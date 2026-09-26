@@ -23,7 +23,7 @@ decision-6 (section 10) explains these rules and their sources. Follow them in e
 - **Testing tools are for debug builds only.** Each file in `ios/App/TestingTools/` is inside `#if DEBUG`.
 - **The widget is a pure view.** `ios/Widget/` uses only `StationActivityAttributes` and its value types from `RATPCore`. No model, no provider, no network.
 - **Access control.** In `RATPCore`, only what the app or the widget uses is `public`. The rest stays `internal`. Tests use `@testable import RATPCore`.
-- **Files.** A file holds one main type and has its name. An extension that adds a topic goes in `Type+Topic.swift`. Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
+- **Files.** A file holds one main type and has its name. Small types that exist only for it (its state, its error, the protocol of its dependency) may stay in the same file. An extension that adds a topic goes in `Type+Topic.swift`. Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
 - **Tests.** Unit tests: `ios/Packages/RATPCore/Tests/RATPCoreTests/<Feature>/<Type>Tests.swift`. E2E tests: `ios/UITests/`, one file per core flow. Docs screenshots: `ios/DocsScreenshots/`. Code that needs a unit test goes in `RATPCore`.
 - **New module.** Add a target in `ios/Packages/` only when it solves a real problem (code that must not see the rest, code shared with a new target, build time). Deeper changes that these rules call for are `tech` tasks.
 
