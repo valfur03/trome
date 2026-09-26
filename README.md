@@ -40,7 +40,9 @@ make run
 
 The app opens in the Simulator. You need no Apple ID for this.
 
-Each copy of the repo (each folder) gets its own Simulator. Its name starts with `RATP-`. To see its ID, run `make simulator`. To delete it, run `make simulator-delete`.
+Each copy of the repo (each folder) gets its own Simulator. Its name starts with `RATP-`. To see its ID, run `make simulator`. To shut it down, run `make simulator-shutdown`. To delete it, run `make simulator-delete`.
+
+Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` when you are done, so the others can go on.
 
 To fake your position in the Simulator:
 
@@ -135,5 +137,5 @@ To fake your position on the iPhone: while the app runs from Xcode, use Debug > 
 ## Notes for developers
 
 - Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `RATPCore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
-- Build output goes to `.build/` inside the folder. Many git worktrees can build and test at the same time. Each worktree has its own build folder and its own Simulator.
+- Build output goes to `.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder and its own Simulator, but Simulator jobs wait for each other (see above).
 - Swift 6 language mode. Minimum iOS version: 18.0.

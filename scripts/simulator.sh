@@ -40,6 +40,20 @@ case "$command" in
         xcrun simctl bootstatus "$udid" -b > /dev/null
         echo "$udid"
         ;;
+    launch)
+        app=${2:?Usage: $0 launch <app path>}
+        udid=$("$0" boot)
+        bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist")
+        open -a Simulator --args -CurrentDeviceUDID "$udid" 2> /dev/null || open -a DeviceHub
+        xcrun simctl install "$udid" "$app"
+        xcrun simctl launch "$udid" "$bundle_id"
+        ;;
+    shutdown)
+        udid=$(find_udid)
+        if [ -n "$udid" ]; then
+            xcrun simctl shutdown "$udid" 2> /dev/null || true
+        fi
+        ;;
     delete)
         udid=$(find_udid)
         if [ -n "$udid" ]; then
@@ -52,7 +66,7 @@ case "$command" in
         echo "$name"
         ;;
     *)
-        echo "Usage: $0 [udid|boot|delete|name]" >&2
+        echo "Usage: $0 [udid|boot|launch <app path>|shutdown|delete|name]" >&2
         exit 1
         ;;
 esac
