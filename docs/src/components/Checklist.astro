@@ -1,18 +1,21 @@
 ---
+import type { ChecklistKind } from './checklist.ts';
+
 interface Props {
   id: string;
+  kind?: ChecklistKind;
 }
 
-const { id } = Astro.props;
+const { id, kind = 'steps' } = Astro.props;
 ---
 
-<docs-checklist data-id={id}>
+<docs-checklist data-id={id} data-kind={kind}>
   <p class="checklist-progress" aria-live="polite" hidden></p>
   <slot />
 </docs-checklist>
 
 <script>
-  import { parseTicks, progressLabel, serializeTicks } from './checklist.ts';
+  import { parseTicks, progressLabel, serializeTicks, type ChecklistKind } from './checklist.ts';
 
   const storageKey = (id: string) => `ratp-docs-checklist:${id}`;
 
@@ -35,6 +38,7 @@ const { id } = Astro.props;
   class DocsChecklist extends HTMLElement {
     connectedCallback() {
       const key = storageKey(this.dataset.id ?? '');
+      const kind: ChecklistKind = this.dataset.kind === 'things' ? 'things' : 'steps';
       const progress = this.querySelector<HTMLElement>('.checklist-progress');
       const steps = [...this.querySelectorAll('li')].filter(
         (step) => step.parentElement?.closest('li, docs-checklist') === this,
@@ -43,7 +47,7 @@ const { id } = Astro.props;
 
       const render = () => {
         if (progress) {
-          progress.textContent = progressLabel(ticks.filter(Boolean).length, steps.length);
+          progress.textContent = progressLabel(ticks.filter(Boolean).length, steps.length, kind);
           progress.hidden = false;
         }
         steps.forEach((step, index) => step.classList.toggle('checklist-done', ticks[index]));
@@ -55,7 +59,10 @@ const { id } = Astro.props;
         const box = document.createElement('input');
         box.type = 'checkbox';
         box.checked = ticks[index];
-        box.setAttribute('aria-label', `Step ${index + 1} done`);
+        box.setAttribute(
+          'aria-label',
+          kind === 'things' ? `Thing ${index + 1} ready` : `Step ${index + 1} done`,
+        );
         box.addEventListener('change', () => {
           ticks[index] = box.checked;
           save(key, serializeTicks(ticks));
@@ -72,6 +79,10 @@ const { id } = Astro.props;
 </script>
 
 <style>
+  docs-checklist {
+    display: block;
+  }
+
   .checklist-progress {
     position: sticky;
     inset-block-start: calc(var(--sl-nav-height) + var(--sl-mobile-toc-height));
@@ -80,6 +91,10 @@ const { id } = Astro.props;
     background-color: var(--sl-color-bg);
     font-weight: 600;
     color: var(--sl-color-accent-high);
+  }
+
+  docs-checklist :global(:is(h2, h3, h4)) {
+    scroll-margin-block-start: 2.5rem;
   }
 
   docs-checklist :global(.checklist-tick) {

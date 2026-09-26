@@ -10,6 +10,11 @@ describe('progressLabel', () => {
   it('uses the singular for a list of one step', () => {
     assert.equal(progressLabel(0, 1), '0 of 1 step done');
   });
+
+  it('counts the things ready for a list of things to have', () => {
+    assert.equal(progressLabel(2, 8, 'things'), '2 of 8 things ready');
+    assert.equal(progressLabel(1, 1, 'things'), '1 of 1 thing ready');
+  });
 });
 
 describe('parseTicks', () => {

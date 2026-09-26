@@ -1,4 +1,7 @@
-export function progressLabel(done: number, total: number): string {
+export type ChecklistKind = 'steps' | 'things';
+
+export function progressLabel(done: number, total: number, kind: ChecklistKind = 'steps'): string {
+  if (kind === 'things') return `${done} of ${total} ${total === 1 ? 'thing' : 'things'} ready`;
   return `${done} of ${total} ${total === 1 ? 'step' : 'steps'} done`;
 }
 

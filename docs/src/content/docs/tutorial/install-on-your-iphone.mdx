@@ -26,7 +26,7 @@ You need no experience with Xcode or with iOS apps. Do the steps in order. Tick 
 
 Make sure that you have all these things. Tick each one.
 
-<Checklist id="iphone-before-you-start">
+<Checklist id="iphone-before-you-start" kind="things">
 
 - **A Mac with Xcode 27, already set up.** You accepted the Xcode license and downloaded the iOS platform. Test: in Terminal, in the project folder, `make run` opens the app in the Simulator. If Terminal says "Waiting for the Simulator lock", wait: the factory agents are using the Simulator. Then run `make simulator-shutdown` to close it.
 - **The project tools.** You ran `make setup` one time in the project folder (the README explains it).
@@ -75,7 +75,11 @@ Apple's help: [Set up code signing for physical devices](https://developer.apple
 
 3. Click the **+** button at the bottom left. Choose **Apple Account**, then click **Continue**.
 
+   _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+
 4. Type your Apple ID email and password. If Apple sends a 6-digit code to your other device, type it.
+
+   _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
 5. Check the list of teams at the right. It shows **Your Name (Personal Team)**. Close the Settings window.
 
@@ -162,6 +166,8 @@ Apple's help: [Pair devices using a cable](https://developer.apple.com/documenta
 
 19. In the Device Hub, click your iPhone in the left column. If a **Pair** button shows, click it. Do what the window asks.
 
+    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+
 20. On the iPhone, open **Settings > Privacy & Security**. Scroll to the bottom. Under **Security**, turn on **Developer Mode**. The iPhone asks to restart: tap **Restart**.
 
     _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
@@ -171,6 +177,8 @@ Apple's help: [Pair devices using a cable](https://developer.apple.com/documenta
     _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
 
 22. Look at the Device Hub on the Mac. Wait until your iPhone shows no message and no progress bar. The first time, Xcode copies files from the iPhone. This can take 10 minutes or more. Then close the Device Hub.
+
+    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
 </Steps>
 
@@ -190,6 +198,8 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 24. Click the **Run** button (the triangle at the top left), or press <kbd>Cmd</kbd> + <kbd>R</kbd>.
 
+    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+
 25. The Mac can ask for your Mac password, with a message like "codesign wants to access key…". Type the password you use to log in to your Mac. Click **Always Allow**. The message can come two times: click **Always Allow** each time.
 
     _No picture: macOS screen ([why](#why-some-steps-have-no-picture))._
@@ -204,7 +214,11 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 28. Under **Developer App**, tap **Apple Development:** followed by your Apple ID email. Tap **Trust "Apple Development: …"**, then tap **Trust** again in the question. The iPhone needs the internet for this step.
 
+    _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
+
 29. In Xcode, click **Run** again. The app opens on your iPhone.
+
+    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
 </Steps>
 
@@ -280,7 +294,11 @@ These steps take about 5 minutes. You do not need to trust the developer or turn
 
   3. At the top of the Xcode window, choose the scheme **RATPActivity** and your iPhone.
 
+     _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+
   4. Click **Run**, or press <kbd>Cmd</kbd> + <kbd>R</kbd>. The app opens on the iPhone. It now works for 7 more days.
+
+     _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
   </Steps>
 </Checklist>
@@ -335,6 +353,8 @@ The Xcode **Run** button reads the file `ios/Config/Secrets.xcconfig` of the fol
   1. Connect the iPhone and open the project of the main folder in Xcode, as in [the 7-day steps](#the-app-stops-after-7-days).
 
   2. Click **Run**. Xcode builds the app again, with your key inside.
+
+     _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
   3. On the iPhone, open **Testing tools > Next trains of a station**. It now says **Train data key: set**. The Live Activity shows live train times. (No picture: the pictures of this page are made without a key, on purpose.)
 
