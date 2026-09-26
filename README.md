@@ -24,8 +24,9 @@ The Xcode project is not in git. The file `project.yml` describes it. If you cha
 
 | Command | What it does |
 |---|---|
-| `make run` | Builds the app and opens it in the Simulator. |
-| `make check` | The quality gate: lint, build, and unit tests. Run it before each commit. |
+| `make run` | Builds the app and opens it in the Simulator, without the train data key. |
+| `make run LIVE=1` | The same, with your train data key (see below). |
+| `make check` | The quality gate: lint, key leak check, build, and unit tests. Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
 | `make stations` | Downloads the metro and RER station list again (see below). |
@@ -127,13 +128,17 @@ To add the key:
 
 1. Create a free account on https://prim.iledefrance-mobilites.fr.
 2. In your account page, create an API key.
-3. Copy `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig`.
+3. In the main folder of the repo, copy `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig`.
 4. Put your key after `PRIM_API_KEY =`.
-5. Run `make run`. The app screen now says "Train data key: set".
+5. Run `make run LIVE=1`. The app screen now says "Train data key: set".
 
 Git ignores `Config/Secrets.xcconfig`. Never commit your key.
 
-Each folder of the repo needs its own copy of `Config/Secrets.xcconfig`.
+Only the main folder needs `Config/Secrets.xcconfig`. In a git worktree, `make run LIVE=1` finds the key in the main folder with git. It does not copy the file. If the main folder has no `Config/Secrets.xcconfig`, `make run LIVE=1` stops and says so.
+
+The other `make` commands (`make run` without `LIVE=1`, `make check`, `make e2e`) never use the key: they build with `Config/NoKey.xcconfig`. Then the tests do not use your PRIM quota. The Run button in Xcode uses the key of the folder that you open.
+
+The build output never shows the key. `make live-key-check` proves it with a fake key. `make check` runs it.
 
 ## Install on your iPhone (free Apple ID)
 

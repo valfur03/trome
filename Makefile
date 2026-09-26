@@ -8,20 +8,26 @@ E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 CORE_PACKAGE := Packages/RATPCore
+NO_KEY := -xcconfig Config/NoKey.xcconfig
+LIVE_XCCONFIG := $(BUILD_DIR)/Live.xcconfig
+PRIM_SECRETS ?= $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')/Config/Secrets.xcconfig
 
 XCODEBUILD := xcodebuild -quiet \
 	-project $(PROJECT) \
 	-derivedDataPath $(DERIVED_DATA) \
 	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages
+BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' build
 
-.PHONY: help setup generate project lint lint-fix build test check run e2e stations simulator simulator-shutdown simulator-delete clean
+.PHONY: help setup generate project lint lint-fix build test check live-key-check run e2e stations simulator simulator-shutdown simulator-delete clean
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
 	@echo "make generate            Create the Xcode project again (after a change in project.yml)"
 	@echo "make run                 Build the app and open it in this folder's Simulator (keeps the Simulator lock)"
-	@echo "make check               Quality gate: lint + build + unit tests"
+	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
+	@echo "make check               Quality gate: lint + key leak check + build + unit tests"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
+	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
 	@echo "make e2e                 End-to-end tests on this folder's Simulator (takes the Simulator lock)"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
@@ -49,19 +55,31 @@ lint-fix:
 	swiftlint lint --strict --quiet
 
 build: project
-	$(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' build
+ifeq ($(LIVE),1)
+	@test -f "$(PRIM_SECRETS)" || { echo "No PRIM key: $(PRIM_SECRETS) does not exist. Add the key there (see README), or build without LIVE=1." >&2; exit 1; }
+	@echo "LIVE=1: the build uses the PRIM key of $(PRIM_SECRETS)"
+	@mkdir -p $(BUILD_DIR)
+	@trap 'rm -f $(LIVE_XCCONFIG)' EXIT INT TERM; \
+		printf '#include "%s"\n' "$(PRIM_SECRETS)" > $(LIVE_XCCONFIG) && $(BUILD_APP)
+else
+	@rm -f $(LIVE_XCCONFIG)
+	$(BUILD_APP) $(NO_KEY)
+endif
 
 test:
 	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore
 
-check: lint build test
+check: lint live-key-check build test
+
+live-key-check: project
+	@./scripts/live-key-check.sh
 
 run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
 
 e2e: project
 	@rm -rf $(E2E_RESULT)
-	$(SIM_LOCK) job $(XCODEBUILD) -scheme $(E2E_SCHEME) -destination "id=$$($(SIMULATOR) udid)" \
+	$(SIM_LOCK) job $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination "id=$$($(SIMULATOR) udid)" \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
 		-resultBundlePath $(E2E_RESULT) test \

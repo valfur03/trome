@@ -42,3 +42,28 @@ In the worktree, delete its Simulator:
 ```sh
 make simulator-delete
 ```
+
+## Live train data (the real PRIM key)
+
+The real PRIM key is in the main repo folder only, in `Config/Secrets.xcconfig`. Worktrees do not have it.
+
+- **Never read, print, copy or commit the key.** Do not open `Config/Secrets.xcconfig`. Do not copy it into a worktree.
+- `make build`, `make run`, `make check` and `make e2e` never use the key. They build with `Config/NoKey.xcconfig`, so the app says "Train data key: not set". Unit tests use recorded PRIM answers (fixtures).
+- `make run LIVE=1` builds the app with the key of the main repo folder (found with git) and opens it in the Simulator. The build output does not show the key. The key is only inside the built app, in `.build/` (ignored by git). The next build without `LIVE=1` removes it.
+- `make check` runs `make live-key-check`. It builds with `LIVE=1` and a fake key, and fails if a build log shows the key. If you change the build (Makefile, `Config/`, `project.yml`, build scripts), this check must still pass.
+
+### Who uses live data, and when
+
+- **Only QA** uses `make run LIVE=1`. Software Engineers and the quality gate never do.
+- QA uses it **only when the task touches train data**: the PRIM calls, the stop ids, the next trains screen, or the train data in the Live Activity.
+- **Budget: at most 60 PRIM calls per QA run.** Write the number of calls you made in your QA notes.
+
+How to count: the app calls PRIM once for each stop of the station when it opens the next trains, then again every 30 seconds while the app screen is open. Calls = stops × (1 + seconds on screen / 30). Today Châtelet has 10 stops: 20 calls per minute. A station with one line has 1 or 2 stops: 2 to 4 calls per minute. TASK-23 (fewer calls per station) will lower these numbers.
+
+To stay in the budget:
+
+- Pick a station with few lines, unless the task needs a big station.
+- Check what you need, then run `make simulator-shutdown` at once. The app keeps calling PRIM while its screen is open.
+- At Châtelet, stay at most 2 minutes on the next trains (50 calls).
+
+Why 60: the public PRIM page of the API "Prochains passages - requête unitaire" gives a quota of 1,000,000 calls per day. But since 13 March 2024, new PRIM accounts get a lower quota by default (users report 1,000 calls per day). We do not know the quota of the prompter's key, so we plan for 1,000 calls per day. 60 calls is 6% of it. After 5 QA runs, the prompter still has more than two thirds of the day's calls. When PRIM answers "too many requests" (HTTP 429), stop at once and tell the manager.
