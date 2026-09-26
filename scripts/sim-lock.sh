@@ -134,14 +134,14 @@ shut_down_if_idle() {
 watch() {
     echo "$$" > "$watcher"
     trap 'if [ "$(cat "$watcher" 2> /dev/null)" = "$$" ]; then rm -f "$watcher"; fi' EXIT
-    udid=
+    shared_udid=
     while :; do
-        if [ -z "$udid" ]; then
-            udid=$("$simulator" find 2> /dev/null || true)
+        if [ -z "$shared_udid" ]; then
+            shared_udid=$("$simulator" find 2> /dev/null || true)
         fi
         if [ -e "$lock" ]; then
             remove_if_stale 2> /dev/null || touch "$last_job"
-        elif [ -z "$udid" ] || ! is_booted "$udid" || shut_down_if_idle "$udid"; then
+        elif [ -z "$shared_udid" ] || ! is_booted "$shared_udid" || shut_down_if_idle "$shared_udid"; then
             break
         fi
         sleep "$watch_seconds"
