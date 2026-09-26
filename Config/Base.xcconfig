@@ -1,0 +1,8 @@
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+RATP_BUNDLE_ID_PREFIX = com.example
+PRIM_API_KEY =
+
+#include? "Local.xcconfig"
+#include? "Secrets.xcconfig"

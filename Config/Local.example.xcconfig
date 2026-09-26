@@ -1,0 +1,8 @@
+// Copy this file to Config/Local.xcconfig to install the app on your iPhone.
+// Config/Local.xcconfig is ignored by git.
+
+// Your Personal Team ID (10 letters and digits).
+DEVELOPMENT_TEAM =
+
+// A prefix that is unique to you, for example io.github.your-github-name
+RATP_BUNDLE_ID_PREFIX = com.example

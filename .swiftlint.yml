@@ -1,0 +1,11 @@
+included:
+  - App
+  - Widget
+  - UITests
+  - Packages/RATPCore/Sources
+  - Packages/RATPCore/Tests
+  - Packages/RATPCore/Package.swift
+
+excluded:
+  - .build
+  - Packages/RATPCore/.build

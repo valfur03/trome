@@ -1,0 +1,104 @@
+name: RATPActivity
+
+options:
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+packages:
+  RATPCore:
+    path: Packages/RATPCore
+
+targets:
+  RATPActivity:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    dependencies:
+      - package: RATPCore
+      - target: RATPActivityWidget
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: RATP Activity
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSSupportsLiveActivities: true
+        PRIMAPIKey: $(PRIM_API_KEY)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivity
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+
+  RATPActivityWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+    dependencies:
+      - package: RATPCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: RATP Activity
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivity.Widget
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+
+  RATPActivityUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: RATPActivity
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: RATPActivity
+
+schemes:
+  RATPActivity:
+    build:
+      targets:
+        RATPActivity: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - package: RATPCore/RATPCoreTests
+
+  RATPActivityE2E:
+    build:
+      targets:
+        RATPActivity: all
+    test:
+      config: Debug
+      targets:
+        - RATPActivityUITests

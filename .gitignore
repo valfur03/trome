@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+.swiftpm/
+xcuserdata/
+*.xcodeproj/
+
+App/Info.plist
+Widget/Info.plist
+
+Config/Local.xcconfig
+Config/Secrets.xcconfig
