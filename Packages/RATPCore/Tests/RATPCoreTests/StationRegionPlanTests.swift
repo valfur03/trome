@@ -60,4 +60,37 @@ struct StationRegionPlanTests {
         #expect(WatchedRegion.arrivalStationId(inRegionId: "stop:IDFM:71264") == nil)
         #expect(WatchedRegion.arrivalStationId(inRegionId: "refresh") == nil)
     }
+
+    @Test func trustsTheEnteredArrivalRegionWhenTheLastPositionIsOutsideIt() {
+        let station = Station(id: "s", name: "S", coordinate: origin, lines: [])
+        let catalog = StationCatalog(stations: [station])
+        let insideTheArea = Coordinate(48.8505, 2.3500)
+        let outsideTheArea = Coordinate(48.8520, 2.3500)
+
+        let inside = WatchedRegion.position(
+            afterEnteringRegionId: "arrival:s", lastKnownPosition: insideTheArea, catalog: catalog
+        )
+        let outside = WatchedRegion.position(
+            afterEnteringRegionId: "arrival:s", lastKnownPosition: outsideTheArea, catalog: catalog
+        )
+        let unknown = WatchedRegion.position(
+            afterEnteringRegionId: "arrival:s", lastKnownPosition: nil, catalog: catalog
+        )
+
+        #expect(inside == insideTheArea)
+        #expect(outside == origin)
+        #expect(unknown == origin)
+    }
+
+    @Test func usesTheLastPositionForEveryOtherRegionEvent() {
+        let catalog = StationCatalog(stations: [Station(id: "s", name: "S", coordinate: origin, lines: [])])
+        let last = Coordinate(48.8600, 2.3500)
+        let position = { (id: String?, known: Coordinate?) in
+            WatchedRegion.position(afterEnteringRegionId: id, lastKnownPosition: known, catalog: catalog)
+        }
+
+        #expect(position("refresh", last) == last)
+        #expect(position(nil, last) == last)
+        #expect(position(nil, nil) == nil)
+    }
 }

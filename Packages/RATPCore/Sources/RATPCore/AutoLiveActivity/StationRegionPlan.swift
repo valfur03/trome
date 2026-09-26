@@ -33,6 +33,22 @@ public struct WatchedRegion: Hashable, Sendable {
         guard id.hasPrefix(arrivalPrefix) else { return nil }
         return String(id.dropFirst(arrivalPrefix.count))
     }
+
+    public static func position(
+        afterEnteringRegionId id: String?,
+        lastKnownPosition: Coordinate?,
+        catalog: StationCatalog
+    ) -> Coordinate? {
+        guard let stationId = id.flatMap(arrivalStationId(inRegionId:)),
+              let station = catalog.station(withId: stationId) else {
+            return lastKnownPosition
+        }
+        if let lastKnownPosition,
+           lastKnownPosition.distance(to: station.coordinate) <= AutoLiveActivityRules.arrivalRadiusMeters {
+            return lastKnownPosition
+        }
+        return station.coordinate
+    }
 }
 
 public enum StationRegionPlan {

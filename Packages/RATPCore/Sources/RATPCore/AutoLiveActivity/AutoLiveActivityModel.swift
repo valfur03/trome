@@ -66,7 +66,9 @@ public final class AutoLiveActivityModel {
         }
         await askForNotificationsIfAllowed()
         await openTappedStation()
-        await evaluate(position: inputs.locationService.position)
+        await evaluate(position: nil)
+        plannedRegions = nil
+        await refreshRegions(around: inputs.locationService.position)
         restartFeed(refreshInBackground: false)
     }
 
@@ -215,6 +217,7 @@ public final class AutoLiveActivityModel {
     }
 
     private func stateDidChange(from oldValue: AutoLiveActivityState) {
+        guard state != oldValue else { return }
         let station = state.shown.flatMap { catalog.station(withId: $0.stationId) }
         if station != shownStation {
             shownStation = station
@@ -240,6 +243,8 @@ public final class AutoLiveActivityModel {
             guard !Task.isCancelled else { return }
             Task { @MainActor in
                 await self?.evaluate(position: nil)
+                guard let self, self.state.shown?.startedAt == shown.startedAt else { return }
+                self.scheduleTimer()
             }
         }
     }

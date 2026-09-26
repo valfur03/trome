@@ -73,18 +73,21 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
 
     private func handle(identifier: String, state: CLMonitor.Event.State) async {
         guard state == .satisfied || state == .unsatisfied else { return }
-        if let location = manager.location,
-           -location.timestamp.timeIntervalSinceNow < Self.freshLocationAge,
-           let position = Coordinate(
-               latitude: location.coordinate.latitude,
-               longitude: location.coordinate.longitude
-           ) {
-            await onWake?(position)
-        } else if state == .satisfied,
-                  let stationId = WatchedRegion.arrivalStationId(inRegionId: identifier),
-                  let station = catalog.station(withId: stationId) {
-            await onWake?(station.coordinate)
+        let position = WatchedRegion.position(
+            afterEnteringRegionId: state == .satisfied ? identifier : nil,
+            lastKnownPosition: freshLocation(),
+            catalog: catalog
+        )
+        guard let position else { return }
+        await onWake?(position)
+    }
+
+    private func freshLocation() -> Coordinate? {
+        guard let location = manager.location,
+              -location.timestamp.timeIntervalSinceNow < Self.freshLocationAge else {
+            return nil
         }
+        return Coordinate(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
     }
 }
 

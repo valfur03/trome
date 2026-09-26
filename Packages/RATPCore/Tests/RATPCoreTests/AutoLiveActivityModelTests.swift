@@ -309,4 +309,26 @@ struct AutoLiveActivityModelTests {
         #expect(watcher.watched.last == [])
         #expect(model.shownStation == Places.stationA)
     }
+
+    @Test func keepsTheTappedLiveActivityWhenTheAppComesBackWithAPositionFromBefore() async {
+        let model = makeModel()
+        gps.report(Places.fourHundredMetersFromA)
+        await waitUntil { locationService.position != nil }
+
+        await model.notificationTapped(stationId: "a")
+        await model.setAppActive(true)
+
+        #expect(model.shownStation == Places.stationA)
+        #expect(client.endCount == 0)
+    }
+
+    @Test func watchesTheStationsAgainWhenTheAppComesBackWithoutAMove() async {
+        let model = makeModel()
+        gps.report(Places.twoHundredMetersFromA)
+        await waitUntil { !watcher.watched.isEmpty }
+
+        await model.setAppActive(true)
+
+        #expect(watcher.watched.count == 2)
+    }
 }
