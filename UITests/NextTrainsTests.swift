@@ -1,6 +1,6 @@
 import XCTest
 
-final class NextTrainsTests: XCTestCase {
+final class NextTrainsTests: E2ETestCase {
     @MainActor
     func testUserCanPickAStationAndSeeItsNextTrains() {
         let app = XCUIApplication.withRealGPS()
@@ -9,24 +9,24 @@ final class NextTrainsTests: XCTestCase {
 
         pickStation("Abbesses", searching: "abbesses", in: app)
         let stationName = app.staticTexts["currentStationName"]
-        XCTAssertTrue(stationName.waitForExistence(timeout: 5))
+        XCTAssertTrue(stationName.waitForExistence(timeout: UITestTimeout.element))
         XCTAssertEqual(stationName.label, "Abbesses")
         expectNextTrainsOutcome(in: app)
 
         pickStation("Pigalle", searching: "pigalle", in: app)
-        XCTAssertTrue(stationName.waitForExistence(timeout: 5))
+        XCTAssertTrue(stationName.waitForExistence(timeout: UITestTimeout.element))
         XCTAssertEqual(stationName.label, "Pigalle")
         expectNextTrainsOutcome(in: app)
     }
 
     @MainActor
     private func pickStation(_ name: String, searching query: String, in app: XCUIApplication) {
-        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
         let chooseStation = app.buttons["chooseStation"]
         (chooseStation.exists ? chooseStation : app.buttons["changeStation"]).tap()
 
         let searchField = app.searchFields.firstMatch
-        XCTAssertTrue(searchField.waitForExistence(timeout: 5))
+        XCTAssertTrue(searchField.waitForExistence(timeout: UITestTimeout.element))
         searchField.tap()
         searchField.typeText(query)
         app.buttons["chooseStation-\(name)"].tap()
@@ -36,12 +36,12 @@ final class NextTrainsTests: XCTestCase {
     private func expectNextTrainsOutcome(in app: XCUIApplication) {
         let keyIsSet = app.staticTexts["primKeyStatus"].label == "Train data key: set"
         guard keyIsSet else {
-            XCTAssertTrue(app.staticTexts["missingKeyMessage"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.staticTexts["missingKeyMessage"].waitForExistence(timeout: UITestTimeout.element))
             return
         }
         let departureRow = app.descendants(matching: .any).matching(identifier: "departureRow").firstMatch
         let noLiveData = app.staticTexts["noLiveDataMessage"]
-        let deadline = Date().addingTimeInterval(30)
+        let deadline = Date().addingTimeInterval(UITestTimeout.element)
         while Date() < deadline, !departureRow.exists, !noLiveData.exists {
             _ = departureRow.waitForExistence(timeout: 1)
         }
