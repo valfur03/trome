@@ -67,6 +67,10 @@ remove_if_stale() {
 acquire() {
     waiting=
     until mkdir "$lock" 2> /dev/null; do
+        if [ ! -e "$lock" ]; then
+            sleep 1
+            continue
+        fi
         if remove_if_stale; then
             continue
         fi
@@ -120,7 +124,11 @@ command=${1:-}
 case "$command" in
     job)
         [ $# -gt 0 ] || usage
-        owns_session || acquire
+        if owns_session; then
+            echo "$$" > "$lock/pid"
+        else
+            acquire
+        fi
         trap on_exit_always EXIT
         "$@"
         ;;
