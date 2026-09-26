@@ -9,3 +9,7 @@ Widget/Info.plist
 
 Config/Local.xcconfig
 Config/Secrets.xcconfig
+
+node_modules/
+docs/dist/
+docs/.astro/

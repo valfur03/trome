@@ -16,7 +16,7 @@ Open Terminal in this folder. Run:
 make setup
 ```
 
-This installs two tools with Homebrew (XcodeGen and SwiftLint). Then it creates the Xcode project `RATPActivity.xcodeproj`.
+This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `RATPActivity.xcodeproj`.
 
 The Xcode project is not in git. The file `project.yml` describes it. If you change `project.yml`, run `make generate`.
 
@@ -31,6 +31,7 @@ The Xcode project is not in git. The file `project.yml` describes it. If you cha
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
 | `make stations` | Downloads the metro and RER station list again (see below). |
 | `make clean` | Deletes the build folder and the Xcode project. |
+| `make docs` | Builds the docs site and serves it at http://localhost:4321 (see [The docs site](#the-docs-site)). |
 | `make help` | Shows all the commands. |
 
 ## Run on the Simulator
@@ -178,6 +179,38 @@ Limits of a free Apple ID:
 
 To fake your position on the iPhone: while the app runs from Xcode, use Debug > Simulate Location.
 
+## The docs site
+
+The folder `docs/` holds the docs for the users of the app, for example the tutorial to install the app on your iPhone. It is a [Starlight](https://starlight.astro.build) site (Astro). It is not online: you read it on your Mac.
+
+The docs need Node 24 LTS. The file `.nvmrc` pins it. Install it one time with [nvm](https://github.com/nvm-sh/nvm): run `nvm install` in this folder. Then run `nvm use` in each new terminal before a docs command. If the active Node is too old, the docs commands stop and tell you to run `nvm use`.
+
+| Command | What it does |
+|---|---|
+| `make docs` | Builds the site and serves it at http://localhost:4321. The search works only here. `make docs PORT=4400` uses port 4400. |
+| `make docs-dev` | Serves the site with live reload while you change a page. No search. It also accepts `PORT=<n>`. |
+| `make docs-stop` | Stops the docs server of this folder. Use it when the server runs in the background (for agents, Astro starts it in the background). In a terminal, press Ctrl + C. |
+| `make docs-check` | The docs quality gate: installs the packages if needed, runs the unit tests and `astro check`, builds the site, and fails on a broken internal link. It needs no Simulator. |
+| `make docs-screenshots` | Takes the app screenshots of the docs on the shared Simulator, and saves them in `docs/src/assets/screenshots/`. |
+
+The first docs command installs the packages in `docs/node_modules` (about 300 MB).
+
+`make check` runs `make docs-check` only when your branch changes files in `docs/` (compared with `develop`). So a change of the app only does not need Node.
+
+To write a page:
+
+- Add an `.mdx` file in `docs/src/content/docs/tutorial/`. The sidebar shows it under "Tutorial".
+- Use the Starlight components: `Steps` for a step list, `Aside` for a callout. See https://starlight.astro.build/components/using-components/.
+- To show the progress of a step list ("3 of 11 steps done"), put the list inside the `Checklist` component of `docs/src/components/Checklist.astro`. Give each list its own `id`: the browser saves the ticks under this id. The home page (`docs/src/content/docs/index.mdx`) shows an example.
+- Show an app screenshot with a Markdown image, for example `![The app](../../../assets/screenshots/app-main-screen.png)`. Astro makes it smaller at build time.
+
+`make docs-screenshots` runs the XCUITest suite of `DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel). It saves one small PNG file for each screenshot (600 pixels wide, compressed with pngquant), with a fixed name: `app-main-screen.png` (the main app screen) and `live-activity-notification-center.png` (the Live Activity in the Notification Center). The PNG files are in git. To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `scripts/docs-screenshots.sh`.
+
+Rules to keep the docs true:
+
+- A change of a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. For a changed screen, run `make docs-screenshots` and commit the new images.
+- `make docs-screenshots` is a Simulator job. It takes the Simulator lock, like `make e2e`. Run `make simulator-shutdown` when your job ends.
+
 ## Project layout
 
 | Folder | What it holds |
@@ -188,6 +221,8 @@ To fake your position on the iPhone: while the app runs from Xcode, use Debug > 
 | `UITests/` | The end-to-end tests (XCUITest). |
 | `Config/` | Build settings. Your key and Team ID go in the local files here. |
 | `scripts/` | Helper scripts for the `make` commands. |
+| `docs/` | The docs site (Starlight). |
+| `DocsScreenshots/` | The XCUITest suite that takes the app screenshots of the docs. |
 
 ## Notes for developers
 

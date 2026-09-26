@@ -1,0 +1,95 @@
+---
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+---
+
+<docs-checklist data-id={id}>
+  <p class="checklist-progress" aria-live="polite" hidden></p>
+  <slot />
+</docs-checklist>
+
+<script>
+  import { parseTicks, progressLabel, serializeTicks } from './checklist.ts';
+
+  const storageKey = (id: string) => `ratp-docs-checklist:${id}`;
+
+  function readSaved(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  function save(key: string, value: string) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      return;
+    }
+  }
+
+  class DocsChecklist extends HTMLElement {
+    connectedCallback() {
+      const key = storageKey(this.dataset.id ?? '');
+      const progress = this.querySelector<HTMLElement>('.checklist-progress');
+      const steps = [...this.querySelectorAll('li')].filter(
+        (step) => step.parentElement?.closest('li, docs-checklist') === this,
+      );
+      const ticks = parseTicks(readSaved(key), steps.length);
+
+      const render = () => {
+        if (progress) {
+          progress.textContent = progressLabel(ticks.filter(Boolean).length, steps.length);
+          progress.hidden = false;
+        }
+        steps.forEach((step, index) => step.classList.toggle('checklist-done', ticks[index]));
+      };
+
+      steps.forEach((step, index) => {
+        const label = document.createElement('label');
+        label.className = 'checklist-tick';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.checked = ticks[index];
+        box.setAttribute('aria-label', `Step ${index + 1} done`);
+        box.addEventListener('change', () => {
+          ticks[index] = box.checked;
+          save(key, serializeTicks(ticks));
+          render();
+        });
+        label.append(box);
+        step.prepend(label);
+      });
+      render();
+    }
+  }
+
+  customElements.define('docs-checklist', DocsChecklist);
+</script>
+
+<style>
+  .checklist-progress {
+    font-weight: 600;
+    color: var(--sl-color-accent-high);
+  }
+
+  docs-checklist :global(.checklist-tick) {
+    float: inline-end;
+    margin-inline-start: 0.5rem;
+  }
+
+  docs-checklist :global(.checklist-tick input) {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    accent-color: var(--sl-color-accent);
+    cursor: pointer;
+  }
+
+  docs-checklist :global(li.checklist-done) {
+    color: var(--sl-color-gray-3);
+  }
+</style>

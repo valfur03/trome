@@ -83,6 +83,19 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: RATPActivity
 
+  RATPActivityDocsScreenshots:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - DocsScreenshots
+    dependencies:
+      - target: RATPActivity
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityDocsScreenshots
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: RATPActivity
+
 schemes:
   RATPActivity:
     build:
@@ -103,3 +116,12 @@ schemes:
       config: Debug
       targets:
         - RATPActivityUITests
+
+  RATPActivityDocsScreenshots:
+    build:
+      targets:
+        RATPActivity: all
+    test:
+      config: Debug
+      targets:
+        - RATPActivityDocsScreenshots

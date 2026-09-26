@@ -31,6 +31,8 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 
   To boot the shared Simulator and remove the app of the last job first, run `./scripts/sim-lock.sh job ./scripts/simulator.sh reset <command>`. With `xcodebuild`, use `-destination "platform=iOS Simulator,name=RATP-Shared"`.
 
+`make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
+
 `make check` and `make test` need no Simulator and no lock.
 
 The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
@@ -58,6 +60,17 @@ make simulator-delete-old
 ```
 
 It keeps the Simulators that are not shut down, because a worktree with the old scripts can still use them.
+
+## The docs site (`docs/`)
+
+The README explains the docs site and its commands (section "The docs site").
+
+- **Keep the docs true.** A task that changes a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. For a changed screen, run `make docs-screenshots` and commit the new images. The reviewer checks it.
+- **Node 24.** Each Bash call starts a new shell with the old default Node. Run the docs commands like this: `. "$HOME/.nvm/nvm.sh" && nvm use && make docs-check`. The same goes for `make check` when your task changes `docs/`.
+- **Install `docs/node_modules` only when your task touches the docs.** It takes about 300 MB. `make check` runs `make docs-check` only when your branch changes `docs/`, so the other tasks never install it.
+- **Use your own port.** The default port 4321 is for the prompter. Run `make docs PORT=<n>` or `make docs-dev PORT=<n>` with a port that no other agent uses (for example 4300 plus your task number).
+- **Stop the docs server when your job ends.** For agents, Astro starts the server in the background and the command returns at once. Run `make docs-stop` in your worktree before you end.
+- `make docs-screenshots` is a Simulator job: one job at a time (the lock), then `make simulator-shutdown`.
 
 ## Live train data (the real PRIM key)
 

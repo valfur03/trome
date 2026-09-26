@@ -1,0 +1,48 @@
+---
+title: Welcome
+description: Install, test and publish the RATP Activity iPhone app, step by step.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import appMainScreen from '../../assets/screenshots/app-main-screen.png';
+import liveActivity from '../../assets/screenshots/live-activity-notification-center.png';
+import Checklist from '../../components/Checklist.astro';
+
+RATP Activity is an iPhone app. It shows the next metro and RER trains of the nearest Paris station on the lock screen, as a Live Activity.
+
+These pages tell you, step by step, how to put the app on your iPhone. You need no experience with Xcode or with iOS apps.
+
+<Aside>
+  The tutorial is not written yet. Its pages will show in the sidebar, under "Tutorial".
+</Aside>
+
+## How to use the step lists
+
+Each tutorial page has one list of steps. Tick a step when you have done it. The top of the list shows how many steps you have done. Your ticks stay in this browser, also when you close it.
+
+Try it here:
+
+<Checklist id="home-how-to">
+  <Steps>
+
+  1. Read the step to the end before you start it.
+
+  2. Do the step.
+
+  3. Tick the box of the step.
+
+  </Steps>
+</Checklist>
+
+## What the app looks like
+
+<div class="screenshots">
+  <Image src={appMainScreen} width={280} alt="The main screen of the app: the nearest station, and the next trains of the picked station." />
+  <Image src={liveActivity} width={280} alt="The Live Activity of the picked station, under the clock of the lock screen." />
+</div>
+
+<style>{`
+  .screenshots { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .screenshots img { border-radius: 1rem; border: 1px solid var(--sl-color-gray-5); }
+`}</style>
