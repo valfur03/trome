@@ -52,6 +52,41 @@ struct StationCatalogTests {
 
         #expect(throws: DecodingError.self) { try StationCatalog(jsonData: Data(json.utf8)) }
     }
+
+    @Test func listsEveryStationInAlphabeticalOrderWhenTheSearchIsEmpty() {
+        let catalog = StationCatalog(stations: [
+            station("Étienne Marcel"), station("Nation"), station("Alésia"), station("Alma - Marceau")
+        ])
+
+        let names = catalog.stations(matching: " ").map(\.name)
+
+        #expect(names == ["Alésia", "Alma - Marceau", "Étienne Marcel", "Nation"])
+    }
+
+    @Test(arguments: [
+        ("chatelet", ["Châtelet", "Châtelet - Les Halles"]),
+        ("LA DEFENSE", ["La Défense"]),
+        ("saint lazare", ["Haussmann Saint-Lazare", "Saint-Lazare"]),
+        ("chatelet-les", ["Châtelet - Les Halles"]),
+        ("madeleine", [])
+    ])
+    func findsStationsByPartOfTheirName(query: String, expectedNames: [String]) {
+        let catalog = StationCatalog(stations: [
+            station("Saint-Lazare"), station("Châtelet - Les Halles"), station("La Défense"),
+            station("Châtelet"), station("Haussmann Saint-Lazare")
+        ])
+
+        #expect(catalog.stations(matching: query).map(\.name) == expectedNames)
+    }
+
+    private func station(_ name: String) -> Station {
+        Station(
+            id: name,
+            name: name,
+            coordinate: Coordinate(48.86, 2.35),
+            lines: [TransitLine(mode: .metro, name: "1")]
+        )
+    }
 }
 
 struct BundledStationCatalogTests {
@@ -82,11 +117,53 @@ struct BundledStationCatalogTests {
         #expect(nearby?.station.name == expectedName)
     }
 
+    @Test(arguments: [
+        ("Châtelet", ["Metro 1", "Metro 4", "Metro 7", "Metro 11", "Metro 14"]),
+        ("Gare du Nord", ["Metro 4", "Metro 5", "RER B", "RER D"]),
+        ("Nation", ["Metro 1", "Metro 2", "Metro 6", "Metro 9", "RER A"]),
+        ("La Défense", ["Metro 1", "RER A", "RER E"]),
+        ("Rosny-Bois-Perrier", ["Metro 11", "RER E"]),
+        ("Aéroport Charles de Gaulle 1", ["RER B"])
+    ])
+    func namesStationsLikeInTheRealWorld(name: String, expectedLines: [String]) {
+        let matches = catalog.stations.filter { $0.name == name }
+
+        #expect(matches.map { $0.lines.map(\.displayName) } == [expectedLines])
+    }
+
+    @Test func hasNoBrokenEntry() {
+        for station in catalog.stations {
+            #expect(!station.name.trimmingCharacters(in: .whitespaces).isEmpty, "\(station.id) has no name")
+            #expect(station.name == station.name.trimmingCharacters(in: .whitespaces), "\(station.name)")
+            #expect(!station.lines.isEmpty, "\(station.name) has no line")
+            #expect(Set(station.lines).count == station.lines.count, "\(station.name) lists a line twice")
+        }
+        #expect(Set(catalog.stations.map(\.id)).count == catalog.stations.count)
+    }
+
+    @Test func listsEachStationOnlyOnce() {
+        let stations = catalog.stations
+        for (index, station) in stations.enumerated() {
+            for other in stations[(index + 1)...] where station.name.comparisonKey == other.name.comparisonKey {
+                #expect(
+                    station.coordinate.distance(to: other.coordinate) > StationCatalog.walkingDistanceMeters,
+                    "\(station.name) and \(other.name) look like the same station"
+                )
+            }
+        }
+    }
+
     @Test func ignoresACloserTramStop() {
         let jeanRostandTramStop = Coordinate(48.9078, 2.4544)
 
         let nearby = catalog.nearestStation(to: jeanRostandTramStop)
 
         #expect(nearby?.station.name != "Jean Rostand")
+    }
+}
+
+private extension String {
+    var comparisonKey: String {
+        folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil).filter { $0.isLetter || $0.isNumber }
     }
 }

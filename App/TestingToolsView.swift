@@ -25,6 +25,16 @@ struct TestingToolsView: View {
             }
             coordinatesSection
             addressSection
+            Section {
+                NavigationLink("All stations") {
+                    StationListView()
+                }
+                .accessibilityIdentifier("allStations")
+            } header: {
+                Text("Station list")
+            } footer: {
+                Text("Every metro and RER station the app knows, with its lines.")
+            }
         }
         .navigationTitle("Testing tools")
         .task {

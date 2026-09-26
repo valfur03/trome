@@ -17,6 +17,11 @@ MODES = {"Metro": "metro", "RapidTransit": "rer"}
 METRO_LINES = {str(number) for number in range(1, 15)} | {"3B", "7B"}
 RER_LINES = {"A", "B", "C", "D", "E"}
 LINE_NAMES = {"3B": "3bis", "7B": "7bis"}
+STATION_NAMES = {
+    "Aéroport CDG 1 (Terminal 3) - RER": "Aéroport Charles de Gaulle 1",
+    "Aéroport Charles de Gaulle 2 (Terminal 2)": "Aéroport Charles de Gaulle 2 TGV",
+    "Rosny Bois Perrier": "Rosny-Bois-Perrier",
+}
 SAME_STATION_MAX_METERS = 1000
 
 
@@ -66,6 +71,10 @@ def line_sort_key(line):
     return (order, int(digits) if digits else 0, line["name"])
 
 
+def station_name(row):
+    return STATION_NAMES.get(row["stop_name"], row["stop_name"])
+
+
 def build_station(rows):
     lines = {}
     for row in rows:
@@ -78,7 +87,7 @@ def build_station(rows):
     sorted_lines = sorted(lines.values(), key=line_sort_key)
     return {
         "id": min(row["stop_id"] for row in rows),
-        "name": rows[0]["stop_name"],
+        "name": station_name(rows[0]),
         "latitude": round(latitude, 6),
         "longitude": round(longitude, 6),
         "lines": [
@@ -94,7 +103,7 @@ def main():
 
     by_name = {}
     for row in filter(is_wanted, rows):
-        by_name.setdefault(row["stop_name"], []).append(row)
+        by_name.setdefault(station_name(row), []).append(row)
 
     stations = [
         build_station(cluster)
