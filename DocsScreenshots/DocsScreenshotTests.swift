@@ -42,6 +42,10 @@ final class DocsScreenshotTests: XCTestCase {
         XCTAssertTrue(stopButton.waitForExistence(timeout: timeout))
         stopButton.tap()
         XCTAssertTrue(showButton.waitForExistence(timeout: timeout))
+
+        app.buttons["testingTools"].tap()
+        XCTAssertTrue(app.buttons["useRealGPS"].waitForExistence(timeout: timeout))
+        saveScreenshot(named: "app-testing-tools")
     }
 
     @MainActor
@@ -66,14 +70,28 @@ final class DocsScreenshotTests: XCTestCase {
 
     @MainActor
     private func answerPermissionQuestions(until isSettled: () -> Bool) {
-        let answers = ["Allow While Using App", "Change to Always Allow", "Allow"]
+        let answers: [(button: String, screenshot: String?)] = [
+            (button: "Allow While Using App", screenshot: "app-location-permission"),
+            (button: "Change to Always Allow", screenshot: nil),
+            (button: "Allow", screenshot: "app-notification-permission"),
+        ]
+        var savedScreenshots: Set<String> = []
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline, !isSettled() {
-            for answer in answers where springboard.buttons[answer].exists {
-                springboard.buttons[answer].tap()
+            for answer in answers where springboard.buttons[answer.button].exists {
+                if let screenshot = answer.screenshot, !savedScreenshots.contains(screenshot) {
+                    saveScreenshot(named: screenshot)
+                    savedScreenshots.insert(screenshot)
+                }
+                springboard.buttons[answer.button].tap()
             }
             sleep(1)
         }
         XCTAssertTrue(isSettled(), "The location and notification permissions did not settle")
+        XCTAssertEqual(
+            savedScreenshots,
+            ["app-location-permission", "app-notification-permission"],
+            "The location and notification questions were not both on screen"
+        )
     }
 }

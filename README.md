@@ -198,31 +198,11 @@ The build output never shows the key. `make live-key-check` proves it with a fak
 
 ## Install on your iPhone (free Apple ID)
 
-You do these steps one time.
+The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open "Tutorial" in the sidebar. The page is `docs/src/content/docs/tutorial/install-on-your-iphone.mdx`.
 
-1. **Add your Apple ID to Xcode.** Open Xcode. Go to Xcode > Settings > Accounts. Click `+` and sign in. Xcode creates a "Personal Team" for you.
-2. **Find your Team ID.** In Xcode > Settings > Accounts, select your team. The Team ID has 10 letters and digits. You can also find it at https://developer.apple.com/account, under Membership details.
-3. **Create your local settings.** Copy `Config/Local.example.xcconfig` to `Config/Local.xcconfig`. Fill in:
-   - `DEVELOPMENT_TEAM`: your Team ID.
-   - `RATP_BUNDLE_ID_PREFIX`: a name that only you use, for example `io.github.your-github-name`. Do not keep `com.example`.
+In short: your Team ID and a unique bundle ID prefix go in `Config/Local.xcconfig` (a copy of `Config/Local.example.xcconfig`, ignored by git). Run `make generate`, open the project in Xcode, choose your iPhone, and click Run. With a free Apple ID, the app stops after 7 days: click Run again to renew it.
 
-   Git ignores `Config/Local.xcconfig`.
-4. **Create the project again.** Run `make generate`.
-5. **Connect your iPhone** to the Mac with the cable. Unlock it. Tap "Trust" if the iPhone asks.
-6. **Turn on Developer Mode** on the iPhone: Settings > Privacy & Security > Developer Mode. The iPhone restarts.
-7. **Open the project** in Xcode: `open RATPActivity.xcodeproj`.
-8. At the top of the Xcode window, choose the scheme `RATPActivity` and your iPhone.
-9. Click the Run button (the triangle), or press Cmd + R.
-10. The first time, the iPhone blocks the app. On the iPhone, go to Settings > General > VPN & Device Management. Tap your Apple ID, then tap "Trust".
-11. Click Run again in Xcode. The app opens on your iPhone.
-
-Limits of a free Apple ID:
-
-- The app stops working after 7 days. Connect the iPhone and click Run in Xcode again to renew it.
-- You can have at most 3 of your own apps on one iPhone.
-- No push notifications.
-
-To fake your position on the iPhone: while the app runs from Xcode, use Debug > Simulate Location.
+On a device, the Run button of Xcode uses the PRIM key of `Config/Secrets.xcconfig` in the folder that you open. There is no `make` command for a device build.
 
 ## The docs site
 
@@ -259,7 +239,7 @@ To write a page:
 
   `Screenshot` always shows the image 300 pixels wide (less on a narrow screen), with the rounded corners of the iPhone screen. At build time, Astro makes AVIF files (and WebP files for old browsers) at 1x, 2x and 3x of this width. The browser downloads only the one that fits its screen, so the page stays light.
 
-`make docs-screenshots` runs the XCUITest suite of `DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel). It saves one PNG file for each screenshot, with a fixed name: `app-main-screen.png` (the main app screen) and `live-activity-notification-center.png` (the Live Activity in the Notification Center). The PNG files are in git. To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `scripts/docs-screenshots.sh`.
+`make docs-screenshots` runs the XCUITest suite of `DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel). It saves one PNG file for each screenshot, with a fixed name: `app-location-permission.png` (the location question at the first launch), `app-notification-permission.png` (the notifications question at the first launch), `app-main-screen.png` (the main app screen), `live-activity-notification-center.png` (the Live Activity in the Notification Center) and `app-testing-tools.png` (the Testing tools screen). The PNG files are in git. To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `scripts/docs-screenshots.sh`.
 
 Rules for the screenshot files:
 
