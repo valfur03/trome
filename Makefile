@@ -23,12 +23,14 @@ ifeq ($(LIVE),1)
 ifneq ($(filter-out build run,$(MAKECMDGOALS)),)
 $(error LIVE=1 works only with 'make build' and 'make run')
 endif
+USE_SHARED_CACHE :=
 SHARED_SDK_MODULES :=
 else
-SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SHARED_CACHE)/SDKExplicitPrecompiledModules
+USE_SHARED_CACHE := ./scripts/shared-cache.sh use "$(SHARED_CACHE)"
+SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH="$(SHARED_CACHE)/SDKExplicitPrecompiledModules"
 endif
 
-XCODEBUILD := xcodebuild -quiet \
+XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
 	-project $(PROJECT) \
 	-derivedDataPath $(DERIVED_DATA) \
 	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages \
@@ -53,7 +55,7 @@ help:
 	@echo "make simulator-delete    Delete the shared Simulator (takes the Simulator lock)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
-	@echo "make clean-shared-cache  Delete the build cache that all folders share (only when no build runs)"
+	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
 	@echo "make docs                Build the docs site and serve it at http://localhost:4321 (PORT=<n> for another port)"
 	@echo "make docs-dev            Serve the docs with live reload, no search (PORT=<n> for another port)"
 	@echo "make docs-stop           Stop the docs server of this folder (when it runs in the background)"
@@ -130,7 +132,7 @@ clean:
 	rm -rf $(BUILD_DIR) $(PROJECT)
 
 clean-shared-cache:
-	rm -rf $(SHARED_CACHE)
+	@./scripts/shared-cache.sh clear "$(SHARED_CACHE)"
 
 node-check:
 	@./scripts/node-check.sh
