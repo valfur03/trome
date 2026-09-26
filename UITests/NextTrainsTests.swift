@@ -3,7 +3,7 @@ import XCTest
 final class NextTrainsTests: E2ETestCase {
     @MainActor
     func testUserCanPickAStationAndSeeItsNextTrains() {
-        let app = XCUIApplication.withRealGPS()
+        let app = makeApp()
         app.launch()
         allowLocationAccessIfAsked()
 

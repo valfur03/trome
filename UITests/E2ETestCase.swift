@@ -5,4 +5,11 @@ class E2ETestCase: XCTestCase {
         super.setUp()
         continueAfterFailure = false
     }
+
+    @MainActor
+    func makeApp() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments.append("--reset-location-source")
+        return app
+    }
 }

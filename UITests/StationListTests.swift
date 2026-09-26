@@ -3,7 +3,7 @@ import XCTest
 final class StationListTests: E2ETestCase {
     @MainActor
     func testTesterCanSearchTheStationList() {
-        let app = XCUIApplication()
+        let app = makeApp()
         app.launch()
         allowLocationAccessIfAsked()
 

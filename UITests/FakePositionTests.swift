@@ -3,7 +3,7 @@ import XCTest
 final class FakePositionTests: E2ETestCase {
     @MainActor
     func testTesterCanFakeThePositionAndGoBackToTheRealGPS() {
-        let app = XCUIApplication.withRealGPS()
+        let app = makeApp()
         app.launch()
         allowLocationAccessIfAsked()
 

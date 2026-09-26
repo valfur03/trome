@@ -4,7 +4,7 @@ import XCTest
 final class NearestStationTests: E2ETestCase {
     @MainActor
     func testShowsTheNearestStationOnceLocationIsAllowed() {
-        let app = XCUIApplication.withRealGPS()
+        let app = makeApp()
         app.resetAuthorizationStatus(for: .location)
         XCUIDevice.shared.location = XCUILocation(location: CLLocation(latitude: 48.8585, longitude: 2.3474))
 
