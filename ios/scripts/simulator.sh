@@ -100,6 +100,7 @@ is_booted() {
 reset_device() {
     uninstall_apps "$1"
     xcrun simctl privacy "$1" reset all
+    xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.locationd
     xcrun simctl location "$1" clear
 }
 

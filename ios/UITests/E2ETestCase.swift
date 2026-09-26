@@ -60,7 +60,6 @@ class E2ETestCase: XCTestCase {
         let location = locationStatus(in: app)
         let notifications = notificationsStatus(in: app)
         var mayResetLocation = resettingRefusedLocation
-        var mayAskLocationAgain = true
         var locationPromptAnswered = !expectingLocationPrompt
         let deadline = Date().addingTimeInterval(UITestTimeout.element)
         while Date() < deadline {
@@ -84,12 +83,7 @@ class E2ETestCase: XCTestCase {
                 app.launch()
                 continue
             }
-            let alertShows = springboard.alerts.firstMatch.waitForExistence(timeout: 1)
-            if mayAskLocationAgain, !alertShows, location.label == "Location, Not asked yet" {
-                mayAskLocationAgain = false
-                terminateWithItsRelaunches(app)
-                app.launch()
-            }
+            _ = springboard.alerts.firstMatch.waitForExistence(timeout: 1)
         }
         XCTFail("The location and notification permissions did not settle")
     }
