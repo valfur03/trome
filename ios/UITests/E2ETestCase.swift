@@ -133,6 +133,7 @@ class E2ETestCase: XCTestCase {
             if let element = elements.first(where: \.exists) {
                 return element
             }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         } while Date() < deadline
         return nil
     }

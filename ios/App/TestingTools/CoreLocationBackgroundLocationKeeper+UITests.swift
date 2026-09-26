@@ -1,12 +1,12 @@
 #if DEBUG
 import Foundation
 
-extension BackgroundActivityLocationKeeper {
+extension CoreLocationBackgroundLocationKeeper {
     static let keepRunningInBackgroundArgument = "--keep-running-in-background"
 
-    static func begunIfAsked(by arguments: [String]) -> BackgroundActivityLocationKeeper? {
+    static func begunIfAsked(by arguments: [String]) -> CoreLocationBackgroundLocationKeeper? {
         guard arguments.contains(keepRunningInBackgroundArgument) else { return nil }
-        let keeper = BackgroundActivityLocationKeeper()
+        let keeper = CoreLocationBackgroundLocationKeeper()
         keeper.begin()
         return keeper
     }
