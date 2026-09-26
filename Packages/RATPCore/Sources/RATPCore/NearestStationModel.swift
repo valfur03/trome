@@ -9,10 +9,6 @@ public enum NearestStationState: Equatable, Sendable {
     case found(NearbyStation)
     case noStationNearby
     case locationUnavailable
-
-    var isFound: Bool {
-        if case .found = self { true } else { false }
-    }
 }
 
 @MainActor
@@ -99,7 +95,6 @@ public final class NearestStationModel {
     }
 
     private func waitForPosition() {
-        guard !state.isFound else { return }
         state = .locating
         guard positionTimeoutTask == nil else { return }
         positionTimeoutTask = Task { [weak self, positionTimeout] in

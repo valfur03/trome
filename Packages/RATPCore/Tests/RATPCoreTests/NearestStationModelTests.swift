@@ -151,6 +151,25 @@ struct NearestStationModelTests {
         #expect(model.state == foundNation(from: nearNation))
     }
 
+    @Test func dropsTheOldStationWhenTheLocationSourceChanges() async {
+        let locationService = LocationService(
+            realProvider: gps,
+            sourceStore: LocationSourceStore(storage: InMemoryKeyValueStore())
+        )
+        locationService.use(.fake(FakePosition(name: "Near Nation", coordinate: nearNation)))
+        let model = makeModel(MockLocationPermission(authorization: .authorized), locationService: locationService)
+        await model.refresh()
+        await waitForState(foundNation(from: nearNation), in: model)
+
+        locationService.use(.realGPS)
+        await waitForState(.locationUnavailable, in: model)
+        #expect(model.state == .locationUnavailable)
+
+        gps.report(farFromNation)
+        await waitForState(.noStationNearby, in: model)
+        #expect(model.state == .noStationNearby)
+    }
+
     @Test func ignoresNewPositionsOncePermissionIsTurnedOff() async {
         let permission = MockLocationPermission(authorization: .authorized)
         let model = makeModel(permission)
