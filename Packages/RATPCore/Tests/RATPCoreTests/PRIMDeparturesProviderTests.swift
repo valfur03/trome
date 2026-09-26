@@ -77,10 +77,52 @@ struct PRIMDeparturesProviderTests {
 
         let departures = try await provider.departures(at: abbesses)
 
-        #expect(departures == [
-            Departure(line: line12, destination: "Mairie d'Issy", time: Fixture.date("2026-09-26T10:02:30Z")),
-            Departure(line: line12, destination: "Mairie d'Issy", time: Fixture.date("2026-09-26T10:07:00Z"))
+        #expect(departures.map(\.destination) == ["Mairie d'Issy", "Mairie d'Issy"])
+        #expect(departures.map(\.time) == [
+            Fixture.date("2026-09-26T10:02:30Z"),
+            Fixture.date("2026-09-26T10:07:00Z")
         ])
+    }
+
+    @Test func tellsTheMetroQuayEachTrainLeavesFrom() async throws {
+        let (provider, _) = provider { request in
+            if request.url?.absoluteString.contains("463116") == true {
+                return (try Fixture.data("stop-monitoring-abbesses"), 200)
+            }
+            return (try Fixture.data("stop-monitoring-empty"), 200)
+        }
+
+        let departures = try await provider.departures(at: abbesses)
+
+        #expect(departures == [
+            Departure(
+                line: line12,
+                destination: "Mairie d'Issy",
+                time: Fixture.date("2026-09-26T10:02:30Z"),
+                quayRef: "STIF:StopPoint:Q:463116:"
+            ),
+            Departure(
+                line: line12,
+                destination: "Mairie d'Issy",
+                time: Fixture.date("2026-09-26T10:07:00Z"),
+                quayRef: "STIF:StopPoint:Q:463116:"
+            )
+        ])
+    }
+
+    @Test func tellsNoQuayForTheTrainsOfAStopArea() async throws {
+        let (provider, _) = provider { _ in (try Fixture.data("stop-monitoring-abbesses"), 200) }
+        let rerStation = Station(
+            id: "rer",
+            name: "Somewhere",
+            coordinate: Coordinate(48.86, 2.34),
+            lines: [TransitLine(mode: .metro, name: "12", stopIds: ["IDFM:monomodalStopPlace:45102"])]
+        )
+
+        let departures = try await provider.departures(at: rerStation)
+
+        #expect(!departures.isEmpty)
+        #expect(departures.allSatisfy { $0.quayRef == nil })
     }
 
     @Test func dropsTrainsWhoseDestinationIsTheStationItself() {

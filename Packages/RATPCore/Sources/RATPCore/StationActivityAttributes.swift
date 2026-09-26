@@ -15,20 +15,8 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
 
     public enum Trains: Codable, Hashable, Sendable {
         case loading
-        case departures([DepartureRow])
+        case directions(line: TransitLine, [LineDirection])
         case noData
-    }
-
-    public struct DepartureRow: Codable, Hashable, Sendable {
-        public var line: TransitLine
-        public var destination: String
-        public var times: [Date]
-
-        public init(line: TransitLine, destination: String, times: [Date]) {
-            self.line = line
-            self.destination = destination
-            self.times = times
-        }
     }
 
     public init() {}
@@ -38,15 +26,15 @@ extension StationActivityAttributes.ContentState {
     public static let loadingTimeout: TimeInterval = 60
 
     public init(station: Station, trains: NextTrainsState, now: Date) {
-        self.init(stationName: station.name, trains: .init(trains, now: now), updatedAt: now)
+        self.init(stationName: station.name, trains: .init(trains, station: station, now: now), updatedAt: now)
     }
 
     public var staleDate: Date? {
         switch trains {
         case .loading:
             updatedAt.addingTimeInterval(Self.loadingTimeout)
-        case .departures(let rows):
-            rows.compactMap(\.times.first).min()
+        case .directions(_, let directions):
+            directions.compactMap(\.times.first).min()
         case .noData:
             nil
         }
@@ -54,23 +42,25 @@ extension StationActivityAttributes.ContentState {
 }
 
 extension StationActivityAttributes.Trains {
-    init(_ state: NextTrainsState, now: Date) {
+    init(_ state: NextTrainsState, station: Station, now: Date) {
         switch state {
         case .idle, .loading:
             self = .loading
         case .missingKey, .noLiveData, .failed:
             self = .noData
         case .departures(let board, _):
-            let firstRow = board.groups.lazy.compactMap { group -> StationActivityAttributes.DepartureRow? in
-                let times = group.times.filter { $0 > now }
-                guard !times.isEmpty else { return nil }
-                return StationActivityAttributes.DepartureRow(
-                    line: TransitLine(mode: group.line.mode, name: group.line.name),
-                    destination: group.destination,
-                    times: times
-                )
-            }.first
-            self = firstRow.map { .departures([$0]) } ?? .noData
+            let upcoming = board.departures.filter { $0.time > now }
+            let shownLine = station.lines.first { line in
+                upcoming.contains { $0.line.mode == line.mode && $0.line.name == line.name }
+            } ?? station.lines.first
+            guard let shownLine else {
+                self = .noData
+                return
+            }
+            let directions = LineDirections.directions(of: shownLine, at: station, from: upcoming)
+            self = directions.isEmpty
+                ? .noData
+                : .directions(line: TransitLine(mode: shownLine.mode, name: shownLine.name), directions)
         }
     }
 }

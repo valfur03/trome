@@ -19,6 +19,7 @@ public protocol StationLiveActivityClient: AnyObject {
 public final class StationLiveActivityModel {
     public private(set) var isShowing: Bool
     public private(set) var startError: StationLiveActivityError?
+    public private(set) var content: StationActivityAttributes.ContentState?
 
     private let client: any StationLiveActivityClient
     private let now: @Sendable () -> Date
@@ -46,19 +47,26 @@ public final class StationLiveActivityModel {
         }
         startError = nil
         isShowing = true
+        self.content = content
     }
 
     public func update(station: Station, trains: NextTrainsState) async {
         guard isShowing else { return }
-        await client.update(StationActivityAttributes.ContentState(station: station, trains: trains, now: now()))
+        let content = StationActivityAttributes.ContentState(station: station, trains: trains, now: now())
+        self.content = content
+        await client.update(content)
     }
 
     public func stop() async {
         await client.end()
         isShowing = false
+        content = nil
     }
 
     public func syncWithSystem() {
         isShowing = client.isShowing
+        if !isShowing {
+            content = nil
+        }
     }
 }

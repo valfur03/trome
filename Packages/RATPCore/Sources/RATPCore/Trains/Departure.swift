@@ -4,11 +4,13 @@ public struct Departure: Hashable, Sendable {
     public var line: TransitLine
     public var destination: String
     public var time: Date
+    public var quayRef: String?
 
-    public init(line: TransitLine, destination: String, time: Date) {
+    public init(line: TransitLine, destination: String, time: Date, quayRef: String? = nil) {
         self.line = line
         self.destination = destination
         self.time = time
+        self.quayRef = quayRef
     }
 }
 
@@ -37,15 +39,13 @@ public struct DepartureBoard: Hashable, Sendable {
     public static let timesPerGroup = 3
 
     public let groups: [DepartureGroup]
-
-    public init(groups: [DepartureGroup]) {
-        self.groups = groups
-    }
+    public let departures: [Departure]
 
     public init(departures: [Departure], lines: [TransitLine], now: Date) {
         let upcoming = departures
             .filter { $0.time > now.addingTimeInterval(-Self.departedGraceSeconds) }
             .sorted { $0.time < $1.time }
+        self.departures = upcoming
         var groups: [DepartureGroup] = []
         for departure in upcoming {
             if let index = groups.firstIndex(where: {

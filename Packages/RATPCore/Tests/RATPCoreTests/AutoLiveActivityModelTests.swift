@@ -56,7 +56,7 @@ private final class StubLocationPermission: LocationPermission {
 private final class TestClock: Sendable {
     static let refreshInterval: Duration = .seconds(30)
     private let date = Mutex(Date(timeIntervalSince1970: 1_000_000))
-    private let timersFire = Mutex(false)
+    private let firingLimit = Mutex<TimeInterval>(0)
 
     var now: Date {
         date.withLock { $0 }
@@ -66,12 +66,13 @@ private final class TestClock: Sendable {
         date.withLock { $0 = $0.addingTimeInterval(seconds) }
     }
 
-    func letTimersFire() {
-        timersFire.withLock { $0 = true }
+    func letTimersFire(upTo seconds: TimeInterval = .infinity) {
+        firingLimit.withLock { $0 = seconds }
     }
 
     func sleep(for duration: Duration) async throws {
-        guard duration != Self.refreshInterval, timersFire.withLock({ $0 }) else {
+        let seconds = TimeInterval(duration.components.seconds)
+        guard duration != Self.refreshInterval, seconds <= firingLimit.withLock({ $0 }) else {
             try await Task.sleep(for: .seconds(3_600))
             return
         }
@@ -282,6 +283,19 @@ struct AutoLiveActivityModelTests {
         withExtendedLifetime(model) {}
     }
 
+    @Test func feedsTheLiveActivityAgainWhenRelaunchedWhileItShows() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await waitUntil { !client.updates.isEmpty }
+        let callCount = provider.callCount
+
+        let relaunched = makeModel()
+        await waitUntil { provider.callCount > callCount }
+
+        #expect(provider.callCount > callCount)
+        withExtendedLifetime((model, relaunched)) {}
+    }
+
     @Test func asksForNotificationsOnceLocationIsAllowed() async {
         permission.authorization = .notDetermined
         let model = makeModel()
@@ -317,6 +331,19 @@ struct AutoLiveActivityModelTests {
         await waitUntil { provider.callCount == 2 }
 
         #expect(provider.callCount == 2)
+    }
+
+    @Test func keepsFeedingTheLiveActivityWhileTheAppIsInTheBackground() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await model.setAppActive(false)
+        let callCount = provider.callCount
+
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { provider.callCount >= callCount + 2 }
+
+        #expect(provider.callCount >= callCount + 2)
+        #expect(client.isShowing)
     }
 
     @Test func watchesTheStationsAroundTheRealPosition() async {

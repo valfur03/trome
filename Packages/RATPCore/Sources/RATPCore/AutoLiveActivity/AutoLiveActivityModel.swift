@@ -58,7 +58,7 @@ public final class AutoLiveActivityModel {
     public func setAppActive(_ isActive: Bool) async {
         appIsActive = isActive
         guard isActive else {
-            restartFeed(refreshInBackground: false)
+            restartFeed(fetchNow: false)
             return
         }
         syncWithSystem()
@@ -70,7 +70,7 @@ public final class AutoLiveActivityModel {
         await evaluate(position: nil)
         plannedRegions = nil
         await refreshRegions(around: inputs.locationService.position)
-        restartFeed(refreshInBackground: false)
+        restartFeed(fetchNow: false)
     }
 
     public func notificationTapped(stationId: String) async {
@@ -121,6 +121,7 @@ public final class AutoLiveActivityModel {
     private func followPositionIfShowing() {
         guard state.shown != nil else { return }
         services.locationKeeper.begin()
+        restartFeed(fetchNow: true)
         guard inputs.permission.authorization == .authorized else { return }
         inputs.locationService.start()
     }
@@ -131,7 +132,7 @@ public final class AutoLiveActivityModel {
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.observeScreenStation()
-                self?.restartFeed(refreshInBackground: false)
+                self?.restartFeed(fetchNow: false)
             }
         }
     }
@@ -164,7 +165,7 @@ public final class AutoLiveActivityModel {
             await show(station)
         case .switchTo(let station):
             await liveActivity.update(station: station, trains: trains(for: station))
-            restartFeed(refreshInBackground: true)
+            restartFeed(fetchNow: true)
         case .end:
             await endLiveActivity()
         case .withdrawNotification:
@@ -179,13 +180,13 @@ public final class AutoLiveActivityModel {
             return
         }
         services.locationKeeper.begin()
-        restartFeed(refreshInBackground: true)
+        restartFeed(fetchNow: true)
     }
 
     private func endLiveActivity() async {
         await liveActivity.stop()
         services.locationKeeper.end()
-        restartFeed(refreshInBackground: false)
+        restartFeed(fetchNow: false)
     }
 
     private func syncWithSystem() {
@@ -193,7 +194,7 @@ public final class AutoLiveActivityModel {
         guard !liveActivity.isShowing, state.shown != nil else { return }
         state.shown = nil
         services.locationKeeper.end()
-        restartFeed(refreshInBackground: false)
+        restartFeed(fetchNow: false)
     }
 
     private func askForNotificationsIfAllowed() async {
@@ -259,7 +260,7 @@ public final class AutoLiveActivityModel {
 }
 
 private extension AutoLiveActivityModel {
-    func restartFeed(refreshInBackground: Bool) {
+    func restartFeed(fetchNow: Bool) {
         feedTask?.cancel()
         feedTask = nil
         guard let station = shownStation, liveActivity.isShowing else { return }
@@ -268,10 +269,28 @@ private extension AutoLiveActivityModel {
             feedTask = Task { [weak self] in
                 await self?.keepFeeding(station)
             }
-        } else if refreshInBackground {
+        } else {
             feedTask = Task { [weak self] in
-                await self?.feed(station)
+                await self?.keepFeedingInBackground(station, fetchNow: fetchNow)
             }
+        }
+    }
+
+    func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
+        if fetchNow {
+            await feed(station)
+        }
+        while !Task.isCancelled {
+            let delay = BackgroundTrainsRefresh.delay(
+                untilStale: liveActivity.content?.staleDate,
+                now: configuration.now()
+            )
+            do {
+                try await configuration.sleep(.seconds(delay))
+            } catch {
+                return
+            }
+            await feed(station)
         }
     }
 

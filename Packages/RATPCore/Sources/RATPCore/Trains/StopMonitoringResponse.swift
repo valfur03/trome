@@ -7,6 +7,7 @@ struct MonitoredVisit: Equatable, Sendable {
     var destinationName: String
     var journeyRef: String?
     var time: Date
+    var quayRef: String?
 }
 
 enum StopMonitoringResponse {

@@ -10,7 +10,7 @@ struct StationLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: context.state.nextRow?.line.symbolName ?? "tram.fill")
+                    Image(systemName: context.state.line?.symbolName ?? "tram.fill")
                         .font(.title3)
                 }
                 DynamicIslandExpandedRegion(.center) {
@@ -22,21 +22,21 @@ struct StationLiveActivity: Widget {
                     TrainsSummary(state: context.state, isStale: context.isStale)
                 }
             } compactLeading: {
-                if let row = context.state.nextRow {
-                    Label(row.line.name, systemImage: row.line.symbolName)
+                if let line = context.state.line {
+                    Label(line.name, systemImage: line.symbolName)
                         .font(.caption.bold())
                 } else {
                     Image(systemName: "tram.fill")
                 }
             } compactTrailing: {
-                if !context.isStale, let time = context.state.nextRow?.times.first {
+                if !context.isStale, let time = context.state.nextTime {
                     WaitingTime(time: time)
                         .font(.caption.bold())
                 } else {
                     Image(systemName: "exclamationmark.circle")
                 }
             } minimal: {
-                Image(systemName: context.state.nextRow?.line.symbolName ?? "tram.fill")
+                Image(systemName: context.state.line?.symbolName ?? "tram.fill")
             }
         }
     }
@@ -48,9 +48,15 @@ private struct LockScreenView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label(state.stationName, systemImage: state.nextRow?.line.symbolName ?? "tram.fill")
-                .font(.headline)
-                .lineLimit(1)
+            HStack {
+                Label(state.stationName, systemImage: state.line?.symbolName ?? "tram.fill")
+                    .font(.headline)
+                    .lineLimit(1)
+                Spacer()
+                if let line = state.line {
+                    LineBadge(line: line)
+                }
+            }
             TrainsSummary(state: state, isStale: isStale)
         }
         .padding()
@@ -75,18 +81,9 @@ private struct TrainsSummary: View {
                 Text("No train times for this station right now.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            case .departures(let rows):
-                ForEach(rows, id: \.self) { row in
-                    HStack {
-                        LineBadge(line: row.line)
-                        Text(row.destination)
-                            .lineLimit(1)
-                        Spacer()
-                        if !isStale, let time = row.times.first {
-                            WaitingTime(time: time)
-                                .font(.title3.bold())
-                        }
-                    }
+            case .directions(_, let directions):
+                ForEach(directions, id: \.self) { direction in
+                    DirectionRow(direction: direction, isStale: isStale)
                 }
             }
             if isStale {
@@ -96,6 +93,43 @@ private struct TrainsSummary: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct DirectionRow: View {
+    static let minimumTimeWidth: CGFloat = 112
+
+    let direction: LineDirection
+    let isStale: Bool
+
+    var body: some View {
+        HStack {
+            Image(systemName: "arrow.right")
+                .font(.caption)
+            Text(direction.label)
+                .font(.subheadline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .layoutPriority(1)
+            Spacer(minLength: 8)
+            if direction.times.isEmpty {
+                Text("No trains")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                    .layoutPriority(1)
+            } else if !isStale {
+                VStack(alignment: .trailing, spacing: 0) {
+                    WaitingTime(time: direction.times[0])
+                        .font(.headline)
+                    if direction.times.count > 1 {
+                        WaitingTime(time: direction.times[1])
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(minWidth: Self.minimumTimeWidth, alignment: .trailing)
+            }
+        }
     }
 }
 
@@ -122,9 +156,14 @@ private struct WaitingTime: View {
 }
 
 private extension StationActivityAttributes.ContentState {
-    var nextRow: StationActivityAttributes.DepartureRow? {
-        guard case .departures(let rows) = trains else { return nil }
-        return rows.first
+    var line: TransitLine? {
+        guard case .directions(let line, _) = trains else { return nil }
+        return line
+    }
+
+    var nextTime: Date? {
+        guard case .directions(_, let directions) = trains else { return nil }
+        return directions.compactMap(\.times.first).min()
     }
 }
 
@@ -142,12 +181,20 @@ private extension TransitLine {
 } contentStates: {
     StationActivityAttributes.ContentState(
         stationName: "Abbesses",
-        trains: .departures([
-            .init(
-                line: TransitLine(mode: .metro, name: "12"),
-                destination: "Mairie d'Issy",
+        trains: .directions(line: TransitLine(mode: .metro, name: "12"), [
+            LineDirection(
+                label: "Mairie d'Aubervilliers",
                 times: [.now.addingTimeInterval(180), .now.addingTimeInterval(540)]
-            )
+            ),
+            LineDirection(label: "Mairie d'Issy", times: [.now.addingTimeInterval(60)])
+        ]),
+        updatedAt: .now
+    )
+    StationActivityAttributes.ContentState(
+        stationName: "Abbesses",
+        trains: .directions(line: TransitLine(mode: .metro, name: "12"), [
+            LineDirection(label: "Mairie d'Aubervilliers", times: []),
+            LineDirection(label: "Mairie d'Issy", times: [.now.addingTimeInterval(240)])
         ]),
         updatedAt: .now
     )

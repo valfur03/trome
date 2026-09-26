@@ -33,6 +33,7 @@ extension TransitLine {
 enum PRIMStopReference {
     private static let stopAreaPrefix = "IDFM:monomodalStopPlace:"
     private static let stopPointPrefix = "IDFM:"
+    private static let quayPrefix = "STIF:StopPoint:Q:"
 
     static func monitoringRef(forStopId stopId: String) -> String? {
         if stopId.hasPrefix(stopAreaPrefix) {
@@ -41,9 +42,20 @@ enum PRIMStopReference {
         }
         if stopId.hasPrefix(stopPointPrefix) {
             let code = stopId.dropFirst(stopPointPrefix.count)
-            return code.isEmpty || code.contains(":") ? nil : "STIF:StopPoint:Q:\(code):"
+            return code.isEmpty || code.contains(":") ? nil : "\(quayPrefix)\(code):"
         }
         return nil
+    }
+
+    static func isQuay(_ monitoringRef: String) -> Bool {
+        monitoringRef.hasPrefix(quayPrefix)
+    }
+
+    static func quayRefs(of line: TransitLine) -> [String] {
+        var seen: Set<String> = []
+        return line.stopIds
+            .compactMap(monitoringRef(forStopId:))
+            .filter { isQuay($0) && seen.insert($0).inserted }
     }
 
     static func lineCode(fromLineRef lineRef: String) -> String? {

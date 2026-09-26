@@ -123,21 +123,21 @@ For developers: the code is in `Packages/RATPCore/Sources/RATPCore/Trains`. `PRI
 
 ## Show the next trains on the lock screen (Live Activity)
 
-The app shows the next train of a station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
+The app shows the next trains of a station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
 
 1. On the main screen, tap "Show the Live Activity for the nearest station now". Testers can also pick any station in "Testing tools" > "Next trains of a station", and tap "Show on the lock screen".
-2. Lock the phone. The Live Activity shows the station, the line, the direction, and the waiting time of the next train.
+2. Lock the phone. The Live Activity shows the station, the line, and the next trains in both directions of the line. Each direction has the name of its end of line, the waiting time of the next train, and the waiting time of the train after it (when there is one). A direction with no upcoming train says "No trains". At the end of a line, the Live Activity shows only the other direction.
 3. To remove it, open the app and tap "Stop showing on the lock screen".
 
 The Live Activity can also start and stop by itself near a station (see below).
 
 The first time, iOS asks on the lock screen if it can show Live Activities from RATP Activity. Tap "Allow".
 
-The waiting time counts down by itself. The app sends new train times only while its screen is open. When the shown train has left, the Live Activity hides its waiting time and says "Open the app for new times". It says the same if the train times take more than a minute to load. If the app has no train times for the station, the Live Activity says "No data available".
+The waiting times count down by themselves. The app sends new train times every 30 seconds while the app is open. While the app is in the background, it sends new train times a few seconds after the first shown train leaves (at most every 20 seconds, and at least every 2 minutes). This works while iOS keeps the app running in the background (see the limit below). When the first shown train has left and no new times came, the Live Activity hides its waiting times and says "Open the app for new times". It says the same if the train times take more than a minute to load. If the app has no train times for the station, the Live Activity says "No data available".
 
 If the app says that Live Activities are turned off, turn them on in Settings > RATP Activity > Live Activities.
 
-For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity. `StationLiveActivityModel` starts, updates and stops it. The view is in `Widget/StationLiveActivity.swift`.
+For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity. `LineDirections` splits the trains of the line into its two directions. For a metro station, PRIM has one stop (quay) for each direction, so the direction of a train is the quay that the app asked for. The end of line names are in `TransitLine+Ends.swift` (a unit test checks them against the station list). A train that ends before the end of the line (for example at Trocadéro on line 6) goes into the direction of its quay. RER stations have one stop area for both directions, so the Live Activity shows the next trains of their soonest destinations (at most 3) until TASK-7 handles branches. `StationLiveActivityModel` starts, updates and stops it. The view is in `Widget/StationLiveActivity.swift`.
 
 ## The Live Activity starts and stops by itself near a station
 
@@ -168,9 +168,9 @@ The first time, the app asks for your location and for notifications. To get the
   On your iPhone connected to the Mac, use Xcode > Debug > Simulate Location in the same way.
 - **The 45 minute limit.** In debug builds, you can make it shorter. Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.RATPActivity -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
 
-For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `App/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times once when the Live Activity starts or switches station. While the app is open, the app gets the train times of the Live Activity every 30 seconds, unless the next trains screen of the testing tools already gets them for the same station.
+For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `App/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times when the Live Activity starts or switches station, then again a few seconds after the first shown train leaves (`BackgroundTrainsRefresh`: at most every 20 seconds, at least every 2 minutes). While the app is open, the app gets the train times of the Live Activity every 30 seconds, unless the next trains screen of the testing tools already gets them for the same station.
 
-Limit: iOS can pause or close the app in the background (for example with a fake position, which sends no new positions, or after you close the app from the app switcher). Then the 45 minute limit applies only when iOS wakes the app again (a region event) or when you open it.
+Limit: iOS can pause or close the app in the background (for example with a fake position, which sends no new positions, or after you close the app from the app switcher). Then the 45 minute limit applies only when iOS wakes the app again (a region event) or when you open it, and the Live Activity gets no new train times until then.
 
 ## The train data key (PRIM)
 
