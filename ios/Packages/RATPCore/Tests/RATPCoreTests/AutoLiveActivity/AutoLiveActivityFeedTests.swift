@@ -81,4 +81,21 @@ extension AutoLiveActivityModelTests {
 
         #expect(provider.callCount == 2)
     }
+
+    @Test func stopsTheBackgroundLocationWhenDismissedAfterTheQuotaIsExceeded() async {
+        provider.answer(.failure(.quotaExceeded), for: Places.stationA)
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await waitUntil { provider.callCount == 1 }
+        await model.setAppActive(false)
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { provider.callCount == 2 }
+
+        client.isShowing = false
+        await waitUntil { !keeper.isKeeping }
+
+        #expect(keeper.isKeeping == false)
+        #expect(model.shownStation == nil)
+        #expect(provider.callCount == 2)
+    }
 }

@@ -210,6 +210,7 @@ struct AutoLiveActivityModelTests {
 
         #expect(client.endCount == 1)
         #expect(model.shownStation == nil)
+        #expect(keeper.isKeeping == false)
     }
 
     @Test func doesNotStartAgainAfterAStopByHandInTheSameArea() async {

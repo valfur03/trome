@@ -277,28 +277,27 @@ private extension AutoLiveActivityModel {
     }
 
     func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
-        if fetchNow, await !feedInBackground(station) {
-            return
-        }
+        var asksPRIM = true
+        var waits = !fetchNow
         while !Task.isCancelled {
-            let delay = BackgroundTrainsRefresh.delay(
-                untilStale: liveActivity.content?.staleDate,
-                now: configuration.now()
-            )
-            do {
-                try await configuration.sleep(.seconds(delay))
-            } catch {
-                return
+            if waits {
+                let staleDate = liveActivity.content?.staleDate
+                let delay = asksPRIM
+                    ? BackgroundTrainsRefresh.delay(untilStale: staleDate, now: configuration.now())
+                    : BackgroundTrainsRefresh.maximumDelay
+                do {
+                    try await configuration.sleep(.seconds(delay))
+                } catch {
+                    return
+                }
             }
-            guard await feedInBackground(station) else { return }
+            waits = true
+            syncWithSystem()
+            guard liveActivity.isShowing else { return }
+            guard asksPRIM else { continue }
+            await feed(station)
+            asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
         }
-    }
-
-    func feedInBackground(_ station: Station) async -> Bool {
-        syncWithSystem()
-        guard liveActivity.isShowing else { return false }
-        await feed(station)
-        return BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
     }
 
     func keepFeeding(_ station: Station) async {
