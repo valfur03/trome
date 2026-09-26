@@ -15,7 +15,12 @@ struct AddressGeocoder {
             latitudinalMeters: 60_000,
             longitudinalMeters: 60_000
         )
-        let response = try await MKLocalSearch(request: request).start()
+        let response: MKLocalSearch.Response
+        do {
+            response = try await MKLocalSearch(request: request).start()
+        } catch let error as MKError where error.code == .placemarkNotFound {
+            throw NotFound()
+        }
         guard let item = response.mapItems.first else {
             throw NotFound()
         }

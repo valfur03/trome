@@ -113,8 +113,10 @@ struct TestingToolsView: View {
             let fakePosition = try await AddressGeocoder().fakePosition(for: addressText)
             addressError = nil
             locationService.use(.fake(fakePosition))
-        } catch {
+        } catch is AddressGeocoder.NotFound {
             addressError = "No place found for this address."
+        } catch {
+            addressError = "The address search failed. Check the network and try again."
         }
     }
 }
