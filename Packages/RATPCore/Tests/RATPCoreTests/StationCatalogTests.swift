@@ -136,19 +136,22 @@ struct BundledStationCatalogTests {
             #expect(!station.name.trimmingCharacters(in: .whitespaces).isEmpty, "\(station.id) has no name")
             #expect(station.name == station.name.trimmingCharacters(in: .whitespaces), "\(station.name)")
             #expect(!station.lines.isEmpty, "\(station.name) has no line")
-            #expect(Set(station.lines).count == station.lines.count, "\(station.name) lists a line twice")
+            let lineNames = station.lines.map(\.displayName)
+            #expect(Set(lineNames).count == lineNames.count, "\(station.name) lists a line twice")
         }
         #expect(Set(catalog.stations.map(\.id)).count == catalog.stations.count)
     }
 
     @Test func listsEachStationOnlyOnce() {
-        let stations = catalog.stations
-        for (index, station) in stations.enumerated() {
-            for other in stations[(index + 1)...] where station.name.comparisonKey == other.name.comparisonKey {
-                #expect(
-                    station.coordinate.distance(to: other.coordinate) > StationCatalog.walkingDistanceMeters,
-                    "\(station.name) and \(other.name) look like the same station"
-                )
+        let stationsByName = Dictionary(grouping: catalog.stations) { $0.name.comparisonKey }
+        for stations in stationsByName.values {
+            for (index, station) in stations.enumerated() {
+                for other in stations[(index + 1)...] {
+                    #expect(
+                        station.coordinate.distance(to: other.coordinate) > StationCatalog.walkingDistanceMeters,
+                        "\(station.name) and \(other.name) look like the same station"
+                    )
+                }
             }
         }
     }
