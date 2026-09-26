@@ -48,7 +48,8 @@ build_app normal LIVE= PRIM_SECRETS="$work/Secrets.xcconfig"
 leaks=$(new_logs_show_key)
 [ -z "$leaks" ] || fail "these build logs or result bundles show the key: $leaks"
 
-git -C "$root" check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore Config/Secrets.xcconfig"
+git -C "$root" check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore ios/Config/Secrets.xcconfig"
+git -C "$root/.." check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore the old path Config/Secrets.xcconfig"
 
 rm -rf "$work"
 echo "live-key-check: OK (a LIVE=1 build puts the key in the app only, and a build without LIVE=1 removes it)"

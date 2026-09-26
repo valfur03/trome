@@ -1,5 +1,5 @@
-// Copy this file to Config/Local.xcconfig to install the app on your iPhone.
-// Config/Local.xcconfig is ignored by git.
+// Copy this file to ios/Config/Local.xcconfig to install the app on your iPhone.
+// ios/Config/Local.xcconfig is ignored by git.
 
 // Your Personal Team ID (10 letters and digits).
 DEVELOPMENT_TEAM =

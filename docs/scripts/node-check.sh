@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 required=$(tr -d '[:space:]v' < "$root/.nvmrc")
 
 if ! command -v node > /dev/null; then

@@ -2,6 +2,31 @@
 
 Read the [README](README.md) first. It lists the `make` commands.
 
+## Repo layout
+
+Each part of the repo has its own folder: `ios/` (the iPhone app, with its config and scripts) and `docs/` (the docs site). Later: `server/` and `contracts/` (decision-6). The root holds only the files of the whole repo: `README.md`, `CLAUDE.md`, `Makefile`, `.gitignore`, `.nvmrc`.
+
+- Run the `make` commands from the root. The root `Makefile` has no build logic: it runs each command in the `Makefile` of its part (`make e2e` runs `make -C ios e2e`). A new command goes in the `Makefile` of its part, and its name goes in the list of the root `Makefile`.
+- A file goes in the folder of the part it serves: its scripts in `<part>/scripts/`, its config and its build output in its folder. Never add a file of one part at the root.
+- The paths in this file are from the root.
+
+## Code structure of the iOS app
+
+decision-6 (section 10) explains these rules and their sources. Follow them in every task. The reviewer checks them: a file in the wrong place or a wrong dependency direction is a medium finding.
+
+- **Two modules, one direction.** `ios/Packages/RATPCore` holds the rules, the state (`@Observable` models), the value types, the PRIM client, and the protocols of the system services. The app (`ios/App/`) and the widget (`ios/Widget/`) depend on `RATPCore`, never the reverse.
+- **`RATPCore` stays free of the UI and of iOS.** No `import SwiftUI`, `UIKit`, `WidgetKit` or `MapKit`. It must build and pass its tests on the Mac (`make test`). An iOS-only framework is allowed only for a type that the app and the widget share (today: the `ActivityAttributes` conformance), inside `#if os(iOS)`.
+- **Views hold no rules.** A view reads a model and calls it. A rule goes in `RATPCore`, with unit tests.
+- **Protocols in the core, adapters in the app.** For an Apple system service (ActivityKit, Core Location, notifications), `RATPCore` declares a small protocol, and the app implements it in a file named after the framework (`ActivityKitStationLiveActivityClient`, `CoreLocationProvider`, `UserNotificationArrivalNotifier`). Unit tests use fakes. Foundation types that run on the Mac (`URLSession`, `UserDefaults`) may conform inside `RATPCore`.
+- **One composition root.** `ios/App/RATPActivityApp.swift` makes the models and the adapters and gives them to the views. No singletons of our own, no global state.
+- **Folders by feature, with the same names everywhere.** `ios/App/`, `ios/Packages/RATPCore/Sources/RATPCore/` and `ios/Packages/RATPCore/Tests/RATPCoreTests/` use the same feature folders: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`. The app also has `Permissions` and `TestingTools`. New code goes in the folder of its feature. A new feature gets a new folder in each module where it has code. No layer folders (`Views/`, `Models/`, `Services/`, `Helpers/`), and no loose files at the top of a module. The only exceptions: `RATPActivityApp.swift` and `ContentView.swift` (the main screen) at the top of `ios/App/`, `Resources/` in the package, and `Fixtures/` in its tests.
+- **Testing tools are for debug builds only.** Each file in `ios/App/TestingTools/` is inside `#if DEBUG`.
+- **The widget is a pure view.** `ios/Widget/` uses only `StationActivityAttributes` and its value types from `RATPCore`. No model, no provider, no network.
+- **Access control.** In `RATPCore`, only what the app or the widget uses is `public`. The rest stays `internal`. Tests use `@testable import RATPCore`.
+- **Files.** A file holds one main type and has its name. An extension that adds a topic goes in `Type+Topic.swift`. Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
+- **Tests.** Unit tests: `ios/Packages/RATPCore/Tests/RATPCoreTests/<Feature>/<Type>Tests.swift`. E2E tests: `ios/UITests/`, one file per core flow. Docs screenshots: `ios/DocsScreenshots/`. Code that needs a unit test goes in `RATPCore`.
+- **New module.** Add a target in `ios/Packages/` only when it solves a real problem (code that must not see the rest, code shared with a new target, build time). Deeper changes that these rules call for are `tech` tasks.
+
 ## Budget for this repo
 
 - The factory runs **at most 2 Software Engineers** in parallel for this repo.
@@ -15,7 +40,7 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 
 - Each job installs its own build of the app. Before that, it removes the app and its data, resets the permissions, and clears the fake position of the Simulator. So a job never sees the data or the saved settings of another worktree.
 - The Simulator stays booted between jobs, so the next job does not wait for a cold boot.
-- It shuts down by itself after 5 minutes with no job. Why 5 minutes: it is longer than the usual gap between two jobs (fix a test, then run `make e2e` again; the next agent starts its job). It is short enough to give the Mac back soon when the factory stops. A small background process (`scripts/sim-lock.sh watch`) does this. It uses no Simulator and almost no CPU, and it stops by itself.
+- It shuts down by itself after 5 minutes with no job. Why 5 minutes: it is longer than the usual gap between two jobs (fix a test, then run `make e2e` again; the next agent starts its job). It is short enough to give the Mac back soon when the factory stops. A small background process (`ios/scripts/sim-lock.sh watch`) does this. It uses no Simulator and almost no CPU, and it stops by itself.
 
 ## The Simulator lock
 
@@ -26,10 +51,10 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 - Any other command that boots or uses a Simulator (for example `xcodebuild test` or `xcrun simctl boot`) must run through the lock, on the shared Simulator:
 
   ```sh
-  ./scripts/sim-lock.sh job <command>
+  ios/scripts/sim-lock.sh job <command>
   ```
 
-  To boot the shared Simulator and remove the app of the last job first, run `./scripts/sim-lock.sh job ./scripts/simulator.sh reset <command>`. With `xcodebuild`, use `-destination "platform=iOS Simulator,name=RATP-Shared"`.
+  To boot the shared Simulator and remove the app of the last job first, run `ios/scripts/sim-lock.sh job ios/scripts/simulator.sh reset <command>`. With `xcodebuild`, use `-project ios/RATPActivity.xcodeproj -destination "platform=iOS Simulator,name=RATP-Shared"`.
 
 `make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
 
@@ -82,13 +107,13 @@ The README explains the docs site and its commands (section "The docs site").
 
 ## Live train data (the real PRIM key)
 
-The real PRIM key is in the main repo folder only, in `Config/Secrets.xcconfig`. Worktrees do not have it.
+The real PRIM key is in the main repo folder only, in `ios/Config/Secrets.xcconfig` (or at its old place, `Config/Secrets.xcconfig`, until the prompter moves it). Worktrees do not have it.
 
-- **Never read, print, copy or commit the key.** Do not open `Config/Secrets.xcconfig`. Do not copy it into a worktree.
-- `make build`, `make run`, `make check` and `make e2e` never use the key. They build with `Config/NoKey.xcconfig`, so the app says "Train data key: not set". Unit tests use recorded PRIM answers (fixtures).
-- `make run LIVE=1` builds the app with the key of the main repo folder (found with git) and opens it in the Simulator. The build output does not show the key. But the key is inside the built app, in `.build/` (ignored by git), and inside the app installed in the Simulator. **Never inspect them.** `LIVE=1` works only with `make build` and `make run`.
-- After a live check, remove the key from the Simulator and from `.build/`: run `make simulator-shutdown` (it removes the app from the shared Simulator, so the app stops calling PRIM), then `make build` (without `LIVE=1`, so the built app has no key). The next Simulator job also removes the app before it installs its own build, so a live build never reaches another worktree's job.
-- `make check` runs `make live-key-check`. It builds with `LIVE=1` and a fake key, and fails if a build log shows the key. If you change the build (Makefile, `Config/`, `project.yml`, build scripts), this check must still pass.
+- **Never read, print, copy or commit the key.** Do not open `ios/Config/Secrets.xcconfig` or `Config/Secrets.xcconfig`. Do not copy it into a worktree.
+- `make build`, `make run`, `make check` and `make e2e` never use the key. They build with `ios/Config/NoKey.xcconfig`, so the app says "Train data key: not set". Unit tests use recorded PRIM answers (fixtures).
+- `make run LIVE=1` builds the app with the key of the main repo folder (found with git) and opens it in the Simulator. The build output does not show the key. But the key is inside the built app, in `ios/.build/` (ignored by git), and inside the app installed in the Simulator. **Never inspect them.** `LIVE=1` works only with `make build` and `make run`.
+- After a live check, remove the key from the Simulator and from `ios/.build/`: run `make simulator-shutdown` (it removes the app from the shared Simulator, so the app stops calling PRIM), then `make build` (without `LIVE=1`, so the built app has no key). The next Simulator job also removes the app before it installs its own build, so a live build never reaches another worktree's job.
+- `make check` runs `make live-key-check`. It builds with `LIVE=1` and a fake key, and fails if a build log shows the key. If you change the build (the `Makefile` files, `ios/Config/`, `ios/project.yml`, `ios/scripts/`), this check must still pass.
 
 ### Who uses live data, and when
 
@@ -101,7 +126,7 @@ How to count: the app calls PRIM once for each stop of the station when it opens
 To stay in the budget:
 
 - Pick a station with few lines, unless the task needs a big station.
-- Check what you need, then run `make simulator-shutdown` at once. The app keeps calling PRIM while it runs, and the shared Simulator stays booted after your job. `make simulator-shutdown` removes the app, so the calls stop. Then remove the key from `.build/` (see above).
+- Check what you need, then run `make simulator-shutdown` at once. The app keeps calling PRIM while it runs, and the shared Simulator stays booted after your job. `make simulator-shutdown` removes the app, so the calls stop. Then remove the key from `ios/.build/` (see above).
 - At Châtelet, stay at most 2 minutes on the next trains (50 calls).
 
 Why 60: the public PRIM page of the API "Prochains passages - requête unitaire" gives a quota of 1,000,000 calls per day. But since 13 March 2024, new PRIM accounts get a lower quota by default (users report 1,000 calls per day). We do not know the quota of the prompter's key, so we plan for 1,000 calls per day. 60 calls is 6% of it. After 5 QA runs, the prompter still has more than two thirds of the day's calls. When PRIM answers "too many requests" (HTTP 429), stop at once and tell the manager.

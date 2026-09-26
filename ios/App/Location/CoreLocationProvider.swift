@@ -1,10 +1,8 @@
-#if os(iOS)
 import CoreLocation
+import RATPCore
 
-public struct CoreLocationProvider: LocationProvider {
-    public init() {}
-
-    public func events() -> AsyncStream<LocationEvent> {
+struct CoreLocationProvider: LocationProvider {
+    func events() -> AsyncStream<LocationEvent> {
         AsyncStream { continuation in
             let task = Task {
                 let session = CLServiceSession(authorization: .whenInUse)
@@ -43,4 +41,3 @@ public struct CoreLocationProvider: LocationProvider {
         return nil
     }
 }
-#endif

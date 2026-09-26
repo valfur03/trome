@@ -3,7 +3,7 @@ set -eu
 
 usage() {
     echo "Usage: $0 <result bundle> <test command...>" >&2
-    echo "Run it through the Simulator lock: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset $0 ..." >&2
+    echo "Run it through the Simulator lock, in ios/: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset $0 ..." >&2
     exit 1
 }
 
@@ -18,7 +18,7 @@ shift
 
 scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/.." && pwd)
-screenshots="$root/docs/src/assets/screenshots"
+screenshots="$root/../docs/src/assets/screenshots"
 names="app-location-permission app-notification-permission app-main-screen live-activity-notification-center app-testing-tools"
 fake_position=48.8584,2.2945
 screenshot_width=900

@@ -85,7 +85,7 @@ Apple's help: [Set up code signing for physical devices](https://developer.apple
 
 ### Part 2 of 5: Give the project your Team ID and bundle ID (10 minutes)
 
-The project reads your settings from a file that only you have: `Config/Local.xcconfig`. Git ignores it.
+The project reads your settings from a file that only you have: `ios/Config/Local.xcconfig`. Git ignores it.
 
 <Steps>
 
@@ -94,7 +94,7 @@ The project reads your settings from a file that only you have: `Config/Local.xc
 7. In Terminal, in the project folder, create the Xcode project and open it:
 
    ```sh
-   make generate && open RATPActivity.xcodeproj
+   make generate && open ios/RATPActivity.xcodeproj
    ```
 
 8. In Xcode, in the left column, click the blue icon **RATPActivity** at the top. In the middle, under **TARGETS**, click **RATPActivity**. Click the tab **Signing & Capabilities**.
@@ -110,7 +110,7 @@ The project reads your settings from a file that only you have: `Config/Local.xc
 11. In Terminal, find your Team ID:
 
     ```sh
-    grep -m 1 DEVELOPMENT_TEAM RATPActivity.xcodeproj/project.pbxproj
+    grep -m 1 DEVELOPMENT_TEAM ios/RATPActivity.xcodeproj/project.pbxproj
     ```
 
     It shows a line like `DEVELOPMENT_TEAM = AB12CD34EF;`. Your Team ID is the 10 letters and digits (here `AB12CD34EF`).
@@ -118,7 +118,7 @@ The project reads your settings from a file that only you have: `Config/Local.xc
 12. Create your settings file, and open it in TextEdit:
 
     ```sh
-    cp Config/Local.example.xcconfig Config/Local.xcconfig && open -e Config/Local.xcconfig
+    cp ios/Config/Local.example.xcconfig ios/Config/Local.xcconfig && open -e ios/Config/Local.xcconfig
     ```
 
 13. In TextEdit, change these two lines, then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file:
@@ -153,7 +153,7 @@ Apple's help: [Pair devices using a cable](https://developer.apple.com/documenta
 17. In Terminal, open the project:
 
     ```sh
-    open RATPActivity.xcodeproj
+    open ios/RATPActivity.xcodeproj
     ```
 
 18. At the top of the Xcode window, open the **run destination** menu (it shows a device name, for example "iPhone 17"). Choose **Manage Devices…**. The **Device Hub** window opens.
@@ -273,7 +273,7 @@ These steps take about 5 minutes. You do not need to trust the developer or turn
   2. In Terminal, in the project folder, open the project:
 
      ```sh
-     open RATPActivity.xcodeproj
+     open ios/RATPActivity.xcodeproj
      ```
 
      If Terminal says that the file does not exist, run `make generate` first.
@@ -300,7 +300,7 @@ Other limits of a free Apple ID ([Apple's list](https://developer.apple.com/help
 The app gets the train times from PRIM, the open data service of Île-de-France Mobilités. PRIM needs a free key. The key is a secret: it is yours only.
 
 <Aside type="caution" title="Keep your key secret">
-  Never send your key to anyone. Never put it in a screenshot, a message or a git commit. Git ignores the file `Config/Secrets.xcconfig`, so a commit does not take it. The key goes inside the app that you build. This is fine for your own iPhone. Do not give this app to other people.
+  Never send your key to anyone. Never put it in a screenshot, a message or a git commit. Git ignores the file `ios/Config/Secrets.xcconfig`, so a commit does not take it. The key goes inside the app that you build. This is fine for your own iPhone. Do not give this app to other people.
 </Aside>
 
 ### Put the key on your Mac (one time)
@@ -315,7 +315,7 @@ The app gets the train times from PRIM, the open data service of Île-de-France 
   3. In Terminal, in the project folder (the main folder, not a git worktree), create the key file and open it in TextEdit:
 
      ```sh
-     cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig && open -e Config/Secrets.xcconfig
+     cp ios/Config/Secrets.example.xcconfig ios/Config/Secrets.xcconfig && open -e ios/Config/Secrets.xcconfig
      ```
 
   4. Paste your key after `PRIM_API_KEY =`. Save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file.
@@ -327,7 +327,7 @@ Now choose where you run the app. The two ways use the key in a different way.
 
 ### Way 1: on your iPhone (Xcode)
 
-The Xcode **Run** button reads the file `Config/Secrets.xcconfig` of the folder that you open. It needs nothing more. (`LIVE=1` is for the `make` commands only. Xcode does not use it.)
+The Xcode **Run** button reads the file `ios/Config/Secrets.xcconfig` of the folder that you open. It needs nothing more. (`LIVE=1` is for the `make` commands only. Xcode does not use it.)
 
 <Checklist id="prim-key-iphone">
   <Steps>
@@ -396,8 +396,8 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
 ### Part 2: Team ID and bundle ID
 
 - **Step 11 shows nothing.** Xcode did not save the team. Do steps 7 to 11 again. Choose the team in step 9, then quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>.
-- **Xcode says "Signing for … requires a development team".** The Team ID is not in `Config/Local.xcconfig`, or you did not save the file. Check the file, quit Xcode, run `make generate`, and open the project again.
-- **Xcode says that the app identifier "cannot be registered to your development team because it is not available".** Someone else uses your bundle ID prefix. Choose another one in `Config/Local.xcconfig` (step 13). Quit Xcode, run `make generate`, and open the project again.
+- **Xcode says "Signing for … requires a development team".** The Team ID is not in `ios/Config/Local.xcconfig`, or you did not save the file. Check the file, quit Xcode, run `make generate`, and open the project again.
+- **Xcode says that the app identifier "cannot be registered to your development team because it is not available".** Someone else uses your bundle ID prefix. Choose another one in `ios/Config/Local.xcconfig` (step 13). Quit Xcode, run `make generate`, and open the project again.
 - **Xcode says that you have reached the maximum number of App IDs.** A free Apple ID can create 10 bundle IDs in 7 days. Put back the prefix that you used before, or wait some days.
 
 ### Part 3: iPhone and Developer Mode
@@ -423,7 +423,7 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
 
 ### In the app
 
-- **Testing tools > Next trains of a station says "Train data key: not set".** On the iPhone: open the project of the main folder (the one with `Config/Secrets.xcconfig`), not a git worktree. On the Simulator: add `LIVE=1`. If it still says "not set", in Xcode choose **Product > Clean Build Folder**, then click **Run** again.
+- **Testing tools > Next trains of a station says "Train data key: not set".** On the iPhone: open the project of the main folder (the one with `ios/Config/Secrets.xcconfig`), not a git worktree. On the Simulator: add `LIVE=1`. If you made your key file before the app moved into the `ios/` folder, it is still at `Config/Secrets.xcconfig`: move it with `mv Config/Secrets.xcconfig ios/Config/`, in the main folder. If it still says "not set", in Xcode choose **Product > Clean Build Folder**, then click **Run** again.
 - **The app cannot find the nearest station, or the Permissions part shows Location as Off.** Tap **Open Settings** in the app, or on the iPhone open **Settings > Apps > RATP Activity > Location** (on older iOS: **Settings > RATP Activity > Location**). Choose **While Using the App** or **Always**.
 - **You get no notification near a station.** Open **Settings > Apps > RATP Activity** (on older iOS: **Settings > RATP Activity**). Turn on **Notifications**. Under **Location**, choose **Always**.
 - **The app shows "Fake position" in orange.** You turned on a fake position in Testing tools. Open Testing tools and tap **Use the real GPS**.

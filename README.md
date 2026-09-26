@@ -10,15 +10,15 @@ An iPhone app. It shows the next metro and RER trains of the nearest Paris stati
 
 ## First setup
 
-Open Terminal in this folder. Run:
+Open Terminal in the main folder of the repo (the root). Run every `make` command there. Run:
 
 ```sh
 make setup
 ```
 
-This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `RATPActivity.xcodeproj`.
+This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `ios/RATPActivity.xcodeproj`.
 
-The Xcode project is not in git. The file `project.yml` describes it. If you change `project.yml`, run `make generate`.
+The Xcode project is not in git. The file `ios/project.yml` describes it. If you change `ios/project.yml`, run `make generate`.
 
 ## Everyday commands
 
@@ -92,7 +92,7 @@ For developers: all code must read the position from `LocationService` (in `RATP
 
 ## The station list
 
-The app finds the nearest station without the network. It reads the file `Packages/RATPCore/Sources/RATPCore/Resources/stations.json`.
+The app finds the nearest station without the network. It reads the file `ios/Packages/RATPCore/Sources/RATPCore/Resources/stations.json`.
 
 This file lists every metro station (lines 1 to 14, 3bis and 7bis) and every RER station (lines A to E). It has no bus, tram or Transilien stop. The data comes from the open data of Île-de-France Mobilités (dataset `arrets-lignes`, no key needed).
 
@@ -100,7 +100,7 @@ To see the list in the app, open "Testing tools" and tap "All stations". Each st
 
 To download the list again, run `make stations`. It needs Python 3. Commit the new `stations.json`.
 
-Some names in the open data are wrong or spelled in two ways. The script fixes them with the table `STATION_NAMES` in `scripts/update-stations.py`. If a unit test says that two stations "look like the same station", add the bad name to this table.
+Some names in the open data are wrong or spelled in two ways. The script fixes them with the table `STATION_NAMES` in `ios/scripts/update-stations.py`. If a unit test says that two stations "look like the same station", add the bad name to this table.
 
 ## Next trains of a station
 
@@ -120,7 +120,7 @@ The screen tells you when:
 - the app cannot reach the train data service (for example, no internet),
 - the service refuses the key, gets too many requests, or does not work.
 
-For developers: the code is in `Packages/RATPCore/Sources/RATPCore/Trains`. `PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop of the station. A metro stop id `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`. An RER stop id `IDFM:monomodalStopPlace:<n>` becomes `STIF:StopArea:SP:<n>:`. `CurrentStationModel` holds the station that the tester picked. `NextTrainsModel.updatingStationId` says which station the screen keeps up to date, so the Live Activity does not ask PRIM for the same station twice.
+For developers: the code is in `ios/Packages/RATPCore/Sources/RATPCore/Trains`. `PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop of the station. A metro stop id `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`. An RER stop id `IDFM:monomodalStopPlace:<n>` becomes `STIF:StopArea:SP:<n>:`. `CurrentStationModel` holds the station that the tester picked. `NextTrainsModel.updatingStationId` says which station the screen keeps up to date, so the Live Activity does not ask PRIM for the same station twice.
 
 ## Show the next trains on the lock screen (Live Activity)
 
@@ -138,7 +138,7 @@ The waiting times count down by themselves. The app sends new train times every 
 
 If the app says that Live Activities are turned off, turn them on in Settings > RATP Activity > Live Activities.
 
-For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity. `LineDirections` splits the trains of the line into its two directions. For a metro station, PRIM has one stop (quay) for each direction, so the direction of a train is the quay that the app asked for. The end of line names are in `TransitLine+Ends.swift` (a unit test checks them against the station list). A train that ends before the end of the line (for example at Trocadéro on line 6) goes into the direction of its quay. RER stations have one stop area for both directions, so the Live Activity shows the next trains of their soonest destinations (at most 3) until TASK-7 handles branches. `StationLiveActivityModel` starts, updates and stops it. The view is in `Widget/StationLiveActivity.swift`.
+For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity. `LineDirections` splits the trains of the line into its two directions. For a metro station, PRIM has one stop (quay) for each direction, so the direction of a train is the quay that the app asked for. The end of line names are in `TransitLine+Ends.swift` (a unit test checks them against the station list). A train that ends before the end of the line (for example at Trocadéro on line 6) goes into the direction of its quay. RER stations have one stop area for both directions, so the Live Activity shows the next trains of their soonest destinations (at most 3) until TASK-7 handles branches. `StationLiveActivityModel` starts, updates and stops it. The view is in `ios/Widget/StationLiveActivity.swift`.
 
 ## The Live Activity starts and stops by itself near a station
 
@@ -169,7 +169,7 @@ The first time, the app asks for your location and for notifications. To get the
   On your iPhone connected to the Mac, use Xcode > Debug > Simulate Location in the same way.
 - **The 45 minute limit.** In debug builds, you can make it shorter. Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.RATPActivity -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
 
-For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `App/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times when the Live Activity starts or switches station, then again a few seconds after the first shown train leaves (`BackgroundTrainsRefresh`: at most every 30 seconds, at least every 2 minutes; it stops when PRIM rejects the key or the quota is used up). Each time, it asks PRIM once for each stop of the station (Châtelet: 10 calls). While the app is open, the app gets the train times of the Live Activity every 30 seconds, unless the next trains screen of the testing tools already gets them for the same station.
+For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `ios/App/AutoLiveActivity/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times when the Live Activity starts or switches station, then again a few seconds after the first shown train leaves (`BackgroundTrainsRefresh`: at most every 30 seconds, at least every 2 minutes; it stops when PRIM rejects the key or the quota is used up). Each time, it asks PRIM once for each stop of the station (Châtelet: 10 calls). While the app is open, the app gets the train times of the Live Activity every 30 seconds, unless the next trains screen of the testing tools already gets them for the same station.
 
 Limit: iOS can pause or close the app in the background (for example with a fake position, which sends no new positions, or after you close the app from the app switcher). Then the 45 minute limit applies only when iOS wakes the app again (a region event) or when you open it, and the Live Activity gets no new train times until then.
 
@@ -183,17 +183,19 @@ To add the key:
 
 1. Create a free account on https://prim.iledefrance-mobilites.fr.
 2. In your account page, create an API key.
-3. In the main folder of the repo, copy `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig`.
+3. In the main folder of the repo, copy `ios/Config/Secrets.example.xcconfig` to `ios/Config/Secrets.xcconfig`.
 4. Put your key after `PRIM_API_KEY =`.
 5. Run `make run LIVE=1`. "Testing tools" > "Next trains of a station" now says "Train data key: set", and it shows live trains.
 
 Always add `LIVE=1` when you want live trains. A plain `make run` does not use your key, also in the main folder.
 
-Git ignores `Config/Secrets.xcconfig`. Never commit your key.
+Git ignores `ios/Config/Secrets.xcconfig`. Never commit your key.
 
-Only the main folder needs `Config/Secrets.xcconfig`. In a git worktree, `make run LIVE=1` finds the key in the main folder with git. It does not copy the file. If the main folder has no `Config/Secrets.xcconfig`, `make run LIVE=1` stops and says so.
+Only the main folder needs `ios/Config/Secrets.xcconfig`. In a git worktree, `make run LIVE=1` finds the key in the main folder with git. It does not copy the file. If the main folder has no key file, `make run LIVE=1` stops and says so.
 
-The other `make` commands (`make run` without `LIVE=1`, `make check`, `make e2e`) never use the key: they build with `Config/NoKey.xcconfig`. Then the tests do not use your PRIM quota. The Run button in Xcode uses the key of the folder that you open.
+Before TASK-43, the key file was `Config/Secrets.xcconfig` (at the root). `make run LIVE=1` still finds it there, and git still ignores it, but it prints a note. Once your main folder has the `ios/` folder, move the file there, in the main folder: `mv Config/Secrets.xcconfig ios/Config/ && rmdir Config`. The Xcode Run button reads only `ios/Config/Secrets.xcconfig`.
+
+The other `make` commands (`make run` without `LIVE=1`, `make check`, `make e2e`) never use the key: they build with `ios/Config/NoKey.xcconfig`. Then the tests do not use your PRIM quota. The Run button in Xcode uses the key of the folder that you open.
 
 The build output never shows the key. `make live-key-check` proves it with a fake key. `make check` runs it.
 
@@ -201,15 +203,15 @@ The build output never shows the key. `make live-key-check` proves it with a fak
 
 The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open "Tutorial" in the sidebar. The page is `docs/src/content/docs/tutorial/install-on-your-iphone.mdx`.
 
-In short: your Team ID and a unique bundle ID prefix go in `Config/Local.xcconfig` (a copy of `Config/Local.example.xcconfig`, ignored by git). Run `make generate`, open the project in Xcode, choose your iPhone, and click Run. With a free Apple ID, the app stops after 7 days: click Run again to renew it.
+In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git). Run `make generate`, open the project `ios/RATPActivity.xcodeproj` in Xcode, choose your iPhone, and click Run. With a free Apple ID, the app stops after 7 days: click Run again to renew it.
 
-On a device, the Run button of Xcode uses the PRIM key of `Config/Secrets.xcconfig` in the folder that you open. There is no `make` command for a device build.
+On a device, the Run button of Xcode uses the PRIM key of `ios/Config/Secrets.xcconfig` in the folder that you open. There is no `make` command for a device build.
 
 ## The docs site
 
 The folder `docs/` holds the docs for the users of the app, for example the tutorial to install the app on your iPhone. It is a [Starlight](https://starlight.astro.build) site (Astro). It is not online: you read it on your Mac.
 
-The docs need Node 24 LTS. The file `.nvmrc` pins it. Install it one time with [nvm](https://github.com/nvm-sh/nvm): run `nvm install` in this folder. Then run `nvm use` in each new terminal before a docs command. If the active Node is too old, the docs commands stop and tell you to run `nvm use`.
+The docs need Node 24 LTS. The file `.nvmrc` pins it. Install it one time with [nvm](https://github.com/nvm-sh/nvm): run `nvm install` in the main folder of the repo. Then run `nvm use` in each new terminal before a docs command. If the active Node is too old, the docs commands stop and tell you to run `nvm use`.
 
 | Command | What it does |
 |---|---|
@@ -240,7 +242,7 @@ To write a page:
 
   `Screenshot` always shows the image 300 pixels wide (less on a narrow screen), with the rounded corners of the iPhone screen. At build time, Astro makes AVIF files (and WebP files for old browsers) at 1x, 2x and 3x of this width. The browser downloads only the one that fits its screen, so the page stays light.
 
-`make docs-screenshots` runs the XCUITest suite of `DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel). It saves one PNG file for each screenshot, with a fixed name: `app-location-permission.png` (the location question at the first launch), `app-notification-permission.png` (the notifications question at the first launch), `app-main-screen.png` (the main app screen), `live-activity-notification-center.png` (the Live Activity in the Notification Center) and `app-testing-tools.png` (the Testing tools screen). The PNG files are in git. To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `scripts/docs-screenshots.sh`.
+`make docs-screenshots` runs the XCUITest suite of `ios/DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel). It saves one PNG file for each screenshot, with a fixed name: `app-location-permission.png` (the location question at the first launch), `app-notification-permission.png` (the notifications question at the first launch), `app-main-screen.png` (the main app screen), `live-activity-notification-center.png` (the Live Activity in the Notification Center) and `app-testing-tools.png` (the Testing tools screen). The PNG files are in git. To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `ios/scripts/docs-screenshots.sh`.
 
 Rules for the screenshot files:
 
@@ -255,23 +257,37 @@ Rules to keep the docs true:
 
 ## Project layout
 
+Each part of the repo has its own folder. The root holds only the files of the whole repo. decision-6 in the backlog explains this layout and the code structure.
+
+| Folder or file | What it holds |
+|---|---|
+| `README.md`, `CLAUDE.md`, `.gitignore`, `.nvmrc` | Files for the whole repo. `.nvmrc` pins the Node version of the Node parts (today `docs/`). |
+| `Makefile` | Runs each `make` command in the folder of its part. It has no build logic. `make check` runs the checks of all parts. |
+| `ios/` | The iPhone app, with its own `Makefile`, `project.yml`, `.swiftlint.yml`, build settings and scripts. Its build output goes to `ios/.build/`. |
+| `docs/` | The docs site (Starlight), with its own `Makefile` and scripts. |
+
+Inside `ios/`:
+
 | Folder | What it holds |
 |---|---|
-| `App/` | The iPhone app (SwiftUI). |
+| `App/` | The iPhone app (SwiftUI): the entry point, the views, and the adapters to the iOS frameworks. One folder per feature. |
 | `Widget/` | The widget extension. It shows the Live Activity. |
-| `Packages/RATPCore/` | Shared code for the app and the widget, with its unit tests. |
+| `Packages/RATPCore/` | The rules, the state and the data of the app, shared by the app and the widget, with its unit tests. One folder per feature. |
 | `UITests/` | The end-to-end tests (XCUITest). |
-| `Config/` | Build settings. Your key and Team ID go in the local files here. |
-| `scripts/` | Helper scripts for the `make` commands. |
-| `docs/` | The docs site (Starlight). |
 | `DocsScreenshots/` | The XCUITest suite that takes the app screenshots of the docs. |
+| `Config/` | Build settings. Your key and Team ID go in the local files here. |
+| `scripts/` | Helper scripts for the `make` commands of the app. |
+
+The feature folders have the same names in `ios/App/`, in the sources of `RATPCore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`. `ios/App/` also has `Permissions` and `TestingTools` (debug builds only). The rules for the code (where each file goes, which module depends on which) are in the CLAUDE.md, section "Code structure of the iOS app".
+
+You can also run the commands of one part in its folder: `make -C ios check` runs only the checks of the app.
 
 ## Notes for developers
 
 - Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `RATPCore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
-- Build output goes to `.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder. All worktrees share one Simulator, and Simulator jobs wait for each other (see above).
-- The shared build cache: all folders (and all git worktrees) share the compiled modules of the iOS SDK (for example SwiftUI and UIKit), in `~/Library/Caches/RATPActivity/`. So the first build of a new worktree does not compile them again. This cache holds no code of the app, only modules of the SDK: the build products of a worktree stay in its own `.build/`. Xcode keys each module by a hash of the SDK and the compiler flags, and it writes each file in one step, so many builds can use the cache at the same time. The cache grows only when the SDK or the flags change (for example after an Xcode update). `make build LIVE=1` does not use this cache: a build with the key stays in its folder. `make live-key-check` fails if the cache holds the key. To clear the cache, run `make clean-shared-cache`. It waits for the builds that use the cache to end, and new builds wait for it, so clearing never breaks a build of another folder. Then it deletes the modules, and the next build makes them again. To use another folder, add `SHARED_CACHE=<folder>` to the `make` command.
+- Build output goes to `ios/.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder. All worktrees share one Simulator, and Simulator jobs wait for each other (see above).
+- The shared build cache: all folders (and all git worktrees) share the compiled modules of the iOS SDK (for example SwiftUI and UIKit), in `~/Library/Caches/RATPActivity/`. So the first build of a new worktree does not compile them again. This cache holds no code of the app, only modules of the SDK: the build products of a worktree stay in its own `ios/.build/`. Xcode keys each module by a hash of the SDK and the compiler flags, and it writes each file in one step, so many builds can use the cache at the same time. The cache grows only when the SDK or the flags change (for example after an Xcode update). `make build LIVE=1` does not use this cache: a build with the key stays in its folder. `make live-key-check` fails if the cache holds the key. To clear the cache, run `make clean-shared-cache`. It waits for the builds that use the cache to end, and new builds wait for it, so clearing never breaks a build of another folder. Then it deletes the modules, and the next build makes them again. To use another folder, add `SHARED_CACHE=<folder>` to the `make` command.
 - `make build` builds the app for the processor of your Mac only (Apple silicon: arm64), and the command line builds make no code index (Xcode makes its own index when you open the project). Both make the build faster.
 - End-to-end tests: to wait for an element, use `waitForExistence(timeout: UITestTimeout.element)` (30 seconds). The Mac can be busy, so short waits fail for no real reason. A wait ends as soon as the element shows, so a passing test stays fast. Each test class inherits from `E2ETestCase`. It sets `continueAfterFailure = false`: a test stops at its first failure.
-- `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock). It stops a test that runs longer than 5 minutes. When a test fails, it prints the file, the line, and the message of each failure. The full results are in `.build/e2e.xcresult` (open it in Xcode).
+- `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock). It stops a test that runs longer than 5 minutes. When a test fails, it prints the file, the line, and the message of each failure. The full results are in `ios/.build/e2e.xcresult` (open it in Xcode).
 - Swift 6 language mode. Minimum iOS version: 18.0.

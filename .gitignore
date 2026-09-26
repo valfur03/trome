@@ -4,8 +4,11 @@
 xcuserdata/
 *.xcodeproj/
 
-App/Info.plist
-Widget/Info.plist
+ios/App/Info.plist
+ios/Widget/Info.plist
+
+ios/Config/Local.xcconfig
+ios/Config/Secrets.xcconfig
 
 Config/Local.xcconfig
 Config/Secrets.xcconfig
