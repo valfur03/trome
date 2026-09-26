@@ -62,6 +62,14 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 
 The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
 
+## Which E2E tests to run
+
+A full `make e2e` keeps the shared Simulator for several minutes. So:
+
+- **The implementer and the reviewers** run only the E2E test classes that cover their change: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests NearestStationTests"` for more than one. The class names are the file names in `ios/UITests/`.
+- **The Software Engineer who merges** runs the full `make e2e` once.
+- **QA** runs no automated tests.
+
 ## When your job ends
 
 In your worktree, remove your app from the Simulator and free the lock (needed after `make run`, and harmless after `make e2e`):

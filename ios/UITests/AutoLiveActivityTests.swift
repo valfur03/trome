@@ -4,8 +4,7 @@ final class AutoLiveActivityTests: E2ETestCase {
     @MainActor
     func testLiveActivityStartsSwitchesAndStopsByItselfNearStations() {
         let app = makeApp()
-        app.launch()
-        allowLocationAccessIfAsked()
+        launch(app)
         XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
         leaveEveryStation(in: app)
 
@@ -71,14 +70,5 @@ final class AutoLiveActivityTests: E2ETestCase {
         let predicate = NSPredicate(format: "label == %@", label)
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: UITestTimeout.element), .completed)
-    }
-
-    @MainActor
-    private func allowLocationAccessIfAsked() {
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allowButton = springboard.buttons["Allow While Using App"]
-        if allowButton.waitForExistence(timeout: 3) {
-            allowButton.tap()
-        }
     }
 }

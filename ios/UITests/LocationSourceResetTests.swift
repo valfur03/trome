@@ -4,7 +4,7 @@ final class LocationSourceResetTests: E2ETestCase {
     @MainActor
     func testANewRunStartsWithTheRealGPSAfterAFakePositionWasSaved() {
         let firstRun = makeApp()
-        firstRun.launch()
+        launch(firstRun)
         firstRun.buttons["testingTools"].tap()
         firstRun.buttons["farFromAnyStation"].tap()
         XCTAssertTrue(firstRun.staticTexts["Fake: Far from any station (Fontainebleau forest)"]
@@ -12,7 +12,7 @@ final class LocationSourceResetTests: E2ETestCase {
         firstRun.terminate()
 
         let secondRun = makeApp()
-        secondRun.launch()
+        launch(secondRun)
         secondRun.buttons["testingTools"].tap()
         let source = secondRun.staticTexts["locationSource"]
         XCTAssertTrue(source.waitForExistence(timeout: UITestTimeout.element))

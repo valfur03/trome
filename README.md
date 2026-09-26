@@ -28,6 +28,7 @@ The Xcode project is not in git. The file `ios/project.yml` describes it. If you
 | `make run LIVE=1` | The same, with your train data key (see below). |
 | `make check` | The quality gate: lint, key leak check, build, and unit tests. Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
+| `make e2e ONLY=FakePositionTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=FakePositionTests/testTesterCanFakeThePositionAndGoBackToTheRealGPS` runs one test. The class names are the file names in `ios/UITests/`. |
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
 | `make stations` | Downloads the metro and RER station list again (see below). |
 | `make clean` | Deletes the build folder and the Xcode project. |
@@ -47,7 +48,7 @@ The app opens in the Simulator. You need no Apple ID for this.
 
 All copies of the repo (all folders) use one shared Simulator, named `RATP-Shared`. To see its ID, run `make simulator`.
 
-- `make run` and `make e2e` remove the app and its data from the Simulator, then install the app of this folder. So a folder never sees the data or the saved settings of another folder. They also reset the permissions and clear the fake position of the Simulator.
+- `make run` and `make e2e` remove the app and its data from the Simulator, then install the app of this folder. So a folder never sees the data or the saved settings of another folder. They also reset the permissions and clear the fake position of the Simulator. Then `make e2e` gives the app the location permission "While Using the App", so the tests see no location popup.
 - The Simulator stays booted between jobs, so the next job starts faster. It shuts down by itself after 5 minutes with no job.
 - To delete the shared Simulator, run `make simulator-delete`. The next job creates it again.
 
@@ -289,5 +290,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 - The shared build cache: all folders (and all git worktrees) share the compiled modules of the iOS SDK (for example SwiftUI and UIKit), in `~/Library/Caches/RATPActivity/`. So the first build of a new worktree does not compile them again. This cache holds no code of the app, only modules of the SDK: the build products of a worktree stay in its own `ios/.build/`. Xcode keys each module by a hash of the SDK and the compiler flags, and it writes each file in one step, so many builds can use the cache at the same time. The cache grows only when the SDK or the flags change (for example after an Xcode update). `make build LIVE=1` does not use this cache: a build with the key stays in its folder. `make live-key-check` fails if the cache holds the key. To clear the cache, run `make clean-shared-cache`. It waits for the builds that use the cache to end, and new builds wait for it, so clearing never breaks a build of another folder. Then it deletes the modules, and the next build makes them again. To use another folder, add `SHARED_CACHE=<folder>` to the `make` command.
 - `make build` builds the app for the processor of your Mac only (Apple silicon: arm64), and the command line builds make no code index (Xcode makes its own index when you open the project). Both make the build faster.
 - End-to-end tests: to wait for an element, use `waitForExistence(timeout: UITestTimeout.element)` (30 seconds). The Mac can be busy, so short waits fail for no real reason. A wait ends as soon as the element shows, so a passing test stays fast. Each test class inherits from `E2ETestCase`. It sets `continueAfterFailure = false`: a test stops at its first failure.
+- End-to-end tests: open the app with `launch(app)` from `E2ETestCase`, not with `app.launch()`. On the first launch of a run, it answers the notification popup at once. If the location is "Off" (for example, you run a test from Xcode after a run that refused it), it resets the location permission and answers the location popup. It also answers "Keep Only While Using" at once when iOS asks to use the location "Always". Before each test, `makeApp()` stops the app of the last test, and stops it again if iOS starts it again in the background (iOS does it for an app that can use the location in the background). Only `NearestStationTests` goes through the real location popup, with `answerPermissionPrompts(in:)`.
+- `make e2e` builds the tests before it takes the Simulator lock, so other jobs do not wait for the build.
 - `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock). It stops a test that runs longer than 5 minutes. When a test fails, it prints the file, the line, and the message of each failure. The full results are in `ios/.build/e2e.xcresult` (open it in Xcode).
 - Swift 6 language mode. Minimum iOS version: 18.0.

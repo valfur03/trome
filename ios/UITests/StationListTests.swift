@@ -4,8 +4,7 @@ final class StationListTests: E2ETestCase {
     @MainActor
     func testTesterCanSearchTheStationList() {
         let app = makeApp()
-        app.launch()
-        allowLocationAccessIfAsked()
+        launch(app)
 
         app.buttons["testingTools"].tap()
         app.swipeUp()
@@ -22,14 +21,5 @@ final class StationListTests: E2ETestCase {
         let rows = app.descendants(matching: .any).matching(identifier: "stationRow")
         XCTAssertTrue(rows.element(boundBy: 0).label.hasPrefix("Châtelet, Metro 1"))
         XCTAssertTrue(rows.element(boundBy: 1).label.hasPrefix("Châtelet - Les Halles, RER A"))
-    }
-
-    @MainActor
-    private func allowLocationAccessIfAsked() {
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allowButton = springboard.buttons["Allow While Using App"]
-        if allowButton.waitForExistence(timeout: 3) {
-            allowButton.tap()
-        }
     }
 }

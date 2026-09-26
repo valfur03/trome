@@ -9,7 +9,7 @@ final class NearestStationTests: E2ETestCase {
         XCUIDevice.shared.location = XCUILocation(location: CLLocation(latitude: 48.8585, longitude: 2.3474))
 
         app.launch()
-        allowLocationAccess()
+        answerPermissionPrompts(in: app)
         let testingTools = app.buttons["testingTools"]
         XCTAssertTrue(testingTools.waitForExistence(timeout: UITestTimeout.element))
         testingTools.tap()
@@ -18,14 +18,5 @@ final class NearestStationTests: E2ETestCase {
         XCTAssertTrue(stationName.waitForExistence(timeout: UITestTimeout.element))
         XCTAssertEqual(stationName.label, "Châtelet")
         XCTAssertTrue(app.staticTexts["nearestStationLines"].label.contains("Metro 14"))
-    }
-
-    @MainActor
-    private func allowLocationAccess() {
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allowButton = springboard.alerts.buttons["Allow While Using App"]
-        if allowButton.waitForExistence(timeout: 10) {
-            allowButton.tap()
-        }
     }
 }

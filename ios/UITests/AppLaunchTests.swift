@@ -4,7 +4,7 @@ final class AppLaunchTests: E2ETestCase {
     @MainActor
     func testAppLaunchesAndShowsItsTitle() {
         let app = makeApp()
-        app.launch()
+        launch(app)
 
         XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
     }

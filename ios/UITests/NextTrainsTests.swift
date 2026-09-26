@@ -4,8 +4,7 @@ final class NextTrainsTests: E2ETestCase {
     @MainActor
     func testUserCanPickAStationAndSeeItsNextTrains() {
         let app = makeApp()
-        app.launch()
-        allowLocationAccessIfAsked()
+        launch(app)
 
         pickStation("Abbesses", searching: "abbesses", in: app)
         let stationName = app.staticTexts["currentStationName"]
@@ -65,14 +64,5 @@ final class NextTrainsTests: E2ETestCase {
             _ = departureRow.waitForExistence(timeout: 1)
         }
         XCTAssertTrue(departureRow.exists || noLiveData.exists, "Neither next trains nor 'no live data' appeared")
-    }
-
-    @MainActor
-    private func allowLocationAccessIfAsked() {
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allowButton = springboard.buttons["Allow While Using App"]
-        if allowButton.waitForExistence(timeout: 3) {
-            allowButton.tap()
-        }
     }
 }

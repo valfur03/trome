@@ -58,6 +58,12 @@ reset_device() {
     xcrun simctl location "$1" clear
 }
 
+grant_location_while_using() {
+    bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$2/Info.plist")
+    xcrun simctl install "$1" "$2"
+    xcrun simctl privacy "$1" grant location "$bundle_id"
+}
+
 delete_old_devices() {
     xcrun simctl list devices \
         | sed -n -E 's/^    (RATP-[^ ]+) \(([0-9A-F-]{36})\) \(([^)]+)\).*/\1 \2 \3/p' \
@@ -94,6 +100,14 @@ case "$command" in
             exec "$@"
         fi
         ;;
+    grant-location)
+        app=${1:?Usage: $0 grant-location <app path> [command...]}
+        shift
+        grant_location_while_using "$(boot_device)" "$app"
+        if [ $# -gt 0 ]; then
+            exec "$@"
+        fi
+        ;;
     launch)
         app=${1:?Usage: $0 launch <app path>}
         udid=$(boot_device)
@@ -124,7 +138,7 @@ case "$command" in
         echo "$name"
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|launch <app path>|uninstall|delete|delete-old|name]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall|delete|delete-old|name]" >&2
         exit 1
         ;;
 esac

@@ -5,6 +5,8 @@ BUILD_DIR := .build
 DERIVED_DATA := $(BUILD_DIR)/DerivedData
 APP_PATH := $(DERIVED_DATA)/Build/Products/Debug-iphonesimulator/RATPActivity.app
 E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
+E2E_TARGET := RATPActivityUITests
+E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := RATPActivityDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
 SIMULATOR := ./scripts/simulator.sh
@@ -47,6 +49,7 @@ help:
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
+	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the shared Simulator (creates it if needed)"
@@ -101,12 +104,17 @@ run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
 
 e2e: project
+	@for test in $(ONLY); do \
+		grep -qw "class $${test%%/*}" UITests/*.swift || { echo "No E2E test class named $${test%%/*} in ios/UITests/" >&2; exit 1; }; \
+	done
 	@rm -rf $(E2E_RESULT)
-	$(SIM_LOCK) job $(SIMULATOR) reset $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
+	$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) grant-location "$(APP_PATH)" \
+		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
 		-destination "platform=iOS Simulator,name=$$($(SIMULATOR) name)" \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
-		-resultBundlePath $(E2E_RESULT) test \
+		$(E2E_ONLY) -resultBundlePath $(E2E_RESULT) test-without-building \
 		|| { status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); exit $$status; }
 
 stations:

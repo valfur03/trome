@@ -7,8 +7,7 @@ final class LiveActivityTests: E2ETestCase {
     @MainActor
     func testUserCanShowTheLiveActivityOfTheNearestStationAndStopIt() {
         let app = makeApp()
-        app.launch()
-        allowLocationAccessIfAsked()
+        launch(app)
         XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
         XCTAssertFalse(app.buttons["chooseStation"].exists)
         XCTAssertFalse(app.buttons["changeStation"].exists)
@@ -35,14 +34,5 @@ final class LiveActivityTests: E2ETestCase {
 
         stopButton.tap()
         XCTAssertTrue(showButton.waitForExistence(timeout: UITestTimeout.element))
-    }
-
-    @MainActor
-    private func allowLocationAccessIfAsked() {
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allowButton = springboard.buttons["Allow While Using App"]
-        if allowButton.waitForExistence(timeout: 3) {
-            allowButton.tap()
-        }
     }
 }
