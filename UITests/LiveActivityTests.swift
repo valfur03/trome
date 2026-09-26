@@ -3,7 +3,7 @@ import XCTest
 final class LiveActivityTests: E2ETestCase {
     @MainActor
     func testUserCanShowAndStopTheLiveActivityOfThePickedStation() {
-        let app = XCUIApplication.withRealGPS()
+        let app = makeApp()
         app.launch()
         allowLocationAccessIfAsked()
         pickStation("Abbesses", searching: "abbesses", in: app)
