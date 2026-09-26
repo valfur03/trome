@@ -39,6 +39,7 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         NSSupportsLiveActivities: true
+        NSLocationWhenInUseUsageDescription: RATP Activity uses your location to find the nearest metro or RER station.
         PRIMAPIKey: $(PRIM_API_KEY)
     settings:
       base:

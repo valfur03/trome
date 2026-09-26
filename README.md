@@ -47,6 +47,25 @@ To fake your position in the Simulator:
 xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
 ```
 
+## Fake your position (testing tools)
+
+Debug builds have a "Testing tools" screen. `make run` and the Run button in Xcode make debug builds. Release builds do not have this screen.
+
+1. Open the app. Tap "Testing tools" at the bottom of the screen.
+2. Choose a fake position:
+   - "Pick a station": choose a metro or RER station from a list.
+   - "Far from any station": a point in the Fontainebleau forest, far from any metro or RER station.
+   - "Coordinates": type the latitude, then the longitude, for example `48.8584, 2.2945`. Tap "Use these coordinates".
+   - "Address": type an address, for example `10 rue de Rivoli, Paris`. Tap "Find this address". This needs the network.
+3. The section "Position used by the app" shows the position that every feature uses.
+4. To stop faking, tap "Use the real GPS".
+
+The app keeps your choice when you close it. While a fake position is on, the main screen shows "Fake position" in orange.
+
+This works in the Simulator and on your iPhone, also when the iPhone is not connected to the Mac.
+
+For developers: all code must read the position from `LocationService` (in `RATPCore`), never from Core Location directly. Then the fake position works for every feature.
+
 ## The train data key (PRIM)
 
 The app gets train times from the PRIM API of Île-de-France Mobilités. PRIM needs a free key.
