@@ -18,13 +18,26 @@ modules="$cache/SDKExplicitPrecompiledModules"
 users="$cache/users"
 clearing="$cache/clearing"
 
+start_time() {
+    ps -o lstart= -p "$1" 2> /dev/null || true
+}
+
+record() {
+    start_time $$ > "$1/.$$" && mv -f "$1/.$$" "$1/$$"
+}
+
+is_alive() {
+    recorded=$(cat "$1" 2> /dev/null || true)
+    [ -n "$recorded" ] && [ "$(start_time "${1##*/}")" = "$recorded" ]
+}
+
 clearer_is_gone() {
-    pid=$(cat "$clearing/pid" 2> /dev/null || true)
-    if [ -n "$pid" ]; then
-        ! kill -0 "$pid" 2> /dev/null
-    else
-        [ -n "$(find "$clearing" -maxdepth 0 -mmin +1 2> /dev/null)" ]
-    fi
+    for clearer in "$clearing"/*; do
+        [ -e "$clearer" ] || break
+        ! is_alive "$clearer"
+        return
+    done
+    [ -n "$(find "$clearing" -maxdepth 0 -mmin +1 2> /dev/null)" ]
 }
 
 register() {
@@ -32,7 +45,7 @@ register() {
     waiting=
     while :; do
         if [ ! -d "$clearing" ]; then
-            touch "$users/$$"
+            record "$users"
             [ -d "$clearing" ] || return 0
             rm -f "$users/$$"
         elif clearer_is_gone; then
@@ -58,7 +71,7 @@ builds_running() {
     running=1
     for user in "$users"/*; do
         [ -e "$user" ] || continue
-        if kill -0 "${user##*/}" 2> /dev/null; then
+        if is_alive "$user"; then
             running=0
         else
             rm -f "$user"
@@ -78,7 +91,7 @@ clear_cache() {
         fi
     done
     trap 'rm -rf "$clearing"' EXIT
-    echo "$$" > "$clearing/pid"
+    record "$clearing"
     waiting=
     while builds_running; do
         if [ -z "$waiting" ]; then
