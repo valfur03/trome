@@ -31,6 +31,7 @@ final class LiveActivityTests: E2ETestCase {
         XCTAssertTrue(lockScreenStation.waitForExistence(timeout: UITestTimeout.element))
         XCTAssertEqual(lockScreenStation.label, "On the lock screen: Champ de Mars Tour Eiffel")
         XCTAssertFalse(app.staticTexts["liveActivityError"].exists)
+        XCTAssertFalse(stopButton.waitForNonExistence(timeout: 5))
 
         stopButton.tap()
         XCTAssertTrue(showButton.waitForExistence(timeout: UITestTimeout.element))

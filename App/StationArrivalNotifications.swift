@@ -37,20 +37,27 @@ final class ArrivalNotificationTapHandler: NSObject, UNUserNotificationCenterDel
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
         let userInfo = response.notification.request.content.userInfo
-        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier,
-              let stationId = userInfo[UserNotificationArrivalNotifier.stationIdKey] as? String else {
-            return
+        let stationId = response.actionIdentifier == UNNotificationDefaultActionIdentifier
+            ? userInfo[UserNotificationArrivalNotifier.stationIdKey] as? String
+            : nil
+        nonisolated(unsafe) let completionHandler = completionHandler
+        Task { @MainActor [onTap] in
+            if let stationId {
+                await onTap(stationId)
+            }
+            completionHandler()
         }
-        await onTap(stationId)
     }
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .list, .sound])
     }
 }
