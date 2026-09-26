@@ -1,11 +1,6 @@
 import XCTest
 
-final class StationListTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
-    }
-
+final class StationListTests: E2ETestCase {
     @MainActor
     func testTesterCanSearchTheStationList() {
         let app = XCUIApplication()

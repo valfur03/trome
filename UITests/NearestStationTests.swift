@@ -1,12 +1,7 @@
 import CoreLocation
 import XCTest
 
-final class NearestStationTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
-    }
-
+final class NearestStationTests: E2ETestCase {
     @MainActor
     func testShowsTheNearestStationOnceLocationIsAllowed() {
         let app = XCUIApplication.withRealGPS()

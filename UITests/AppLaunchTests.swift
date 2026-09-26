@@ -1,11 +1,6 @@
 import XCTest
 
-final class AppLaunchTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
-    }
-
+final class AppLaunchTests: E2ETestCase {
     @MainActor
     func testAppLaunchesAndShowsItsTitle() {
         let app = XCUIApplication.withRealGPS()

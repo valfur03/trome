@@ -1,11 +1,6 @@
 import XCTest
 
-final class FakePositionTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
-    }
-
+final class FakePositionTests: E2ETestCase {
     @MainActor
     func testTesterCanFakeThePositionAndGoBackToTheRealGPS() {
         let app = XCUIApplication.withRealGPS()
