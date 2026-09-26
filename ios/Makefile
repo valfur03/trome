@@ -105,7 +105,11 @@ run: build
 
 e2e: project
 	@for test in $(ONLY); do \
-		grep -qw "class $${test%%/*}" UITests/*.swift || { echo "No E2E test class named $${test%%/*} in ios/UITests/" >&2; exit 1; }; \
+		class=$${test%%/*}; \
+		files=$$(grep -lw "class $$class: E2ETestCase" UITests/*.swift) \
+			|| { echo "No E2E test class named $$class in ios/UITests/" >&2; exit 1; }; \
+		case $$test in */*) grep -qw "func $${test#*/}" $$files \
+			|| { echo "No E2E test named $${test#*/} in $$class" >&2; exit 1; };; esac; \
 	done
 	@rm -rf $(E2E_RESULT)
 	$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing

@@ -3,9 +3,7 @@ import XCTest
 
 class E2ETestCase: XCTestCase {
     static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
-    private static let permissionAnswers = [
-        "Allow While Using App", "Keep Only While Using", "Change to Always Allow", "Allow"
-    ]
+    private static let permissionAnswers = ["Allow While Using App", "Keep Only While Using", "Allow"]
     private static let allowedLocationLabels = ["Location, Always", "Location, While Using the App"]
     @MainActor private static var permissionsAreSettled = false
 
