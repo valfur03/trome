@@ -20,6 +20,10 @@ public struct StationCatalog: Sendable {
         return try StationCatalog(jsonData: Data(contentsOf: url))
     }
 
+    public func station(withId id: String) -> Station? {
+        stations.first { $0.id == id }
+    }
+
     public func stations(matching query: String) -> [Station] {
         let searchKey = Self.searchKey(query)
         return stations
@@ -37,7 +41,7 @@ public struct StationCatalog: Sendable {
             .min { $0.distanceMeters < $1.distanceMeters }
     }
 
-    private static func searchKey(_ text: String) -> String {
+    static func searchKey(_ text: String) -> String {
         text
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
             .components(separatedBy: CharacterSet.alphanumerics.inverted)

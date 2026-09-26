@@ -5,7 +5,10 @@ import SwiftUI
 struct RATPActivityApp: App {
     @State private var locationService: LocationService
     @State private var nearestStationModel: NearestStationModel
+    @State private var currentStationModel: CurrentStationModel
+    @State private var nextTrainsModel: NextTrainsModel
     private let stationCatalog: StationCatalog
+    private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
 
     init() {
         let locationService = LocationService.makeForThisBuild()
@@ -19,12 +22,25 @@ struct RATPActivityApp: App {
                 catalog: stationCatalog
             )
         )
+        _currentStationModel = State(
+            initialValue: CurrentStationModel(
+                catalog: stationCatalog,
+                store: CurrentStationStore(storage: UserDefaults.standard)
+            )
+        )
+        _nextTrainsModel = State(
+            initialValue: NextTrainsModel(
+                provider: primConfiguration.map { PRIMDeparturesProvider(apiKey: $0.apiKey) }
+            )
+        )
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(nearestStationModel: nearestStationModel)
+            ContentView(nearestStationModel: nearestStationModel, primConfiguration: primConfiguration)
                 .environment(locationService)
+                .environment(currentStationModel)
+                .environment(nextTrainsModel)
                 .environment(\.stationCatalog, stationCatalog)
         }
     }

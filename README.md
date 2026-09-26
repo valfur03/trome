@@ -54,7 +54,7 @@ xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
 
 Debug builds have a "Testing tools" screen. `make run` and the Run button in Xcode make debug builds. Release builds do not have this screen.
 
-1. Open the app. Tap "Testing tools" at the bottom of the screen.
+1. Open the app. Tap "Testing tools" at the top right of the screen.
 2. Choose a fake position:
    - "Pick a station": choose a metro or RER station from a list.
    - "Far from any station": a point in the Fontainebleau forest, far from any metro or RER station.
@@ -80,6 +80,25 @@ To see the list in the app, open "Testing tools" and tap "All stations". Each st
 To download the list again, run `make stations`. It needs Python 3. Commit the new `stations.json`.
 
 Some names in the open data are wrong or spelled in two ways. The script fixes them with the table `STATION_NAMES` in `scripts/update-stations.py`. If a unit test says that two stations "look like the same station", add the bad name to this table.
+
+## Next trains of a station
+
+The main screen shows the next trains of a station that you pick by hand. This needs no location permission.
+
+1. Under "Next trains", tap "Pick a station". Type part of a name to find a station, then tap it.
+2. The screen shows the next trains of each line and destination, in minutes. The app asks for new times every 30 seconds while the screen is open.
+3. Tap "Change station" to pick another station.
+
+The app remembers the picked station when you close it.
+
+The screen tells you when:
+
+- the train data key is not set (see below),
+- the station has no live data right now,
+- the app cannot reach the train data service (for example, no internet),
+- the service refuses the key, gets too many requests, or does not work.
+
+For developers: the code is in `Packages/RATPCore/Sources/RATPCore/Trains`. `PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop of the station. A metro stop id `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`. An RER stop id `IDFM:monomodalStopPlace:<n>` becomes `STIF:StopArea:SP:<n>:`. `CurrentStationModel` holds the station that the user picked. Other features (for example the Live Activity) can use it.
 
 ## The train data key (PRIM)
 
