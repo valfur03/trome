@@ -24,22 +24,23 @@ XCODEBUILD := xcodebuild -quiet \
 	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' build
 
-.PHONY: help setup generate project lint lint-fix build test check live-key-check run e2e stations simulator simulator-shutdown simulator-delete clean
+.PHONY: help setup generate project lint lint-fix build test check live-key-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
 	@echo "make generate            Create the Xcode project again (after a change in project.yml)"
-	@echo "make run                 Build the app and open it in this folder's Simulator (keeps the Simulator lock)"
+	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
 	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
 	@echo "make check               Quality gate: lint + key leak check + build + unit tests"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
-	@echo "make e2e                 End-to-end tests on this folder's Simulator (takes the Simulator lock)"
+	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
-	@echo "make simulator           Print the ID of this folder's Simulator (creates it if needed)"
-	@echo "make simulator-shutdown  Shut down this folder's Simulator and free the Simulator lock"
-	@echo "make simulator-delete    Delete this folder's Simulator and free the Simulator lock"
+	@echo "make simulator           Print the ID of the shared Simulator (creates it if needed)"
+	@echo "make simulator-shutdown  Free the Simulator lock that 'make run' keeps (the Simulator shuts down when idle)"
+	@echo "make simulator-delete    Delete the shared Simulator (takes the Simulator lock)"
+	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
 
 setup:
@@ -85,7 +86,8 @@ run: build
 
 e2e: project
 	@rm -rf $(E2E_RESULT)
-	$(SIM_LOCK) job $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination "id=$$($(SIMULATOR) udid)" \
+	$(SIM_LOCK) job $(SIMULATOR) reset $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
+		-destination "platform=iOS Simulator,name=$$($(SIMULATOR) name)" \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
 		-resultBundlePath $(E2E_RESULT) test \
@@ -101,8 +103,10 @@ simulator-shutdown:
 	@$(SIM_LOCK) free
 
 simulator-delete:
-	@$(SIM_LOCK) free
-	@$(SIMULATOR) delete
+	@$(SIM_LOCK) job $(SIMULATOR) delete
+
+simulator-delete-old:
+	@$(SIM_LOCK) job $(SIMULATOR) delete-old
 
 clean:
 	rm -rf $(BUILD_DIR) $(PROJECT)

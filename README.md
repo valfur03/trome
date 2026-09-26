@@ -43,9 +43,15 @@ make run
 
 The app opens in the Simulator. You need no Apple ID for this.
 
-Each copy of the repo (each folder) gets its own Simulator. Its name starts with `RATP-`. To see its ID, run `make simulator`. To shut it down, run `make simulator-shutdown`. To delete it, run `make simulator-delete`.
+All copies of the repo (all folders) use one shared Simulator, named `RATP-Shared`. To see its ID, run `make simulator`.
 
-Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` when you are done, so the others can go on.
+- `make run` and `make e2e` remove the app and its data from the Simulator, then install the app of this folder. So a folder never sees the data or the saved settings of another folder. They also reset the permissions and clear the fake position of the Simulator.
+- The Simulator stays booted between jobs, so the next job starts faster. It shuts down by itself after 5 minutes with no job.
+- To delete the shared Simulator, run `make simulator-delete`. The next job creates it again.
+
+Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` when you are done, so the others can go on. This frees the lock. It does not shut down the Simulator at once.
+
+Before the shared Simulator, each folder had its own Simulator, named `RATP-<folder>-<hash>`. To delete these old Simulators, run `make simulator-delete-old`.
 
 To fake your position in the Simulator:
 
@@ -186,7 +192,7 @@ To fake your position on the iPhone: while the app runs from Xcode, use Debug > 
 ## Notes for developers
 
 - Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `RATPCore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
-- Build output goes to `.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder and its own Simulator, but Simulator jobs wait for each other (see above).
+- Build output goes to `.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder. All worktrees share one Simulator, and Simulator jobs wait for each other (see above).
 - End-to-end tests: to wait for an element, use `waitForExistence(timeout: UITestTimeout.element)` (30 seconds). The Mac can be busy, so short waits fail for no real reason. A wait ends as soon as the element shows, so a passing test stays fast. Each test class inherits from `E2ETestCase`. It sets `continueAfterFailure = false`: a test stops at its first failure.
 - `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock). It stops a test that runs longer than 5 minutes. When a test fails, it prints the file, the line, and the message of each failure. The full results are in `.build/e2e.xcresult` (open it in Xcode).
 - Swift 6 language mode. Minimum iOS version: 18.0.

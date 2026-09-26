@@ -7,41 +7,57 @@ Read the [README](README.md) first. It lists the `make` commands.
 - The factory runs **at most 2 Software Engineers** in parallel for this repo.
 - **At most one Simulator job** runs at a time on the machine. A lock enforces it (see below).
 
-Why: each worktree builds the app and boots its own iOS Simulator. On 2026-09-26, seven Simulators ran at once on the 8-core Mac. The load average went above 600, and the prompter could not work.
+Why: on 2026-09-26, each worktree booted its own iOS Simulator, and seven Simulators ran at once on the 8-core Mac. The load average went above 600, and the prompter could not work.
+
+## The shared Simulator
+
+All worktrees use one shared Simulator, named `RATP-Shared`.
+
+- Each job installs its own build of the app. Before that, it removes the app and its data, resets the permissions, and clears the fake position of the Simulator. So a job never sees the data or the saved settings of another worktree.
+- The Simulator stays booted between jobs, so the next job does not wait for a cold boot.
+- It shuts down by itself after 5 minutes with no job. Why 5 minutes: it is longer than the usual gap between two jobs (fix a test, then run `make e2e` again; the next agent starts its job). It is short enough to give the Mac back soon when the factory stops. A small background process (`scripts/sim-lock.sh watch`) does this. It uses no Simulator and almost no CPU, and it stops by itself.
 
 ## The Simulator lock
 
-Each worktree uses its own Simulator. Its name starts with `RATP-`.
-
 `make run` and `make e2e` take a machine-wide lock: the folder `/tmp/ratp-sim.lock`. While another job holds it, they wait and print `Waiting for the Simulator lock`. This is normal. Do not stop them, and do not delete the lock. The wait can be long, so run these commands in the background.
 
-- `make e2e` shuts down the Simulator when the tests end, pass or fail. Then it frees the lock.
-- `make run` keeps the Simulator open, and keeps the lock. You can then check the app by hand, or run `make e2e`.
-- Any other command that boots or uses a Simulator (for example `xcodebuild test` or `xcrun simctl boot`) must run through the lock:
+- `make e2e` frees the lock when the tests end, pass or fail.
+- `make run` keeps the lock. You can then check the app by hand, or run `make e2e`.
+- Any other command that boots or uses a Simulator (for example `xcodebuild test` or `xcrun simctl boot`) must run through the lock, on the shared Simulator:
 
   ```sh
   ./scripts/sim-lock.sh job <command>
   ```
 
+  To boot the shared Simulator and remove the app of the last job first, run `./scripts/sim-lock.sh job ./scripts/simulator.sh reset <command>`. With `xcodebuild`, use `-destination "platform=iOS Simulator,name=RATP-Shared"`.
+
 `make check` and `make test` need no Simulator and no lock.
 
-The lock frees itself when its job dies, when its worktree is removed, or when its Simulator is shut down.
+The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
 
 ## When your job ends
 
-In your worktree, shut down its Simulator. This also frees the lock:
+In your worktree, free the lock (needed after `make run`, and harmless after `make e2e`):
 
 ```sh
 make simulator-shutdown
 ```
 
+It does not shut down the shared Simulator at once: the Simulator shuts down by itself after 5 minutes with no job.
+
 ## Before you remove a worktree
 
-In the worktree, delete its Simulator:
+Nothing to do: the worktree has no Simulator of its own.
+
+## Old Simulators
+
+Before the shared Simulator, each worktree had its own Simulator, named `RATP-<folder>-<hash>`. To delete them, run this in any worktree:
 
 ```sh
-make simulator-delete
+make simulator-delete-old
 ```
+
+It keeps the Simulators that are not shut down, because a worktree with the old scripts can still use them.
 
 ## Live train data (the real PRIM key)
 

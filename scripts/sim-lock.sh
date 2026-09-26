@@ -2,15 +2,20 @@
 set -eu
 
 lock=${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}
+last_job="$lock.last"
+watcher="$lock.watcher"
+idle_minutes=${RATP_SIM_IDLE_MINUTES:-5}
 scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/.." && pwd)
 simulator="$scripts/simulator.sh"
 poll_seconds=10
+watch_seconds=30
 
 usage() {
-    echo "Usage: $0 job <command...>   Run a Simulator job with the lock, then shut down the Simulator" >&2
-    echo "       $0 open <command...>  Open the Simulator with the lock, and keep both" >&2
-    echo "       $0 free               Shut down this folder's Simulator and free its lock" >&2
+    echo "Usage: $0 job <command...>   Run a Simulator job with the lock" >&2
+    echo "       $0 open <command...>  Open the Simulator with the lock, and keep the lock" >&2
+    echo "       $0 free               Free the lock that this folder keeps after 'open'" >&2
+    echo "       $0 watch              Shut down the shared Simulator after $idle_minutes minutes with no job" >&2
     exit 1
 }
 
@@ -57,11 +62,28 @@ remove_if_stale() {
     removed=1
     if is_stale; then
         echo "Removing a stale Simulator lock of $(holder worktree)" >&2
+        touch "$last_job"
         rm -rf "$lock"
         removed=0
     fi
     rmdir "$lock.reap"
     return "$removed"
+}
+
+take() {
+    echo "$$" > "$lock/pid"
+    echo "$root" > "$lock/worktree"
+}
+
+watcher_is_running() {
+    watcher_pid=$(cat "$watcher" 2> /dev/null || true)
+    [ -n "$watcher_pid" ] && ps -p "$watcher_pid" -o command= 2> /dev/null | grep -qF "sim-lock.sh watch"
+}
+
+start_watcher() {
+    if ! watcher_is_running; then
+        perl -MPOSIX -e 'setsid(); exec @ARGV' "$scripts/sim-lock.sh" watch < /dev/null > /dev/null 2>&1 &
+    fi
 }
 
 acquire() {
@@ -80,8 +102,8 @@ acquire() {
         fi
         sleep "$poll_seconds"
     done
-    echo "$$" > "$lock/pid"
-    echo "$root" > "$lock/worktree"
+    take
+    start_watcher
     if [ -n "$waiting" ]; then
         echo "Got the Simulator lock" >&2
     fi
@@ -89,19 +111,46 @@ acquire() {
 
 release() {
     if [ "$(holder pid)" = "$$" ] || owns_session; then
+        touch "$last_job"
         rm -rf "$lock"
     fi
 }
 
-shut_down_and_release() {
-    "$simulator" shutdown || true
-    release
+is_idle() {
+    if [ ! -e "$last_job" ]; then
+        touch "$last_job"
+    fi
+    [ -n "$(find "$last_job" -mmin +"$idle_minutes" 2> /dev/null)" ]
 }
 
-on_exit_always() {
+shut_down_if_idle() {
+    is_idle && mkdir "$lock" 2> /dev/null || return 1
+    take
+    xcrun simctl shutdown "$1" 2> /dev/null || true
+    rm -rf "$lock"
+}
+
+watch() {
+    echo "$$" > "$watcher"
+    trap 'if [ "$(cat "$watcher" 2> /dev/null)" = "$$" ]; then rm -f "$watcher"; fi' EXIT
+    udid=
+    while :; do
+        if [ -z "$udid" ]; then
+            udid=$("$simulator" find 2> /dev/null || true)
+        fi
+        if [ -e "$lock" ]; then
+            remove_if_stale 2> /dev/null || touch "$last_job"
+        elif [ -z "$udid" ] || ! is_booted "$udid" || shut_down_if_idle "$udid"; then
+            break
+        fi
+        sleep "$watch_seconds"
+    done
+}
+
+on_exit() {
     status=$?
     trap - EXIT
-    shut_down_and_release
+    release
     exit "$status"
 }
 
@@ -109,7 +158,7 @@ on_exit_if_failed() {
     status=$?
     trap - EXIT
     if [ "$status" -ne 0 ]; then
-        shut_down_and_release
+        release
     fi
     exit "$status"
 }
@@ -126,10 +175,11 @@ case "$command" in
         [ $# -gt 0 ] || usage
         if owns_session; then
             echo "$$" > "$lock/pid"
+            start_watcher
         else
             acquire
         fi
-        trap on_exit_always EXIT
+        trap on_exit EXIT
         "$@"
         ;;
     open)
@@ -145,7 +195,10 @@ case "$command" in
         rm "$lock/pid"
         ;;
     free)
-        shut_down_and_release
+        release
+        ;;
+    watch)
+        watch
         ;;
     *)
         usage
