@@ -2,15 +2,19 @@ import RATPCore
 import SwiftUI
 
 struct ContentView: View {
+    let nearestStationModel: NearestStationModel
+
     @Environment(LocationService.self) private var locationService
+    @Environment(\.scenePhase) private var scenePhase
     private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: 24) {
                 Text("RATP Activity")
                     .font(.largeTitle.bold())
                     .accessibilityIdentifier("appTitle")
+                NearestStationView(state: nearestStationModel.state)
                 Text(primConfiguration == nil ? "Train data key: not set" : "Train data key: set")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -26,15 +30,13 @@ struct ContentView: View {
                     TestingToolsView()
                 }
                 .accessibilityIdentifier("testingTools")
-                .padding(.top, 24)
                 #endif
             }
             .padding()
         }
+        .onChange(of: scenePhase, initial: true) {
+            guard scenePhase == .active else { return }
+            Task { await nearestStationModel.refresh() }
+        }
     }
-}
-
-#Preview {
-    ContentView()
-        .environment(LocationService.makeForThisBuild())
 }

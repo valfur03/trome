@@ -28,6 +28,7 @@ The Xcode project is not in git. The file `project.yml` describes it. If you cha
 | `make check` | The quality gate: lint, build, and unit tests. Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
+| `make stations` | Downloads the metro and RER station list again (see below). |
 | `make clean` | Deletes the build folder and the Xcode project. |
 | `make help` | Shows all the commands. |
 
@@ -65,6 +66,14 @@ The app keeps your choice when you close it. While a fake position is on, the ma
 This works in the Simulator and on your iPhone, also when the iPhone is not connected to the Mac.
 
 For developers: all code must read the position from `LocationService` (in `RATPCore`), never from Core Location directly. Then the fake position works for every feature.
+
+## The station list
+
+The app finds the nearest station without the network. It reads the file `Packages/RATPCore/Sources/RATPCore/Resources/stations.json`.
+
+This file lists every metro station (lines 1 to 14, 3bis and 7bis) and every RER station (lines A to E). It has no bus, tram or Transilien stop. The data comes from the open data of Île-de-France Mobilités (dataset `arrets-lignes`, no key needed).
+
+To download the list again, run `make stations`. It needs Python 3. Commit the new `stations.json`.
 
 ## The train data key (PRIM)
 

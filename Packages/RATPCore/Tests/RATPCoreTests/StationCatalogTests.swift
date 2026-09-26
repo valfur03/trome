@@ -1,0 +1,92 @@
+import Foundation
+import Testing
+@testable import RATPCore
+
+struct StationCatalogTests {
+    private let near = Station(
+        id: "near",
+        name: "Near",
+        coordinate: Coordinate(latitude: 48.8600, longitude: 2.3500),
+        lines: [TransitLine(mode: .metro, name: "1")]
+    )
+    private let far = Station(
+        id: "far",
+        name: "Far",
+        coordinate: Coordinate(latitude: 48.8700, longitude: 2.3500),
+        lines: [TransitLine(mode: .rer, name: "A")]
+    )
+
+    @Test func findsTheClosestStation() {
+        let catalog = StationCatalog(stations: [far, near])
+
+        let nearby = catalog.nearestStation(to: Coordinate(latitude: 48.8610, longitude: 2.3500))
+
+        #expect(nearby?.station == near)
+        #expect(abs((nearby?.distanceMeters ?? 0) - 111) < 1)
+    }
+
+    @Test func findsNoStationBeyondWalkingDistance() {
+        let catalog = StationCatalog(stations: [near, far])
+
+        #expect(catalog.nearestStation(to: Coordinate(latitude: 48.9000, longitude: 2.3500)) == nil)
+    }
+
+    @Test func decodesStationsFromJSON() throws {
+        let json = """
+        [{"id": "IDFM:1", "name": "Nation", "latitude": 48.848, "longitude": 2.396,
+          "lines": [{"mode": "metro", "name": "1", "stopIds": ["IDFM:22080"]},
+                    {"mode": "rer", "name": "A", "stopIds": ["IDFM:473875"]}]}]
+        """
+
+        let catalog = try StationCatalog(jsonData: Data(json.utf8))
+
+        #expect(catalog.stations.first?.name == "Nation")
+        #expect(catalog.stations.first?.lines.map(\.displayName) == ["Metro 1", "RER A"])
+    }
+
+    @Test func rejectsModesOtherThanMetroAndRER() {
+        let json = """
+        [{"id": "IDFM:2", "name": "Jean Rostand", "latitude": 48.9, "longitude": 2.45,
+          "lines": [{"mode": "tram", "name": "T1", "stopIds": []}]}]
+        """
+
+        #expect(throws: DecodingError.self) { try StationCatalog(jsonData: Data(json.utf8)) }
+    }
+}
+
+struct BundledStationCatalogTests {
+    private let catalog: StationCatalog
+
+    init() throws {
+        catalog = try StationCatalog.bundled()
+    }
+
+    @Test func coversEveryMetroAndRERLine() {
+        let lines = Set(catalog.stations.flatMap(\.lines).map(\.displayName))
+        let metroLines = (1...14).map { "Metro \($0)" } + ["Metro 3bis", "Metro 7bis"]
+        let rerLines = ["A", "B", "C", "D", "E"].map { "RER \($0)" }
+
+        #expect(lines == Set(metroLines + rerLines))
+    }
+
+    @Test(arguments: [
+        (48.8585, 2.3474, "Châtelet"),
+        (48.8807, 2.3553, "Gare du Nord"),
+        (48.8920, 2.2380, "La Défense"),
+        (48.8702, 2.7830, "Marne-la-Vallée - Chessy"),
+        (48.7030, 2.0710, "Saint-Rémy-lès-Chevreuse")
+    ])
+    func findsTheNearestStation(latitude: Double, longitude: Double, expectedName: String) {
+        let nearby = catalog.nearestStation(to: Coordinate(latitude: latitude, longitude: longitude))
+
+        #expect(nearby?.station.name == expectedName)
+    }
+
+    @Test func ignoresACloserTramStop() {
+        let jeanRostandTramStop = Coordinate(latitude: 48.9078, longitude: 2.4544)
+
+        let nearby = catalog.nearestStation(to: jeanRostandTramStop)
+
+        #expect(nearby?.station.name != "Jean Rostand")
+    }
+}

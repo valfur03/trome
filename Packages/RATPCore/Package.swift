@@ -12,7 +12,7 @@ let package = Package(
         .library(name: "RATPCore", targets: ["RATPCore"])
     ],
     targets: [
-        .target(name: "RATPCore"),
+        .target(name: "RATPCore", resources: [.copy("Resources/stations.json")]),
         .testTarget(name: "RATPCoreTests", dependencies: ["RATPCore"])
     ]
 )

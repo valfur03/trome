@@ -12,7 +12,7 @@ XCODEBUILD := xcodebuild -quiet \
 	-derivedDataPath $(DERIVED_DATA) \
 	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages
 
-.PHONY: help setup generate project lint lint-fix build test check run e2e simulator simulator-delete clean
+.PHONY: help setup generate project lint lint-fix build test check run e2e stations simulator simulator-delete clean
 
 help:
 	@echo "make setup             Install the tools and create the Xcode project"
@@ -22,6 +22,7 @@ help:
 	@echo "make test              Unit tests only (on the Mac, no Simulator)"
 	@echo "make e2e               End-to-end tests on this folder's Simulator"
 	@echo "make lint-fix          Fix the lint problems that can be fixed automatically"
+	@echo "make stations          Download the metro and RER station list again"
 	@echo "make simulator         Print the ID of this folder's Simulator (creates it if needed)"
 	@echo "make simulator-delete  Delete this folder's Simulator"
 	@echo "make clean             Delete the build folder and the Xcode project"
@@ -62,6 +63,9 @@ run: build
 e2e: project
 	$(XCODEBUILD) -scheme $(E2E_SCHEME) -destination "id=$$($(SIMULATOR) udid)" \
 		-parallel-testing-enabled NO test
+
+stations:
+	python3 scripts/update-stations.py
 
 simulator:
 	@$(SIMULATOR) udid
