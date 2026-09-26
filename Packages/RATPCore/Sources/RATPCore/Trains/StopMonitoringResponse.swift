@@ -69,6 +69,12 @@ private struct MonitoredCall: Decodable {
     let expectedArrivalTime: String?
     let aimedDepartureTime: String?
     let aimedArrivalTime: String?
+    let departureStatus: String?
+    let arrivalStatus: String?
+
+    var isCancelled: Bool {
+        (departureStatus ?? arrivalStatus) == "cancelled"
+    }
 
     var bestTime: Date? {
         [expectedDepartureTime, expectedArrivalTime, aimedDepartureTime, aimedArrivalTime]
@@ -100,7 +106,9 @@ private struct MonitoredStopVisit: Decodable {
     var monitoredVisit: MonitoredVisit? {
         guard let journey = monitoredVehicleJourney,
               let lineRef = journey.lineRef?.value,
-              let time = journey.monitoredCall?.bestTime,
+              let call = journey.monitoredCall,
+              !call.isCancelled,
+              let time = call.bestTime,
               let destinationName = journey.bestDestinationName
         else {
             return nil

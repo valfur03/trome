@@ -40,6 +40,12 @@ struct StopMonitoringResponseTests {
         #expect(visits[2].time == Fixture.date("2026-09-26T10:04:00Z"))
     }
 
+    @Test func skipsCancelledTrains() throws {
+        let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
+
+        #expect(!visits.contains { $0.journeyRef == "RATP-SIV:VehicleJourney::M12.R.1011:LOC" })
+    }
+
     @Test func readsAnEmptyAnswer() throws {
         #expect(try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-empty")).isEmpty)
     }
