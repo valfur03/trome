@@ -1,5 +1,6 @@
 import CoreLocation
 import RATPCore
+import UIKit
 
 @MainActor
 final class CoreLocationProvider: NSObject, LocationProvider {
@@ -12,10 +13,20 @@ final class CoreLocationProvider: NSObject, LocationProvider {
 
     private let manager = CLLocationManager()
     private var authorizationWaiters: [CheckedContinuation<LocationAuthorization, Never>] = []
+    private var backgroundObserver: NSObjectProtocol?
 
     override init() {
         super.init()
         manager.delegate = self
+        backgroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.resumeAuthorizationWaiters()
+            }
+        }
     }
 
     var authorization: LocationAuthorization {
@@ -56,8 +67,12 @@ final class CoreLocationProvider: NSObject, LocationProvider {
     }
 
     private func authorizationDidChange() {
+        guard authorization != .notDetermined else { return }
+        resumeAuthorizationWaiters()
+    }
+
+    private func resumeAuthorizationWaiters() {
         let current = authorization
-        guard current != .notDetermined, !authorizationWaiters.isEmpty else { return }
         let waiters = authorizationWaiters
         authorizationWaiters = []
         waiters.forEach { $0.resume(returning: current) }

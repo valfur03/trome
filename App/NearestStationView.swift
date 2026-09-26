@@ -7,6 +7,11 @@ struct NearestStationView: View {
 
     @Environment(\.openURL) private var openURL
 
+    private var walkingDistance: String {
+        Measurement(value: StationCatalog.walkingDistanceMeters, unit: UnitLength.meters)
+            .formatted(.measurement(width: .abbreviated, usage: .road))
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             switch state {
@@ -32,7 +37,7 @@ struct NearestStationView: View {
                 StationSummary(nearby: nearby)
             case .noStationNearby:
                 message(
-                    "No metro or RER station was found within 2 km of you.",
+                    "No metro or RER station was found within \(walkingDistance) of you.",
                     identifier: "noStationNearbyMessage"
                 )
             case .locationUnavailable:
