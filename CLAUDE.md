@@ -29,10 +29,12 @@ decision-6 (section 10) explains these rules and their sources. Follow them in e
 
 ## Budget for this repo
 
-- The factory runs **at most 2 Software Engineers** in parallel for this repo.
+- The factory runs **at most 3 Software Engineers** in parallel for this repo.
 - **At most one Simulator job** runs at a time on the machine. A lock enforces it (see below).
 
-Why: on 2026-09-26, each worktree booted its own iOS Simulator, and seven Simulators ran at once on the 8-core Mac. The load average went above 600, and the prompter could not work.
+Why one Simulator job: on 2026-09-26, each worktree booted its own iOS Simulator, and seven Simulators ran at once on the 8-core Mac. The load average went above 600, and the prompter could not work.
+
+Why 3 Software Engineers: the cap was 2 after that day. Two checks now protect the Mac, so the prompter set it back to 3 (2026-09-26). The factory starts a new agent only when at least 25% of the CPU is idle. The Simulator lock and the shared Simulator keep the Simulator jobs to one at a time.
 
 ## The shared Simulator
 
@@ -68,7 +70,11 @@ A full `make e2e` keeps the shared Simulator for several minutes. So:
 
 - **The implementer and the reviewers** run only the E2E test classes that cover their change: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests NearestStationTests"` for more than one. The class names are the file names in `ios/UITests/`.
 - **The Software Engineer who merges** runs the full `make e2e` once.
-- **QA** runs no automated tests.
+- **QA** runs no automated tests. It explores the app like a real user.
+
+## Flaky tests
+
+A flaky test (it fails, then passes with no change) is a bug. Rerun a failing test at most once, to know if it is flaky. Then fix the cause in your task if the test covers your code. Otherwise, create a `bug` task with the test name, how often it failed, and the error. Never hide a flaky test with retries or longer timeouts alone: find the cause (a race, a shared state, a missing wait for a condition).
 
 ## When your job ends
 
@@ -105,7 +111,7 @@ All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RA
 
 The README explains the docs site and its commands (section "The docs site").
 
-- **Keep the docs true.** A task that changes a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. For a changed screen, run `make docs-screenshots` and commit the new images. The reviewer checks it.
+- **Keep the docs true.** A task that changes a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. For a changed screen, run `make docs-screenshots` and commit the new images. Run it only when a screen that the docs show changed: a docs text change alone needs no new screenshots. The reviewer checks it.
 - **Node 24.** Each Bash call starts a new shell with the old default Node. Run the docs commands like this: `. "$HOME/.nvm/nvm.sh" && nvm use && make docs-check`. The same goes for `make check` when your task changes `docs/`.
 - **Install `docs/node_modules` only when your task touches the docs.** It takes about 300 MB. `make check` runs `make docs-check` only when your branch changes `docs/`, so the other tasks never install it.
 - **Use your own port.** The default port 4321 is for the prompter. Run `make docs PORT=<n>` or `make docs-dev PORT=<n>` with a port that no other agent uses (for example 4300 plus your task number).
