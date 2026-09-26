@@ -38,12 +38,12 @@ is_stale() {
 describe_holder() {
     worktree=$(holder worktree)
     pid=$(holder pid)
-    if [ -z "$worktree" ]; then
-        echo "an agent that took it by hand"
-    elif [ -n "$pid" ]; then
+    if [ -n "$pid" ]; then
         echo "a job in $worktree (PID $pid)"
-    else
+    elif [ -n "$(holder udid)" ]; then
         echo "the open Simulator of $worktree (run 'make simulator-shutdown' there to free it)"
+    else
+        echo "an agent that took it by hand${worktree:+ ($worktree)}"
     fi
 }
 
