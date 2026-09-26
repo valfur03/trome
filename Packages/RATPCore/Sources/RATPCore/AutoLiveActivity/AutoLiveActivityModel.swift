@@ -295,6 +295,8 @@ private extension AutoLiveActivityModel {
     }
 
     func feedInBackground(_ station: Station) async -> Bool {
+        syncWithSystem()
+        guard liveActivity.isShowing else { return false }
         await feed(station)
         return BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
     }

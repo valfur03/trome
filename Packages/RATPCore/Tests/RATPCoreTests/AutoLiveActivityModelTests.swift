@@ -32,7 +32,7 @@ private final class StubRegionWatcher: StationRegionWatcher {
 }
 
 @MainActor
-private final class StubLocationKeeper: BackgroundLocationKeeper {
+final class StubLocationKeeper: BackgroundLocationKeeper {
     private(set) var isKeeping = false
 
     func begin() {
@@ -53,7 +53,7 @@ private final class StubLocationPermission: LocationPermission {
     }
 }
 
-private final class TestClock: Sendable {
+final class TestClock: Sendable {
     static let refreshInterval: Duration = .seconds(30)
     private let date = Mutex(Date(timeIntervalSince1970: 1_000_000))
     private let firingLimit = Mutex<TimeInterval>(0)
@@ -83,18 +83,18 @@ private final class TestClock: Sendable {
 
 @MainActor
 struct AutoLiveActivityModelTests {
-    private typealias Places = AutoTestPlaces
+    typealias Places = AutoTestPlaces
     private let gps = ControlledLocationProvider()
-    private let client = StubStationLiveActivityClient()
+    let client = StubStationLiveActivityClient()
     private let notifier = StubArrivalNotifier()
     private let watcher = StubRegionWatcher()
-    private let keeper = StubLocationKeeper()
+    let keeper = StubLocationKeeper()
     private let permission = StubLocationPermission()
-    private let provider = StubDeparturesProvider()
+    let provider = StubDeparturesProvider()
     private let storage = InMemoryKeyValueStore()
-    private let clock = TestClock()
+    let clock = TestClock()
     private let locationService: LocationService
-    private let screenTrains: NextTrainsModel
+    let screenTrains: NextTrainsModel
 
     init() {
         locationService = LocationService(
@@ -109,7 +109,7 @@ struct AutoLiveActivityModelTests {
         )
     }
 
-    private func makeModel() -> AutoLiveActivityModel {
+    func makeModel() -> AutoLiveActivityModel {
         let model = makeModel(locationService: locationService, keeper: keeper)
         locationService.start()
         return model
@@ -133,13 +133,13 @@ struct AutoLiveActivityModelTests {
         )
     }
 
-    private func waitUntil(_ condition: () -> Bool) async {
+    func waitUntil(_ condition: () -> Bool) async {
         for _ in 0..<1_000 where !condition() {
             try? await Task.sleep(for: .milliseconds(1))
         }
     }
 
-    private func arrive(at position: Coordinate, in model: AutoLiveActivityModel) async {
+    func arrive(at position: Coordinate, in model: AutoLiveActivityModel) async {
         await model.setAppActive(true)
         gps.report(position)
         await waitUntil { client.isShowing }
@@ -283,19 +283,6 @@ struct AutoLiveActivityModelTests {
         withExtendedLifetime(model) {}
     }
 
-    @Test func feedsTheLiveActivityAgainWhenRelaunchedWhileItShows() async {
-        let model = makeModel()
-        await arrive(at: Places.fiftyMetersFromA, in: model)
-        await waitUntil { !client.updates.isEmpty }
-        let callCount = provider.callCount
-
-        let relaunched = makeModel()
-        await waitUntil { provider.callCount > callCount }
-
-        #expect(provider.callCount > callCount)
-        withExtendedLifetime((model, relaunched)) {}
-    }
-
     @Test func asksForNotificationsOnceLocationIsAllowed() async {
         permission.authorization = .notDetermined
         let model = makeModel()
@@ -307,55 +294,6 @@ struct AutoLiveActivityModelTests {
         await model.setAppActive(true)
 
         #expect(notifier.authorizationRequestCount == 1)
-    }
-
-    @Test func feedsTheLiveActivityWithTheTrainsOfItsOwnStation() async {
-        provider.answer(.failure(.unreachable), for: Places.stationA)
-        let model = makeModel()
-
-        await arrive(at: Places.fiftyMetersFromA, in: model)
-        await waitUntil { client.updates.contains { $0.trains == .noData } }
-
-        #expect(client.updates.last?.stationName == "Station A")
-        #expect(client.updates.last?.trains == .noData)
-    }
-
-    @Test func feedsTheLiveActivityItselfOnceTheScreenStopsUpdatingItsStation() async {
-        let model = makeModel()
-        let screen = Task { await screenTrains.keepUpdated(for: Places.stationA) }
-        await waitUntil { provider.callCount == 1 }
-        await arrive(at: Places.fiftyMetersFromA, in: model)
-        #expect(provider.callCount == 1)
-
-        screen.cancel()
-        await waitUntil { provider.callCount == 2 }
-
-        #expect(provider.callCount == 2)
-    }
-
-    @Test func keepsFeedingTheLiveActivityWhileTheAppIsInTheBackground() async {
-        let model = makeModel()
-        await arrive(at: Places.fiftyMetersFromA, in: model)
-        await model.setAppActive(false)
-        let callCount = provider.callCount
-
-        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
-        await waitUntil { provider.callCount >= callCount + 2 }
-
-        #expect(provider.callCount >= callCount + 2)
-        #expect(client.isShowing)
-    }
-
-    @Test func stopsAskingInTheBackgroundOnceTheQuotaIsExceeded() async {
-        provider.answer(.failure(.quotaExceeded), for: Places.stationA)
-        let model = makeModel()
-        await arrive(at: Places.fiftyMetersFromA, in: model)
-        await model.setAppActive(false)
-
-        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
-        await waitUntil { provider.callCount > 2 }
-
-        #expect(provider.callCount == 2)
     }
 
     @Test func watchesTheStationsAroundTheRealPosition() async {
