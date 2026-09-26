@@ -60,7 +60,8 @@ run: build
 
 e2e: project
 	$(SIM_LOCK) job $(XCODEBUILD) -scheme $(E2E_SCHEME) -destination "id=$$($(SIMULATOR) udid)" \
-		-parallel-testing-enabled NO test
+		-parallel-testing-enabled NO -collect-test-diagnostics never \
+		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 test
 
 stations:
 	python3 scripts/update-stations.py

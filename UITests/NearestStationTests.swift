@@ -2,6 +2,11 @@ import CoreLocation
 import XCTest
 
 final class NearestStationTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+    }
+
     @MainActor
     func testShowsTheNearestStationOnceLocationIsAllowed() {
         let app = XCUIApplication.withRealGPS()
@@ -12,7 +17,7 @@ final class NearestStationTests: XCTestCase {
         allowLocationAccess()
 
         let stationName = app.staticTexts["nearestStationName"]
-        XCTAssertTrue(stationName.waitForExistence(timeout: 30))
+        XCTAssertTrue(stationName.waitForExistence(timeout: UITestTimeout.element))
         XCTAssertEqual(stationName.label, "Châtelet")
         XCTAssertTrue(app.staticTexts["nearestStationLines"].label.contains("Metro 14"))
     }
