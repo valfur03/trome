@@ -3,14 +3,7 @@ import RATPCore
 import UIKit
 
 @MainActor
-final class CoreLocationProvider: NSObject, LocationProvider {
-    enum Failure: Error {
-        case timedOut
-        case noPosition
-    }
-
-    private static let positionTimeout: Duration = .seconds(20)
-
+final class CoreLocationPermission: NSObject, LocationPermission {
     private let manager = CLLocationManager()
     private var authorizationWaiters: [CheckedContinuation<LocationAuthorization, Never>] = []
     private var backgroundObserver: NSObjectProtocol?
@@ -43,29 +36,6 @@ final class CoreLocationProvider: NSObject, LocationProvider {
         }
     }
 
-    func currentCoordinate() async throws -> Coordinate {
-        try await withThrowingTaskGroup(of: Coordinate.self) { group in
-            group.addTask {
-                for try await update in CLLocationUpdate.liveUpdates() {
-                    if let location = update.location {
-                        return Coordinate(
-                            latitude: location.coordinate.latitude,
-                            longitude: location.coordinate.longitude
-                        )
-                    }
-                }
-                throw Failure.noPosition
-            }
-            group.addTask {
-                try await Task.sleep(for: Self.positionTimeout)
-                throw Failure.timedOut
-            }
-            defer { group.cancelAll() }
-            guard let coordinate = try await group.next() else { throw Failure.noPosition }
-            return coordinate
-        }
-    }
-
     private func authorizationDidChange() {
         guard authorization != .notDetermined else { return }
         resumeAuthorizationWaiters()
@@ -88,7 +58,7 @@ final class CoreLocationProvider: NSObject, LocationProvider {
     }
 }
 
-extension CoreLocationProvider: CLLocationManagerDelegate {
+extension CoreLocationPermission: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         MainActor.assumeIsolated {
             authorizationDidChange()

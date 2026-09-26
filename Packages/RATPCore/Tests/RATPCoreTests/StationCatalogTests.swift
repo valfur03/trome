@@ -6,20 +6,20 @@ struct StationCatalogTests {
     private let near = Station(
         id: "near",
         name: "Near",
-        coordinate: Coordinate(latitude: 48.8600, longitude: 2.3500),
+        coordinate: Coordinate(48.8600, 2.3500),
         lines: [TransitLine(mode: .metro, name: "1")]
     )
     private let far = Station(
         id: "far",
         name: "Far",
-        coordinate: Coordinate(latitude: 48.8700, longitude: 2.3500),
+        coordinate: Coordinate(48.8700, 2.3500),
         lines: [TransitLine(mode: .rer, name: "A")]
     )
 
     @Test func findsTheClosestStation() {
         let catalog = StationCatalog(stations: [far, near])
 
-        let nearby = catalog.nearestStation(to: Coordinate(latitude: 48.8610, longitude: 2.3500))
+        let nearby = catalog.nearestStation(to: Coordinate(48.8610, 2.3500))
 
         #expect(nearby?.station == near)
         #expect(abs((nearby?.distanceMeters ?? 0) - 111) < 1)
@@ -28,7 +28,7 @@ struct StationCatalogTests {
     @Test func findsNoStationBeyondWalkingDistance() {
         let catalog = StationCatalog(stations: [near, far])
 
-        #expect(catalog.nearestStation(to: Coordinate(latitude: 48.9000, longitude: 2.3500)) == nil)
+        #expect(catalog.nearestStation(to: Coordinate(48.9000, 2.3500)) == nil)
     }
 
     @Test func decodesStationsFromJSON() throws {
@@ -77,13 +77,13 @@ struct BundledStationCatalogTests {
         (48.7030, 2.0710, "Saint-Rémy-lès-Chevreuse")
     ])
     func findsTheNearestStation(latitude: Double, longitude: Double, expectedName: String) {
-        let nearby = catalog.nearestStation(to: Coordinate(latitude: latitude, longitude: longitude))
+        let nearby = catalog.nearestStation(to: Coordinate(latitude, longitude))
 
         #expect(nearby?.station.name == expectedName)
     }
 
     @Test func ignoresACloserTramStop() {
-        let jeanRostandTramStop = Coordinate(latitude: 48.9078, longitude: 2.4544)
+        let jeanRostandTramStop = Coordinate(48.9078, 2.4544)
 
         let nearby = catalog.nearestStation(to: jeanRostandTramStop)
 

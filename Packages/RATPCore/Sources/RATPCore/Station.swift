@@ -40,7 +40,7 @@ public struct Station: Codable, Hashable, Identifiable, Sendable {
     }
 
     public var coordinate: Coordinate {
-        Coordinate(latitude: latitude, longitude: longitude)
+        Coordinate(latitude, longitude)
     }
 }
 

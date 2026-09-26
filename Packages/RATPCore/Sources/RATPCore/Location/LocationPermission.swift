@@ -1,5 +1,3 @@
-import Foundation
-
 public enum LocationAuthorization: Sendable {
     case notDetermined
     case denied
@@ -7,8 +5,7 @@ public enum LocationAuthorization: Sendable {
 }
 
 @MainActor
-public protocol LocationProvider: AnyObject {
+public protocol LocationPermission: AnyObject {
     var authorization: LocationAuthorization { get }
     func requestAuthorization() async -> LocationAuthorization
-    func currentCoordinate() async throws -> Coordinate
 }

@@ -20,13 +20,24 @@ public enum NearestStationState: Equatable, Sendable {
 public final class NearestStationModel {
     public private(set) var state: NearestStationState = .idle
 
-    private let locationProvider: any LocationProvider
+    private let permission: any LocationPermission
+    private let locationService: LocationService
     private let catalog: StationCatalog
+    private let positionTimeout: Duration
     private var isRefreshing = false
+    private var isFollowingPosition = false
+    private var positionTimeoutTask: Task<Void, Never>?
 
-    public init(locationProvider: any LocationProvider, catalog: StationCatalog) {
-        self.locationProvider = locationProvider
+    public init(
+        permission: any LocationPermission,
+        locationService: LocationService,
+        catalog: StationCatalog,
+        positionTimeout: Duration = .seconds(20)
+    ) {
+        self.permission = permission
+        self.locationService = locationService
         self.catalog = catalog
+        self.positionTimeout = positionTimeout
     }
 
     public func refresh() async {
@@ -34,9 +45,9 @@ public final class NearestStationModel {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        var authorization = locationProvider.authorization
+        var authorization = permission.authorization
         if authorization == .notDetermined {
-            authorization = await locationProvider.requestAuthorization()
+            authorization = await permission.requestAuthorization()
         }
 
         switch authorization {
@@ -45,23 +56,62 @@ public final class NearestStationModel {
         case .denied:
             state = .permissionDenied
         case .authorized:
-            await locateNearestStation()
+            locationService.start()
+            followPosition()
+            showNearestStation()
         }
     }
 
-    private func locateNearestStation() async {
-        if !state.isFound {
-            state = .locating
-        }
-        do {
-            let coordinate = try await locationProvider.currentCoordinate()
-            if let nearby = catalog.nearestStation(to: coordinate) {
-                state = .found(nearby)
-            } else {
-                state = .noStationNearby
+    private func followPosition() {
+        guard !isFollowingPosition else { return }
+        isFollowingPosition = true
+        observePosition()
+    }
+
+    private func observePosition() {
+        withObservationTracking {
+            _ = locationService.position
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                self?.positionDidChange()
             }
-        } catch {
-            state = .locationUnavailable
         }
+    }
+
+    private func positionDidChange() {
+        observePosition()
+        guard permission.authorization == .authorized else { return }
+        showNearestStation()
+    }
+
+    private func showNearestStation() {
+        guard let position = locationService.position else {
+            waitForPosition()
+            return
+        }
+        positionTimeoutTask?.cancel()
+        positionTimeoutTask = nil
+        if let nearby = catalog.nearestStation(to: position) {
+            state = .found(nearby)
+        } else {
+            state = .noStationNearby
+        }
+    }
+
+    private func waitForPosition() {
+        guard !state.isFound else { return }
+        state = .locating
+        guard positionTimeoutTask == nil else { return }
+        positionTimeoutTask = Task { [weak self, positionTimeout] in
+            try? await Task.sleep(for: positionTimeout)
+            guard !Task.isCancelled else { return }
+            self?.positionDidTimeOut()
+        }
+    }
+
+    private func positionDidTimeOut() {
+        positionTimeoutTask = nil
+        guard state == .locating, locationService.position == nil else { return }
+        state = .locationUnavailable
     }
 }

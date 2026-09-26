@@ -2,22 +2,14 @@ import Testing
 @testable import RATPCore
 
 @MainActor
-private final class MockLocationProvider: LocationProvider {
-    struct Failure: Error {}
-
+private final class MockLocationPermission: LocationPermission {
     var authorization: LocationAuthorization
     var answerToRequest: LocationAuthorization
-    var coordinate: Coordinate?
     private(set) var requestCount = 0
 
-    init(
-        authorization: LocationAuthorization,
-        answerToRequest: LocationAuthorization = .authorized,
-        coordinate: Coordinate? = nil
-    ) {
+    init(authorization: LocationAuthorization, answerToRequest: LocationAuthorization = .authorized) {
         self.authorization = authorization
         self.answerToRequest = answerToRequest
-        self.coordinate = coordinate
     }
 
     func requestAuthorization() async -> LocationAuthorization {
@@ -25,72 +17,87 @@ private final class MockLocationProvider: LocationProvider {
         authorization = answerToRequest
         return answerToRequest
     }
-
-    func currentCoordinate() async throws -> Coordinate {
-        guard let coordinate else { throw Failure() }
-        return coordinate
-    }
 }
 
 @MainActor
 struct NearestStationModelTests {
+    private let gps = ControlledLocationProvider()
     private let nation = Station(
         id: "nation",
         name: "Nation",
-        coordinate: Coordinate(latitude: 48.8483, longitude: 2.3960),
+        coordinate: Coordinate(48.8483, 2.3960),
         lines: [TransitLine(mode: .metro, name: "1"), TransitLine(mode: .rer, name: "A")]
     )
-    private let nearNation = Coordinate(latitude: 48.8490, longitude: 2.3960)
-    private let farFromNation = Coordinate(latitude: 48.9500, longitude: 2.3960)
+    private let nearNation = Coordinate(48.8490, 2.3960)
+    private let farFromNation = Coordinate(48.9500, 2.3960)
 
-    private func makeModel(_ provider: MockLocationProvider) -> NearestStationModel {
-        NearestStationModel(locationProvider: provider, catalog: StationCatalog(stations: [nation]))
+    private func makeModel(
+        _ permission: MockLocationPermission,
+        locationService: LocationService? = nil
+    ) -> NearestStationModel {
+        NearestStationModel(
+            permission: permission,
+            locationService: locationService ?? LocationService(realProvider: gps, sourceStore: nil),
+            catalog: StationCatalog(stations: [nation]),
+            positionTimeout: .milliseconds(50)
+        )
+    }
+
+    private func foundNation(from position: Coordinate) -> NearestStationState {
+        .found(NearbyStation(station: nation, distanceMeters: position.distance(to: nation.coordinate)))
+    }
+
+    private func waitForState(_ expected: NearestStationState, in model: NearestStationModel) async {
+        for _ in 0..<1_000 where model.state != expected {
+            try? await Task.sleep(for: .milliseconds(1))
+        }
     }
 
     @Test func asksForPermissionTheFirstTimeThenFindsTheStation() async {
-        let provider = MockLocationProvider(authorization: .notDetermined, coordinate: nearNation)
-        let model = makeModel(provider)
+        let permission = MockLocationPermission(authorization: .notDetermined)
+        let model = makeModel(permission)
 
         await model.refresh()
+        gps.report(nearNation)
+        await waitForState(foundNation(from: nearNation), in: model)
 
-        #expect(provider.requestCount == 1)
-        let distance = nearNation.distance(to: nation.coordinate)
-        #expect(model.state == .found(NearbyStation(station: nation, distanceMeters: distance)))
+        #expect(permission.requestCount == 1)
+        #expect(model.state == foundNation(from: nearNation))
     }
 
     @Test func doesNotAskAgainOncePermissionIsGranted() async {
-        let provider = MockLocationProvider(authorization: .authorized, coordinate: nearNation)
-        let model = makeModel(provider)
+        let permission = MockLocationPermission(authorization: .authorized)
+        let model = makeModel(permission)
 
         await model.refresh()
 
-        #expect(provider.requestCount == 0)
+        #expect(permission.requestCount == 0)
     }
 
     @Test func asksAgainNextTimeWhenTheUserHasNotDecided() async {
-        let provider = MockLocationProvider(authorization: .notDetermined, answerToRequest: .notDetermined)
-        let model = makeModel(provider)
+        let permission = MockLocationPermission(authorization: .notDetermined, answerToRequest: .notDetermined)
+        let model = makeModel(permission)
 
         await model.refresh()
         #expect(model.state == .permissionUndecided)
 
         await model.refresh()
-        #expect(provider.requestCount == 2)
+        #expect(permission.requestCount == 2)
     }
 
     @Test func reportsADeniedPermissionWithoutAskingAgain() async {
-        let provider = MockLocationProvider(authorization: .denied)
-        let model = makeModel(provider)
+        let permission = MockLocationPermission(authorization: .denied)
+        let model = makeModel(permission)
 
         await model.refresh()
 
         #expect(model.state == .permissionDenied)
-        #expect(provider.requestCount == 0)
+        #expect(permission.requestCount == 0)
     }
 
     @Test func reportsAPermissionDeniedAtTheRequest() async {
-        let provider = MockLocationProvider(authorization: .notDetermined, answerToRequest: .denied)
-        let model = makeModel(provider)
+        let permission = MockLocationPermission(authorization: .notDetermined, answerToRequest: .denied)
+        let model = makeModel(permission)
 
         await model.refresh()
 
@@ -98,31 +105,64 @@ struct NearestStationModelTests {
     }
 
     @Test func reportsWhenNoStationIsWithinWalkingDistance() async {
-        let provider = MockLocationProvider(authorization: .authorized, coordinate: farFromNation)
-        let model = makeModel(provider)
+        let model = makeModel(MockLocationPermission(authorization: .authorized))
 
         await model.refresh()
+        gps.report(farFromNation)
+        await waitForState(.noStationNearby, in: model)
 
         #expect(model.state == .noStationNearby)
     }
 
     @Test func reportsWhenThePositionIsUnavailable() async {
-        let provider = MockLocationProvider(authorization: .authorized, coordinate: nil)
-        let model = makeModel(provider)
+        let model = makeModel(MockLocationPermission(authorization: .authorized))
 
         await model.refresh()
+        #expect(model.state == .locating)
 
+        await waitForState(.locationUnavailable, in: model)
         #expect(model.state == .locationUnavailable)
     }
 
-    @Test func followsTheNewPositionOnTheNextRefresh() async {
-        let provider = MockLocationProvider(authorization: .authorized, coordinate: nearNation)
-        let model = makeModel(provider)
+    @Test func followsTheNewPosition() async {
+        let model = makeModel(MockLocationPermission(authorization: .authorized))
         await model.refresh()
+        gps.report(nearNation)
+        await waitForState(foundNation(from: nearNation), in: model)
 
-        provider.coordinate = farFromNation
-        await model.refresh()
+        gps.report(farFromNation)
+        await waitForState(.noStationNearby, in: model)
 
         #expect(model.state == .noStationNearby)
+    }
+
+    @Test func usesTheFakePosition() async {
+        let locationService = LocationService(
+            realProvider: gps,
+            sourceStore: LocationSourceStore(storage: InMemoryKeyValueStore())
+        )
+        locationService.use(.fake(FakePosition(name: "Near Nation", coordinate: nearNation)))
+        let model = makeModel(MockLocationPermission(authorization: .authorized), locationService: locationService)
+
+        await model.refresh()
+        gps.report(farFromNation)
+        await waitForState(foundNation(from: nearNation), in: model)
+
+        #expect(model.state == foundNation(from: nearNation))
+    }
+
+    @Test func ignoresNewPositionsOncePermissionIsTurnedOff() async {
+        let permission = MockLocationPermission(authorization: .authorized)
+        let model = makeModel(permission)
+        await model.refresh()
+        gps.report(nearNation)
+        await waitForState(foundNation(from: nearNation), in: model)
+
+        permission.authorization = .denied
+        await model.refresh()
+        gps.report(farFromNation)
+        try? await Task.sleep(for: .milliseconds(20))
+
+        #expect(model.state == .permissionDenied)
     }
 }

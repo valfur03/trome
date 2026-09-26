@@ -5,9 +5,9 @@ final class FakePositionTests: XCTestCase {
     func testTesterCanFakeThePositionAndGoBackToTheRealGPS() {
         let app = XCUIApplication()
         app.launch()
+        allowLocationAccessIfAsked()
 
         app.buttons["testingTools"].tap()
-        allowLocationAccessIfAsked()
 
         app.buttons["pickStation"].tap()
         app.buttons["station-Châtelet"].tap()
@@ -25,6 +25,9 @@ final class FakePositionTests: XCTestCase {
 
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.staticTexts["fakePositionBanner"].waitForExistence(timeout: 5))
+        let stationName = app.staticTexts["nearestStationName"]
+        XCTAssertTrue(stationName.waitForExistence(timeout: 5))
+        XCTAssertEqual(stationName.label, "Champ de Mars Tour Eiffel")
 
         app.buttons["testingTools"].tap()
         app.buttons["useRealGPS"].tap()
