@@ -47,6 +47,7 @@ public final class AutoLiveActivityModel {
         stateDidChange(from: AutoLiveActivityState())
         observePosition()
         observePickedStation()
+        followPositionIfShowing()
     }
 
     deinit {
@@ -115,6 +116,13 @@ public final class AutoLiveActivityModel {
         observePosition()
         guard let position = inputs.locationService.position else { return }
         Task { await handle(position) }
+    }
+
+    private func followPositionIfShowing() {
+        guard state.shown != nil else { return }
+        services.locationKeeper.begin()
+        guard inputs.permission.authorization == .authorized else { return }
+        inputs.locationService.start()
     }
 
     private func observePickedStation() {

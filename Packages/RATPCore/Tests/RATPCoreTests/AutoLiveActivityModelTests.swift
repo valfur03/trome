@@ -107,10 +107,16 @@ struct AutoLiveActivityModelTests {
     }
 
     private func makeModel() -> AutoLiveActivityModel {
+        let model = makeModel(locationService: locationService, keeper: keeper)
+        locationService.start()
+        return model
+    }
+
+    private func makeModel(locationService: LocationService, keeper: StubLocationKeeper) -> AutoLiveActivityModel {
         let clock = clock
         let now: @Sendable () -> Date = { clock.now }
         let sleep: @Sendable (Duration) async throws -> Void = { try await clock.sleep(for: $0) }
-        let model = AutoLiveActivityModel(
+        return AutoLiveActivityModel(
             catalog: Places.catalog,
             liveActivity: StationLiveActivityModel(client: client, now: now),
             inputs: .init(
@@ -123,8 +129,6 @@ struct AutoLiveActivityModelTests {
             services: .init(notifier: notifier, regionWatcher: watcher, locationKeeper: keeper),
             configuration: .init(store: AutoLiveActivityStore(storage: storage), now: now, sleep: sleep)
         )
-        locationService.start()
-        return model
     }
 
     private func waitUntil(_ condition: () -> Bool) async {
@@ -252,6 +256,29 @@ struct AutoLiveActivityModelTests {
         let relaunched = makeModel()
 
         #expect(relaunched.shownStation == Places.stationA)
+    }
+
+    @Test func followsThePositionAgainWhenRelaunchedWhileTheLiveActivityShows() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        let relaunchedGPS = ControlledLocationProvider()
+        let relaunchedKeeper = StubLocationKeeper()
+
+        let relaunched = makeModel(
+            locationService: LocationService(
+                realProvider: relaunchedGPS,
+                sourceStore: LocationSourceStore(storage: InMemoryKeyValueStore())
+            ),
+            keeper: relaunchedKeeper
+        )
+        #expect(relaunchedKeeper.isKeeping)
+        relaunchedGPS.report(Places.fourHundredMetersFromA)
+        await waitUntil { client.endCount == 1 }
+
+        #expect(client.endCount == 1)
+        #expect(relaunched.shownStation == nil)
+        #expect(relaunchedKeeper.isKeeping == false)
+        withExtendedLifetime(model) {}
     }
 
     @Test func asksForNotificationsOnceLocationIsAllowed() async {
