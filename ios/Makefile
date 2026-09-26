@@ -21,7 +21,7 @@ SHARED_CACHE ?= $(HOME)/Library/Caches/RATPActivity
 HOST_ARCH := $(shell uname -m)
 
 ifeq ($(SMALL),1)
-ifneq ($(filter-out build run,$(MAKECMDGOALS)),)
+ifneq ($(filter-out run,$(MAKECMDGOALS)),)
 $(error SMALL=1 works only with 'make run')
 endif
 export RATP_SIM_SIZE := small
