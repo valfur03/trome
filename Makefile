@@ -4,6 +4,7 @@ E2E_SCHEME := RATPActivityE2E
 BUILD_DIR := .build
 DERIVED_DATA := $(BUILD_DIR)/DerivedData
 APP_PATH := $(DERIVED_DATA)/Build/Products/Debug-iphonesimulator/RATPActivity.app
+E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 CORE_PACKAGE := Packages/RATPCore
@@ -59,9 +60,12 @@ run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
 
 e2e: project
+	@rm -rf $(E2E_RESULT)
 	$(SIM_LOCK) job $(XCODEBUILD) -scheme $(E2E_SCHEME) -destination "id=$$($(SIMULATOR) udid)" \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
-		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 test
+		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
+		-resultBundlePath $(E2E_RESULT) test \
+		|| { status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); exit $$status; }
 
 stations:
 	python3 scripts/update-stations.py
