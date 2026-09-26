@@ -40,6 +40,6 @@ case "$command" in
         echo "$udid"
         ;;
     bootstatus) set_state "$1" Booted ;;
-    shutdown) set_state "$1" Shutdown ;;
+    shutdown) [ -z "${FAKE_SHUTDOWN_FAILS:-}" ] || exit 1; set_state "$1" Shutdown ;;
     delete) rm "$state/device.$1" ;;
 esac

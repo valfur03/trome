@@ -186,11 +186,11 @@ case "$command" in
     open)
         [ $# -gt 0 ] || usage
         if owns_session; then
-            "$@"
-            "$simulator" udid > "$lock/udid"
-            exit
+            echo "$$" > "$lock/pid"
+            start_watcher
+        else
+            acquire
         fi
-        acquire
         trap on_exit_if_failed EXIT
         "$@"
         "$simulator" udid > "$lock/udid"

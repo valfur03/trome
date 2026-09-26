@@ -50,8 +50,11 @@ expect "make run SMALL=1 shuts down RATP-Shared and boots only the small Simulat
 expect "the small Simulator is an iPhone SE" "$(cat "$state/type.$small")" "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation"
 expect "the lock keeps the small Simulator" "$(cat "$RATP_SIM_LOCK/udid")" "$small"
 
-"$scripts/sim-lock.sh" open "$scripts/simulator.sh" boot > /dev/null
+"$scripts/sim-lock.sh" open sh -c '"$1" boot && kill -0 "$(cat "$RATP_SIM_LOCK/pid")" && echo held > "$FAKE_SIM_STATE/switch"' \
+    sh "$scripts/simulator.sh" > /dev/null
 expect "make run after make run SMALL=1 in the same folder boots only RATP-Shared" "$(booted)" "RATP-Shared "
+expect "a live job holds the lock while the session switches Simulator" "$(cat "$state/switch" 2> /dev/null || true)" "held"
+expect "the session keeps the lock with no job after the switch" "$(test -e "$RATP_SIM_LOCK/pid" && echo job || true)" ""
 expect "the lock follows the Simulator of the session" "$(cat "$RATP_SIM_LOCK/udid")" "$default"
 
 small_open
@@ -66,7 +69,12 @@ echo "RATP-Shared-Small Booted" > "$state/device.$small"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null
 expect "a job shuts down a small Simulator left booted" "$(booted)" "RATP-Shared "
 
+echo "RATP-Shared Shutdown" > "$state/device.$default"
 echo "RATP-Shared-Small Booted" > "$state/device.$small"
+FAKE_SHUTDOWN_FAILS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null 2>&1 || true
+expect "a job does not boot RATP-Shared when it cannot shut down the small Simulator" "$(booted)" "RATP-Shared-Small "
+expect "a failed job frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
+
 touch -t 202001010000 "$RATP_SIM_LOCK.last"
 RATP_SIM_IDLE_MINUTES=1 "$scripts/sim-lock.sh" watch
 pretend_a_watcher_runs

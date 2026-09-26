@@ -46,9 +46,11 @@ booted_shared_udids() {
 }
 
 shut_down_other_shared() {
-    for other in $(booted_shared_udids); do
-        if [ "$other" != "$1" ]; then
-            xcrun simctl shutdown "$other" 2> /dev/null || true
+    others=$(booted_shared_udids) || return 1
+    for other in $others; do
+        if [ "$other" != "$1" ] && ! xcrun simctl shutdown "$other" 2> /dev/null && is_booted "$other"; then
+            echo "Could not shut down the other shared Simulator ($other), so this job does not boot a second one" >&2
+            return 1
         fi
     done
 }
@@ -75,7 +77,7 @@ device_udid() {
 
 boot_device() {
     udid=$(device_udid)
-    shut_down_other_shared "$udid"
+    shut_down_other_shared "$udid" || exit 1
     xcrun simctl bootstatus "$udid" -b > /dev/null
     echo "$udid"
 }
