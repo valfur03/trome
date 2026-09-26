@@ -10,6 +10,10 @@ final class FakePositionTests: XCTestCase {
         app.buttons["testingTools"].tap()
 
         app.buttons["pickStation"].tap()
+        let searchField = app.searchFields.firstMatch
+        XCTAssertTrue(searchField.waitForExistence(timeout: 5))
+        searchField.tap()
+        searchField.typeText("Chatelet")
         app.buttons["station-Châtelet"].tap()
         XCTAssertTrue(app.staticTexts["Fake: Châtelet"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["48.85856, 2.34743"].waitForExistence(timeout: 5))
