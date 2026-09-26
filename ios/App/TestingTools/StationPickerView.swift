@@ -9,7 +9,7 @@ struct StationPickerView: View {
     @State private var searchText = ""
 
     var body: some View {
-        List(filteredStations) { station in
+        List(stationCatalog.stations(matching: searchText)) { station in
             Button {
                 locationService.use(.fake(station.fakePosition))
                 dismiss()
@@ -32,14 +32,6 @@ struct StationPickerView: View {
         }
         .searchable(text: $searchText)
         .navigationTitle("Pick a station")
-    }
-
-    private var filteredStations: [Station] {
-        let stations = stationCatalog.stations.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-        guard !searchText.isEmpty else {
-            return stations
-        }
-        return stations.filter { $0.name.localizedStandardContains(searchText) }
     }
 }
 #endif

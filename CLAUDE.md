@@ -68,7 +68,7 @@ The lock frees itself when its job dies, when its worktree is removed, or when t
 
 A full `make e2e` keeps the shared Simulator for several minutes. So:
 
-- **The implementer and the reviewers** run only the E2E test classes that cover their change: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests NearestStationTests"` for more than one. The class names are the file names in `ios/UITests/`.
+- **The implementer and the reviewers** run only the E2E test classes that cover their change: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests LiveActivityTests"` for more than one. The class names are the file names in `ios/UITests/`.
 - **The Software Engineer who merges** runs the full `make e2e` once.
 - **QA** runs no automated tests. It explores the app like a real user.
 

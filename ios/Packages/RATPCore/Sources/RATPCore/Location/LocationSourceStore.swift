@@ -9,6 +9,7 @@ extension UserDefaults: KeyValueStore {}
 
 public struct LocationSourceStore {
     public static let key = "testingTools.locationSource"
+    public static let resetArgument = "--reset-location-source"
 
     private let storage: any KeyValueStore
 
@@ -26,5 +27,11 @@ public struct LocationSourceStore {
 
     public func save(_ source: LocationSource) {
         storage.set(try? JSONEncoder().encode(source), forKey: Self.key)
+    }
+
+    public func resetIfAsked(by launchArguments: [String]) {
+        if launchArguments.contains(Self.resetArgument) {
+            save(.realGPS)
+        }
     }
 }

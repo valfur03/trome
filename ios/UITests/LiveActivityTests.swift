@@ -5,9 +5,11 @@ final class LiveActivityTests: E2ETestCase {
     private static let nearEiffelTower = CLLocation(latitude: 48.8584, longitude: 2.2945)
 
     @MainActor
-    func testUserCanShowTheLiveActivityOfTheNearestStationAndStopIt() {
+    func testUserAllowsLocationThenShowsTheLiveActivityOfTheNearestStationAndStopsIt() {
         let app = makeApp()
-        launch(app)
+        app.resetAuthorizationStatus(for: .location)
+        app.launch()
+        answerPermissionPrompts(in: app)
         XCTAssertFalse(app.buttons["chooseStation"].exists)
         XCTAssertFalse(app.buttons["changeStation"].exists)
         XCTAssertFalse(app.descendants(matching: .any)["departureRow"].exists)

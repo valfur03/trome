@@ -44,4 +44,22 @@ struct LocationSourceStoreTests {
 
         #expect(LocationSourceStore(storage: storage).load() == .realGPS)
     }
+
+    @Test func goesBackToTheRealGPSWhenTheLaunchAsksForAReset() {
+        let store = LocationSourceStore(storage: InMemoryKeyValueStore())
+        store.save(.fake(chatelet))
+
+        store.resetIfAsked(by: ["RATPActivity", LocationSourceStore.resetArgument])
+
+        #expect(store.load() == .realGPS)
+    }
+
+    @Test func keepsTheFakePositionWhenTheLaunchAsksForNoReset() {
+        let store = LocationSourceStore(storage: InMemoryKeyValueStore())
+        store.save(.fake(chatelet))
+
+        store.resetIfAsked(by: ["RATPActivity"])
+
+        #expect(store.load() == .fake(chatelet))
+    }
 }

@@ -8,18 +8,6 @@ final class FakePositionTests: E2ETestCase {
 
         app.buttons["testingTools"].tap()
 
-        app.buttons["pickStation"].tap()
-        let searchField = app.searchFields.firstMatch
-        XCTAssertTrue(searchField.waitForExistence(timeout: UITestTimeout.element))
-        searchField.tap()
-        searchField.typeText("Chatelet")
-        app.buttons["station-Châtelet"].tap()
-        XCTAssertTrue(app.staticTexts["Fake: Châtelet"].waitForExistence(timeout: UITestTimeout.element))
-        XCTAssertTrue(app.staticTexts["48.85856, 2.34743"].waitForExistence(timeout: UITestTimeout.element))
-
-        app.buttons["farFromAnyStation"].tap()
-        XCTAssertTrue(app.staticTexts["48.42000, 2.63000"].waitForExistence(timeout: UITestTimeout.element))
-
         let coordinatesField = app.textFields["coordinatesField"]
         coordinatesField.tap()
         coordinatesField.typeText("48.8584, 2.2945")

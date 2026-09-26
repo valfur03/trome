@@ -106,6 +106,7 @@ struct BundledStationCatalogTests {
 
     @Test(arguments: [
         (48.8585, 2.3474, "Châtelet"),
+        (48.8584, 2.2945, "Champ de Mars Tour Eiffel"),
         (48.8807, 2.3553, "Gare du Nord"),
         (48.8920, 2.2380, "La Défense"),
         (48.8702, 2.7830, "Marne-la-Vallée - Chessy"),
@@ -154,6 +155,21 @@ struct BundledStationCatalogTests {
                 }
             }
         }
+    }
+
+    @Test func listsMoreThanFiveHundredStations() {
+        #expect(catalog.stations.count > 500)
+    }
+
+    @Test func findsBothChateletStationsWithTheirLines() {
+        let matches = catalog.stations(matching: "chatelet")
+
+        #expect(matches.map(\.name) == ["Châtelet", "Châtelet - Les Halles"])
+        #expect(matches.map { $0.lines.first?.displayName } == ["Metro 1", "RER A"])
+    }
+
+    @Test func findsNoStationFarFromAnyStation() {
+        #expect(catalog.nearestStation(to: TestPlaces.farFromAnyStation.coordinate) == nil)
     }
 
     @Test func ignoresACloserTramStop() {
