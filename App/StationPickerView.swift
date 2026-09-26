@@ -4,6 +4,7 @@ import SwiftUI
 
 struct StationPickerView: View {
     @Environment(LocationService.self) private var locationService
+    @Environment(\.stationCatalog) private var stationCatalog
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
 
@@ -17,7 +18,7 @@ struct StationPickerView: View {
                     VStack(alignment: .leading) {
                         Text(station.name)
                             .foregroundStyle(.primary)
-                        Text(station.lines.joined(separator: " · "))
+                        Text(station.lines.map(\.displayName).joined(separator: " · "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -33,11 +34,12 @@ struct StationPickerView: View {
         .navigationTitle("Pick a station")
     }
 
-    private var filteredStations: [TestPlace] {
+    private var filteredStations: [Station] {
+        let stations = stationCatalog.stations.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         guard !searchText.isEmpty else {
-            return TestPlaces.stations
+            return stations
         }
-        return TestPlaces.stations.filter { $0.name.localizedStandardContains(searchText) }
+        return stations.filter { $0.name.localizedStandardContains(searchText) }
     }
 }
 #endif

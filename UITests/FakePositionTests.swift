@@ -12,7 +12,7 @@ final class FakePositionTests: XCTestCase {
         app.buttons["pickStation"].tap()
         app.buttons["station-Châtelet"].tap()
         XCTAssertTrue(app.staticTexts["Fake: Châtelet"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["48.85855, 2.34743"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["48.85856, 2.34743"].waitForExistence(timeout: 5))
 
         app.buttons["farFromAnyStation"].tap()
         XCTAssertTrue(app.staticTexts["48.42000, 2.63000"].waitForExistence(timeout: 5))
