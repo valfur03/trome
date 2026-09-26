@@ -13,7 +13,7 @@ Why: each worktree builds the app and boots its own iOS Simulator. On 2026-09-26
 
 Each worktree uses its own Simulator. Its name starts with `RATP-`.
 
-`make run` and `make e2e` take a machine-wide lock: the folder `/tmp/ratp-sim.lock`. While another job holds it, they wait and print `Waiting for the Simulator lock`. This is normal. Do not stop them, and do not delete the lock.
+`make run` and `make e2e` take a machine-wide lock: the folder `/tmp/ratp-sim.lock`. While another job holds it, they wait and print `Waiting for the Simulator lock`. This is normal. Do not stop them, and do not delete the lock. The wait can be long, so run these commands in the background.
 
 - `make e2e` shuts down the Simulator when the tests end, pass or fail. Then it frees the lock.
 - `make run` keeps the Simulator open, and keeps the lock. You can then check the app by hand, or run `make e2e`.

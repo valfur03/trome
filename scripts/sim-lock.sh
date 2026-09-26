@@ -51,12 +51,23 @@ owns_session() {
     [ -z "$(holder pid)" ] && [ -n "$(holder udid)" ] && [ "$(holder worktree)" = "$root" ]
 }
 
+remove_if_stale() {
+    find "$lock.reap" -maxdepth 0 -mmin +1 -exec rmdir {} \; 2> /dev/null || true
+    mkdir "$lock.reap" 2> /dev/null || return 1
+    removed=1
+    if is_stale; then
+        echo "Removing a stale Simulator lock of $(holder worktree)" >&2
+        rm -rf "$lock"
+        removed=0
+    fi
+    rmdir "$lock.reap"
+    return "$removed"
+}
+
 acquire() {
     waiting=
     until mkdir "$lock" 2> /dev/null; do
-        if is_stale; then
-            echo "Removing a stale Simulator lock of $(holder worktree)" >&2
-            rm -rf "$lock"
+        if remove_if_stale; then
             continue
         fi
         if [ -z "$waiting" ]; then
