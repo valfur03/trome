@@ -289,6 +289,15 @@ struct AutoLiveActivityModelTests {
         withExtendedLifetime(model) {}
     }
 
+    @Test func notifiesAndWatchesTheStationsAroundAPositionFromRegionMonitoring() async {
+        let model = makeModel()
+
+        await model.handleMonitoredPosition(Places.fiftyMetersFromA)
+
+        #expect(notifier.notified == [Places.stationA])
+        #expect(watcher.watched.last?.map(\.id) == ["arrival:a", "arrival:b", "stop:a", "refresh"])
+    }
+
     @Test func stopsWatchingRealStationsWhileAFakePositionIsOn() async {
         let model = makeModel()
         await model.setAppActive(true)

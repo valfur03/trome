@@ -85,13 +85,13 @@ public final class AutoLiveActivityModel {
         let isNear = position.map { $0.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters }
         state.shown = .init(stationId: station.id, startedAt: configuration.now(), hasBeenNear: isNear ?? false)
         await show(station)
-        await refreshRegions()
+        await refreshRegions(around: inputs.locationService.position)
     }
 
     public func stopByHand() async {
         state.shown = nil
         await endLiveActivity()
-        await refreshRegions()
+        await refreshRegions(around: inputs.locationService.position)
     }
 
     public func screenTrainsChanged(for station: Station) async {
@@ -128,7 +128,7 @@ public final class AutoLiveActivityModel {
 
     private func handle(_ position: Coordinate) async {
         await evaluate(position: position)
-        await refreshRegions()
+        await refreshRegions(around: position)
     }
 
     private func evaluate(position: Coordinate?) async {
@@ -280,7 +280,7 @@ private extension AutoLiveActivityModel {
         await liveActivity.update(station: station, trains: trains.state(for: station))
     }
 
-    func refreshRegions() async {
+    func refreshRegions(around position: Coordinate?) async {
         guard inputs.locationService.source == .realGPS else {
             guard plannedRegions != nil || !hasClearedRegions else { return }
             plannedRegions = nil
@@ -288,7 +288,7 @@ private extension AutoLiveActivityModel {
             await services.regionWatcher.watch([])
             return
         }
-        guard let position = inputs.locationService.position else { return }
+        guard let position else { return }
         hasClearedRegions = false
         let stopStationId = state.shown?.stationId ?? state.arrivalStationId
         if let plannedRegions, plannedRegions.stopStationId == stopStationId,
