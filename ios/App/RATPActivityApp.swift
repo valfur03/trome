@@ -102,7 +102,7 @@ struct RATPActivityApp: App {
             services: .init(
                 notifier: UserNotificationArrivalNotifier(),
                 regionWatcher: regionWatcher,
-                locationKeeper: BackgroundActivityLocationKeeper()
+                locationKeeper: CoreLocationBackgroundLocationKeeper()
             ),
             configuration: .init(
                 store: AutoLiveActivityStore(storage: UserDefaults.standard),

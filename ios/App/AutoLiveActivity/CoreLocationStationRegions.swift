@@ -90,18 +90,3 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         return Coordinate(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
     }
 }
-
-@MainActor
-final class BackgroundActivityLocationKeeper: BackgroundLocationKeeper {
-    private var session: CLBackgroundActivitySession?
-
-    func begin() {
-        guard session == nil else { return }
-        session = CLBackgroundActivitySession()
-    }
-
-    func end() {
-        session?.invalidate()
-        session = nil
-    }
-}
