@@ -117,4 +117,26 @@ struct NextTrainsModelTests {
 
         #expect(waits.withLock { $0 } == [.seconds(30)])
     }
+
+    @Test func givesTheStateOfTheShownStation() async {
+        provider.answer(.success([]), for: abbesses)
+        let model = makeModel()
+
+        await model.refresh(for: abbesses)
+
+        #expect(model.state(for: abbesses) == .noLiveData)
+    }
+
+    @Test func saysAnotherStationIsStillLoading() async {
+        provider.answer(.success([]), for: abbesses)
+        let model = makeModel()
+
+        await model.refresh(for: abbesses)
+
+        #expect(model.state(for: pigalle) == .loading)
+    }
+
+    @Test func saysTheKeyIsMissingForAnyStation() {
+        #expect(NextTrainsModel(provider: nil).state(for: pigalle) == .missingKey)
+    }
 }

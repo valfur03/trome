@@ -7,6 +7,7 @@ struct RATPActivityApp: App {
     @State private var nearestStationModel: NearestStationModel
     @State private var currentStationModel: CurrentStationModel
     @State private var nextTrainsModel: NextTrainsModel
+    @State private var liveActivityModel = StationLiveActivityModel(client: ActivityKitStationLiveActivityClient())
     private let stationCatalog: StationCatalog
     private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
 
@@ -41,6 +42,7 @@ struct RATPActivityApp: App {
                 .environment(locationService)
                 .environment(currentStationModel)
                 .environment(nextTrainsModel)
+                .environment(liveActivityModel)
                 .environment(\.stationCatalog, stationCatalog)
         }
     }

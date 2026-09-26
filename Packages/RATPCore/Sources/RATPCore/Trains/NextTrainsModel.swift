@@ -38,6 +38,10 @@ public final class NextTrainsModel {
         }
     }
 
+    public func state(for station: Station) -> NextTrainsState {
+        provider == nil || shownStationId == station.id ? state : .loading
+    }
+
     public func keepUpdated(for station: Station) async {
         guard provider != nil else { return }
         while !Task.isCancelled {

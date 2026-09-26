@@ -100,6 +100,23 @@ The screen tells you when:
 
 For developers: the code is in `Packages/RATPCore/Sources/RATPCore/Trains`. `PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop of the station. A metro stop id `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`. An RER stop id `IDFM:monomodalStopPlace:<n>` becomes `STIF:StopArea:SP:<n>:`. `CurrentStationModel` holds the station that the user picked. Other features (for example the Live Activity) can use it.
 
+## Show the next trains on the lock screen (Live Activity)
+
+The app can show the next train of the picked station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
+
+1. Pick a station (see above).
+2. Tap "Show on the lock screen".
+3. Lock the phone. The Live Activity shows the station, the line, the direction, and the waiting time of the next train.
+4. To remove it, open the app and tap "Stop showing on the lock screen".
+
+The first time, iOS asks on the lock screen if it can show Live Activities from RATP Activity. Tap "Allow".
+
+The waiting time counts down by itself. The app sends new train times only while its screen is open. When the last known train has left, the Live Activity says "Open the app for new times". If the app has no train times for the station, the Live Activity says "No data available".
+
+If the app says that Live Activities are turned off, turn them on in Settings > RATP Activity > Live Activities.
+
+For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity. `StationLiveActivityModel` starts, updates and stops it. The view is in `Widget/StationLiveActivity.swift`.
+
 ## The train data key (PRIM)
 
 The app gets train times from the PRIM API of Île-de-France Mobilités. PRIM needs a free key.

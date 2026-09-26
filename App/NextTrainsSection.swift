@@ -19,6 +19,7 @@ struct NextTrainsSection: View {
                     StationSearchView()
                 }
                 .accessibilityIdentifier("changeStation")
+                LiveActivityControls(station: station)
                 NextTrainsView(state: nextTrains.state)
                     .task(id: RefreshKey(stationId: station.id, isActive: scenePhase == .active)) {
                         guard scenePhase == .active else { return }
