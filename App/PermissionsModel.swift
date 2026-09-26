@@ -20,7 +20,7 @@ final class PermissionsModel {
         location = locationPermission.access
         locationPermission.onAccessChange = { [weak self] in
             guard let self else { return }
-            location = locationPermission.access
+            location = self.locationPermission.access
         }
     }
 

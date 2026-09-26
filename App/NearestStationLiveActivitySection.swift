@@ -31,6 +31,7 @@ struct NearestStationLiveActivitySection: View {
                 LiveActivityStartError()
             }
             .frame(maxWidth: .infinity)
+            .onChange(of: liveActivity.isShowing) { problem = nil }
         } footer: {
             Text("The Live Activity shows the next trains on your lock screen.")
         }
@@ -67,7 +68,7 @@ struct NearestStationLiveActivitySection: View {
     private func message(for problem: NearestStationProblem) -> String {
         switch problem {
         case .permissionUndecided:
-            "The app needs your location to find the nearest station. Allow location above, then try again."
+            "The app needs your location to find the nearest station. Allow location below, then try again."
         case .permissionDenied:
             "The app cannot find the nearest station without your location. Turn on Location in Settings."
         case .noStationNearby:
