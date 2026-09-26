@@ -3,7 +3,8 @@ import XCTest
 
 class E2ETestCase: XCTestCase {
     static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
-    private static let permissionAnswers = ["Allow While Using App", "Keep Only While Using", "Allow"]
+    private static let locationPromptAnswer = "Allow While Using App"
+    private static let permissionAnswers = [locationPromptAnswer, "Keep Only While Using", "Allow"]
     private static let allowedLocationLabels = ["Location, Always", "Location, While Using the App"]
     @MainActor private static var permissionsAreSettled = false
 
@@ -47,22 +48,31 @@ class E2ETestCase: XCTestCase {
 
     @MainActor
     func answerPermissionPrompts(in app: XCUIApplication) {
-        settlePermissions(in: app, resettingRefusedLocation: false)
+        settlePermissions(in: app, resettingRefusedLocation: false, expectingLocationPrompt: true)
     }
 
     @MainActor
-    private func settlePermissions(in app: XCUIApplication, resettingRefusedLocation: Bool) {
+    private func settlePermissions(
+        in app: XCUIApplication,
+        resettingRefusedLocation: Bool,
+        expectingLocationPrompt: Bool = false
+    ) {
         let location = locationStatus(in: app)
         let notifications = notificationsStatus(in: app)
         var mayResetLocation = resettingRefusedLocation
+        var mayAskLocationAgain = true
+        var locationPromptAnswered = !expectingLocationPrompt
         let deadline = Date().addingTimeInterval(UITestTimeout.element)
         while Date() < deadline {
-            answerPermissionPrompt()
+            if answerPermissionPrompt() {
+                locationPromptAnswered = true
+            }
             guard location.exists, notifications.exists else {
                 app.swipeUp()
                 continue
             }
-            if Self.allowedLocationLabels.contains(location.label), notifications.label == "Notifications, On" {
+            if locationPromptAnswered, Self.allowedLocationLabels.contains(location.label),
+               notifications.label == "Notifications, On" {
                 Self.permissionsAreSettled = true
                 scrollToTop(of: app)
                 return
@@ -74,18 +84,27 @@ class E2ETestCase: XCTestCase {
                 app.launch()
                 continue
             }
-            _ = springboard.alerts.firstMatch.waitForExistence(timeout: 1)
+            let alertShows = springboard.alerts.firstMatch.waitForExistence(timeout: 1)
+            if mayAskLocationAgain, !alertShows, location.label == "Location, Not asked yet" {
+                mayAskLocationAgain = false
+                terminateWithItsRelaunches(app)
+                app.launch()
+            }
         }
         XCTFail("The location and notification permissions did not settle")
     }
 
     @MainActor
-    private func answerPermissionPrompt() {
+    @discardableResult
+    private func answerPermissionPrompt() -> Bool {
+        var answeredLocation = false
         for answer in Self.permissionAnswers where springboard.buttons[answer].exists {
             let button = springboard.buttons[answer]
             button.tap()
             _ = button.waitForNonExistence(timeout: 2)
+            answeredLocation = answeredLocation || answer == Self.locationPromptAnswer
         }
+        return answeredLocation
     }
 
     @MainActor
