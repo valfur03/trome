@@ -7,6 +7,7 @@ final class ArrivalNotificationTests: E2ETestCase {
     @MainActor
     func testTappingTheArrivalNotificationOfTheAppInTheBackgroundShowsTheLiveActivity() {
         let app = makeApp()
+        app.launchArguments.append("--keep-running-in-background")
         launch(app)
         stopLiveActivityIfShowing(in: app)
 
@@ -17,22 +18,16 @@ final class ArrivalNotificationTests: E2ETestCase {
         let notification = springboard.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Next trains at Abbesses"))
             .firstMatch
-        XCTAssertTrue(notification.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(notification))
         notification.tap()
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: UITestTimeout.element))
         let lockScreenStation = app.staticTexts["liveActivityStationName"]
-        XCTAssertTrue(lockScreenStation.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(lockScreenStation))
         XCTAssertEqual(lockScreenStation.label, "On the lock screen: Abbesses")
         XCTAssertEqual(app.state, .runningForeground)
-    }
 
-    @MainActor
-    private func stopLiveActivityIfShowing(in app: XCUIApplication) {
-        let stopButton = app.buttons["stopLiveActivity"]
-        if stopButton.waitForExistence(timeout: 3) {
-            stopButton.tap()
-        }
-        XCTAssertTrue(stopButton.waitForNonExistence(timeout: UITestTimeout.element))
+        tap(app.buttons["stopLiveActivity"])
+        XCTAssertTrue(waitFor(app.buttons["showNearestStationLiveActivity"]))
     }
 }

@@ -15,6 +15,9 @@ struct RATPActivityApp: App {
     private let regionWatcher: CoreLocationStationRegionWatcher
     private let notificationTapHandler: ArrivalNotificationTapHandler
     private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
+    #if DEBUG
+    private let uiTestLocationKeeper: BackgroundActivityLocationKeeper?
+    #endif
 
     init() {
         let locationService = LocationService.makeForThisBuild()
@@ -47,6 +50,9 @@ struct RATPActivityApp: App {
         }
         Task { await regionWatcher.resume() }
 
+        #if DEBUG
+        uiTestLocationKeeper = BackgroundActivityLocationKeeper.begunIfAsked(by: ProcessInfo.processInfo.arguments)
+        #endif
         self.stationCatalog = stationCatalog
         _permissionsModel = State(initialValue: PermissionsModel(locationPermission: permission))
         self.regionWatcher = regionWatcher

@@ -9,7 +9,7 @@ final class AutoLiveActivityTests: E2ETestCase {
 
         useFakePosition(atStation: "Abbesses", in: app)
         let lockScreenStation = app.staticTexts["liveActivityStationName"]
-        XCTAssertTrue(lockScreenStation.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(lockScreenStation))
         XCTAssertEqual(lockScreenStation.label, "On the lock screen: Abbesses")
         XCTAssertFalse(app.staticTexts["liveActivityError"].exists)
 
@@ -17,55 +17,42 @@ final class AutoLiveActivityTests: E2ETestCase {
         waitForLabel("On the lock screen: Pigalle", of: lockScreenStation)
         XCTAssertEqual(app.buttons.matching(identifier: "stopLiveActivity").count, 1)
 
-        openTestingTools(in: app)
-        app.buttons["farFromAnyStation"].tap()
+        tap(app.buttons["testingTools"])
+        tap(app.buttons["farFromAnyStation"])
         goBack(in: app)
-        XCTAssertTrue(lockScreenStation.waitForNonExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitForNo(lockScreenStation))
     }
 
     @MainActor
     private func leaveEveryStation(in app: XCUIApplication) {
-        openTestingTools(in: app)
-        app.buttons["farFromAnyStation"].tap()
-        XCTAssertTrue(app.staticTexts["48.42000, 2.63000"].waitForExistence(timeout: UITestTimeout.element))
+        tap(app.buttons["testingTools"])
+        tap(app.buttons["farFromAnyStation"])
+        XCTAssertTrue(waitFor(app.staticTexts["48.42000, 2.63000"]))
         goBack(in: app)
-        let stopButton = app.buttons["stopLiveActivity"]
-        if stopButton.waitForExistence(timeout: 3) {
-            stopButton.tap()
-        }
-        XCTAssertTrue(stopButton.waitForNonExistence(timeout: UITestTimeout.element))
+        stopLiveActivityIfShowing(in: app)
     }
 
     @MainActor
     private func useFakePosition(atStation name: String, in app: XCUIApplication) {
-        openTestingTools(in: app)
-        app.buttons["pickStation"].tap()
+        tap(app.buttons["testingTools"])
+        tap(app.buttons["pickStation"])
         let searchField = app.searchFields.firstMatch
-        XCTAssertTrue(searchField.waitForExistence(timeout: UITestTimeout.element))
-        searchField.tap()
+        tap(searchField)
         searchField.typeText(name)
-        let stationButton = app.buttons["station-\(name)"]
-        XCTAssertTrue(stationButton.waitForExistence(timeout: UITestTimeout.element))
-        stationButton.tap()
-        XCTAssertTrue(app.staticTexts["Fake: \(name)"].waitForExistence(timeout: UITestTimeout.element))
+        tap(app.buttons["station-\(name)"])
+        XCTAssertTrue(waitFor(app.staticTexts["Fake: \(name)"]))
         goBack(in: app)
     }
 
     @MainActor
-    private func openTestingTools(in app: XCUIApplication) {
-        let testingTools = app.buttons["testingTools"]
-        XCTAssertTrue(testingTools.waitForExistence(timeout: UITestTimeout.element))
-        testingTools.tap()
-    }
-
-    @MainActor
     private func goBack(in app: XCUIApplication) {
-        app.navigationBars.buttons.firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
+        tap(app.navigationBars.buttons.firstMatch)
+        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
     }
 
     @MainActor
     private func waitForLabel(_ label: String, of element: XCUIElement) {
+        guard element.label != label else { return }
         let predicate = NSPredicate(format: "label == %@", label)
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: UITestTimeout.element), .completed)

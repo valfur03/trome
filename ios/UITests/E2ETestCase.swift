@@ -37,7 +37,7 @@ class E2ETestCase: XCTestCase {
     @MainActor
     func launch(_ app: XCUIApplication) {
         app.launch()
-        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
         if Self.permissionsAreSettled {
             answerPermissionPrompt()
         } else {
@@ -69,6 +69,7 @@ class E2ETestCase: XCTestCase {
             }
             if mayResetLocation, location.label == "Location, Off" {
                 mayResetLocation = false
+                terminateWithItsRelaunches(app)
                 app.resetAuthorizationStatus(for: .location)
                 app.launch()
                 continue
@@ -93,7 +94,46 @@ class E2ETestCase: XCTestCase {
         for _ in 0..<3 where !(title.exists && title.isHittable) {
             app.swipeDown()
         }
-        XCTAssertTrue(title.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(title))
+    }
+
+    @MainActor
+    func waitFor(_ element: XCUIElement) -> Bool {
+        element.exists || element.waitForExistence(timeout: UITestTimeout.element)
+    }
+
+    @MainActor
+    func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(waitFor(element), "\(element) did not show", file: file, line: line)
+        element.tap()
+    }
+
+    @MainActor
+    func waitForNo(_ element: XCUIElement) -> Bool {
+        !element.exists || element.waitForNonExistence(timeout: UITestTimeout.element)
+    }
+
+    @MainActor
+    func waitForFirst(of elements: [XCUIElement]) -> XCUIElement? {
+        let deadline = Date().addingTimeInterval(UITestTimeout.element)
+        repeat {
+            if let element = elements.first(where: \.exists) {
+                return element
+            }
+        } while Date() < deadline
+        return nil
+    }
+
+    @MainActor
+    func stopLiveActivityIfShowing(in app: XCUIApplication) {
+        let stopButton = app.buttons["stopLiveActivity"]
+        let showButton = app.buttons["showNearestStationLiveActivity"]
+        let shown = waitForFirst(of: [stopButton, showButton])
+        XCTAssertNotNil(shown)
+        if shown === stopButton {
+            stopButton.tap()
+        }
+        XCTAssertTrue(waitFor(showButton))
     }
 
     @MainActor

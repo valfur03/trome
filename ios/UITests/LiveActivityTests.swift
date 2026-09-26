@@ -14,26 +14,35 @@ final class LiveActivityTests: E2ETestCase {
         XCTAssertFalse(app.buttons["changeStation"].exists)
         XCTAssertFalse(app.descendants(matching: .any)["departureRow"].exists)
 
-        let stopButton = app.buttons["stopLiveActivity"]
-        if stopButton.waitForExistence(timeout: 3) {
-            stopButton.tap()
-        }
+        stopLiveActivityIfShowing(in: app)
         let showButton = app.buttons["showNearestStationLiveActivity"]
-        XCTAssertTrue(showButton.waitForExistence(timeout: UITestTimeout.element))
-        showButton.tap()
+        tap(showButton)
         let problem = app.staticTexts["nearestStationProblem"]
-        XCTAssertTrue(problem.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(problem))
         XCTAssertTrue(problem.label.hasPrefix("No metro or RER station was found"))
 
         XCUIDevice.shared.location = XCUILocation(location: Self.nearEiffelTower)
-        showButton.tap()
+        waitUntilTheAppFinds("Champ de Mars Tour Eiffel", in: app)
+        tap(showButton)
         let lockScreenStation = app.staticTexts["liveActivityStationName"]
-        XCTAssertTrue(lockScreenStation.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(lockScreenStation))
         XCTAssertEqual(lockScreenStation.label, "On the lock screen: Champ de Mars Tour Eiffel")
         XCTAssertFalse(app.staticTexts["liveActivityError"].exists)
+        let stopButton = app.buttons["stopLiveActivity"]
         XCTAssertFalse(stopButton.waitForNonExistence(timeout: 5))
 
         stopButton.tap()
-        XCTAssertTrue(showButton.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(showButton))
+    }
+
+    @MainActor
+    private func waitUntilTheAppFinds(_ stationName: String, in app: XCUIApplication) {
+        tap(app.buttons["testingTools"])
+        let found = app.staticTexts
+            .matching(NSPredicate(format: "identifier == %@ AND label == %@", "nearestStationName", stationName))
+            .firstMatch
+        XCTAssertTrue(waitFor(found))
+        tap(app.navigationBars.buttons.firstMatch)
+        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
     }
 }

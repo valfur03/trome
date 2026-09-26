@@ -6,22 +6,22 @@ final class FakePositionTests: E2ETestCase {
         let app = makeApp()
         launch(app)
 
-        app.buttons["testingTools"].tap()
+        tap(app.buttons["testingTools"])
 
         let coordinatesField = app.textFields["coordinatesField"]
-        coordinatesField.tap()
+        tap(coordinatesField)
         coordinatesField.typeText("48.8584, 2.2945")
-        app.buttons["useCoordinates"].tap()
-        XCTAssertTrue(app.staticTexts["Fake: 48.85840, 2.29450"].waitForExistence(timeout: UITestTimeout.element))
+        tap(app.buttons["useCoordinates"])
+        XCTAssertTrue(waitFor(app.staticTexts["Fake: 48.85840, 2.29450"]))
         let stationName = app.staticTexts["nearestStationName"]
-        XCTAssertTrue(stationName.waitForExistence(timeout: UITestTimeout.element))
+        XCTAssertTrue(waitFor(stationName))
         XCTAssertEqual(stationName.label, "Champ de Mars Tour Eiffel")
 
-        app.navigationBars.buttons.firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["fakePositionBanner"].waitForExistence(timeout: UITestTimeout.element))
+        tap(app.navigationBars.buttons.firstMatch)
+        XCTAssertTrue(waitFor(app.staticTexts["fakePositionBanner"]))
 
-        app.buttons["testingTools"].tap()
-        app.buttons["useRealGPS"].tap()
-        XCTAssertTrue(app.staticTexts["Real GPS"].waitForExistence(timeout: UITestTimeout.element))
+        tap(app.buttons["testingTools"])
+        tap(app.buttons["useRealGPS"])
+        XCTAssertTrue(waitFor(app.staticTexts["Real GPS"]))
     }
 }
