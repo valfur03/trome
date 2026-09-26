@@ -74,7 +74,7 @@ A full `make e2e` keeps the shared Simulator for several minutes. So:
 
 ## Flaky tests
 
-A flaky test (it fails, then passes with no change) is a bug. Rerun a failing test at most once, to know if it is flaky. Then fix the cause in your task if the test covers your code. Otherwise, create a `bug` task with the test name, how often it failed, and the error. Never hide a flaky test with retries or longer timeouts alone: find the cause (a race, a shared state, a missing wait for a condition).
+A flaky test (it fails, then passes with no change) is a bug. Rerun a failing test at most once, to know if it is flaky. Then fix the cause in your task if the test covers your code. Otherwise, create a `bug` task with the test name, how often it failed, and the error. Never fix it with retries or longer timeouts alone: find the cause (a race, a shared state, a missing wait for a condition).
 
 ## When your job ends
 
@@ -111,12 +111,11 @@ All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RA
 
 The README explains the docs site and its commands (section "The docs site").
 
-- **Keep the docs true.** A task that changes a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. For a changed screen, run `make docs-screenshots` and commit the new images. Run it only when a screen that the docs show changed: a docs text change alone needs no new screenshots. The reviewer checks it.
+- **Keep the docs true.** A task that changes a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. Run `make docs-screenshots` only when a screen that the docs show changed, and commit the new images. A docs text change alone needs no new screenshots. The reviewer checks it.
 - **Node 24.** Each Bash call starts a new shell with the old default Node. Run the docs commands like this: `. "$HOME/.nvm/nvm.sh" && nvm use && make docs-check`. The same goes for `make check` when your task changes `docs/`.
 - **Install `docs/node_modules` only when your task touches the docs.** It takes about 300 MB. `make check` runs `make docs-check` only when your branch changes `docs/`, so the other tasks never install it.
 - **Use your own port.** The default port 4321 is for the prompter. Run `make docs PORT=<n>` or `make docs-dev PORT=<n>` with a port that no other agent uses (for example 4300 plus your task number).
 - **Stop the docs server when your job ends.** For agents, Astro starts the server in the background and the command returns at once. Run `make docs-stop` in your worktree before you end.
-- `make docs-screenshots` is a Simulator job: one job at a time (the lock), then `make simulator-shutdown`.
 - **Screenshots.** Show each app screenshot with the `Screenshot` component (`docs/src/components/Screenshot.astro`), never with a Markdown image or the `Image` component. Put screenshots side by side inside `Screenshots`. Take each screenshot full screen on the shared Simulator, so all have the same size. Each file in git stays under the budget of the README (section "The docs site"). The script checks the size and the budget.
 
 ## Live train data (the real PRIM key)
