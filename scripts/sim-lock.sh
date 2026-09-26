@@ -113,6 +113,7 @@ release() {
     if [ "$(holder pid)" = "$$" ] || owns_session; then
         touch "$last_job"
         rm -rf "$lock"
+        start_watcher
     fi
 }
 
