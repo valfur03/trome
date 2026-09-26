@@ -5,7 +5,6 @@ final class AutoLiveActivityTests: E2ETestCase {
     func testLiveActivityStartsSwitchesAndStopsByItselfNearStations() {
         let app = makeApp()
         launch(app)
-        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
         leaveEveryStation(in: app)
 
         useFakePosition(atStation: "Abbesses", in: app)

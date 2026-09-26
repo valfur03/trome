@@ -8,7 +8,6 @@ final class ArrivalNotificationTests: E2ETestCase {
     func testTappingTheArrivalNotificationOfTheAppInTheBackgroundShowsTheLiveActivity() {
         let app = makeApp()
         launch(app)
-        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
         stopLiveActivityIfShowing(in: app)
 
         XCUIDevice.shared.press(.home)

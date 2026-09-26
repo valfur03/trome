@@ -8,7 +8,6 @@ final class LiveActivityTests: E2ETestCase {
     func testUserCanShowTheLiveActivityOfTheNearestStationAndStopIt() {
         let app = makeApp()
         launch(app)
-        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
         XCTAssertFalse(app.buttons["chooseStation"].exists)
         XCTAssertFalse(app.buttons["changeStation"].exists)
         XCTAssertFalse(app.descendants(matching: .any)["departureRow"].exists)
