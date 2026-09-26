@@ -71,6 +71,7 @@ The README explains the docs site and its commands (section "The docs site").
 - **Use your own port.** The default port 4321 is for the prompter. Run `make docs PORT=<n>` or `make docs-dev PORT=<n>` with a port that no other agent uses (for example 4300 plus your task number).
 - **Stop the docs server when your job ends.** For agents, Astro starts the server in the background and the command returns at once. Run `make docs-stop` in your worktree before you end.
 - `make docs-screenshots` is a Simulator job: one job at a time (the lock), then `make simulator-shutdown`.
+- **Screenshots.** Show each app screenshot with the `Screenshot` component (`docs/src/components/Screenshot.astro`), never with a Markdown image or the `Image` component. Put screenshots side by side inside `Screenshots`. Take each screenshot full screen on the shared Simulator, so all have the same size. Each file in git stays under the budget of the README (section "The docs site"). The script checks the size and the budget.
 
 ## Live train data (the real PRIM key)
 

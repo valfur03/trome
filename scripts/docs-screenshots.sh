@@ -21,7 +21,9 @@ root=$(cd "$scripts/.." && pwd)
 screenshots="$root/docs/src/assets/screenshots"
 names="app-main-screen live-activity-notification-center"
 fake_position=48.8584,2.2945
-screenshot_width=600
+screenshot_width=900
+pngquant_quality=85-100
+budget_kb=500
 udid=$("$scripts/simulator.sh" boot)
 exported="$root/.build/docs-screenshots"
 
@@ -34,7 +36,7 @@ trap cleanup EXIT INT TERM
 
 rm -rf "$result" "$exported"
 xcrun simctl location "$udid" set "$fake_position"
-xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 \
+xcrun simctl status_bar "$udid" override --time 9:41 --operatorName '' --batteryState charged --batteryLevel 100 \
     --cellularMode active --cellularBars 4 --wifiBars 3
 "$@" -resultBundlePath "$result" test \
     || { status=$?; "$scripts/e2e-failures.py" "$result"; exit $status; }
@@ -68,6 +70,23 @@ PYTHON
 for name in $names; do
     file="$screenshots/$name.png"
     sips --resampleWidth "$screenshot_width" "$file" > /dev/null
-    pngquant --force --strip --ext .png -- "$file"
-    echo "Saved docs/src/assets/screenshots/$name.png ($(($(wc -c < "$file") / 1024)) KB)"
+    pngquant --force --strip --quality "$pngquant_quality" --speed 1 --ext .png -- "$file"
 done
+python3 - "$screenshots" "$budget_kb" $names <<'PYTHON'
+import struct
+import sys
+from pathlib import Path
+
+screenshots, budget_kb, names = Path(sys.argv[1]), int(sys.argv[2]), sys.argv[3:]
+sizes = {}
+for name in names:
+    file = screenshots / f"{name}.png"
+    width, height = struct.unpack(">II", file.read_bytes()[16:24])
+    kilobytes = file.stat().st_size // 1024
+    sizes[name] = (width, height)
+    print(f"Saved docs/src/assets/screenshots/{name}.png ({width}x{height} px, {kilobytes} KB)")
+    if kilobytes > budget_kb:
+        sys.exit(f"{name}.png is {kilobytes} KB: more than the budget of {budget_kb} KB")
+if len(set(sizes.values())) > 1:
+    sys.exit(f"The screenshots do not all have the same size: {sizes}")
+PYTHON

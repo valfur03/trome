@@ -1,0 +1,20 @@
+---
+---
+
+<div class="screenshots not-content">
+  <slot />
+</div>
+
+<style>
+  .screenshots {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .screenshots > :global(.screenshot) {
+    margin: 0;
+  }
+</style>

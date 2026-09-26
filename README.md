@@ -237,9 +237,25 @@ To write a page:
 - Add an `.mdx` file in `docs/src/content/docs/tutorial/`. The sidebar shows it under "Tutorial".
 - Use the Starlight components: `Steps` for a step list, `Aside` for a callout. See https://starlight.astro.build/components/using-components/.
 - To show the progress of a step list ("3 of 11 steps done"), put the list inside the `Checklist` component of `docs/src/components/Checklist.astro`. Give each list its own `id`: the browser saves the ticks under this id. The home page (`docs/src/content/docs/index.mdx`) shows an example.
-- Show an app screenshot with a Markdown image, for example `![The app](../../../assets/screenshots/app-main-screen.png)`. Astro makes it smaller at build time.
+- Show an app screenshot with the `Screenshot` component of `docs/src/components/Screenshot.astro`. Do not use a Markdown image or the `Image` component of Astro. To show many screenshots side by side, put them inside the `Screenshots` component. The home page shows an example:
 
-`make docs-screenshots` runs the XCUITest suite of `DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel). It saves one small PNG file for each screenshot (600 pixels wide, compressed with pngquant), with a fixed name: `app-main-screen.png` (the main app screen) and `live-activity-notification-center.png` (the Live Activity in the Notification Center). The PNG files are in git. To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `scripts/docs-screenshots.sh`.
+  ```mdx
+  import Screenshot from '../../../components/Screenshot.astro';
+  import Screenshots from '../../../components/Screenshots.astro';
+  import appMainScreen from '../../../assets/screenshots/app-main-screen.png';
+
+  <Screenshot src={appMainScreen} alt="The main screen of the app." />
+  ```
+
+  `Screenshot` always shows the image 300 pixels wide (less on a narrow screen), with the rounded corners of the iPhone screen. At build time, Astro makes AVIF files (and WebP files for old browsers) at 1x, 2x and 3x of this width. The browser downloads only the one that fits its screen, so the page stays light.
+
+`make docs-screenshots` runs the XCUITest suite of `DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel). It saves one PNG file for each screenshot, with a fixed name: `app-main-screen.png` (the main app screen) and `live-activity-notification-center.png` (the Live Activity in the Notification Center). The PNG files are in git. To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `scripts/docs-screenshots.sh`.
+
+Rules for the screenshot files:
+
+- **Full screen, same device.** Each screenshot shows the full screen of the shared Simulator (an iPhone 17), also for the Live Activity (the full Notification Center, not a crop). So all screenshots have the same size and look the same side by side. The script fails if a screenshot has another size.
+- **900 pixels wide.** The docs show a screenshot 300 pixels wide. A Retina (2x) screen needs 600 pixels, and a 3x screen (an iPhone) needs 900 pixels. So the script makes each screenshot 900 pixels wide (the Simulator gives 1206 pixels). More pixels make a larger file with no visible gain. Fewer pixels make a blurry image.
+- **Budget: at most 500 KB for each file in git.** The script compresses each file with pngquant (quality 85 to 100: no visible loss), and fails if a file is larger than 500 KB. Today, a screen of the app is about 60 KB, and the lock screen with its wallpaper is about 450 KB. Why a budget: the files stay in the git history forever, and each new run of `make docs-screenshots` adds them again. The page does not get heavier: Astro makes small AVIF files at build time.
 
 Rules to keep the docs true:
 
