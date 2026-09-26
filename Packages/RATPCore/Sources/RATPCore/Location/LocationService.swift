@@ -63,6 +63,9 @@ public final class LocationService {
                 }
                 self?.position = coordinate
             }
+            if !Task.isCancelled {
+                self?.updatesTask = nil
+            }
         }
     }
 }

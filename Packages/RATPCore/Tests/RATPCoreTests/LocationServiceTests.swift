@@ -14,6 +14,10 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     func report(_ coordinate: Coordinate) {
         continuation?.yield(coordinate)
     }
+
+    func stopReporting() {
+        continuation?.finish()
+    }
 }
 
 @MainActor
@@ -63,6 +67,20 @@ struct LocationServiceTests {
         service.use(.fake(chatelet))
         await waitForPosition(chatelet.coordinate, in: service)
         service.use(.realGPS)
+        gps.report(realPosition)
+        await waitForPosition(realPosition, in: service)
+
+        #expect(service.position == realPosition)
+    }
+
+    @Test func restartsTheRealGPSAfterItStopped() async {
+        let service = makeService()
+        service.start()
+        gps.stopReporting()
+        for _ in 0..<1_000 {
+            await Task.yield()
+        }
+        service.start()
         gps.report(realPosition)
         await waitForPosition(realPosition, in: service)
 
