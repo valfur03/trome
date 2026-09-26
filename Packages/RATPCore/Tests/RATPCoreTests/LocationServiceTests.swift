@@ -3,16 +3,25 @@ import Testing
 @testable import RATPCore
 
 final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
-    private var continuation: AsyncStream<Coordinate>.Continuation?
+    private var continuation: AsyncStream<LocationEvent>.Continuation?
+    private(set) var isReporting = false
 
-    func positions() -> AsyncStream<Coordinate> {
-        let (stream, continuation) = AsyncStream<Coordinate>.makeStream()
+    func events() -> AsyncStream<LocationEvent> {
+        let (stream, continuation) = AsyncStream<LocationEvent>.makeStream()
+        continuation.onTermination = { [weak self] _ in
+            self?.isReporting = false
+        }
         self.continuation = continuation
+        isReporting = true
         return stream
     }
 
     func report(_ coordinate: Coordinate) {
-        continuation?.yield(coordinate)
+        continuation?.yield(.position(coordinate))
+    }
+
+    func report(_ problem: LocationProblem) {
+        continuation?.yield(.problem(problem))
     }
 
     func stopReporting() {
@@ -32,6 +41,12 @@ struct LocationServiceTests {
             realProvider: gps,
             sourceStore: allowsFakePosition ? LocationSourceStore(storage: storage) : nil
         )
+    }
+
+    private func waitForProblem(_ expected: LocationProblem?, in service: LocationService) async {
+        for _ in 0..<1_000 where service.problem != expected {
+            await Task.yield()
+        }
     }
 
     private func waitForPosition(_ expected: Coordinate?, in service: LocationService) async {
@@ -109,5 +124,64 @@ struct LocationServiceTests {
         #expect(service.allowsFakePosition == false)
         #expect(service.source == .realGPS)
         #expect(service.position == realPosition)
+    }
+
+    @Test func reportsADeniedPermissionAndDropsThePosition() async {
+        let service = makeService()
+        service.start()
+        gps.report(realPosition)
+        await waitForPosition(realPosition, in: service)
+        gps.report(.permissionDenied)
+        await waitForProblem(.permissionDenied, in: service)
+
+        #expect(service.problem == .permissionDenied)
+        #expect(service.position == nil)
+    }
+
+    @Test func keepsTheLastPositionWhenLocationIsUnavailable() async {
+        let service = makeService()
+        service.start()
+        gps.report(realPosition)
+        await waitForPosition(realPosition, in: service)
+        gps.report(.unavailable)
+        await waitForProblem(.unavailable, in: service)
+
+        #expect(service.problem == .unavailable)
+        #expect(service.position == realPosition)
+    }
+
+    @Test func clearsTheProblemOnTheNextPosition() async {
+        let service = makeService()
+        service.start()
+        gps.report(.unavailable)
+        await waitForProblem(.unavailable, in: service)
+        gps.report(realPosition)
+        await waitForPosition(realPosition, in: service)
+
+        #expect(service.problem == nil)
+    }
+
+    @Test func clearsTheProblemWhenTheSourceChanges() async {
+        let service = makeService()
+        service.start()
+        gps.report(.permissionDenied)
+        await waitForProblem(.permissionDenied, in: service)
+        service.use(.fake(chatelet))
+
+        #expect(service.problem == nil)
+    }
+
+    @Test func stopsThePositionUpdatesWhenReleased() async {
+        var service: LocationService? = makeService()
+        service?.start()
+        #expect(gps.isReporting)
+
+        service = nil
+        for _ in 0..<1_000 where gps.isReporting {
+            await Task.yield()
+        }
+
+        #expect(service == nil)
+        #expect(!gps.isReporting)
     }
 }

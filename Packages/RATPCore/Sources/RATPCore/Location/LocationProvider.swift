@@ -1,5 +1,15 @@
+public enum LocationProblem: Equatable, Sendable {
+    case permissionDenied
+    case unavailable
+}
+
+public enum LocationEvent: Equatable, Sendable {
+    case position(Coordinate)
+    case problem(LocationProblem)
+}
+
 public protocol LocationProvider: Sendable {
-    func positions() -> AsyncStream<Coordinate>
+    func events() -> AsyncStream<LocationEvent>
 }
 
 public struct FakeLocationProvider: LocationProvider {
@@ -9,9 +19,9 @@ public struct FakeLocationProvider: LocationProvider {
         self.coordinate = coordinate
     }
 
-    public func positions() -> AsyncStream<Coordinate> {
+    public func events() -> AsyncStream<LocationEvent> {
         AsyncStream { continuation in
-            continuation.yield(coordinate)
+            continuation.yield(.position(coordinate))
         }
     }
 }

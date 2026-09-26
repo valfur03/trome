@@ -4,10 +4,11 @@ import RATPCore
 extension LocationService {
     static func makeForThisBuild() -> LocationService {
         #if DEBUG
-        LocationService(
-            realProvider: CoreLocationProvider(),
-            sourceStore: LocationSourceStore(storage: UserDefaults.standard)
-        )
+        let sourceStore = LocationSourceStore(storage: UserDefaults.standard)
+        if ProcessInfo.processInfo.arguments.contains("--reset-location-source") {
+            sourceStore.save(.realGPS)
+        }
+        return LocationService(realProvider: CoreLocationProvider(), sourceStore: sourceStore)
         #else
         LocationService(realProvider: CoreLocationProvider(), sourceStore: nil)
         #endif

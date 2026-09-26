@@ -3,6 +3,11 @@ import Foundation
 public struct Coordinate: Codable, Hashable, Sendable {
     private static let earthRadiusMeters = 6_371_000.0
 
+    private enum CodingKeys: String, CodingKey {
+        case latitude
+        case longitude
+    }
+
     public let latitude: Double
     public let longitude: Double
 
@@ -24,6 +29,21 @@ public struct Coordinate: Codable, Hashable, Sendable {
             return nil
         }
         self.init(latitude: latitude, longitude: longitude)
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let latitude = try container.decode(Double.self, forKey: .latitude)
+        let longitude = try container.decode(Double.self, forKey: .longitude)
+        guard let coordinate = Coordinate(latitude: latitude, longitude: longitude) else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Latitude or longitude out of range: \(latitude), \(longitude)"
+                )
+            )
+        }
+        self = coordinate
     }
 
     init(_ latitude: Double, _ longitude: Double) {

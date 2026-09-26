@@ -5,6 +5,7 @@ import Observation
 public final class LocationService {
     public private(set) var source: LocationSource
     public private(set) var position: Coordinate?
+    public private(set) var problem: LocationProblem?
 
     public var allowsFakePosition: Bool {
         sourceStore != nil
@@ -12,12 +13,16 @@ public final class LocationService {
 
     private let realProvider: any LocationProvider
     private let sourceStore: LocationSourceStore?
-    private var updatesTask: Task<Void, Never>?
+    @ObservationIgnored private var updatesTask: Task<Void, Never>?
 
     public init(realProvider: any LocationProvider, sourceStore: LocationSourceStore?) {
         self.realProvider = realProvider
         self.sourceStore = sourceStore
         self.source = sourceStore?.load() ?? .realGPS
+    }
+
+    deinit {
+        updatesTask?.cancel()
     }
 
     public func start() {
@@ -39,6 +44,7 @@ public final class LocationService {
         source = newSource
         sourceStore.save(newSource)
         position = nil
+        problem = nil
         if updatesTask != nil {
             stop()
             listen(to: provider(for: newSource))
@@ -55,17 +61,30 @@ public final class LocationService {
     }
 
     private func listen(to provider: any LocationProvider) {
-        let positions = provider.positions()
+        let events = provider.events()
         updatesTask = Task { [weak self] in
-            for await coordinate in positions {
+            for await event in events {
                 guard !Task.isCancelled else {
                     return
                 }
-                self?.position = coordinate
+                self?.handle(event)
             }
             if !Task.isCancelled {
                 self?.updatesTask = nil
             }
+        }
+    }
+
+    private func handle(_ event: LocationEvent) {
+        switch event {
+        case .position(let coordinate):
+            position = coordinate
+            problem = nil
+        case .problem(let newProblem):
+            if newProblem == .permissionDenied {
+                position = nil
+            }
+            problem = newProblem
         }
     }
 }

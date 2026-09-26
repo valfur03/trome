@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import RATPCore
 
@@ -37,5 +38,23 @@ struct CoordinateTests {
         let notreDame = Coordinate(48.8530, 2.3499)
 
         #expect(abs(eiffelTower.distance(to: notreDame) - 4_100) < 50)
+    }
+
+    @Test func decodesAValidCoordinate() throws {
+        let data = Data(#"{"latitude": 48.8584, "longitude": 2.2945}"#.utf8)
+
+        #expect(try JSONDecoder().decode(Coordinate.self, from: data) == Coordinate(48.8584, 2.2945))
+    }
+
+    @Test(arguments: [
+        #"{"latitude": 91, "longitude": 2.2945}"#,
+        #"{"latitude": -91, "longitude": 2.2945}"#,
+        #"{"latitude": 48.8584, "longitude": 181}"#,
+        #"{"latitude": 48.8584, "longitude": -181}"#
+    ])
+    func rejectsDecodingAnOutOfRangeCoordinate(json: String) {
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(Coordinate.self, from: Data(json.utf8))
+        }
     }
 }

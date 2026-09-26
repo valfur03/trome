@@ -46,7 +46,7 @@ struct TestingToolsView: View {
         Section {
             Text(sourceDescription)
                 .accessibilityIdentifier("locationSource")
-            Text(locationService.position?.formatted ?? "Waiting for a position…")
+            Text(positionDescription)
                 .monospacedDigit()
                 .accessibilityIdentifier("currentPosition")
             Button("Use the real GPS") {
@@ -95,6 +95,20 @@ struct TestingToolsView: View {
                 Text(addressError)
                     .foregroundStyle(.red)
             }
+        }
+    }
+
+    private var positionDescription: String {
+        if let position = locationService.position {
+            return position.formatted
+        }
+        switch locationService.problem {
+        case .permissionDenied:
+            return "Location access is denied"
+        case .unavailable:
+            return "Location is unavailable"
+        case nil:
+            return "Waiting for a position…"
         }
     }
 
