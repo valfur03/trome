@@ -6,6 +6,7 @@ build="$root/.build"
 work="$build/live-key-check"
 app_plist="$build/DerivedData/Build/Products/Debug-iphonesimulator/RATPActivity.app/Info.plist"
 fake="LEAKCHECK$(date +%s)$$"
+shared_cache="${SHARED_CACHE:?}"
 
 fail() {
     echo "live-key-check: FAILED: $1" >&2
@@ -39,6 +40,7 @@ touch "$work/start"
 build_app live LIVE=1 PRIM_SECRETS="$work/Secrets.xcconfig"
 grep -qF "$fake" "$app_plist" || fail "the LIVE=1 build did not put the key in the app"
 [ ! -e "$build/Live.xcconfig" ] || fail "the LIVE=1 build left .build/Live.xcconfig behind"
+! grep -rqF "$fake" "$shared_cache" 2> /dev/null || fail "the shared build cache $shared_cache holds the key"
 
 build_app normal LIVE= PRIM_SECRETS="$work/Secrets.xcconfig"
 ! grep -qF "$fake" "$app_plist" || fail "the build without LIVE=1 kept the key in the app"

@@ -61,6 +61,13 @@ make simulator-delete-old
 
 It keeps the Simulators that are not shut down, because a worktree with the old scripts can still use them.
 
+## The shared build cache
+
+All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RATPActivity/` (the README explains it). It holds no code of the app, so two tasks never mix their build products.
+
+- Do not delete it while other agents build. `make clean` does not touch it. Only the prompter runs `make clean-shared-cache`, when no build runs.
+- `make build LIVE=1` does not use it, so it never holds a build with the real key. `make live-key-check` checks it.
+
 ## The docs site (`docs/`)
 
 The README explains the docs site and its commands (section "The docs site").

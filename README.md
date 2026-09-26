@@ -31,6 +31,7 @@ The Xcode project is not in git. The file `project.yml` describes it. If you cha
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
 | `make stations` | Downloads the metro and RER station list again (see below). |
 | `make clean` | Deletes the build folder and the Xcode project. |
+| `make clean-shared-cache` | Deletes the build cache that all folders share (see [Notes for developers](#notes-for-developers)). |
 | `make docs` | Builds the docs site and serves it at http://localhost:4321 (see [The docs site](#the-docs-site)). |
 | `make help` | Shows all the commands. |
 
@@ -269,6 +270,8 @@ Rules to keep the docs true:
 
 - Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `RATPCore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
 - Build output goes to `.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder. All worktrees share one Simulator, and Simulator jobs wait for each other (see above).
+- The shared build cache: all folders (and all git worktrees) share the compiled modules of the iOS SDK (for example SwiftUI and UIKit), in `~/Library/Caches/RATPActivity/`. So the first build of a new worktree does not compile them again. This cache holds no code of the app, only modules of the SDK: the build products of a worktree stay in its own `.build/`. Xcode keys each module by a hash of the SDK and the compiler flags, and it writes each file in one step, so many builds can use the cache at the same time. Once a day, Xcode deletes the modules that no build used for 4 days, so the cache does not grow forever. `make build LIVE=1` does not use this cache: a build with the key stays in its folder. `make live-key-check` fails if the cache holds the key. To clear the cache, run `make clean-shared-cache` when no build runs (it deletes the folder, and the next build makes it again). To use another folder, add `SHARED_CACHE=<folder>` to the `make` command.
+- `make build` builds the app for the processor of your Mac only (Apple silicon: arm64), and the command line builds make no code index (Xcode makes its own index when you open the project). Both make the build faster.
 - End-to-end tests: to wait for an element, use `waitForExistence(timeout: UITestTimeout.element)` (30 seconds). The Mac can be busy, so short waits fail for no real reason. A wait ends as soon as the element shows, so a passing test stays fast. Each test class inherits from `E2ETestCase`. It sets `continueAfterFailure = false`: a test stops at its first failure.
 - `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock). It stops a test that runs longer than 5 minutes. When a test fails, it prints the file, the line, and the message of each failure. The full results are in `.build/e2e.xcresult` (open it in Xcode).
 - Swift 6 language mode. Minimum iOS version: 18.0.

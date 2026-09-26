@@ -16,20 +16,26 @@ CORE_PACKAGE := Packages/RATPCore
 NO_KEY := -xcconfig Config/NoKey.xcconfig
 LIVE_XCCONFIG := $(BUILD_DIR)/Live.xcconfig
 PRIM_SECRETS ?= $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')/Config/Secrets.xcconfig
+SHARED_CACHE ?= $(HOME)/Library/Caches/RATPActivity
+HOST_ARCH := $(shell uname -m)
 
 ifeq ($(LIVE),1)
 ifneq ($(filter-out build run,$(MAKECMDGOALS)),)
 $(error LIVE=1 works only with 'make build' and 'make run')
 endif
+SHARED_SDK_MODULES :=
+else
+SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SHARED_CACHE)/SDKExplicitPrecompiledModules
 endif
 
 XCODEBUILD := xcodebuild -quiet \
 	-project $(PROJECT) \
 	-derivedDataPath $(DERIVED_DATA) \
-	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages
-BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' build
+	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages \
+	COMPILER_INDEX_STORE_ENABLE=NO $(SHARED_SDK_MODULES)
+BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
 
-.PHONY: help setup generate project lint lint-fix build test check live-key-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean docs docs-dev docs-check docs-check-if-changed docs-install docs-stop node-check docs-screenshots
+.PHONY: help setup generate project lint lint-fix build test check live-key-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs docs-dev docs-check docs-check-if-changed docs-install docs-stop node-check docs-screenshots
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -47,6 +53,7 @@ help:
 	@echo "make simulator-delete    Delete the shared Simulator (takes the Simulator lock)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
+	@echo "make clean-shared-cache  Delete the build cache that all folders share (only when no build runs)"
 	@echo "make docs                Build the docs site and serve it at http://localhost:4321 (PORT=<n> for another port)"
 	@echo "make docs-dev            Serve the docs with live reload, no search (PORT=<n> for another port)"
 	@echo "make docs-stop           Stop the docs server of this folder (when it runs in the background)"
@@ -90,7 +97,7 @@ test:
 check: lint live-key-check build test docs-check-if-changed
 
 live-key-check: project
-	@./scripts/live-key-check.sh
+	@SHARED_CACHE="$(SHARED_CACHE)" ./scripts/live-key-check.sh
 
 run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
@@ -121,6 +128,9 @@ simulator-delete-old:
 
 clean:
 	rm -rf $(BUILD_DIR) $(PROJECT)
+
+clean-shared-cache:
+	rm -rf $(SHARED_CACHE)
 
 node-check:
 	@./scripts/node-check.sh
