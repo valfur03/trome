@@ -8,6 +8,7 @@ final class StationListTests: XCTestCase {
         allowLocationAccessIfAsked()
 
         app.buttons["testingTools"].tap()
+        app.swipeUp()
         app.buttons["allStations"].tap()
         let stationCount = app.staticTexts["stationCount"]
         XCTAssertTrue(stationCount.waitForExistence(timeout: 5))
