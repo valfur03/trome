@@ -21,4 +21,14 @@ struct BackgroundTrainsRefreshTests {
     func waitsAtMostTheMaximumDelay(staleDate: Date?) {
         #expect(BackgroundTrainsRefresh.delay(untilStale: staleDate, now: now) == BackgroundTrainsRefresh.maximumDelay)
     }
+
+    @Test(arguments: [NextTrainsState.missingKey, .failed(.keyRejected), .failed(.quotaExceeded)])
+    func stopsAskingWhenAskingAgainCannotHelp(state: NextTrainsState) {
+        #expect(BackgroundTrainsRefresh.shouldAskAgain(after: state) == false)
+    }
+
+    @Test(arguments: [NextTrainsState.noLiveData, .failed(.unreachable), .failed(.serviceFailure)])
+    func asksAgainAfterAPassingProblem(state: NextTrainsState) {
+        #expect(BackgroundTrainsRefresh.shouldAskAgain(after: state))
+    }
 }

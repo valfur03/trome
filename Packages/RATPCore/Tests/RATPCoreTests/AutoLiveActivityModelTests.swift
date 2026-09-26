@@ -346,6 +346,18 @@ struct AutoLiveActivityModelTests {
         #expect(client.isShowing)
     }
 
+    @Test func stopsAskingInTheBackgroundOnceTheQuotaIsExceeded() async {
+        provider.answer(.failure(.quotaExceeded), for: Places.stationA)
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await model.setAppActive(false)
+
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { provider.callCount > 2 }
+
+        #expect(provider.callCount == 2)
+    }
+
     @Test func watchesTheStationsAroundTheRealPosition() async {
         let model = makeModel()
 

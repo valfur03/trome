@@ -277,8 +277,8 @@ private extension AutoLiveActivityModel {
     }
 
     func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
-        if fetchNow {
-            await feed(station)
+        if fetchNow, await !feedInBackground(station) {
+            return
         }
         while !Task.isCancelled {
             let delay = BackgroundTrainsRefresh.delay(
@@ -290,8 +290,13 @@ private extension AutoLiveActivityModel {
             } catch {
                 return
             }
-            await feed(station)
+            guard await feedInBackground(station) else { return }
         }
+    }
+
+    func feedInBackground(_ station: Station) async -> Bool {
+        await feed(station)
+        return BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
     }
 
     func keepFeeding(_ station: Station) async {
