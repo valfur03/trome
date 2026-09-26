@@ -118,6 +118,20 @@ struct NextTrainsModelTests {
         #expect(waits.withLock { $0 } == [.seconds(30)])
     }
 
+    @Test func saysWhichStationItKeepsUpdatedUntilItStops() async {
+        let model = makeModel(sleep: { _ in try await Task.sleep(for: .seconds(3_600)) })
+
+        let updates = Task { await model.keepUpdated(for: abbesses) }
+        for _ in 0..<1_000 where provider.callCount == 0 {
+            try? await Task.sleep(for: .milliseconds(1))
+        }
+        #expect(model.updatingStationId == "abbesses")
+        updates.cancel()
+        await updates.value
+
+        #expect(model.updatingStationId == nil)
+    }
+
     @Test func givesTheStateOfTheShownStation() async {
         provider.answer(.success([]), for: abbesses)
         let model = makeModel()

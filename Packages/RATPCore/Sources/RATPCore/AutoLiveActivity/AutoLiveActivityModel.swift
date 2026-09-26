@@ -46,7 +46,7 @@ public final class AutoLiveActivityModel {
         self.state = state
         stateDidChange(from: AutoLiveActivityState())
         observePosition()
-        observePickedStation()
+        observeScreenStation()
         followPositionIfShowing()
     }
 
@@ -125,12 +125,12 @@ public final class AutoLiveActivityModel {
         inputs.locationService.start()
     }
 
-    private func observePickedStation() {
+    private func observeScreenStation() {
         withObservationTracking {
-            _ = inputs.currentStation.station
+            _ = inputs.screenTrains.updatingStationId
         } onChange: { [weak self] in
             Task { @MainActor in
-                self?.observePickedStation()
+                self?.observeScreenStation()
                 self?.restartFeed(refreshInBackground: false)
             }
         }
@@ -218,7 +218,7 @@ public final class AutoLiveActivityModel {
     }
 
     private func trains(for station: Station) -> NextTrainsState {
-        if inputs.currentStation.station?.id == station.id {
+        if inputs.screenTrains.updatingStationId == station.id {
             return inputs.screenTrains.state(for: station)
         }
         return inputs.liveActivityTrains.state(for: station)
@@ -264,7 +264,7 @@ private extension AutoLiveActivityModel {
         feedTask = nil
         guard let station = shownStation, liveActivity.isShowing else { return }
         if appIsActive {
-            guard inputs.currentStation.station?.id != station.id else { return }
+            guard inputs.screenTrains.updatingStationId != station.id else { return }
             feedTask = Task { [weak self] in
                 await self?.keepFeeding(station)
             }

@@ -93,16 +93,18 @@ struct AutoLiveActivityModelTests {
     private let storage = InMemoryKeyValueStore()
     private let clock = TestClock()
     private let locationService: LocationService
-    private let currentStation: CurrentStationModel
+    private let screenTrains: NextTrainsModel
 
     init() {
         locationService = LocationService(
             realProvider: gps,
             sourceStore: LocationSourceStore(storage: InMemoryKeyValueStore())
         )
-        currentStation = CurrentStationModel(
-            catalog: Places.catalog,
-            store: CurrentStationStore(storage: InMemoryKeyValueStore())
+        let clock = clock
+        screenTrains = NextTrainsModel(
+            provider: provider,
+            now: { clock.now },
+            sleep: { try await clock.sleep(for: $0) }
         )
     }
 
@@ -122,8 +124,7 @@ struct AutoLiveActivityModelTests {
             inputs: .init(
                 locationService: locationService,
                 permission: permission,
-                currentStation: currentStation,
-                screenTrains: NextTrainsModel(provider: provider, now: now, sleep: sleep),
+                screenTrains: screenTrains,
                 liveActivityTrains: NextTrainsModel(provider: provider, now: now, sleep: sleep)
             ),
             services: .init(notifier: notifier, regionWatcher: watcher, locationKeeper: keeper),
@@ -303,6 +304,19 @@ struct AutoLiveActivityModelTests {
 
         #expect(client.updates.last?.stationName == "Station A")
         #expect(client.updates.last?.trains == .noData)
+    }
+
+    @Test func feedsTheLiveActivityItselfOnceTheScreenStopsUpdatingItsStation() async {
+        let model = makeModel()
+        let screen = Task { await screenTrains.keepUpdated(for: Places.stationA) }
+        await waitUntil { provider.callCount == 1 }
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        #expect(provider.callCount == 1)
+
+        screen.cancel()
+        await waitUntil { provider.callCount == 2 }
+
+        #expect(provider.callCount == 2)
     }
 
     @Test func watchesTheStationsAroundTheRealPosition() async {

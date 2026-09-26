@@ -44,20 +44,17 @@ extension AutoLiveActivityModel {
     public struct Inputs {
         public let locationService: LocationService
         public let permission: any LocationPermission
-        public let currentStation: CurrentStationModel
         public let screenTrains: NextTrainsModel
         public let liveActivityTrains: NextTrainsModel
 
         public init(
             locationService: LocationService,
             permission: any LocationPermission,
-            currentStation: CurrentStationModel,
             screenTrains: NextTrainsModel,
             liveActivityTrains: NextTrainsModel
         ) {
             self.locationService = locationService
             self.permission = permission
-            self.currentStation = currentStation
             self.screenTrains = screenTrains
             self.liveActivityTrains = liveActivityTrains
         }

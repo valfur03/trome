@@ -10,6 +10,9 @@ final class NearestStationTests: E2ETestCase {
 
         app.launch()
         allowLocationAccess()
+        let testingTools = app.buttons["testingTools"]
+        XCTAssertTrue(testingTools.waitForExistence(timeout: UITestTimeout.element))
+        testingTools.tap()
 
         let stationName = app.staticTexts["nearestStationName"]
         XCTAssertTrue(stationName.waitForExistence(timeout: UITestTimeout.element))

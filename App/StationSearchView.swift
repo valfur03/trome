@@ -1,3 +1,4 @@
+#if DEBUG
 import RATPCore
 import SwiftUI
 
@@ -41,3 +42,4 @@ struct StationSearchView: View {
         .navigationTitle("Pick a station")
     }
 }
+#endif

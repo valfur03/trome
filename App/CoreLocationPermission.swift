@@ -2,8 +2,17 @@ import CoreLocation
 import RATPCore
 import UIKit
 
+enum LocationAccess {
+    case notDecided
+    case denied
+    case whileUsing
+    case always
+}
+
 @MainActor
 final class CoreLocationPermission: NSObject, LocationPermission {
+    var onAccessChange: (() -> Void)?
+
     private let manager = CLLocationManager()
     private var authorizationWaiters: [CheckedContinuation<LocationAuthorization, Never>] = []
     private var backgroundObserver: NSObjectProtocol?
@@ -26,8 +35,14 @@ final class CoreLocationPermission: NSObject, LocationPermission {
         Self.authorization(from: manager.authorizationStatus)
     }
 
-    var allowsBackgroundDetection: Bool {
-        manager.authorizationStatus == .authorizedAlways
+    var access: LocationAccess {
+        switch manager.authorizationStatus {
+        case .notDetermined: .notDecided
+        case .authorizedAlways: .always
+        case .authorizedWhenInUse: .whileUsing
+        case .denied, .restricted: .denied
+        @unknown default: .denied
+        }
     }
 
     func requestAuthorization() async -> LocationAuthorization {
@@ -41,6 +56,7 @@ final class CoreLocationPermission: NSObject, LocationPermission {
     }
 
     private func authorizationDidChange() {
+        onAccessChange?()
         guard authorization != .notDetermined else { return }
         resumeAuthorizationWaiters()
     }

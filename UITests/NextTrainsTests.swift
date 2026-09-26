@@ -21,15 +21,34 @@ final class NextTrainsTests: E2ETestCase {
 
     @MainActor
     private func pickStation(_ name: String, searching query: String, in app: XCUIApplication) {
-        XCTAssertTrue(app.staticTexts["appTitle"].waitForExistence(timeout: UITestTimeout.element))
         let chooseStation = app.buttons["chooseStation"]
-        (chooseStation.exists ? chooseStation : app.buttons["changeStation"]).tap()
+        let changeStation = app.buttons["changeStation"]
+        if !chooseStation.exists, !changeStation.exists {
+            openNextTrainsScreen(in: app)
+        }
+        (chooseStation.exists ? chooseStation : changeStation).tap()
 
         let searchField = app.searchFields.firstMatch
         XCTAssertTrue(searchField.waitForExistence(timeout: UITestTimeout.element))
         searchField.tap()
         searchField.typeText(query)
         app.buttons["chooseStation-\(name)"].tap()
+    }
+
+    @MainActor
+    private func openNextTrainsScreen(in app: XCUIApplication) {
+        let testingTools = app.buttons["testingTools"]
+        XCTAssertTrue(testingTools.waitForExistence(timeout: UITestTimeout.element))
+        testingTools.tap()
+        let nextTrains = app.buttons["nextTrains"]
+        XCTAssertTrue(app.staticTexts["locationSource"].waitForExistence(timeout: UITestTimeout.element))
+        app.swipeUp()
+        XCTAssertTrue(nextTrains.waitForExistence(timeout: UITestTimeout.element))
+        nextTrains.tap()
+        XCTAssertTrue(
+            app.buttons["chooseStation"].waitForExistence(timeout: UITestTimeout.element)
+                || app.buttons["changeStation"].exists
+        )
     }
 
     @MainActor

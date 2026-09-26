@@ -184,4 +184,36 @@ struct NearestStationModelTests {
 
         #expect(model.state == .permissionDenied)
     }
+
+    @Test func givesTheNearestStationNowOnceThePositionArrives() async {
+        let model = makeModel(MockLocationPermission(authorization: .authorized))
+
+        async let result = model.nearestStationNow()
+        await waitForState(.locating, in: model)
+        gps.report(nearNation)
+
+        #expect(await result == .success(nation))
+    }
+
+    @Test func explainsWhyThereIsNoNearestStationNow() async {
+        let denied = makeModel(MockLocationPermission(authorization: .denied))
+        let undecided = makeModel(
+            MockLocationPermission(authorization: .notDetermined, answerToRequest: .notDetermined)
+        )
+        let unavailable = makeModel(MockLocationPermission(authorization: .authorized))
+
+        #expect(await denied.nearestStationNow() == .failure(.permissionDenied))
+        #expect(await undecided.nearestStationNow() == .failure(.permissionUndecided))
+        #expect(await unavailable.nearestStationNow() == .failure(.locationUnavailable))
+    }
+
+    @Test func saysNoStationIsNearbyNow() async {
+        let model = makeModel(MockLocationPermission(authorization: .authorized))
+
+        async let result = model.nearestStationNow()
+        await waitForState(.locating, in: model)
+        gps.report(farFromNation)
+
+        #expect(await result == .failure(.noStationNearby))
+    }
 }

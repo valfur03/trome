@@ -26,12 +26,12 @@ final class FakePositionTests: E2ETestCase {
         coordinatesField.typeText("48.8584, 2.2945")
         app.buttons["useCoordinates"].tap()
         XCTAssertTrue(app.staticTexts["Fake: 48.85840, 2.29450"].waitForExistence(timeout: UITestTimeout.element))
-
-        app.navigationBars.buttons.firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["fakePositionBanner"].waitForExistence(timeout: UITestTimeout.element))
         let stationName = app.staticTexts["nearestStationName"]
         XCTAssertTrue(stationName.waitForExistence(timeout: UITestTimeout.element))
         XCTAssertEqual(stationName.label, "Champ de Mars Tour Eiffel")
+
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["fakePositionBanner"].waitForExistence(timeout: UITestTimeout.element))
 
         app.buttons["testingTools"].tap()
         app.buttons["useRealGPS"].tap()

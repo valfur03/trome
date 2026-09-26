@@ -6,12 +6,12 @@ import UserNotifications
 struct RATPActivityApp: App {
     @State private var locationService: LocationService
     @State private var nearestStationModel: NearestStationModel
+    @State private var permissionsModel: PermissionsModel
     @State private var currentStationModel: CurrentStationModel
     @State private var nextTrainsModel: NextTrainsModel
     @State private var liveActivityModel: StationLiveActivityModel
     @State private var autoLiveActivityModel: AutoLiveActivityModel
     private let stationCatalog: StationCatalog
-    private let locationPermission: CoreLocationPermission
     private let regionWatcher: CoreLocationStationRegionWatcher
     private let notificationTapHandler: ArrivalNotificationTapHandler
     private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
@@ -33,7 +33,6 @@ struct RATPActivityApp: App {
             inputs: .init(
                 locationService: locationService,
                 permission: permission,
-                currentStation: currentStationModel,
                 screenTrains: nextTrainsModel,
                 liveActivityTrains: NextTrainsModel(provider: Self.departuresProvider(primConfiguration))
             ),
@@ -49,7 +48,7 @@ struct RATPActivityApp: App {
         Task { await regionWatcher.resume() }
 
         self.stationCatalog = stationCatalog
-        self.locationPermission = permission
+        _permissionsModel = State(initialValue: PermissionsModel(locationPermission: permission))
         self.regionWatcher = regionWatcher
         self.notificationTapHandler = notificationTapHandler
         _locationService = State(initialValue: locationService)
@@ -70,7 +69,7 @@ struct RATPActivityApp: App {
         WindowGroup {
             ContentView(
                 nearestStationModel: nearestStationModel,
-                locationPermission: locationPermission,
+                permissions: permissionsModel,
                 primConfiguration: primConfiguration
             )
             .environment(locationService)

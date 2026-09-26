@@ -1,3 +1,4 @@
+#if DEBUG
 import RATPCore
 import SwiftUI
 
@@ -162,3 +163,4 @@ private struct DepartureRow: View {
         .accessibilityIdentifier("departureRow")
     }
 }
+#endif

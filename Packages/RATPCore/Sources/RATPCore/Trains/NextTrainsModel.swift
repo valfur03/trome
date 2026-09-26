@@ -16,12 +16,14 @@ public final class NextTrainsModel {
     public static let refreshInterval: Duration = .seconds(30)
 
     public private(set) var state: NextTrainsState = .idle
+    public private(set) var updatingStationId: String?
 
     private let provider: (any DeparturesProvider)?
     private let refreshInterval: Duration
     private let now: @Sendable () -> Date
     private let sleep: @Sendable (Duration) async throws -> Void
     private var shownStationId: String?
+    private var updateCount = 0
 
     public init(
         provider: (any DeparturesProvider)?,
@@ -44,6 +46,14 @@ public final class NextTrainsModel {
 
     public func keepUpdated(for station: Station) async {
         guard provider != nil else { return }
+        updateCount += 1
+        let update = updateCount
+        updatingStationId = station.id
+        defer {
+            if updateCount == update {
+                updatingStationId = nil
+            }
+        }
         while !Task.isCancelled {
             await refresh(for: station)
             do {

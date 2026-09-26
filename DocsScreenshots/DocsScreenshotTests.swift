@@ -18,17 +18,19 @@ final class DocsScreenshotTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments.append("--reset-location-source")
         app.launch()
-        allowLocationAccessIfAsked()
 
-        XCTAssertTrue(app.staticTexts["nearestStationName"].waitForExistence(timeout: timeout))
-        pickStation("Champ de Mars Tour Eiffel", searching: "champ de mars", in: app)
-        XCTAssertTrue(app.staticTexts["currentStationName"].waitForExistence(timeout: timeout))
-        let startButton = app.buttons["startLiveActivity"]
-        XCTAssertTrue(startButton.waitForExistence(timeout: timeout))
+        let stopButton = app.buttons["stopLiveActivity"]
+        let showButton = app.buttons["showNearestStationLiveActivity"]
+        let location = app.descendants(matching: .any)["locationPermissionStatus"]
+        let notifications = app.descendants(matching: .any)["notificationsPermissionStatus"]
+        answerPermissionQuestions {
+            location.exists && location.label == "Location, Always"
+                && notifications.exists && notifications.label == "Notifications, On"
+        }
+        XCTAssertTrue(showButton.waitForExistence(timeout: timeout))
         saveScreenshot(named: "app-main-screen")
 
-        startButton.tap()
-        let stopButton = app.buttons["stopLiveActivity"]
+        showButton.tap()
         XCTAssertTrue(stopButton.waitForExistence(timeout: timeout))
 
         XCUIDevice.shared.press(.home)
@@ -39,19 +41,7 @@ final class DocsScreenshotTests: XCTestCase {
         app.activate()
         XCTAssertTrue(stopButton.waitForExistence(timeout: timeout))
         stopButton.tap()
-        XCTAssertTrue(startButton.waitForExistence(timeout: timeout))
-    }
-
-    @MainActor
-    private func pickStation(_ name: String, searching query: String, in app: XCUIApplication) {
-        app.buttons["chooseStation"].tap()
-        let searchField = app.searchFields.firstMatch
-        XCTAssertTrue(searchField.waitForExistence(timeout: timeout))
-        searchField.tap()
-        searchField.typeText(query)
-        let station = app.buttons["chooseStation-\(name)"]
-        XCTAssertTrue(station.waitForExistence(timeout: timeout))
-        station.tap()
+        XCTAssertTrue(showButton.waitForExistence(timeout: timeout))
     }
 
     @MainActor
@@ -75,10 +65,15 @@ final class DocsScreenshotTests: XCTestCase {
     }
 
     @MainActor
-    private func allowLocationAccessIfAsked() {
-        let allowButton = springboard.buttons["Allow While Using App"]
-        if allowButton.waitForExistence(timeout: 3) {
-            allowButton.tap()
+    private func answerPermissionQuestions(until isSettled: () -> Bool) {
+        let answers = ["Allow While Using App", "Change to Always Allow", "Allow"]
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline, !isSettled() {
+            for answer in answers where springboard.buttons[answer].exists {
+                springboard.buttons[answer].tap()
+            }
+            sleep(1)
         }
+        XCTAssertTrue(isSettled(), "The location and notification permissions did not settle")
     }
 }

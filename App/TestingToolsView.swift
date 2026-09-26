@@ -3,6 +3,9 @@ import RATPCore
 import SwiftUI
 
 struct TestingToolsView: View {
+    let nearestStationModel: NearestStationModel
+    let primConfiguration: PRIMConfiguration?
+
     @Environment(LocationService.self) private var locationService
     @State private var coordinatesText = ""
     @State private var coordinatesError: String?
@@ -35,6 +38,16 @@ struct TestingToolsView: View {
             } footer: {
                 Text("Every metro and RER station the app knows, with its lines.")
             }
+            Section {
+                NavigationLink("Next trains of a station") {
+                    NextTrainsScreen(primConfiguration: primConfiguration)
+                }
+                .accessibilityIdentifier("nextTrains")
+            } header: {
+                Text("Next trains")
+            } footer: {
+                Text("Pick a station by hand, see its next trains, and show them on the lock screen.")
+            }
         }
         .navigationTitle("Testing tools")
         .task {
@@ -49,6 +62,7 @@ struct TestingToolsView: View {
             Text(positionDescription)
                 .monospacedDigit()
                 .accessibilityIdentifier("currentPosition")
+            nearestStationRow
             Button("Use the real GPS") {
                 locationService.use(.realGPS)
             }
@@ -95,6 +109,44 @@ struct TestingToolsView: View {
                 Text(addressError)
                     .foregroundStyle(.red)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var nearestStationRow: some View {
+        if case .found(let nearby) = nearestStationModel.state {
+            VStack(alignment: .leading) {
+                Text(nearby.station.name)
+                    .accessibilityIdentifier("nearestStationName")
+                Text(nearestStationDetails(nearby))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("nearestStationLines")
+            }
+        } else {
+            Text(nearestStationProblem)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("nearestStationState")
+        }
+    }
+
+    private func nearestStationDetails(_ nearby: NearbyStation) -> String {
+        let distance = Measurement(value: nearby.distanceMeters, unit: UnitLength.meters)
+            .formatted(.measurement(width: .abbreviated, usage: .road))
+        let lines = nearby.station.lines.map(\.displayName).joined(separator: " · ")
+        return "Nearest station, \(distance): \(lines)"
+    }
+
+    private var nearestStationProblem: String {
+        switch nearestStationModel.state {
+        case .idle, .locating, .found:
+            "Nearest station: looking…"
+        case .permissionUndecided, .permissionDenied:
+            "Nearest station: no location access"
+        case .noStationNearby:
+            "Nearest station: none within walking distance"
+        case .locationUnavailable:
+            "Nearest station: position unavailable"
         }
     }
 

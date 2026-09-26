@@ -40,7 +40,7 @@ The Xcode project is not in git. The file `project.yml` describes it. If you cha
 make run
 ```
 
-`make run` does not use your train data key. The app shows no trains, and it says "Train data key: not set". To see live trains, run `make run LIVE=1` (see [The train data key](#the-train-data-key-prim)).
+`make run` does not use your train data key. The app shows no trains, and "Testing tools" > "Next trains of a station" says "Train data key: not set". To see live trains, run `make run LIVE=1` (see [The train data key](#the-train-data-key-prim)).
 
 The app opens in the Simulator. You need no Apple ID for this.
 
@@ -60,6 +60,16 @@ To fake your position in the Simulator:
 xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
 ```
 
+## The main screen
+
+The app is the Live Activity. The main screen shows only:
+
+- **One action.** "Show the Live Activity for the nearest station now" shows the Live Activity of the station nearest to you. If the app cannot find a station (no location access, no metro or RER station near you, no position), it says why. While a Live Activity shows, the screen says which station ("On the lock screen: <station>") and has "Stop showing on the lock screen" instead.
+- **The automatic mode.** It is always on for now (see [below](#the-live-activity-starts-and-stops-by-itself-near-a-station)). A later task adds a way to snooze it or turn it off.
+- **The permissions.** The state of the location and of the notifications. When one is missing or refused, the screen says what does not work, with a button to fix it ("Open Settings", or "Allow location").
+
+The station picker and the next trains list are only for testers, in "Testing tools" (debug builds).
+
 ## Fake your position (testing tools)
 
 Debug builds have a "Testing tools" screen. `make run` and the Run button in Xcode make debug builds. Release builds do not have this screen.
@@ -70,7 +80,7 @@ Debug builds have a "Testing tools" screen. `make run` and the Run button in Xco
    - "Far from any station": a point in the Fontainebleau forest, far from any metro or RER station.
    - "Coordinates": type the latitude, then the longitude, for example `48.8584, 2.2945`. Tap "Use these coordinates".
    - "Address": type an address, for example `10 rue de Rivoli, Paris`. Tap "Find this address". This needs the network.
-3. The section "Position used by the app" shows the position that every feature uses.
+3. The section "Position used by the app" shows the position that every feature uses, and the nearest station.
 4. To stop faking, tap "Use the real GPS".
 
 The app keeps your choice when you close it. While a fake position is on, the main screen shows "Fake position" in orange.
@@ -93,11 +103,12 @@ Some names in the open data are wrong or spelled in two ways. The script fixes t
 
 ## Next trains of a station
 
-The main screen shows the next trains of a station that you pick by hand. This needs no location permission.
+Debug builds can show the next trains of a station that you pick by hand. This needs no location permission. Release builds do not have this screen.
 
-1. Under "Next trains", tap "Pick a station". Type part of a name to find a station, then tap it.
-2. The screen shows the next trains of each line and destination, in minutes. The app asks for new times every 30 seconds while the screen is open.
-3. Tap "Change station" to pick another station.
+1. Open "Testing tools", then tap "Next trains of a station" at the bottom.
+2. Tap "Pick a station". Type part of a name to find a station, then tap it.
+3. The screen shows the next trains of each line and destination, in minutes. The app asks for new times every 30 seconds while this screen is open.
+4. Tap "Change station" to pick another station.
 
 The app remembers the picked station when you close it.
 
@@ -108,16 +119,15 @@ The screen tells you when:
 - the app cannot reach the train data service (for example, no internet),
 - the service refuses the key, gets too many requests, or does not work.
 
-For developers: the code is in `Packages/RATPCore/Sources/RATPCore/Trains`. `PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop of the station. A metro stop id `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`. An RER stop id `IDFM:monomodalStopPlace:<n>` becomes `STIF:StopArea:SP:<n>:`. `CurrentStationModel` holds the station that the user picked. Other features (for example the Live Activity) can use it.
+For developers: the code is in `Packages/RATPCore/Sources/RATPCore/Trains`. `PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop of the station. A metro stop id `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`. An RER stop id `IDFM:monomodalStopPlace:<n>` becomes `STIF:StopArea:SP:<n>:`. `CurrentStationModel` holds the station that the tester picked. `NextTrainsModel.updatingStationId` says which station the screen keeps up to date, so the Live Activity does not ask PRIM for the same station twice.
 
 ## Show the next trains on the lock screen (Live Activity)
 
-The app can show the next train of the picked station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
+The app shows the next train of a station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
 
-1. Pick a station (see above).
-2. Tap "Show on the lock screen".
-3. Lock the phone. The Live Activity shows the station, the line, the direction, and the waiting time of the next train.
-4. To remove it, open the app and tap "Stop showing on the lock screen".
+1. On the main screen, tap "Show the Live Activity for the nearest station now". Testers can also pick any station in "Testing tools" > "Next trains of a station", and tap "Show on the lock screen".
+2. Lock the phone. The Live Activity shows the station, the line, the direction, and the waiting time of the next train.
+3. To remove it, open the app and tap "Stop showing on the lock screen".
 
 The Live Activity can also start and stop by itself near a station (see below).
 
@@ -139,11 +149,11 @@ The app watches the metro and RER stations around you. The rules come from decis
 - **One station at a time.** If a Live Activity already shows and you come within 150 meters of another station, the Live Activity switches to the new station. There is no second Live Activity and no second notification.
 - **Stop.** The Live Activity ends by itself when you move more than about 250 meters away from its station, or 45 minutes after it started.
 - **No repeat.** You get one notification or one automatic start for each arrival. After you stop the Live Activity by hand, it does not start again until you leave the station (more than 250 meters) and come back.
-- **By hand.** "Show on the lock screen" and "Stop showing on the lock screen" still work. A Live Activity that you start by hand for a station far from you does not stop because of the distance. It stops at 250 meters only after you came near its station. The 45 minute limit applies to every Live Activity.
+- **By hand.** "Show the Live Activity for the nearest station now", "Show on the lock screen" (testing tools) and "Stop showing on the lock screen" still work. A Live Activity that you start by hand for a station far from you does not stop because of the distance. It stops at 250 meters only after you came near its station. The 45 minute limit applies to every Live Activity.
 
 The main screen says which station shows on the lock screen ("On the lock screen: <station>").
 
-The first time, the app asks for your location and for notifications. To get the notification while the app is closed, the app needs the location "Always". iOS first gives "While Using the App", then later asks you if the app can keep using your location in the background. If you keep "While Using the App", the Live Activity starts by itself only while the app is open. The main screen then says so, with a button to open Settings.
+The first time, the app asks for your location and for notifications. To get the notification while the app is closed, the app needs the location "Always". iOS first gives "While Using the App", then later asks you if the app can keep using your location in the background. If you keep "While Using the App", the Live Activity starts by itself only while the app is open. The "Permissions" part of the main screen then says so, with a button to open Settings.
 
 ### Test it with a fake position
 
@@ -158,7 +168,7 @@ The first time, the app asks for your location and for notifications. To get the
   On your iPhone connected to the Mac, use Xcode > Debug > Simulate Location in the same way.
 - **The 45 minute limit.** In debug builds, you can make it shorter. Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.RATPActivity -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
 
-For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `App/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times once when the Live Activity starts or switches station. When the Live Activity shows another station than the app screen, the app gets its train times every 30 seconds while the app is open.
+For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `App/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times once when the Live Activity starts or switches station. While the app is open, the app gets the train times of the Live Activity every 30 seconds, unless the next trains screen of the testing tools already gets them for the same station.
 
 Limit: iOS can pause or close the app in the background (for example with a fake position, which sends no new positions, or after you close the app from the app switcher). Then the 45 minute limit applies only when iOS wakes the app again (a region event) or when you open it.
 
@@ -166,7 +176,7 @@ Limit: iOS can pause or close the app in the background (for example with a fake
 
 The app gets train times from the PRIM API of Île-de-France Mobilités. PRIM needs a free key.
 
-The app builds and runs without the key. The app screen says "Train data key: not set".
+The app builds and runs without the key. "Testing tools" > "Next trains of a station" says "Train data key: not set".
 
 To add the key:
 
@@ -174,7 +184,7 @@ To add the key:
 2. In your account page, create an API key.
 3. In the main folder of the repo, copy `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig`.
 4. Put your key after `PRIM_API_KEY =`.
-5. Run `make run LIVE=1`. The app screen now says "Train data key: set", and it shows live trains.
+5. Run `make run LIVE=1`. "Testing tools" > "Next trains of a station" now says "Train data key: set", and it shows live trains.
 
 Always add `LIVE=1` when you want live trains. A plain `make run` does not use your key, also in the main folder.
 

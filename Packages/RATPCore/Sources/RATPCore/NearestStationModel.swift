@@ -11,6 +11,13 @@ public enum NearestStationState: Equatable, Sendable {
     case locationUnavailable
 }
 
+public enum NearestStationProblem: Error, Equatable, Sendable {
+    case permissionUndecided
+    case permissionDenied
+    case noStationNearby
+    case locationUnavailable
+}
+
 @MainActor
 @Observable
 public final class NearestStationModel {
@@ -55,6 +62,36 @@ public final class NearestStationModel {
             locationService.start()
             followPosition()
             showNearestStation()
+        }
+    }
+
+    public func nearestStationNow() async -> Result<Station, NearestStationProblem> {
+        await refresh()
+        while true {
+            switch state {
+            case .idle, .locating:
+                await nextStateChange()
+            case .permissionUndecided:
+                return .failure(.permissionUndecided)
+            case .permissionDenied:
+                return .failure(.permissionDenied)
+            case .found(let nearby):
+                return .success(nearby.station)
+            case .noStationNearby:
+                return .failure(.noStationNearby)
+            case .locationUnavailable:
+                return .failure(.locationUnavailable)
+            }
+        }
+    }
+
+    private func nextStateChange() async {
+        await withCheckedContinuation { continuation in
+            withObservationTracking {
+                _ = state
+            } onChange: {
+                continuation.resume()
+            }
         }
     }
 
