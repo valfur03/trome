@@ -38,7 +38,7 @@ help:
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the shared Simulator (creates it if needed)"
-	@echo "make simulator-shutdown  Free the Simulator lock that 'make run' keeps (the Simulator shuts down when idle)"
+	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle)"
 	@echo "make simulator-delete    Delete the shared Simulator (takes the Simulator lock)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"

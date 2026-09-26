@@ -49,7 +49,7 @@ All copies of the repo (all folders) use one shared Simulator, named `RATP-Share
 - The Simulator stays booted between jobs, so the next job starts faster. It shuts down by itself after 5 minutes with no job.
 - To delete the shared Simulator, run `make simulator-delete`. The next job creates it again.
 
-Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` when you are done, so the others can go on. This frees the lock. It does not shut down the Simulator at once.
+Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` when you are done, so the others can go on. This removes the app from the Simulator and frees the lock. It does not shut down the Simulator at once.
 
 Before the shared Simulator, each folder had its own Simulator, named `RATP-<folder>-<hash>`. To delete these old Simulators, run `make simulator-delete-old`.
 

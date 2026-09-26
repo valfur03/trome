@@ -14,7 +14,7 @@ watch_seconds=30
 usage() {
     echo "Usage: $0 job <command...>   Run a Simulator job with the lock" >&2
     echo "       $0 open <command...>  Open the Simulator with the lock, and keep the lock" >&2
-    echo "       $0 free               Free the lock that this folder keeps after 'open'" >&2
+    echo "       $0 free               Remove the app from the Simulator and free the lock that this folder keeps after 'open'" >&2
     echo "       $0 watch              Shut down the shared Simulator after $idle_minutes minutes with no job" >&2
     exit 1
 }
@@ -196,6 +196,9 @@ case "$command" in
         rm "$lock/pid"
         ;;
     free)
+        if owns_session; then
+            "$simulator" uninstall || true
+        fi
         release
         ;;
     watch)

@@ -42,10 +42,18 @@ installed_apps() {
         | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.RATPActivity)"?;$/\1/p'
 }
 
-reset_device() {
-    for app in $(installed_apps "$1"); do
-        xcrun simctl uninstall "$1" "$app"
+uninstall_apps() {
+    for installed_app in $(installed_apps "$1"); do
+        xcrun simctl uninstall "$1" "$installed_app"
     done
+}
+
+is_booted() {
+    xcrun simctl list devices booted | grep -qF "($1)"
+}
+
+reset_device() {
+    uninstall_apps "$1"
     xcrun simctl privacy "$1" reset all
     xcrun simctl location "$1" clear
 }
@@ -95,6 +103,12 @@ case "$command" in
         xcrun simctl install "$udid" "$app"
         xcrun simctl launch "$udid" "$bundle_id"
         ;;
+    uninstall)
+        udid=$(find_udid)
+        if [ -n "$udid" ] && is_booted "$udid"; then
+            uninstall_apps "$udid"
+        fi
+        ;;
     delete)
         udid=$(find_udid)
         if [ -n "$udid" ]; then
@@ -110,7 +124,7 @@ case "$command" in
         echo "$name"
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|launch <app path>|delete|delete-old|name]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|launch <app path>|uninstall|delete|delete-old|name]" >&2
         exit 1
         ;;
 esac
