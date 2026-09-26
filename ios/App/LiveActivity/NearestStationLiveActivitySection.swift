@@ -33,7 +33,7 @@ struct NearestStationLiveActivitySection: View {
             .frame(maxWidth: .infinity)
             .onChange(of: liveActivity.isShowing) { problem = nil }
         } footer: {
-            Text("The Live Activity shows the next trains on your lock screen.")
+            Text("The Live Activity shows the next trains of the station nearest to you on your lock screen.")
         }
     }
 
@@ -43,12 +43,14 @@ struct NearestStationLiveActivitySection: View {
         } label: {
             if isLookingForStation {
                 ProgressView("Finding the nearest station…")
+                    .frame(maxWidth: .infinity)
             } else {
-                Label("Show the Live Activity for the nearest station now", systemImage: "lock.iphone")
-                    .multilineTextAlignment(.center)
+                ButtonLabel("Show the Live Activity now", systemImage: "lock.iphone")
             }
         }
         .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .adaptiveButtonBorderShape()
         .disabled(isLookingForStation)
         .accessibilityIdentifier("showNearestStationLiveActivity")
     }

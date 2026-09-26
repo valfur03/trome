@@ -106,16 +106,13 @@ private struct PermissionRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            StateRow(state: state) {
                 Label {
                     Text(title)
                 } icon: {
                     Image(systemName: isGranted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(isGranted ? .green : .orange)
                 }
-                Spacer()
-                Text(state)
-                    .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("\(kind.rawValue)PermissionStatus")
@@ -133,6 +130,7 @@ private struct PermissionRow: View {
     private var fixButton: some View {
         fixButtonContent
             .buttonStyle(.bordered)
+            .adaptiveButtonBorderShape()
     }
 
     @ViewBuilder

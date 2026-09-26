@@ -12,10 +12,14 @@ struct ShownLiveActivityControls: View {
                 .multilineTextAlignment(.center)
                 .accessibilityIdentifier("liveActivityStationName")
         }
-        Button("Stop showing on the lock screen", systemImage: "xmark.circle") {
+        Button {
             Task { await autoLiveActivity.stopByHand() }
+        } label: {
+            ButtonLabel("Stop showing on the lock screen", systemImage: "xmark.circle")
         }
         .buttonStyle(.bordered)
+        .controlSize(.large)
+        .adaptiveButtonBorderShape()
         .accessibilityIdentifier("stopLiveActivity")
     }
 }

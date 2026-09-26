@@ -14,10 +14,14 @@ struct LiveActivityControls: View {
             if liveActivity.isShowing {
                 ShownLiveActivityControls()
             } else if let station {
-                Button("Show on the lock screen", systemImage: "lock.iphone") {
+                Button {
                     Task { await autoLiveActivity.startByHand(station) }
+                } label: {
+                    ButtonLabel("Show on the lock screen", systemImage: "lock.iphone")
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .adaptiveButtonBorderShape()
                 .accessibilityIdentifier("startLiveActivity")
             }
             LiveActivityStartError()

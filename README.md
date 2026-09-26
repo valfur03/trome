@@ -65,7 +65,7 @@ xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
 
 The app is the Live Activity. The main screen shows only:
 
-- **One action.** "Show the Live Activity for the nearest station now" shows the Live Activity of the station nearest to you. If the app cannot find a station (no location access, no metro or RER station near you, no position), it says why. While a Live Activity shows, the screen says which station ("On the lock screen: <station>") and has "Stop showing on the lock screen" instead.
+- **One action.** "Show the Live Activity now" shows the Live Activity of the station nearest to you. You do not pick the station. If the app cannot find a station (no location access, no metro or RER station near you, no position), it says why. While a Live Activity shows, the screen says which station ("On the lock screen: <station>") and has "Stop showing on the lock screen" instead.
 - **The automatic mode.** It is always on for now (see [below](#the-live-activity-starts-and-stops-by-itself-near-a-station)). A later task adds a way to snooze it or turn it off.
 - **The permissions.** The state of the location and of the notifications. When one is missing or refused, the screen says what does not work, with a button to fix it ("Open Settings", or "Allow location").
 
@@ -126,7 +126,7 @@ For developers: the code is in `ios/Packages/RATPCore/Sources/RATPCore/Trains`. 
 
 The app shows the next trains of a station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
 
-1. On the main screen, tap "Show the Live Activity for the nearest station now". Testers can also pick any station in "Testing tools" > "Next trains of a station", and tap "Show on the lock screen".
+1. On the main screen, tap "Show the Live Activity now". It shows the Live Activity of the station nearest to you. Testers can also pick any station in "Testing tools" > "Next trains of a station", and tap "Show on the lock screen".
 2. Lock the phone. The Live Activity shows the station, the line, and the next trains in both directions of the line. Each direction has the name of its end of line, the waiting time of the next train, and the waiting time of the train after it (when there is one). A direction with no upcoming train says "No trains". At the end of a line, the Live Activity shows only the other direction.
 3. To remove it, open the app and tap "Stop showing on the lock screen".
 
@@ -150,7 +150,7 @@ The app watches the metro and RER stations around you. The rules come from decis
 - **One station at a time.** If a Live Activity already shows and you come within 150 meters of another station, the Live Activity switches to the new station. There is no second Live Activity and no second notification.
 - **Stop.** The Live Activity ends by itself when you move more than about 250 meters away from its station, or 45 minutes after it started.
 - **No repeat.** You get one notification or one automatic start for each arrival. After you stop the Live Activity by hand, it does not start again until you leave the station (more than 250 meters) and come back.
-- **By hand.** "Show the Live Activity for the nearest station now", "Show on the lock screen" (testing tools) and "Stop showing on the lock screen" still work. A Live Activity that you start by hand for a station far from you does not stop because of the distance. It stops at 250 meters only after you came near its station. The 45 minute limit applies to every Live Activity.
+- **By hand.** "Show the Live Activity now", "Show on the lock screen" (testing tools) and "Stop showing on the lock screen" still work. A Live Activity that you start by hand for a station far from you does not stop because of the distance. It stops at 250 meters only after you came near its station. The 45 minute limit applies to every Live Activity.
 
 The main screen says which station shows on the lock screen ("On the lock screen: <station>").
 

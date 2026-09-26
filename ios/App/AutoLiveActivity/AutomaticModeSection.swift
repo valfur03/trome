@@ -3,11 +3,8 @@ import SwiftUI
 struct AutomaticModeSection: View {
     var body: some View {
         Section {
-            HStack {
+            StateRow(state: "On") {
                 Label("Automatic mode", systemImage: "location.circle")
-                Spacer()
-                Text("On")
-                    .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("automaticModeState")
