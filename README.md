@@ -246,6 +246,7 @@ To write a page:
 
 - Add an `.mdx` file in `docs/src/content/docs/tutorial/`. The sidebar shows it under "Tutorial".
 - Use the Starlight components: `Steps` for a step list, `Aside` for a callout. See https://starlight.astro.build/components/using-components/.
+- Inline code (between backticks) never breaks across two lines (`docs/src/styles/custom.css`), so a reader can copy a command as one piece. Keep it short: at most about 30 characters. Put a longer command in a code block, on its own line.
 - To show the progress of a step list ("3 of 11 steps done"), put the list inside the `Checklist` component of `docs/src/components/Checklist.astro`. Give each list its own `id`: the browser saves the ticks under this id. The home page (`docs/src/content/docs/index.mdx`) shows an example. For a list of things to have, not steps, add `kind="things"`: it shows "3 of 8 things ready".
 - Show an app screenshot with the `Screenshot` component of `docs/src/components/Screenshot.astro`. Do not use a Markdown image or the `Image` component of Astro. To show many screenshots side by side, put them inside the `Screenshots` component. The home page shows an example:
 

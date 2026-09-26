@@ -7,6 +7,7 @@ export default defineConfig({
     starlight({
       title: 'RATP Activity',
       description: 'Install, test and publish the RATP Activity iPhone app.',
+      customCss: ['./src/styles/custom.css'],
       plugins: [starlightLinksValidator()],
       sidebar: [
         { label: 'Home', link: '/' },

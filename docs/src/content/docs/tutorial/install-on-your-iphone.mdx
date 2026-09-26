@@ -443,7 +443,13 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
 
 ### In the app
 
-- **Testing tools > Next trains of a station says "Train data key: not set".** On the iPhone: open the project of the main folder (the one with `ios/Config/Secrets.xcconfig`), not a git worktree. On the Simulator: add `LIVE=1`. If you made your key file before the app moved into the `ios/` folder, it is still at `Config/Secrets.xcconfig`: move it with `mv Config/Secrets.xcconfig ios/Config/`, in the main folder. If it still says "not set", in Xcode choose **Product > Clean Build Folder**, then click **Run** again.
+- **Testing tools > Next trains of a station says "Train data key: not set".** On the iPhone: open the project of the main folder (the one with `ios/Config/Secrets.xcconfig`), not a git worktree. On the Simulator: add `LIVE=1`. If you made your key file before the app moved into the `ios/` folder, it is still at `Config/Secrets.xcconfig`. Move it with this command, in the main folder:
+
+  ```sh
+  mv Config/Secrets.xcconfig ios/Config/
+  ```
+
+  If it still says "not set", in Xcode choose **Product > Clean Build Folder**, then click **Run** again.
 - **The app cannot find the nearest station, or the Permissions part shows Location as Off.** Tap **Open Settings** in the app, or on the iPhone open **Settings > Apps > RATP Activity > Location** (on older iOS: **Settings > RATP Activity > Location**). Choose **While Using the App** or **Always**.
 - **You get no notification near a station.** Open **Settings > Apps > RATP Activity** (on older iOS: **Settings > RATP Activity**). Turn on **Notifications**. Under **Location**, choose **Always**.
 - **The app shows "Fake position" in orange.** You turned on a fake position in Testing tools. Open Testing tools and tap **Use the real GPS**.
