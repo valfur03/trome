@@ -160,6 +160,8 @@ The first time, the app asks for your location and for notifications. To get the
 
 For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `App/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times once when the Live Activity starts or switches station. When the Live Activity shows another station than the app screen, the app gets its train times every 30 seconds while the app is open.
 
+Limit: iOS can pause or close the app in the background (for example with a fake position, which sends no new positions, or after you close the app from the app switcher). Then the 45 minute limit applies only when iOS wakes the app again (a region event) or when you open it.
+
 ## The train data key (PRIM)
 
 The app gets train times from the PRIM API of Île-de-France Mobilités. PRIM needs a free key.
