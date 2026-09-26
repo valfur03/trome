@@ -119,6 +119,8 @@ The app can show the next train of the picked station on the lock screen, as a L
 3. Lock the phone. The Live Activity shows the station, the line, the direction, and the waiting time of the next train.
 4. To remove it, open the app and tap "Stop showing on the lock screen".
 
+The Live Activity can also start and stop by itself near a station (see below).
+
 The first time, iOS asks on the lock screen if it can show Live Activities from RATP Activity. Tap "Allow".
 
 The waiting time counts down by itself. The app sends new train times only while its screen is open. When the shown train has left, the Live Activity hides its waiting time and says "Open the app for new times". It says the same if the train times take more than a minute to load. If the app has no train times for the station, the Live Activity says "No data available".
@@ -126,6 +128,37 @@ The waiting time counts down by itself. The app sends new train times only while
 If the app says that Live Activities are turned off, turn them on in Settings > RATP Activity > Live Activities.
 
 For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity. `StationLiveActivityModel` starts, updates and stops it. The view is in `Widget/StationLiveActivity.swift`.
+
+## The Live Activity starts and stops by itself near a station
+
+The app watches the metro and RER stations around you. The rules come from decision-3 in the backlog.
+
+- **Arrival.** When you come within about 150 meters of a station:
+  - If the app is open on screen, the Live Activity of this station starts at once.
+  - If the app is closed or in the background, the phone shows one notification: "Next trains at <station>". Tap it: the app opens and starts the Live Activity of this station.
+- **One station at a time.** If a Live Activity already shows and you come within 150 meters of another station, the Live Activity switches to the new station. There is no second Live Activity and no second notification.
+- **Stop.** The Live Activity ends by itself when you move more than about 250 meters away from its station, or 45 minutes after it started.
+- **No repeat.** You get one notification or one automatic start for each arrival. After you stop the Live Activity by hand, it does not start again until you leave the station (more than 250 meters) and come back.
+- **By hand.** "Show on the lock screen" and "Stop showing on the lock screen" still work. A Live Activity that you start by hand for a station far from you does not stop because of the distance. It stops at 250 meters only after you came near its station. The 45 minute limit applies to every Live Activity.
+
+The main screen says which station shows on the lock screen ("On the lock screen: <station>").
+
+The first time, the app asks for your location and for notifications. To get the notification while the app is closed, the app needs the location "Always". iOS first gives "While Using the App", then later asks you if the app can keep using your location in the background. If you keep "While Using the App", the Live Activity starts by itself only while the app is open. The main screen then says so, with a button to open Settings.
+
+### Test it with a fake position
+
+- **App open (the Live Activity starts at once).** Open "Testing tools", pick a station (for example Abbesses), and go back. The Live Activity starts. Pick a station near it (for example Pigalle): the Live Activity switches. Tap "Far from any station": the Live Activity ends.
+- **App closed (the notification).** The in-app fake position cannot change while the app is closed. Use the Simulator location instead:
+  1. In "Testing tools", tap "Use the real GPS". In iOS Settings, set the location of RATP Activity to "Always".
+  2. Set a position far from any station: `xcrun simctl location "$(make -s simulator)" set 48.42,2.63`.
+  3. Go to the home screen or lock the Simulator.
+  4. Set a position at a station, for example Abbesses: `xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838`. The notification shows. iOS can take a few seconds to a few minutes to notice the move.
+  5. Tap the notification.
+
+  On your iPhone connected to the Mac, use Xcode > Debug > Simulate Location in the same way.
+- **The 45 minute limit.** In debug builds, you can make it shorter. Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.RATPActivity -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
+
+For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them. It reads the position from `LocationService`, so the fake position works too. When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `App/CoreLocationStationRegions.swift`). iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you. When you leave this larger area, the app picks the nearest stations again. While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity. In the background, the app gets new train times once when the Live Activity starts or switches station. When the Live Activity shows another station than the app screen, the app gets its train times every 30 seconds while the app is open.
 
 ## The train data key (PRIM)
 

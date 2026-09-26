@@ -34,6 +34,7 @@ struct NextTrainsSection: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("chooseStation")
+                LiveActivityControls(station: nil)
             }
         }
         .frame(maxWidth: .infinity)

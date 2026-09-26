@@ -40,6 +40,9 @@ targets:
           - UIInterfaceOrientationPortrait
         NSSupportsLiveActivities: true
         NSLocationWhenInUseUsageDescription: RATP Activity uses your location to find the nearest metro or RER station.
+        NSLocationAlwaysAndWhenInUseUsageDescription: RATP Activity uses your location to tell you when you reach a metro or RER station, also when the app is closed.
+        UIBackgroundModes:
+          - location
         PRIMAPIKey: $(PRIM_API_KEY)
     settings:
       base:

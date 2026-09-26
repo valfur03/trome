@@ -2,27 +2,30 @@ import RATPCore
 import SwiftUI
 
 struct LiveActivityControls: View {
-    let station: Station
+    let station: Station?
 
     @Environment(NextTrainsModel.self) private var nextTrains
     @Environment(StationLiveActivityModel.self) private var liveActivity
-    @Environment(\.scenePhase) private var scenePhase
-
-    private var trains: NextTrainsState {
-        nextTrains.state(for: station)
-    }
+    @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
 
     var body: some View {
         VStack(spacing: 8) {
             if liveActivity.isShowing {
+                if let shownStation = autoLiveActivity.shownStation {
+                    Text("On the lock screen: \(shownStation.name)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .accessibilityIdentifier("liveActivityStationName")
+                }
                 Button("Stop showing on the lock screen", systemImage: "xmark.circle") {
-                    Task { await liveActivity.stop() }
+                    Task { await autoLiveActivity.stopByHand() }
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("stopLiveActivity")
-            } else {
+            } else if let station {
                 Button("Show on the lock screen", systemImage: "lock.iphone") {
-                    Task { await liveActivity.start(station: station, trains: trains) }
+                    Task { await autoLiveActivity.startByHand(station) }
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("startLiveActivity")
@@ -35,12 +38,9 @@ struct LiveActivityControls: View {
                     .accessibilityIdentifier("liveActivityError")
             }
         }
-        .onChange(of: LiveActivityContentKey(stationId: station.id, trains: trains)) {
-            Task { await liveActivity.update(station: station, trains: trains) }
-        }
-        .onChange(of: scenePhase, initial: true) {
-            guard scenePhase == .active else { return }
-            liveActivity.syncWithSystem()
+        .onChange(of: station.map { LiveActivityContentKey(stationId: $0.id, trains: nextTrains.state(for: $0)) }) {
+            guard let station else { return }
+            Task { await autoLiveActivity.screenTrainsChanged(for: station) }
         }
     }
 

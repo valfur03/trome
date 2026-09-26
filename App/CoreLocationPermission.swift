@@ -26,12 +26,16 @@ final class CoreLocationPermission: NSObject, LocationPermission {
         Self.authorization(from: manager.authorizationStatus)
     }
 
+    var allowsBackgroundDetection: Bool {
+        manager.authorizationStatus == .authorizedAlways
+    }
+
     func requestAuthorization() async -> LocationAuthorization {
         guard authorization == .notDetermined else { return authorization }
         return await withCheckedContinuation { continuation in
             authorizationWaiters.append(continuation)
             if authorizationWaiters.count == 1 {
-                manager.requestWhenInUseAuthorization()
+                manager.requestAlwaysAuthorization()
             }
         }
     }
