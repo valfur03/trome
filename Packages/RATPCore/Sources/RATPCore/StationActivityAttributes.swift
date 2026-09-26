@@ -35,13 +35,21 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
 }
 
 extension StationActivityAttributes.ContentState {
+    public static let loadingTimeout: TimeInterval = 60
+
     public init(station: Station, trains: NextTrainsState, now: Date) {
         self.init(stationName: station.name, trains: .init(trains, now: now), updatedAt: now)
     }
 
     public var staleDate: Date? {
-        guard case .departures(let rows) = trains else { return nil }
-        return rows.compactMap(\.times.last).max()
+        switch trains {
+        case .loading:
+            updatedAt.addingTimeInterval(Self.loadingTimeout)
+        case .departures(let rows):
+            rows.compactMap(\.times.first).min()
+        case .noData:
+            nil
+        }
     }
 }
 
@@ -54,7 +62,7 @@ extension StationActivityAttributes.Trains {
             self = .noData
         case .departures(let board, _):
             let firstRow = board.groups.lazy.compactMap { group -> StationActivityAttributes.DepartureRow? in
-                let times = group.upcomingTimes(after: now)
+                let times = group.times.filter { $0 > now }
                 guard !times.isEmpty else { return nil }
                 return StationActivityAttributes.DepartureRow(
                     line: TransitLine(mode: group.line.mode, name: group.line.name),

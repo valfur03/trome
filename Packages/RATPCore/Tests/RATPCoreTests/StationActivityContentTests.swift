@@ -87,16 +87,40 @@ struct StationActivityContentTests {
         #expect(ContentState(station: station, trains: trains, now: now).trains == .noData)
     }
 
-    @Test func becomesStaleAfterTheLastKnownTrain() {
+    @Test func skipsATrainThatHasJustLeft() {
+        let trains = board([
+            DepartureGroup(
+                line: line12,
+                destination: "Mairie d'Issy",
+                times: [time(inMinutes: -0.25), time(inMinutes: 4)]
+            )
+        ])
+
+        let content = ContentState(station: station, trains: trains, now: now)
+
+        let row = StationActivityAttributes.DepartureRow(
+            line: TransitLine(mode: .metro, name: "12"),
+            destination: "Mairie d'Issy",
+            times: [time(inMinutes: 4)]
+        )
+        #expect(content.trains == .departures([row]))
+    }
+
+    @Test func becomesStaleWhenTheShownTrainLeaves() {
         let trains = board([
             DepartureGroup(line: line12, destination: "Mairie d'Issy", times: [time(inMinutes: 3), time(inMinutes: 9)])
         ])
 
-        #expect(ContentState(station: station, trains: trains, now: now).staleDate == time(inMinutes: 9))
+        #expect(ContentState(station: station, trains: trains, now: now).staleDate == time(inMinutes: 3))
     }
 
-    @Test(arguments: [NextTrainsState.loading, .noLiveData])
-    func neverBecomesStaleWithoutTrainTimes(state: NextTrainsState) {
-        #expect(ContentState(station: station, trains: state, now: now).staleDate == nil)
+    @Test func becomesStaleWhenTheTrainsTakeTooLongToLoad() {
+        let content = ContentState(station: station, trains: .loading, now: now)
+
+        #expect(content.staleDate == now.addingTimeInterval(ContentState.loadingTimeout))
+    }
+
+    @Test func neverBecomesStaleWithoutTrainTimes() {
+        #expect(ContentState(station: station, trains: .noLiveData, now: now).staleDate == nil)
     }
 }

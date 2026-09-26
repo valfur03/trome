@@ -29,7 +29,7 @@ struct StationLiveActivity: Widget {
                     Image(systemName: "tram.fill")
                 }
             } compactTrailing: {
-                if let time = context.state.nextRow?.times.first {
+                if !context.isStale, let time = context.state.nextRow?.times.first {
                     WaitingTime(time: time)
                         .font(.caption.bold())
                 } else {
@@ -65,8 +65,10 @@ private struct TrainsSummary: View {
         VStack(alignment: .leading, spacing: 4) {
             switch state.trains {
             case .loading:
-                Text("Loading the next trains…")
-                    .foregroundStyle(.secondary)
+                if !isStale {
+                    Text("Loading the next trains…")
+                        .foregroundStyle(.secondary)
+                }
             case .noData:
                 Text("No data available")
                     .font(.subheadline.bold())
@@ -80,7 +82,7 @@ private struct TrainsSummary: View {
                         Text(row.destination)
                             .lineLimit(1)
                         Spacer()
-                        if let time = row.times.first {
+                        if !isStale, let time = row.times.first {
                             WaitingTime(time: time)
                                 .font(.title3.bold())
                         }

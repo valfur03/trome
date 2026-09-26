@@ -111,7 +111,7 @@ The app can show the next train of the picked station on the lock screen, as a L
 
 The first time, iOS asks on the lock screen if it can show Live Activities from RATP Activity. Tap "Allow".
 
-The waiting time counts down by itself. The app sends new train times only while its screen is open. When the last known train has left, the Live Activity says "Open the app for new times". If the app has no train times for the station, the Live Activity says "No data available".
+The waiting time counts down by itself. The app sends new train times only while its screen is open. When the shown train has left, the Live Activity hides its waiting time and says "Open the app for new times". It says the same if the train times take more than a minute to load. If the app has no train times for the station, the Live Activity says "No data available".
 
 If the app says that Live Activities are turned off, turn them on in Settings > RATP Activity > Live Activities.
 
