@@ -20,6 +20,13 @@ PRIM_SECRETS ?= $(firstword $(wildcard $(MAIN_FOLDER)/ios/Config/Secrets.xcconfi
 SHARED_CACHE ?= $(HOME)/Library/Caches/RATPActivity
 HOST_ARCH := $(shell uname -m)
 
+ifeq ($(SMALL),1)
+ifneq ($(filter-out build run,$(MAKECMDGOALS)),)
+$(error SMALL=1 works only with 'make run')
+endif
+export RATP_SIM_SIZE := small
+endif
+
 ifeq ($(LIVE),1)
 ifneq ($(filter-out build run,$(MAKECMDGOALS)),)
 $(error LIVE=1 works only with 'make build' and 'make run')
@@ -38,23 +45,25 @@ XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
 	COMPILER_INDEX_STORE_ENABLE=NO $(SHARED_SDK_MODULES)
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
 
-.PHONY: help setup generate project lint lint-fix build test check live-key-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots
+.PHONY: help setup generate project lint lint-fix build test test-scripts check live-key-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
 	@echo "make generate            Create the Xcode project again (after a change in project.yml)"
 	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
 	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
-	@echo "make check               iOS quality gate: lint + key leak check + build + unit tests"
+	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
+	@echo "make check               iOS quality gate: lint + key leak check + build + unit tests + script tests"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
+	@echo "make test-scripts        Tests of the Simulator lock scripts (with a fake xcrun, no Simulator)"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the shared Simulator (creates it if needed)"
-	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle)"
-	@echo "make simulator-delete    Delete the shared Simulator (takes the Simulator lock)"
+	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle; the small one at once)"
+	@echo "make simulator-delete    Delete the shared Simulators (takes the Simulator lock)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
@@ -95,7 +104,11 @@ endif
 test:
 	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore
 
-check: lint live-key-check build test
+test-scripts:
+	@mkdir -p $(BUILD_DIR)
+	@./scripts/tests/sim-lock-test.sh > $(BUILD_DIR)/test-scripts.log 2>&1 || { cat $(BUILD_DIR)/test-scripts.log; exit 1; }
+
+check: lint live-key-check build test test-scripts
 
 live-key-check: project
 	@SHARED_CACHE="$(SHARED_CACHE)" ./scripts/live-key-check.sh

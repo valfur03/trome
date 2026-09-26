@@ -1,14 +1,56 @@
 #!/bin/sh
 set -eu
 
-name=${RATP_SIM_NAME:-RATP-Shared}
-device_type=${SIM_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17}
+shared_names="RATP-Shared RATP-Shared-Small"
 
-find_udid() {
+case "${RATP_SIM_SIZE:-}" in
+    "")
+        name=RATP-Shared
+        device_type=com.apple.CoreSimulator.SimDeviceType.iPhone-17
+        ;;
+    small)
+        name=RATP-Shared-Small
+        device_type=com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation
+        ;;
+    *)
+        echo "Unknown RATP_SIM_SIZE: $RATP_SIM_SIZE (use 'small', or leave it empty)" >&2
+        exit 1
+        ;;
+esac
+
+udid_of() {
     xcrun simctl list devices available \
-        | grep -F "    $name (" \
+        | grep -F "    $1 (" \
         | head -n 1 \
         | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/'
+}
+
+find_udid() {
+    udid_of "$name"
+}
+
+is_shared_name() {
+    for shared_name in $shared_names; do
+        [ "$1" = "$shared_name" ] && return 0
+    done
+    return 1
+}
+
+booted_shared_udids() {
+    booted=$(xcrun simctl list devices booted) || return 1
+    for shared_name in $shared_names; do
+        printf '%s\n' "$booted" \
+            | grep -F "    $shared_name (" \
+            | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/'
+    done
+}
+
+shut_down_other_shared() {
+    for other in $(booted_shared_udids); do
+        if [ "$other" != "$1" ]; then
+            xcrun simctl shutdown "$other" 2> /dev/null || true
+        fi
+    done
 }
 
 create_device() {
@@ -33,6 +75,7 @@ device_udid() {
 
 boot_device() {
     udid=$(device_udid)
+    shut_down_other_shared "$udid"
     xcrun simctl bootstatus "$udid" -b > /dev/null
     echo "$udid"
 }
@@ -68,7 +111,7 @@ delete_old_devices() {
     xcrun simctl list devices \
         | sed -n -E 's/^    (RATP-[^ ]+) \(([0-9A-F-]{36})\) \(([^)]+)\).*/\1 \2 \3/p' \
         | while read -r old_name udid state; do
-            if [ "$old_name" = "$name" ]; then
+            if is_shared_name "$old_name"; then
                 continue
             fi
             if [ "$state" != Shutdown ]; then
@@ -118,18 +161,29 @@ case "$command" in
         xcrun simctl launch "$udid" "$bundle_id"
         ;;
     uninstall)
-        udid=$(find_udid)
+        udid=${1:-$(find_udid)}
         if [ -n "$udid" ] && is_booted "$udid"; then
             uninstall_apps "$udid"
         fi
         ;;
-    delete)
-        udid=$(find_udid)
-        if [ -n "$udid" ]; then
+    shutdown-if-not-default)
+        udid=${1:?Usage: $0 shutdown-if-not-default <udid>}
+        if [ "$udid" != "$(udid_of RATP-Shared)" ]; then
             xcrun simctl shutdown "$udid" 2> /dev/null || true
-            xcrun simctl delete "$udid"
-            echo "Deleted simulator $name"
         fi
+        ;;
+    booted)
+        booted_shared_udids
+        ;;
+    delete)
+        for shared_name in $shared_names; do
+            udid=$(udid_of "$shared_name")
+            if [ -n "$udid" ]; then
+                xcrun simctl shutdown "$udid" 2> /dev/null || true
+                xcrun simctl delete "$udid"
+                echo "Deleted simulator $shared_name"
+            fi
+        done
         ;;
     delete-old)
         delete_old_devices
@@ -138,7 +192,8 @@ case "$command" in
         echo "$name"
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall|delete|delete-old|name]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|shutdown-if-not-default <udid>|booted|delete|delete-old|name]" >&2
+        echo "RATP_SIM_SIZE=small uses the small shared Simulator (RATP-Shared-Small, an iPhone SE) instead of RATP-Shared" >&2
         exit 1
         ;;
 esac

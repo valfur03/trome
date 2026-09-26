@@ -15,7 +15,7 @@ usage() {
     echo "Usage: $0 job <command...>   Run a Simulator job with the lock" >&2
     echo "       $0 open <command...>  Open the Simulator with the lock, and keep the lock" >&2
     echo "       $0 free               Remove the app from the Simulator and free the lock that this folder keeps after 'open'" >&2
-    echo "       $0 watch              Shut down the shared Simulator after $idle_minutes minutes with no job" >&2
+    echo "       $0 watch              Shut down the shared Simulators after $idle_minutes minutes with no job" >&2
     exit 1
 }
 
@@ -127,21 +127,21 @@ is_idle() {
 shut_down_if_idle() {
     is_idle && mkdir "$lock" 2> /dev/null || return 1
     take
-    xcrun simctl shutdown "$1" 2> /dev/null || true
+    for booted_udid in $1; do
+        xcrun simctl shutdown "$booted_udid" 2> /dev/null || true
+    done
     rm -rf "$lock"
 }
 
 watch() {
     echo "$$" > "$watcher"
     trap 'if [ "$(cat "$watcher" 2> /dev/null)" = "$$" ]; then rm -f "$watcher"; fi' EXIT
-    shared_udid=
     while :; do
-        if [ -z "$shared_udid" ]; then
-            shared_udid=$("$simulator" find 2> /dev/null || true)
-        fi
         if [ -e "$lock" ]; then
             remove_if_stale 2> /dev/null || touch "$last_job"
-        elif [ -z "$shared_udid" ] || ! is_booted "$shared_udid" || shut_down_if_idle "$shared_udid"; then
+        elif ! booted_shared=$("$simulator" booted 2> /dev/null); then
+            :
+        elif [ -z "$booted_shared" ] || shut_down_if_idle "$booted_shared"; then
             break
         fi
         sleep "$watch_seconds"
@@ -187,6 +187,7 @@ case "$command" in
         [ $# -gt 0 ] || usage
         if owns_session; then
             "$@"
+            "$simulator" udid > "$lock/udid"
             exit
         fi
         acquire
@@ -197,7 +198,9 @@ case "$command" in
         ;;
     free)
         if owns_session; then
-            "$simulator" uninstall || true
+            session_udid=$(holder udid)
+            "$simulator" uninstall "$session_udid" || true
+            "$simulator" shutdown-if-not-default "$session_udid" || true
         fi
         release
         ;;

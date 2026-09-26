@@ -1,4 +1,4 @@
-IOS_TARGETS := setup generate project lint lint-fix build test live-key-check run e2e stations simulator \
+IOS_TARGETS := setup generate project lint lint-fix build test test-scripts live-key-check run e2e stations simulator \
 	simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots
 DOCS_TARGETS := docs docs-dev docs-stop docs-check docs-check-if-changed
 SUB_MAKE := $(MAKE) --no-print-directory
@@ -7,7 +7,7 @@ SUB_MAKE := $(MAKE) --no-print-directory
 
 help:
 	@echo "Run each command from here (the root). It runs in the folder of its part: ios/ or docs/."
-	@echo "make check               Quality gate: the iOS gate (lint + key leak check + build + unit tests) + make docs-check if docs/ changed"
+	@echo "make check               Quality gate: the iOS gate (lint + key leak check + build + unit tests + script tests) + make docs-check if docs/ changed"
 	@$(SUB_MAKE) -C ios help | grep -v '^make check '
 	@$(SUB_MAKE) -C docs help
 

@@ -26,7 +26,8 @@ The Xcode project is not in git. The file `ios/project.yml` describes it. If you
 |---|---|
 | `make run` | Builds the app and opens it in the Simulator, without the train data key. |
 | `make run LIVE=1` | The same, with your train data key (see below). |
-| `make check` | The quality gate: lint, key leak check, build, and unit tests. Run it before each commit. |
+| `make run SMALL=1` | The same, on the smallest supported iPhone (see [The smallest iPhone](#the-smallest-iphone)). |
+| `make check` | The quality gate: lint, key leak check, build, unit tests, and the tests of the Simulator scripts. Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make e2e ONLY=FakePositionTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=FakePositionTests/testTesterCanFakeThePositionAndGoBackToTheRealGPS` runs one test. The class names are the file names in `ios/UITests/`. |
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
@@ -50,9 +51,24 @@ All copies of the repo (all folders) use one shared Simulator, named `RATP-Share
 
 - `make run` and `make e2e` remove the app and its data from the Simulator, then install the app of this folder. So a folder never sees the data or the saved settings of another folder. They also reset the permissions and clear the fake position of the Simulator. Then `make e2e` gives the app the location permission "While Using the App", so the tests see no location popup.
 - The Simulator stays booted between jobs, so the next job starts faster. It shuts down by itself after 5 minutes with no job.
-- To delete the shared Simulator, run `make simulator-delete`. The next job creates it again.
+- To delete the shared Simulators (`RATP-Shared` and the small one), run `make simulator-delete`. The next job creates them again.
 
 Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` when you are done, so the others can go on. This removes the app from the Simulator and frees the lock. It does not shut down the Simulator at once.
+
+### The smallest iPhone
+
+To check a screen on the smallest iPhone that the app supports, run:
+
+```sh
+make run SMALL=1
+```
+
+It opens the app in a second shared Simulator, named `RATP-Shared-Small`. It is an iPhone SE (3rd generation): 375 x 667 points, the narrowest and the shortest screen. `RATP-Shared` is an iPhone 17 (402 x 874 points).
+
+- It takes the Simulator lock and keeps it, like `make run`. `LIVE=1` works with it too.
+- Only one Simulator runs at a time. Before it boots one shared Simulator, a job shuts down the other one. So after `make run SMALL=1`, the next job waits for a cold boot of `RATP-Shared`.
+- `make simulator-shutdown` removes the app and shuts down `RATP-Shared-Small` at once. Few jobs use it, so it does not stay booted.
+- `SMALL=1` works only with `make run`. The end-to-end tests and the docs screenshots always use `RATP-Shared`.
 
 Before the shared Simulator, each folder had its own Simulator, named `RATP-<folder>-<hash>`. To delete these old Simulators, run `make simulator-delete-old`.
 

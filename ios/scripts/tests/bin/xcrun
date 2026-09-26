@@ -1,0 +1,45 @@
+#!/bin/sh
+set -eu
+state=${FAKE_SIM_STATE:?}
+echo "$*" >> "$state/calls"
+[ "${1:-}" = simctl ] || exit 1
+shift
+command=$1
+shift
+
+list_devices() {
+    echo "== Devices =="
+    echo "-- iOS 27.0 --"
+    for device in "$state"/device.*; do
+        [ -e "$device" ] || continue
+        read -r name device_state < "$device"
+        if [ "${1:-}" = booted ] && [ "$device_state" != Booted ]; then
+            continue
+        fi
+        echo "    $name (${device##*/device.}) ($device_state) "
+    done
+}
+
+set_state() {
+    read -r name old_state < "$state/device.$1"
+    echo "$name $2" > "$state/device.$1"
+}
+
+case "$command" in
+    list)
+        case "$*" in
+            "devices booted") list_devices booted ;;
+            devices*) list_devices ;;
+            "runtimes available") echo "iOS 27.0 (27.0 - 24A434) - com.apple.CoreSimulator.SimRuntime.iOS-27-0" ;;
+        esac
+        ;;
+    create)
+        udid=$(uuidgen)
+        echo "$1 Shutdown" > "$state/device.$udid"
+        echo "$2" > "$state/type.$udid"
+        echo "$udid"
+        ;;
+    bootstatus) set_state "$1" Booted ;;
+    shutdown) set_state "$1" Shutdown ;;
+    delete) rm "$state/device.$1" ;;
+esac

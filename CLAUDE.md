@@ -24,7 +24,7 @@ decision-6 (section 10) explains these rules and their sources. Follow them in e
 - **The widget is a pure view.** `ios/Widget/` uses only `StationActivityAttributes` and its value types from `RATPCore`. No model, no provider, no network.
 - **Access control.** In `RATPCore`, only what the app or the widget uses is `public`. The rest stays `internal`. Tests use `@testable import RATPCore`.
 - **Files.** A file holds one main type and has its name. Small types that exist only for it (its state, its error, the protocol of its dependency) may stay in the same file. An extension that adds a topic goes in `Type+Topic.swift`. Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
-- **Tests.** Unit tests: `ios/Packages/RATPCore/Tests/RATPCoreTests/<Feature>/<Type>Tests.swift`. E2E tests: `ios/UITests/`, one file per core flow. Docs screenshots: `ios/DocsScreenshots/`. Code that needs a unit test goes in `RATPCore`.
+- **Tests.** Unit tests: `ios/Packages/RATPCore/Tests/RATPCoreTests/<Feature>/<Type>Tests.swift`. E2E tests: `ios/UITests/`, one file per core flow. Tests of the Simulator scripts: `ios/scripts/tests/` (`make test-scripts`, with a fake `xcrun`). Docs screenshots: `ios/DocsScreenshots/`. Code that needs a unit test goes in `RATPCore`.
 - **New module.** Add a target in `ios/Packages/` only when it solves a real problem (code that must not see the rest, code shared with a new target, build time). Deeper changes that these rules call for are `tech` tasks.
 
 ## Budget for this repo
@@ -43,6 +43,7 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 - Each job installs its own build of the app. Before that, it removes the app and its data, resets the permissions, and clears the fake position of the Simulator. So a job never sees the data or the saved settings of another worktree.
 - The Simulator stays booted between jobs, so the next job does not wait for a cold boot.
 - It shuts down by itself after 5 minutes with no job. Why 5 minutes: it is longer than the usual gap between two jobs (fix a test, then run `make e2e` again; the next agent starts its job). It is short enough to give the Mac back soon when the factory stops. A small background process (`ios/scripts/sim-lock.sh watch`) does this. It uses no Simulator and almost no CPU, and it stops by itself.
+- **The smallest iPhone.** To check a screen on the smallest supported iPhone (375 x 667 pt), run `make run SMALL=1`. It uses a second shared Simulator, `RATP-Shared-Small` (an iPhone SE), through the same lock. A job shuts down the other shared Simulator before it boots its own, so only one runs at a time. `make simulator-shutdown` shuts down `RATP-Shared-Small` at once. Never boot another Simulator by hand to check a screen size.
 
 ## The Simulator lock
 
@@ -60,7 +61,7 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 
 `make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
 
-`make check` and `make test` need no Simulator and no lock.
+`make check`, `make test` and `make test-scripts` need no Simulator and no lock.
 
 The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
 
