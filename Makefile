@@ -12,6 +12,12 @@ NO_KEY := -xcconfig Config/NoKey.xcconfig
 LIVE_XCCONFIG := $(BUILD_DIR)/Live.xcconfig
 PRIM_SECRETS ?= $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')/Config/Secrets.xcconfig
 
+ifeq ($(LIVE),1)
+ifneq ($(filter-out build run,$(MAKECMDGOALS)),)
+$(error LIVE=1 works only with 'make build' and 'make run')
+endif
+endif
+
 XCODEBUILD := xcodebuild -quiet \
 	-project $(PROJECT) \
 	-derivedDataPath $(DERIVED_DATA) \

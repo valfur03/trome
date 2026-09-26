@@ -49,7 +49,8 @@ The real PRIM key is in the main repo folder only, in `Config/Secrets.xcconfig`.
 
 - **Never read, print, copy or commit the key.** Do not open `Config/Secrets.xcconfig`. Do not copy it into a worktree.
 - `make build`, `make run`, `make check` and `make e2e` never use the key. They build with `Config/NoKey.xcconfig`, so the app says "Train data key: not set". Unit tests use recorded PRIM answers (fixtures).
-- `make run LIVE=1` builds the app with the key of the main repo folder (found with git) and opens it in the Simulator. The build output does not show the key. The key is only inside the built app, in `.build/` (ignored by git). The next build without `LIVE=1` removes it.
+- `make run LIVE=1` builds the app with the key of the main repo folder (found with git) and opens it in the Simulator. The build output does not show the key. But the key is inside the built app, in `.build/` (ignored by git), and inside the app installed in the Simulator. **Never inspect them.** `LIVE=1` works only with `make build` and `make run`.
+- After a live check, remove the key from `.build/` and from the Simulator: run `make run` (without `LIVE=1`, so the app has no key and makes no PRIM call), then `make simulator-shutdown`.
 - `make check` runs `make live-key-check`. It builds with `LIVE=1` and a fake key, and fails if a build log shows the key. If you change the build (Makefile, `Config/`, `project.yml`, build scripts), this check must still pass.
 
 ### Who uses live data, and when
@@ -63,7 +64,7 @@ How to count: the app calls PRIM once for each stop of the station when it opens
 To stay in the budget:
 
 - Pick a station with few lines, unless the task needs a big station.
-- Check what you need, then run `make simulator-shutdown` at once. The app keeps calling PRIM while its screen is open.
+- Check what you need, then run `make simulator-shutdown` at once. The app keeps calling PRIM while its screen is open. Then remove the key (see above).
 - At Châtelet, stay at most 2 minutes on the next trains (50 calls).
 
 Why 60: the public PRIM page of the API "Prochains passages - requête unitaire" gives a quota of 1,000,000 calls per day. But since 13 March 2024, new PRIM accounts get a lower quota by default (users report 1,000 calls per day). We do not know the quota of the prompter's key, so we plan for 1,000 calls per day. 60 calls is 6% of it. After 5 QA runs, the prompter still has more than two thirds of the day's calls. When PRIM answers "too many requests" (HTTP 429), stop at once and tell the manager.
