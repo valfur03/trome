@@ -73,7 +73,7 @@ final class DocsScreenshotTests: XCTestCase {
         let answers: [(button: String, screenshot: String?)] = [
             (button: "Allow While Using App", screenshot: "app-location-permission"),
             (button: "Change to Always Allow", screenshot: nil),
-            (button: "Allow", screenshot: "app-notification-permission"),
+            (button: "Allow", screenshot: "app-notification-permission")
         ]
         var savedScreenshots: Set<String> = []
         let deadline = Date().addingTimeInterval(timeout)
