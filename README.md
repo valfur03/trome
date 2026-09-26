@@ -39,6 +39,8 @@ The Xcode project is not in git. The file `project.yml` describes it. If you cha
 make run
 ```
 
+`make run` does not use your train data key. The app shows no trains, and it says "Train data key: not set". To see live trains, run `make run LIVE=1` (see [The train data key](#the-train-data-key-prim)).
+
 The app opens in the Simulator. You need no Apple ID for this.
 
 Each copy of the repo (each folder) gets its own Simulator. Its name starts with `RATP-`. To see its ID, run `make simulator`. To shut it down, run `make simulator-shutdown`. To delete it, run `make simulator-delete`.
@@ -130,7 +132,9 @@ To add the key:
 2. In your account page, create an API key.
 3. In the main folder of the repo, copy `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig`.
 4. Put your key after `PRIM_API_KEY =`.
-5. Run `make run LIVE=1`. The app screen now says "Train data key: set".
+5. Run `make run LIVE=1`. The app screen now says "Train data key: set", and it shows live trains.
+
+Always add `LIVE=1` when you want live trains. A plain `make run` does not use your key, also in the main folder.
 
 Git ignores `Config/Secrets.xcconfig`. Never commit your key.
 
