@@ -281,6 +281,10 @@ expect "switch-language fails when the app is not in the Simulator" "$(RATP_SIM_
 echo com.example.RATPActivity > "$state/apps.$default"
 RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null
 expect "switch-language keeps the app, sets the language and opens the app again" "$(cat "$state/apps.$default") $(language_at_restart) $(cat "$state/launched.$default")" "com.example.RATPActivity fr fr_FR com.example.RATPActivity"
+echo accessibility-extra-extra-extra-large > "$state/ui.$default.content_size"
+echo dark > "$state/ui.$default.appearance"
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "a job sets back the default text size and the light appearance that an earlier job changed" "$(cat "$state/ui.$default.content_size" "$state/ui.$default.appearance" | paste -s -d ' ' -)" "large light"
 
 hold "$RATP_SIM_LOCK"
 in_background "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/one-slot"'

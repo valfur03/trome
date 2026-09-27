@@ -143,10 +143,16 @@ set_language() {
     xcrun simctl spawn "$1" defaults write -g AppleLocale -string "$locale"
 }
 
+reset_display() {
+    xcrun simctl ui "$1" content_size large
+    xcrun simctl ui "$1" appearance light
+}
+
 reset_device() {
     uninstall_apps "$1"
     xcrun simctl privacy "$1" reset all
     set_language "$1"
+    reset_display "$1"
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.SpringBoard
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.locationd
     xcrun simctl location "$1" clear

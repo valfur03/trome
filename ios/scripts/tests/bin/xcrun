@@ -52,6 +52,7 @@ case "$command" in
     delete) rm "$state/device.$1" ;;
     get_app_container) touch "$state/apps.$1"; grep -qxF "$2" "$state/apps.$1" ;;
     launch) echo "$2" > "$state/launched.$1" ;;
+    ui) [ $# -lt 3 ] || echo "$3" > "$state/ui.$1.$2" ;;
     spawn)
         prefs="$state/prefs.$1"
         touch "$prefs"
