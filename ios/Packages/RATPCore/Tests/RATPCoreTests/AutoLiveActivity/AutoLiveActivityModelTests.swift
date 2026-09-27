@@ -177,7 +177,7 @@ struct AutoLiveActivityModelTests {
     func arrive(at position: Coordinate, in model: AutoLiveActivityModel) async {
         await activate(model)
         gps.report(position)
-        await waitUntil { client.isShowing }
+        await waitUntil { client.isShowing && keeper.isKeeping }
     }
 
     @Test func startsTheLiveActivityWhenThePhoneArrivesWhileTheAppIsOnScreen() async {

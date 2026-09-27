@@ -70,7 +70,15 @@ PYTHON
 for name in $names; do
     file="$screenshots/$name.png"
     sips --resampleWidth "$screenshot_width" "$file" > /dev/null
-    pngquant --force --strip --quality "$pngquant_quality" --speed 1 --ext .png -- "$file"
+    pngquant --force --strip --quality "$pngquant_quality" --speed 1 --ext .png -- "$file" || {
+        status=$?
+        if [ "$status" -eq 99 ]; then
+            echo "$name.png: pngquant cannot keep the quality $pngquant_quality. Lower the floor of pngquant_quality in $0, or check the image." >&2
+        else
+            echo "$name.png: pngquant failed (exit $status)." >&2
+        fi
+        exit "$status"
+    }
 done
 python3 - "$screenshots" "$budget_kb" $names <<'PYTHON'
 import struct
@@ -82,11 +90,12 @@ sizes = {}
 for name in names:
     file = screenshots / f"{name}.png"
     width, height = struct.unpack(">II", file.read_bytes()[16:24])
-    kilobytes = file.stat().st_size // 1024
+    size = file.stat().st_size
+    kilobytes = size / 1024
     sizes[name] = (width, height)
-    print(f"Saved docs/src/assets/screenshots/{name}.png ({width}x{height} px, {kilobytes} KB)")
-    if kilobytes > budget_kb:
-        sys.exit(f"{name}.png is {kilobytes} KB: more than the budget of {budget_kb} KB")
+    print(f"Saved docs/src/assets/screenshots/{name}.png ({width}x{height} px, {kilobytes:.1f} KB)")
+    if size > budget_kb * 1024:
+        sys.exit(f"{name}.png is {kilobytes:.1f} KB: more than the budget of {budget_kb} KB")
 if len(set(sizes.values())) > 1:
     sys.exit(f"The screenshots do not all have the same size: {sizes}")
 PYTHON
