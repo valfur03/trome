@@ -35,6 +35,23 @@ struct StationActivityContentTests {
         content.trains.linesPage?.lines ?? []
     }
 
+    @Test func keepsTheContentOfTheBiggestHubSmall() throws {
+        let catalog = try StationCatalog.bundled()
+        let saintLazare = try #require(catalog.stations.first { $0.name == "Saint-Lazare" })
+        let hub = catalog.hubStations(of: saintLazare)
+        let departures = hub.flatMap(\.lines).map { line in
+            Departure(line: line, destination: "Somewhere", time: time(inMinutes: 3), quayRef: nil)
+        }
+
+        let content = ContentState(station: saintLazare, trains: board(departures, at: hub), now: now)
+        let json = String(decoding: try JSONEncoder().encode(content), as: UTF8.self)
+
+        #expect(hub.flatMap(\.lines).count >= 9)
+        #expect(!json.contains("stopIds"))
+        #expect(!json.contains("stopAreaIds"))
+        #expect(json.utf8.count < 4_096)
+    }
+
     @Test func showsTheStationName() {
         let content = ContentState(station: station, trains: .loading, now: now)
 
