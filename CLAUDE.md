@@ -57,7 +57,7 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 `make run` and `make e2e` take a machine-wide lock: the folder `/tmp/ratp-sim.lock`. While another job holds it, they wait and print `Waiting for the Simulator lock`, with the reason. This is normal. Do not stop them, and do not delete the lock. The wait can be long, so run these commands in the background.
 
 - `make e2e` frees the lock when the tests end, pass or fail.
-- `make run` keeps the lock. You can then check the app by hand, or run `make e2e`.
+- `make run` keeps the lock. You can then check the app by hand, or run `make e2e`. Free it with `make simulator-shutdown` as soon as your check is done (see "Hold the Simulator only while you use it").
 - Any other command that boots or uses a Simulator (for example `xcodebuild test` or `xcrun simctl boot`) must run through the lock, on the shared Simulator:
 
   ```sh
@@ -74,11 +74,26 @@ The lock frees itself when its job dies, when its worktree is removed, or when t
 
 ## Which E2E tests to run
 
-A full `make e2e` keeps a shared Simulator for several minutes. So:
+The E2E tests must make sure that no breaking bug lands on `develop`, and that no agent ever sees a failing test because another agent brought a bug. But a full `make e2e` keeps the shared Simulator for several minutes, and the shared Simulator is the factory's bottleneck. So the factory runs far fewer E2E tests, at the right time:
 
-- **The implementer and the reviewers** run only the E2E test classes that cover their change: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests LiveActivityTests"` for more than one. The class names are the file names in `ios/UITests/`.
-- **The Software Engineer who merges** runs the full `make e2e` once.
+**`develop` is always green.** Each fast-forward of `develop` lands on a commit where the full E2E suite passed. The Software Engineer who merges runs it on that exact commit. This is the only full run of a task.
+
+**App code**, for these rules, is what the E2E tests exercise: `ios/App/`, `ios/Widget/`, the sources of `ios/Packages/`, the E2E tests in `ios/UITests/`, and what builds or runs them (`ios/project.yml`, `ios/Config/`, the `Makefile` files, `ios/scripts/`). Docs (`docs/`, `README.md`, `CLAUDE.md`), unit tests (`ios/Packages/RATPCore/Tests/`) and backlog files are not app code.
+
+- **The implementer** runs only the E2E test classes of the flows that it changed: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests LiveActivityTests"` for more than one. The class names are the file names in `ios/UITests/`. When unit tests cover the change, it runs no E2E test.
+- **A reviewer** runs no E2E test, unless it changes app code. For example, a review with no change, or a change to the docs, the unit tests or the backlog files only, runs none. A reviewer who changes app code runs only the E2E test classes of the flows that its change touches.
+- **The Software Engineer who merges** runs the full `make e2e` once, after the rebase onto `develop`, on the commit that it will fast-forward `develop` to. If git refuses the fast-forward (another SE merged first), it rebases again. When this new rebase brings app code, it runs the full `make e2e` again, on the new commit. A task that changes only docs (no app code) skips the full run: `develop` was green, and the task adds no app code.
 - **QA** runs no automated tests. It explores the app like a real user.
+
+These rules do not change the rule on flaky tests (below): a failing test may be rerun once, to know if it is flaky.
+
+## Hold the Simulator only while you use it
+
+Every job that uses the Simulator (`make run`, `make e2e`, `make docs-screenshots`, a job through `ios/scripts/sim-lock.sh job`) frees it as soon as its check is done, not a moment later.
+
+- **Prepare first.** Read, plan and build before you take the Simulator. `make e2e` already builds before it takes the lock.
+- **Free it right after the check.** `make e2e` and `make docs-screenshots` free the lock by themselves when the tests end. After `make run`, run `make simulator-shutdown` as soon as your check by hand is done, not at the end of your job.
+- **Never hold it while you do something else.** Do not keep the lock while you think, fix code, write notes or wait for another job. To check again after a fix, run `make run` again: another job may use the Simulator in the meantime.
 
 ## Flaky tests
 
@@ -86,7 +101,7 @@ A flaky test (it fails, then passes with no change) is a bug. Rerun a failing te
 
 ## When your job ends
 
-In your worktree, remove your app from the Simulator and free the lock (needed after `make run`, and harmless after `make e2e`):
+Free the Simulator right after your last check, not later (see "Hold the Simulator only while you use it"). Before your job ends, run this again in your worktree, to be sure. It removes your app from the Simulator and frees the lock (needed after `make run`, and harmless after `make e2e`):
 
 ```sh
 make simulator-shutdown

@@ -53,7 +53,7 @@ All copies of the repo (all folders) use one shared Simulator, named `RATP-Share
 - The Simulator stays booted between jobs, so the next job starts faster. It shuts down by itself after 5 minutes with no job. While a job runs, only its Simulator runs: when another tool boots the other shared Simulator (for example the Simulator panel of the Claude app), it shuts down within about 10 seconds.
 - To delete the shared Simulators (`RATP-Shared`, the small one, and the ones of the second slot if a trial made them), run `make simulator-delete`. It waits until no other Simulator job runs. The next job creates them again.
 
-Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` when you are done, so the others can go on. This removes the app from the Simulator and frees the lock. It does not shut down the Simulator at once.
+Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac. The others wait and say so. After `make run`, run `make simulator-shutdown` as soon as you are done with your check, so the others can go on. This removes the app from the Simulator and frees the lock. It does not shut down the Simulator at once.
 
 Why one job: two Simulators at once take the whole CPU of the Mac. On 2026-09-27, a trial with a second Simulator job raised the load average of the 8-core Mac to 257 to 286, and the second job ran about 3 times slower than alone. The code of a second job slot is in `ios/scripts/sim-lock.sh`, but it is off. To turn it on for a trial, change `slots=${RATP_SIM_SLOTS:-1}` to `slots=${RATP_SIM_SLOTS:-2}` in that file. A job then runs next to another one only when at least 25% of the CPU is idle, on its own Simulators (`RATP-Shared-2`, `RATP-Shared-Small-2`). The CLAUDE.md (section "Budget for this repo") explains the numbers, the trial and the way back.
 
@@ -288,7 +288,7 @@ Rules for the screenshot files:
 Rules to keep the docs true:
 
 - A change of a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. Run `make docs-screenshots` only when a screen that the docs show changed, and commit the new images. A docs text change alone needs no new screenshots.
-- `make docs-screenshots` is a Simulator job. It takes the Simulator lock, like `make e2e`. Run `make simulator-shutdown` when your job ends.
+- `make docs-screenshots` is a Simulator job. It takes the Simulator lock, like `make e2e`, and frees it when the screenshots are taken. Run `make simulator-shutdown` when your job ends.
 
 ## Project layout
 
