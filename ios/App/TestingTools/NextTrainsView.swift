@@ -91,7 +91,7 @@ private struct DepartureRow: View {
     let now: Date
 
     private var timesText: String {
-        guard !group.nextTrainIsOverAnHourAway else { return "Next train in over 1 hour" }
+        guard !group.nextTrainIsOverAnHourAway else { return String(localized: "Next train in over 1 hour") }
         return times
             .map { time in
                 let minutes = DepartureTime.minutes(until: time, from: now)

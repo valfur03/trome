@@ -21,6 +21,26 @@
         }
       }
     },
+    "> 1 h" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "> 1 h"
+          }
+        }
+      }
+    },
+    "In over 1 hour" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans plus d’1 h"
+          }
+        }
+      }
+    },
     "Loading the next trains…" : {
       "localizations" : {
         "fr" : {
@@ -37,6 +57,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Métro %@"
+          }
+        }
+      }
+    },
+    "Next train in over 1 hour" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochain train dans plus d’une heure"
           }
         }
       }
