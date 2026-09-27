@@ -170,7 +170,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prochains passages à %@"
+            "value" : "%@ : prochains passages"
           }
         }
       }
@@ -301,7 +301,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Afficher l’activité en direct maintenant"
+            "value" : "Afficher l’activité en direct"
           }
         }
       }

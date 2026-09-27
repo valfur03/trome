@@ -243,8 +243,6 @@ private struct LineTrainsView: View {
 }
 
 private struct DirectionRow: View {
-    static let minimumTimeWidth: CGFloat = 112
-
     let direction: LineDirection
     let isStale: Bool
 
@@ -277,7 +275,7 @@ private struct DirectionRow: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    .frame(minWidth: Self.minimumTimeWidth, alignment: .trailing)
+                    .frame(minWidth: WaitingTime.minimumWidth, alignment: .trailing)
                 }
             }
         }
@@ -300,7 +298,7 @@ private struct TrainRow: View {
             WaitingTime(time: train.time)
                 .font(isNext ? .subheadline.bold() : .caption2)
                 .foregroundStyle(isNext ? .primary : .secondary)
-                .frame(minWidth: DirectionRow.minimumTimeWidth, alignment: .trailing)
+                .frame(minWidth: WaitingTime.minimumWidth, alignment: .trailing)
         }
     }
 }
@@ -359,16 +357,6 @@ private struct OtherLinesBadge: View {
             .frame(minWidth: SmallLineBadge.minimumWidth)
             .background(.quaternary, in: Capsule())
             .foregroundStyle(.secondary)
-    }
-}
-
-private struct WaitingTime: View {
-    let time: Date
-
-    var body: some View {
-        Text(.currentDate, format: .reference(to: time, allowedFields: [.minute]))
-            .monospacedDigit()
-            .multilineTextAlignment(.trailing)
     }
 }
 
