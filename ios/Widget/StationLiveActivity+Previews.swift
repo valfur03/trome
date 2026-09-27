@@ -44,17 +44,17 @@ import WidgetKit
     StationActivityAttributes.ContentState.preview(
         stationName: "Châtelet - Les Halles",
         lines: [
-            LineTrains(line: TransitLine(mode: .rer, name: "A"), directions: [
-                LineDirection(label: "Saint-Germain-en-Laye", times: [.now.addingTimeInterval(120)]),
-                LineDirection(label: "Marne-la-Vallée Chessy", times: [.now.addingTimeInterval(180)])
+            LineTrains(line: TransitLine(mode: .metro, name: "1"), directions: [
+                LineDirection(label: "La Défense", times: [.now.addingTimeInterval(180)]),
+                LineDirection(label: "Château de Vincennes", times: [.now.addingTimeInterval(300)])
             ]),
-            LineTrains(line: TransitLine(mode: .rer, name: "B"), directions: [
-                LineDirection(label: "Aéroport CDG 2 TGV", times: [.now.addingTimeInterval(300)]),
-                LineDirection(label: "Saint-Rémy-lès-Chevreuse", times: [.now.addingTimeInterval(420)])
+            LineTrains(line: TransitLine(mode: .metro, name: "4"), directions: [
+                LineDirection(label: "Porte de Clignancourt", times: [.now.addingTimeInterval(120)]),
+                LineDirection(label: "Bagneux - Lucie Aubrac", times: [.now.addingTimeInterval(240)])
             ])
         ],
-        otherLines: ["1", "4", "7", "11", "14"].map { TransitLine(mode: .metro, name: $0) }
-            + [TransitLine(mode: .rer, name: "D")]
+        otherLines: ["7", "11", "14"].map { TransitLine(mode: .metro, name: $0) }
+            + ["A", "B", "D"].map { TransitLine(mode: .rer, name: $0) }
     )
     StationActivityAttributes.ContentState(stationName: "Abbesses", trains: .noData, updatedAt: .now)
 }
