@@ -230,6 +230,12 @@ case "$command" in
     booted)
         booted_shared_udids
         ;;
+    shutdown-others)
+        udid=$(find_udid)
+        if [ -n "$udid" ]; then
+            shut_down_other_shared "$udid"
+        fi
+        ;;
     with-destination)
         [ $# -gt 0 ] || { echo "Usage: $0 with-destination <xcodebuild command...>" >&2; exit 1; }
         udid=$(device_udid)
@@ -242,7 +248,7 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|shutdown-if-not-default <udid>|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|shutdown-if-not-default <udid>|shutdown-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
         exit 1

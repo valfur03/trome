@@ -64,6 +64,17 @@ expect() {
     fi
 }
 
+watch_in_background() {
+    RATP_SIM_WATCH_SECONDS=1 "$scripts/sim-lock.sh" watch > /dev/null 2>&1 &
+    watcher=$!
+}
+
+stop_watcher() {
+    kill "$watcher" 2> /dev/null || true
+    wait "$watcher" 2> /dev/null || true
+    pretend_a_watcher_runs
+}
+
 small_open() {
     RATP_SIM_SIZE=small "$scripts/sim-lock.sh" open "$scripts/simulator.sh" boot > /dev/null
 }
@@ -87,6 +98,17 @@ small_open
 "$scripts/sim-lock.sh" free
 expect "make simulator-shutdown after make run SMALL=1 shuts down the small Simulator" "$(booted)" ""
 expect "make simulator-shutdown frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
+
+small_open
+watch_in_background
+echo "RATP-Shared Booted" > "$state/device.$default"
+sleep 3
+expect "while make run SMALL=1 keeps the lock, the watcher shuts down RATP-Shared that another tool boots" "$(booted)" "RATP-Shared-Small "
+"$scripts/sim-lock.sh" job sh -c '"$1" boot > /dev/null && sleep 3 && "$1" booted > "$FAKE_SIM_STATE/joined" && echo "RATP-Shared-Small Booted" > "$FAKE_SIM_STATE/device.$2" && sleep 3 && "$1" booted > "$FAKE_SIM_STATE/job-others"' \
+    sh "$scripts/simulator.sh" "$small" > /dev/null
+stop_watcher
+expect "the watcher keeps RATP-Shared booted for make e2e after make run SMALL=1 in the same folder" "$(ran joined)" "$default"
+expect "while a job uses RATP-Shared, the watcher shuts down the small Simulator that another tool boots" "$(ran job-others)" "$default"
 
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null
 expect "a job keeps RATP-Shared booted after it ends" "$(booted)" "RATP-Shared "

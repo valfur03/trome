@@ -10,7 +10,7 @@ poll_seconds=${RATP_SIM_POLL_SECONDS:-10}
 scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/../.." && pwd)
 simulator="$scripts/simulator.sh"
-watch_seconds=30
+watch_seconds=${RATP_SIM_WATCH_SECONDS:-10}
 held_slots=
 
 case "$slots" in
@@ -26,7 +26,7 @@ usage() {
     echo "       $0 free               Remove the app from the Simulator and free the lock that this folder keeps after 'open'" >&2
     echo "       $0 all <command...>   Run a command with the locks of every slot (waits until no other job runs)" >&2
     echo "       $0 udid               Print the ID of the Simulator that this folder keeps after 'open', or of the Simulator of slot 1" >&2
-    echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job" >&2
+    echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job, and the one that a job of the slot does not use" >&2
     echo "At most $slots Simulator jobs run at once (RATP_SIM_SLOTS). A job runs next to another one only when the CPU is at least $min_idle_percent% idle (RATP_SIM_MIN_IDLE_PERCENT)." >&2
     exit 1
 }
@@ -110,11 +110,13 @@ remove_if_stale() {
 take() {
     echo "$$" > "$lock/pid"
     echo "$root" > "$lock/worktree"
+    echo "${RATP_SIM_SIZE:-}" > "$lock/size"
     held_slots="$held_slots $RATP_SIM_SLOT"
 }
 
 join_session() {
     echo "$$" > "$lock/pid"
+    echo "${RATP_SIM_SIZE:-}" > "$lock/size"
     held_slots="$held_slots $RATP_SIM_SLOT"
 }
 
@@ -238,6 +240,11 @@ is_idle() {
     [ -n "$(find "$last_job" -mmin +"$idle_minutes" 2> /dev/null)" ]
 }
 
+shut_down_the_other_shared() {
+    size=$(cat "$lock/size" 2> /dev/null) || return 0
+    RATP_SIM_SIZE=$size "$simulator" shutdown-others > /dev/null 2>&1 || true
+}
+
 shut_down_if_idle() {
     is_idle && mkdir "$lock" 2> /dev/null || return 1
     take
@@ -255,7 +262,10 @@ watch() {
         for candidate in $(all_slots); do
             use_slot "$candidate"
             if [ -e "$lock" ]; then
-                remove_if_stale 2> /dev/null || touch "$last_job"
+                if ! remove_if_stale 2> /dev/null; then
+                    touch "$last_job"
+                    shut_down_the_other_shared
+                fi
                 active=1
             elif ! booted_shared=$("$simulator" booted 2> /dev/null); then
                 active=1
