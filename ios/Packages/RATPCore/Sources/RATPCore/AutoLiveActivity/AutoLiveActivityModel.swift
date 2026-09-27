@@ -47,6 +47,7 @@ public final class AutoLiveActivityModel {
         stateDidChange(from: AutoLiveActivityState())
         observePosition()
         observeScreenStation()
+        observeAutomaticMode()
         followPositionIfShowing()
     }
 
@@ -97,6 +98,11 @@ public final class AutoLiveActivityModel {
         await refreshRegions(around: inputs.locationService.position)
     }
 
+    public func snooze(for duration: SnoozeDuration) async {
+        inputs.automaticMode.snooze(for: duration)
+        await stopByHand()
+    }
+
     public func screenTrainsChanged(for station: Station) async {
         guard shownStation?.id == station.id else { return }
         await liveActivity.update(station: station, trains: inputs.screenTrains.state(for: station))
@@ -137,6 +143,20 @@ public final class AutoLiveActivityModel {
         }
     }
 
+    private func observeAutomaticMode() {
+        withObservationTracking {
+            _ = inputs.automaticMode.mode
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                guard let self else { return }
+                self.observeAutomaticMode()
+                if !self.inputs.automaticMode.allowsAutomaticStart {
+                    self.services.notifier.withdraw()
+                }
+            }
+        }
+    }
+
     private func handle(_ position: Coordinate) async {
         await evaluate(position: position)
         await refreshRegions(around: position)
@@ -144,11 +164,15 @@ public final class AutoLiveActivityModel {
 
     private func evaluate(position: Coordinate?) async {
         syncWithSystem()
+        let response = AutoLiveActivityRules.ArrivalResponse(
+            appIsActive: appIsActive,
+            allowsAutomaticStart: inputs.automaticMode.allowsAutomaticStart
+        )
         let decision = configuration.rules.decide(
             state: state,
             position: position,
             now: configuration.now(),
-            appIsActive: appIsActive,
+            onArrival: response,
             catalog: catalog
         )
         state = decision.state

@@ -1,4 +1,5 @@
 import ActivityKit
+import AppIntents
 import RATPCore
 import SwiftUI
 import WidgetKit
@@ -19,7 +20,10 @@ struct StationLiveActivity: Widget {
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    TrainsSummary(state: context.state, isStale: context.isStale)
+                    VStack(alignment: .leading, spacing: 8) {
+                        TrainsSummary(state: context.state, isStale: context.isStale)
+                        SnoozeButtons()
+                    }
                 }
             } compactLeading: {
                 if let line = context.state.line {
@@ -58,8 +62,49 @@ private struct LockScreenView: View {
                 }
             }
             TrainsSummary(state: state, isStale: isStale)
+            SnoozeButtons()
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+    }
+}
+
+private struct SnoozeButtons: View {
+    var body: some View {
+        HStack(spacing: 6) {
+            Label("Snooze", systemImage: "bell.slash")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            ForEach(SnoozeDuration.allCases, id: \.self) { duration in
+                Button(intent: SnoozeLiveActivityIntent(duration: duration)) {
+                    Text(title(of: duration))
+                        .font(.caption.bold())
+                        .lineLimit(1)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .controlSize(.mini)
+                .accessibilityLabel(accessibilityTitle(of: duration))
+            }
+        }
+    }
+
+    private func title(of duration: SnoozeDuration) -> String {
+        switch duration {
+        case .thirtyMinutes: "30 min"
+        case .oneHour: "1 h"
+        case .restOfToday: "Today"
+        }
+    }
+
+    private func accessibilityTitle(of duration: SnoozeDuration) -> String {
+        switch duration {
+        case .thirtyMinutes: "Snooze for 30 minutes"
+        case .oneHour: "Snooze for 1 hour"
+        case .restOfToday: "Snooze for the rest of today"
+        }
     }
 }
 

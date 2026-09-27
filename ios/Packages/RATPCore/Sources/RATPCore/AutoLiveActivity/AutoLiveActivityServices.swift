@@ -46,17 +46,20 @@ extension AutoLiveActivityModel {
         public let permission: any LocationPermission
         public let screenTrains: NextTrainsModel
         public let liveActivityTrains: NextTrainsModel
+        public let automaticMode: AutomaticModeModel
 
         public init(
             locationService: LocationService,
             permission: any LocationPermission,
             screenTrains: NextTrainsModel,
-            liveActivityTrains: NextTrainsModel
+            liveActivityTrains: NextTrainsModel,
+            automaticMode: AutomaticModeModel
         ) {
             self.locationService = locationService
             self.permission = permission
             self.screenTrains = screenTrains
             self.liveActivityTrains = liveActivityTrains
+            self.automaticMode = automaticMode
         }
     }
 

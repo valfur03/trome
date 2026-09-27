@@ -4,7 +4,7 @@ import Testing
 @testable import RATPCore
 
 @MainActor
-private final class StubArrivalNotifier: ArrivalNotifier {
+final class StubArrivalNotifier: ArrivalNotifier {
     private(set) var authorizationRequestCount = 0
     private(set) var notified: [Station] = []
     private(set) var withdrawCount = 0
@@ -84,17 +84,18 @@ final class TestClock: Sendable {
 @MainActor
 struct AutoLiveActivityModelTests {
     typealias Places = AutoTestPlaces
-    private let gps = ControlledLocationProvider()
+    let gps = ControlledLocationProvider()
     let client = StubStationLiveActivityClient()
-    private let notifier = StubArrivalNotifier()
+    let notifier = StubArrivalNotifier()
     private let watcher = StubRegionWatcher()
     let keeper = StubLocationKeeper()
     private let permission = StubLocationPermission()
     let provider = StubDeparturesProvider()
     private let storage = InMemoryKeyValueStore()
     let clock = TestClock()
-    private let locationService: LocationService
+    let locationService: LocationService
     let screenTrains: NextTrainsModel
+    let automaticMode: AutomaticModeModel
 
     init() {
         locationService = LocationService(
@@ -104,6 +105,11 @@ struct AutoLiveActivityModelTests {
         let clock = clock
         screenTrains = NextTrainsModel(
             provider: provider,
+            now: { clock.now },
+            sleep: { try await clock.sleep(for: $0) }
+        )
+        automaticMode = AutomaticModeModel(
+            store: AutomaticModeStore(storage: InMemoryKeyValueStore()),
             now: { clock.now },
             sleep: { try await clock.sleep(for: $0) }
         )
@@ -126,7 +132,8 @@ struct AutoLiveActivityModelTests {
                 locationService: locationService,
                 permission: permission,
                 screenTrains: screenTrains,
-                liveActivityTrains: NextTrainsModel(provider: provider, now: now, sleep: sleep)
+                liveActivityTrains: NextTrainsModel(provider: provider, now: now, sleep: sleep),
+                automaticMode: automaticMode
             ),
             services: .init(notifier: notifier, regionWatcher: watcher, locationKeeper: keeper),
             configuration: .init(store: AutoLiveActivityStore(storage: storage), now: now, sleep: sleep)

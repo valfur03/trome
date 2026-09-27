@@ -22,39 +22,4 @@ final class AutoLiveActivityTests: E2ETestCase {
         goBack(in: app)
         XCTAssertTrue(waitForNo(lockScreenStation))
     }
-
-    @MainActor
-    private func leaveEveryStation(in app: XCUIApplication) {
-        tap(app.buttons["testingTools"])
-        tap(app.buttons["farFromAnyStation"])
-        XCTAssertTrue(waitFor(app.staticTexts["48.42000, 2.63000"]))
-        goBack(in: app)
-        stopLiveActivityIfShowing(in: app)
-    }
-
-    @MainActor
-    private func useFakePosition(atStation name: String, in app: XCUIApplication) {
-        tap(app.buttons["testingTools"])
-        tap(app.buttons["pickStation"])
-        let searchField = app.searchFields.firstMatch
-        tap(searchField)
-        searchField.typeText(name)
-        tap(app.buttons["station-\(name)"])
-        XCTAssertTrue(waitFor(app.staticTexts["Fake: \(name)"]))
-        goBack(in: app)
-    }
-
-    @MainActor
-    private func goBack(in app: XCUIApplication) {
-        tap(app.navigationBars.buttons.firstMatch)
-        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
-    }
-
-    @MainActor
-    private func waitForLabel(_ label: String, of element: XCUIElement) {
-        guard element.label != label else { return }
-        let predicate = NSPredicate(format: "label == %@", label)
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: UITestTimeout.element), .completed)
-    }
 }

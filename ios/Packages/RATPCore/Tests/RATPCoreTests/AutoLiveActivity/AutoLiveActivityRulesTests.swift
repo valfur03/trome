@@ -21,13 +21,14 @@ struct AutoLiveActivityRulesTests {
         _ state: AutoLiveActivityState = AutoLiveActivityState(),
         at position: Coordinate?,
         appIsActive: Bool = false,
+        allowsAutomaticStart: Bool = true,
         after seconds: TimeInterval = 0
     ) -> AutoLiveActivityRules.Decision {
         rules.decide(
             state: state,
             position: position,
             now: now.addingTimeInterval(seconds),
-            appIsActive: appIsActive,
+            onArrival: .init(appIsActive: appIsActive, allowsAutomaticStart: allowsAutomaticStart),
             catalog: Places.catalog
         )
     }
@@ -51,6 +52,36 @@ struct AutoLiveActivityRulesTests {
 
         #expect(decision.actions == [.start(Places.stationA)])
         #expect(decision.state == showing(Places.stationA))
+    }
+
+    @Test(arguments: [true, false])
+    func neitherNotifiesNorStartsWhileSnoozedOrOffButRemembersTheArrival(appIsActive: Bool) {
+        let decision = decide(at: Places.fiftyMetersFromA, appIsActive: appIsActive, allowsAutomaticStart: false)
+
+        #expect(decision.actions.isEmpty)
+        #expect(decision.state == AutoLiveActivityState(arrivalStationId: "a"))
+    }
+
+    @Test func doesNotNotifyAfterTheSnoozeForTheStationOfAnArrivalDuringTheSnooze() {
+        let duringSnooze = decide(at: Places.fiftyMetersFromA, allowsAutomaticStart: false)
+        let afterSnooze = decide(duringSnooze.state, at: Places.fiftyMetersFromA)
+
+        #expect(afterSnooze.actions.isEmpty)
+    }
+
+    @Test func switchesALiveActivityStartedByHandWhileSnoozedOrOff() {
+        let decision = decide(showing(Places.stationA), at: Places.atB, allowsAutomaticStart: false)
+
+        #expect(decision.actions == [.switchTo(Places.stationB)])
+    }
+
+    @Test func respondsToAnArrivalByStartingOnlyWhenTheAppIsOnScreenAndTheAutomaticModeAllowsIt() {
+        typealias Response = AutoLiveActivityRules.ArrivalResponse
+
+        #expect(Response(appIsActive: true, allowsAutomaticStart: true) == .start)
+        #expect(Response(appIsActive: false, allowsAutomaticStart: true) == .notify)
+        #expect(Response(appIsActive: true, allowsAutomaticStart: false) == .none)
+        #expect(Response(appIsActive: false, allowsAutomaticStart: false) == .none)
     }
 
     @Test func doesNothingOutsideTheArrivalRadius() {
@@ -152,7 +183,7 @@ struct AutoLiveActivityRulesTests {
             state: showing(Places.stationA),
             position: nil,
             now: now.addingTimeInterval(60),
-            appIsActive: true,
+            onArrival: .start,
             catalog: Places.catalog
         )
 

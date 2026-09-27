@@ -160,6 +160,41 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
+    func leaveEveryStation(in app: XCUIApplication) {
+        tap(app.buttons["testingTools"])
+        tap(app.buttons["farFromAnyStation"])
+        XCTAssertTrue(waitFor(app.staticTexts["48.42000, 2.63000"]))
+        goBack(in: app)
+        stopLiveActivityIfShowing(in: app)
+    }
+
+    @MainActor
+    func useFakePosition(atStation name: String, in app: XCUIApplication) {
+        tap(app.buttons["testingTools"])
+        tap(app.buttons["pickStation"])
+        let searchField = app.searchFields.firstMatch
+        tap(searchField)
+        searchField.typeText(name)
+        tap(app.buttons["station-\(name)"])
+        XCTAssertTrue(waitFor(app.staticTexts["Fake: \(name)"]))
+        goBack(in: app)
+    }
+
+    @MainActor
+    func goBack(in app: XCUIApplication) {
+        tap(app.navigationBars.buttons.firstMatch)
+        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
+    }
+
+    @MainActor
+    func waitForLabel(_ label: String, of element: XCUIElement) {
+        guard element.label != label else { return }
+        let predicate = NSPredicate(format: "label == %@", label)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: UITestTimeout.element), .completed)
+    }
+
+    @MainActor
     private func locationStatus(in app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any)["locationPermissionStatus"]
     }

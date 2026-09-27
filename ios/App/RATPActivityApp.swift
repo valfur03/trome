@@ -1,3 +1,4 @@
+import AppIntents
 import RATPCore
 import SwiftUI
 import UserNotifications
@@ -11,6 +12,7 @@ struct RATPActivityApp: App {
     @State private var nextTrainsModel: NextTrainsModel
     @State private var liveActivityModel: StationLiveActivityModel
     @State private var autoLiveActivityModel: AutoLiveActivityModel
+    @State private var automaticModeModel: AutomaticModeModel
     private let stationCatalog: StationCatalog
     private let regionWatcher: CoreLocationStationRegionWatcher
     private let notificationTapHandler: ArrivalNotificationTapHandler
@@ -30,6 +32,7 @@ struct RATPActivityApp: App {
         let nextTrainsModel = NextTrainsModel(provider: Self.departuresProvider(primConfiguration))
         let liveActivityModel = StationLiveActivityModel(client: ActivityKitStationLiveActivityClient())
         let regionWatcher = CoreLocationStationRegionWatcher(catalog: stationCatalog)
+        let automaticModeModel = AutomaticModeModel(store: AutomaticModeStore(storage: UserDefaults.standard))
         let autoLiveActivityModel = Self.makeAutoLiveActivityModel(
             catalog: stationCatalog,
             liveActivity: liveActivityModel,
@@ -37,18 +40,12 @@ struct RATPActivityApp: App {
                 locationService: locationService,
                 permission: permission,
                 screenTrains: nextTrainsModel,
-                liveActivityTrains: NextTrainsModel(provider: Self.departuresProvider(primConfiguration))
+                liveActivityTrains: NextTrainsModel(provider: Self.departuresProvider(primConfiguration)),
+                automaticMode: automaticModeModel
             ),
             regionWatcher: regionWatcher
         )
-        let notificationTapHandler = ArrivalNotificationTapHandler { [weak autoLiveActivityModel] stationId in
-            await autoLiveActivityModel?.notificationTapped(stationId: stationId)
-        }
-        UNUserNotificationCenter.current().delegate = notificationTapHandler
-        regionWatcher.onWake = { [weak autoLiveActivityModel] position in
-            await autoLiveActivityModel?.handleMonitoredPosition(position)
-        }
-        Task { await regionWatcher.resume() }
+        let notificationTapHandler = Self.connectSystemEvents(to: autoLiveActivityModel, regionWatcher: regionWatcher)
 
         #if DEBUG
         uiTestLocationKeeper = CoreLocationBackgroundLocationKeeper.begunIfAsked(by: ProcessInfo.processInfo.arguments)
@@ -69,6 +66,7 @@ struct RATPActivityApp: App {
         _nextTrainsModel = State(initialValue: nextTrainsModel)
         _liveActivityModel = State(initialValue: liveActivityModel)
         _autoLiveActivityModel = State(initialValue: autoLiveActivityModel)
+        _automaticModeModel = State(initialValue: automaticModeModel)
     }
 
     var body: some Scene {
@@ -83,6 +81,7 @@ struct RATPActivityApp: App {
             .environment(nextTrainsModel)
             .environment(liveActivityModel)
             .environment(autoLiveActivityModel)
+            .environment(automaticModeModel)
             .environment(\.stationCatalog, stationCatalog)
         }
     }
@@ -115,6 +114,22 @@ struct RATPActivityApp: App {
                 rules: AutoLiveActivityRules(maximumDuration: liveActivityMaximumDuration())
             )
         )
+    }
+
+    private static func connectSystemEvents(
+        to autoLiveActivityModel: AutoLiveActivityModel,
+        regionWatcher: CoreLocationStationRegionWatcher
+    ) -> ArrivalNotificationTapHandler {
+        AppDependencyManager.shared.add(dependency: autoLiveActivityModel)
+        let notificationTapHandler = ArrivalNotificationTapHandler { [weak autoLiveActivityModel] stationId in
+            await autoLiveActivityModel?.notificationTapped(stationId: stationId)
+        }
+        UNUserNotificationCenter.current().delegate = notificationTapHandler
+        regionWatcher.onWake = { [weak autoLiveActivityModel] position in
+            await autoLiveActivityModel?.handleMonitoredPosition(position)
+        }
+        Task { await regionWatcher.resume() }
+        return notificationTapHandler
     }
 
     private static func departuresProvider(_ configuration: PRIMConfiguration?) -> PRIMDeparturesProvider? {

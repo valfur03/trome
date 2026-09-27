@@ -27,6 +27,20 @@ public struct AutoLiveActivityRules: Sendable {
     public static let stopRadiusMeters = 250.0
     public static let defaultMaximumDuration: TimeInterval = 45 * 60
 
+    public enum ArrivalResponse: Equatable, Sendable {
+        case start
+        case notify
+        case none
+
+        public init(appIsActive: Bool, allowsAutomaticStart: Bool) {
+            if !allowsAutomaticStart {
+                self = .none
+            } else {
+                self = appIsActive ? .start : .notify
+            }
+        }
+    }
+
     public enum Action: Equatable, Sendable {
         case notify(Station)
         case start(Station)
@@ -50,7 +64,7 @@ public struct AutoLiveActivityRules: Sendable {
         state: AutoLiveActivityState,
         position: Coordinate?,
         now: Date,
-        appIsActive: Bool,
+        onArrival response: ArrivalResponse,
         catalog: StationCatalog
     ) -> Decision {
         var decision = Decision(state: state, actions: [])
@@ -58,7 +72,7 @@ public struct AutoLiveActivityRules: Sendable {
             decision.end()
         }
         guard let position else { return decision }
-        decision.detectArrival(at: position, now: now, appIsActive: appIsActive, catalog: catalog)
+        decision.detectArrival(at: position, now: now, response: response, catalog: catalog)
         decision.checkDistanceToShownStation(from: position, catalog: catalog)
         return decision
     }
@@ -70,11 +84,16 @@ private extension AutoLiveActivityRules.Decision {
         actions.append(.end)
     }
 
-    mutating func detectArrival(at position: Coordinate, now: Date, appIsActive: Bool, catalog: StationCatalog) {
+    mutating func detectArrival(
+        at position: Coordinate,
+        now: Date,
+        response: AutoLiveActivityRules.ArrivalResponse,
+        catalog: StationCatalog
+    ) {
         let nearest = catalog.nearestStation(to: position, within: AutoLiveActivityRules.arrivalRadiusMeters)?.station
         if let nearest, nearest.id != state.arrivalStationId {
             state.arrivalStationId = nearest.id
-            arrive(at: nearest, now: now, appIsActive: appIsActive)
+            arrive(at: nearest, now: now, response: response)
         } else if nearest == nil, let arrivalId = state.arrivalStationId,
                   let arrival = catalog.station(withId: arrivalId),
                   position.distance(to: arrival.coordinate) > AutoLiveActivityRules.stopRadiusMeters {
@@ -83,16 +102,21 @@ private extension AutoLiveActivityRules.Decision {
         }
     }
 
-    mutating func arrive(at station: Station, now: Date, appIsActive: Bool) {
+    mutating func arrive(at station: Station, now: Date, response: AutoLiveActivityRules.ArrivalResponse) {
         if let shown = state.shown {
             guard shown.stationId != station.id else { return }
             state.shown = .init(stationId: station.id, startedAt: shown.startedAt, hasBeenNear: true)
             actions.append(.switchTo(station))
-        } else if appIsActive {
+            return
+        }
+        switch response {
+        case .start:
             state.shown = .init(stationId: station.id, startedAt: now, hasBeenNear: true)
             actions.append(.start(station))
-        } else {
+        case .notify:
             actions.append(.notify(station))
+        case .none:
+            break
         }
     }
 
