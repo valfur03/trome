@@ -42,6 +42,7 @@ enum LineDirections {
 
     private struct Group {
         let isOneDirection: Bool
+        let isStationQuay: Bool
         let trains: [Departure]
         var side: Int?
     }
@@ -100,7 +101,11 @@ enum LineDirections {
             }
         }
         let quayGroups = allQuays.map { quay in
-            Group(isOneDirection: true, trains: trains.filter { $0.quayRef == quay })
+            Group(
+                isOneDirection: true,
+                isStationQuay: quays.contains(quay),
+                trains: trains.filter { $0.quayRef == quay }
+            )
         }
         var destinations: [String] = []
         for train in trains where train.quayRef == nil && !destinations.contains(train.destination) {
@@ -109,6 +114,7 @@ enum LineDirections {
         let destinationGroups = destinations.map { destination in
             Group(
                 isOneDirection: false,
+                isStationQuay: false,
                 trains: trains.filter { $0.quayRef == nil && $0.destination == destination }
             )
         }
@@ -146,7 +152,9 @@ enum LineDirections {
             return
         }
         let freeSides = Set(0..<sideCount).subtracting(groups.compactMap(\.side))
-        guard unknown.count == 1, freeSides.count == 1, let freeSide = freeSides.first else { return }
+        guard unknown.count == 1, groups[unknown[0]].isStationQuay,
+              freeSides.count == 1, let freeSide = freeSides.first
+        else { return }
         groups[unknown[0]].side = freeSide
     }
 

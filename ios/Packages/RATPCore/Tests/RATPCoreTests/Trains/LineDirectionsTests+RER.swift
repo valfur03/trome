@@ -101,6 +101,21 @@ extension LineDirectionsTests {
         ])
     }
 
+    @Test func neverPutsATrainOfAnUnknownRERQuayInTheOnlyDirectionWithoutTrains() {
+        let result = directions(of: rerB, at: "Denfert-Rochereau", [
+            train(rerB, to: "Mitry - Claye", inMinutes: 2, from: rerQuay(1)),
+            train(rerB, to: "Gare du Nord", inMinutes: 4, from: rerQuay(2))
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Aéroport Charles de Gaulle 2 TGV / Mitry - Claye", trains: [
+                rerTrain(2, to: "Mitry - Claye")
+            ]),
+            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", times: []),
+            LineDirection(label: "Gare du Nord", times: [time(inMinutes: 4)])
+        ])
+    }
+
     @Test func ignoresATrainDirectionThatIsTheSameForBothWays() {
         let result = directions(of: rerA, at: "La Défense", [
             train(rerA, to: "Torcy", inMinutes: 1, from: rerQuay(4), direction: "Aller"),
