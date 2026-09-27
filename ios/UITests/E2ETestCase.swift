@@ -48,6 +48,7 @@ class E2ETestCase: XCTestCase {
 
     @MainActor
     func answerPermissionPrompts(in app: XCUIApplication) {
+        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
         settlePermissions(in: app, resettingRefusedLocation: false, expectingLocationPrompt: true)
     }
 
@@ -59,6 +60,7 @@ class E2ETestCase: XCTestCase {
     ) {
         let location = locationStatus(in: app)
         let notifications = notificationsStatus(in: app)
+        let screen = app.collectionViews.firstMatch
         var mayResetLocation = resettingRefusedLocation
         var locationPromptAnswered = !expectingLocationPrompt
         let deadline = Date().addingTimeInterval(UITestTimeout.element)
@@ -66,8 +68,15 @@ class E2ETestCase: XCTestCase {
             if answerPermissionPrompt() {
                 locationPromptAnswered = true
             }
+            guard screen.exists else {
+                if app.state != .runningForeground {
+                    app.activate()
+                }
+                _ = screen.waitForExistence(timeout: 1)
+                continue
+            }
             guard location.exists, notifications.exists else {
-                app.swipeUp()
+                screen.swipeUp()
                 continue
             }
             if locationPromptAnswered, Self.allowedLocationLabels.contains(location.label),
