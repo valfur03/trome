@@ -46,6 +46,8 @@ struct AutomaticModeSection: View {
             }
         } label: {
             Label("Snooze", systemImage: "bell.slash")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(.rect)
         }
         .accessibilityIdentifier("snoozeMenu")
     }
