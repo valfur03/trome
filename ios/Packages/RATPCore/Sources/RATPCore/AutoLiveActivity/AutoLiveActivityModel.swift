@@ -221,12 +221,6 @@ public final class AutoLiveActivityModel {
         restartFeed(fetchNow: false)
     }
 
-    private func askForNotificationsIfAllowed() async {
-        guard !hasAskedForNotifications, inputs.permission.authorization == .authorized else { return }
-        hasAskedForNotifications = true
-        await services.notifier.requestAuthorization()
-    }
-
     private func openTappedStation() async {
         guard appIsActive, let stationId = pendingTappedStationId else { return }
         pendingTappedStationId = nil
@@ -284,6 +278,13 @@ public final class AutoLiveActivityModel {
 }
 
 private extension AutoLiveActivityModel {
+    func askForNotificationsIfAllowed() async {
+        guard !hasAskedForNotifications, inputs.permission.authorization == .authorized else { return }
+        hasAskedForNotifications = true
+        await inputs.permission.waitForAlwaysQuestion()
+        await services.notifier.requestAuthorization()
+    }
+
     func restartFeed(fetchNow: Bool) {
         feedTask?.cancel()
         feedTask = nil

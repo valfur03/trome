@@ -47,9 +47,26 @@ final class StubLocationKeeper: BackgroundLocationKeeper {
 @MainActor
 private final class StubLocationPermission: LocationPermission {
     var authorization: LocationAuthorization = .authorized
+    var isAskingAlways = false
+    private var alwaysQuestionWaiters: [CheckedContinuation<Void, Never>] = []
+
+    var isWaitingForAlwaysQuestion: Bool {
+        !alwaysQuestionWaiters.isEmpty
+    }
 
     func requestAuthorization() async -> LocationAuthorization {
         authorization
+    }
+
+    func waitForAlwaysQuestion() async {
+        guard isAskingAlways else { return }
+        await withCheckedContinuation { alwaysQuestionWaiters.append($0) }
+    }
+
+    func answerAlwaysQuestion() {
+        isAskingAlways = false
+        alwaysQuestionWaiters.forEach { $0.resume() }
+        alwaysQuestionWaiters = []
     }
 }
 
@@ -300,6 +317,19 @@ struct AutoLiveActivityModelTests {
         permission.authorization = .authorized
         await model.setAppActive(true)
         await model.setAppActive(true)
+
+        #expect(notifier.authorizationRequestCount == 1)
+    }
+
+    @Test func asksForNotificationsOnlyOnceTheAlwaysLocationQuestionIsAnswered() async {
+        permission.isAskingAlways = true
+        let model = makeModel()
+        let activation = Task { await model.setAppActive(true) }
+        await waitUntil { permission.isWaitingForAlwaysQuestion }
+        #expect(notifier.authorizationRequestCount == 0)
+
+        permission.answerAlwaysQuestion()
+        await activation.value
 
         #expect(notifier.authorizationRequestCount == 1)
     }

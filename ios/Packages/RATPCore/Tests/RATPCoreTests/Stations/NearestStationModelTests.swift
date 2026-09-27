@@ -17,6 +17,8 @@ private final class MockLocationPermission: LocationPermission {
         authorization = answerToRequest
         return answerToRequest
     }
+
+    func waitForAlwaysQuestion() async {}
 }
 
 @MainActor

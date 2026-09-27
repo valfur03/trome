@@ -72,7 +72,7 @@ final class DocsScreenshotTests: XCTestCase {
     private func answerPermissionQuestions(until isSettled: () -> Bool) {
         let answers: [(button: String, screenshot: String?)] = [
             (button: "Allow While Using App", screenshot: "app-location-permission"),
-            (button: "Change to Always Allow", screenshot: nil),
+            (button: "Change to Always Allow", screenshot: "app-always-permission"),
             (button: "Allow", screenshot: "app-notification-permission")
         ]
         var savedScreenshots: Set<String> = []
@@ -80,6 +80,7 @@ final class DocsScreenshotTests: XCTestCase {
         while Date() < deadline, !isSettled() {
             for answer in answers where springboard.buttons[answer.button].exists {
                 if let screenshot = answer.screenshot, !savedScreenshots.contains(screenshot) {
+                    sleep(1)
                     saveScreenshot(named: screenshot)
                     savedScreenshots.insert(screenshot)
                 }
@@ -90,8 +91,8 @@ final class DocsScreenshotTests: XCTestCase {
         XCTAssertTrue(isSettled(), "The location and notification permissions did not settle")
         XCTAssertEqual(
             savedScreenshots,
-            ["app-location-permission", "app-notification-permission"],
-            "The location and notification questions were not both on screen"
+            ["app-location-permission", "app-always-permission", "app-notification-permission"],
+            "The location, Always and notification questions were not all on screen"
         )
     }
 }

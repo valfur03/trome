@@ -6,6 +6,9 @@ struct PermissionsSection: View {
     let permissions: PermissionsModel
     let nearestStationModel: NearestStationModel
 
+    private static let locationIndicatorHint = "While the Live Activity shows, your iPhone may show that the app uses "
+        + "your location to keep the train times up to date, and this is normal."
+
     var body: some View {
         Section("Permissions") {
             locationRow
@@ -19,7 +22,13 @@ struct PermissionsSection: View {
     private var locationRow: some View {
         switch permissions.location {
         case .always:
-            PermissionRow(title: "Location", state: "Always", isGranted: true, kind: .location)
+            PermissionRow(
+                title: "Location",
+                state: "Always",
+                isGranted: true,
+                kind: .location,
+                hint: Self.locationIndicatorHint
+            )
         case .whileUsing:
             PermissionRow(
                 title: "Location",
@@ -27,7 +36,8 @@ struct PermissionsSection: View {
                 isGranted: false,
                 kind: .location,
                 hint: "The Live Activity can start by itself only while the app is open. "
-                    + "To get a notification near a station when the app is closed, set Location to Always.",
+                    + "To get a notification near a station when the app is closed, set Location to Always. "
+                    + Self.locationIndicatorHint,
                 fix: .openSettings
             )
         case .denied:

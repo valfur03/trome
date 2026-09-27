@@ -7,6 +7,7 @@ sidebar:
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 import appLocationPermission from '../../../assets/screenshots/app-location-permission.png';
+import appAlwaysPermission from '../../../assets/screenshots/app-always-permission.png';
 import appNotificationPermission from '../../../assets/screenshots/app-notification-permission.png';
 import appMainScreen from '../../../assets/screenshots/app-main-screen.png';
 import appTestingTools from '../../../assets/screenshots/app-testing-tools.png';
@@ -226,15 +227,19 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 <Steps>
 
-30. The app asks to use your location. Tap **Allow While Using App**. The app uses your location to find the stations near you. (Later, iOS asks you to change this to **Always**: see [The questions of the app](#the-questions-of-the-app).)
+30. The app asks to use your location. Tap **Allow While Using App**. The app uses your location to find the stations near you.
 
     <Screenshot src={appLocationPermission} alt="The iPhone asks: Allow RATP Activity to use your location? The buttons are Allow Once, Allow While Using App, and Don't Allow." />
 
-31. The app asks to send you notifications. Tap **Allow**. The app uses them to tell you when you arrive at a station.
+31. Right after, the app asks if it can also use your location when you do not use it. Tap **Change to Always Allow**. Then the app can tell you when you arrive at a station, also when it is closed. If you keep "While Using the App", this works only while the app is open. The **Permissions** part of the main screen then says so, with an **Open Settings** button. While the Live Activity shows, the app uses your location to keep the train times up to date. With **Always**, iOS shows no blue location indicator. With "While Using the App", iOS turns the status bar blue (or shows a blue bubble in the Dynamic Island) while the Live Activity shows. This is normal: the app cannot hide it.
+
+    <Screenshot src={appAlwaysPermission} alt="The iPhone asks: Allow RATP Activity to also use your location even when you are not using the app? The buttons are Keep Only While Using and Change to Always Allow." />
+
+32. The app asks to send you notifications. Tap **Allow**. The app uses them to tell you when you arrive at a station.
 
     <Screenshot src={appNotificationPermission} alt="The iPhone asks: RATP Activity would like to send you notifications. The buttons are Don't Allow and Allow." />
 
-32. Look at the main screen of the app. It has a button to show the Live Activity of the nearest station now, the automatic mode, and the **Permissions** part. The app is ready. Later versions of the app can show this screen a bit differently.
+33. Look at the main screen of the app. It has a button to show the Live Activity of the nearest station now, the automatic mode, and the **Permissions** part. The app is ready. Later versions of the app can show this screen a bit differently.
 
     <Screenshot src={appMainScreen} alt="The main screen of the app: one button to show the Live Activity of the nearest station, the automatic mode, and the permissions." />
 
@@ -250,9 +255,8 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 ### The questions of the app
 
-After the first launch, iOS asks you two more questions. They come later, so this page has no picture of them ([why](#why-some-steps-have-no-picture)).
+After the first launch, iOS asks you one more question. It comes later, so this page has no picture of it ([why](#why-some-steps-have-no-picture)).
 
-- **Your location when the app is closed.** Later, iOS asks if the app can also use your location when you do not use it. Tap **Change to Always Allow**. Then the app can tell you when you arrive at a station, also when it is closed. If you keep "While Using the App", this works only while the app is open. The **Permissions** part of the main screen then says so, with an **Open Settings** button.
 - **Live Activities.** The first time the app shows the next trains on the lock screen, iOS asks on the lock screen if RATP Activity can show Live Activities. Tap **Allow**.
 
 If you tapped the wrong button, you can change your choice later in the iPhone Settings (see [In the app](#in-the-app)).
@@ -467,7 +471,7 @@ The people who wrote this page had no real iPhone connected to a Mac. So they co
 - **The exact words and places of the Apple screens**: Xcode 27 (Apple Accounts, Signing & Capabilities and its Set Up Signing window, Device Hub, the run destination menu, the error messages), macOS (the "codesign" password message), and the iPhone (Trust This Computer, Developer Mode, VPN & Device Management, Untrusted Developer). The steps follow Apple's pages for Xcode 27, and the usual iOS messages. The exact words can differ a little.
 - **Pictures of the Apple screens**: there are none, on purpose ([why](#why-some-steps-have-no-picture)).
 - **The pictures of the app**: they come from the iPhone Simulator on the Mac, not from a real iPhone. The app looks the same, but the top bar of the iPhone can differ.
-- **The questions of the app on a real iPhone**: the location, notifications, the location "Always", and Live Activities. The pictures of the first two come from the Simulator. Their exact words and the moment when iOS asks them.
+- **The questions of the app on a real iPhone**: the location, notifications, the location "Always", and Live Activities. The pictures of the first three come from the Simulator. Their exact words and the moment when iOS asks them.
 - **What the iPhone shows when the 7 days end**: the app does not open, but the exact message was not checked.
 - **The team ID step (step 11)**: it reads the file that Xcode writes. It was not checked with a real Apple ID.
 

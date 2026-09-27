@@ -19,7 +19,7 @@ shift
 scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/.." && pwd)
 screenshots="$root/../docs/src/assets/screenshots"
-names="app-location-permission app-notification-permission app-main-screen live-activity-notification-center app-testing-tools"
+names="app-location-permission app-always-permission app-notification-permission app-main-screen live-activity-notification-center app-testing-tools"
 fake_position=48.8584,2.2945
 screenshot_width=900
 pngquant_quality=85-100
