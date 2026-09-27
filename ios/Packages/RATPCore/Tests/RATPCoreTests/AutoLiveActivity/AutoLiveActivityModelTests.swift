@@ -45,7 +45,7 @@ final class StubLocationKeeper: BackgroundLocationKeeper {
 }
 
 @MainActor
-private final class StubLocationPermission: LocationPermission {
+final class StubLocationPermission: LocationPermission {
     var authorization: LocationAuthorization = .authorized
     var isAskingAlways = false
     private var alwaysQuestionWaiters: [CheckedContinuation<Void, Never>] = []
@@ -106,7 +106,7 @@ struct AutoLiveActivityModelTests {
     let notifier = StubArrivalNotifier()
     let watcher = StubRegionWatcher()
     let keeper = StubLocationKeeper()
-    private let permission = StubLocationPermission()
+    let permission = StubLocationPermission()
     let provider = StubDeparturesProvider()
     private let storage = InMemoryKeyValueStore()
     let clock = TestClock()
@@ -231,7 +231,7 @@ struct AutoLiveActivityModelTests {
         await arrive(at: Places.fiftyMetersFromA, in: model)
 
         gps.report(Places.fourHundredMetersFromA)
-        await waitUntil { client.endCount == 1 }
+        await waitUntil { client.endCount == 1 && !keeper.isKeeping }
 
         #expect(model.shownStation == nil)
         #expect(keeper.isKeeping == false)
@@ -242,7 +242,7 @@ struct AutoLiveActivityModelTests {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
 
-        await waitUntil { client.endCount == 1 }
+        await waitUntil { client.endCount == 1 && !keeper.isKeeping }
 
         #expect(client.endCount == 1)
         #expect(model.shownStation == nil)
@@ -312,52 +312,12 @@ struct AutoLiveActivityModelTests {
         )
         #expect(relaunchedKeeper.isKeeping)
         relaunchedGPS.report(Places.fourHundredMetersFromA)
-        await waitUntil { client.endCount == 1 }
+        await waitUntil { client.endCount == 1 && !relaunchedKeeper.isKeeping }
 
         #expect(client.endCount == 1)
         #expect(relaunched.shownStation == nil)
         #expect(relaunchedKeeper.isKeeping == false)
         withExtendedLifetime(model) {}
-    }
-
-    @Test func asksForNotificationsOnceLocationIsAllowed() async {
-        permission.authorization = .notDetermined
-        let model = makeModel()
-        await activate(model)
-        #expect(notifier.authorizationRequestCount == 0)
-
-        permission.authorization = .authorized
-        await activate(model)
-        await activate(model)
-        await waitUntil { notifier.authorizationRequestCount > 0 }
-
-        #expect(notifier.authorizationRequestCount == 1)
-    }
-
-    @Test func asksForNotificationsOnlyOnceTheAlwaysLocationQuestionIsAnswered() async {
-        permission.isAskingAlways = true
-        let model = makeModel()
-        await activate(model)
-        await waitUntil { permission.isWaitingForAlwaysQuestion }
-        #expect(notifier.authorizationRequestCount == 0)
-
-        permission.answerAlwaysQuestion()
-        await waitUntil { notifier.authorizationRequestCount > 0 }
-
-        #expect(notifier.authorizationRequestCount == 1)
-    }
-
-    @Test func startsTheTappedLiveActivityWhileTheNotificationQuestionIsOpen() async {
-        permission.isAskingAlways = true
-        let model = makeModel()
-        await model.notificationTapped(stationId: "a")
-
-        await activate(model)
-        await waitUntil { permission.isWaitingForAlwaysQuestion }
-
-        #expect(permission.isWaitingForAlwaysQuestion)
-        #expect(model.shownStation == Places.stationA)
-        #expect(client.isShowing)
     }
 
     @Test func startsTheLiveActivityWhenTheFirstPositionComesBeforeTheAppFinishesComingOnScreen() async {

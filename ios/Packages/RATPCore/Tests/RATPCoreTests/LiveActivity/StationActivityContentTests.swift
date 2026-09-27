@@ -44,7 +44,7 @@ struct StationActivityContentTests {
         }
 
         let content = ContentState(station: saintLazare, trains: board(departures, at: hub), now: now)
-        let json = String(decoding: try JSONEncoder().encode(content), as: UTF8.self)
+        let json = try #require(String(bytes: try JSONEncoder().encode(content), encoding: .utf8))
 
         #expect(hub.flatMap(\.lines).count >= 9)
         #expect(!json.contains("stopIds"))

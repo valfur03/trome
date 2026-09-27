@@ -6,7 +6,7 @@ struct TransitLineTests {
     private func json(_ line: TransitLine) throws -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
-        return String(decoding: try encoder.encode(line), as: UTF8.self)
+        return try #require(String(bytes: try encoder.encode(line), encoding: .utf8))
     }
 
     @Test func leavesOutTheStopsOfALineThatHasNone() throws {

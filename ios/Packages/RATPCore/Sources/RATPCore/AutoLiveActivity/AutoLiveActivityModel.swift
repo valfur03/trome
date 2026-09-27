@@ -12,20 +12,20 @@ public final class AutoLiveActivityModel {
     public private(set) var shownStation: Station?
 
     private let catalog: StationCatalog
-    private let liveActivity: StationLiveActivityModel
-    private let inputs: Inputs
+    let liveActivity: StationLiveActivityModel
+    let inputs: Inputs
     private let services: Services
-    private let configuration: Configuration
+    let configuration: Configuration
     private var state: AutoLiveActivityState {
         didSet { stateDidChange(from: oldValue) }
     }
-    private var appIsActive = false
+    private(set) var appIsActive = false
     private var hasAskedForNotifications = false
     private var pendingTappedStationId: String?
     private var plannedRegions: RegionPlanKey?
     private var hasClearedRegions = false
     @ObservationIgnored private var timerTask: Task<Void, Never>?
-    @ObservationIgnored private var feedTask: Task<Void, Never>?
+    @ObservationIgnored var feedTask: Task<Void, Never>?
 
     public init(
         catalog: StationCatalog,
@@ -222,7 +222,7 @@ public final class AutoLiveActivityModel {
         restartFeed(fetchNow: false)
     }
 
-    private func syncWithSystem() {
+    func syncWithSystem() {
         liveActivity.syncWithSystem()
         guard !liveActivity.isShowing, state.shown != nil else { return }
         state.shown = nil
@@ -243,13 +243,6 @@ public final class AutoLiveActivityModel {
             state.shown = .init(stationId: stationId, startedAt: configuration.now(), hasBeenNear: true)
             await show(station)
         }
-    }
-
-    private func trains(for station: Station) -> NextTrainsState {
-        if inputs.screenTrains.updatingStationId == station.id {
-            return inputs.screenTrains.state(for: station)
-        }
-        return inputs.liveActivityTrains.state(for: station)
     }
 
     private func stateDidChange(from oldValue: AutoLiveActivityState) {
@@ -322,74 +315,11 @@ private extension AutoLiveActivityModel {
         }
     }
 
-    func startFeedAfterLaunch() {
-        guard let station = shownStation, liveActivity.isShowing else { return }
-        feedTask = Task { [weak self, sleep = configuration.sleep] in
-            do {
-                try await sleep(.seconds(BackgroundTrainsRefresh.launchDelay))
-            } catch {
-                return
-            }
-            await self?.keepFeedingInBackground(station, fetchNow: true)
+    func trains(for station: Station) -> NextTrainsState {
+        if inputs.screenTrains.updatingStationId == station.id {
+            return inputs.screenTrains.state(for: station)
         }
-    }
-
-    func restartFeed(fetchNow: Bool) {
-        feedTask?.cancel()
-        feedTask = nil
-        guard let station = shownStation, liveActivity.isShowing else { return }
-        if appIsActive {
-            guard inputs.screenTrains.updatingStationId != station.id else { return }
-            feedTask = Task { [weak self] in
-                await self?.keepFeeding(station)
-            }
-        } else {
-            feedTask = Task { [weak self] in
-                await self?.keepFeedingInBackground(station, fetchNow: fetchNow)
-            }
-        }
-    }
-
-    func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
-        var asksPRIM = true
-        var waits = !fetchNow
-        while !Task.isCancelled {
-            if waits {
-                let staleDate = liveActivity.content?.staleDate
-                let delay = asksPRIM
-                    ? BackgroundTrainsRefresh.delay(untilStale: staleDate, now: configuration.now())
-                    : BackgroundTrainsRefresh.maximumDelay
-                do {
-                    try await configuration.sleep(.seconds(delay))
-                } catch {
-                    return
-                }
-            }
-            waits = true
-            syncWithSystem()
-            guard liveActivity.isShowing else { return }
-            guard asksPRIM else { continue }
-            await feed(station)
-            asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
-        }
-    }
-
-    func keepFeeding(_ station: Station) async {
-        while !Task.isCancelled {
-            await feed(station)
-            do {
-                try await configuration.sleep(NextTrainsModel.refreshInterval)
-            } catch {
-                return
-            }
-        }
-    }
-
-    func feed(_ station: Station) async {
-        let trains = inputs.liveActivityTrains
-        await trains.refresh(for: station)
-        guard !Task.isCancelled, shownStation?.id == station.id else { return }
-        await liveActivity.update(station: station, trains: trains.state(for: station))
+        return inputs.liveActivityTrains.state(for: station)
     }
 
     func refreshRegions(around position: Coordinate?) async {
