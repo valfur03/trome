@@ -137,8 +137,13 @@ struct RATPActivityApp: App {
         return notificationTapHandler
     }
 
-    private static func departuresProvider(_ configuration: PRIMConfiguration?) -> PRIMDeparturesProvider? {
-        configuration.map { PRIMDeparturesProvider(apiKey: $0.apiKey) }
+    private static func departuresProvider(_ configuration: PRIMConfiguration?) -> (any DeparturesProvider)? {
+        #if DEBUG
+        if let fakeProvider = FakeDeparturesProvider.ifAsked(by: ProcessInfo.processInfo.arguments) {
+            return fakeProvider
+        }
+        #endif
+        return configuration.map { PRIMDeparturesProvider(apiKey: $0.apiKey) }
     }
 
     private static func liveActivityMaximumDuration() -> TimeInterval {

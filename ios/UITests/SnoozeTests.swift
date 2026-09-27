@@ -4,14 +4,33 @@ final class SnoozeTests: E2ETestCase {
     @MainActor
     func testUserSnoozesTheLiveActivityFromTheLockScreenThenCancelsTheSnooze() {
         let app = makeApp()
+        app.launchArguments.append("--fake-trains")
         launch(app)
         turnOnTheAutomaticMode(in: app)
         leaveEveryStation(in: app)
         useFakePosition(atStation: "Abbesses", in: app)
-        XCTAssertTrue(waitFor(app.staticTexts["liveActivityStationName"]))
+        let lockScreenStation = app.staticTexts["liveActivityStationName"]
+        XCTAssertTrue(waitFor(lockScreenStation))
 
         XCUIDevice.shared.press(.home)
         openNotificationCenter()
+        XCTAssertTrue(waitFor(springboard.staticTexts["Abbesses"]))
+        XCTAssertTrue(waitFor(springboard.staticTexts["Mairie d'Aubervilliers"]))
+        XCTAssertTrue(waitFor(springboard.staticTexts["Mairie d'Issy"]))
+        closeNotificationCenter()
+
+        app.activate()
+        useFakePosition(atStation: "Gare de l'Est", in: app)
+        waitForLabel("On the lock screen: Gare de l'Est", of: lockScreenStation)
+        XCUIDevice.shared.press(.home)
+        openNotificationCenter()
+        XCTAssertTrue(waitFor(springboard.staticTexts["Gare de l'Est"]))
+        XCTAssertTrue(waitFor(liveActivityElement(containing: "Porte de Clignancourt")))
+        XCTAssertFalse(liveActivityElement(containing: "Villejuif - Louis Aragon").exists)
+        tap(springboard.buttons["Show the next lines"])
+        XCTAssertTrue(waitFor(liveActivityElement(containing: "Villejuif - Louis Aragon")))
+        XCTAssertTrue(liveActivityElement(containing: "Mairie d'Ivry").exists)
+        XCTAssertTrue(waitForNo(liveActivityElement(containing: "Porte de Clignancourt")))
         tap(springboard.buttons["Snooze for 30 minutes"])
         XCTAssertTrue(waitForNo(springboard.buttons["Snooze for 30 minutes"]))
         closeNotificationCenter()
@@ -78,6 +97,11 @@ final class SnoozeTests: E2ETestCase {
         if allowLiveActivities.waitForExistence(timeout: 5) {
             allowLiveActivities.tap()
         }
+    }
+
+    @MainActor
+    private func liveActivityElement(containing text: String) -> XCUIElement {
+        springboard.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
     }
 
     @MainActor
