@@ -101,7 +101,7 @@ final class TestClock: Sendable {
 @MainActor
 struct AutoLiveActivityModelTests {
     typealias Places = AutoTestPlaces
-    let gps = ControlledLocationProvider()
+    let gps: ControlledLocationProvider
     let client = StubStationLiveActivityClient()
     let notifier = StubArrivalNotifier()
     let watcher = StubRegionWatcher()
@@ -115,11 +115,12 @@ struct AutoLiveActivityModelTests {
     let automaticMode: AutomaticModeModel
 
     init() {
+        let clock = clock
+        gps = ControlledLocationProvider(now: { clock.now })
         locationService = LocationService(
             realProvider: gps,
             sourceStore: LocationSourceStore(storage: InMemoryKeyValueStore())
         )
-        let clock = clock
         screenTrains = NextTrainsModel(
             provider: provider,
             now: { clock.now },
@@ -217,8 +218,9 @@ struct AutoLiveActivityModelTests {
         await arrive(at: Places.fiftyMetersFromA, in: model)
 
         gps.report(Places.atB)
-        await waitUntil { model.shownStation == Places.stationB }
+        await waitUntil { client.updates.last?.stationName == "Station B" }
 
+        #expect(model.shownStation == Places.stationB)
         #expect(client.started.count == 1)
         #expect(client.updates.last?.stationName == "Station B")
         #expect(notifier.notified.isEmpty)
@@ -298,7 +300,7 @@ struct AutoLiveActivityModelTests {
     @Test func followsThePositionAgainWhenRelaunchedWhileTheLiveActivityShows() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
-        let relaunchedGPS = ControlledLocationProvider()
+        let relaunchedGPS = ControlledLocationProvider(now: { [clock] in clock.now })
         let relaunchedKeeper = StubLocationKeeper()
 
         let relaunched = makeModel(

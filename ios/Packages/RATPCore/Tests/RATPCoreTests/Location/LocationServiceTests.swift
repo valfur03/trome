@@ -3,8 +3,13 @@ import Testing
 @testable import RATPCore
 
 final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
+    private let now: @Sendable () -> Date
     private var continuation: AsyncStream<LocationEvent>.Continuation?
     private(set) var isReporting = false
+
+    init(now: @escaping @Sendable () -> Date = { Date() }) {
+        self.now = now
+    }
 
     func events() -> AsyncStream<LocationEvent> {
         let (stream, continuation) = AsyncStream<LocationEvent>.makeStream()
@@ -17,7 +22,7 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     }
 
     func report(_ coordinate: Coordinate) {
-        report(.exact(coordinate))
+        report(PositionFix(coordinate: coordinate, accuracyMeters: 0, timestamp: now()))
     }
 
     func report(_ fix: PositionFix) {

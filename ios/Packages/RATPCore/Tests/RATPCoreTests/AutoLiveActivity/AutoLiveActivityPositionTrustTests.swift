@@ -7,6 +7,10 @@ extension AutoLiveActivityModelTests {
         PositionFix(coordinate: coordinate, accuracyMeters: 500, timestamp: clock.now)
     }
 
+    private func exactFix(at coordinate: Coordinate) -> PositionFix {
+        PositionFix(coordinate: coordinate, accuracyMeters: 0, timestamp: clock.now)
+    }
+
     private func oldFix(at coordinate: Coordinate) -> PositionFix {
         PositionFix(coordinate: coordinate, accuracyMeters: 10, timestamp: clock.now.addingTimeInterval(-60))
     }
@@ -64,7 +68,7 @@ extension AutoLiveActivityModelTests {
         await reportAndWaitForRegions(roughFix(at: Places.fiftyMetersFromA))
 
         await model.startByHand(Places.stationA)
-        await reportAndWaitForRegions(.exact(Places.fourHundredMetersFromA))
+        await reportAndWaitForRegions(exactFix(at: Places.fourHundredMetersFromA))
 
         #expect(model.shownStation == Places.stationA)
         #expect(client.endCount == 0)
@@ -78,7 +82,7 @@ extension AutoLiveActivityModelTests {
         clock.advance(by: 60)
 
         await model.startByHand(Places.stationA)
-        gps.report(.exact(Places.fourHundredMetersFromA))
+        gps.report(Places.fourHundredMetersFromA)
         await waitUntil { client.endCount == 1 }
 
         #expect(client.endCount == 1)

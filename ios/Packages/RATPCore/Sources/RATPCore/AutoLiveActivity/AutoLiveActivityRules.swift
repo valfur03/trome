@@ -68,7 +68,7 @@ public struct AutoLiveActivityRules: Sendable {
         now: Date,
         maximumAge: TimeInterval = maximumPositionAge
     ) -> Bool {
-        let isRecent = now.timeIntervalSince(fix.timestamp) <= maximumAge
+        let isRecent = abs(now.timeIntervalSince(fix.timestamp)) <= maximumAge
         return isPrecise(fix) && isRecent
     }
 

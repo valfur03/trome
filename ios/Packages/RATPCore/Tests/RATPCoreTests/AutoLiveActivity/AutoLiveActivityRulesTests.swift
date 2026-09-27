@@ -211,6 +211,14 @@ struct AutoLiveActivityRulesTests {
         #expect(AutoLiveActivityRules.trusts(fix(accuracy: 10, secondsAgo: 16), now: now) == false)
     }
 
+    @Test func trustsAPositionFromAFewSecondsAhead() {
+        #expect(AutoLiveActivityRules.trusts(fix(accuracy: 10, secondsAgo: -15), now: now))
+    }
+
+    @Test func doesNotTrustAPositionFromFarAhead() {
+        #expect(AutoLiveActivityRules.trusts(fix(accuracy: 10, secondsAgo: -16), now: now) == false)
+    }
+
     @Test func usesTheGivenMaximumAge() {
         let oldFix = fix(accuracy: 10, secondsAgo: 120)
 
