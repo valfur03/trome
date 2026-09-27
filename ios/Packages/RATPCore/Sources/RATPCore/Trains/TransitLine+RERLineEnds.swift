@@ -150,9 +150,8 @@ extension TransitLine {
                 "Boulainvilliers",
                 "Avenue du Président Kennedy Maison de Radio France"
             ],
-            "Versailles Château Rive Gauche": rerCVersaillesBranch,
+            "Versailles Château Rive Gauche": rerCVersaillesBranch + ["Porchefontaine"],
             "Saint-Quentin en Yvelines - Montigny-le-Bretonneux": rerCVersaillesBranch + [
-                "Porchefontaine",
                 "Versailles Chantiers",
                 "Saint-Cyr"
             ],
@@ -200,7 +199,6 @@ extension TransitLine {
                 "Savigny-le-Temple - Nandy",
                 "Cesson",
                 "Le Mée",
-                "Moulin Galant",
                 "Le Plessis Chenet",
                 "Le Coudray-Montceaux",
                 "Saint-Fargeau",
@@ -211,6 +209,7 @@ extension TransitLine {
             "Malesherbes": rerDCorbeilBranch + [
                 "Essonnes Robinson",
                 "Villabé",
+                "Moulin Galant",
                 "Mennecy",
                 "Ballancourt",
                 "La Ferté-Alais",

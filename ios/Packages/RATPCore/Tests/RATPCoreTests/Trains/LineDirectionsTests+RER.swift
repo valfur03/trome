@@ -153,12 +153,18 @@ extension LineDirectionsTests {
     @Test func namesOnlyTheRERBranchEndsThatAStationCanReach() {
         let sartrouville = directions(of: rerA, at: "Sartrouville", [])
         let massy = directions(of: rerB, at: "Massy - Palaiseau", [])
+        let moulinGalant = directions(
+            of: TransitLine(mode: .rer, name: "D", stopIds: ["IDFM:monomodalStopPlace:43097"]),
+            at: "Moulin Galant",
+            []
+        )
 
         #expect(sartrouville.map(\.label) == [
             "Cergy le Haut / Poissy",
             "Boissy-Saint-Léger / Marne-la-Vallée - Chessy"
         ])
         #expect(massy.map(\.label) == ["Aéroport Charles de Gaulle 2 TGV / Mitry - Claye", "Saint-Rémy-lès-Chevreuse"])
+        #expect(moulinGalant.map(\.label) == ["Creil", "Malesherbes"])
     }
 
     @Test func showsOnlyTheOtherDirectionAtAnRERTerminus() {
