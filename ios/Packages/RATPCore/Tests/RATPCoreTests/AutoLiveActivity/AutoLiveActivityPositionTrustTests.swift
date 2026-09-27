@@ -69,4 +69,19 @@ extension AutoLiveActivityModelTests {
         #expect(model.shownStation == Places.stationA)
         #expect(client.endCount == 0)
     }
+
+    @Test func trustsAFakePositionSetLongAgo() async {
+        let model = makeModel()
+        await model.setAppActive(true)
+        locationService.use(.fake(FakePosition(name: "Near A", coordinate: Places.twoHundredMetersFromA)))
+        await waitUntil { locationService.position != nil }
+        clock.advance(by: Date().timeIntervalSince(clock.now) + 60)
+
+        await model.startByHand(Places.stationA)
+        locationService.use(.fake(FakePosition(name: "Far from A", coordinate: Places.fourHundredMetersFromA)))
+        await waitUntil { client.endCount == 1 }
+
+        #expect(client.endCount == 1)
+        #expect(model.shownStation == nil)
+    }
 }

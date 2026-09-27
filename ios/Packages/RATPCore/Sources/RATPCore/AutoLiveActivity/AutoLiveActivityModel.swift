@@ -275,15 +275,19 @@ public final class AutoLiveActivityModel {
 
 private extension AutoLiveActivityModel {
     func trustedPosition() -> Coordinate? {
-        guard let fix = inputs.locationService.fix,
-              AutoLiveActivityRules.trusts(fix, now: configuration.now()) else {
+        guard let fix = inputs.locationService.fix, trusts(fix) else {
             return nil
         }
         return fix.coordinate
     }
 
+    func trusts(_ fix: PositionFix) -> Bool {
+        guard inputs.locationService.source == .realGPS else { return true }
+        return AutoLiveActivityRules.trusts(fix, now: configuration.now())
+    }
+
     func handle(_ fix: PositionFix) async {
-        guard AutoLiveActivityRules.trusts(fix, now: configuration.now()) else {
+        guard trusts(fix) else {
             await refreshRegions(around: fix.coordinate)
             return
         }
