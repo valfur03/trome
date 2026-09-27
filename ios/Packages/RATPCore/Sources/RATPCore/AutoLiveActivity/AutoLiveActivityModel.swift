@@ -92,7 +92,7 @@ public final class AutoLiveActivityModel {
     }
 
     public func startByHand(_ station: Station) async {
-        let isNear = trustedPosition().map {
+        let isNear = precisePosition().map {
             $0.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters
         }
         state.shown = .init(stationId: station.id, startedAt: configuration.now(), hasBeenNear: isNear ?? false)
@@ -281,8 +281,9 @@ public final class AutoLiveActivityModel {
 }
 
 private extension AutoLiveActivityModel {
-    func trustedPosition() -> Coordinate? {
-        guard let fix = inputs.locationService.fix, trusts(fix) else {
+    func precisePosition() -> Coordinate? {
+        guard let fix = inputs.locationService.fix else { return nil }
+        guard inputs.locationService.source != .realGPS || AutoLiveActivityRules.isPrecise(fix) else {
             return nil
         }
         return fix.coordinate

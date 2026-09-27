@@ -70,6 +70,21 @@ extension AutoLiveActivityModelTests {
         #expect(client.endCount == 0)
     }
 
+    @Test func countsAnOldPrecisePositionAsNearAStationStartedByHand() async {
+        let model = makeModel()
+        await model.setAppActive(true)
+        let stillFix = PositionFix(coordinate: Places.twoHundredMetersFromA, accuracyMeters: 10, timestamp: clock.now)
+        await reportAndWaitForRegions(stillFix)
+        clock.advance(by: 60)
+
+        await model.startByHand(Places.stationA)
+        gps.report(.exact(Places.fourHundredMetersFromA))
+        await waitUntil { client.endCount == 1 }
+
+        #expect(client.endCount == 1)
+        #expect(model.shownStation == nil)
+    }
+
     @Test func trustsAFakePositionSetLongAgo() async {
         let model = makeModel()
         await model.setAppActive(true)
