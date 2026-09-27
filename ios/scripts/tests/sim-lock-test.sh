@@ -91,7 +91,7 @@ echo com.example.RATPActivity > "$state/apps.$default"
 echo "Allow RATP Activity to also use your location even when you are not using the app?" > "$state/popup.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job closes a system popup that an earlier job left on the Simulator" "$(test -e "$state/popup.$default" && echo shown || true)" ""
-expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default")" ""
+expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default" 2> /dev/null || echo "no restart")" ""
 expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 RATP_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
 echo "RATP-task-1-abc Shutdown" > "$state/device.$old"
