@@ -162,6 +162,7 @@ struct StationActivityContentTests {
 
         #expect(content.stationName == "Pigalle")
         #expect(lines(of: content).map(\.line.name) == ["2", "12"])
+        #expect(lines(of: content).map(\.stationName) == [nil, "Mairie d'Issy"])
         #expect(lines(of: content)[1].directions == [
             LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 4)])
         ])

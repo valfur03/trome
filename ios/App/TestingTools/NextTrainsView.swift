@@ -106,8 +106,15 @@ private struct DepartureRow: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 2)
                 .background(.quaternary, in: Capsule())
-            Text(group.destination)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(group.destination)
+                if let stationName = group.stationName {
+                    Label(stationName, systemImage: "figure.walk")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             Text(timesText)
                 .monospacedDigit()
                 .multilineTextAlignment(.trailing)

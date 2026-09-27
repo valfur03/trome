@@ -56,6 +56,24 @@ import WidgetKit
         otherLines: ["7", "11", "14"].map { TransitLine(mode: .metro, name: $0) }
             + ["A", "B", "D"].map { TransitLine(mode: .rer, name: $0) }
     )
+    StationActivityAttributes.ContentState.preview(
+        stationName: "Opéra",
+        lines: [
+            LineTrains(line: TransitLine(mode: .metro, name: "8"), directions: [
+                LineDirection(label: "Balard", times: [.now.addingTimeInterval(120)]),
+                LineDirection(label: "Pointe du Lac", times: [.now.addingTimeInterval(240)])
+            ]),
+            LineTrains(
+                line: TransitLine(mode: .metro, name: "13"),
+                directions: [
+                    LineDirection(label: "Châtillon - Montrouge", times: [.now.addingTimeInterval(60)])
+                ],
+                stationName: "Saint-Lazare"
+            )
+        ],
+        otherLines: ["9", "12", "14"].map { TransitLine(mode: .metro, name: $0) }
+            + ["A", "E"].map { TransitLine(mode: .rer, name: $0) }
+    )
     StationActivityAttributes.ContentState(stationName: "Abbesses", trains: .noData, updatedAt: .now)
 }
 

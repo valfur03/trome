@@ -227,6 +227,9 @@ private struct LineTrainsView: View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             SmallLineBadge(line: line.line, isShown: true)
             VStack(alignment: .leading, spacing: 0) {
+                if let stationName = line.stationName {
+                    ServingStationName(name: stationName)
+                }
                 if line.directions.isEmpty {
                     Text("No trains")
                         .font(.subheadline.bold())

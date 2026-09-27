@@ -3,14 +3,16 @@ import Foundation
 public struct LineTrains: Codable, Hashable, Sendable {
     public var line: TransitLine
     public var directions: [LineDirection]
+    public var stationName: String?
 
-    public init(line: TransitLine, directions: [LineDirection]) {
+    public init(line: TransitLine, directions: [LineDirection], stationName: String? = nil) {
         self.line = line
         self.directions = directions
+        self.stationName = stationName
     }
 
     var rowCount: Int {
-        max(1, directions.count)
+        max(1, directions.count) + (stationName == nil ? 0 : 1)
     }
 }
 
@@ -55,7 +57,8 @@ public struct LinesPage: Codable, Hashable, Sendable {
                     line: line.line,
                     directions: line.directions.map { direction in
                         LineDirection(label: direction.label, trains: Array(direction.trains.prefix(1)))
-                    }
+                    },
+                    stationName: line.stationName
                 )
             }
         }

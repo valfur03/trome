@@ -60,6 +60,54 @@ struct DepartureBoardTests {
         #expect(board.station(serving: TransitLine(mode: .rer, name: "B")) == nil)
     }
 
+    @Test func namesTheStationOfTheHubThatServesALineOnlyWhenItIsNotTheFirstStation() {
+        let board = DepartureBoard(
+            departures: [
+                Departure(line: rerA, destination: "Boissy", time: at(minutes: 1)),
+                Departure(line: line1, destination: "La Défense", time: at(minutes: 5))
+            ],
+            stations: [station("Châtelet", line1), station("Châtelet - Les Halles", rerA)],
+            now: now
+        )
+
+        #expect(board.otherStationName(serving: line1) == nil)
+        #expect(board.otherStationName(serving: rerA) == "Châtelet - Les Halles")
+        #expect(board.groups.map(\.stationName) == [nil, "Châtelet - Les Halles"])
+    }
+
+    @Test func namesNoStationForALineOfAnotherStationWithTheSameName() {
+        let board = DepartureBoard(
+            departures: [],
+            stations: [
+                Station(id: "metro", name: "Saint-Lazare", coordinate: Coordinate(48.87, 2.32), lines: [line1]),
+                Station(id: "rer", name: "Saint-Lazare", coordinate: Coordinate(48.87, 2.32), lines: [rerA])
+            ],
+            now: now
+        )
+
+        #expect(board.otherStationName(serving: rerA) == nil)
+    }
+
+    @Test(arguments: [
+        ("Opéra", [
+            "3": nil, "7": nil, "8": nil, "9": "Havre-Caumartin", "12": "Saint-Lazare", "13": "Saint-Lazare",
+            "14": "Saint-Lazare", "A": "Auber", "E": "Haussmann Saint-Lazare"
+        ]),
+        ("Châtelet", [
+            "1": nil, "4": nil, "7": nil, "11": nil, "14": nil,
+            "A": "Châtelet - Les Halles", "B": "Châtelet - Les Halles", "D": "Châtelet - Les Halles"
+        ])
+    ] as [(String, [String: String?])])
+    func namesTheStationThatServesEachLineOfTheBundledHub(stationName: String, expected: [String: String?]) throws {
+        let catalog = try StationCatalog.bundled()
+        let station = try #require(catalog.stations.first { $0.name == stationName })
+
+        let board = DepartureBoard(departures: [], stations: catalog.hubStations(of: station), now: now)
+
+        #expect(Dictionary(uniqueKeysWithValues: board.lines.map { ($0.name, board.otherStationName(serving: $0)) })
+            == expected)
+    }
+
     @Test func keepsOnlyTheNextThreeTimesOfAGroup() {
         let departures = (1...5).map {
             Departure(line: line1, destination: "La Défense", time: at(minutes: Double($0)))

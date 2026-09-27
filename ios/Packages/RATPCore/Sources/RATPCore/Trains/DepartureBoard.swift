@@ -29,7 +29,12 @@ public struct DepartureBoard: Hashable, Sendable {
                 }
             } else {
                 groups.append(
-                    DepartureGroup(line: departure.line, destination: departure.destination, times: [departure.time])
+                    DepartureGroup(
+                        line: departure.line,
+                        destination: departure.destination,
+                        times: [departure.time],
+                        stationName: Self.otherStationName(serving: departure.line, in: stations)
+                    )
                 )
             }
         }
@@ -48,6 +53,21 @@ public struct DepartureBoard: Hashable, Sendable {
     }
 
     func station(serving line: TransitLine) -> Station? {
+        Self.station(serving: line, in: stations)
+    }
+
+    func otherStationName(serving line: TransitLine) -> String? {
+        Self.otherStationName(serving: line, in: stations)
+    }
+
+    private static func station(serving line: TransitLine, in stations: [Station]) -> Station? {
         stations.first { $0.lines.contains(line) }
+    }
+
+    private static func otherStationName(serving line: TransitLine, in stations: [Station]) -> String? {
+        guard let station = station(serving: line, in: stations), station.name != stations.first?.name else {
+            return nil
+        }
+        return station.name
     }
 }

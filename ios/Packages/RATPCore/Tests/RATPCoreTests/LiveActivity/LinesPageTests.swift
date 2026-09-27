@@ -9,7 +9,12 @@ struct LinesPageTests {
         now.addingTimeInterval(minutes * 60)
     }
 
-    private func line(_ name: String, directions: Int, firstTrainInMinutes minutes: Double = 5) -> LineTrains {
+    private func line(
+        _ name: String,
+        directions: Int,
+        firstTrainInMinutes minutes: Double = 5,
+        stationName: String? = nil
+    ) -> LineTrains {
         LineTrains(
             line: TransitLine(mode: .metro, name: name),
             directions: (0..<directions).map { index in
@@ -17,7 +22,8 @@ struct LinesPageTests {
                     label: "\(name) end \(index)",
                     times: [time(inMinutes: minutes + Double(index)), time(inMinutes: minutes + Double(index) + 6)]
                 )
-            }
+            },
+            stationName: stationName
         )
     }
 
@@ -64,6 +70,23 @@ struct LinesPageTests {
         let page = LinesPage(showing: lines, from: 0)
 
         #expect(page.lines.map(\.line.name) == ["1", "4", "7"])
+    }
+
+    @Test func countsARowForTheNameOfTheStationThatServesALine() {
+        let lines = [line("3", directions: 2), line("13", directions: 2, stationName: "Saint-Lazare")]
+
+        let page = LinesPage(showing: lines, from: 0)
+
+        #expect(page.lines.map(\.line.name) == ["3"])
+    }
+
+    @Test func keepsTheNameOfTheStationThatServesALineWhenItKeepsOneTrainPerDirection() {
+        let lines = [line("12", directions: 2, stationName: "Saint-Lazare"), line("13", directions: 1)]
+
+        let page = LinesPage(showing: lines, from: 0)
+
+        #expect(page.lines.map(\.stationName) == ["Saint-Lazare", nil])
+        #expect(page.lines.flatMap(\.directions).allSatisfy { $0.trains.count == 1 })
     }
 
     @Test func goesToTheLineAfterThePageThenBackToTheFirstLine() {
