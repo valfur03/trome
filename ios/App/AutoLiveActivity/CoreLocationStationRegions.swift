@@ -118,10 +118,17 @@ extension CoreLocationStationRegionWatcher {
             ("serviceSessionRequired", event.serviceSessionRequired),
             ("authorizationRequestInProgress", event.authorizationRequestInProgress)
         ].filter(\.1).map(\.0).joined(separator: ", ")
-        let state = event.state.rawValue
-        logger.notice(
-            "\(event.identifier, privacy: .public): state \(state), diagnostics [\(diagnostics, privacy: .public)]"
-        )
+        let state = switch event.state {
+        case .unknown: "unknown"
+        case .satisfied: "satisfied"
+        case .unsatisfied: "unsatisfied"
+        case .unmonitored: "unmonitored"
+        @unknown default: "raw value \(event.state.rawValue)"
+        }
+        logger.notice("""
+            \(event.identifier, privacy: .public): state \(state, privacy: .public), \
+            diagnostics [\(diagnostics, privacy: .public)]
+            """)
         #endif
     }
 }
