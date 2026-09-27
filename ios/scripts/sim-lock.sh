@@ -107,16 +107,21 @@ remove_if_stale() {
     return "$removed"
 }
 
+write_size() {
+    echo "${RATP_SIM_SIZE:-}" > "$lock/size.new"
+    mv "$lock/size.new" "$lock/size"
+}
+
 take() {
     echo "$$" > "$lock/pid"
     echo "$root" > "$lock/worktree"
-    echo "${RATP_SIM_SIZE:-}" > "$lock/size"
+    write_size
     held_slots="$held_slots $RATP_SIM_SLOT"
 }
 
 join_session() {
     echo "$$" > "$lock/pid"
-    echo "${RATP_SIM_SIZE:-}" > "$lock/size"
+    write_size
     held_slots="$held_slots $RATP_SIM_SLOT"
 }
 
@@ -242,7 +247,12 @@ is_idle() {
 
 shut_down_the_other_shared() {
     size=$(cat "$lock/size" 2> /dev/null) || return 0
-    RATP_SIM_SIZE=$size "$simulator" shutdown-others > /dev/null 2>&1 || true
+    others=$(RATP_SIM_SIZE=$size "$simulator" booted-others 2> /dev/null) || return 0
+    for other in $others; do
+        size_now=$(cat "$lock/size" 2> /dev/null) || return 0
+        [ "$size_now" = "$size" ] || return 0
+        xcrun simctl shutdown "$other" 2> /dev/null || true
+    done
 }
 
 shut_down_if_idle() {

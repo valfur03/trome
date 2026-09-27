@@ -75,6 +75,14 @@ stop_watcher() {
     pretend_a_watcher_runs
 }
 
+wait_until_booted() {
+    tries=0
+    while [ "$(booted)" != "$1" ] && [ "$tries" -lt 20 ]; do
+        sleep 1
+        tries=$((tries + 1))
+    done
+}
+
 small_open() {
     RATP_SIM_SIZE=small "$scripts/sim-lock.sh" open "$scripts/simulator.sh" boot > /dev/null
 }
@@ -102,10 +110,21 @@ expect "make simulator-shutdown frees the lock" "$(test -e "$RATP_SIM_LOCK" && e
 small_open
 watch_in_background
 echo "RATP-Shared Booted" > "$state/device.$default"
-sleep 3
+wait_until_booted "RATP-Shared-Small "
 expect "while make run SMALL=1 keeps the lock, the watcher shuts down RATP-Shared that another tool boots" "$(booted)" "RATP-Shared-Small "
-"$scripts/sim-lock.sh" job sh -c '"$1" boot > /dev/null && sleep 3 && "$1" booted > "$FAKE_SIM_STATE/joined" && echo "RATP-Shared-Small Booted" > "$FAKE_SIM_STATE/device.$2" && sleep 3 && "$1" booted > "$FAKE_SIM_STATE/job-others"' \
-    sh "$scripts/simulator.sh" "$small" > /dev/null
+cat > "$state/e2e-after-small.sh" << 'EOF'
+"$1" boot > /dev/null
+sleep 3
+"$1" booted > "$FAKE_SIM_STATE/joined"
+echo "RATP-Shared-Small Booted" > "$FAKE_SIM_STATE/device.$2"
+tries=0
+while [ "$("$1" booted)" != "$3" ] && [ "$tries" -lt 20 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+"$1" booted > "$FAKE_SIM_STATE/job-others"
+EOF
+"$scripts/sim-lock.sh" job sh "$state/e2e-after-small.sh" "$scripts/simulator.sh" "$small" "$default" > /dev/null
 stop_watcher
 expect "the watcher keeps RATP-Shared booted for make e2e after make run SMALL=1 in the same folder" "$(ran joined)" "$default"
 expect "while a job uses RATP-Shared, the watcher shuts down the small Simulator that another tool boots" "$(ran job-others)" "$default"
