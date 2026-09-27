@@ -65,7 +65,9 @@ enum LineDirections {
         inferQuaySides(of: &groups, sideCount: sides.count)
         inferSidesFromDirectionRefs(of: &groups)
 
-        let showsEmptySides = quays.count != 1
+        let hasMetroQuayOfUnknownSide = line.mode == .metro
+            && groups.contains { $0.isOneDirection && $0.side == nil && !$0.trains.isEmpty }
+        let showsEmptySides = quays.count != 1 && !hasMetroQuayOfUnknownSide
         let sideDirections = sides.indices.compactMap { index -> LineDirection? in
             let sideTrains = groups.filter { $0.side == index }.flatMap(\.trains).sorted { $0.time < $1.time }
             guard showsEmptySides || !sideTrains.isEmpty else { return nil }

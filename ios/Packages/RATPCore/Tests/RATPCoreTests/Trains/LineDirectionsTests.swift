@@ -81,14 +81,12 @@ struct LineDirectionsTests {
         #expect(result.map(\.name) == ["Trocadéro", "Nation"])
     }
 
-    @Test func showsTrainsOfAnUnknownDirectionUnderTheirDestination() {
+    @Test func showsTrainsOfAnUnknownDirectionUnderTheirDestinationAndNoEmptyDirection() {
         let result = directions(of: line6, at: "Chevaleret", [
             train(line6, to: "Trocadéro", inMinutes: 1, from: westQuay)
         ])
 
         #expect(result == [
-            LineDirection(label: "Charles de Gaulle - Étoile", times: []),
-            LineDirection(label: "Nation", times: []),
             LineDirection(label: "Trocadéro", times: [time(inMinutes: 1)])
         ])
     }
