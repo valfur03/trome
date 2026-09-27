@@ -210,7 +210,7 @@ expect "make merge does not rebase a worktree with changes" "$(cat "$state/refs"
 
 new_task only
 commit "$state/only" only only
-ONLY=FakePositionTests
+ONLY=SnoozeTests
 export ONLY
 merge only
 unset ONLY

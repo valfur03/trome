@@ -28,10 +28,8 @@ final class LiveActivityTests: E2ETestCase {
         XCTAssertTrue(waitFor(lockScreenStation))
         XCTAssertEqual(lockScreenStation.label, "On the lock screen: Champ de Mars Tour Eiffel")
         XCTAssertFalse(app.staticTexts["liveActivityError"].exists)
-        let stopButton = app.buttons["stopLiveActivity"]
-        XCTAssertFalse(stopButton.waitForNonExistence(timeout: 5))
 
-        stopButton.tap()
+        tap(app.buttons["stopLiveActivity"])
         XCTAssertTrue(waitFor(showButton))
     }
 

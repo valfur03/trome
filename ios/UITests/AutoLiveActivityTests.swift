@@ -18,7 +18,8 @@ final class AutoLiveActivityTests: E2ETestCase {
         XCTAssertEqual(app.buttons.matching(identifier: "stopLiveActivity").count, 1)
 
         tap(app.buttons["testingTools"])
-        tap(app.buttons["farFromAnyStation"])
+        tap(app.buttons["useRealGPS"])
+        XCTAssertTrue(waitFor(app.staticTexts["Real GPS"]))
         goBack(in: app)
         XCTAssertTrue(waitForNo(lockScreenStation))
     }

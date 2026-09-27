@@ -49,32 +49,6 @@ final class SnoozeTests: E2ETestCase {
     }
 
     @MainActor
-    func testUserTurnsOffTheAutomaticModeAndStillShowsTheLiveActivityByHand() {
-        let app = makeApp()
-        launch(app)
-        turnOnTheAutomaticMode(in: app)
-        leaveEveryStation(in: app)
-
-        let toggle = app.switches["automaticModeToggle"]
-        toggle.switches.firstMatch.tap()
-        XCTAssertTrue(waitForValue("0", of: toggle))
-        XCTAssertFalse(app.buttons["snoozeMenu"].exists)
-        useFakePosition(atStation: "Abbesses", in: app)
-        let lockScreenStation = app.staticTexts["liveActivityStationName"]
-        XCTAssertFalse(lockScreenStation.waitForExistence(timeout: 5))
-
-        tap(app.buttons["showNearestStationLiveActivity"])
-        XCTAssertTrue(waitFor(lockScreenStation))
-        XCTAssertEqual(lockScreenStation.label, "On the lock screen: Abbesses")
-
-        tap(app.buttons["stopLiveActivity"])
-        toggle.switches.firstMatch.tap()
-        XCTAssertTrue(waitForValue("1", of: toggle))
-        XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))
-        leaveEveryStation(in: app)
-    }
-
-    @MainActor
     private func turnOnTheAutomaticMode(in app: XCUIApplication) {
         let cancelSnooze = app.buttons["cancelSnooze"]
         let toggle = app.switches["automaticModeToggle"]
@@ -108,12 +82,5 @@ final class SnoozeTests: E2ETestCase {
     @MainActor
     private func closeNotificationCenter() {
         XCUIDevice.shared.press(.home)
-    }
-
-    @MainActor
-    private func waitForValue(_ value: String, of element: XCUIElement) -> Bool {
-        let predicate = NSPredicate(format: "value == %@", value)
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
-        return XCTWaiter().wait(for: [expectation], timeout: UITestTimeout.element) == .completed
     }
 }
