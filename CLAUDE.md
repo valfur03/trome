@@ -30,44 +30,51 @@ decision-6 (section 10) explains these rules and their sources. Follow them in e
 ## Budget for this repo
 
 - The factory runs **at most 3 Software Engineers** in parallel for this repo.
-- **At most one Simulator job** runs at a time on the machine. A lock enforces it (see below).
+- **At most two Simulator jobs** run at the same time on the machine, each on its own Simulator. A job starts next to another one only when at least 25% of the CPU is idle. The Simulator lock enforces both (see below).
 
-Why one Simulator job: on 2026-09-26, each worktree booted its own iOS Simulator, and seven Simulators ran at once on the 8-core Mac. The load average went above 600, and the prompter could not work.
+Why a limit: on 2026-09-26, each worktree booted its own iOS Simulator, and seven Simulators ran at once on the 8-core Mac. The load average went above 600, and the prompter could not work. So the limit was one Simulator job at a time.
 
-Why 3 Software Engineers: the cap was 2 after that day. Two checks now protect the Mac, so the prompter set it back to 3 (2026-09-26). The factory starts a new agent only when at least 25% of the CPU is idle. The Simulator lock and the shared Simulator keep the Simulator jobs to one at a time.
+Why two Simulator jobs: on 2026-09-27, a QA run that needed the Simulator for 8 minutes waited 30 minutes for the lock, while the CPU was often 50 to 80% idle. The prompter asked for a second Simulator job, if the Mac stays usable (2026-09-27). The CPU check protects the Mac: when the CPU is less than 25% idle, the second job waits, as it did with one job at a time. It is the same condition as the one for a new agent. TASK-63 records how long the jobs wait and run, so the factory can decide to keep two jobs or go back to one.
 
-## The shared Simulator
+**How to go back to one Simulator job at a time:** in `ios/scripts/sim-lock.sh`, change `slots=${RATP_SIM_SLOTS:-2}` to `slots=${RATP_SIM_SLOTS:-1}`, and change this section, "The shared Simulators" and the README back to one job. Nothing else changes: slot 1 uses the same Simulators (`RATP-Shared`, `RATP-Shared-Small`) and the same lock (`/tmp/ratp-sim.lock`) as before the second slot. Then run `make simulator-delete` once, to delete the Simulators of slot 2. To try one job at a time for one command only, add `RATP_SIM_SLOTS=1` before it (for example `RATP_SIM_SLOTS=1 make e2e`). The CPU condition is in the same file (`min_idle_percent`, or `RATP_SIM_MIN_IDLE_PERCENT` for one command).
 
-All worktrees use one shared Simulator, named `RATP-Shared`.
+Why 3 Software Engineers: the cap was 2 after that day. Two checks now protect the Mac, so the prompter set it back to 3 (2026-09-26). The factory starts a new agent only when at least 25% of the CPU is idle. The Simulator lock keeps the Simulator jobs to at most two at a time, and the second one only when the CPU has room.
 
-- Each job installs its own build of the app. Before that, it removes the app and its data, resets the permissions, and clears the fake position of the Simulator. So a job never sees the data or the saved settings of another worktree.
-- The Simulator stays booted between jobs, so the next job does not wait for a cold boot.
-- It shuts down by itself after 5 minutes with no job. Why 5 minutes: it is longer than the usual gap between two jobs (fix a test, then run `make e2e` again; the next agent starts its job). It is short enough to give the Mac back soon when the factory stops. A small background process (`ios/scripts/sim-lock.sh watch`) does this. It uses no Simulator and almost no CPU, and it stops by itself.
-- **The smallest iPhone.** To check a screen on the smallest supported iPhone (375 x 667 pt), run `make run SMALL=1`. It uses a second shared Simulator, `RATP-Shared-Small` (an iPhone SE), through the same lock. A job shuts down the other shared Simulator before it boots its own, so only one runs at a time. `make simulator-shutdown` shuts down `RATP-Shared-Small` at once. Never boot another Simulator by hand to check a screen size.
+## The shared Simulators
+
+All worktrees share two Simulator slots. Each slot has its own shared Simulator, an iPhone 17: `RATP-Shared` (slot 1) and `RATP-Shared-2` (slot 2). A job takes a free slot (slot 1 first), and uses only the Simulators of its slot.
+
+- Each job installs its own build of the app. Before that, it removes the app and its data, resets the permissions, and clears the fake position of the Simulator. So a job never sees the data or the saved settings of another worktree. A job never touches the Simulators of the other slot, so two jobs at the same time never see the data of each other.
+- The Simulator of a slot stays booted between jobs, so the next job does not wait for a cold boot.
+- It shuts down by itself after 5 minutes with no job in its slot. Why 5 minutes: it is longer than the usual gap between two jobs (fix a test, then run `make e2e` again; the next agent starts its job). It is short enough to give the Mac back soon when the factory stops. With two slots, the delay stays the same for each slot: slot 2 has a job only when two jobs overlap, so it goes idle first and shuts down first. A small background process (`ios/scripts/sim-lock.sh watch`) does this for both slots. It uses no Simulator and almost no CPU, and it stops by itself.
+- **The smallest iPhone.** To check a screen on the smallest supported iPhone (375 x 667 pt), run `make run SMALL=1`. It uses the small shared Simulator of its slot (an iPhone SE): `RATP-Shared-Small` (slot 1) or `RATP-Shared-Small-2` (slot 2), through the same lock. A job shuts down the other Simulator of its slot before it boots its own, so at most one Simulator runs in each slot: at most two on the Mac. `make simulator-shutdown` shuts down the small Simulator at once. Never boot another Simulator by hand to check a screen size.
+- `make simulator` prints the ID of the Simulator of your `make run` (it can be in slot 2). Use it in your `xcrun simctl` commands; never type a Simulator name.
 
 ## The Simulator lock
 
-`make run` and `make e2e` take a machine-wide lock: the folder `/tmp/ratp-sim.lock`. While another job holds it, they wait and print `Waiting for the Simulator lock`. This is normal. Do not stop them, and do not delete the lock. The wait can be long, so run these commands in the background.
+`make run` and `make e2e` take a machine-wide lock of one slot: the folder `/tmp/ratp-sim.lock` (slot 1) or `/tmp/ratp-sim.lock.2` (slot 2). They wait and print `Waiting for the Simulator lock`, with the reason, when both slots are busy, or when one slot is busy and the CPU is less than 25% idle. This is normal. Do not stop them, and do not delete the lock. The wait can be long, so run these commands in the background.
 
 - `make e2e` frees the lock when the tests end, pass or fail.
 - `make run` keeps the lock. You can then check the app by hand, or run `make e2e`.
-- Any other command that boots or uses a Simulator (for example `xcodebuild test` or `xcrun simctl boot`) must run through the lock, on the shared Simulator:
+- Any other command that boots or uses a Simulator (for example `xcodebuild test` or `xcrun simctl boot`) must run through the lock, on the shared Simulator of its slot:
 
   ```sh
   ios/scripts/sim-lock.sh job <command>
   ```
 
-  To boot the shared Simulator and remove the app of the last job first, run `ios/scripts/sim-lock.sh job ios/scripts/simulator.sh reset <command>`. With `xcodebuild`, use `-project ios/RATPActivity.xcodeproj -destination "platform=iOS Simulator,name=RATP-Shared"`.
+  To boot the shared Simulator of the slot and remove the app of the last job first, run `ios/scripts/sim-lock.sh job ios/scripts/simulator.sh reset <command>`. The lock gives the slot to the command (`RATP_SIM_SLOT`), and `ios/scripts/simulator.sh` uses it. With `xcodebuild`, put `ios/scripts/simulator.sh with-destination` before it, and add `-project ios/RATPActivity.xcodeproj`: it adds the `-destination` of the Simulator of the slot. Never name the Simulator (`name=RATP-Shared`): the job can run in slot 2.
 
 `make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
 
 `make check`, `make test` and `make test-scripts` need no Simulator and no lock.
 
-The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
+The lock of a slot frees itself when its job dies, when its worktree is removed, or when its Simulator is shut down.
+
+`make simulator-delete` takes the locks of both slots, so it waits until no other Simulator job runs.
 
 ## Which E2E tests to run
 
-A full `make e2e` keeps the shared Simulator for several minutes. So:
+A full `make e2e` keeps a shared Simulator for several minutes. So:
 
 - **The implementer and the reviewers** run only the E2E test classes that cover their change: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests LiveActivityTests"` for more than one. The class names are the file names in `ios/UITests/`.
 - **The Software Engineer who merges** runs the full `make e2e` once.
@@ -117,7 +124,7 @@ The README explains the docs site and its commands (section "The docs site").
 - **Install `docs/node_modules` only when your task touches the docs.** It takes about 300 MB. `make check` runs `make docs-check` only when your branch changes `docs/`, so the other tasks never install it.
 - **Use your own port.** The default port 4321 is for the prompter. Run `make docs PORT=<n>` or `make docs-dev PORT=<n>` with a port that no other agent uses (for example 4300 plus your task number).
 - **Stop the docs server when your job ends.** For agents, Astro starts the server in the background and the command returns at once. Run `make docs-stop` in your worktree before you end.
-- **Screenshots.** Show each app screenshot with the `Screenshot` component (`docs/src/components/Screenshot.astro`), never with a Markdown image or the `Image` component. Put screenshots side by side inside `Screenshots`. Take each screenshot full screen on the shared Simulator, so all have the same size. Each file in git stays under the budget of the README (section "The docs site"). The script checks the size and the budget.
+- **Screenshots.** Show each app screenshot with the `Screenshot` component (`docs/src/components/Screenshot.astro`), never with a Markdown image or the `Image` component. Put screenshots side by side inside `Screenshots`. Take each screenshot full screen on a shared iPhone 17 Simulator (`make docs-screenshots` does), so all have the same size. Each file in git stays under the budget of the README (section "The docs site"). The script checks the size and the budget.
 
 ## Live train data (the real PRIM key)
 

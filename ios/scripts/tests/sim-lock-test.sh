@@ -21,12 +21,38 @@ cleanup() {
 trap cleanup EXIT
 
 pretend_a_watcher_runs() {
-    echo "$idle_watcher" > "$RATP_SIM_LOCK.watcher"
+    echo "$idle_watcher" > "$RATP_SIM_LOCK.slots-watcher"
 }
 pretend_a_watcher_runs
 
 booted() {
-    xcrun simctl list devices booted | sed -n -E 's/^    ([^ ]+) .*/\1/p' | tr '\n' ' '
+    xcrun simctl list devices booted | sed -n -E 's/^    ([^ ]+) .*/\1/p' | sort | tr '\n' ' '
+}
+
+hold() {
+    mkdir "$1"
+    echo "$idle_watcher" > "$1/pid"
+    echo /another/worktree > "$1/worktree"
+}
+
+in_background() {
+    RATP_SIM_POLL_SECONDS=1 "$@" > "$state/background.log" 2>&1 &
+    background=$!
+    sleep 2
+}
+
+finish_background() {
+    tries=0
+    while kill -0 "$background" 2> /dev/null && [ "$tries" -lt 20 ]; do
+        sleep 1
+        tries=$((tries + 1))
+    done
+    kill "$background" 2> /dev/null || true
+    wait "$background" 2> /dev/null || true
+}
+
+ran() {
+    cat "$state/$1" 2> /dev/null || echo waiting
 }
 
 expect() {
@@ -94,12 +120,72 @@ expect "a job closes a system popup that an earlier job left on the Simulator" "
 expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default" 2> /dev/null || echo "no restart")" ""
 expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 RATP_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
+hold "$RATP_SIM_LOCK"
+echo com.example.RATPActivity > "$state/apps.$default"
+"$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/slot" && "$1" reset && "$1" with-destination echo > "$FAKE_SIM_STATE/destination"' \
+    sh "$scripts/simulator.sh" > /dev/null
+second=$(RATP_SIM_SLOT=2 "$scripts/simulator.sh" find)
+expect "a job runs on slot 2 while another job holds slot 1" "$(ran slot)" "2"
+expect "the job on slot 2 boots RATP-Shared-2 and keeps RATP-Shared booted" "$(booted)" "RATP-Shared RATP-Shared-2 "
+expect "RATP-Shared-2 is an iPhone 17, like RATP-Shared" "$(cat "$state/type.$second")" "com.apple.CoreSimulator.SimDeviceType.iPhone-17"
+expect "the job on slot 2 runs its tests on RATP-Shared-2" "$(ran destination)" "-destination platform=iOS Simulator,id=$second"
+expect "the job on slot 2 does not remove the app of the job on slot 1" "$(cat "$state/apps.$default")" "com.example.RATPActivity"
+expect "the job on slot 2 frees its lock and leaves the lock of slot 1 to its holder" "$(test -e "$RATP_SIM_LOCK.2" && echo held || true) $(cat "$RATP_SIM_LOCK/pid")" " $idle_watcher"
+
+in_background env FAKE_CPU_IDLE=10 "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/cpu-slot"'
+expect "a job does not run next to another one when the CPU is less than 25% idle" "$(ran cpu-slot)" "waiting"
+expect "a job says that it waits for the CPU" "$(grep -c "the CPU is only 10% idle" "$state/background.log" || true)" "1"
+rm -rf "$RATP_SIM_LOCK"
+finish_background
+expect "the job runs on slot 1 once the other job ends" "$(ran cpu-slot)" "1"
+
+hold "$RATP_SIM_LOCK"
+hold "$RATP_SIM_LOCK.2"
+in_background "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/busy-slot"'
+expect "a third job waits while both slots are busy" "$(ran busy-slot)" "waiting"
+expect "a third job says that both slots are busy" "$(grep -c "every Simulator slot is busy" "$state/background.log" || true)" "1"
+rm -rf "$RATP_SIM_LOCK.2"
+finish_background
+expect "the third job runs on slot 2 once it is free" "$(ran busy-slot)" "2"
+
+in_background env RATP_SIM_SLOTS=1 "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/one-slot"'
+expect "with one slot (RATP_SIM_SLOTS=1), a job waits for the other job even when the CPU is idle" "$(ran one-slot)" "waiting"
+rm -rf "$RATP_SIM_LOCK"
+finish_background
+expect "with one slot, the job runs on slot 1 once the other job ends" "$(ran one-slot)" "1"
+
+hold "$RATP_SIM_LOCK"
+small_open
+second_small=$(RATP_SIM_SLOT=2 RATP_SIM_SIZE=small "$scripts/simulator.sh" find)
+expect "make run SMALL=1 next to a job on slot 1 shuts down RATP-Shared-2 and keeps RATP-Shared booted" "$(booted)" "RATP-Shared RATP-Shared-Small-2 "
+expect "make simulator prints the Simulator that make run of this folder uses" "$("$scripts/sim-lock.sh" udid)" "$second_small"
+"$scripts/sim-lock.sh" free
+expect "make simulator-shutdown on slot 2 shuts down the small Simulator of slot 2 only" "$(booted)" "RATP-Shared "
+expect "make simulator-shutdown on slot 2 frees slot 2 only" "$(test -e "$RATP_SIM_LOCK.2" && echo held || true) $(cat "$RATP_SIM_LOCK/pid")" " $idle_watcher"
+rm -rf "$RATP_SIM_LOCK"
+expect "make simulator prints the ID of RATP-Shared when this folder has no open Simulator" "$("$scripts/sim-lock.sh" udid)" "$default"
+
+hold "$RATP_SIM_LOCK.2"
+in_background "$scripts/sim-lock.sh" all sh -c 'test -d "$RATP_SIM_LOCK" && test -d "$RATP_SIM_LOCK.2" && echo both > "$FAKE_SIM_STATE/all"'
+expect "make simulator-delete waits for the jobs of every slot" "$(ran all)" "waiting"
+rm -rf "$RATP_SIM_LOCK.2"
+finish_background
+expect "make simulator-delete runs with the locks of every slot" "$(ran all)" "both"
+expect "make simulator-delete frees the locks of every slot" "$(ls -d "$RATP_SIM_LOCK" "$RATP_SIM_LOCK.2" 2> /dev/null || true)" ""
+
+RATP_SIM_SLOT=2 "$scripts/simulator.sh" boot > /dev/null
+touch -t 202001010000 "$RATP_SIM_LOCK.last" "$RATP_SIM_LOCK.2.last"
+RATP_SIM_IDLE_MINUTES=1 "$scripts/sim-lock.sh" watch
+pretend_a_watcher_runs
+expect "the idle watcher shuts down the shared Simulators of every slot" "$(booted)" ""
+
 echo "RATP-task-1-abc Shutdown" > "$state/device.$old"
 "$scripts/simulator.sh" delete-old > /dev/null
 expect "make simulator-delete-old keeps the small Simulator" "$(test -e "$state/device.$small" && echo kept || true)" "kept"
+expect "make simulator-delete-old keeps the Simulators of slot 2" "$(test -e "$state/device.$second" && test -e "$state/device.$second_small" && echo kept || true)" "kept"
 expect "make simulator-delete-old deletes an old Simulator" "$(test -e "$state/device.$old" && echo kept || true)" ""
 
 "$scripts/simulator.sh" delete > /dev/null
-expect "make simulator-delete deletes both shared Simulators" "$(xcrun simctl list devices | grep -c RATP-Shared || true)" "0"
+expect "make simulator-delete deletes the shared Simulators of every slot" "$(xcrun simctl list devices | grep -c RATP-Shared || true)" "0"
 
 [ "$failures" -eq 0 ]

@@ -3,7 +3,7 @@ set -eu
 
 usage() {
     echo "Usage: $0 <result bundle> <test command...>" >&2
-    echo "Run it through the Simulator lock, in ios/: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset $0 ..." >&2
+    echo "Run it through the Simulator lock, in ios/: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset ./scripts/simulator.sh with-destination $0 ..." >&2
     exit 1
 }
 

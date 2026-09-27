@@ -1,16 +1,29 @@
 #!/bin/sh
 set -eu
 
-shared_names="RATP-Shared RATP-Shared-Small"
+shared_name_pattern='RATP-Shared(-Small)?(-[0-9]+)?'
 springboard_wait_seconds=${RATP_SPRINGBOARD_WAIT_SECONDS:-60}
+slot=${RATP_SIM_SLOT:-1}
+
+case "$slot" in
+    "" | *[!0-9]* | 0)
+        echo "Unknown RATP_SIM_SLOT: $slot (use 1, 2, ...)" >&2
+        exit 1
+        ;;
+    1) suffix= ;;
+    *) suffix="-$slot" ;;
+esac
+default_name="RATP-Shared$suffix"
+small_name="RATP-Shared-Small$suffix"
+slot_names="$default_name $small_name"
 
 case "${RATP_SIM_SIZE:-}" in
     "")
-        name=RATP-Shared
+        name=$default_name
         device_type=com.apple.CoreSimulator.SimDeviceType.iPhone-17
         ;;
     small)
-        name=RATP-Shared-Small
+        name=$small_name
         device_type=com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation
         ;;
     *)
@@ -31,15 +44,12 @@ find_udid() {
 }
 
 is_shared_name() {
-    for shared_name in $shared_names; do
-        [ "$1" = "$shared_name" ] && return 0
-    done
-    return 1
+    printf '%s\n' "$1" | grep -Eqx "$shared_name_pattern"
 }
 
 booted_shared_udids() {
     booted=$(xcrun simctl list devices booted) || return 1
-    for shared_name in $shared_names; do
+    for shared_name in $slot_names; do
         printf '%s\n' "$booted" \
             | grep -F "    $shared_name (" \
             | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/'
@@ -50,7 +60,7 @@ shut_down_other_shared() {
     others=$(booted_shared_udids) || return 1
     for other in $others; do
         if [ "$other" != "$1" ] && ! xcrun simctl shutdown "$other" 2> /dev/null && is_booted "$other"; then
-            echo "Could not shut down the other shared Simulator ($other), so this job does not boot a second one" >&2
+            echo "Could not shut down the other shared Simulator of slot $slot ($other), so this job does not boot a second one in its slot" >&2
             return 1
         fi
     done
@@ -139,6 +149,19 @@ grant_location_while_using() {
     xcrun simctl privacy "$1" grant location "$bundle_id"
 }
 
+delete_shared_devices() {
+    xcrun simctl list devices \
+        | sed -n -E 's/^    (RATP-[^ ]+) \(([0-9A-F-]{36})\).*/\1 \2/p' \
+        | while read -r shared_name udid; do
+            if ! is_shared_name "$shared_name"; then
+                continue
+            fi
+            xcrun simctl shutdown "$udid" 2> /dev/null || true
+            xcrun simctl delete "$udid"
+            echo "Deleted simulator $shared_name"
+        done
+}
+
 delete_old_devices() {
     xcrun simctl list devices \
         | sed -n -E 's/^    (RATP-[^ ]+) \(([0-9A-F-]{36})\) \(([^)]+)\).*/\1 \2 \3/p' \
@@ -200,32 +223,28 @@ case "$command" in
         ;;
     shutdown-if-not-default)
         udid=${1:?Usage: $0 shutdown-if-not-default <udid>}
-        if [ "$udid" != "$(udid_of RATP-Shared)" ]; then
+        if [ "$udid" != "$(udid_of "$default_name")" ]; then
             xcrun simctl shutdown "$udid" 2> /dev/null || true
         fi
         ;;
     booted)
         booted_shared_udids
         ;;
+    with-destination)
+        [ $# -gt 0 ] || { echo "Usage: $0 with-destination <xcodebuild command...>" >&2; exit 1; }
+        udid=$(device_udid)
+        exec "$@" -destination "platform=iOS Simulator,id=$udid"
+        ;;
     delete)
-        for shared_name in $shared_names; do
-            udid=$(udid_of "$shared_name")
-            if [ -n "$udid" ]; then
-                xcrun simctl shutdown "$udid" 2> /dev/null || true
-                xcrun simctl delete "$udid"
-                echo "Deleted simulator $shared_name"
-            fi
-        done
+        delete_shared_devices
         ;;
     delete-old)
         delete_old_devices
         ;;
-    name)
-        echo "$name"
-        ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|shutdown-if-not-default <udid>|booted|delete|delete-old|name]" >&2
-        echo "RATP_SIM_SIZE=small uses the small shared Simulator (RATP-Shared-Small, an iPhone SE) instead of RATP-Shared" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|shutdown-if-not-default <udid>|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
+        echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
         exit 1
         ;;
 esac

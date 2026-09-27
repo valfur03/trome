@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+echo "CPU usage: 60.00% user, 37.00% sys, 3.00% idle "
+echo "CPU usage: 5.00% user, 5.00% sys, ${FAKE_CPU_IDLE:-90}.00% idle "

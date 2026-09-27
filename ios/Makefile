@@ -50,24 +50,24 @@ BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
 	@echo "make generate            Create the Xcode project again (after a change in project.yml)"
-	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
+	@echo "make run                 Build the app and open it in a shared Simulator (keeps the Simulator lock of its slot)"
 	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
 	@echo "make check               iOS quality gate: lint + key leak check + build + unit tests + script tests"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the Simulator lock scripts (with a fake xcrun, no Simulator)"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
-	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
+	@echo "make e2e                 End-to-end tests on a shared Simulator (takes the Simulator lock of a free slot)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
-	@echo "make simulator           Print the ID of the shared Simulator (creates it if needed)"
+	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
 	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle; the small one at once)"
-	@echo "make simulator-delete    Delete the shared Simulators (takes the Simulator lock)"
+	@echo "make simulator-delete    Delete the shared Simulators of every slot (waits until no other Simulator job runs)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
-	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock)"
+	@echo "make docs-screenshots    Take the app screenshots of the docs on a shared Simulator (takes the Simulator lock of a free slot)"
 
 setup:
 	@command -v xcodegen > /dev/null || brew install xcodegen
@@ -127,8 +127,7 @@ e2e: project
 	@rm -rf $(E2E_RESULT)
 	$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
 	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) grant-location "$(APP_PATH)" \
-		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
-		-destination "platform=iOS Simulator,name=$$($(SIMULATOR) name)" \
+		$(SIMULATOR) with-destination $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
 		$(E2E_ONLY) -resultBundlePath $(E2E_RESULT) test-without-building \
@@ -138,13 +137,13 @@ stations:
 	python3 scripts/update-stations.py
 
 simulator:
-	@$(SIMULATOR) udid
+	@$(SIM_LOCK) udid
 
 simulator-shutdown:
 	@$(SIM_LOCK) free
 
 simulator-delete:
-	@$(SIM_LOCK) job $(SIMULATOR) delete
+	@$(SIM_LOCK) all $(SIMULATOR) delete
 
 simulator-delete-old:
 	@$(SIM_LOCK) job $(SIMULATOR) delete-old
@@ -156,8 +155,8 @@ clean-shared-cache:
 	@./scripts/shared-cache.sh clear "$(SHARED_CACHE)"
 
 docs-screenshots: project
-	$(SIM_LOCK) job $(SIMULATOR) reset ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) \
+	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \
+		./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
-		-destination "platform=iOS Simulator,name=$$($(SIMULATOR) name)" \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300
