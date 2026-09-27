@@ -4,8 +4,8 @@ if [ $# -ne 2 ] || { [ "$2" != cold ] && [ "$2" != warm ]; }; then
     echo "Usage: $0 <label> cold|warm" >&2
     echo "Measures the load of the Mac while a full make e2e runs on the shared Simulator and a QA session runs on its own Simulator (RATP-Shared-QA)." >&2
     echo "cold: the QA Simulator boots 20 s after the e2e job gets the Simulator lock. warm: the QA Simulator and the app are open before the e2e job starts." >&2
-    echo "The logs go to ios/.build/timing/<label>/. When the 1-minute load goes above 200 or the free memory below 10%, it shuts down the QA Simulator at once." >&2
-    echo "Delete RATP-Shared-QA when you are done: xcrun simctl delete <its ID>" >&2
+    echo "The logs go to ios/.build/timing/<label>/. When the 1-minute load goes above 200 or the free memory below 10%, it shuts down the QA Simulator at once. At the end, it shuts down and deletes RATP-Shared-QA." >&2
+    echo "It boots a second Simulator outside the Simulator lock: only the prompter, or a task that the prompter asked for, runs it. Run make build first." >&2
     exit 1
 fi
 label=$1
@@ -16,6 +16,10 @@ root=$(cd "$ios/.." && pwd)
 out="$ios/.build/timing/$label"
 app="$ios/.build/DerivedData/Build/Products/Debug-iphonesimulator/RATPActivity.app"
 qa_name=RATP-Shared-QA
+if [ ! -d "$app" ]; then
+    echo "No app at $app: run make build first." >&2
+    exit 1
+fi
 mkdir -p "$out"
 cd "$ios"
 
@@ -53,7 +57,15 @@ qa_start() {
     fi
 done ) > "$out/load.log" 2>&1 &
 logger=$!
-trap 'kill $logger 2> /dev/null; pkill -f "top -l 0 -s 5 -n 0" 2> /dev/null' EXIT
+cleanup() {
+    kill "$logger" 2> /dev/null
+    pkill -f "top -l 0 -s 5 -n 0" 2> /dev/null
+    xcrun simctl shutdown "$qa_udid" 2> /dev/null
+    xcrun simctl delete "$qa_udid" 2> /dev/null
+    note "qa Simulator deleted"
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM
 
 note "start ($mode)"
 if [ "$mode" = warm ]; then
