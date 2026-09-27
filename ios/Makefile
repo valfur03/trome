@@ -15,11 +15,10 @@ SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 CORE_PACKAGE := Packages/RATPCore
 NO_KEY := -xcconfig Config/NoKey.xcconfig
-LIVE_XCCONFIG := $(BUILD_DIR)/Live.xcconfig
 MAIN_FOLDER = $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')
 OLD_PRIM_SECRETS = $(MAIN_FOLDER)/Config/Secrets.xcconfig
 PRIM_SECRETS ?= $(firstword $(wildcard $(MAIN_FOLDER)/ios/Config/Secrets.xcconfig $(OLD_PRIM_SECRETS)) $(MAIN_FOLDER)/ios/Config/Secrets.xcconfig)
-SHARED_CACHE ?= $(HOME)/Library/Caches/RATPActivity
+RATP_SHARED_CACHE ?= $(HOME)/Library/Caches/RATPActivity
 HOST_ARCH := $(shell uname -m)
 
 ifeq ($(SMALL),1)
@@ -45,8 +44,8 @@ endif
 USE_SHARED_CACHE :=
 SHARED_SDK_MODULES :=
 else
-USE_SHARED_CACHE := ./scripts/shared-cache.sh use "$(SHARED_CACHE)"
-SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH="$(SHARED_CACHE)/SDKExplicitPrecompiledModules"
+USE_SHARED_CACHE := ./scripts/shared-cache.sh use "$(RATP_SHARED_CACHE)"
+SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH="$(RATP_SHARED_CACHE)/SDKExplicitPrecompiledModules"
 endif
 
 XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
@@ -110,11 +109,8 @@ ifeq ($(LIVE),1)
 	@test -f "$(PRIM_SECRETS)" || { echo "No PRIM key: $(PRIM_SECRETS) does not exist. Add the key there (see README), or build without LIVE=1." >&2; exit 1; }
 	@echo "LIVE=1: the build uses the PRIM key of $(PRIM_SECRETS)"
 	@if [ "$(PRIM_SECRETS)" = "$(OLD_PRIM_SECRETS)" ]; then echo "Note: the key is at its old place. Once the main folder has the ios/ folder, move it there: cd $(MAIN_FOLDER) && mv Config/Secrets.xcconfig ios/Config/ && rmdir Config"; fi
-	@mkdir -p $(BUILD_DIR)
-	@trap 'rm -f $(LIVE_XCCONFIG)' EXIT INT TERM; \
-		printf '#include "%s"\n' "$(PRIM_SECRETS)" > $(LIVE_XCCONFIG) && $(BUILD_APP)
+	@$(BUILD_APP) -xcconfig "$(PRIM_SECRETS)"
 else
-	@rm -f $(LIVE_XCCONFIG)
 	@rm -rf $(BUILD_RESULT)
 	$(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)
 	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
@@ -140,7 +136,7 @@ recommended-settings-check:
 	@./scripts/recommended-settings-check.sh project.yml "$$(xcodebuild -version | head -1)"
 
 live-key-check: project
-	@SHARED_CACHE="$(SHARED_CACHE)" ./scripts/live-key-check.sh
+	@RATP_SHARED_CACHE="$(RATP_SHARED_CACHE)" ./scripts/live-key-check.sh
 
 run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
@@ -184,7 +180,7 @@ clean:
 	rm -rf $(BUILD_DIR) $(PROJECT)
 
 clean-shared-cache:
-	@./scripts/shared-cache.sh clear "$(SHARED_CACHE)"
+	@./scripts/shared-cache.sh clear "$(RATP_SHARED_CACHE)"
 
 merge:
 	@./scripts/merge.sh

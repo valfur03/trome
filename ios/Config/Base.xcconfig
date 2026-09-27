@@ -6,4 +6,3 @@ PRIM_API_KEY =
 
 #include? "Local.xcconfig"
 #include? "Secrets.xcconfig"
-#include? "../.build/Live.xcconfig"
