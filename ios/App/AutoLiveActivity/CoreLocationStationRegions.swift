@@ -1,4 +1,5 @@
 import CoreLocation
+import os
 import RATPCore
 
 @MainActor
@@ -51,6 +52,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
             return await monitorTask.value
         }
         guard manager.authorizationStatus == .authorizedAlways else { return nil }
+        Self.logAvailability()
         session = CLServiceSession(authorization: .always)
         let task = Task { await CLMonitor(Self.monitorName) }
         monitorTask = task
@@ -63,6 +65,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         eventsTask = Task { [weak self] in
             do {
                 for try await event in await monitor.events {
+                    Self.log(event)
                     await self?.handle(identifier: event.identifier, state: event.state)
                 }
             } catch {
@@ -88,5 +91,37 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
             return nil
         }
         return Coordinate(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+    }
+}
+
+extension CoreLocationStationRegionWatcher {
+    nonisolated private static let logger = Logger(subsystem: "RATPActivity", category: "StationRegions")
+
+    nonisolated private static func logAvailability() {
+        #if DEBUG
+        let available = CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self)
+        logger.notice("region monitoring available: \(available, privacy: .public)")
+        #endif
+    }
+
+    nonisolated private static func log(_ event: CLMonitor.Event) {
+        #if DEBUG
+        let diagnostics = [
+            ("authorizationDenied", event.authorizationDenied),
+            ("authorizationDeniedGlobally", event.authorizationDeniedGlobally),
+            ("authorizationRestricted", event.authorizationRestricted),
+            ("insufficientlyInUse", event.insufficientlyInUse),
+            ("accuracyLimited", event.accuracyLimited),
+            ("conditionUnsupported", event.conditionUnsupported),
+            ("conditionLimitExceeded", event.conditionLimitExceeded),
+            ("persistenceUnavailable", event.persistenceUnavailable),
+            ("serviceSessionRequired", event.serviceSessionRequired),
+            ("authorizationRequestInProgress", event.authorizationRequestInProgress)
+        ].filter(\.1).map(\.0).joined(separator: ", ")
+        let state = event.state.rawValue
+        logger.notice(
+            "\(event.identifier, privacy: .public): state \(state), diagnostics [\(diagnostics, privacy: .public)]"
+        )
+        #endif
     }
 }
