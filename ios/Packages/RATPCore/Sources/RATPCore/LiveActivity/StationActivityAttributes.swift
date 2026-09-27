@@ -28,7 +28,7 @@ extension StationActivityAttributes.ContentState {
     public init(station: Station, trains: NextTrainsState, now: Date, firstLineIndex: Int = 0) {
         self.init(
             stationName: station.name,
-            trains: .init(trains, now: now, firstLineIndex: firstLineIndex),
+            trains: .init(trains, at: station, now: now, firstLineIndex: firstLineIndex),
             updatedAt: now
         )
     }
@@ -58,31 +58,48 @@ extension StationActivityAttributes.Trains {
         return page
     }
 
-    init(_ state: NextTrainsState, now: Date, firstLineIndex: Int) {
+    init(_ state: NextTrainsState, at station: Station, now: Date, firstLineIndex: Int) {
         switch state {
         case .idle, .loading:
             self = .loading
-        case .missingKey, .noLiveData, .failed:
+        case .missingKey, .failed:
             self = .noData
+        case .noLiveData:
+            self = .lines(LinesPage(
+                showing: station.lines.sorted(by: TransitLine.stationListOrder).map { line in
+                    LineTrains(line: line.shown, directions: [])
+                },
+                from: firstLineIndex
+            ))
         case .departures(let board, _):
             let upcoming = board.departures.filter { $0.time > now }
             let lines = board.lines.map { line in
                 LineTrains(
-                    line: TransitLine(mode: line.mode, name: line.name),
+                    line: line.shown,
                     directions: board.station(serving: line).map { station in
-                        LineDirections.directions(of: line, at: station, from: upcoming, later: board.laterDepartures)
+                        LineDirections.directions(
+                            of: line,
+                            at: station,
+                            from: upcoming,
+                            later: board.laterDepartures,
+                            now: now
+                        )
                     } ?? [],
                     stationName: board.otherStationName(serving: line)
                 )
             }
-            self = lines.allSatisfy(\.directions.isEmpty)
-                ? .noData
-                : .lines(LinesPage(
-                    showing: lines,
-                    from: firstLineIndex,
-                    laterTrainTime: board.laterDepartures.first?.time
-                ))
+            self = .lines(LinesPage(
+                showing: lines,
+                from: firstLineIndex,
+                laterTrainTime: board.laterDepartures.first?.time
+            ))
         }
+    }
+}
+
+private extension TransitLine {
+    var shown: TransitLine {
+        TransitLine(mode: mode, name: name, color: color)
     }
 }
 

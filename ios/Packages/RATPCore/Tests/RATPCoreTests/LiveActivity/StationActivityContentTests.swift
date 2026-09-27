@@ -69,7 +69,6 @@ struct StationActivityContentTests {
 
     @Test(arguments: [
         NextTrainsState.missingKey,
-        .noLiveData,
         .failed(.unreachable),
         .failed(.keyRejected),
         .failed(.quotaExceeded),
@@ -214,13 +213,30 @@ struct StationActivityContentTests {
         #expect(lines(of: content).map(\.line.name) == ["12"])
     }
 
-    @Test func saysThereIsNoDataWhenNoLineHasADirection() {
-        let unknownLine = TransitLine(mode: .metro, name: "99", stopIds: ["IDFM:9"])
-        let unknown = Station(id: "unknown", name: "Unknown", coordinate: Coordinate(48.87, 2.33), lines: [unknownLine])
+    @Test func showsEveryLineWithoutTrainsWhenNoLineHasADirection() {
+        let trains = board([train(line12, to: "Mairie d'Issy", inMinutes: -0.25, from: southQuay)])
 
-        let content = ContentState(station: unknown, trains: board([], at: [unknown]), now: now)
+        let content = ContentState(station: station, trains: trains, now: now)
 
-        #expect(content.trains == .noData)
+        #expect(lines(of: content) == [
+            LineTrains(line: TransitLine(mode: .metro, name: "2"), directions: [
+                LineDirection(label: "Porte Dauphine", times: []),
+                LineDirection(label: "Nation", times: [])
+            ]),
+            LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [
+                LineDirection(label: "Mairie d'Aubervilliers", times: []),
+                LineDirection(label: "Mairie d'Issy", times: [])
+            ])
+        ])
+    }
+
+    @Test func showsEveryLineOfTheStationWithoutTrainsWhenPRIMHasNoTrain() {
+        let content = ContentState(station: station, trains: .noLiveData, now: now)
+
+        #expect(lines(of: content) == [
+            LineTrains(line: TransitLine(mode: .metro, name: "2"), directions: []),
+            LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [])
+        ])
     }
 
     @Test func dropsTimesMoreThanAnHourAwayAndSaysTheNextTrainIsOverAnHourAwayForADirectionLeftEmpty() {
@@ -272,6 +288,49 @@ struct StationActivityContentTests {
 
         #expect(content.trains.linesPage?.nextTrainIsOverAnHourAway == true)
         #expect(content.staleDate == time(inMinutes: 4))
+    }
+
+    @Test func keepsTheColorOfEachLine() {
+        let color = LineColor(background: "00643c", text: "ffffff")
+        var colored = line12
+        colored.color = color
+        let abbesses = Station(
+            id: "abbesses",
+            name: "Abbesses",
+            coordinate: Coordinate(48.8844, 2.3384),
+            lines: [colored]
+        )
+        let trains = board([train(colored, to: "Mairie d'Issy", inMinutes: 3, from: southQuay)], at: [abbesses])
+
+        let content = ContentState(station: abbesses, trains: trains, now: now)
+
+        #expect(content.trains.linesPage?.allLines.map(\.color) == [color])
+        #expect(lines(of: content).map(\.line.color) == [color])
+    }
+
+    @Test func staysUnderTheSizeLimitOfALiveActivityAtTheBiggestHub() throws {
+        let catalog = try StationCatalog.bundled()
+        let chatelet = try #require(catalog.stations(matching: "Châtelet").first { $0.name == "Châtelet" })
+        let stations = catalog.hubStations(of: chatelet)
+        let departures = stations.flatMap(\.lines).flatMap { line in
+            (0..<8).map { index in
+                Departure(
+                    line: line,
+                    destination: "A very long destination name number \(index % 2)",
+                    time: time(inMinutes: 0.5 + Double(index)),
+                    isAtStop: index == 0
+                )
+            }
+        }
+        let trains = NextTrainsState.departures(
+            DepartureBoard(departures: departures, stations: stations, now: now),
+            updatedAt: now
+        )
+
+        let content = ContentState(station: chatelet, trains: trains, now: now)
+
+        #expect(content.trains.linesPage?.allLines.count ?? 0 >= 8)
+        #expect(try JSONEncoder().encode(content).count < 4096)
     }
 
     @Test func becomesStaleWhenTheSoonestTrainOfAnyLineLeaves() {

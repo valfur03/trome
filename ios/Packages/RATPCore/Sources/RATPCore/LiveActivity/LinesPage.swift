@@ -24,6 +24,10 @@ public struct LineTrains: Codable, Hashable, Sendable {
         }
         return line
     }
+
+    public var hasNoTrain: Bool {
+        directions.allSatisfy(\.trains.isEmpty)
+    }
 }
 
 public struct SoonestTrain: Codable, Hashable, Sendable {

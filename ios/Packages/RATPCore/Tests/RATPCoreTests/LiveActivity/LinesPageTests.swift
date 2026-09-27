@@ -192,4 +192,14 @@ struct LinesPageTests {
         #expect(page.isShown(TransitLine(mode: .metro, name: "4")))
         #expect(!page.isShown(TransitLine(mode: .metro, name: "7")))
     }
+
+    @Test func hasNoTrainWhenNoDirectionOfTheLineHasATrain() {
+        let line = TransitLine(mode: .metro, name: "4")
+        let empty = LineDirection(label: "Porte de Clignancourt", trains: [])
+        let withTrain = LineDirection(label: "Bagneux - Lucie Aubrac", times: [Date(timeIntervalSince1970: 1_000)])
+
+        #expect(LineTrains(line: line, directions: []).hasNoTrain)
+        #expect(LineTrains(line: line, directions: [empty, empty]).hasNoTrain)
+        #expect(!LineTrains(line: line, directions: [empty, withTrain]).hasNoTrain)
+    }
 }

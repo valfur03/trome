@@ -149,7 +149,8 @@ struct PRIMDeparturesProviderTests {
                 line: line12ByQuay,
                 destination: "Mairie d'Issy",
                 time: Fixture.date("2026-09-26T10:02:30Z"),
-                quayRef: "STIF:StopPoint:Q:463116:"
+                quayRef: "STIF:StopPoint:Q:463116:",
+                arrivalTime: Fixture.date("2026-09-26T10:02:10Z")
             ),
             Departure(
                 line: line12ByQuay,

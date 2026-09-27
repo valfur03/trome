@@ -117,7 +117,9 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
                 destination: visit.destinationName,
                 time: visit.time,
                 quayRef: visit.quayRef,
-                directionRef: visit.directionRef
+                directionRef: visit.directionRef,
+                arrivalTime: visit.arrivalTime,
+                isAtStop: visit.isAtStop
             )
         }
     }

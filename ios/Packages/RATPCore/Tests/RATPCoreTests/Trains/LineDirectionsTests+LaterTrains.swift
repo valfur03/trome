@@ -21,7 +21,8 @@ extension LineDirectionsTests {
             of: line,
             at: station(stationName, [line]),
             from: departures,
-            later: laterDepartures
+            later: laterDepartures,
+            now: now
         )
     }
 

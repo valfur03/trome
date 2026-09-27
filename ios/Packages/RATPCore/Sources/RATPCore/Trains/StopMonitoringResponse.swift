@@ -9,6 +9,8 @@ struct MonitoredVisit: Equatable, Sendable {
     var time: Date
     var quayRef: String?
     var directionRef: String?
+    var arrivalTime: Date?
+    var isAtStop = false
 }
 
 enum StopMonitoringResponse {
@@ -80,6 +82,7 @@ private struct MonitoredCall: Decodable {
     let aimedArrivalTime: String?
     let departureStatus: String?
     let arrivalStatus: String?
+    let vehicleAtStop: Bool?
 
     var isCancelled: Bool {
         (departureStatus ?? arrivalStatus) == "cancelled"
@@ -94,6 +97,13 @@ private struct MonitoredCall: Decodable {
 
     var bestTime: Date? {
         [expectedDepartureTime, expectedArrivalTime, aimedDepartureTime, aimedArrivalTime]
+            .lazy
+            .compactMap { $0.flatMap(SIRIDate.parse) }
+            .first
+    }
+
+    var arrivalTime: Date? {
+        [expectedArrivalTime, aimedArrivalTime]
             .lazy
             .compactMap { $0.flatMap(SIRIDate.parse) }
             .first
@@ -138,7 +148,9 @@ private struct MonitoredStopVisit: Decodable {
             journeyRef: journey.framedVehicleJourneyRef?.datedVehicleJourneyRef,
             time: time,
             quayRef: call.quayRef,
-            directionRef: journey.directionRef?.value
+            directionRef: journey.directionRef?.value,
+            arrivalTime: call.arrivalTime,
+            isAtStop: call.vehicleAtStop ?? false
         )
     }
 }

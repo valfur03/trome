@@ -15,6 +15,10 @@ METRO_STOP_AREAS_URL = (
     DATASETS_URL
     + "arrets/exports/json?select=arrid,zdaid&where=arrtype%3D%22metro%22"
 )
+LINE_COLORS_URL = (
+    DATASETS_URL
+    + "referentiel-des-lignes/exports/json?select=id_line,colourweb_hexa,textcolourweb_hexa"
+)
 STOP_AREA_PREFIX = "IDFM:monomodalStopPlace:"
 OUTPUT = (
     Path(__file__).resolve().parent.parent
@@ -129,11 +133,38 @@ def add_stop_area_ids(stations, stop_areas_by_quay_id):
                 line["stopAreaIds"] = sorted({stop_areas_by_quay_id[stop_id] for stop_id in line["stopIds"]})
 
 
+def line_key(row):
+    return (MODES[row["mode"]], LINE_NAMES.get(row["shortname"], row["shortname"]))
+
+
+def colors_by_line(rows, reference_lines):
+    colors_by_line_id = {
+        "IDFM:" + line["id_line"]: {
+            "background": line["colourweb_hexa"].lower(),
+            "text": line["textcolourweb_hexa"].lower(),
+        }
+        for line in reference_lines
+        if line.get("id_line") and line.get("colourweb_hexa") and line.get("textcolourweb_hexa")
+    }
+    return {
+        line_key(row): colors_by_line_id[row["id"]]
+        for row in rows
+        if row.get("id") in colors_by_line_id
+    }
+
+
+def add_line_colors(stations, colors):
+    for station in stations:
+        for line in station["lines"]:
+            color = colors.get((line["mode"], line["name"]))
+            if color:
+                line["color"] = color
+
+
 def build_station(rows):
     lines = {}
     for row in rows:
-        mode = MODES[row["mode"]]
-        name = LINE_NAMES.get(row["shortname"], row["shortname"])
+        mode, name = line_key(row)
         line = lines.setdefault((mode, name), {"mode": mode, "name": name, "stopIds": set()})
         line["stopIds"].add(row["stop_id"])
     latitude = sum(float(row["stop_lat"]) for row in rows) / len(rows)
@@ -154,8 +185,9 @@ def build_station(rows):
 def main():
     rows = download(SOURCE_URL)
 
+    wanted_rows = list(filter(is_wanted, rows))
     by_name = {}
-    for row in filter(is_wanted, rows):
+    for row in wanted_rows:
         by_name.setdefault(station_name(row), []).append(row)
 
     stations = [
@@ -166,6 +198,7 @@ def main():
     stations.sort(key=lambda station: (station["name"], station["id"]))
     add_hub_ids(stations, hub_ids_by_stop_id(download(HUBS_URL)))
     add_stop_area_ids(stations, stop_area_ids_by_quay_id(download(METRO_STOP_AREAS_URL)))
+    add_line_colors(stations, colors_by_line(wanted_rows, download(LINE_COLORS_URL)))
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT.open("w", encoding="utf-8") as output:

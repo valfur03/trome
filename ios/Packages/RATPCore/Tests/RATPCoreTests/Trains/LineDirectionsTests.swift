@@ -22,14 +22,16 @@ struct LineDirectionsTests {
         to destination: String,
         inMinutes minutes: Double,
         from quay: String? = nil,
-        direction: String? = nil
+        direction: String? = nil,
+        atStop: Bool = false
     ) -> Departure {
         Departure(
             line: line,
             destination: destination,
             time: time(inMinutes: minutes),
             quayRef: quay,
-            directionRef: direction
+            directionRef: direction,
+            isAtStop: atStop
         )
     }
 
@@ -38,7 +40,7 @@ struct LineDirectionsTests {
         at stationName: String,
         _ departures: [Departure]
     ) -> [LineDirection] {
-        LineDirections.directions(of: line, at: station(stationName, [line]), from: departures)
+        LineDirections.directions(of: line, at: station(stationName, [line]), from: departures, now: now)
     }
 
     @Test func labelsEachDirectionWithItsEndOfLine() {
@@ -53,6 +55,38 @@ struct LineDirectionsTests {
         ])
         #expect(result.allSatisfy { !$0.showsEachDestination })
         #expect(result.map(\.name) == ["Charles de Gaulle - Étoile", "Nation"])
+    }
+
+    @Test func tellsWhichTrainIsApproachingOrAtThePlatform() {
+        let result = directions(of: line6, at: "Chevaleret", [
+            train(line6, to: "Nation", inMinutes: 0.5, from: eastQuay, atStop: true),
+            train(line6, to: "Nation", inMinutes: 4, from: eastQuay),
+            train(line6, to: "Charles de Gaulle-Etoile", inMinutes: 0.75, from: westQuay)
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Charles de Gaulle - Étoile", trains: [
+                LineDirection.Train(
+                    time: time(inMinutes: 0.75),
+                    destination: "Charles de Gaulle - Étoile",
+                    status: .approaching
+                )
+            ]),
+            LineDirection(label: "Nation", trains: [
+                LineDirection.Train(time: time(inMinutes: 0.5), destination: "Nation", status: .atPlatform),
+                LineDirection.Train(time: time(inMinutes: 4), destination: "Nation")
+            ])
+        ])
+    }
+
+    @Test func roundsTheWaitUpToTheNextWholeMinuteSoItNeverSaysZeroBeforeTheTrainLeaves() {
+        let train = LineDirection.Train(time: time(inMinutes: 3), destination: "Nation")
+
+        let minutes = [2.75, 2.5, 1.9, 1.25, 0.5, 0.01].map { minutesLeft in
+            DepartureTime.minutes(until: train.roundedUpCountdownEnd, from: time(inMinutes: 3 - minutesLeft))
+        }
+
+        #expect(minutes == [3, 3, 2, 2, 1, 1])
     }
 
     @Test func showsNoTrainsForADirectionWithoutTrains() {

@@ -65,11 +65,21 @@ private struct LockScreenView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
+            HStack(alignment: .center) {
                 if let page = state.multiLinePage {
                     StationAndLinesHeader(stationName: state.stationName, page: page)
+                } else if let line = state.leadingLine, line.mode == .metro {
+                    MetroLineBadge(line: line, size: .regular)
+                    Text(state.stationName)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Spacer(minLength: 0)
                 } else {
-                    Label(state.stationName, systemImage: state.leadingLine?.symbolName ?? "tram.fill")
+                    Image(systemName: state.leadingLine?.symbolName ?? "tram.fill")
+                        .font(.headline)
+                        .accessibilityHidden(true)
+                    Text(state.stationName)
                         .font(.headline)
                         .lineLimit(1)
                     Spacer()
@@ -123,7 +133,7 @@ private struct StationAndLinesHeader: View {
     }
 
     private func header(showsEveryBadge: Bool) -> some View {
-        HStack {
+        HStack(alignment: .center) {
             Text(stationName)
                 .font(isCompact ? .subheadline.bold() : .headline)
                 .lineLimit(1)
@@ -174,45 +184,6 @@ private struct LinesPager: View {
     }
 }
 
-private struct SnoozeButtons: View {
-    var body: some View {
-        HStack(spacing: 6) {
-            Label("Snooze", systemImage: "bell.slash")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            Spacer(minLength: 4)
-            ForEach(SnoozeDuration.allCases, id: \.self) { duration in
-                Button(intent: SnoozeLiveActivityIntent(duration: duration)) {
-                    Text(title(of: duration))
-                        .font(.caption2.bold())
-                        .lineLimit(1)
-                }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-                .controlSize(.mini)
-                .accessibilityLabel(accessibilityTitle(of: duration))
-            }
-        }
-    }
-
-    private func title(of duration: SnoozeDuration) -> LocalizedStringKey {
-        switch duration {
-        case .thirtyMinutes: "30 min"
-        case .oneHour: "1 h"
-        case .restOfToday: "Today"
-        }
-    }
-
-    private func accessibilityTitle(of duration: SnoozeDuration) -> LocalizedStringKey {
-        switch duration {
-        case .thirtyMinutes: "Snooze for 30 minutes"
-        case .oneHour: "Snooze for 1 hour"
-        case .restOfToday: "Snooze for the rest of today"
-        }
-    }
-}
-
 private struct TrainsSummary: View {
     let state: StationActivityAttributes.ContentState
     let isStale: Bool
@@ -237,8 +208,14 @@ private struct TrainsSummary: View {
                     LineTrainsView(line: line, isStale: isStale, isCompact: isCompact)
                 }
             case .lines(let page):
-                ForEach(page.lines.flatMap(\.directions), id: \.self) { direction in
-                    DirectionRow(direction: direction, isStale: isStale, isCompact: isCompact)
+                ForEach(page.lines, id: \.self) { line in
+                    if line.hasNoTrain {
+                        NoTrainsText(line: line.line)
+                    } else {
+                        ForEach(line.directions, id: \.self) { direction in
+                            LineDirectionRow(direction: direction, line: line.line, isStale: isStale, isCompact: isCompact)
+                        }
+                    }
                 }
             }
             if isStale {
@@ -263,13 +240,11 @@ private struct LineTrainsView: View {
                 if let stationName = line.stationName {
                     ServingStationName(name: stationName)
                 }
-                if line.directions.isEmpty {
-                    Text("No trains")
-                        .font(isCompact ? .caption.bold() : .subheadline.bold())
-                        .foregroundStyle(.secondary)
+                if line.hasNoTrain {
+                    NoTrainsText(line: line.line)
                 } else {
                     ForEach(line.directions, id: \.self) { direction in
-                        DirectionRow(direction: direction, isStale: isStale, isCompact: isCompact)
+                        LineDirectionRow(direction: direction, line: line.line, isStale: isStale, isCompact: isCompact)
                     }
                 }
             }
@@ -278,79 +253,34 @@ private struct LineTrainsView: View {
     }
 }
 
-private struct DirectionRow: View {
+private struct LineDirectionRow: View {
     let direction: LineDirection
+    let line: TransitLine
     let isStale: Bool
     var isCompact = false
 
     var body: some View {
-        if direction.showsEachDestination && !isStale {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(direction.trains.enumerated()), id: \.offset) { index, train in
-                    TrainRow(train: train, isNext: index == 0)
-                }
-            }
-        } else {
-            HStack {
-                Image(systemName: "arrow.right")
-                    .font(.caption)
-                DirectionName(text: direction.name)
-                    .font(isCompact ? .caption : .subheadline)
-                Spacer(minLength: 8)
-                if direction.times.isEmpty {
-                    if !direction.nextTrainIsOverAnHourAway || !isStale {
-                        Text(direction.nextTrainIsOverAnHourAway ? "In over 1 hour" : "No trains")
-                            .font(isCompact ? .caption.bold() : .subheadline.bold())
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .layoutPriority(1)
-                    }
-                } else if !isStale {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        WaitingTime(time: direction.times[0])
-                            .font(isCompact ? .caption.bold() : .subheadline.bold())
-                        if direction.times.count > 1 {
-                            WaitingTime(time: direction.times[1])
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(minWidth: WaitingTime.minimumWidth, alignment: .trailing)
-                }
-            }
+        switch line.mode {
+        case .metro:
+            PanamDirectionRows(direction: direction, line: line, isStale: isStale)
+        case .rer:
+            RERDirectionRow(direction: direction, isStale: isStale)
         }
     }
 }
 
-private struct TrainRow: View {
-    let train: LineDirection.Train
-    let isNext: Bool
+private struct NoTrainsText: View {
+    let line: TransitLine
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Image(systemName: "arrow.right")
-                .font(.caption)
-                .opacity(isNext ? 1 : 0)
-            DirectionName(text: train.destination)
-                .font(isNext ? .subheadline : .caption)
-                .foregroundStyle(isNext ? .primary : .secondary)
-            Spacer(minLength: 8)
-            WaitingTime(time: train.time)
-                .font(isNext ? .subheadline.bold() : .caption2)
-                .foregroundStyle(isNext ? .primary : .secondary)
-                .frame(minWidth: WaitingTime.minimumWidth, alignment: .trailing)
+        switch line.mode {
+        case .metro:
+            ServiceEndedText()
+        case .rer:
+            Text("No trains")
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
         }
-    }
-}
-
-private struct DirectionName: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
-            .layoutPriority(1)
     }
 }
 

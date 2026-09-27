@@ -142,4 +142,33 @@ extension LineDirectionsTests {
             }
         }
     }
+
+    @Test func givesOneRowToEachBranchWithItsOwnTrains() {
+        let direction = LineDirection(label: "Mairie d'Ivry / Villejuif - Louis Aragon", trains: [
+            branchTrain(2, to: "Villejuif - Louis Aragon"),
+            branchTrain(5, to: "Mairie d'Ivry"),
+            branchTrain(7, to: "Villejuif - Louis Aragon")
+        ])
+
+        #expect(direction.trainsByDestination == [
+            DestinationTrains(destination: "Villejuif - Louis Aragon", trains: [
+                branchTrain(2, to: "Villejuif - Louis Aragon"),
+                branchTrain(7, to: "Villejuif - Louis Aragon")
+            ]),
+            DestinationTrains(destination: "Mairie d'Ivry", trains: [branchTrain(5, to: "Mairie d'Ivry")])
+        ])
+    }
+
+    @Test func givesOneRowToADirectionWhoseTrainsAllGoToOnePlaceOrWithoutTrains() {
+        let oneBranch = LineDirection(label: "Mairie d'Ivry / Villejuif - Louis Aragon", trains: [
+            branchTrain(2, to: "Mairie d'Ivry"),
+            branchTrain(5, to: "Mairie d'Ivry")
+        ])
+        let empty = LineDirection(label: "La Courneuve - 8 Mai 1945", trains: [])
+
+        #expect(oneBranch.trainsByDestination == [
+            DestinationTrains(destination: "Mairie d'Ivry", trains: oneBranch.trains)
+        ])
+        #expect(empty.trainsByDestination == [DestinationTrains(destination: "La Courneuve - 8 Mai 1945", trains: [])])
+    }
 }

@@ -24,8 +24,18 @@ struct StopMonitoringResponseTests {
             destinationRef: "STIF:StopPoint:Q:463108:",
             destinationName: "Mairie d'Issy",
             journeyRef: "RATP-SIV:VehicleJourney::M12.R.1003:LOC",
-            time: Fixture.date("2026-09-26T10:02:30Z")
+            time: Fixture.date("2026-09-26T10:02:30Z"),
+            arrivalTime: Fixture.date("2026-09-26T10:02:10Z")
         ))
+    }
+
+    @Test func readsWhetherTheTrainIsAtTheStop() throws {
+        let answer = try #require(String(bytes: Fixture.data("stop-monitoring-abbesses"), encoding: .utf8))
+            .replacingOccurrences(of: "\"VehicleAtStop\": false", with: "\"VehicleAtStop\": true")
+
+        let visits = try StopMonitoringResponse.visits(from: Data(answer.utf8))
+
+        #expect(visits.map(\.isAtStop) == [true, true, false, false])
     }
 
     @Test func readsTheQuayAndTheDirectionOfEachTrainOfAStopArea() throws {

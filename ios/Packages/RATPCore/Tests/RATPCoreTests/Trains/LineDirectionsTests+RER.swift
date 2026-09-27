@@ -49,7 +49,7 @@ extension LineDirectionsTests {
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-chatelet-rer"))
         let departures = PRIMDeparturesProvider.departures(from: visits, at: [station])
 
-        let result = LineDirections.directions(of: rerA, at: station, from: departures)
+        let result = LineDirections.directions(of: rerA, at: station, from: departures, now: now)
 
         #expect(result == [
             LineDirection(label: "Saint-Germain-en-Laye / Cergy le Haut / Poissy", trains: [

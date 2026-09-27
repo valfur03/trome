@@ -60,10 +60,17 @@ extension PRIMDeparturesProviderTests {
         #expect(fromStopArea.count == 4)
         #expect(fromStopArea.map(Self.shown) == fromQuays.sorted { $0.time < $1.time }.map(Self.shown))
         #expect(
-            LineDirections.directions(of: line12, at: abbesses, from: fromStopArea)
-                == LineDirections.directions(of: line12ByQuay, at: abbessesByQuay, from: fromQuays)
+            LineDirections.directions(of: line12, at: abbesses, from: fromStopArea, now: Self.recordedAt)
+                == LineDirections.directions(
+                    of: line12ByQuay,
+                    at: abbessesByQuay,
+                    from: fromQuays,
+                    now: Self.recordedAt
+                )
         )
     }
+
+    static let recordedAt = Fixture.date("2026-09-26T09:59:48Z")
 
     static func shown(_ departure: Departure) -> String {
         "\(departure.line.displayName) \(departure.destination) \(departure.time) \(departure.quayRef ?? "-")"
@@ -93,7 +100,7 @@ extension PRIMDeparturesProviderTests {
         let departures = try await provider.departures(at: [abbesses])
 
         #expect(departures.allSatisfy { $0.quayRef == nil })
-        #expect(LineDirections.directions(of: line12, at: abbesses, from: departures) == [
+        #expect(LineDirections.directions(of: line12, at: abbesses, from: departures, now: Self.recordedAt) == [
             LineDirection(label: "Mairie d'Aubervilliers", times: [
                 Fixture.date("2026-09-26T10:04:00Z"),
                 Fixture.date("2026-09-26T10:09:30Z")

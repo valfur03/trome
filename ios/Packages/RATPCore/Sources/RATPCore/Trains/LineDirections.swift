@@ -4,10 +4,16 @@ public struct LineDirection: Codable, Hashable, Sendable {
     public struct Train: Codable, Hashable, Sendable {
         public var time: Date
         public var destination: String
+        public var status: PlatformStatus?
 
-        public init(time: Date, destination: String) {
+        public init(time: Date, destination: String, status: PlatformStatus? = nil) {
             self.time = time
             self.destination = destination
+            self.status = status
+        }
+
+        public var roundedUpCountdownEnd: Date {
+            time.addingTimeInterval(60)
         }
     }
 
@@ -40,6 +46,26 @@ public struct LineDirection: Codable, Hashable, Sendable {
     public var showsEachDestination: Bool {
         Set(trains.map(\.destination)).count > 1
     }
+
+    public var trainsByDestination: [DestinationTrains] {
+        guard showsEachDestination else {
+            return [DestinationTrains(destination: name, trains: trains)]
+        }
+        var groups: [DestinationTrains] = []
+        for train in trains {
+            if let index = groups.firstIndex(where: { $0.destination == train.destination }) {
+                groups[index].trains.append(train)
+            } else {
+                groups.append(DestinationTrains(destination: train.destination, trains: [train]))
+            }
+        }
+        return groups
+    }
+}
+
+public struct DestinationTrains: Hashable, Sendable {
+    public var destination: String
+    public var trains: [LineDirection.Train]
 }
 
 enum LineDirections {
@@ -57,12 +83,13 @@ enum LineDirections {
         of line: TransitLine,
         at station: Station,
         from departures: [Departure],
-        later laterDepartures: [Departure] = []
+        later laterDepartures: [Departure] = [],
+        now: Date
     ) -> [LineDirection] {
-        var shown = directions(of: line, at: station, trainsFrom: departures)
+        var shown = directions(of: line, at: station, trainsFrom: departures, now: now)
         guard !laterDepartures.isEmpty else { return shown }
         let laterTimes = Set(laterDepartures.map(\.time))
-        let laterOnly = directions(of: line, at: station, trainsFrom: departures + laterDepartures)
+        let laterOnly = directions(of: line, at: station, trainsFrom: departures + laterDepartures, now: now)
             .filter { direction in direction.trains.first.map { laterTimes.contains($0.time) } ?? false }
         for later in laterOnly {
             if let index = shown.firstIndex(where: { $0.label == later.label }) {
@@ -79,7 +106,8 @@ enum LineDirections {
     private static func directions(
         of line: TransitLine,
         at station: Station,
-        trainsFrom departures: [Departure]
+        trainsFrom departures: [Departure],
+        now: Date
     ) -> [LineDirection] {
         let trains = departures
             .filter { $0.line.mode == line.mode && $0.line.name == line.name }
@@ -112,7 +140,8 @@ enum LineDirections {
                 trains: sideTrains.prefix(timesPerDirection).map { train in
                     LineDirection.Train(
                         time: train.time,
-                        destination: endName(of: train.destination, in: sides[index], ends: ends) ?? train.destination
+                        destination: endName(of: train.destination, in: sides[index], ends: ends) ?? train.destination,
+                        status: PlatformStatus(of: train, at: now)
                     )
                 }
             )
@@ -124,7 +153,11 @@ enum LineDirections {
                 LineDirection(
                     label: group.trains[0].destination,
                     trains: group.trains.prefix(timesPerDirection).map {
-                        LineDirection.Train(time: $0.time, destination: $0.destination)
+                        LineDirection.Train(
+                            time: $0.time,
+                            destination: $0.destination,
+                            status: PlatformStatus(of: $0, at: now)
+                        )
                     }
                 )
             }

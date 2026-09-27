@@ -10,19 +10,28 @@ public struct TransitLine: Codable, Hashable, Sendable {
     public var name: String
     public var stopIds: [String]
     public var stopAreaIds: [String]
+    public var color: LineColor?
 
     private enum CodingKeys: String, CodingKey {
         case mode
         case name
         case stopIds
         case stopAreaIds
+        case color
     }
 
-    public init(mode: TransitMode, name: String, stopIds: [String] = [], stopAreaIds: [String] = []) {
+    public init(
+        mode: TransitMode,
+        name: String,
+        stopIds: [String] = [],
+        stopAreaIds: [String] = [],
+        color: LineColor? = nil
+    ) {
         self.mode = mode
         self.name = name
         self.stopIds = stopIds
         self.stopAreaIds = stopAreaIds
+        self.color = color
     }
 
     public init(from decoder: any Decoder) throws {
@@ -31,6 +40,7 @@ public struct TransitLine: Codable, Hashable, Sendable {
         name = try container.decode(String.self, forKey: .name)
         stopIds = try container.decodeIfPresent([String].self, forKey: .stopIds) ?? []
         stopAreaIds = try container.decodeIfPresent([String].self, forKey: .stopAreaIds) ?? []
+        color = try container.decodeIfPresent(LineColor.self, forKey: .color)
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -43,6 +53,7 @@ public struct TransitLine: Codable, Hashable, Sendable {
         if !stopAreaIds.isEmpty {
             try container.encode(stopAreaIds, forKey: .stopAreaIds)
         }
+        try container.encodeIfPresent(color, forKey: .color)
     }
 
     public var displayName: String {

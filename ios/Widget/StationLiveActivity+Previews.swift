@@ -6,16 +6,23 @@ import WidgetKit
     StationLiveActivity()
 } contentStates: {
     StationActivityAttributes.ContentState.preview(stationName: "Abbesses", lines: [
-        LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [
+        LineTrains(line: .metro("12", "00643c", "ffffff"), directions: [
             LineDirection(
                 label: "Mairie d'Aubervilliers",
                 times: [.now.addingTimeInterval(180), .now.addingTimeInterval(540)]
             ),
-            LineDirection(label: "Mairie d'Issy", times: [.now.addingTimeInterval(60)])
+            LineDirection(label: "Mairie d'Issy", trains: [
+                LineDirection.Train(
+                    time: .now.addingTimeInterval(40),
+                    destination: "Mairie d'Issy",
+                    status: .approaching
+                ),
+                LineDirection.Train(time: .now.addingTimeInterval(420), destination: "Mairie d'Issy")
+            ])
         ])
     ])
     StationActivityAttributes.ContentState.preview(stationName: "Place de Clichy", lines: [
-        LineTrains(line: TransitLine(mode: .metro, name: "13"), directions: [
+        LineTrains(line: .metro("13", "82c8e6", "000000"), directions: [
             LineDirection(label: "Saint-Denis - Université / Asnières - Gennevilliers - Les Courtilles", trains: [
                 LineDirection.Train(
                     time: .now.addingTimeInterval(60),
@@ -35,11 +42,11 @@ import WidgetKit
     StationActivityAttributes.ContentState.preview(
         stationName: "Châtelet",
         lines: [
-            LineTrains(line: TransitLine(mode: .metro, name: "1"), directions: [
+            LineTrains(line: .metro("1", "ffbe00", "000000"), directions: [
                 LineDirection(label: "La Défense", times: [.now.addingTimeInterval(120)]),
                 LineDirection(label: "Château de Vincennes", times: [.now.addingTimeInterval(60)])
             ]),
-            LineTrains(line: TransitLine(mode: .metro, name: "4"), directions: [
+            LineTrains(line: .metro("4", "a0006e", "ffffff"), directions: [
                 LineDirection(label: "Porte de Clignancourt", times: [.now.addingTimeInterval(240)]),
                 LineDirection(label: "Bagneux - Lucie Aubrac", times: [])
             ])
@@ -50,11 +57,11 @@ import WidgetKit
     StationActivityAttributes.ContentState.preview(
         stationName: "Châtelet - Les Halles",
         lines: [
-            LineTrains(line: TransitLine(mode: .metro, name: "1"), directions: [
+            LineTrains(line: .metro("1", "ffbe00", "000000"), directions: [
                 LineDirection(label: "La Défense", times: [.now.addingTimeInterval(180)]),
                 LineDirection(label: "Château de Vincennes", times: [.now.addingTimeInterval(300)])
             ]),
-            LineTrains(line: TransitLine(mode: .metro, name: "4"), directions: [
+            LineTrains(line: .metro("4", "a0006e", "ffffff"), directions: [
                 LineDirection(label: "Porte de Clignancourt", times: [.now.addingTimeInterval(120)]),
                 LineDirection(label: "Bagneux - Lucie Aubrac", times: [.now.addingTimeInterval(240)])
             ])
@@ -81,6 +88,12 @@ import WidgetKit
             + ["A", "E"].map { TransitLine(mode: .rer, name: $0) }
     )
     StationActivityAttributes.ContentState(stationName: "Abbesses", trains: .noData, updatedAt: .now)
+}
+
+private extension TransitLine {
+    static func metro(_ name: String, _ color: String, _ text: String) -> TransitLine {
+        TransitLine(mode: .metro, name: name, color: LineColor(background: color, text: text))
+    }
 }
 
 private extension StationActivityAttributes.ContentState {

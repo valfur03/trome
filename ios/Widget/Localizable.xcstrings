@@ -31,6 +31,26 @@
         }
       }
     },
+    "Approaching" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À l’approche"
+          }
+        }
+      }
+    },
+    "At the platform" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À quai"
+          }
+        }
+      }
+    },
     "In over 1 hour" : {
       "localizations" : {
         "fr" : {
@@ -117,6 +137,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "RER %@"
+          }
+        }
+      }
+    },
+    "Service ended" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Service terminé"
           }
         }
       }
