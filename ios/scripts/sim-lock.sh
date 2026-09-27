@@ -27,7 +27,7 @@ usage() {
     echo "       $0 free               Remove the app from the Simulator and free the lock that this folder keeps after 'open'" >&2
     echo "       $0 all <command...>   Run a command with the locks of every slot (waits until no other job runs)" >&2
     echo "       $0 udid               Print the ID of the Simulator that this folder keeps after 'open', or of the Simulator of slot 1" >&2
-    echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job, and the one that a job of the slot does not use" >&2
+    echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job, and the one that boots during a job of the slot that does not use it" >&2
     echo "At most $slots Simulator jobs run at once (RATP_SIM_SLOTS). A job runs next to another one only when the CPU is at least $min_idle_percent% idle (RATP_SIM_MIN_IDLE_PERCENT)." >&2
     exit 1
 }
@@ -113,6 +113,11 @@ write_size() {
     mv "$lock/size.new" "$lock/size"
 }
 
+write_booted_before() {
+    "$simulator" booted > "$lock/booted-before.new" 2> /dev/null || true
+    mv "$lock/booted-before.new" "$lock/booted-before"
+}
+
 mark_held() {
     held_slots="$held_slots $RATP_SIM_SLOT"
     RATP_SIM_HELD_LOCK=$lock
@@ -124,12 +129,14 @@ take() {
     echo "$$" > "$lock/pid"
     echo "$root" > "$lock/worktree"
     write_size
+    write_booted_before
     mark_held
 }
 
 join_session() {
     echo "$$" > "$lock/pid"
     write_size
+    write_booted_before
     mark_held
 }
 
@@ -278,6 +285,9 @@ shut_down_the_other_shared() {
     size=$(cat "$lock/size" 2> /dev/null) || return 0
     others=$(RATP_SIM_SIZE=$size "$simulator" booted-others 2> /dev/null) || return 0
     for other in $others; do
+        if grep -qxF "$other" "$lock/booted-before" 2> /dev/null; then
+            continue
+        fi
         size_now=$(cat "$lock/size" 2> /dev/null) || return 0
         [ "$size_now" = "$size" ] || return 0
         xcrun simctl shutdown "$other" 2> /dev/null || true
@@ -361,9 +371,7 @@ case "$command" in
     free)
         if find_session; then
             held_slots=$RATP_SIM_SLOT
-            session_udid=$(holder udid)
-            "$simulator" uninstall "$session_udid" || true
-            "$simulator" shutdown-if-not-default "$session_udid" || true
+            "$simulator" uninstall "$(holder udid)" || true
             release
         fi
         ;;

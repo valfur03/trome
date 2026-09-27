@@ -56,16 +56,6 @@ booted_shared_udids() {
     done
 }
 
-shut_down_other_shared() {
-    others=$(booted_shared_udids) || return 1
-    for other in $others; do
-        if [ "$other" != "$1" ] && ! xcrun simctl shutdown "$other" 2> /dev/null && is_booted "$other"; then
-            echo "Could not shut down the other shared Simulator of slot $slot ($other), so this job does not boot a second one in its slot" >&2
-            return 1
-        fi
-    done
-}
-
 create_device() {
     runtime=$(xcrun simctl list runtimes available \
         | grep '^iOS ' \
@@ -88,7 +78,6 @@ device_udid() {
 
 boot_device() {
     udid=$(device_udid)
-    shut_down_other_shared "$udid" || exit 1
     xcrun simctl bootstatus "$udid" -b > /dev/null
     echo "$udid"
 }
@@ -221,12 +210,6 @@ case "$command" in
             uninstall_apps "$udid"
         fi
         ;;
-    shutdown-if-not-default)
-        udid=${1:?Usage: $0 shutdown-if-not-default <udid>}
-        if [ "$udid" != "$(udid_of "$default_name")" ]; then
-            xcrun simctl shutdown "$udid" 2> /dev/null || true
-        fi
-        ;;
     booted)
         booted_shared_udids
         ;;
@@ -250,7 +233,7 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|shutdown-if-not-default <udid>|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
         exit 1
