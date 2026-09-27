@@ -1,12 +1,34 @@
 import Foundation
 
 public struct LineDirection: Codable, Hashable, Sendable {
+    public struct Train: Codable, Hashable, Sendable {
+        public var time: Date
+        public var destination: String
+
+        public init(time: Date, destination: String) {
+            self.time = time
+            self.destination = destination
+        }
+    }
+
     public var label: String
-    public var times: [Date]
+    public var trains: [Train]
+
+    public init(label: String, trains: [Train]) {
+        self.label = label
+        self.trains = trains
+    }
 
     public init(label: String, times: [Date]) {
-        self.label = label
-        self.times = times
+        self.init(label: label, trains: times.map { Train(time: $0, destination: label) })
+    }
+
+    public var times: [Date] {
+        trains.map(\.time)
+    }
+
+    public var showsEachDestination: Bool {
+        trains.contains { $0.destination != label }
     }
 }
 
@@ -38,11 +60,17 @@ enum LineDirections {
 
         let showsEmptySides = quays.count != 1
         let sideDirections = sides.indices.compactMap { index -> LineDirection? in
-            let times = groups.filter { $0.side == index }.flatMap(\.trains).map(\.time).sorted()
-            guard showsEmptySides || !times.isEmpty else { return nil }
+            let sideTrains = groups.filter { $0.side == index }.flatMap(\.trains).sorted { $0.time < $1.time }
+            guard showsEmptySides || !sideTrains.isEmpty else { return nil }
+            let ends = line.ends?.reachableEnds(of: sides[index], from: station.name) ?? sides[index]
             return LineDirection(
-                label: sides[index].joined(separator: " / "),
-                times: Array(times.prefix(timesPerDirection))
+                label: ends.joined(separator: " / "),
+                trains: sideTrains.prefix(timesPerDirection).map { train in
+                    LineDirection.Train(
+                        time: train.time,
+                        destination: endName(of: train.destination, in: sides[index]) ?? train.destination
+                    )
+                }
             )
         }
         let otherDirections = groups
@@ -51,7 +79,9 @@ enum LineDirections {
             .map { group in
                 LineDirection(
                     label: group.trains[0].destination,
-                    times: Array(group.trains.map(\.time).prefix(timesPerDirection))
+                    trains: group.trains.prefix(timesPerDirection).map {
+                        LineDirection.Train(time: $0.time, destination: $0.destination)
+                    }
                 )
             }
         return Array((sideDirections + otherDirections).prefix(maximumDirections))
@@ -88,12 +118,14 @@ enum LineDirections {
     }
 
     private static func side(of destination: String, in sides: [[String]]) -> Int? {
+        sides.firstIndex { endName(of: destination, in: $0) != nil }
+    }
+
+    private static func endName(of destination: String, in names: [String]) -> String? {
         let key = StationCatalog.searchKey(destination)
-        return sides.firstIndex { names in
-            names.contains { name in
-                let nameKey = StationCatalog.searchKey(name)
-                return key == nameKey || key.hasPrefix(nameKey + " ")
-            }
+        return names.first { name in
+            let nameKey = StationCatalog.searchKey(name)
+            return key == nameKey || key.hasPrefix(nameKey + " ")
         }
     }
 }

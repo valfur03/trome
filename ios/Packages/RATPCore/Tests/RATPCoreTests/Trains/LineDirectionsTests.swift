@@ -3,21 +3,21 @@ import Testing
 @testable import RATPCore
 
 struct LineDirectionsTests {
-    private let now = Date(timeIntervalSince1970: 1_000_000)
+    let now = Date(timeIntervalSince1970: 1_000_000)
     private let line6 = TransitLine(mode: .metro, name: "6", stopIds: ["IDFM:10", "IDFM:11"])
     private let westQuay = "STIF:StopPoint:Q:10:"
     private let eastQuay = "STIF:StopPoint:Q:11:"
-    private let rerB = TransitLine(mode: .rer, name: "B", stopIds: ["IDFM:monomodalStopPlace:20"])
+    let rerB = TransitLine(mode: .rer, name: "B", stopIds: ["IDFM:monomodalStopPlace:20"])
 
-    private func station(_ name: String, _ lines: [TransitLine]) -> Station {
+    func station(_ name: String, _ lines: [TransitLine]) -> Station {
         Station(id: name, name: name, coordinate: Coordinate(48.85, 2.35), lines: lines)
     }
 
-    private func time(inMinutes minutes: Double) -> Date {
+    func time(inMinutes minutes: Double) -> Date {
         now.addingTimeInterval(minutes * 60)
     }
 
-    private func train(
+    func train(
         _ line: TransitLine,
         to destination: String,
         inMinutes minutes: Double,
@@ -26,7 +26,7 @@ struct LineDirectionsTests {
         Departure(line: line, destination: destination, time: time(inMinutes: minutes), quayRef: quay)
     }
 
-    private func directions(
+    func directions(
         of line: TransitLine,
         at stationName: String,
         _ departures: [Departure]
@@ -44,6 +44,7 @@ struct LineDirectionsTests {
             LineDirection(label: "Charles de Gaulle - Étoile", times: [time(inMinutes: 4)]),
             LineDirection(label: "Nation", times: [time(inMinutes: 2)])
         ])
+        #expect(result.allSatisfy { !$0.showsEachDestination })
     }
 
     @Test func showsNoTrainsForADirectionWithoutTrains() {
@@ -62,9 +63,12 @@ struct LineDirectionsTests {
         ])
 
         #expect(result == [
-            LineDirection(label: "Charles de Gaulle - Étoile", times: [time(inMinutes: 1)]),
+            LineDirection(label: "Charles de Gaulle - Étoile", trains: [
+                LineDirection.Train(time: time(inMinutes: 1), destination: "Trocadéro")
+            ]),
             LineDirection(label: "Nation", times: [time(inMinutes: 2)])
         ])
+        #expect(result[0].showsEachDestination)
     }
 
     @Test func showsTrainsOfAnUnknownDirectionUnderTheirDestination() {
@@ -100,7 +104,10 @@ struct LineDirectionsTests {
         ])
 
         #expect(result == [
-            LineDirection(label: "Charles de Gaulle - Étoile", times: [time(inMinutes: 1), time(inMinutes: 3)])
+            LineDirection(label: "Charles de Gaulle - Étoile", trains: [
+                LineDirection.Train(time: time(inMinutes: 1), destination: "Trocadéro"),
+                LineDirection.Train(time: time(inMinutes: 3), destination: "Charles de Gaulle - Étoile")
+            ])
         ])
     }
 

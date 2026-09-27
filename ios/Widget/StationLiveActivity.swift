@@ -103,33 +103,70 @@ private struct DirectionRow: View {
     let isStale: Bool
 
     var body: some View {
+        if direction.showsEachDestination && !isStale {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(direction.trains.enumerated()), id: \.offset) { index, train in
+                    TrainRow(train: train, isNext: index == 0)
+                }
+            }
+        } else {
+            HStack {
+                Image(systemName: "arrow.right")
+                    .font(.caption)
+                DirectionName(text: direction.label)
+                    .font(.subheadline)
+                Spacer(minLength: 8)
+                if direction.times.isEmpty {
+                    Text("No trains")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.secondary)
+                        .layoutPriority(1)
+                } else if !isStale {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        WaitingTime(time: direction.times[0])
+                            .font(.headline)
+                        if direction.times.count > 1 {
+                            WaitingTime(time: direction.times[1])
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(minWidth: Self.minimumTimeWidth, alignment: .trailing)
+                }
+            }
+        }
+    }
+}
+
+private struct TrainRow: View {
+    let train: LineDirection.Train
+    let isNext: Bool
+
+    var body: some View {
         HStack {
             Image(systemName: "arrow.right")
                 .font(.caption)
-            Text(direction.label)
-                .font(.subheadline)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .layoutPriority(1)
+                .opacity(isNext ? 1 : 0)
+            DirectionName(text: train.destination)
+                .font(isNext ? .subheadline : .caption)
+                .foregroundStyle(isNext ? .primary : .secondary)
             Spacer(minLength: 8)
-            if direction.times.isEmpty {
-                Text("No trains")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.secondary)
-                    .layoutPriority(1)
-            } else if !isStale {
-                VStack(alignment: .trailing, spacing: 0) {
-                    WaitingTime(time: direction.times[0])
-                        .font(.headline)
-                    if direction.times.count > 1 {
-                        WaitingTime(time: direction.times[1])
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(minWidth: Self.minimumTimeWidth, alignment: .trailing)
-            }
+            WaitingTime(time: train.time)
+                .font(isNext ? .headline : .caption2)
+                .foregroundStyle(isNext ? .primary : .secondary)
+                .frame(minWidth: DirectionRow.minimumTimeWidth, alignment: .trailing)
         }
+    }
+}
+
+private struct DirectionName: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .layoutPriority(1)
     }
 }
 
@@ -195,6 +232,20 @@ private extension TransitLine {
         trains: .directions(line: TransitLine(mode: .metro, name: "12"), [
             LineDirection(label: "Mairie d'Aubervilliers", times: []),
             LineDirection(label: "Mairie d'Issy", times: [.now.addingTimeInterval(240)])
+        ]),
+        updatedAt: .now
+    )
+    StationActivityAttributes.ContentState(
+        stationName: "Place de Clichy",
+        trains: .directions(line: TransitLine(mode: .metro, name: "13"), [
+            LineDirection(label: "Saint-Denis - Université / Asnières - Gennevilliers - Les Courtilles", trains: [
+                LineDirection.Train(
+                    time: .now.addingTimeInterval(60),
+                    destination: "Asnières - Gennevilliers - Les Courtilles"
+                ),
+                LineDirection.Train(time: .now.addingTimeInterval(300), destination: "Saint-Denis - Université")
+            ]),
+            LineDirection(label: "Châtillon - Montrouge", times: [.now.addingTimeInterval(120)])
         ]),
         updatedAt: .now
     )
