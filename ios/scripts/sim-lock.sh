@@ -11,6 +11,7 @@ scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/../.." && pwd)
 simulator="$scripts/simulator.sh"
 watch_seconds=${RATP_SIM_WATCH_SECONDS:-10}
+watcher_version=1
 held_slots=
 
 case "$slots" in
@@ -59,7 +60,7 @@ is_stale() {
     pid=$(holder pid)
     udid=$(holder udid)
     if [ -n "$pid" ]; then
-        ! kill -0 "$pid" 2> /dev/null
+        ! kill -0 "$pid" 2> /dev/null && [ "$(holder pid)" = "$pid" ]
     elif [ -n "$udid" ]; then
         [ ! -d "$(holder worktree)" ] || ! is_booted "$udid"
     else
@@ -143,15 +144,25 @@ in_held_job() {
     return 1
 }
 
-watcher_is_running() {
-    watcher_pid=$(cat "$watcher" 2> /dev/null || true)
-    [ -n "$watcher_pid" ] && ps -p "$watcher_pid" -o command= 2> /dev/null | grep -qF "sim-lock.sh watch"
+keeps_running_watcher() {
+    running_pid=$(cat "$1" 2> /dev/null || true)
+    [ -n "$running_pid" ] || return 1
+    running_command=$(ps -p "$running_pid" -o command= 2> /dev/null | grep -F "sim-lock.sh watch") || return 1
+    running_version=$(printf '%s\n' "$running_command" | sed -n -E 's/.*sim-lock\.sh watch ([0-9]+).*/\1/p')
+    if [ "${running_version:-0}" -ge "$watcher_version" ]; then
+        return 0
+    fi
+    kill "$running_pid" 2> /dev/null || true
+    return 1
 }
 
 start_watcher() {
-    if ! watcher_is_running; then
-        perl -MPOSIX -e 'setsid(); exec @ARGV' "$scripts/sim-lock.sh" watch < /dev/null > /dev/null 2>&1 &
+    if keeps_running_watcher "$watcher"; then
+        return 0
     fi
+    keeps_running_watcher "$base_lock.watcher" || true
+    perl -MPOSIX -e 'setsid(); exec @ARGV' "$scripts/sim-lock.sh" watch "$watcher_version" < /dev/null > /dev/null 2>&1 &
+    echo "$!" > "$watcher"
 }
 
 cpu_idle_percent() {
@@ -285,7 +296,7 @@ shut_down_if_idle() {
 watch() {
     echo "$$" > "$watcher"
     trap 'if [ "$(cat "$watcher" 2> /dev/null)" = "$$" ]; then rm -f "$watcher"; fi' EXIT
-    while :; do
+    while [ -e "$simulator" ]; do
         active=
         for candidate in $(all_slots); do
             use_slot "$candidate"
@@ -379,6 +390,9 @@ case "$command" in
         fi
         ;;
     watch)
+        if [ "${1:-}" != "$watcher_version" ]; then
+            exec "$scripts/sim-lock.sh" watch "$watcher_version"
+        fi
         watch
         ;;
     *)

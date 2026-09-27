@@ -12,12 +12,12 @@ export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_NAME
 
 mkdir "$state/idle-watcher"
 printf 'trap "kill \\$!; exit" TERM\nsleep 600 &\nwait\n' > "$state/idle-watcher/sim-lock.sh"
-(/bin/sh "$state/idle-watcher/sim-lock.sh" watch > /dev/null 2>&1 & echo $! > "$state/idle-watcher/pid")
+(/bin/sh "$state/idle-watcher/sim-lock.sh" watch "$(sed -n 's/^watcher_version=//p' "$scripts/sim-lock.sh")" > /dev/null 2>&1 & echo $! > "$state/idle-watcher/pid")
 idle_watcher=$(cat "$state/idle-watcher/pid")
 echo "$idle_watcher" > "$RATP_SIM_LOCK.slots-watcher"
 
 cleanup() {
-    kill "$idle_watcher" 2> /dev/null || true
+    kill "$idle_watcher" "$(cat "$RATP_SIM_LOCK.slots-watcher" 2> /dev/null)" 2> /dev/null || true
     rm -rf "$state"
 }
 trap cleanup EXIT

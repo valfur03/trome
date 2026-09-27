@@ -9,13 +9,25 @@ failures=0
 export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock"
 unset RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID || true
 
-mkdir "$state/idle-watcher"
-printf 'trap "kill \\$!; exit" TERM\nsleep 600 &\nwait\n' > "$state/idle-watcher/sim-lock.sh"
-(/bin/sh "$state/idle-watcher/sim-lock.sh" watch > /dev/null 2>&1 & echo $! > "$state/idle-watcher/pid")
-idle_watcher=$(cat "$state/idle-watcher/pid")
+version=$(sed -n 's/^watcher_version=//p' "$scripts/sim-lock.sh")
+
+fake_watcher() {
+    name=$1
+    shift
+    mkdir "$state/$name"
+    printf 'trap "kill \\$!; exit" TERM\nsleep 600 &\nwait\n' > "$state/$name/sim-lock.sh"
+    (/bin/sh "$state/$name/sim-lock.sh" watch "$@" > /dev/null 2>&1 & echo $! > "$state/$name/pid")
+    cat "$state/$name/pid"
+}
+
+idle_watcher=$(fake_watcher idle-watcher "$version")
 
 cleanup() {
-    kill "$idle_watcher" ${watcher:-} 2> /dev/null || true
+    kill ${watcher:-} ${started:-} 2> /dev/null || true
+    for fake in "$state"/*/pid; do
+        kill "$(cat "$fake")" 2> /dev/null || true
+    done
+    kill "$(cat "$RATP_SIM_LOCK.slots-watcher" 2> /dev/null)" 2> /dev/null || true
     rm -rf "$state"
 }
 trap cleanup EXIT
@@ -76,6 +88,36 @@ stop_watcher() {
     pretend_a_watcher_runs
 }
 
+is_running() {
+    if kill -0 "$1" 2> /dev/null; then echo running; else echo stopped; fi
+}
+
+wait_until_stopped() {
+    tries=0
+    while kill -0 "$1" 2> /dev/null && [ "$tries" -lt 20 ]; do
+        sleep 1
+        tries=$((tries + 1))
+    done
+}
+
+command_of_started_watcher() {
+    started=$(cat "$RATP_SIM_LOCK.slots-watcher")
+    tries=0
+    until ps -p "$started" -o command= | grep -qF "sim-lock.sh watch" || [ "$tries" -ge 5 ]; do
+        sleep 1
+        tries=$((tries + 1))
+    done
+    ps -p "$started" -o command= | sed 's/^[^ ]* //'
+}
+
+stop_started_watcher() {
+    started=$(cat "$RATP_SIM_LOCK.slots-watcher")
+    kill "$started" 2> /dev/null || true
+    wait_until_stopped "$started"
+    started=
+    pretend_a_watcher_runs
+}
+
 wait_until_booted() {
     tries=0
     while [ "$(booted)" != "$1" ] && [ "$tries" -lt 20 ]; do
@@ -129,6 +171,43 @@ EOF
 stop_watcher
 expect "the watcher keeps RATP-Shared booted for make e2e after make run SMALL=1 in the same folder" "$(ran joined)" "$default"
 expect "while a job uses RATP-Shared, the watcher shuts down the small Simulator that another tool boots" "$(ran job-others)" "$default"
+
+"$scripts/sim-lock.sh" job true
+expect "a job keeps a watcher of its own version" "$(is_running "$idle_watcher") $(cat "$RATP_SIM_LOCK.slots-watcher")" "running $idle_watcher"
+
+newer_watcher=$(fake_watcher newer-watcher $((version + 1)))
+echo "$newer_watcher" > "$RATP_SIM_LOCK.slots-watcher"
+"$scripts/sim-lock.sh" job true
+expect "a job keeps a watcher of newer scripts" "$(is_running "$newer_watcher") $(cat "$RATP_SIM_LOCK.slots-watcher")" "running $newer_watcher"
+kill "$newer_watcher"
+pretend_a_watcher_runs
+
+old_watcher=$(fake_watcher old-watcher)
+older_watcher=$(fake_watcher older-watcher)
+echo "$old_watcher" > "$RATP_SIM_LOCK.slots-watcher"
+echo "$older_watcher" > "$RATP_SIM_LOCK.watcher"
+RATP_SIM_WATCH_SECONDS=1 RATP_SIM_SIZE=small "$scripts/sim-lock.sh" open "$scripts/simulator.sh" boot > /dev/null
+wait_until_stopped "$old_watcher"
+wait_until_stopped "$older_watcher"
+expect "make run stops the watchers of old scripts" "$(is_running "$old_watcher") $(is_running "$older_watcher")" "stopped stopped"
+expect "make run starts a watcher of its own scripts in their place" "$(command_of_started_watcher)" "$scripts/sim-lock.sh watch $version"
+echo "RATP-Shared Booted" > "$state/device.$default"
+wait_until_booted "RATP-Shared-Small "
+expect "after an old watcher ran, the watcher shuts down RATP-Shared that another tool boots while make run SMALL=1 keeps the lock" "$(booted)" "RATP-Shared-Small "
+"$scripts/sim-lock.sh" free
+stop_started_watcher
+
+mkdir -p "$state/removed/ios"
+cp -R "$scripts" "$state/removed/ios/scripts"
+hold "$RATP_SIM_LOCK"
+RATP_SIM_WATCH_SECONDS=1 "$state/removed/ios/scripts/sim-lock.sh" watch > /dev/null 2>&1 &
+watcher=$!
+sleep 2
+rm -rf "$state/removed"
+wait_until_stopped "$watcher"
+expect "a watcher stops when its worktree is removed" "$(is_running "$watcher")" "stopped"
+stop_watcher
+rm -rf "$RATP_SIM_LOCK"
 
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null
 expect "a job keeps RATP-Shared booted after it ends" "$(booted)" "RATP-Shared "
