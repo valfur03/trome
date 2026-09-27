@@ -26,7 +26,7 @@ public struct AutoLiveActivityRules: Sendable {
     public static let arrivalRadiusMeters = 150.0
     public static let stopRadiusMeters = 250.0
     public static let defaultMaximumDuration: TimeInterval = 45 * 60
-    public static let maximumAccuracyMeters = 100.0
+    static let maximumAccuracyMeters = 100.0
     public static let maximumPositionAge: TimeInterval = 15
 
     public enum ArrivalResponse: Equatable, Sendable {
