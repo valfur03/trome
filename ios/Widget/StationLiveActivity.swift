@@ -268,11 +268,13 @@ private struct DirectionRow: View {
                     .font(.subheadline)
                 Spacer(minLength: 8)
                 if direction.times.isEmpty {
-                    Text(direction.nextTrainIsOverAnHourAway ? "In over 1 hour" : "No trains")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .layoutPriority(1)
+                    if !direction.nextTrainIsOverAnHourAway || !isStale {
+                        Text(direction.nextTrainIsOverAnHourAway ? "In over 1 hour" : "No trains")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .layoutPriority(1)
+                    }
                 } else if !isStale {
                     VStack(alignment: .trailing, spacing: 0) {
                         WaitingTime(time: direction.times[0])

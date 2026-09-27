@@ -35,6 +35,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
     public var firstIndex: Int
     public var soonestTrain: SoonestTrain?
     public var nextTrainIsOverAnHourAway: Bool
+    var nextTrainComesWithinTheHourAt: Date?
 
     public init(
         lines: [LineTrains],
@@ -50,7 +51,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
         self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
     }
 
-    init(showing lines: [LineTrains], from index: Int) {
+    init(showing lines: [LineTrains], from index: Int, laterTrainTime: Date? = nil) {
         let firstIndex = lines.indices.contains(index) ? index : 0
         var shown: [LineTrains] = []
         var rowCount = 0
@@ -76,14 +77,18 @@ public struct LinesPage: Codable, Hashable, Sendable {
             .flatMap { line in line.directions.compactMap(\.trains.first).map { (line: line.line, time: $0.time) } }
             .min { $0.time < $1.time }
             .map { SoonestTrain(line: $0.line, time: $0.time) }
+        let nextTrainIsOverAnHourAway = soonestTrain == nil
+            && lines.contains { $0.directions.contains(where: \.nextTrainIsOverAnHourAway) }
         self.init(
             lines: shown,
             allLines: lines.map(\.line),
             firstIndex: firstIndex,
             soonestTrain: soonestTrain,
-            nextTrainIsOverAnHourAway: soonestTrain == nil
-                && lines.contains { $0.directions.contains(where: \.nextTrainIsOverAnHourAway) }
+            nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway
         )
+        if nextTrainIsOverAnHourAway {
+            nextTrainComesWithinTheHourAt = laterTrainTime?.addingTimeInterval(-DepartureBoard.farthestTimeSeconds)
+        }
     }
 
     public var showsSeveralLines: Bool {

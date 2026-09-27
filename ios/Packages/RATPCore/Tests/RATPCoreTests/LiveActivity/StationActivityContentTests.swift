@@ -222,7 +222,19 @@ struct StationActivityContentTests {
         #expect(lines(of: content)[0].directions[0].nextTrainIsOverAnHourAway)
         #expect(lines(of: content)[0].directions[0].times.isEmpty)
         #expect(content.trains.linesPage?.nextTrainIsOverAnHourAway == true)
-        #expect(content.staleDate == nil)
+        #expect(content.staleDate == time(inMinutes: 3))
+    }
+
+    @Test func becomesStaleWhenTheFirstTrainMoreThanAnHourAwayComesWithinTheHour() {
+        let trains = board([
+            train(line12, to: "Mairie d'Issy", inMinutes: 75, from: southQuay),
+            train(line2, to: "Nation", inMinutes: 64, from: "STIF:StopPoint:Q:3:")
+        ])
+
+        let content = ContentState(station: station, trains: trains, now: now)
+
+        #expect(content.trains.linesPage?.nextTrainIsOverAnHourAway == true)
+        #expect(content.staleDate == time(inMinutes: 4))
     }
 
     @Test func becomesStaleWhenTheSoonestTrainOfAnyLineLeaves() {

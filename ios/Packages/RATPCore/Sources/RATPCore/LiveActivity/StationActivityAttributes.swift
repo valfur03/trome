@@ -38,7 +38,7 @@ extension StationActivityAttributes.ContentState {
         case .loading:
             updatedAt.addingTimeInterval(Self.loadingTimeout)
         case .lines(let page):
-            page.soonestTrain?.time
+            page.soonestTrain?.time ?? page.nextTrainComesWithinTheHourAt
         case .noData:
             nil
         }
@@ -70,7 +70,11 @@ extension StationActivityAttributes.Trains {
             }
             self = lines.allSatisfy(\.directions.isEmpty)
                 ? .noData
-                : .lines(LinesPage(showing: lines, from: firstLineIndex))
+                : .lines(LinesPage(
+                    showing: lines,
+                    from: firstLineIndex,
+                    laterTrainTime: board.laterDepartures.first?.time
+                ))
         }
     }
 }
