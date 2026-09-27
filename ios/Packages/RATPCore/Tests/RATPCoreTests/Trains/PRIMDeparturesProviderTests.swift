@@ -26,9 +26,18 @@ final class StubHTTPClient: HTTPClient {
 }
 
 struct PRIMDeparturesProviderTests {
-    private let line12 = TransitLine(mode: .metro, name: "12", stopIds: ["IDFM:22059", "IDFM:463116"])
-    private var abbesses: Station {
+    let line12 = TransitLine(
+        mode: .metro,
+        name: "12",
+        stopIds: ["IDFM:22059", "IDFM:463116"],
+        stopAreaIds: ["IDFM:monomodalStopPlace:42155"]
+    )
+    let line12ByQuay = TransitLine(mode: .metro, name: "12", stopIds: ["IDFM:22059", "IDFM:463116"])
+    var abbesses: Station {
         Station(id: "IDFM:22059", name: "Abbesses", coordinate: Coordinate(48.884388, 2.338381), lines: [line12])
+    }
+    var abbessesByQuay: Station {
+        Station(id: "IDFM:22059", name: "Abbesses", coordinate: Coordinate(48.884388, 2.338381), lines: [line12ByQuay])
     }
     private let chateletLesHalles = Station(
         id: "IDFM:monomodalStopPlace:45102",
@@ -40,28 +49,36 @@ struct PRIMDeparturesProviderTests {
         ]
     )
 
-    private func provider(_ answer: @escaping StubHTTPClient.Answer) -> (PRIMDeparturesProvider, StubHTTPClient) {
+    func provider(_ answer: @escaping StubHTTPClient.Answer) -> (PRIMDeparturesProvider, StubHTTPClient) {
         let client = StubHTTPClient(answer: answer)
         return (PRIMDeparturesProvider(apiKey: "test-key", httpClient: client), client)
     }
 
-    private func monitoringRef(of request: URLRequest) -> String? {
+    func monitoringRef(of request: URLRequest) -> String? {
         URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?
             .queryItems?.first { $0.name == "MonitoringRef" }?.value
     }
 
-    @Test func asksForEachStopOfTheStationWithTheKey() async throws {
+    @Test func asksOnceForTheStopAreaOfAMetroStationWithTheKey() async throws {
         let (provider, client) = provider { _ in (try Fixture.data("stop-monitoring-empty"), 200) }
 
         _ = try await provider.departures(at: [abbesses])
+
+        #expect(client.requests.compactMap(monitoringRef) == ["STIF:StopArea:SP:42155:"])
+        #expect(client.requests.allSatisfy { $0.value(forHTTPHeaderField: "apikey") == "test-key" })
+        let endpoint = "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?"
+        #expect(client.requests.allSatisfy { $0.url?.absoluteString.hasPrefix(endpoint) == true })
+    }
+
+    @Test func asksForEachQuayOfAMetroLineWithoutAStopArea() async throws {
+        let (provider, client) = provider { _ in (try Fixture.data("stop-monitoring-empty"), 200) }
+
+        _ = try await provider.departures(at: [abbessesByQuay])
 
         #expect(Set(client.requests.compactMap(monitoringRef)) == [
             "STIF:StopPoint:Q:22059:",
             "STIF:StopPoint:Q:463116:"
         ])
-        #expect(client.requests.allSatisfy { $0.value(forHTTPHeaderField: "apikey") == "test-key" })
-        let endpoint = "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?"
-        #expect(client.requests.allSatisfy { $0.url?.absoluteString.hasPrefix(endpoint) == true })
     }
 
     @Test func asksOnlyOnceForAStopSharedByTwoLines() async throws {
@@ -79,8 +96,7 @@ struct PRIMDeparturesProviderTests {
 
         #expect(Set(client.requests.compactMap(monitoringRef)) == [
             "STIF:StopArea:SP:45102:",
-            "STIF:StopPoint:Q:22059:",
-            "STIF:StopPoint:Q:463116:"
+            "STIF:StopArea:SP:42155:"
         ])
     }
 
@@ -126,37 +142,22 @@ struct PRIMDeparturesProviderTests {
             return (try Fixture.data("stop-monitoring-empty"), 200)
         }
 
-        let departures = try await provider.departures(at: [abbesses])
+        let departures = try await provider.departures(at: [abbessesByQuay])
 
         #expect(departures == [
             Departure(
-                line: line12,
+                line: line12ByQuay,
                 destination: "Mairie d'Issy",
                 time: Fixture.date("2026-09-26T10:02:30Z"),
                 quayRef: "STIF:StopPoint:Q:463116:"
             ),
             Departure(
-                line: line12,
+                line: line12ByQuay,
                 destination: "Mairie d'Issy",
                 time: Fixture.date("2026-09-26T10:07:00Z"),
                 quayRef: "STIF:StopPoint:Q:463116:"
             )
         ])
-    }
-
-    @Test func tellsNoQuayForTheTrainsOfAStopArea() async throws {
-        let (provider, _) = provider { _ in (try Fixture.data("stop-monitoring-abbesses"), 200) }
-        let rerStation = Station(
-            id: "rer",
-            name: "Somewhere",
-            coordinate: Coordinate(48.86, 2.34),
-            lines: [TransitLine(mode: .metro, name: "12", stopIds: ["IDFM:monomodalStopPlace:45102"])]
-        )
-
-        let departures = try await provider.departures(at: [rerStation])
-
-        #expect(!departures.isEmpty)
-        #expect(departures.allSatisfy { $0.quayRef == nil })
     }
 
     @Test func tellsTheQuayAndTheDirectionOfEachTrainOfAStopArea() async throws {
@@ -218,7 +219,7 @@ struct PRIMDeparturesProviderTests {
             return (Data(), 500)
         }
 
-        #expect(try await provider.departures(at: [abbesses]).count == 2)
+        #expect(try await provider.departures(at: [abbessesByQuay]).count == 2)
     }
 
     @Test(arguments: [

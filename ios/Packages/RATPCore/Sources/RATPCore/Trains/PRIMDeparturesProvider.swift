@@ -23,19 +23,19 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         self.httpClient = httpClient
     }
 
+    struct StopRequest: Equatable {
+        let monitoringRef: String
+        var lineCodes: Set<String>
+    }
+
     public func departures(at stations: [Station]) async throws -> [Departure] {
-        let monitoringRefs = Self.monitoringRefs(for: stations)
+        let stopRequests = Self.stopRequests(for: stations)
         let results = await withTaskGroup(of: Result<[MonitoredVisit], any Error>.self) { group in
-            for monitoringRef in monitoringRefs {
+            for stopRequest in stopRequests {
                 group.addTask {
                     do {
-                        let isQuay = PRIMStopReference.isQuay(monitoringRef)
-                        return .success(try await visits(at: monitoringRef).map { visit in
-                            var visit = visit
-                            if isQuay {
-                                visit.quayRef = monitoringRef
-                            }
-                            return visit
+                        return .success(try await visits(at: stopRequest.monitoringRef).compactMap {
+                            Self.visit($0, askedBy: stopRequest)
                         })
                     } catch {
                         return .failure(error)
@@ -57,13 +57,36 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         return departures
     }
 
-    static func monitoringRefs(for stations: [Station]) -> [String] {
-        var seen: Set<String> = []
-        return stations
-            .flatMap(\.lines)
-            .flatMap(\.stopIds)
-            .compactMap(PRIMStopReference.monitoringRef(forStopId:))
-            .filter { seen.insert($0).inserted }
+    static func stopRequests(for stations: [Station]) -> [StopRequest] {
+        var stopRequests: [StopRequest] = []
+        for line in stations.flatMap(\.lines) {
+            guard let lineCode = line.primLineCode else { continue }
+            for monitoringRef in PRIMStopReference.monitoringRefs(of: line) {
+                if let index = stopRequests.firstIndex(where: { $0.monitoringRef == monitoringRef }) {
+                    stopRequests[index].lineCodes.insert(lineCode)
+                } else {
+                    stopRequests.append(StopRequest(monitoringRef: monitoringRef, lineCodes: [lineCode]))
+                }
+            }
+        }
+        return stopRequests
+    }
+
+    static func visit(_ visit: MonitoredVisit, askedBy stopRequest: StopRequest) -> MonitoredVisit? {
+        guard let lineCode = PRIMStopReference.lineCode(fromLineRef: visit.lineRef),
+              stopRequest.lineCodes.contains(lineCode)
+        else {
+            return nil
+        }
+        var visit = visit
+        if PRIMStopReference.isQuay(stopRequest.monitoringRef) {
+            visit.quayRef = stopRequest.monitoringRef
+        } else if visit.quayRef == nil,
+                  let monitoringRef = visit.monitoringRef,
+                  PRIMStopReference.isQuay(monitoringRef) {
+            visit.quayRef = monitoringRef
+        }
+        return visit
     }
 
     static func departures(from visits: [MonitoredVisit], at stations: [Station]) -> [Departure] {

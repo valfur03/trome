@@ -11,6 +11,10 @@ HUBS_URL = (
     DATASETS_URL
     + "relations/exports/json?select=pdeid,zdaid,arrid&where=pdeid%20is%20not%20null"
 )
+METRO_STOP_AREAS_URL = (
+    DATASETS_URL
+    + "arrets/exports/json?select=arrid,zdaid&where=arrtype%3D%22metro%22"
+)
 STOP_AREA_PREFIX = "IDFM:monomodalStopPlace:"
 OUTPUT = (
     Path(__file__).resolve().parent.parent
@@ -108,6 +112,23 @@ def add_hub_ids(stations, hubs_by_stop_id):
             station.pop("hubId", None)
 
 
+def stop_area_ids_by_quay_id(quays):
+    return {
+        "IDFM:" + quay["arrid"]: STOP_AREA_PREFIX + quay["zdaid"]
+        for quay in quays
+        if quay.get("arrid") and quay.get("zdaid")
+    }
+
+
+def add_stop_area_ids(stations, stop_areas_by_quay_id):
+    for station in stations:
+        for line in station["lines"]:
+            if line["mode"] != "metro":
+                continue
+            if all(stop_id in stop_areas_by_quay_id for stop_id in line["stopIds"]):
+                line["stopAreaIds"] = sorted({stop_areas_by_quay_id[stop_id] for stop_id in line["stopIds"]})
+
+
 def build_station(rows):
     lines = {}
     for row in rows:
@@ -144,6 +165,7 @@ def main():
     ]
     stations.sort(key=lambda station: (station["name"], station["id"]))
     add_hub_ids(stations, hub_ids_by_stop_id(download(HUBS_URL)))
+    add_stop_area_ids(stations, stop_area_ids_by_quay_id(download(METRO_STOP_AREAS_URL)))
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT.open("w", encoding="utf-8") as output:

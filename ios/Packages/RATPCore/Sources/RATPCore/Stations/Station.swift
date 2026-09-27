@@ -9,11 +9,21 @@ public struct TransitLine: Codable, Hashable, Sendable {
     public var mode: TransitMode
     public var name: String
     public var stopIds: [String]
+    public var stopAreaIds: [String]
 
-    public init(mode: TransitMode, name: String, stopIds: [String] = []) {
+    public init(mode: TransitMode, name: String, stopIds: [String] = [], stopAreaIds: [String] = []) {
         self.mode = mode
         self.name = name
         self.stopIds = stopIds
+        self.stopAreaIds = stopAreaIds
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        mode = try container.decode(TransitMode.self, forKey: .mode)
+        name = try container.decode(String.self, forKey: .name)
+        stopIds = try container.decode([String].self, forKey: .stopIds)
+        stopAreaIds = try container.decodeIfPresent([String].self, forKey: .stopAreaIds) ?? []
     }
 
     public var displayName: String {

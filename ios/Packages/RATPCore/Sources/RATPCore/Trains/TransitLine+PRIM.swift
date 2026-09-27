@@ -47,6 +47,10 @@ enum PRIMStopReference {
         return nil
     }
 
+    static func monitoringRefs(of line: TransitLine) -> [String] {
+        (line.stopAreaIds.isEmpty ? line.stopIds : line.stopAreaIds).compactMap(monitoringRef(forStopId:))
+    }
+
     static func isQuay(_ monitoringRef: String) -> Bool {
         monitoringRef.hasPrefix(quayPrefix)
     }
