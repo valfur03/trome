@@ -146,8 +146,7 @@ run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
 
 switch-language:
-	@$(SIM_LOCK) session || { echo "No 'make run' of this folder keeps the Simulator. Run 'make run LANGUAGE=$(LANGUAGE)' instead." >&2; exit 1; }
-	@$(SIM_LOCK) open $(SIMULATOR) switch-language "$(APP_PATH)"
+	@$(SIM_LOCK) reopen $(SIMULATOR) switch-language "$(APP_PATH)"
 
 e2e: project
 	@for test in $(ONLY); do \

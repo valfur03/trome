@@ -137,7 +137,13 @@ small=$("$scripts/simulator.sh" booted | grep -vxF "$default")
 expect "make run SMALL=1 keeps RATP-Shared booted and boots the small Simulator" "$(booted)" "RATP-Shared RATP-Shared-Small "
 expect "the small Simulator is an iPhone SE" "$(cat "$state/type.$small")" "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation"
 expect "the lock keeps the small Simulator" "$(cat "$RATP_SIM_LOCK/udid")" "$small"
-expect "sim-lock.sh session succeeds while this folder keeps the Simulator" "$("$scripts/sim-lock.sh" session && echo session || echo none)" "session"
+mkdir -p "$state/RATPActivity.app"
+/usr/libexec/PlistBuddy -c 'Add CFBundleIdentifier string com.example.RATPActivity' "$state/RATPActivity.app/Info.plist" > /dev/null
+echo com.example.RATPActivity > "$state/apps.$small"
+RATP_SIM_LANGUAGE=en "$scripts/sim-lock.sh" reopen "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null
+expect "switch-language after make run SMALL=1 keeps only the small Simulator booted" "$(booted)" "RATP-Shared-Small "
+expect "switch-language after make run SMALL=1 opens the app again on the small Simulator" "$(cat "$state/launched.$small" 2> /dev/null || true)" "com.example.RATPActivity"
+expect "the lock keeps the small Simulator after switch-language" "$(cat "$RATP_SIM_LOCK/udid") $(cat "$RATP_SIM_LOCK/size")" "$small small"
 
 "$scripts/sim-lock.sh" open sh -c '"$1" boot && kill -0 "$(cat "$RATP_SIM_LOCK/pid")" && echo held > "$FAKE_SIM_STATE/switch"' \
     sh "$scripts/simulator.sh" > /dev/null
@@ -268,10 +274,8 @@ expect "RATP_SIM_LANGUAGE=fr sets the Simulator to French before SpringBoard res
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job sets the Simulator back to English by default" "$(language_at_restart)" "en en_US"
 expect "an unknown language fails" "$(RATP_SIM_LANGUAGE=de "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || echo fails)" "fails"
-mkdir -p "$state/RATPActivity.app"
-/usr/libexec/PlistBuddy -c 'Add CFBundleIdentifier string com.example.RATPActivity' "$state/RATPActivity.app/Info.plist" > /dev/null
 : > "$state/apps.$default"
-expect "sim-lock.sh session fails when this folder keeps no Simulator" "$("$scripts/sim-lock.sh" session && echo session || echo none)" "none"
+expect "sim-lock.sh reopen fails when this folder keeps no Simulator" "$("$scripts/sim-lock.sh" reopen true > /dev/null 2>&1 && echo reopened || echo fails)" "fails"
 expect "switch-language fails when the app is not in the Simulator" "$(RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null 2>&1 && echo switched || echo fails)" "fails"
 echo com.example.RATPActivity > "$state/apps.$default"
 RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null

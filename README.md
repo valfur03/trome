@@ -85,7 +85,7 @@ make run LANGUAGE=fr
 ```
 
 - `make run` puts the Simulator in English, as before. `LANGUAGE=fr` puts it in French (language French, region France). The whole Simulator changes: the app, the Live Activity, the Dynamic Island, the notifications and the permission popups.
-- To switch the language of the open app, run `make switch-language LANGUAGE=en` (or `LANGUAGE=fr`) after `make run`. It changes the language of the Simulator, restarts the home screen (SpringBoard), and opens the app again. It keeps the app, its data and its permissions, so you do not set up the app again. The Live Activity shows in the new language. A notification that the app sent before the switch keeps its old language. It works only while this folder keeps the Simulator after `make run`.
+- To switch the language of the open app, run `make switch-language LANGUAGE=en` (or `LANGUAGE=fr`) after `make run`. It changes the language of the Simulator, restarts the home screen (SpringBoard), and opens the app again. It keeps the app, its data and its permissions, so you do not set up the app again. The Live Activity shows in the new language. A notification that the app sent before the switch keeps its old language. It works only while this folder keeps the Simulator after `make run`, and it uses the same Simulator (also after `make run SMALL=1`).
 - `make e2e` and `make docs-screenshots` always put the Simulator back in English: the tests and the docs screenshots are in English.
 - `LANGUAGE=` works only with `make run` and `make switch-language`.
 
