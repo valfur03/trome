@@ -167,6 +167,39 @@ extension LineDirectionsTests {
         #expect(moulinGalant.map(\.label) == ["Creil", "Malesherbes"])
     }
 
+    @Test func putsATrainToAStationBeforeTheForkInTheOtherDirectionOfARERBranch() {
+        let rerD = TransitLine(mode: .rer, name: "D", stopIds: ["IDFM:monomodalStopPlace:43090"])
+        let result = directions(of: rerD, at: "Boigneville", [
+            train(rerD, to: "Malesherbes", inMinutes: 23, from: rerQuay(1)),
+            train(rerD, to: "Paris Gare de Lyon", inMinutes: 47, from: rerQuay(2))
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Creil", trains: [rerTrain(47, to: "Paris Gare de Lyon")]),
+            LineDirection(label: "Malesherbes", trains: [rerTrain(23, to: "Malesherbes")])
+        ])
+        #expect(result.map(\.name) == ["Paris Gare de Lyon", "Malesherbes"])
+    }
+
+    @Test func neverGuessesTheDirectionOfATrainToAStationOfAnRERBranch() {
+        let rerC = TransitLine(mode: .rer, name: "C", stopIds: ["IDFM:monomodalStopPlace:43091"])
+        let result = directions(of: rerC, at: "Orly Ville", [
+            train(rerC, to: "Versailles Chantiers", inMinutes: 5, from: rerQuay(1)),
+            train(rerC, to: "Paris Austerlitz", inMinutes: 8, from: rerQuay(2))
+        ])
+
+        #expect(result.map(\.label) == [
+            "Pontoise / Versailles Château Rive Gauche / Saint-Quentin en Yvelines - Montigny-le-Bretonneux",
+            "Massy - Palaiseau",
+            "Versailles Chantiers"
+        ])
+        #expect(result.map(\.trains) == [
+            [rerTrain(8, to: "Paris Austerlitz")],
+            [],
+            [rerTrain(5, to: "Versailles Chantiers")]
+        ])
+    }
+
     @Test func showsOnlyTheOtherDirectionAtAnRERTerminus() {
         let result = directions(of: rerB, at: "Robinson", [
             train(rerB, to: "Aéroport Charles de Gaulle 2 (Terminal 2)", inMinutes: 3, from: rerQuay(1))

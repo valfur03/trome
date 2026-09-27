@@ -60,6 +60,9 @@ enum LineDirections {
         var groups = groups(of: trains, quays: quays).map { group in
             var group = group
             group.side = group.trains.lazy.compactMap { side(of: $0.destination, in: sides, ends: ends) }.first
+                ?? group.trains.lazy.compactMap {
+                    sideTowardTheTrunk(of: $0.destination, from: station.name, in: sides, ends: ends)
+                }.first
             return group
         }
         inferQuaySides(of: &groups, sideCount: sides.count)
@@ -164,13 +167,34 @@ enum LineDirections {
         sides.firstIndex { endName(of: destination, in: $0, ends: ends) != nil }
     }
 
-    private static func endName(of destination: String, in names: [String], ends: LineEnds) -> String? {
-        let key = StationCatalog.searchKey(destination)
-        return names.lazy
-            .flatMap { [$0] + ends.otherNames[$0, default: []] }
-            .first { candidate in
-                let nameKey = StationCatalog.searchKey(candidate)
-                return key == nameKey || key.hasPrefix(nameKey + " ")
+    private static func sideTowardTheTrunk(
+        of destination: String,
+        from stationName: String,
+        in sides: [[String]],
+        ends: LineEnds
+    ) -> Int? {
+        let stationKey = StationCatalog.searchKey(stationName)
+        let branchSides = ends.sides.indices.filter { index in
+            ends.sides[index].contains { end in
+                ends.branchStations[end, default: []].contains { StationCatalog.searchKey($0) == stationKey }
             }
+        }
+        let branchNames = ends.branchStations.values.flatMap { $0 }
+        guard branchSides.count == 1, let branchSide = branchSides.first,
+              !branchNames.contains(where: { isNamed(destination, $0) })
+        else { return nil }
+        return sides.firstIndex(of: ends.sides[1 - branchSide])
+    }
+
+    private static func endName(of destination: String, in names: [String], ends: LineEnds) -> String? {
+        names.lazy
+            .flatMap { [$0] + ends.otherNames[$0, default: []] }
+            .first { isNamed(destination, $0) }
+    }
+
+    private static func isNamed(_ destination: String, _ name: String) -> Bool {
+        let key = StationCatalog.searchKey(destination)
+        let nameKey = StationCatalog.searchKey(name)
+        return key == nameKey || key.hasPrefix(nameKey + " ")
     }
 }

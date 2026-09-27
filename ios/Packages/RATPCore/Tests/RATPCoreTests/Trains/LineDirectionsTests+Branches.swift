@@ -82,6 +82,18 @@ extension LineDirectionsTests {
         #expect(porteDItalie.map(\.label) == ["La Courneuve - 8 Mai 1945", "Mairie d'Ivry"])
     }
 
+    @Test func putsATrainToAStationBeforeTheForkInTheOtherDirectionOfABranch() {
+        let result = directions(of: line13, at: "Brochant", [
+            train(line13, to: "Gare Saint-Lazare", inMinutes: 2, from: quay(132)),
+            train(line13, to: "Asnières-Gennevilliers Les Courtilles", inMinutes: 4, from: quay(130))
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Asnières - Gennevilliers - Les Courtilles", times: [time(inMinutes: 4)]),
+            LineDirection(label: "Châtillon - Montrouge", trains: [branchTrain(2, to: "Gare Saint-Lazare")])
+        ])
+    }
+
     @Test func namesTheDestinationOfTrainsThatEndBeforeTheEndOfLine() {
         let result = directions(of: line13, at: "Place de Clichy", [
             train(line13, to: "Saint-Ouen", inMinutes: 2, from: quay(130)),
