@@ -17,8 +17,12 @@ final class FakePositionTests: E2ETestCase {
         XCTAssertTrue(waitFor(stationName))
         XCTAssertEqual(stationName.label, "Champ de Mars Tour Eiffel")
 
-        tap(app.navigationBars.buttons.firstMatch)
-        XCTAssertTrue(waitFor(app.staticTexts["fakePositionBanner"]))
+        goBack(in: app)
+        let banner = app.staticTexts["fakePositionBanner"]
+        for _ in 0..<3 where !banner.exists {
+            app.collectionViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(waitFor(banner))
 
         tap(app.buttons["testingTools"])
         tap(app.buttons["useRealGPS"])
