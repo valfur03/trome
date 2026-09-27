@@ -2,14 +2,14 @@
 import Foundation
 
 public struct FakeDeparturesProvider: DeparturesProvider {
-    public static let launchArgument = "--fake-trains"
+    static let launchArgument = "--fake-trains"
     static let firstTrainMinutes = 3
     static let minutesBetweenTrains = 4
     static let trainsPerSide = 4
 
     private let now: @Sendable () -> Date
 
-    public init(now: @escaping @Sendable () -> Date = { Date() }) {
+    init(now: @escaping @Sendable () -> Date = { Date() }) {
         self.now = now
     }
 
