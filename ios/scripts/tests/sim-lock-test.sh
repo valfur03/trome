@@ -141,8 +141,9 @@ mkdir -p "$state/RATPActivity.app"
 /usr/libexec/PlistBuddy -c 'Add CFBundleIdentifier string com.example.RATPActivity' "$state/RATPActivity.app/Info.plist" > /dev/null
 echo com.example.RATPActivity > "$state/apps.$small"
 RATP_SIM_LANGUAGE=en "$scripts/sim-lock.sh" reopen "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null
-expect "switch-language after make run SMALL=1 keeps only the small Simulator booted" "$(booted)" "RATP-Shared-Small "
+expect "switch-language after make run SMALL=1 keeps the small Simulator booted and does not shut down RATP-Shared" "$(booted)" "RATP-Shared RATP-Shared-Small "
 expect "switch-language after make run SMALL=1 opens the app again on the small Simulator" "$(cat "$state/launched.$small" 2> /dev/null || true)" "com.example.RATPActivity"
+expect "switch-language after make run SMALL=1 does not open the app on RATP-Shared" "$(cat "$state/launched.$default" 2> /dev/null || true)" ""
 expect "the lock keeps the small Simulator after switch-language" "$(cat "$RATP_SIM_LOCK/udid") $(cat "$RATP_SIM_LOCK/size")" "$small small"
 
 "$scripts/sim-lock.sh" open sh -c '"$1" boot && kill -0 "$(cat "$RATP_SIM_LOCK/pid")" && echo held > "$FAKE_SIM_STATE/switch"' \
