@@ -205,6 +205,7 @@ old_watcher=$(fake_watcher old-watcher)
 older_watcher=$(fake_watcher older-watcher)
 echo "$old_watcher" > "$RATP_SIM_LOCK.slots-watcher"
 echo "$older_watcher" > "$RATP_SIM_LOCK.watcher"
+echo "RATP-Shared Shutdown" > "$state/device.$default"
 RATP_SIM_WATCH_SECONDS=1 RATP_SIM_SIZE=small "$scripts/sim-lock.sh" open "$scripts/simulator.sh" boot > /dev/null
 wait_until_stopped "$old_watcher"
 wait_until_stopped "$older_watcher"
@@ -215,6 +216,7 @@ wait_until_booted "RATP-Shared-Small "
 expect "after an old watcher ran, the watcher shuts down RATP-Shared that another tool boots while make run SMALL=1 keeps the lock" "$(booted)" "RATP-Shared-Small "
 "$scripts/sim-lock.sh" free
 stop_started_watcher
+echo "RATP-Shared-Small Shutdown" > "$state/device.$small"
 
 mkdir -p "$state/removed/ios"
 cp -R "$scripts" "$state/removed/ios/scripts"

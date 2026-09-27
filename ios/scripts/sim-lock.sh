@@ -11,7 +11,7 @@ scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/../.." && pwd)
 simulator="$scripts/simulator.sh"
 watch_seconds=${RATP_SIM_WATCH_SECONDS:-10}
-watcher_version=1
+watcher_version=2
 held_slots=
 
 case "$slots" in
