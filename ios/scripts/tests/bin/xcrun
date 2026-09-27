@@ -48,7 +48,7 @@ case "$command" in
         case "$2 $3" in
             "defaults domains") paste -s -d ',' "$prefs" | sed 's/,/, /g' ;;
             "defaults delete")
-                grep -qxF "$4" "$prefs" || exit 1
+                [ -z "${FAKE_DEFAULTS_DELETE_FAILS:-}" ] && grep -qxF "$4" "$prefs" || exit 1
                 grep -vxF "$4" "$prefs" > "$prefs.new" || true
                 mv "$prefs.new" "$prefs"
                 ;;

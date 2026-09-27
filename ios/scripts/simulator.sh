@@ -98,7 +98,7 @@ uninstall_apps() {
         xcrun simctl uninstall "$1" "$installed_app"
     done
     for domain in $(left_preference_domains "$1"); do
-        xcrun simctl spawn "$1" defaults delete "$domain"
+        xcrun simctl spawn "$1" defaults delete "$domain" 2> /dev/null || true
     done
 }
 

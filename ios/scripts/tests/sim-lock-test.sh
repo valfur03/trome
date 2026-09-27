@@ -84,6 +84,8 @@ expect "the idle watcher shuts down every shared Simulator" "$(booted)" ""
 printf '%s\n' com.apple.Maps com.example.RATPActivity com.example.RATPActivityUITests.xctrunner com.other.App > "$state/prefs.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job deletes the saved settings that the app of an earlier job left on the Simulator" "$(tr '\n' ' ' < "$state/prefs.$default")" "com.apple.Maps com.other.App "
+echo com.example.RATPActivity >> "$state/prefs.$default"
+expect "a job goes on when the Simulator lists settings of the app that it cannot delete" "$(FAKE_DEFAULTS_DELETE_FAILS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset echo reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
 echo "RATP-task-1-abc Shutdown" > "$state/device.$old"
 "$scripts/simulator.sh" delete-old > /dev/null
