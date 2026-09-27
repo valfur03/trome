@@ -25,12 +25,8 @@ struct CoreLocationProvider: LocationProvider {
     }
 
     private static func event(from update: CLLocationUpdate) -> LocationEvent? {
-        if let location = update.location,
-           let coordinate = Coordinate(
-               latitude: location.coordinate.latitude,
-               longitude: location.coordinate.longitude
-           ) {
-            return .position(coordinate)
+        if let fix = update.location.flatMap(PositionFix.init) {
+            return .position(fix)
         }
         if update.authorizationDenied || update.authorizationDeniedGlobally || update.authorizationRestricted {
             return .problem(.permissionDenied)

@@ -17,7 +17,11 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     }
 
     func report(_ coordinate: Coordinate) {
-        continuation?.yield(.position(coordinate))
+        report(.exact(coordinate))
+    }
+
+    func report(_ fix: PositionFix) {
+        continuation?.yield(.position(fix))
     }
 
     func report(_ problem: LocationProblem) {

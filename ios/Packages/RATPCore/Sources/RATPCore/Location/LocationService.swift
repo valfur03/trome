@@ -4,8 +4,12 @@ import Observation
 @Observable
 public final class LocationService {
     public private(set) var source: LocationSource
-    public private(set) var position: Coordinate?
+    private(set) var fix: PositionFix?
     public private(set) var problem: LocationProblem?
+
+    public var position: Coordinate? {
+        fix?.coordinate
+    }
 
     public var allowsFakePosition: Bool {
         sourceStore != nil
@@ -43,7 +47,7 @@ public final class LocationService {
         }
         source = newSource
         sourceStore.save(newSource)
-        position = nil
+        fix = nil
         problem = nil
         if updatesTask != nil {
             stop()
@@ -77,12 +81,12 @@ public final class LocationService {
 
     private func handle(_ event: LocationEvent) {
         switch event {
-        case .position(let coordinate):
-            position = coordinate
+        case .position(let newFix):
+            fix = newFix
             problem = nil
         case .problem(let newProblem):
             if newProblem == .permissionDenied {
-                position = nil
+                fix = nil
             }
             problem = newProblem
         }

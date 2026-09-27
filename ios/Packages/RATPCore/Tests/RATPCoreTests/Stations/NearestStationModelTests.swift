@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import RATPCore
 
@@ -136,6 +137,16 @@ struct NearestStationModelTests {
         await waitForState(.noStationNearby, in: model)
 
         #expect(model.state == .noStationNearby)
+    }
+
+    @Test func showsTheStationWithARoughAndOldPosition() async {
+        let model = makeModel(MockLocationPermission(authorization: .authorized))
+
+        await model.refresh()
+        gps.report(PositionFix(coordinate: nearNation, accuracyMeters: 1_000, timestamp: .distantPast))
+        await waitForState(foundNation(from: nearNation), in: model)
+
+        #expect(model.state == foundNation(from: nearNation))
     }
 
     @Test func usesTheFakePosition() async {

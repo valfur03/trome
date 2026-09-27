@@ -78,19 +78,19 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         guard state == .satisfied || state == .unsatisfied else { return }
         let position = WatchedRegion.position(
             afterEnteringRegionId: state == .satisfied ? identifier : nil,
-            lastKnownPosition: freshLocation(),
+            lastKnownPosition: trustedPosition(),
             catalog: catalog
         )
         guard let position else { return }
         await onWake?(position)
     }
 
-    private func freshLocation() -> Coordinate? {
-        guard let location = manager.location,
-              -location.timestamp.timeIntervalSinceNow < Self.freshLocationAge else {
+    private func trustedPosition() -> Coordinate? {
+        guard let fix = manager.location.flatMap(PositionFix.init),
+              AutoLiveActivityRules.trusts(fix, now: .now, maximumAge: Self.freshLocationAge) else {
             return nil
         }
-        return Coordinate(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+        return fix.coordinate
     }
 }
 

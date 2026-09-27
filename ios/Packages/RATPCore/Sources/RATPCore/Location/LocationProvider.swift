@@ -4,7 +4,7 @@ public enum LocationProblem: Equatable, Sendable {
 }
 
 public enum LocationEvent: Equatable, Sendable {
-    case position(Coordinate)
+    case position(PositionFix)
     case problem(LocationProblem)
 }
 
@@ -21,7 +21,7 @@ public struct FakeLocationProvider: LocationProvider {
 
     public func events() -> AsyncStream<LocationEvent> {
         AsyncStream { continuation in
-            continuation.yield(.position(coordinate))
+            continuation.yield(.position(.exact(coordinate)))
         }
     }
 }

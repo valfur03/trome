@@ -23,7 +23,7 @@ final class StubArrivalNotifier: ArrivalNotifier {
 }
 
 @MainActor
-private final class StubRegionWatcher: StationRegionWatcher {
+final class StubRegionWatcher: StationRegionWatcher {
     private(set) var watched: [[WatchedRegion]] = []
 
     func watch(_ regions: [WatchedRegion]) async {
@@ -104,7 +104,7 @@ struct AutoLiveActivityModelTests {
     let gps = ControlledLocationProvider()
     let client = StubStationLiveActivityClient()
     let notifier = StubArrivalNotifier()
-    private let watcher = StubRegionWatcher()
+    let watcher = StubRegionWatcher()
     let keeper = StubLocationKeeper()
     private let permission = StubLocationPermission()
     let provider = StubDeparturesProvider()

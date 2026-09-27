@@ -189,4 +189,32 @@ struct AutoLiveActivityRulesTests {
 
         #expect(decision.actions == [.end])
     }
+
+    private func fix(accuracy: Double, secondsAgo: TimeInterval = 0) -> PositionFix {
+        PositionFix(
+            coordinate: Places.fiftyMetersFromA,
+            accuracyMeters: accuracy,
+            timestamp: now.addingTimeInterval(-secondsAgo)
+        )
+    }
+
+    @Test func trustsAPreciseAndRecentPosition() {
+        #expect(AutoLiveActivityRules.trusts(fix(accuracy: 100, secondsAgo: 15), now: now))
+    }
+
+    @Test(arguments: [100.1, 800, -1])
+    func doesNotTrustARoughOrInvalidPosition(accuracy: Double) {
+        #expect(AutoLiveActivityRules.trusts(fix(accuracy: accuracy), now: now) == false)
+    }
+
+    @Test func doesNotTrustAnOldPosition() {
+        #expect(AutoLiveActivityRules.trusts(fix(accuracy: 10, secondsAgo: 16), now: now) == false)
+    }
+
+    @Test func usesTheGivenMaximumAge() {
+        let oldFix = fix(accuracy: 10, secondsAgo: 120)
+
+        #expect(AutoLiveActivityRules.trusts(oldFix, now: now, maximumAge: 120))
+        #expect(AutoLiveActivityRules.trusts(oldFix, now: now, maximumAge: 119) == false)
+    }
 }

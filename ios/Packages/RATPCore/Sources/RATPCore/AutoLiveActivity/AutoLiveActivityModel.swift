@@ -85,8 +85,9 @@ public final class AutoLiveActivityModel {
     }
 
     public func startByHand(_ station: Station) async {
-        let position = inputs.locationService.position
-        let isNear = position.map { $0.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters }
+        let isNear = trustedPosition().map {
+            $0.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters
+        }
         state.shown = .init(stationId: station.id, startedAt: configuration.now(), hasBeenNear: isNear ?? false)
         await show(station)
         await refreshRegions(around: inputs.locationService.position)
@@ -110,7 +111,7 @@ public final class AutoLiveActivityModel {
 
     private func observePosition() {
         withObservationTracking {
-            _ = inputs.locationService.position
+            _ = inputs.locationService.fix
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.positionDidChange()
@@ -120,8 +121,8 @@ public final class AutoLiveActivityModel {
 
     private func positionDidChange() {
         observePosition()
-        guard let position = inputs.locationService.position else { return }
-        Task { await handle(position) }
+        guard let fix = inputs.locationService.fix else { return }
+        Task { await handle(fix) }
     }
 
     private func followPositionIfShowing() {
@@ -155,11 +156,6 @@ public final class AutoLiveActivityModel {
                 }
             }
         }
-    }
-
-    private func handle(_ position: Coordinate) async {
-        await evaluate(position: position)
-        await refreshRegions(around: position)
     }
 
     private func evaluate(position: Coordinate?) async {
@@ -278,6 +274,27 @@ public final class AutoLiveActivityModel {
 }
 
 private extension AutoLiveActivityModel {
+    func trustedPosition() -> Coordinate? {
+        guard let fix = inputs.locationService.fix,
+              AutoLiveActivityRules.trusts(fix, now: configuration.now()) else {
+            return nil
+        }
+        return fix.coordinate
+    }
+
+    func handle(_ fix: PositionFix) async {
+        guard AutoLiveActivityRules.trusts(fix, now: configuration.now()) else {
+            await refreshRegions(around: fix.coordinate)
+            return
+        }
+        await handle(fix.coordinate)
+    }
+
+    func handle(_ position: Coordinate) async {
+        await evaluate(position: position)
+        await refreshRegions(around: position)
+    }
+
     func askForNotificationsIfAllowed() async {
         guard !hasAskedForNotifications, inputs.permission.authorization == .authorized else { return }
         hasAskedForNotifications = true
