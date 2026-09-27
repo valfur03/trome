@@ -1,4 +1,4 @@
-DOCS_BASE ?= develop
+DOCS_BASE ?= main
 PORT ?= 4321
 
 .PHONY: help node-check docs-install docs docs-dev docs-stop docs-check docs-check-if-changed

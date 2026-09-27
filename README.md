@@ -30,7 +30,7 @@ The Xcode project is not in git. The file `ios/project.yml` describes it. If you
 | `make check` | The quality gate: lint, recommended settings check, key leak check, build, unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make e2e ONLY=FakePositionTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=FakePositionTests/testTesterCanFakeThePositionAndGoBackToTheRealGPS` runs one test. The class names are the file names in `ios/UITests/`. |
-| `make merge` | Merges the branch of this folder into `develop`, with the Simulator lock from start to end: rebase onto `develop`, `make check`, the full `make e2e`, then a fast-forward of `develop`. The CLAUDE.md explains it (section "Merge a task into develop"). |
+| `make merge` | Merges the branch of this folder into `main`, with the Simulator lock from start to end: rebase onto `main`, `make check`, the full `make e2e`, then a fast-forward of `main`. The manager runs it, after QA passed the task (see [Merge a task into main](#merge-a-task-into-main)). |
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
 | `make stations` | Downloads the metro and RER station list again (see below). |
 | `make clean` | Deletes the build folder and the Xcode project. |
@@ -265,7 +265,7 @@ The docs need Node 24 LTS. The file `.nvmrc` pins it. Install it one time with [
 
 The first docs command installs the packages in `docs/node_modules` (about 300 MB).
 
-`make check` runs `make docs-check` only when your branch changes files in `docs/` (compared with `develop`). So a change of the app only does not need Node.
+`make check` runs `make docs-check` only when your branch changes files in `docs/` (compared with `main`). So a change of the app only does not need Node.
 
 To write a page:
 
@@ -338,6 +338,23 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 - `make e2e` builds the tests before it takes the Simulator lock, so other jobs do not wait for the build. It runs the tests on the Simulator of its job (`ios/scripts/simulator.sh with-destination` adds its `-destination`).
 - `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock). It stops a test that runs longer than 5 minutes. When a test fails, it prints the file, the line, and the message of each failure. The full results are in `ios/.build/e2e.xcresult` (open it in Xcode).
 - Swift 6 language mode. Minimum iOS version: 18.0.
+
+### Merge a task into main
+
+`main` is always green. It holds only the tasks that passed review and QA. There is no other long-lived branch.
+
+1. A Software Engineer implements a task on its branch `task/<id>`, and another Software Engineer reviews it.
+2. The Software Engineer rebases the branch onto `main` and hands it over to QA. The Software Engineer never merges.
+3. QA tests the branch.
+4. When QA passed the task, the manager runs `make merge` in the worktree of the task. It takes the Simulator lock, rebases the branch onto the tip of `main`, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs or unit tests), then fast-forwards `main` to the rebased branch. When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`. When a step fails, `main` stays as it was, and the task goes back to its Software Engineer.
+
+Why:
+
+- **Merges queue one at a time.** A second `make merge` waits for the first one (a merge lock, `/tmp/ratp-merge.lock`), then for the Simulator lock. When its turn comes, `main` already has the first merge, so it rebases onto it. Its fast-forward is never refused because another merge landed during its run.
+- **A full E2E run is never repeated.** The full suite runs once for each task, on the exact commit that `main` gets. No other merge can land between the end of the run and the fast-forward.
+- **History stays linear.** `main` moves only by fast-forward. A merge is always a rebase, then a fast-forward: never a merge commit.
+
+The CLAUDE.md gives the details (section "Merge a task into main").
 
 ### No warnings
 

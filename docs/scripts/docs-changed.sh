@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-base=${1:-develop}
+base=${1:-main}
 cd "$(dirname "$0")/.."
 
 if ! merge_base=$(git merge-base HEAD "$base" 2> /dev/null); then

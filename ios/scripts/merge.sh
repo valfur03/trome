@@ -2,7 +2,7 @@
 set -eu
 
 scripts=$(cd "$(dirname "$0")" && pwd)
-target=develop
+target=main
 check_command=${RATP_MERGE_CHECK:-make check}
 e2e_command=${RATP_MERGE_E2E:-make e2e}
 merge_lock=${RATP_MERGE_LOCK:-/tmp/ratp-merge.lock}
@@ -22,12 +22,12 @@ in_rebase() {
 check_worktree() {
     branch=$(git symbolic-ref --short -q HEAD) || fail "HEAD is not on a branch. Check out the branch of the task."
     case "$branch" in
-        "$target" | main) fail "you are on '$branch'. Run it on the branch of the task." ;;
+        "$target") fail "you are on '$branch'. Run it on the branch of the task." ;;
     esac
     git rev-parse -q --verify "refs/heads/$target" > /dev/null || fail "there is no branch '$target'."
     ! in_rebase || fail "a rebase is in progress. Finish it (git rebase --continue) or stop it (git rebase --abort) first."
     [ -z "${ONLY:-}" ] || fail "ONLY works only with 'make e2e'. make merge always runs the full E2E suite."
-    [ -z "$(git status --porcelain)" ] || fail "the worktree has changes that are not committed. Commit them first, so the gate checks what develop gets."
+    [ -z "$(git status --porcelain)" ] || fail "the worktree has changes that are not committed. Commit them first, so the gate checks what $target gets."
     [ -n "$(git rev-list -n 1 "$target..HEAD")" ] || fail "'$branch' has no commit that '$target' does not have. There is nothing to merge."
 }
 
@@ -45,6 +45,25 @@ changes_app_code() {
 
 step() {
     echo "make merge: $1" >&2
+}
+
+target_worktree() {
+    git worktree list --porcelain | awk -v ref="refs/heads/$target" '
+        /^worktree / { path = substr($0, 10) }
+        $0 == "branch " ref { print path; exit }
+    '
+}
+
+fast_forward() {
+    checked_out=$(target_worktree)
+    if [ -z "$checked_out" ]; then
+        git update-ref -m "make merge: fast-forward to $branch" "refs/heads/$target" "$tested" "$old" \
+            || step_failed fast-forward "$target moved during the merge, outside 'make merge'."
+        return
+    fi
+    [ "$(git rev-parse "refs/heads/$target")" = "$old" ] || step_failed fast-forward "$target moved during the merge, outside 'make merge'."
+    git -C "$checked_out" merge --ff-only -q "$tested" \
+        || step_failed fast-forward "$target is checked out in $checked_out, and git could not update its files. Commit or stash the changes of that folder, then run 'make merge' again."
 }
 
 merge() {
@@ -65,8 +84,7 @@ merge() {
     step "4/4 fast-forward $target to $(git rev-parse --short "$tested")"
     [ "$(git rev-parse HEAD)" = "$tested" ] || step_failed fast-forward "HEAD moved during the merge."
     git merge-base --is-ancestor "$old" "$tested" || step_failed fast-forward "$branch does not start from $target."
-    git update-ref -m "make merge: fast-forward to $branch" "refs/heads/$target" "$tested" "$old" \
-        || step_failed fast-forward "$target moved during the merge, outside 'make merge'."
+    fast_forward
     echo "make merge: $target is now $(git rev-parse --short "$tested") ($branch)." >&2
 }
 
