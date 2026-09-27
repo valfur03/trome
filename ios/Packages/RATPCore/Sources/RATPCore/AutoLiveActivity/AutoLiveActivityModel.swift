@@ -79,9 +79,16 @@ public final class AutoLiveActivityModel {
         await openTappedStation()
     }
 
-    public func handleMonitoredPosition(_ position: Coordinate) async {
+    public func handleRegionEvent(enteredRegionId: String?, lastKnownFix: PositionFix?) async {
         guard inputs.locationService.source == .realGPS else { return }
-        await handle(position)
+        let fix = WatchedRegion.fix(
+            afterEnteringRegionId: enteredRegionId,
+            lastKnownFix: lastKnownFix,
+            now: configuration.now(),
+            catalog: catalog
+        )
+        guard let fix else { return }
+        await handle(fix, maximumAge: AutoLiveActivityRules.maximumMonitoredPositionAge)
     }
 
     public func startByHand(_ station: Station) async {
@@ -281,13 +288,13 @@ private extension AutoLiveActivityModel {
         return fix.coordinate
     }
 
-    func trusts(_ fix: PositionFix) -> Bool {
+    func trusts(_ fix: PositionFix, maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge) -> Bool {
         guard inputs.locationService.source == .realGPS else { return true }
-        return AutoLiveActivityRules.trusts(fix, now: configuration.now())
+        return AutoLiveActivityRules.trusts(fix, now: configuration.now(), maximumAge: maximumAge)
     }
 
-    func handle(_ fix: PositionFix) async {
-        guard trusts(fix) else {
+    func handle(_ fix: PositionFix, maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge) async {
+        guard trusts(fix, maximumAge: maximumAge) else {
             await refreshRegions(around: fix.coordinate)
             return
         }

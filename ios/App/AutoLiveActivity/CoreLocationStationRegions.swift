@@ -5,20 +5,14 @@ import RATPCore
 @MainActor
 final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     private static let monitorName = "RATPStationRegions"
-    private static let freshLocationAge: TimeInterval = 120
 
-    var onWake: (@MainActor (Coordinate) async -> Void)?
+    var onWake: (@MainActor (_ enteredRegionId: String?, _ lastKnownFix: PositionFix?) async -> Void)?
 
-    private let catalog: StationCatalog
     private let manager = CLLocationManager()
     private var session: CLServiceSession?
     private var monitorTask: Task<CLMonitor, Never>?
     private var eventsTask: Task<Void, Never>?
     private var watched: [String: WatchedRegion]?
-
-    init(catalog: StationCatalog) {
-        self.catalog = catalog
-    }
 
     func resume() async {
         _ = await startedMonitor()
@@ -76,21 +70,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
 
     private func handle(identifier: String, state: CLMonitor.Event.State) async {
         guard state == .satisfied || state == .unsatisfied else { return }
-        let position = WatchedRegion.position(
-            afterEnteringRegionId: state == .satisfied ? identifier : nil,
-            lastKnownPosition: trustedPosition(),
-            catalog: catalog
-        )
-        guard let position else { return }
-        await onWake?(position)
-    }
-
-    private func trustedPosition() -> Coordinate? {
-        guard let fix = manager.location.flatMap(PositionFix.init),
-              AutoLiveActivityRules.trusts(fix, now: .now, maximumAge: Self.freshLocationAge) else {
-            return nil
-        }
-        return fix.coordinate
+        await onWake?(state == .satisfied ? identifier : nil, manager.location.flatMap(PositionFix.init))
     }
 }
 

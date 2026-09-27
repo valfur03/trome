@@ -34,20 +34,24 @@ public struct WatchedRegion: Hashable, Sendable {
         return String(id.dropFirst(arrivalPrefix.count))
     }
 
-    public static func position(
+    static func fix(
         afterEnteringRegionId id: String?,
-        lastKnownPosition: Coordinate?,
+        lastKnownFix: PositionFix?,
+        now: Date,
         catalog: StationCatalog
-    ) -> Coordinate? {
+    ) -> PositionFix? {
+        let maximumAge = AutoLiveActivityRules.maximumMonitoredPositionAge
+        let recentFix = lastKnownFix.flatMap { now.timeIntervalSince($0.timestamp) <= maximumAge ? $0 : nil }
         guard let stationId = id.flatMap(arrivalStationId(inRegionId:)),
               let station = catalog.station(withId: stationId) else {
-            return lastKnownPosition
+            return recentFix
         }
-        if let lastKnownPosition,
-           lastKnownPosition.distance(to: station.coordinate) <= AutoLiveActivityRules.arrivalRadiusMeters {
-            return lastKnownPosition
+        if let recentFix,
+           AutoLiveActivityRules.trusts(recentFix, now: now, maximumAge: maximumAge),
+           recentFix.coordinate.distance(to: station.coordinate) <= AutoLiveActivityRules.arrivalRadiusMeters {
+            return recentFix
         }
-        return station.coordinate
+        return PositionFix(coordinate: station.coordinate, accuracyMeters: 0, timestamp: now)
     }
 }
 

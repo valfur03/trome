@@ -27,7 +27,8 @@ public struct AutoLiveActivityRules: Sendable {
     public static let stopRadiusMeters = 250.0
     public static let defaultMaximumDuration: TimeInterval = 45 * 60
     static let maximumAccuracyMeters = 100.0
-    public static let maximumPositionAge: TimeInterval = 15
+    static let maximumPositionAge: TimeInterval = 15
+    static let maximumMonitoredPositionAge: TimeInterval = 120
 
     public enum ArrivalResponse: Equatable, Sendable {
         case start
@@ -62,7 +63,7 @@ public struct AutoLiveActivityRules: Sendable {
         self.maximumDuration = maximumDuration
     }
 
-    public static func trusts(
+    static func trusts(
         _ fix: PositionFix,
         now: Date,
         maximumAge: TimeInterval = maximumPositionAge

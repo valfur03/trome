@@ -23,10 +23,10 @@ extension AutoLiveActivityModelTests {
 
         gps.report(Places.fiftyMetersFromA)
         await waitUntil { locationService.position == Places.fiftyMetersFromA }
-        await model.handleMonitoredPosition(Places.atB)
+        await wake(model, at: Places.atB)
         await model.setAppActive(true)
         gps.report(Places.fiftyMetersFromA)
-        await model.handleMonitoredPosition(Places.fiftyMetersFromA)
+        await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(notifier.notified.isEmpty)
         #expect(client.started.isEmpty)
@@ -35,10 +35,10 @@ extension AutoLiveActivityModelTests {
     @Test func notifiesAgainOnceTheSnoozeEnds() async {
         let model = makeModel()
         await model.snooze(for: .thirtyMinutes)
-        await model.handleMonitoredPosition(Places.fiftyMetersFromA)
+        await wake(model, at: Places.fiftyMetersFromA)
 
         clock.advance(by: 30 * 60)
-        await model.handleMonitoredPosition(Places.atB)
+        await wake(model, at: Places.atB)
 
         #expect(notifier.notified == [Places.stationB])
     }
@@ -47,9 +47,9 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         automaticMode.setOn(false)
 
-        await model.handleMonitoredPosition(Places.fiftyMetersFromA)
+        await wake(model, at: Places.fiftyMetersFromA)
         await model.setAppActive(true)
-        await model.handleMonitoredPosition(Places.atB)
+        await wake(model, at: Places.atB)
 
         #expect(notifier.notified.isEmpty)
         #expect(client.started.isEmpty)

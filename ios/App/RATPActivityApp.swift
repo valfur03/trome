@@ -31,7 +31,7 @@ struct RATPActivityApp: App {
         )
         let nextTrainsModel = NextTrainsModel(provider: Self.departuresProvider(primConfiguration))
         let liveActivityModel = StationLiveActivityModel(client: ActivityKitStationLiveActivityClient())
-        let regionWatcher = CoreLocationStationRegionWatcher(catalog: stationCatalog)
+        let regionWatcher = CoreLocationStationRegionWatcher()
         let automaticModeModel = AutomaticModeModel(store: AutomaticModeStore(storage: UserDefaults.standard))
         let autoLiveActivityModel = Self.makeAutoLiveActivityModel(
             catalog: stationCatalog,
@@ -125,8 +125,8 @@ struct RATPActivityApp: App {
             await autoLiveActivityModel?.notificationTapped(stationId: stationId)
         }
         UNUserNotificationCenter.current().delegate = notificationTapHandler
-        regionWatcher.onWake = { [weak autoLiveActivityModel] position in
-            await autoLiveActivityModel?.handleMonitoredPosition(position)
+        regionWatcher.onWake = { [weak autoLiveActivityModel] enteredRegionId, lastKnownFix in
+            await autoLiveActivityModel?.handleRegionEvent(enteredRegionId: enteredRegionId, lastKnownFix: lastKnownFix)
         }
         Task { await regionWatcher.resume() }
         return notificationTapHandler

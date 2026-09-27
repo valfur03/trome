@@ -163,6 +163,11 @@ struct AutoLiveActivityModelTests {
         }
     }
 
+    func wake(_ model: AutoLiveActivityModel, at position: Coordinate) async {
+        let fix = PositionFix(coordinate: position, accuracyMeters: 10, timestamp: clock.now)
+        await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: fix)
+    }
+
     func arrive(at position: Coordinate, in model: AutoLiveActivityModel) async {
         await model.setAppActive(true)
         gps.report(position)
@@ -348,7 +353,7 @@ struct AutoLiveActivityModelTests {
     @Test func notifiesAndWatchesTheStationsAroundAPositionFromRegionMonitoring() async {
         let model = makeModel()
 
-        await model.handleMonitoredPosition(Places.fiftyMetersFromA)
+        await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(notifier.notified == [Places.stationA])
         #expect(watcher.watched.last?.map(\.id) == ["arrival:a", "arrival:b", "stop:a", "refresh"])
@@ -360,7 +365,7 @@ struct AutoLiveActivityModelTests {
 
         locationService.use(.fake(Places.stationA.fakePosition))
         await waitUntil { client.isShowing }
-        await model.handleMonitoredPosition(Places.atB)
+        await wake(model, at: Places.atB)
 
         #expect(watcher.watched.last == [])
         #expect(model.shownStation == Places.stationA)

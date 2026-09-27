@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import RATPCore
 
@@ -61,36 +62,41 @@ struct StationRegionPlanTests {
         #expect(WatchedRegion.arrivalStationId(inRegionId: "refresh") == nil)
     }
 
-    @Test func trustsTheEnteredArrivalRegionWhenTheLastPositionIsOutsideIt() {
+    private let now = Date(timeIntervalSince1970: 1_000_000)
+
+    private func fix(at coordinate: Coordinate, accuracy: Double = 10, secondsAgo: TimeInterval = 0) -> PositionFix {
+        PositionFix(coordinate: coordinate, accuracyMeters: accuracy, timestamp: now.addingTimeInterval(-secondsAgo))
+    }
+
+    @Test func trustsTheEnteredArrivalRegionWhenTheLastPositionIsOutsideItOrRough() {
         let station = Station(id: "s", name: "S", coordinate: origin, lines: [])
         let catalog = StationCatalog(stations: [station])
         let insideTheArea = Coordinate(48.8505, 2.3500)
         let outsideTheArea = Coordinate(48.8520, 2.3500)
+        let fixAfterEntering = { (known: PositionFix?) in
+            WatchedRegion.fix(afterEnteringRegionId: "arrival:s", lastKnownFix: known, now: now, catalog: catalog)
+        }
+        let atTheStation = fix(at: origin, accuracy: 0)
 
-        let inside = WatchedRegion.position(
-            afterEnteringRegionId: "arrival:s", lastKnownPosition: insideTheArea, catalog: catalog
-        )
-        let outside = WatchedRegion.position(
-            afterEnteringRegionId: "arrival:s", lastKnownPosition: outsideTheArea, catalog: catalog
-        )
-        let unknown = WatchedRegion.position(
-            afterEnteringRegionId: "arrival:s", lastKnownPosition: nil, catalog: catalog
-        )
-
-        #expect(inside == insideTheArea)
-        #expect(outside == origin)
-        #expect(unknown == origin)
+        #expect(fixAfterEntering(fix(at: insideTheArea, secondsAgo: 120)) == fix(at: insideTheArea, secondsAgo: 120))
+        #expect(fixAfterEntering(fix(at: outsideTheArea)) == atTheStation)
+        #expect(fixAfterEntering(fix(at: insideTheArea, accuracy: 500)) == atTheStation)
+        #expect(fixAfterEntering(fix(at: insideTheArea, secondsAgo: 121)) == atTheStation)
+        #expect(fixAfterEntering(nil) == atTheStation)
     }
 
-    @Test func usesTheLastPositionForEveryOtherRegionEvent() {
+    @Test func usesTheLastRecentPositionForEveryOtherRegionEvent() {
         let catalog = StationCatalog(stations: [Station(id: "s", name: "S", coordinate: origin, lines: [])])
         let last = Coordinate(48.8600, 2.3500)
-        let position = { (id: String?, known: Coordinate?) in
-            WatchedRegion.position(afterEnteringRegionId: id, lastKnownPosition: known, catalog: catalog)
+        let fixAfter = { (id: String?, known: PositionFix?) in
+            WatchedRegion.fix(afterEnteringRegionId: id, lastKnownFix: known, now: now, catalog: catalog)
         }
 
-        #expect(position("refresh", last) == last)
-        #expect(position(nil, last) == last)
-        #expect(position(nil, nil) == nil)
+        let roughRecentFix = fix(at: last, accuracy: 500, secondsAgo: 120)
+
+        #expect(fixAfter("refresh", fix(at: last)) == fix(at: last))
+        #expect(fixAfter(nil, roughRecentFix) == roughRecentFix)
+        #expect(fixAfter(nil, fix(at: last, secondsAgo: 121)) == nil)
+        #expect(fixAfter(nil, nil) == nil)
     }
 }
