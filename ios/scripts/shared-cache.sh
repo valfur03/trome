@@ -32,12 +32,33 @@ is_alive() {
 }
 
 clearer_is_gone() {
-    for clearer in "$clearing"/*; do
+    for clearer in "$1"/*; do
         [ -e "$clearer" ] || break
         ! is_alive "$clearer"
         return
     done
-    [ -n "$(find "$clearing" -maxdepth 0 -mmin +1 2> /dev/null)" ]
+    [ -n "$(find "$1" -maxdepth 0 -mmin +1 2> /dev/null)" ]
+}
+
+remove_mark_of_gone_clearer() {
+    taken="$cache/.clearing.$$"
+    rm -rf "$taken"
+    mv "$clearing" "$taken" 2> /dev/null || return 0
+    if clearer_is_gone "$taken"; then
+        rm -rf "$taken"
+    elif mkdir "$clearing" 2> /dev/null; then
+        mv "$taken"/* "$clearing"/ 2> /dev/null || true
+        rm -rf "$taken"
+    else
+        rm -rf "$taken"
+    fi
+}
+
+prune_gone_users() {
+    for user in "$users"/*; do
+        [ -e "$user" ] || continue
+        is_alive "$user" || rm -f "$user"
+    done
 }
 
 register() {
@@ -48,8 +69,8 @@ register() {
             record "$users"
             [ -d "$clearing" ] || return 0
             rm -f "$users/$$"
-        elif clearer_is_gone; then
-            rm -rf "$clearing"
+        elif clearer_is_gone "$clearing"; then
+            remove_mark_of_gone_clearer
             continue
         fi
         if [ -z "$waiting" ]; then
@@ -62,41 +83,39 @@ register() {
 
 use() {
     [ $# -gt 0 ] || usage
-    trap 'rm -f "$users/$$"' EXIT
+    prune_gone_users 2> /dev/null || true
     register
-    "$@"
+    exec "$@"
 }
 
-builds_running() {
-    running=1
+running_builds() {
+    prune_gone_users
     for user in "$users"/*; do
-        [ -e "$user" ] || continue
-        if is_alive "$user"; then
-            running=0
-        else
-            rm -f "$user"
-        fi
+        [ ! -e "$user" ] || printf ' %s' "${user##*/}"
     done
-    return "$running"
+}
+
+release_mark() {
+    [ "$(cat "$clearing/$$" 2> /dev/null || true)" = "$(start_time $$)" ] && rm -rf "$clearing"
 }
 
 clear_cache() {
     mkdir -p "$cache"
     until mkdir "$clearing" 2> /dev/null; do
-        if clearer_is_gone; then
-            rm -rf "$clearing"
+        if clearer_is_gone "$clearing"; then
+            remove_mark_of_gone_clearer
         else
             echo "The shared build cache ($cache) is already being cleared" >&2
             exit 1
         fi
     done
-    trap 'rm -rf "$clearing"' EXIT
     record "$clearing"
+    trap 'release_mark || true' EXIT
     waiting=
-    while builds_running; do
-        if [ -z "$waiting" ]; then
-            echo "Waiting for the builds that use the shared build cache to end (new builds wait)" >&2
-            waiting=1
+    while builds=$(running_builds) && [ -n "$builds" ]; do
+        if [ "$waiting" != "$builds" ]; then
+            echo "Waiting for the builds that use the shared build cache to end (new builds wait). Build processes:$builds" >&2
+            waiting=$builds
         fi
         sleep "$poll_seconds"
     done
