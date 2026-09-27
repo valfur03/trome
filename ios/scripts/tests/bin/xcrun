@@ -41,6 +41,14 @@ case "$command" in
         ;;
     bootstatus) set_state "$1" Booted ;;
     shutdown) [ -z "${FAKE_SHUTDOWN_FAILS:-}" ] || exit 1; set_state "$1" Shutdown ;;
+    listapps)
+        touch "$state/apps.$1"
+        sed 's/.*/    CFBundleIdentifier = "&";/' "$state/apps.$1"
+        ;;
+    uninstall)
+        grep -vxF "$2" "$state/apps.$1" > "$state/apps.$1.new" || true
+        mv "$state/apps.$1.new" "$state/apps.$1"
+        ;;
     delete) rm "$state/device.$1" ;;
     spawn)
         prefs="$state/prefs.$1"
@@ -51,6 +59,17 @@ case "$command" in
                 [ -z "${FAKE_DEFAULTS_DELETE_FAILS:-}" ] && grep -qxF "$4" "$prefs" || exit 1
                 grep -vxF "$4" "$prefs" > "$prefs.new" || true
                 mv "$prefs.new" "$prefs"
+                ;;
+            "launchctl kickstart")
+                if [ "$5" = user/foreground/com.apple.SpringBoard ]; then
+                    touch "$state/apps.$1"
+                    cp "$state/apps.$1" "$state/apps-at-springboard-restart.$1"
+                    rm -f "$state/popup.$1"
+                fi
+                ;;
+            "launchctl print")
+                [ -z "${FAKE_SPRINGBOARD_NOT_READY:-}" ] || exit 0
+                printf '\t\t"com.apple.springboard.services" = {\n\t\t\tport = 0x1\n\t\t\tactive = 1\n\t\t}\n'
                 ;;
         esac
         ;;

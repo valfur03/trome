@@ -2,6 +2,7 @@
 set -eu
 
 shared_names="RATP-Shared RATP-Shared-Small"
+springboard_wait_seconds=${RATP_SPRINGBOARD_WAIT_SECONDS:-60}
 
 case "${RATP_SIM_SIZE:-}" in
     "")
@@ -106,11 +107,30 @@ is_booted() {
     xcrun simctl list devices booted | grep -qF "($1)"
 }
 
+springboard_is_ready() {
+    xcrun simctl spawn "$1" launchctl print user/foreground/com.apple.SpringBoard 2> /dev/null \
+        | awk '/"com\.apple\.springboard\.services" = \{/ { found = 1 } found && /active = / { exit !($3 == 1) } END { if (!found) exit 1 }'
+}
+
+wait_for_springboard() {
+    tries=0
+    until springboard_is_ready "$1"; do
+        tries=$((tries + 1))
+        if [ "$tries" -ge "$springboard_wait_seconds" ]; then
+            echo "SpringBoard did not say it is ready after $springboard_wait_seconds s; going on" >&2
+            return 0
+        fi
+        sleep 1
+    done
+}
+
 reset_device() {
     uninstall_apps "$1"
     xcrun simctl privacy "$1" reset all
+    xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.SpringBoard
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.locationd
     xcrun simctl location "$1" clear
+    wait_for_springboard "$1"
 }
 
 grant_location_while_using() {
