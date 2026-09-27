@@ -27,7 +27,7 @@ public struct LocationQuestionsRules: Equatable, Sendable {
         step != .idle
     }
 
-    public var isAskingWhileUsing: Bool {
+    var isAskingWhileUsing: Bool {
         if case .whileUsingAsked = step { true } else { false }
     }
 
