@@ -157,12 +157,12 @@ The real PRIM key is in the main repo folder only, in `ios/Config/Secrets.xcconf
 - QA uses it **only when the task touches train data**: the PRIM calls, the stop ids, the next trains screen, or the train data in the Live Activity.
 - **Budget: at most 60 PRIM calls per QA run.** Write the number of calls you made in your QA notes.
 
-How to count: the app calls PRIM once for each stop of the station when it opens the next trains, then again every 30 seconds while the app screen is open. Calls = stops × (1 + seconds on screen / 30). Today Châtelet has 10 stops: 20 calls per minute. A station with one line has 1 or 2 stops: 2 to 4 calls per minute. TASK-23 (fewer calls per station) will lower these numbers.
+How to count: the app calls PRIM once for each stop of the station when it opens the next trains, then again every 30 seconds while the app screen is open. Calls = stops × (1 + seconds on screen / 30). The stops of a station include the stops of the other stations of its place (its hub, see the README section "The station list"). Today Châtelet has 11 stops (10 metro stops, and the RER stop of Châtelet - Les Halles): 22 calls per minute. Saint-Lazare has 16. A station with one line has 1 or 2 stops: 2 to 4 calls per minute. TASK-23 (fewer calls per station) will lower these numbers.
 
 To stay in the budget:
 
-- Pick a station with few lines, unless the task needs a big station.
+- Pick a station with few lines and no hub, unless the task needs a big station.
 - Check what you need, then run `make simulator-shutdown` at once. The app keeps calling PRIM while it runs, and the shared Simulator stays booted after your job. `make simulator-shutdown` removes the app, so the calls stop. Then remove the key from `ios/.build/` (see above).
-- At Châtelet, stay at most 2 minutes on the next trains (50 calls).
+- At Châtelet, stay at most 2 minutes on the next trains (55 calls).
 
 Why 60: the public PRIM page of the API "Prochains passages - requête unitaire" gives a quota of 1,000,000 calls per day. But since 13 March 2024, new PRIM accounts get a lower quota by default (users report 1,000 calls per day). We do not know the quota of the prompter's key, so we plan for 1,000 calls per day. 60 calls is 6% of it. After 5 QA runs, the prompter still has more than two thirds of the day's calls. When PRIM answers "too many requests" (HTTP 429), stop at once and tell the manager.

@@ -11,18 +11,22 @@ struct StationLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: context.state.leadingLine?.symbolName ?? "tram.fill")
-                        .font(.title3)
+                    if context.state.multiLinePage == nil {
+                        Image(systemName: context.state.leadingLine?.symbolName ?? "tram.fill")
+                            .font(.title3)
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(context.state.stationName)
-                        .font(.headline)
-                        .lineLimit(1)
+                    if context.state.multiLinePage == nil {
+                        Text(context.state.stationName)
+                            .font(.headline)
+                            .lineLimit(1)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let page = context.state.trains.linesPage, page.allLines.count > 1 {
-                            LinesPager(page: page)
+                    VStack(alignment: .leading, spacing: context.state.multiLinePage == nil ? 8 : 4) {
+                        if let page = context.state.multiLinePage {
+                            StationAndLinesHeader(stationName: context.state.stationName, page: page)
                         }
                         TrainsSummary(state: context.state, isStale: context.isStale)
                         SnoozeButtons()
@@ -56,13 +60,8 @@ private struct LockScreenView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                if let page = state.trains.linesPage, page.allLines.count > 1 {
-                    Text(state.stationName)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    Spacer(minLength: 4)
-                    LinesPager(page: page)
+                if let page = state.multiLinePage {
+                    StationAndLinesHeader(stationName: state.stationName, page: page)
                 } else {
                     Label(state.stationName, systemImage: state.leadingLine?.symbolName ?? "tram.fill")
                         .font(.headline)
@@ -78,6 +77,22 @@ private struct LockScreenView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
+    }
+}
+
+private struct StationAndLinesHeader: View {
+    let stationName: String
+    let page: LinesPage
+
+    var body: some View {
+        HStack {
+            Text(stationName)
+                .font(.headline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: 4)
+            LinesPager(page: page)
+        }
     }
 }
 
@@ -168,7 +183,7 @@ private struct TrainsSummary: View {
                 Text("No train times for this station right now.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            case .lines(let page) where page.allLines.count > 1:
+            case .lines(let page) where page.showsSeveralLines:
                 ForEach(page.lines, id: \.self) { line in
                     LineTrainsView(line: line, isStale: isStale)
                 }
@@ -333,6 +348,16 @@ private extension StationActivityAttributes.ContentState {
 
     var nextTime: Date? {
         trains.linesPage?.soonestTrain?.time
+    }
+
+    var multiLinePage: LinesPage? {
+        trains.linesPage.flatMap { $0.showsSeveralLines ? $0 : nil }
+    }
+}
+
+private extension LinesPage {
+    var showsSeveralLines: Bool {
+        allLines.count > 1
     }
 }
 
