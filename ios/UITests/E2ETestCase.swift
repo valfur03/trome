@@ -68,7 +68,7 @@ class E2ETestCase: XCTestCase {
             if answerPermissionPrompt() {
                 locationPromptAnswered = true
             }
-            guard screen.exists else {
+            guard app.state == .runningForeground, screen.exists else {
                 if app.state != .runningForeground {
                     app.activate()
                 }
