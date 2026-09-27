@@ -18,7 +18,7 @@ make setup
 
 This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `ios/RATPActivity.xcodeproj`.
 
-The Xcode project is not in git. The file `ios/project.yml` describes it. If you change `ios/project.yml`, run `make generate`.
+The Xcode project is not in git. The file `ios/project.yml` describes it. It does not update itself when the code changes. So run `make generate` after each `git pull` (or when `main` moves), and after you change `ios/project.yml`. Then open Xcode. An old project lists files that no longer exist, and misses the new ones: the build fails with "Build input file cannot be found" or "Cannot find ... in scope". The `make` commands update the project by themselves.
 
 ## Everyday commands
 
@@ -261,7 +261,7 @@ The build output never shows the key. `make live-key-check` proves it with a fak
 
 The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open "Tutorial" in the sidebar. The page is `docs/src/content/docs/tutorial/install-on-your-iphone.mdx`.
 
-In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git). Run `make generate`, open the project `ios/RATPActivity.xcodeproj` in Xcode, choose your iPhone, and click Run. With a free Apple ID, the app stops after 7 days: click Run again to renew it.
+In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git). Run `make generate`, open the project `ios/RATPActivity.xcodeproj` in Xcode, choose your iPhone, and click Run. With a free Apple ID, the app stops after 7 days: run `make generate` again, then click Run again to renew it.
 
 On a device, the Run button of Xcode uses the PRIM key of `ios/Config/Secrets.xcconfig` in the folder that you open. There is no `make` command for a device build.
 

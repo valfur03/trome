@@ -290,13 +290,13 @@ These steps take about 5 minutes. You do not need to trust the developer or turn
 
   1. Connect the iPhone to the Mac with the cable. Unlock the iPhone.
 
-  2. In Terminal, in the project folder, open the project:
+  2. In Terminal, in the project folder, create the Xcode project again and open it:
 
      ```sh
-     open ios/RATPActivity.xcodeproj
+     make generate && open ios/RATPActivity.xcodeproj
      ```
 
-     If Terminal says that the file does not exist, run `make generate` first.
+     Do it each time, also when the file exists: the code may have changed since the last time, and the old project does not build any more.
 
   3. At the top of the Xcode window, choose the scheme **RATPActivity** and your iPhone.
 
@@ -441,6 +441,7 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
 - **The trust screen says "Not Verified", or it asks for the internet.** Connect the iPhone to the internet, open the same screen, and tap **Verify App**.
 - **Xcode says that the maximum number of apps for free development has been reached.** A free Apple ID allows 3 of your own apps on the iPhone. Delete another app that you installed from Xcode, then click **Run** again.
 - **Xcode shows a Register button, or says that your iPhone is not registered.** Open **Signing & Capabilities** (step 8) and click **Register**. Then click **Run** again.
+- **Xcode says "Build input file cannot be found" or "Cannot find … in scope".** The Xcode project is older than the code (for example after a `git pull`). Quit Xcode, run `make generate`, and open the project again.
 - **The Mac asks for your password each time you click Run.** At the message, type your Mac password and click **Always Allow**, not **Allow**.
 
 ### After some days
