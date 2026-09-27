@@ -8,6 +8,13 @@ final class DocsScreenshotTests: XCTestCase {
         XCUIApplication(bundleIdentifier: "com.apple.springboard")
     }
 
+    override static func setUp() {
+        super.setUp()
+        MainActor.assumeIsolated {
+            SimulatorNotificationService.waitUntilItAnswers()
+        }
+    }
+
     override func setUp() {
         super.setUp()
         continueAfterFailure = false

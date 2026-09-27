@@ -95,6 +95,7 @@ targets:
     platform: iOS
     sources:
       - DocsScreenshots
+      - UITests/SimulatorNotificationService.swift
     dependencies:
       - target: RATPActivity
     settings:

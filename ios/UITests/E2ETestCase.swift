@@ -9,6 +9,13 @@ class E2ETestCase: XCTestCase {
     private static let allowedLocationLabels = ["Location, Always", "Location, While Using the App"]
     @MainActor private static var permissionsAreSettled = false
 
+    override class func setUp() {
+        super.setUp()
+        MainActor.assumeIsolated {
+            SimulatorNotificationService.waitUntilItAnswers()
+        }
+    }
+
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
