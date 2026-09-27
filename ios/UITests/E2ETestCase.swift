@@ -171,12 +171,20 @@ class E2ETestCase: XCTestCase {
     func stopLiveActivityIfShowing(in app: XCUIApplication) {
         let stopButton = app.buttons["stopLiveActivity"]
         let showButton = app.buttons["showNearestStationLiveActivity"]
-        let shown = waitForFirst(of: [stopButton, showButton])
-        XCTAssertNotNil(shown)
-        if shown === stopButton {
-            stopButton.tap()
+        let deadline = Date().addingTimeInterval(UITestTimeout.element)
+        while Date() < deadline, waitForFirst(of: [stopButton, showButton]) === stopButton {
+            tapWhereItIs(stopButton, in: app)
+            _ = showButton.waitForExistence(timeout: 2)
         }
         XCTAssertTrue(waitFor(showButton))
+    }
+
+    @MainActor
+    private func tapWhereItIs(_ element: XCUIElement, in app: XCUIApplication) {
+        guard let frame = try? element.snapshot().frame else { return }
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: frame.midX, dy: frame.midY))
+            .tap()
     }
 
     @MainActor

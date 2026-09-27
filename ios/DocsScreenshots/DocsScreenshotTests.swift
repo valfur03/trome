@@ -69,7 +69,26 @@ final class DocsScreenshotTests: XCTestCase {
 
     @MainActor
     private func saveScreenshot(named name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        save(XCUIScreen.main.screenshot(), named: name)
+    }
+
+    @MainActor
+    private func saveStillScreenshot(named name: String) {
+        var screenshot = XCUIScreen.main.screenshot()
+        let deadline = Date().addingTimeInterval(5)
+        while Date() < deadline {
+            let next = XCUIScreen.main.screenshot()
+            if next.pngRepresentation == screenshot.pngRepresentation {
+                break
+            }
+            screenshot = next
+        }
+        save(screenshot, named: name)
+    }
+
+    @MainActor
+    private func save(_ screenshot: XCUIScreenshot, named name: String) {
+        let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
@@ -87,8 +106,7 @@ final class DocsScreenshotTests: XCTestCase {
         while Date() < deadline, !isSettled() {
             for answer in answers where springboard.buttons[answer.button].exists {
                 if let screenshot = answer.screenshot, !savedScreenshots.contains(screenshot) {
-                    sleep(1)
-                    saveScreenshot(named: screenshot)
+                    saveStillScreenshot(named: screenshot)
                     savedScreenshots.insert(screenshot)
                 }
                 springboard.buttons[answer.button].tap()
