@@ -30,6 +30,7 @@ struct LinesPageTests {
         #expect(page.lines.flatMap(\.directions).allSatisfy { $0.trains.count == 1 })
         #expect(page.allLines.map(\.name) == ["1", "4", "7"])
         #expect(page.hasOtherLines)
+        #expect(page.otherLineCount == 1)
     }
 
     @Test func keepsTwoTrainsInEachDirectionWhenThePageShowsTwoDirections() {
@@ -37,6 +38,7 @@ struct LinesPageTests {
 
         #expect(page.lines == [line("12", directions: 2)])
         #expect(!page.hasOtherLines)
+        #expect(page.otherLineCount == 0)
     }
 
     @Test func showsOnlyTheNextTrainOfEachDirectionWhenALineHasThreeDirections() {

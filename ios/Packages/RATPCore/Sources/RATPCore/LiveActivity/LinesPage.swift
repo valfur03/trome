@@ -78,6 +78,10 @@ public struct LinesPage: Codable, Hashable, Sendable {
         lines.count < allLines.count
     }
 
+    public var otherLineCount: Int {
+        allLines.count - lines.count
+    }
+
     public var nextFirstIndex: Int {
         let next = firstIndex + lines.count
         return next < allLines.count ? next : 0

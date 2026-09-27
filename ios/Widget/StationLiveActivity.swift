@@ -85,19 +85,27 @@ private struct StationAndLinesHeader: View {
     let page: LinesPage
 
     var body: some View {
+        ViewThatFits(in: .horizontal) {
+            header(showsEveryBadge: true)
+            header(showsEveryBadge: false)
+        }
+    }
+
+    private func header(showsEveryBadge: Bool) -> some View {
         HStack {
             Text(stationName)
                 .font(.headline)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Spacer(minLength: 4)
-            LinesPager(page: page)
+            LinesPager(page: page, showsEveryBadge: showsEveryBadge)
         }
     }
 }
 
 private struct LinesPager: View {
     let page: LinesPage
+    let showsEveryBadge: Bool
 
     var body: some View {
         if page.hasOtherLines {
@@ -117,8 +125,17 @@ private struct LinesPager: View {
 
     private var badges: some View {
         HStack(spacing: 3) {
-            ForEach(page.allLines, id: \.self) { line in
-                SmallLineBadge(line: line, isShown: page.isShown(line))
+            if showsEveryBadge {
+                ForEach(page.allLines, id: \.self) { line in
+                    SmallLineBadge(line: line, isShown: page.isShown(line))
+                }
+            } else {
+                ForEach(page.lines.map(\.line), id: \.self) { line in
+                    SmallLineBadge(line: line, isShown: true)
+                }
+                if page.otherLineCount > 0 {
+                    OtherLinesBadge(count: page.otherLineCount)
+                }
             }
         }
         .accessibilityElement(children: .ignore)
@@ -327,6 +344,21 @@ private struct SmallLineBadge: View {
             .background(isShown ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.quaternary), in: Capsule())
             .foregroundStyle(isShown ? .primary : .secondary)
             .accessibilityLabel(line.displayName)
+    }
+}
+
+private struct OtherLinesBadge: View {
+    let count: Int
+
+    var body: some View {
+        Text("+\(count)")
+            .font(.caption.bold())
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 4)
+            .frame(minWidth: SmallLineBadge.minimumWidth)
+            .background(.quaternary, in: Capsule())
+            .foregroundStyle(.secondary)
     }
 }
 
