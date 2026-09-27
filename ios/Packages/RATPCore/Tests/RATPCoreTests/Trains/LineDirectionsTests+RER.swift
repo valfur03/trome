@@ -1,0 +1,160 @@
+import Foundation
+import Testing
+@testable import RATPCore
+
+extension LineDirectionsTests {
+    private var rerA: TransitLine {
+        TransitLine(mode: .rer, name: "A", stopIds: ["IDFM:monomodalStopPlace:45102"])
+    }
+
+    private var rerE: TransitLine {
+        TransitLine(mode: .rer, name: "E", stopIds: ["IDFM:monomodalStopPlace:22"])
+    }
+
+    private func rerQuay(_ code: Int) -> String {
+        "STIF:StopPoint:Q:\(code):"
+    }
+
+    private func rerTrain(_ time: Double, to destination: String) -> LineDirection.Train {
+        LineDirection.Train(time: self.time(inMinutes: time), destination: destination)
+    }
+
+    @Test func showsBothDirectionsOfRERBWhenTheSoonestTrainsAllGoTheSameWay() {
+        let result = directions(of: rerB, at: "Châtelet - Les Halles", [
+            train(rerB, to: "Aéroport Charles de Gaulle 2 (Terminal 2)", inMinutes: 1, from: rerQuay(1)),
+            train(rerB, to: "Mitry - Claye", inMinutes: 2, from: rerQuay(2)),
+            train(rerB, to: "Aéroport Charles de Gaulle 2 (Terminal 2)", inMinutes: 4, from: rerQuay(1)),
+            train(rerB, to: "Saint-Rémy-lès-Chevreuse", inMinutes: 9, from: rerQuay(3))
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Aéroport Charles de Gaulle 2 TGV / Mitry - Claye", trains: [
+                rerTrain(1, to: "Aéroport Charles de Gaulle 2"),
+                rerTrain(2, to: "Mitry - Claye")
+            ]),
+            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", trains: [
+                rerTrain(9, to: "Saint-Rémy-lès-Chevreuse")
+            ])
+        ])
+        #expect(result.map(\.showsEachDestination) == [true, false])
+    }
+
+    @Test func showsBothDirectionsOfRERAAtChateletFromARecordedAnswer() throws {
+        let station = Station(
+            id: "IDFM:monomodalStopPlace:45102",
+            name: "Châtelet - Les Halles",
+            coordinate: Coordinate(48.861745, 2.346977),
+            lines: [rerA, TransitLine(mode: .rer, name: "B", stopIds: ["IDFM:monomodalStopPlace:45102"])]
+        )
+        let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-chatelet-rer"))
+        let departures = PRIMDeparturesProvider.departures(from: visits, at: station)
+
+        let result = LineDirections.directions(of: rerA, at: station, from: departures)
+
+        #expect(result == [
+            LineDirection(label: "Saint-Germain-en-Laye / Cergy le Haut / Poissy", trains: [
+                LineDirection.Train(time: Fixture.date("2026-09-27T08:03:00Z"), destination: "Saint-Germain-en-Laye")
+            ]),
+            LineDirection(label: "Boissy-Saint-Léger / Marne-la-Vallée - Chessy", trains: [
+                LineDirection.Train(time: Fixture.date("2026-09-27T08:02:00Z"), destination: "Boissy-Saint-Léger")
+            ])
+        ])
+    }
+
+    @Test func namesEachRERTrainOfOneDirectionThatEndsAtADifferentPlace() {
+        let result = directions(of: rerB, at: "Gare du Nord", [
+            train(rerB, to: "Massy-Palaiseau", inMinutes: 1, from: rerQuay(3)),
+            train(rerB, to: "Robinson", inMinutes: 5, from: rerQuay(3)),
+            train(rerB, to: "Mitry - Claye", inMinutes: 3, from: rerQuay(1))
+        ])
+
+        #expect(result[1].trains == [rerTrain(1, to: "Massy-Palaiseau"), rerTrain(5, to: "Robinson")])
+        #expect(result.map(\.showsEachDestination) == [false, true])
+    }
+
+    @Test func showsNoTrainsForAnRERDirectionWithoutTrains() {
+        let result = directions(of: rerA, at: "Nation", [
+            train(rerA, to: "Boissy-Saint-Léger", inMinutes: 2, from: rerQuay(1)),
+            train(rerA, to: "Marne-la-Vallée Chessy", inMinutes: 4, from: rerQuay(1))
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Saint-Germain-en-Laye / Cergy le Haut / Poissy", times: []),
+            LineDirection(label: "Boissy-Saint-Léger / Marne-la-Vallée - Chessy", trains: [
+                rerTrain(2, to: "Boissy-Saint-Léger"),
+                rerTrain(4, to: "Marne-la-Vallée - Chessy")
+            ])
+        ])
+    }
+
+    @Test func usesTheDirectionOfATrainWhenItsQuayHasOnlyTrainsThatEndBeforeTheEndOfLine() {
+        let result = directions(of: rerB, at: "Denfert-Rochereau", [
+            train(rerB, to: "Gare du Nord", inMinutes: 1, from: rerQuay(2), direction: "Retour"),
+            train(rerB, to: "Massy-Palaiseau", inMinutes: 2, from: rerQuay(4), direction: "Aller"),
+            train(rerB, to: "Mitry - Claye", inMinutes: 3, from: rerQuay(1), direction: "Retour"),
+            train(rerB, to: "Robinson", inMinutes: 4, from: rerQuay(3), direction: "Aller")
+        ])
+
+        #expect(result.map(\.trains) == [
+            [rerTrain(1, to: "Gare du Nord"), rerTrain(3, to: "Mitry - Claye")],
+            [rerTrain(2, to: "Massy-Palaiseau"), rerTrain(4, to: "Robinson")]
+        ])
+    }
+
+    @Test func ignoresATrainDirectionThatIsTheSameForBothWays() {
+        let result = directions(of: rerA, at: "La Défense", [
+            train(rerA, to: "Torcy", inMinutes: 1, from: rerQuay(4), direction: "Aller"),
+            train(rerA, to: "Boissy-Saint-Léger", inMinutes: 2, from: rerQuay(1), direction: "Aller"),
+            train(rerA, to: "Saint-Germain-en-Laye", inMinutes: 3, from: rerQuay(2), direction: "Aller")
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Saint-Germain-en-Laye / Cergy le Haut / Poissy", trains: [
+                rerTrain(3, to: "Saint-Germain-en-Laye")
+            ]),
+            LineDirection(label: "Boissy-Saint-Léger / Marne-la-Vallée - Chessy", trains: [
+                rerTrain(2, to: "Boissy-Saint-Léger")
+            ]),
+            LineDirection(label: "Torcy", times: [time(inMinutes: 1)])
+        ])
+    }
+
+    @Test func putsRERTrainsWithoutQuayInTheDirectionOfTheirEndOfLine() {
+        let result = directions(of: rerE, at: "Magenta", [
+            train(rerE, to: "Tournan", inMinutes: 1),
+            train(rerE, to: "Chelles Gournay", inMinutes: 4),
+            train(rerE, to: "Nanterre-La-Folie", inMinutes: 6)
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Nanterre-La-Folie", times: [time(inMinutes: 6)]),
+            LineDirection(label: "Chelles - Gournay / Tournan", trains: [
+                rerTrain(1, to: "Tournan"),
+                rerTrain(4, to: "Chelles - Gournay")
+            ])
+        ])
+    }
+
+    @Test func namesOnlyTheRERBranchEndsThatAStationCanReach() {
+        let sartrouville = directions(of: rerA, at: "Sartrouville", [])
+        let massy = directions(of: rerB, at: "Massy - Palaiseau", [])
+
+        #expect(sartrouville.map(\.label) == [
+            "Cergy le Haut / Poissy",
+            "Boissy-Saint-Léger / Marne-la-Vallée - Chessy"
+        ])
+        #expect(massy.map(\.label) == ["Aéroport Charles de Gaulle 2 TGV / Mitry - Claye", "Saint-Rémy-lès-Chevreuse"])
+    }
+
+    @Test func showsOnlyTheOtherDirectionAtAnRERTerminus() {
+        let result = directions(of: rerB, at: "Robinson", [
+            train(rerB, to: "Aéroport Charles de Gaulle 2 (Terminal 2)", inMinutes: 3, from: rerQuay(1))
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Aéroport Charles de Gaulle 2 TGV / Mitry - Claye", trains: [
+                rerTrain(3, to: "Aéroport Charles de Gaulle 2")
+            ])
+        ])
+    }
+}

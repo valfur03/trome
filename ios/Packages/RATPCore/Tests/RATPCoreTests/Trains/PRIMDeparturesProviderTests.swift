@@ -125,6 +125,21 @@ struct PRIMDeparturesProviderTests {
         #expect(departures.allSatisfy { $0.quayRef == nil })
     }
 
+    @Test func tellsTheQuayAndTheDirectionOfEachTrainOfAStopArea() async throws {
+        let (provider, _) = provider { _ in (try Fixture.data("stop-monitoring-chatelet-rer"), 200) }
+
+        let departures = try await provider.departures(at: chateletLesHalles)
+
+        #expect(departures.map(\.line.name) == ["A", "A", "B", "B"])
+        #expect(departures.map(\.quayRef) == [
+            "STIF:StopPoint:Q:473924:",
+            "STIF:StopPoint:Q:473925:",
+            "STIF:StopPoint:Q:473926:",
+            "STIF:StopPoint:Q:473927:"
+        ])
+        #expect(departures.map(\.directionRef) == ["Aller", "Aller", "Retour", "Aller"])
+    }
+
     @Test func dropsTrainsWhoseDestinationIsTheStationItself() {
         let visit = MonitoredVisit(
             monitoringRef: "STIF:StopArea:SP:45102:",

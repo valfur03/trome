@@ -4,11 +4,18 @@ public struct LineEnds: Hashable, Sendable {
     public let first: [String]
     public let second: [String]
     let branchStations: [String: [String]]
+    let otherNames: [String: [String]]
 
-    public init(first: [String], second: [String], branchStations: [String: [String]] = [:]) {
+    public init(
+        first: [String],
+        second: [String],
+        branchStations: [String: [String]] = [:],
+        otherNames: [String: [String]] = [:]
+    ) {
         self.first = first
         self.second = second
         self.branchStations = branchStations
+        self.otherNames = otherNames
     }
 
     public var sides: [[String]] {
@@ -17,10 +24,10 @@ public struct LineEnds: Hashable, Sendable {
 
     func reachableEnds(of side: [String], from stationName: String) -> [String] {
         let stationKey = StationCatalog.searchKey(stationName)
-        let branchEnd = side.first { end in
+        let branchEnds = side.filter { end in
             branchStations[end, default: []].contains { StationCatalog.searchKey($0) == stationKey }
         }
-        return branchEnd.map { [$0] } ?? side
+        return branchEnds.isEmpty ? side : branchEnds
     }
 }
 
@@ -77,6 +84,7 @@ extension TransitLine {
     ]
 
     public var ends: LineEnds? {
-        Self.lineEnds["\(mode.rawValue)-\(name)"]
+        let key = "\(mode.rawValue)-\(name)"
+        return Self.lineEnds[key] ?? Self.rerLineEnds[key]
     }
 }

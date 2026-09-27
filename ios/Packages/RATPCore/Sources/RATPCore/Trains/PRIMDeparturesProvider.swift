@@ -29,10 +29,12 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
             for monitoringRef in monitoringRefs {
                 group.addTask {
                     do {
-                        let quayRef = PRIMStopReference.isQuay(monitoringRef) ? monitoringRef : nil
+                        let isQuay = PRIMStopReference.isQuay(monitoringRef)
                         return .success(try await visits(at: monitoringRef).map { visit in
                             var visit = visit
-                            visit.quayRef = quayRef
+                            if isQuay {
+                                visit.quayRef = monitoringRef
+                            }
                             return visit
                         })
                     } catch {
@@ -86,7 +88,8 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
                 line: line,
                 destination: visit.destinationName,
                 time: visit.time,
-                quayRef: visit.quayRef
+                quayRef: visit.quayRef,
+                directionRef: visit.directionRef
             )
         }
     }

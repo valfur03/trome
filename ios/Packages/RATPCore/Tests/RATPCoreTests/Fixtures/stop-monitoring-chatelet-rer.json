@@ -1,0 +1,284 @@
+{
+  "Siri": {
+    "ServiceDelivery": {
+      "ResponseTimestamp": "2026-09-27T08:00:00.412Z",
+      "ProducerRef": "IVTR_HET",
+      "StopMonitoringDelivery": [
+        {
+          "ResponseTimestamp": "2026-09-27T08:00:00.412Z",
+          "Version": "2.0",
+          "Status": "true",
+          "MonitoredStopVisit": [
+            {
+              "RecordedAtTime": "2026-09-27T08:00:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-1:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::journey-1:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:43094:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Boissy-Saint-Léger"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Boissy-Saint-Léger"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-09-27T08:02:00.000Z",
+                  "DepartureStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:473924:"
+                    }
+                  },
+                  "DeparturePlatformName": {
+                    "value": "1"
+                  },
+                  "DepartureStatus": "onTime",
+                  "ArrivalStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:473924:"
+                    }
+                  },
+                  "ArrivalPlatformName": {
+                    "value": "1"
+                  },
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-09-27T08:00:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-2:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::journey-2:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:43135:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Saint-Germain-en-Laye"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Saint-Germain-en-Laye"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-09-27T08:03:00.000Z",
+                  "DepartureStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:473925:"
+                    }
+                  },
+                  "DeparturePlatformName": {
+                    "value": "2"
+                  },
+                  "DepartureStatus": "onTime",
+                  "ArrivalStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:473925:"
+                    }
+                  },
+                  "ArrivalPlatformName": {
+                    "value": "2"
+                  },
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-09-27T08:00:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-3:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01743:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::journey-3:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:73596:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Aéroport Charles de Gaulle 2 (Terminal 2)"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Aéroport Charles de Gaulle 2 (Terminal 2)"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-09-27T08:04:00.000Z",
+                  "DepartureStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:473926:"
+                    }
+                  },
+                  "DeparturePlatformName": {
+                    "value": "3"
+                  },
+                  "DepartureStatus": "onTime",
+                  "ArrivalStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:473926:"
+                    }
+                  },
+                  "ArrivalPlatformName": {
+                    "value": "3"
+                  },
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Retour"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-09-27T08:00:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-4:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01743:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::journey-4:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:58778:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Saint-Rémy-lès-Chevreuse"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Saint-Rémy-lès-Chevreuse"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-09-27T08:05:00.000Z",
+                  "DeparturePlatformName": {
+                    "value": "4"
+                  },
+                  "DepartureStatus": "onTime",
+                  "ArrivalStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:473927:"
+                    }
+                  },
+                  "ArrivalPlatformName": {
+                    "value": "4"
+                  },
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

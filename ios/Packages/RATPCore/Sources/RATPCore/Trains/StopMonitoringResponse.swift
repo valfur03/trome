@@ -8,6 +8,7 @@ struct MonitoredVisit: Equatable, Sendable {
     var journeyRef: String?
     var time: Date
     var quayRef: String?
+    var directionRef: String?
 }
 
 enum StopMonitoringResponse {
@@ -64,8 +65,15 @@ private struct FramedVehicleJourneyRef: Decodable {
     let datedVehicleJourneyRef: String?
 }
 
+private struct StopAssignment: Decodable {
+    let expectedQuayRef: Value?
+    let aimedQuayRef: Value?
+}
+
 private struct MonitoredCall: Decodable {
     let destinationDisplay: [Value]?
+    let departureStopAssignment: StopAssignment?
+    let arrivalStopAssignment: StopAssignment?
     let expectedDepartureTime: String?
     let expectedArrivalTime: String?
     let aimedDepartureTime: String?
@@ -75,6 +83,13 @@ private struct MonitoredCall: Decodable {
 
     var isCancelled: Bool {
         (departureStatus ?? arrivalStatus) == "cancelled"
+    }
+
+    var quayRef: String? {
+        [departureStopAssignment, arrivalStopAssignment]
+            .lazy
+            .compactMap { $0?.expectedQuayRef?.value ?? $0?.aimedQuayRef?.value }
+            .first { !$0.isEmpty }
     }
 
     var bestTime: Date? {
@@ -89,6 +104,7 @@ private struct MonitoredVehicleJourney: Decodable {
     let lineRef: Value?
     let destinationRef: Value?
     let destinationName: [Value]?
+    let directionRef: Value?
     let framedVehicleJourneyRef: FramedVehicleJourneyRef?
     let monitoredCall: MonitoredCall?
 
@@ -120,7 +136,9 @@ private struct MonitoredStopVisit: Decodable {
             destinationRef: journey.destinationRef?.value,
             destinationName: destinationName,
             journeyRef: journey.framedVehicleJourneyRef?.datedVehicleJourneyRef,
-            time: time
+            time: time,
+            quayRef: call.quayRef,
+            directionRef: journey.directionRef?.value
         )
     }
 }

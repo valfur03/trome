@@ -28,6 +28,24 @@ struct StopMonitoringResponseTests {
         ))
     }
 
+    @Test func readsTheQuayAndTheDirectionOfEachTrainOfAStopArea() throws {
+        let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-chatelet-rer"))
+
+        #expect(visits.map(\.quayRef) == [
+            "STIF:StopPoint:Q:473924:",
+            "STIF:StopPoint:Q:473925:",
+            "STIF:StopPoint:Q:473926:",
+            "STIF:StopPoint:Q:473927:"
+        ])
+        #expect(visits.map(\.directionRef) == ["Aller", "Aller", "Retour", "Aller"])
+    }
+
+    @Test func readsNoQuayAndNoDirectionWhenTheAnswerHasNone() throws {
+        let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
+
+        #expect(visits.allSatisfy { $0.quayRef == nil && $0.directionRef == nil })
+    }
+
     @Test func readsTimesWithAndWithoutFractionalSeconds() throws {
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
 

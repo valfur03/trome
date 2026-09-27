@@ -21,9 +21,16 @@ struct LineDirectionsTests {
         _ line: TransitLine,
         to destination: String,
         inMinutes minutes: Double,
-        from quay: String? = nil
+        from quay: String? = nil,
+        direction: String? = nil
     ) -> Departure {
-        Departure(line: line, destination: destination, time: time(inMinutes: minutes), quayRef: quay)
+        Departure(
+            line: line,
+            destination: destination,
+            time: time(inMinutes: minutes),
+            quayRef: quay,
+            directionRef: direction
+        )
     }
 
     func directions(
@@ -135,18 +142,20 @@ struct LineDirectionsTests {
     }
 
     @Test func showsTheSoonestDestinationsOfALineWithoutKnownEnds() {
-        let result = directions(of: rerB, at: "Gare du Nord", [
-            train(rerB, to: "Robinson", inMinutes: 5),
-            train(rerB, to: "Mitry-Claye", inMinutes: 3),
-            train(rerB, to: "Aéroport Charles de Gaulle 2", inMinutes: 1),
-            train(rerB, to: "Massy-Palaiseau", inMinutes: 7),
-            train(rerB, to: "Mitry-Claye", inMinutes: 9)
+        let unknownLine = TransitLine(mode: .rer, name: "Z", stopIds: ["IDFM:monomodalStopPlace:90"])
+
+        let result = directions(of: unknownLine, at: "Somewhere", [
+            train(unknownLine, to: "West", inMinutes: 5),
+            train(unknownLine, to: "North", inMinutes: 3),
+            train(unknownLine, to: "East", inMinutes: 1),
+            train(unknownLine, to: "South", inMinutes: 7),
+            train(unknownLine, to: "North", inMinutes: 9)
         ])
 
         #expect(result == [
-            LineDirection(label: "Aéroport Charles de Gaulle 2", times: [time(inMinutes: 1)]),
-            LineDirection(label: "Mitry-Claye", times: [time(inMinutes: 3), time(inMinutes: 9)]),
-            LineDirection(label: "Robinson", times: [time(inMinutes: 5)])
+            LineDirection(label: "East", times: [time(inMinutes: 1)]),
+            LineDirection(label: "North", times: [time(inMinutes: 3), time(inMinutes: 9)]),
+            LineDirection(label: "West", times: [time(inMinutes: 5)])
         ])
     }
 
@@ -159,14 +168,16 @@ struct LineDirectionsTests {
     @Test func namesEveryEndOfLineAsAStationOfThatLine() throws {
         let catalog = try StationCatalog.bundled()
         let metroNames = ["1", "2", "3", "3bis", "4", "5", "6", "7", "7bis", "8", "9", "10", "11", "12", "13", "14"]
+        let lines = metroNames.map { TransitLine(mode: .metro, name: $0) }
+            + ["A", "B", "C", "D", "E"].map { TransitLine(mode: .rer, name: $0) }
 
-        for name in metroNames {
-            let ends = try #require(TransitLine(mode: .metro, name: name).ends)
+        for line in lines {
+            let ends = try #require(line.ends)
             for end in ends.first + ends.second {
                 let served = catalog.stations.contains { station in
-                    station.name == end && station.lines.contains { $0.mode == .metro && $0.name == name }
+                    station.name == end && station.lines.contains { $0.mode == line.mode && $0.name == line.name }
                 }
-                #expect(served, "\(end) is not a station of metro \(name)")
+                #expect(served, "\(end) is not a station of \(line.displayName)")
             }
         }
     }

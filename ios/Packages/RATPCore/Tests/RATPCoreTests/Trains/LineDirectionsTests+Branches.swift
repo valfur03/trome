@@ -11,10 +11,6 @@ extension LineDirectionsTests {
         TransitLine(mode: .metro, name: "13", stopIds: ["IDFM:130", "IDFM:131"])
     }
 
-    private var rerC: TransitLine {
-        TransitLine(mode: .rer, name: "C", stopIds: ["IDFM:monomodalStopPlace:21"])
-    }
-
     private func quay(_ code: Int) -> String {
         "STIF:StopPoint:Q:\(code):"
     }
@@ -86,34 +82,6 @@ extension LineDirectionsTests {
         #expect(porteDItalie.map(\.label) == ["La Courneuve - 8 Mai 1945", "Mairie d'Ivry"])
     }
 
-    @Test func showsEachRERBDestinationUnderItsOwnName() {
-        let result = directions(of: rerB, at: "Denfert-Rochereau", [
-            train(rerB, to: "Saint-Rémy-lès-Chevreuse", inMinutes: 1),
-            train(rerB, to: "Robinson", inMinutes: 2),
-            train(rerB, to: "Saint-Rémy-lès-Chevreuse", inMinutes: 8)
-        ])
-
-        #expect(result == [
-            LineDirection(label: "Saint-Rémy-lès-Chevreuse", times: [time(inMinutes: 1), time(inMinutes: 8)]),
-            LineDirection(label: "Robinson", times: [time(inMinutes: 2)])
-        ])
-    }
-
-    @Test func showsEachRERCDestinationUnderItsOwnName() {
-        let result = directions(of: rerC, at: "Saint-Michel Notre-Dame", [
-            train(rerC, to: "Versailles Château Rive Gauche", inMinutes: 3),
-            train(rerC, to: "Pontoise", inMinutes: 4),
-            train(rerC, to: "Dourdan", inMinutes: 6),
-            train(rerC, to: "Versailles Château Rive Gauche", inMinutes: 12)
-        ])
-
-        #expect(result == [
-            LineDirection(label: "Versailles Château Rive Gauche", times: [time(inMinutes: 3), time(inMinutes: 12)]),
-            LineDirection(label: "Pontoise", times: [time(inMinutes: 4)]),
-            LineDirection(label: "Dourdan", times: [time(inMinutes: 6)])
-        ])
-    }
-
     @Test func namesTheDestinationOfTrainsThatEndBeforeTheEndOfLine() {
         let result = directions(of: line13, at: "Place de Clichy", [
             train(line13, to: "Saint-Ouen", inMinutes: 2, from: quay(130)),
@@ -137,20 +105,28 @@ extension LineDirectionsTests {
         ])
     }
 
-    @Test func namesEveryBranchStationAsAStationOfItsLine() throws {
+    @Test(arguments: [
+        TransitLine(mode: .metro, name: "7"),
+        TransitLine(mode: .metro, name: "13"),
+        TransitLine(mode: .rer, name: "A"),
+        TransitLine(mode: .rer, name: "B"),
+        TransitLine(mode: .rer, name: "C"),
+        TransitLine(mode: .rer, name: "D"),
+        TransitLine(mode: .rer, name: "E")
+    ])
+    func namesEveryBranchStationAsAStationOfItsLine(line: TransitLine) throws {
         let catalog = try StationCatalog.bundled()
+        let ends = try #require(line.ends)
 
-        for name in ["7", "13"] {
-            let ends = try #require(TransitLine(mode: .metro, name: name).ends)
-            #expect(!ends.branchStations.isEmpty)
-            for (end, stations) in ends.branchStations {
-                #expect(ends.sides.contains { $0.count > 1 && $0.contains(end) })
-                for stationName in stations {
-                    let served = catalog.stations.contains { station in
-                        station.name == stationName && station.lines.contains { $0.mode == .metro && $0.name == name }
-                    }
-                    #expect(served, "\(stationName) is not a station of metro \(name)")
+        #expect(!ends.branchStations.isEmpty)
+        for (end, stations) in ends.branchStations {
+            #expect(ends.sides.contains { $0.count > 1 && $0.contains(end) })
+            for stationName in stations {
+                let served = catalog.stations.contains { station in
+                    station.name == stationName
+                        && station.lines.contains { $0.mode == line.mode && $0.name == line.name }
                 }
+                #expect(served, "\(stationName) is not a station of \(line.displayName)")
             }
         }
     }

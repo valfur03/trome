@@ -41,7 +41,7 @@ enum LineDirections {
     static let maximumDirections = 3
 
     private struct Group {
-        let isQuay: Bool
+        let isOneDirection: Bool
         let trains: [Departure]
         var side: Int?
     }
@@ -52,27 +52,28 @@ enum LineDirections {
             .sorted { $0.time < $1.time }
         let quays = PRIMStopReference.quayRefs(of: line)
         let stationKey = StationCatalog.searchKey(station.name)
-        let sides = (line.ends?.sides ?? []).filter { names in
-            !names.contains { StationCatalog.searchKey($0) == stationKey }
+        let ends = line.ends ?? LineEnds(first: [], second: [])
+        let sides = ends.sides.filter { names in
+            !names.isEmpty && !names.contains { StationCatalog.searchKey($0) == stationKey }
         }
         var groups = groups(of: trains, quays: quays).map { group in
             var group = group
-            group.side = group.trains.lazy.compactMap { side(of: $0.destination, in: sides) }.first
+            group.side = group.trains.lazy.compactMap { side(of: $0.destination, in: sides, ends: ends) }.first
             return group
         }
+        inferSidesFromDirectionRefs(of: &groups)
         inferQuaySides(of: &groups, sideCount: sides.count)
 
         let showsEmptySides = quays.count != 1
         let sideDirections = sides.indices.compactMap { index -> LineDirection? in
             let sideTrains = groups.filter { $0.side == index }.flatMap(\.trains).sorted { $0.time < $1.time }
             guard showsEmptySides || !sideTrains.isEmpty else { return nil }
-            let ends = line.ends?.reachableEnds(of: sides[index], from: station.name) ?? sides[index]
             return LineDirection(
-                label: ends.joined(separator: " / "),
+                label: ends.reachableEnds(of: sides[index], from: station.name).joined(separator: " / "),
                 trains: sideTrains.prefix(timesPerDirection).map { train in
                     LineDirection.Train(
                         time: train.time,
-                        destination: endName(of: train.destination, in: sides[index]) ?? train.destination
+                        destination: endName(of: train.destination, in: sides[index], ends: ends) ?? train.destination
                     )
                 }
             )
@@ -92,25 +93,53 @@ enum LineDirections {
     }
 
     private static func groups(of trains: [Departure], quays: [String]) -> [Group] {
-        let quayGroups = quays.map { quay in
-            Group(isQuay: true, trains: trains.filter { $0.quayRef == quay })
+        var allQuays = quays
+        for train in trains {
+            if let quay = train.quayRef, !allQuays.contains(quay) {
+                allQuays.append(quay)
+            }
+        }
+        let quayGroups = allQuays.map { quay in
+            Group(isOneDirection: true, trains: trains.filter { $0.quayRef == quay })
         }
         var destinations: [String] = []
-        for train in trains where !quays.contains(train.quayRef ?? "") && !destinations.contains(train.destination) {
+        for train in trains where train.quayRef == nil && !destinations.contains(train.destination) {
             destinations.append(train.destination)
         }
         let destinationGroups = destinations.map { destination in
             Group(
-                isQuay: false,
-                trains: trains.filter { !quays.contains($0.quayRef ?? "") && $0.destination == destination }
+                isOneDirection: false,
+                trains: trains.filter { $0.quayRef == nil && $0.destination == destination }
             )
         }
         return quayGroups + destinationGroups
     }
 
+    private static func inferSidesFromDirectionRefs(of groups: inout [Group]) {
+        let directionRefs = Set(groups.flatMap(\.trains).compactMap(\.directionRef))
+        guard directionRefs.count > 1 else { return }
+        var sidesByDirectionRef: [String: Set<Int>] = [:]
+        for group in groups {
+            guard let side = group.side else { continue }
+            for directionRef in group.trains.compactMap(\.directionRef) {
+                sidesByDirectionRef[directionRef, default: []].insert(side)
+            }
+        }
+        for index in groups.indices where groups[index].side == nil {
+            let groupSides = groups[index].trains.map { train in
+                train.directionRef.flatMap { sidesByDirectionRef[$0] }
+            }
+            guard let first = groupSides.first,
+                  let sides = first, sides.count == 1,
+                  groupSides.allSatisfy({ $0 == sides })
+            else { continue }
+            groups[index].side = sides.first
+        }
+    }
+
     private static func inferQuaySides(of groups: inout [Group], sideCount: Int) {
         let unknown = groups.indices.filter { index in
-            groups[index].isQuay && groups[index].side == nil && !groups[index].trains.isEmpty
+            groups[index].isOneDirection && groups[index].side == nil && !groups[index].trains.isEmpty
         }
         if sideCount == 1 {
             unknown.forEach { groups[$0].side = 0 }
@@ -121,15 +150,17 @@ enum LineDirections {
         groups[unknown[0]].side = freeSide
     }
 
-    private static func side(of destination: String, in sides: [[String]]) -> Int? {
-        sides.firstIndex { endName(of: destination, in: $0) != nil }
+    private static func side(of destination: String, in sides: [[String]], ends: LineEnds) -> Int? {
+        sides.firstIndex { endName(of: destination, in: $0, ends: ends) != nil }
     }
 
-    private static func endName(of destination: String, in names: [String]) -> String? {
+    private static func endName(of destination: String, in names: [String], ends: LineEnds) -> String? {
         let key = StationCatalog.searchKey(destination)
-        return names.first { name in
-            let nameKey = StationCatalog.searchKey(name)
-            return key == nameKey || key.hasPrefix(nameKey + " ")
-        }
+        return names.lazy
+            .flatMap { [$0] + ends.otherNames[$0, default: []] }
+            .first { candidate in
+                let nameKey = StationCatalog.searchKey(candidate)
+                return key == nameKey || key.hasPrefix(nameKey + " ")
+            }
     }
 }
