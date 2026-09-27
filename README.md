@@ -127,7 +127,7 @@ Debug builds can show the next trains of a station that you pick by hand. This n
 
 1. Open "Testing tools", then tap "Next trains of a station" at the bottom.
 2. Tap "Pick a station". Type part of a name to find a station, then tap it.
-3. The screen shows the next trains of each line and destination, in minutes. The app asks for new times every 30 seconds while this screen is open.
+3. The screen shows the next trains of each line and destination, in minutes. It shows only the trains of the next 60 minutes: PRIM sometimes gives a time much later (for example 154 min), and it is not a real prediction. The app asks for new times every 30 seconds while this screen is open.
 4. Tap "Change station" to pick another station.
 
 The app remembers the picked station when you close it.
@@ -146,7 +146,7 @@ For developers: the code is in `ios/Packages/RATPCore/Sources/RATPCore/Trains`. 
 The app shows the next trains of a station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
 
 1. On the main screen, tap "Show the Live Activity now". It shows the Live Activity of the station nearest to you. Testers can also pick any station in "Testing tools" > "Next trains of a station", and tap "Show on the lock screen".
-2. Lock the phone. The Live Activity shows the station, the line, and the next trains in both directions of the line. Each direction has the name of its end of line, the waiting time of the next train, and the waiting time of the train after it (when there is one). A direction with no upcoming train says "No trains". At the end of a line, the Live Activity shows only the other direction.
+2. Lock the phone. The Live Activity shows the station, the line, and the next trains in both directions of the line. Each direction has the name of its end of line, the waiting time of the next train, and the waiting time of the train after it (when there is one). The Live Activity shows only the trains of the next 60 minutes, like the next trains screen. A direction with no upcoming train in the next 60 minutes says "No trains". At the end of a line, the Live Activity shows only the other direction.
 
    Some lines split into branches: metro 7 (Mairie d'Ivry or Villejuif), metro 13 (Saint-Denis or Asnières-Gennevilliers), and the RER lines. On these lines, the Live Activity names where the trains go. When the next two trains of a direction go to different places, each train shows its own destination next to its waiting time, so they never look the same. When they go to the same place, the direction shows that place. After the fork, a station names only the end of its own branch (for example "Asnières - Gennevilliers - Les Courtilles" at Brochant). A train that ends before the end of the line (for example at Trocadéro on line 6) also shows its destination. RER stations show both directions too, like metro stations. For example, at Châtelet - Les Halles, RER B shows the trains to the north (Aéroport Charles de Gaulle 2 TGV or Mitry - Claye) and the trains to the south (Robinson or Saint-Rémy-lès-Chevreuse), even when the soonest trains all go north.
 3. To remove it, open the app and tap "Stop showing on the lock screen".

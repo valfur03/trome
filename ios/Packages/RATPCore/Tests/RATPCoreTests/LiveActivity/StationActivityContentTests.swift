@@ -97,6 +97,22 @@ struct StationActivityContentTests {
         ))
     }
 
+    @Test func dropsTimesMoreThanAnHourAwayAndSaysNoTrainsForADirectionLeftEmpty() {
+        let trains = board([
+            train(line12, to: "Mairie d'Issy", inMinutes: 154, from: southQuay),
+            train(line12, to: "Mairie d'Issy", inMinutes: 8, from: southQuay),
+            train(line12, to: "Mairie d'Aubervilliers", inMinutes: 75, from: northQuay)
+        ])
+
+        #expect(ContentState(station: station, trains: trains, now: now).trains == .directions(
+            line: TransitLine(mode: .metro, name: "12"),
+            [
+                LineDirection(label: "Mairie d'Aubervilliers", times: []),
+                LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 8)])
+            ]
+        ))
+    }
+
     @Test func becomesStaleWhenTheFirstShownTrainLeaves() {
         let trains = board([
             train(line12, to: "Mairie d'Issy", inMinutes: 3, from: southQuay),

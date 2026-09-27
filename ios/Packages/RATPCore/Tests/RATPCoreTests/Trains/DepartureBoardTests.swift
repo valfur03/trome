@@ -64,6 +64,55 @@ struct DepartureBoardTests {
         #expect(board.groups.first?.times == [at(minutes: -0.25)])
     }
 
+    @Test func dropsTimesMoreThanAnHourAwayAndKeepsTheCloserOnes() {
+        let line13 = TransitLine(mode: .metro, name: "13")
+        let board = DepartureBoard(
+            departures: [
+                Departure(line: line13, destination: "Châtillon Montrouge", time: at(minutes: 154)),
+                Departure(line: line13, destination: "Châtillon Montrouge", time: at(minutes: 15)),
+                Departure(line: line13, destination: "Châtillon Montrouge", time: at(minutes: 8)),
+                Departure(line: line13, destination: "Les Courtilles", time: at(minutes: 8)),
+                Departure(line: line13, destination: "Les Courtilles", time: at(minutes: 15)),
+                Departure(line: line13, destination: "Les Courtilles", time: at(minutes: 25))
+            ],
+            lines: [line13],
+            now: now
+        )
+
+        #expect(board.groups == [
+            DepartureGroup(line: line13, destination: "Châtillon Montrouge", times: [at(minutes: 8), at(minutes: 15)]),
+            DepartureGroup(
+                line: line13,
+                destination: "Les Courtilles",
+                times: [at(minutes: 8), at(minutes: 15), at(minutes: 25)]
+            )
+        ])
+        #expect(!board.departures.contains { $0.time == at(minutes: 154) })
+    }
+
+    @Test func keepsATimeExactlyAnHourAway() {
+        let board = DepartureBoard(
+            departures: [
+                Departure(line: line1, destination: "La Défense", time: at(minutes: 60.01)),
+                Departure(line: line1, destination: "La Défense", time: at(minutes: 60))
+            ],
+            lines: [line1],
+            now: now
+        )
+
+        #expect(board.groups.first?.times == [at(minutes: 60)])
+    }
+
+    @Test func isEmptyWhenEveryTimeIsMoreThanAnHourAway() {
+        let board = DepartureBoard(
+            departures: [Departure(line: line1, destination: "La Défense", time: at(minutes: 61))],
+            lines: [line1],
+            now: now
+        )
+
+        #expect(board.isEmpty)
+    }
+
     @Test func isEmptyWithoutUpcomingDepartures() {
         let board = DepartureBoard(
             departures: [Departure(line: line1, destination: "La Défense", time: at(minutes: -3))],

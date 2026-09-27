@@ -45,6 +45,7 @@ public struct DepartureGroup: Hashable, Identifiable, Sendable {
 public struct DepartureBoard: Hashable, Sendable {
     public static let departedGraceSeconds: TimeInterval = 30
     public static let timesPerGroup = 3
+    static let farthestTimeSeconds: TimeInterval = 60 * 60
 
     public let groups: [DepartureGroup]
     public let departures: [Departure]
@@ -52,6 +53,7 @@ public struct DepartureBoard: Hashable, Sendable {
     public init(departures: [Departure], lines: [TransitLine], now: Date) {
         let upcoming = departures
             .filter { $0.time > now.addingTimeInterval(-Self.departedGraceSeconds) }
+            .filter { $0.time <= now.addingTimeInterval(Self.farthestTimeSeconds) }
             .sorted { $0.time < $1.time }
         self.departures = upcoming
         var groups: [DepartureGroup] = []
