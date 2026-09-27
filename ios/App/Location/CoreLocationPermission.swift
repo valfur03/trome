@@ -80,7 +80,7 @@ final class CoreLocationPermission: NSObject, LocationPermission {
         case nil:
             break
         }
-        if !questions.isAskingWhileUsing {
+        if !questions.keepsAuthorizationRequestsWaiting {
             resumeAuthorizationWaiters()
         }
         if !questions.isAskingAlways {

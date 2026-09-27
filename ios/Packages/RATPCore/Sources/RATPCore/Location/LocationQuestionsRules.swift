@@ -16,7 +16,7 @@ public struct LocationQuestionsRules: Equatable, Sendable {
 
     enum Step: Equatable, Sendable {
         case idle
-        case whileUsingAsked
+        case whileUsingAsked(appWentToBackground: Bool)
         case waitingToAskAlways
         case alwaysAsked(appResigned: Bool)
     }
@@ -28,7 +28,11 @@ public struct LocationQuestionsRules: Equatable, Sendable {
     }
 
     public var isAskingWhileUsing: Bool {
-        step == .whileUsingAsked
+        if case .whileUsingAsked = step { true } else { false }
+    }
+
+    public var keepsAuthorizationRequestsWaiting: Bool {
+        step == .whileUsingAsked(appWentToBackground: false)
     }
 
     public var isAskingAlways: Bool {
@@ -39,7 +43,7 @@ public struct LocationQuestionsRules: Equatable, Sendable {
 
     public mutating func start(access: LocationAccess) -> Action? {
         guard step == .idle, access == .notDecided else { return nil }
-        step = .whileUsingAsked
+        step = .whileUsingAsked(appWentToBackground: false)
         return .askWhileUsing
     }
 
@@ -47,6 +51,8 @@ public struct LocationQuestionsRules: Equatable, Sendable {
         switch (step, event) {
         case (.idle, _):
             break
+        case (.whileUsingAsked, .appEnteredBackground):
+            step = .whileUsingAsked(appWentToBackground: true)
         case (_, .appEnteredBackground):
             step = .idle
         case (.whileUsingAsked, .accessChanged(let access, let appIsActive)):

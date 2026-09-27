@@ -96,6 +96,25 @@ struct LocationQuestionsRulesTests {
         #expect(!rules.isAsking)
     }
 
+    @Test func stopsHoldingTheAuthorizationRequestsWhenTheAppGoesToTheBackgroundDuringTheFirstQuestion() {
+        var rules = askedWhileUsing()
+        #expect(rules.keepsAuthorizationRequestsWaiting)
+
+        #expect(rules.handle(.appEnteredBackground) == nil)
+
+        #expect(!rules.keepsAuthorizationRequestsWaiting)
+        #expect(rules.isAskingWhileUsing)
+    }
+
+    @Test func stillAsksAlwaysWhenTheRiderAnswersTheFirstQuestionAfterABackgroundTrip() {
+        var rules = askedWhileUsing()
+        _ = rules.handle(.appEnteredBackground)
+        _ = rules.handle(.appBecameActive)
+
+        #expect(rules.handle(.accessChanged(.whileUsing, appIsActive: true)) == .askAlways)
+        #expect(rules.isAskingAlways)
+    }
+
     @Test func ignoresEventsWhenItAsksNothing() {
         var rules = LocationQuestionsRules()
 
