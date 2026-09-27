@@ -3,7 +3,7 @@ set -eu
 
 base_lock=${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}
 watcher="$base_lock.slots-watcher"
-slots=${RATP_SIM_SLOTS:-2}
+slots=${RATP_SIM_SLOTS:-1}
 min_idle_percent=${RATP_SIM_MIN_IDLE_PERCENT:-25}
 idle_minutes=${RATP_SIM_IDLE_MINUTES:-5}
 poll_seconds=${RATP_SIM_POLL_SECONDS:-10}

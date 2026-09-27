@@ -7,7 +7,7 @@ default=11111111-1111-1111-1111-111111111111
 old=22222222-2222-2222-2222-222222222222
 failures=0
 export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock"
-unset RATP_SIM_SIZE || true
+unset RATP_SIM_SIZE RATP_SIM_SLOTS || true
 
 mkdir "$state/idle-watcher"
 printf 'trap "kill \\$!; exit" TERM\nsleep 600 &\nwait\n' > "$state/idle-watcher/sim-lock.sh"
@@ -121,6 +121,14 @@ expect "a job restarts SpringBoard only after it removed the app of the earlier 
 expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 RATP_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
 hold "$RATP_SIM_LOCK"
+in_background "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/one-slot"'
+expect "by default (one slot), a job waits for the other job even when the CPU is idle" "$(ran one-slot)" "waiting"
+rm -rf "$RATP_SIM_LOCK"
+finish_background
+expect "by default, the job runs on slot 1 once the other job ends" "$(ran one-slot)" "1"
+
+export RATP_SIM_SLOTS=2
+hold "$RATP_SIM_LOCK"
 echo com.example.RATPActivity > "$state/apps.$default"
 "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/slot" && "$1" reset && "$1" with-destination echo > "$FAKE_SIM_STATE/destination"' \
     sh "$scripts/simulator.sh" > /dev/null
@@ -147,12 +155,7 @@ expect "a third job says that both slots are busy" "$(grep -c "every Simulator s
 rm -rf "$RATP_SIM_LOCK.2"
 finish_background
 expect "the third job runs on slot 2 once it is free" "$(ran busy-slot)" "2"
-
-in_background env RATP_SIM_SLOTS=1 "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/one-slot"'
-expect "with one slot (RATP_SIM_SLOTS=1), a job waits for the other job even when the CPU is idle" "$(ran one-slot)" "waiting"
 rm -rf "$RATP_SIM_LOCK"
-finish_background
-expect "with one slot, the job runs on slot 1 once the other job ends" "$(ran one-slot)" "1"
 
 hold "$RATP_SIM_LOCK"
 small_open

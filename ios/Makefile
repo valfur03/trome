@@ -50,24 +50,24 @@ BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
 	@echo "make generate            Create the Xcode project again (after a change in project.yml)"
-	@echo "make run                 Build the app and open it in a shared Simulator (keeps the Simulator lock of its slot)"
+	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
 	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
 	@echo "make check               iOS quality gate: lint + key leak check + build + unit tests + script tests"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the Simulator lock scripts (with a fake xcrun, no Simulator)"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
-	@echo "make e2e                 End-to-end tests on a shared Simulator (takes the Simulator lock of a free slot)"
+	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
 	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle; the small one at once)"
-	@echo "make simulator-delete    Delete the shared Simulators of every slot (waits until no other Simulator job runs)"
+	@echo "make simulator-delete    Delete the shared Simulators, also those of a second-slot trial (waits until no other Simulator job runs)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
-	@echo "make docs-screenshots    Take the app screenshots of the docs on a shared Simulator (takes the Simulator lock of a free slot)"
+	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock)"
 
 setup:
 	@command -v xcodegen > /dev/null || brew install xcodegen
