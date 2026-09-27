@@ -7,7 +7,7 @@ default=11111111-1111-1111-1111-111111111111
 old=22222222-2222-2222-2222-222222222222
 failures=0
 export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock"
-unset RATP_SIM_SIZE RATP_SIM_SLOTS || true
+unset RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID || true
 
 mkdir "$state/idle-watcher"
 printf 'trap "kill \\$!; exit" TERM\nsleep 600 &\nwait\n' > "$state/idle-watcher/sim-lock.sh"
@@ -168,6 +168,30 @@ expect "by default (one slot), a job waits for the other job even when the CPU i
 rm -rf "$RATP_SIM_LOCK"
 finish_background
 expect "by default, the job runs on slot 1 once the other job ends" "$(ran one-slot)" "1"
+
+cat > "$state/nested-job.sh" << 'EOF'
+"$1" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/nested"' &
+inner=$!
+tries=0
+while [ ! -e "$FAKE_SIM_STATE/nested" ] && [ "$tries" -lt 5 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+kill "$inner" 2> /dev/null || true
+wait "$inner" 2> /dev/null || true
+test -e "$RATP_SIM_LOCK/pid" && echo held > "$FAKE_SIM_STATE/after-nested"
+EOF
+"$scripts/sim-lock.sh" job sh "$state/nested-job.sh" "$scripts/sim-lock.sh" > /dev/null 2>&1 || true
+expect "a job inside a job that holds the lock (make e2e inside make merge) runs at once" "$(ran nested)" "1"
+expect "a job inside a job leaves the lock to the outer job" "$(ran after-nested)" "held"
+expect "the outer job frees the lock when it ends" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
+
+hold "$RATP_SIM_LOCK"
+in_background env RATP_SIM_HELD_LOCK="$RATP_SIM_LOCK" RATP_SIM_HELD_PID=1 "$scripts/sim-lock.sh" job sh -c 'echo ran > "$FAKE_SIM_STATE/not-nested"'
+expect "a job whose parent does not hold the lock waits for it" "$(ran not-nested)" "waiting"
+rm -rf "$RATP_SIM_LOCK"
+finish_background
+expect "that job runs once the lock is free" "$(ran not-nested)" "ran"
 
 export RATP_SIM_SLOTS=2
 hold "$RATP_SIM_LOCK"

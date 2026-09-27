@@ -68,6 +68,8 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 
 `make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
 
+`make merge` takes the lock before the rebase and frees it after the fast-forward, success or failure (see "Merge a task into develop"). A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock. It does not free the lock when it ends: the outer job does.
+
 `make check`, `make test` and `make test-scripts` need no Simulator and no lock.
 
 The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
@@ -82,10 +84,37 @@ The E2E tests must make sure that no breaking bug lands on `develop`, and that n
 
 - **The implementer** runs only the E2E test classes of the flows that it changed: `make e2e ONLY=FakePositionTests`, or `make e2e ONLY="FakePositionTests LiveActivityTests"` for more than one. The class names are the file names in `ios/UITests/`. When its change touches no flow of the E2E tests (for example, a rule that only unit tests cover), it runs no E2E test.
 - **A reviewer** runs no E2E test, unless it changes app code. For example, a review with no change, or a change to the docs, the unit tests or the backlog files only, runs none. A reviewer who changes app code runs only the E2E test classes of the flows that its change touches.
-- **The Software Engineer who merges** runs the full `make e2e` once, after the rebase onto `develop`, on the commit that it will fast-forward `develop` to. If git refuses the fast-forward (another SE merged first), it rebases again. When this new rebase brings app code, it runs the full `make e2e` again, on the new commit. A task that changes only docs (no app code) skips the full run: `develop` was green, and the task adds no app code.
+- **The Software Engineer who merges** runs `make merge` (see "Merge a task into develop"). It runs the full `make e2e` once, after the rebase onto `develop`, on the commit that it fast-forwards `develop` to. A task that changes only docs or unit tests (no app code) skips the full run: `develop` was green, and the task adds no app code. `make merge` sees this by itself.
 - **QA** runs no automated tests. It explores the app like a real user.
 
 These rules do not change the rule on flaky tests (below): a failing test may be rerun once, to know if it is flaky.
+
+## Merge a task into develop
+
+The Software Engineer who merges a task runs one command in the worktree of the task, instead of the separate steps (rebase, gate, E2E run, fast-forward):
+
+```sh
+make merge
+```
+
+When the branch changes `docs/`, load Node 24 first: `. "$HOME/.nvm/nvm.sh" && nvm use && make merge`. Run it in the background: it can wait long for the Simulator lock.
+
+It takes the Simulator lock, then does these steps. Each step runs only when the step before it passed:
+
+1. It rebases the branch of the worktree onto the tip of `develop`.
+2. It runs the quality gate (`make check`).
+3. It runs the full E2E suite (`make e2e`), unless the branch changes no app code (see "Which E2E tests to run").
+4. It fast-forwards `develop` to the rebased branch.
+
+Then it frees the lock. When a step fails (a rebase conflict, the gate, the E2E suite), it stops at once, says which step failed, leaves `develop` as it was, and frees the lock. After a rebase conflict, the rebase stays in progress: solve it, run `git rebase --continue`, then run `make merge` again. It refuses to start on `develop` or `main`, with changes that are not committed, or with nothing to merge.
+
+Why one command, with the lock all along:
+
+- **Merges queue one after another.** A second `make merge` waits for the lock. When its turn comes, `develop` already has the first merge, so it rebases onto it. Its fast-forward is never refused because another merge landed during its run.
+- **A full E2E run is never repeated.** Before, another merge could land between the end of a full run and the fast-forward. The fast-forward was then refused, and the Software Engineer had to rebase and run the full suite again.
+- **History stays linear, and `develop` stays green.** `develop` moves only by fast-forward, to the exact commit that passed the gate and the E2E suite. No merge commit.
+
+`make merge` changes only `develop` (never `main`), and it never checks out `develop`. When it fails, fix the cause on the branch, then run it again.
 
 ## Hold the Simulator only while you use it
 

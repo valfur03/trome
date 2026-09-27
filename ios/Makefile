@@ -47,7 +47,7 @@ XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
 	SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
 
-.PHONY: help setup generate project lint lint-fix build test test-scripts check live-key-check recommended-settings-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots
+.PHONY: help setup generate project lint lint-fix build test test-scripts check live-key-check recommended-settings-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -62,6 +62,7 @@ help:
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
+	@echo "make merge               Merge the branch of this folder into develop, with the Simulator lock all along: rebase, make check, full make e2e, fast-forward"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
@@ -163,6 +164,9 @@ clean:
 
 clean-shared-cache:
 	@./scripts/shared-cache.sh clear "$(SHARED_CACHE)"
+
+merge:
+	@./scripts/merge.sh
 
 docs-screenshots: project
 	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \

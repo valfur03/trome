@@ -30,6 +30,7 @@ The Xcode project is not in git. The file `ios/project.yml` describes it. If you
 | `make check` | The quality gate: lint, recommended settings check, key leak check, build, unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make e2e ONLY=FakePositionTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=FakePositionTests/testTesterCanFakeThePositionAndGoBackToTheRealGPS` runs one test. The class names are the file names in `ios/UITests/`. |
+| `make merge` | Merges the branch of this folder into `develop`, with the Simulator lock from start to end: rebase onto `develop`, `make check`, the full `make e2e`, then a fast-forward of `develop`. The CLAUDE.md explains it (section "Merge a task into develop"). |
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
 | `make stations` | Downloads the metro and RER station list again (see below). |
 | `make clean` | Deletes the build folder and the Xcode project. |

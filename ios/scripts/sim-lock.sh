@@ -21,7 +21,7 @@ case "$slots" in
 esac
 
 usage() {
-    echo "Usage: $0 job <command...>   Run a Simulator job with the lock of a free Simulator slot" >&2
+    echo "Usage: $0 job <command...>   Run a Simulator job with the lock of a free Simulator slot (at once inside a job that holds it)" >&2
     echo "       $0 open <command...>  Open the Simulator with the lock of a free slot, and keep the lock" >&2
     echo "       $0 free               Remove the app from the Simulator and free the lock that this folder keeps after 'open'" >&2
     echo "       $0 all <command...>   Run a command with the locks of every slot (waits until no other job runs)" >&2
@@ -112,17 +112,35 @@ write_size() {
     mv "$lock/size.new" "$lock/size"
 }
 
+mark_held() {
+    held_slots="$held_slots $RATP_SIM_SLOT"
+    RATP_SIM_HELD_LOCK=$lock
+    RATP_SIM_HELD_PID=$$
+    export RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID
+}
+
 take() {
     echo "$$" > "$lock/pid"
     echo "$root" > "$lock/worktree"
     write_size
-    held_slots="$held_slots $RATP_SIM_SLOT"
+    mark_held
 }
 
 join_session() {
     echo "$$" > "$lock/pid"
     write_size
-    held_slots="$held_slots $RATP_SIM_SLOT"
+    mark_held
+}
+
+in_held_job() {
+    [ -n "${RATP_SIM_HELD_LOCK:-}" ] && [ -n "${RATP_SIM_HELD_PID:-}" ] || return 1
+    for candidate in $(all_slots); do
+        use_slot "$candidate"
+        if [ "$lock" = "$RATP_SIM_HELD_LOCK" ] && [ "$(holder pid)" = "$RATP_SIM_HELD_PID" ]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
 watcher_is_running() {
@@ -314,6 +332,9 @@ command=${1:-}
 case "$command" in
     job)
         [ $# -gt 0 ] || usage
+        if in_held_job; then
+            exec "$@"
+        fi
         enter
         trap on_exit EXIT
         "$@"
