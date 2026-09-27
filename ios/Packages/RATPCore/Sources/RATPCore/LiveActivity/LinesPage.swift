@@ -70,6 +70,10 @@ public struct LinesPage: Codable, Hashable, Sendable {
         )
     }
 
+    public var showsSeveralLines: Bool {
+        allLines.count > 1
+    }
+
     public var hasOtherLines: Bool {
         lines.count < allLines.count
     }

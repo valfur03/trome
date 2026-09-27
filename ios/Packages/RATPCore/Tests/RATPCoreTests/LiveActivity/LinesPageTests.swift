@@ -102,6 +102,14 @@ struct LinesPageTests {
         #expect(LinesPage(showing: [empty], from: 0).soonestTrain == nil)
     }
 
+    @Test func showsSeveralLinesOnlyWhenTheStationHasMoreThanOneLine() {
+        let oneLine = LinesPage(showing: [line("12", directions: 2)], from: 0)
+        let severalLines = LinesPage(showing: [line("1", directions: 2), line("4", directions: 2)], from: 0)
+
+        #expect(!oneLine.showsSeveralLines)
+        #expect(severalLines.showsSeveralLines)
+    }
+
     @Test func tellsWhichLinesThePageShows() {
         let lines = [line("1", directions: 2), line("4", directions: 2), line("7", directions: 2)]
 

@@ -355,12 +355,6 @@ private extension StationActivityAttributes.ContentState {
     }
 }
 
-private extension LinesPage {
-    var showsSeveralLines: Bool {
-        allLines.count > 1
-    }
-}
-
 private extension TransitLine {
     var symbolName: String {
         switch mode {
