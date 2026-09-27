@@ -11,10 +11,12 @@ struct ButtonLabel: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
-                icon
-                Text(title)
-                    .lineLimit(1)
+            oneLine
+            ZStack {
+                Text(verbatim: " ")
+                    .hidden()
+                oneLine
+                    .font(.callout)
             }
             VStack(spacing: 4) {
                 icon
@@ -26,6 +28,14 @@ struct ButtonLabel: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(title))
+    }
+
+    private var oneLine: some View {
+        HStack(spacing: 8) {
+            icon
+            Text(title)
+                .lineLimit(1)
+        }
     }
 
     private var icon: some View {
