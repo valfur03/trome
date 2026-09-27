@@ -23,7 +23,7 @@ final class SnoozeTests: E2ETestCase {
         useFakePosition(atStation: "Gare de l'Est", in: app)
         waitForLabel("On the lock screen: Gare de l'Est", of: lockScreenStation)
         XCUIDevice.shared.press(.home)
-        openNotificationCenter()
+        openNotificationCenter(answeringTheLiveActivitiesPrompt: false)
         XCTAssertTrue(waitFor(springboard.staticTexts["Gare de l'Est"]))
         XCTAssertTrue(waitFor(liveActivityElement(containing: "Porte de Clignancourt")))
         XCTAssertFalse(liveActivityElement(containing: "Villejuif - Louis Aragon").exists)
@@ -89,10 +89,11 @@ final class SnoozeTests: E2ETestCase {
     }
 
     @MainActor
-    private func openNotificationCenter() {
+    private func openNotificationCenter(answeringTheLiveActivitiesPrompt: Bool = true) {
         let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.001))
         let middle = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.7))
         top.press(forDuration: 0.1, thenDragTo: middle)
+        guard answeringTheLiveActivitiesPrompt else { return }
         let allowLiveActivities = springboard.buttons["Allow"]
         if allowLiveActivities.waitForExistence(timeout: 5) {
             allowLiveActivities.tap()
