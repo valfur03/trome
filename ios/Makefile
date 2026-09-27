@@ -9,6 +9,7 @@ E2E_TARGET := RATPActivityUITests
 E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := RATPActivityDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
+BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 CORE_PACKAGE := Packages/RATPCore
@@ -42,10 +43,11 @@ XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
 	-project $(PROJECT) \
 	-derivedDataPath $(DERIVED_DATA) \
 	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages \
-	COMPILER_INDEX_STORE_ENABLE=NO $(SHARED_SDK_MODULES)
+	COMPILER_INDEX_STORE_ENABLE=NO $(SHARED_SDK_MODULES) \
+	SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
 
-.PHONY: help setup generate project lint lint-fix build test test-scripts check live-key-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots
+.PHONY: help setup generate project lint lint-fix build test test-scripts check live-key-check recommended-settings-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -53,10 +55,11 @@ help:
 	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
 	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
-	@echo "make check               iOS quality gate: lint + key leak check + build + unit tests + script tests"
+	@echo "make check               iOS quality gate: lint + recommended settings check + key leak check + build (no warning allowed) + unit tests + script tests"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
-	@echo "make test-scripts        Tests of the Simulator lock scripts (with a fake xcrun, no Simulator)"
+	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
+	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
@@ -98,17 +101,24 @@ ifeq ($(LIVE),1)
 		printf '#include "%s"\n' "$(PRIM_SECRETS)" > $(LIVE_XCCONFIG) && $(BUILD_APP)
 else
 	@rm -f $(LIVE_XCCONFIG)
-	$(BUILD_APP) $(NO_KEY)
+	@rm -rf $(BUILD_RESULT)
+	$(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)
+	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 endif
 
 test:
-	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore
+	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore -Xswiftc -warnings-as-errors
 
 test-scripts:
 	@mkdir -p $(BUILD_DIR)
-	@./scripts/tests/sim-lock-test.sh > $(BUILD_DIR)/test-scripts.log 2>&1 || { cat $(BUILD_DIR)/test-scripts.log; exit 1; }
+	@for test in ./scripts/tests/*-test.sh; do \
+		$$test > $(BUILD_DIR)/test-scripts.log 2>&1 || { cat $(BUILD_DIR)/test-scripts.log; exit 1; }; \
+	done
 
-check: lint live-key-check build test test-scripts
+check: lint recommended-settings-check live-key-check build test test-scripts
+
+recommended-settings-check:
+	@./scripts/recommended-settings-check.sh project.yml "$$(xcodebuild -version | head -1)"
 
 live-key-check: project
 	@SHARED_CACHE="$(SHARED_CACHE)" ./scripts/live-key-check.sh

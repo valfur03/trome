@@ -27,7 +27,7 @@ The Xcode project is not in git. The file `ios/project.yml` describes it. If you
 | `make run` | Builds the app and opens it in the Simulator, without the train data key. |
 | `make run LIVE=1` | The same, with your train data key (see below). |
 | `make run SMALL=1` | The same, on the smallest supported iPhone (see [The smallest iPhone](#the-smallest-iphone)). |
-| `make check` | The quality gate: lint, key leak check, build, unit tests, and the tests of the Simulator scripts. Run it before each commit. |
+| `make check` | The quality gate: lint, recommended settings check, key leak check, build, unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make e2e ONLY=FakePositionTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=FakePositionTests/testTesterCanFakeThePositionAndGoBackToTheRealGPS` runs one test. The class names are the file names in `ios/UITests/`. |
 | `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
@@ -330,3 +330,10 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 - `make e2e` builds the tests before it takes the Simulator lock, so other jobs do not wait for the build. It runs the tests on the Simulator of its job (`ios/scripts/simulator.sh with-destination` adds its `-destination`).
 - `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock). It stops a test that runs longer than 5 minutes. When a test fails, it prints the file, the line, and the message of each failure. The full results are in `ios/.build/e2e.xcresult` (open it in Xcode).
 - Swift 6 language mode. Minimum iOS version: 18.0.
+
+### No warnings
+
+The project has no warning, and the quality gate keeps it so:
+
+- **Build warnings.** The command line builds (`make build`, `make e2e`, `make docs-screenshots`) treat each compiler warning as an error. `make test` does the same for `RATPCore`. After `make build`, `ios/scripts/build-warnings.py` reads the result of the build (`ios/.build/build.xcresult`) and fails on any other warning that Xcode reports (for example the linker or the asset catalog). The Run button in Xcode does not treat warnings as errors, so you can try code that is not finished yet.
+- **Recommended settings.** A new version of Xcode can recommend new project settings: Xcode then shows the warning "Update to recommended settings". `options.xcodeVersion` in `ios/project.yml` says which Xcode version last checked the settings. `make recommended-settings-check` (part of `make check`) fails when your Xcode is newer (a bug fix release, for example 27.0.1, does not count). Then open `ios/RATPActivity.xcodeproj` in Xcode, click the warning, and add each setting that Xcode proposes to `ios/project.yml`. Do not click "Perform Changes": the Xcode project is not in git, and `make generate` would undo it. Then set `options.xcodeVersion` to your Xcode version, and run `make generate`.
