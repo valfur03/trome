@@ -10,6 +10,7 @@ public final class AutoLiveActivityModel {
     }
 
     public private(set) var shownStation: Station?
+    public private(set) var hasAskedNotificationQuestion = false
 
     private let catalog: StationCatalog
     let liveActivity: StationLiveActivityModel
@@ -309,9 +310,10 @@ private extension AutoLiveActivityModel {
     func askForNotificationsIfAllowed() {
         guard !hasAskedForNotifications, inputs.permission.authorization == .authorized else { return }
         hasAskedForNotifications = true
-        Task { [permission = inputs.permission, notifier = services.notifier] in
+        Task { [weak self, permission = inputs.permission, notifier = services.notifier] in
             await permission.waitForAlwaysQuestion()
             await notifier.requestAuthorization()
+            self?.hasAskedNotificationQuestion = true
         }
     }
 

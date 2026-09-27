@@ -29,6 +29,18 @@ extension AutoLiveActivityModelTests {
         #expect(notifier.authorizationRequestCount == 1)
     }
 
+    @Test func saysWhenTheNotificationQuestionIsAnswered() async {
+        permission.isAskingAlways = true
+        let model = makeModel()
+        await activate(model)
+        #expect(model.hasAskedNotificationQuestion == false)
+
+        permission.answerAlwaysQuestion()
+        await waitUntil { model.hasAskedNotificationQuestion }
+
+        #expect(model.hasAskedNotificationQuestion)
+    }
+
     @Test func startsTheTappedLiveActivityWhileTheNotificationQuestionIsOpen() async {
         permission.isAskingAlways = true
         let model = makeModel()

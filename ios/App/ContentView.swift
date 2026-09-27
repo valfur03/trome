@@ -53,5 +53,8 @@ struct ContentView: View {
                 await autoLiveActivity.appDidBecomeActive()
             }
         }
+        .onChange(of: autoLiveActivity.hasAskedNotificationQuestion) {
+            Task { await permissions.refresh() }
+        }
     }
 }
