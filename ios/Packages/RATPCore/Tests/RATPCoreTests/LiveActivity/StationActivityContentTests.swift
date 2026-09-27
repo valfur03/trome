@@ -137,4 +137,35 @@ struct StationActivityContentTests {
     @Test func neverBecomesStaleWithoutTrainTimes() {
         #expect(ContentState(station: station, trains: .noLiveData, now: now).staleDate == nil)
     }
+
+    @Test func keepsTwoTrainsInEachDirectionWhenTheLiveActivityShowsTwoDirections() {
+        let directions = [
+            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", trains: [
+                LineDirection.Train(time: time(inMinutes: 1), destination: "Saint-Rémy-lès-Chevreuse"),
+                LineDirection.Train(time: time(inMinutes: 5), destination: "Massy - Palaiseau")
+            ]),
+            LineDirection(label: "Mitry - Claye", times: [time(inMinutes: 2), time(inMinutes: 9)])
+        ]
+
+        #expect(StationActivityAttributes.Trains.fittingTheLiveActivity(directions) == directions)
+    }
+
+    @Test func showsOnlyTheNextTrainOfEachDirectionWhenTheLiveActivityShowsThreeDirections() {
+        let directions = [
+            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", trains: [
+                LineDirection.Train(time: time(inMinutes: 1), destination: "Saint-Rémy-lès-Chevreuse"),
+                LineDirection.Train(time: time(inMinutes: 5), destination: "Massy - Palaiseau")
+            ]),
+            LineDirection(label: "Mitry - Claye", times: [time(inMinutes: 2), time(inMinutes: 9)]),
+            LineDirection(label: "Gare du Nord", times: [])
+        ]
+
+        #expect(StationActivityAttributes.Trains.fittingTheLiveActivity(directions) == [
+            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", trains: [
+                LineDirection.Train(time: time(inMinutes: 1), destination: "Saint-Rémy-lès-Chevreuse")
+            ]),
+            LineDirection(label: "Mitry - Claye", times: [time(inMinutes: 2)]),
+            LineDirection(label: "Gare du Nord", times: [])
+        ])
+    }
 }

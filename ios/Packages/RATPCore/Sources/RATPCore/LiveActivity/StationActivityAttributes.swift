@@ -42,6 +42,8 @@ extension StationActivityAttributes.ContentState {
 }
 
 extension StationActivityAttributes.Trains {
+    static let maximumDirectionsWithTwoTrains = 2
+
     init(_ state: NextTrainsState, station: Station, now: Date) {
         switch state {
         case .idle, .loading:
@@ -60,8 +62,16 @@ extension StationActivityAttributes.Trains {
             let directions = LineDirections.directions(of: shownLine, at: station, from: upcoming)
             self = directions.isEmpty
                 ? .noData
-                : .directions(line: TransitLine(mode: shownLine.mode, name: shownLine.name), directions)
+                : .directions(
+                    line: TransitLine(mode: shownLine.mode, name: shownLine.name),
+                    Self.fittingTheLiveActivity(directions)
+                )
         }
+    }
+
+    static func fittingTheLiveActivity(_ directions: [LineDirection]) -> [LineDirection] {
+        guard directions.count > maximumDirectionsWithTwoTrains else { return directions }
+        return directions.map { LineDirection(label: $0.label, trains: Array($0.trains.prefix(1))) }
     }
 }
 

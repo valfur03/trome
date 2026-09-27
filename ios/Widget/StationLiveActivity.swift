@@ -51,7 +51,7 @@ private struct LockScreenView: View {
     let isStale: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Label(state.stationName, systemImage: state.line?.symbolName ?? "tram.fill")
                     .font(.headline)
@@ -65,7 +65,7 @@ private struct LockScreenView: View {
             SnoozeButtons()
         }
         .padding(.horizontal)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
     }
 }
 
@@ -80,7 +80,7 @@ private struct SnoozeButtons: View {
             ForEach(SnoozeDuration.allCases, id: \.self) { duration in
                 Button(intent: SnoozeLiveActivityIntent(duration: duration)) {
                     Text(title(of: duration))
-                        .font(.caption.bold())
+                        .font(.caption2.bold())
                         .lineLimit(1)
                 }
                 .buttonStyle(.bordered)
@@ -133,7 +133,7 @@ private struct TrainsSummary: View {
             }
             if isStale {
                 Text("Open the app for new times.")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
@@ -169,7 +169,7 @@ private struct DirectionRow: View {
                 } else if !isStale {
                     VStack(alignment: .trailing, spacing: 0) {
                         WaitingTime(time: direction.times[0])
-                            .font(.headline)
+                            .font(.subheadline.bold())
                         if direction.times.count > 1 {
                             WaitingTime(time: direction.times[1])
                                 .font(.caption2)
@@ -197,7 +197,7 @@ private struct TrainRow: View {
                 .foregroundStyle(isNext ? .primary : .secondary)
             Spacer(minLength: 8)
             WaitingTime(time: train.time)
-                .font(isNext ? .headline : .caption2)
+                .font(isNext ? .subheadline.bold() : .caption2)
                 .foregroundStyle(isNext ? .primary : .secondary)
                 .frame(minWidth: DirectionRow.minimumTimeWidth, alignment: .trailing)
         }
@@ -209,8 +209,8 @@ private struct DirectionName: View {
 
     var body: some View {
         Text(text)
-            .lineLimit(2)
-            .fixedSize(horizontal: false, vertical: true)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
             .layoutPriority(1)
     }
 }
