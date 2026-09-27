@@ -87,9 +87,18 @@ installed_apps() {
         | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.RATPActivity)"?;$/\1/p'
 }
 
+left_preference_domains() {
+    xcrun simctl spawn "$1" defaults domains \
+        | tr ',' '\n' \
+        | sed -n -E 's/^ *([^ ]*\.RATPActivity[A-Za-z.]*) *$/\1/p'
+}
+
 uninstall_apps() {
     for installed_app in $(installed_apps "$1"); do
         xcrun simctl uninstall "$1" "$installed_app"
+    done
+    for domain in $(left_preference_domains "$1"); do
+        xcrun simctl spawn "$1" defaults delete "$domain"
     done
 }
 

@@ -80,6 +80,11 @@ RATP_SIM_IDLE_MINUTES=1 "$scripts/sim-lock.sh" watch
 pretend_a_watcher_runs
 expect "the idle watcher shuts down every shared Simulator" "$(booted)" ""
 
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null
+printf '%s\n' com.apple.Maps com.example.RATPActivity com.example.RATPActivityUITests.xctrunner com.other.App > "$state/prefs.$default"
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "a job deletes the saved settings that the app of an earlier job left on the Simulator" "$(tr '\n' ' ' < "$state/prefs.$default")" "com.apple.Maps com.other.App "
+
 echo "RATP-task-1-abc Shutdown" > "$state/device.$old"
 "$scripts/simulator.sh" delete-old > /dev/null
 expect "make simulator-delete-old keeps the small Simulator" "$(test -e "$state/device.$small" && echo kept || true)" "kept"

@@ -42,4 +42,16 @@ case "$command" in
     bootstatus) set_state "$1" Booted ;;
     shutdown) [ -z "${FAKE_SHUTDOWN_FAILS:-}" ] || exit 1; set_state "$1" Shutdown ;;
     delete) rm "$state/device.$1" ;;
+    spawn)
+        prefs="$state/prefs.$1"
+        touch "$prefs"
+        case "$2 $3" in
+            "defaults domains") paste -s -d ',' "$prefs" | sed 's/,/, /g' ;;
+            "defaults delete")
+                grep -qxF "$4" "$prefs" || exit 1
+                grep -vxF "$4" "$prefs" > "$prefs.new" || true
+                mv "$prefs.new" "$prefs"
+                ;;
+        esac
+        ;;
 esac
