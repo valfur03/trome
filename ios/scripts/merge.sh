@@ -5,6 +5,7 @@ scripts=$(cd "$(dirname "$0")" && pwd)
 target=develop
 check_command=${RATP_MERGE_CHECK:-make check}
 e2e_command=${RATP_MERGE_E2E:-make e2e}
+merge_lock=${RATP_MERGE_LOCK:-/tmp/ratp-merge.lock}
 
 fail() {
     echo "make merge: $1" >&2
@@ -25,6 +26,7 @@ check_worktree() {
     esac
     git rev-parse -q --verify "refs/heads/$target" > /dev/null || fail "there is no branch '$target'."
     ! in_rebase || fail "a rebase is in progress. Finish it (git rebase --continue) or stop it (git rebase --abort) first."
+    [ -z "${ONLY:-}" ] || fail "ONLY works only with 'make e2e'. make merge always runs the full E2E suite."
     [ -z "$(git status --porcelain)" ] || fail "the worktree has changes that are not committed. Commit them first, so the gate checks what develop gets."
     [ -n "$(git rev-list -n 1 "$target..HEAD")" ] || fail "'$branch' has no commit that '$target' does not have. There is nothing to merge."
 }
@@ -38,7 +40,7 @@ step_failed() {
 }
 
 changes_app_code() {
-    git diff --name-only "$1" "$2" | grep -qv -e '^docs/' -e '^README\.md$' -e '^CLAUDE\.md$' -e '^ios/Packages/RATPCore/Tests/'
+    git diff --name-only --no-renames "$1" "$2" | grep -qv -e '^docs/' -e '^README\.md$' -e '^CLAUDE\.md$' -e '^ios/Packages/RATPCore/Tests/'
 }
 
 step() {
@@ -71,7 +73,8 @@ merge() {
 case "${1:-}" in
     "")
         check_worktree
-        exec "$scripts/sim-lock.sh" job "$scripts/merge.sh" locked
+        lockf -s -k -t 0 "$merge_lock" true || echo "make merge: waiting for the merge of another worktree to end" >&2
+        exec lockf -k "$merge_lock" "$scripts/sim-lock.sh" job "$scripts/merge.sh" locked
         ;;
     locked)
         merge

@@ -68,7 +68,7 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 
 `make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
 
-`make merge` takes the lock before the rebase and frees it after the fast-forward, success or failure (see "Merge a task into develop"). A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock. It does not free the lock when it ends: the outer job does.
+`make merge` takes the lock before the rebase and frees it after the fast-forward, success or failure (see "Merge a task into develop"). Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots. A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock. It does not free the lock when it ends: the outer job does.
 
 `make check`, `make test` and `make test-scripts` need no Simulator and no lock.
 
@@ -106,11 +106,11 @@ It takes the Simulator lock, then does these steps. Each step runs only when the
 3. It runs the full E2E suite (`make e2e`), unless the branch changes no app code (see "Which E2E tests to run").
 4. It fast-forwards `develop` to the rebased branch.
 
-Then it frees the lock. When a step fails (a rebase conflict, the gate, the E2E suite), it stops at once, says which step failed, leaves `develop` as it was, and frees the lock. After a rebase conflict, the rebase stays in progress: solve it, run `git rebase --continue`, then run `make merge` again. It refuses to start on `develop` or `main`, with changes that are not committed, or with nothing to merge.
+Then it frees the lock. When a step fails (a rebase conflict, the gate, the E2E suite), it stops at once, says which step failed, leaves `develop` as it was, and frees the lock. After a rebase conflict, the rebase stays in progress: solve it, run `git rebase --continue`, then run `make merge` again. It refuses to start on `develop` or `main`, with changes that are not committed, with `ONLY=` (the E2E suite is always the full one), or with nothing to merge.
 
 Why one command, with the lock all along:
 
-- **Merges queue one after another.** A second `make merge` waits for the lock. When its turn comes, `develop` already has the first merge, so it rebases onto it. Its fast-forward is never refused because another merge landed during its run.
+- **Merges queue one after another.** A second `make merge` waits for the first one (it prints `waiting for the merge of another worktree`), then for the Simulator lock. When its turn comes, `develop` already has the first merge, so it rebases onto it. Its fast-forward is never refused because another merge landed during its run.
 - **A full E2E run is never repeated.** Before, another merge could land between the end of a full run and the fast-forward. The fast-forward was then refused, and the Software Engineer had to rebase and run the full suite again.
 - **History stays linear, and `develop` stays green.** `develop` moves only by fast-forward, to the exact commit that passed the gate and the E2E suite. No merge commit.
 

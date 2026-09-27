@@ -5,8 +5,8 @@ scripts=$(cd "$tests/.." && pwd)
 state=$(mktemp -d)
 repo="$state/repo"
 failures=0
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID || true
-export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 SCRIPTS="$scripts"
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE ONLY RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID || true
+export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 RATP_MERGE_LOCK="$state/merge.lock" SCRIPTS="$scripts"
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.com
 
@@ -132,6 +132,14 @@ expect "make merge skips the E2E suite when the task changes only docs" "$(tr '\
 expect "make merge says why it skips the E2E suite" "$(contains "$state/docs.log" "changes no app code")" "yes"
 expect "develop is the task that changes only docs" "$(rev develop)" "$(rev task/docs)"
 
+advance_develop app app
+new_task moved
+mkdir -p "$state/moved/docs"
+git -C "$state/moved" mv app docs/app
+git -C "$state/moved" commit -q -m "move app into docs"
+merge moved
+expect "make merge runs the E2E suite when the task moves app code into docs" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job "
+
 new_task gate
 commit "$state/gate" gate gate
 before=$(rev develop)
@@ -173,6 +181,15 @@ merge dirty
 expect "make merge refuses a worktree with changes that are not committed" "$status" "1"
 expect "make merge does not rebase a worktree with changes" "$(cat "$state/refs")" ""
 
+new_task only
+commit "$state/only" only only
+ONLY=FakePositionTests
+export ONLY
+merge only
+unset ONLY
+expect "make merge refuses ONLY, so the E2E suite is always the full one" "$(contains "$state/only.log" "ONLY works only with 'make e2e'")" "yes"
+expect "make merge with ONLY does not rebase" "$(cat "$state/refs")" ""
+
 new_task empty
 merge empty
 expect "make merge refuses a branch with nothing to merge" "$(contains "$state/empty.log" "There is nothing to merge")" "yes"
@@ -189,9 +206,23 @@ sleep 1
 start_merge second
 expect "the first of two merges started together succeeds" "$(finish_merge first)" "0"
 expect "the second of two merges started together succeeds" "$(finish_merge second)" "0"
-expect "the second merge waits for the Simulator lock of the first one" "$(contains "$state/second.log" "Waiting for the Simulator lock")" "yes"
+expect "the second merge waits for the first one" "$(contains "$state/second.log" "waiting for the merge of another worktree")" "yes"
 expect "the second merge rebases onto develop after the fast-forward of the first one" "$(rev develop~1) $(rev develop~2)" "$(rev task/first) $before"
 expect "develop is the second task branch" "$(rev develop)" "$(rev task/second)"
 expect "develop has no merge commit after two merges" "$(git -C "$repo" rev-list --merges develop)" ""
+
+new_task slot1
+new_task slot2
+commit "$state/slot1" slot1 slot1
+commit "$state/slot2" slot2 slot2
+before=$(rev develop)
+export RATP_SIM_SLOTS=2 RATP_SIM_MIN_IDLE_PERCENT=0
+start_merge slot1
+sleep 1
+start_merge slot2
+expect "with two Simulator slots, the first of two merges succeeds" "$(finish_merge slot1)" "0"
+expect "with two Simulator slots, the second merge succeeds" "$(finish_merge slot2)" "0"
+expect "with two Simulator slots, the second merge still waits for the first one" "$(rev develop~1) $(rev develop~2)" "$(rev task/slot1) $before"
+unset RATP_SIM_SLOTS RATP_SIM_MIN_IDLE_PERCENT
 
 [ "$failures" -eq 0 ]
