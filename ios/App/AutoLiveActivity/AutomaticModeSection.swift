@@ -52,20 +52,24 @@ struct AutomaticModeSection: View {
         .accessibilityIdentifier("snoozeMenu")
     }
 
-    private var footer: String {
+    private var footer: LocalizedStringKey {
         switch automaticMode.mode {
         case .turnedOn:
-            "The Live Activity starts by itself when you come near a metro or RER station, "
-                + "and stops when you leave. Snooze it to stop it for a while."
+            """
+            The Live Activity starts by itself when you come near a metro or RER station, \
+            and stops when you leave. Snooze it to stop it for a while.
+            """
         case .snoozed:
-            "No notification and no automatic Live Activity until the snooze ends. "
-                + "You can still show the Live Activity by hand."
+            """
+            No notification and no automatic Live Activity until the snooze ends. \
+            You can still show the Live Activity by hand.
+            """
         case .turnedOff:
             "No notification and no automatic Live Activity. You can still show the Live Activity by hand."
         }
     }
 
-    private func title(of duration: SnoozeDuration) -> String {
+    private func title(of duration: SnoozeDuration) -> LocalizedStringKey {
         switch duration {
         case .thirtyMinutes: "30 minutes"
         case .oneHour: "1 hour"

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct StateRow<Title: View>: View {
-    let state: String
+    let state: LocalizedStringKey
     @ViewBuilder let title: Title
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize

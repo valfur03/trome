@@ -1,0 +1,42 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSLocationAlwaysAndWhenInUseUsageDescription" : {
+      "comment" : "",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "RATP Activity uses your location to tell you when you reach a metro or RER station, also when the app is closed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RATP Activity utilise votre position pour vous prévenir quand vous arrivez à une station de métro ou de RER, même quand l’app est fermée."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "RATP Activity uses your location to find the nearest metro or RER station."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RATP Activity utilise votre position pour trouver la station de métro ou de RER la plus proche."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

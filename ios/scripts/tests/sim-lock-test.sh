@@ -137,6 +137,7 @@ small=$("$scripts/simulator.sh" booted | grep -vxF "$default")
 expect "make run SMALL=1 keeps RATP-Shared booted and boots the small Simulator" "$(booted)" "RATP-Shared RATP-Shared-Small "
 expect "the small Simulator is an iPhone SE" "$(cat "$state/type.$small")" "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation"
 expect "the lock keeps the small Simulator" "$(cat "$RATP_SIM_LOCK/udid")" "$small"
+expect "sim-lock.sh session succeeds while this folder keeps the Simulator" "$("$scripts/sim-lock.sh" session && echo session || echo none)" "session"
 
 "$scripts/sim-lock.sh" open sh -c '"$1" boot && kill -0 "$(cat "$RATP_SIM_LOCK/pid")" && echo held > "$FAKE_SIM_STATE/switch"' \
     sh "$scripts/simulator.sh" > /dev/null
@@ -258,6 +259,23 @@ echo "Allow RATP Activity to also use your location even when you are not using 
 expect "a job closes a system popup that an earlier job left on the Simulator" "$(test -e "$state/popup.$default" && echo shown || true)" ""
 expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default" 2> /dev/null || echo "no restart")" ""
 expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 RATP_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
+
+language_at_restart() {
+    cat "$state/language-at-springboard-restart.$default" 2> /dev/null || echo "no restart"
+}
+RATP_SIM_LANGUAGE=fr "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "RATP_SIM_LANGUAGE=fr sets the Simulator to French before SpringBoard restarts" "$(language_at_restart)" "fr fr_FR"
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "a job sets the Simulator back to English by default" "$(language_at_restart)" "en en_US"
+expect "an unknown language fails" "$(RATP_SIM_LANGUAGE=de "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || echo fails)" "fails"
+mkdir -p "$state/RATPActivity.app"
+/usr/libexec/PlistBuddy -c 'Add CFBundleIdentifier string com.example.RATPActivity' "$state/RATPActivity.app/Info.plist" > /dev/null
+: > "$state/apps.$default"
+expect "sim-lock.sh session fails when this folder keeps no Simulator" "$("$scripts/sim-lock.sh" session && echo session || echo none)" "none"
+expect "switch-language fails when the app is not in the Simulator" "$(RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null 2>&1 && echo switched || echo fails)" "fails"
+echo com.example.RATPActivity > "$state/apps.$default"
+RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null
+expect "switch-language keeps the app, sets the language and opens the app again" "$(cat "$state/apps.$default") $(language_at_restart) $(cat "$state/launched.$default")" "com.example.RATPActivity fr fr_FR com.example.RATPActivity"
 
 hold "$RATP_SIM_LOCK"
 in_background "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/one-slot"'

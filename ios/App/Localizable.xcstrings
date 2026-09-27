@@ -1,0 +1,508 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%lld stations" : {
+      "shouldTranslate" : false
+    },
+    "1 hour" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 heure"
+          }
+        }
+      }
+    },
+    "1 station" : {
+      "shouldTranslate" : false
+    },
+    "30 minutes" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 minutes"
+          }
+        }
+      }
+    },
+    "48.8584, 2.2945" : {
+      "shouldTranslate" : false
+    },
+    "Address" : {
+      "shouldTranslate" : false
+    },
+    "Address in or near Paris" : {
+      "shouldTranslate" : false
+    },
+    "All stations" : {
+      "shouldTranslate" : false
+    },
+    "Allow location" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser la localisation"
+          }
+        }
+      }
+    },
+    "Always" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours"
+          }
+        }
+      }
+    },
+    "Automatic mode" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode automatique"
+          }
+        }
+      }
+    },
+    "Back on at %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprise à %@"
+          }
+        }
+      }
+    },
+    "Cancel the snooze" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler la pause"
+          }
+        }
+      }
+    },
+    "Change station" : {
+      "shouldTranslate" : false
+    },
+    "Coordinates" : {
+      "shouldTranslate" : false
+    },
+    "Current station" : {
+      "shouldTranslate" : false
+    },
+    "Every feature that needs your location uses this position." : {
+      "shouldTranslate" : false
+    },
+    "Every metro and RER station the app knows, with its lines." : {
+      "shouldTranslate" : false
+    },
+    "Fake position" : {
+      "shouldTranslate" : false
+    },
+    "Fake position: %@" : {
+      "shouldTranslate" : false
+    },
+    "Far from any station" : {
+      "shouldTranslate" : false
+    },
+    "Find this address" : {
+      "shouldTranslate" : false
+    },
+    "Finding the nearest station…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche de la station la plus proche…"
+          }
+        }
+      }
+    },
+    "For the rest of today" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jusqu’à la fin de la journée"
+          }
+        }
+      }
+    },
+    "Latitude, then longitude, with a dot for decimals." : {
+      "shouldTranslate" : false
+    },
+    "Live Activities are turned off for this app. Turn them on in Settings > RATP Activity." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les activités en direct sont désactivées pour cette app. Activez-les dans Réglages > RATP Activity."
+          }
+        }
+      }
+    },
+    "Loading the next trains…" : {
+      "shouldTranslate" : false
+    },
+    "Location" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Localisation"
+          }
+        }
+      }
+    },
+    "Next trains" : {
+      "shouldTranslate" : false
+    },
+    "Next trains at %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochains passages à %@"
+          }
+        }
+      }
+    },
+    "Next trains of a station" : {
+      "shouldTranslate" : false
+    },
+    "No metro or RER station was found within %@ of you." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune station de métro ou de RER à moins de %@ de vous."
+          }
+        }
+      }
+    },
+    "No notification and no automatic Live Activity until the snooze ends. You can still show the Live Activity by hand." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune notification et aucune activité en direct automatique jusqu’à la fin de la pause. Vous pouvez toujours afficher l’activité en direct vous-même."
+          }
+        }
+      }
+    },
+    "No notification and no automatic Live Activity. You can still show the Live Activity by hand." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune notification et aucune activité en direct automatique. Vous pouvez toujours afficher l’activité en direct vous-même."
+          }
+        }
+      }
+    },
+    "Not asked yet" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore demandé"
+          }
+        }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non"
+          }
+        }
+      }
+    },
+    "On" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui"
+          }
+        }
+      }
+    },
+    "On the lock screen: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur l’écran verrouillé : %@"
+          }
+        }
+      }
+    },
+    "Open Settings" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Réglages"
+          }
+        }
+      }
+    },
+    "Permissions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisations"
+          }
+        }
+      }
+    },
+    "Pick a metro or RER station to see its next trains." : {
+      "shouldTranslate" : false
+    },
+    "Pick a station" : {
+      "shouldTranslate" : false
+    },
+    "Pick a station by hand, see its next trains, and show them on the lock screen." : {
+      "shouldTranslate" : false
+    },
+    "Position used by the app" : {
+      "shouldTranslate" : false
+    },
+    "Searching…" : {
+      "shouldTranslate" : false
+    },
+    "Show on the lock screen" : {
+      "shouldTranslate" : false
+    },
+    "Show the Live Activity now" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’activité en direct maintenant"
+          }
+        }
+      }
+    },
+    "Snooze" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre en pause"
+          }
+        }
+      }
+    },
+    "Snoozed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause"
+          }
+        }
+      }
+    },
+    "Station list" : {
+      "shouldTranslate" : false
+    },
+    "Station name" : {
+      "shouldTranslate" : false
+    },
+    "Stop showing on the lock screen" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer de l’écran verrouillé"
+          }
+        }
+      }
+    },
+    "Tap to show them on your lock screen." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez pour les afficher sur l’écran verrouillé."
+          }
+        }
+      }
+    },
+    "Testing tools" : {
+      "shouldTranslate" : false
+    },
+    "The Live Activity can start by itself only while the app is open. To get a notification near a station when the app is closed, set Location to Always. While the Live Activity shows, your iPhone may show that the app uses your location to keep the train times up to date, and this is normal." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’activité en direct ne peut démarrer toute seule que si l’app est ouverte. Pour recevoir une notification près d’une station quand l’app est fermée, réglez la localisation sur Toujours. Pendant que l’activité en direct est affichée, votre iPhone peut indiquer que l’app utilise votre position pour garder les horaires à jour : c’est normal."
+          }
+        }
+      }
+    },
+    "The Live Activity shows the next trains of the station nearest to you on your lock screen." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’activité en direct affiche sur l’écran verrouillé les prochains passages à la station la plus proche de vous."
+          }
+        }
+      }
+    },
+    "The Live Activity starts by itself when you come near a metro or RER station, and stops when you leave. Snooze it to stop it for a while." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’activité en direct démarre toute seule quand vous arrivez près d’une station de métro ou de RER, et s’arrête quand vous partez. Mettez-la en pause pour l’arrêter un moment."
+          }
+        }
+      }
+    },
+    "The app asks for notifications once it can use your location." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’app demande l’accès aux notifications une fois qu’elle peut utiliser votre position."
+          }
+        }
+      }
+    },
+    "The app cannot find the nearest station without your location. Turn on Location for RATP Activity in Settings, and choose Always." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans votre position, l’app ne peut pas trouver la station la plus proche. Activez la localisation pour RATP Activity dans Réglages, et choisissez Toujours."
+          }
+        }
+      }
+    },
+    "The app cannot find the nearest station without your location. Turn on Location in Settings." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans votre position, l’app ne peut pas trouver la station la plus proche. Activez la localisation dans Réglages."
+          }
+        }
+      }
+    },
+    "The app cannot tell you that you are near a station while it is closed. Turn on Notifications for RATP Activity in Settings." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand l’app est fermée, elle ne peut pas vous prévenir que vous êtes près d’une station. Activez les notifications pour RATP Activity dans Réglages."
+          }
+        }
+      }
+    },
+    "The app needs your location to find the nearest metro or RER station." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’app a besoin de votre position pour trouver la station de métro ou de RER la plus proche."
+          }
+        }
+      }
+    },
+    "The app needs your location to find the nearest station. Allow location below, then try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’app a besoin de votre position pour trouver la station la plus proche. Autorisez la localisation plus bas, puis réessayez."
+          }
+        }
+      }
+    },
+    "The lock screen display could not start. Try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’affichage sur l’écran verrouillé n’a pas pu démarrer. Réessayez."
+          }
+        }
+      }
+    },
+    "Train data key: not set" : {
+      "shouldTranslate" : false
+    },
+    "Train data key: set" : {
+      "shouldTranslate" : false
+    },
+    "Updated at %@" : {
+      "shouldTranslate" : false
+    },
+    "Updating the next trains…" : {
+      "shouldTranslate" : false
+    },
+    "Use the real GPS" : {
+      "shouldTranslate" : false
+    },
+    "Use these coordinates" : {
+      "shouldTranslate" : false
+    },
+    "While Using the App" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque l’app est active"
+          }
+        }
+      }
+    },
+    "While the Live Activity shows, your iPhone may show that the app uses your location to keep the train times up to date, and this is normal." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendant que l’activité en direct est affichée, votre iPhone peut indiquer que l’app utilise votre position pour garder les horaires à jour : c’est normal."
+          }
+        }
+      }
+    },
+    "Your position is not available right now. Try again in a moment." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre position n’est pas disponible pour le moment. Réessayez dans un instant."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

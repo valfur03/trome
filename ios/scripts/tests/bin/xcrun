@@ -50,6 +50,8 @@ case "$command" in
         mv "$state/apps.$1.new" "$state/apps.$1"
         ;;
     delete) rm "$state/device.$1" ;;
+    get_app_container) touch "$state/apps.$1"; grep -qxF "$2" "$state/apps.$1" ;;
+    launch) echo "$2" > "$state/launched.$1" ;;
     spawn)
         prefs="$state/prefs.$1"
         touch "$prefs"
@@ -60,10 +62,15 @@ case "$command" in
                 grep -vxF "$4" "$prefs" > "$prefs.new" || true
                 mv "$prefs.new" "$prefs"
                 ;;
+            "defaults write")
+                [ "$4" = -g ] && echo "$7" > "$state/global.$1.$5"
+                ;;
             "launchctl kickstart")
                 if [ "$5" = user/foreground/com.apple.SpringBoard ]; then
                     touch "$state/apps.$1"
                     cp "$state/apps.$1" "$state/apps-at-springboard-restart.$1"
+                    cat "$state/global.$1.AppleLanguages" "$state/global.$1.AppleLocale" 2> /dev/null \
+                        | paste -s -d ' ' - > "$state/language-at-springboard-restart.$1"
                     rm -f "$state/popup.$1"
                 fi
                 ;;

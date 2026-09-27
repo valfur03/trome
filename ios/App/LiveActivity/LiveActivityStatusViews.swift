@@ -37,7 +37,7 @@ struct LiveActivityStartError: View {
         }
     }
 
-    private func message(for error: StationLiveActivityError) -> String {
+    private func message(for error: StationLiveActivityError) -> LocalizedStringKey {
         switch error {
         case .turnedOff:
             "Live Activities are turned off for this app. Turn them on in Settings > RATP Activity."

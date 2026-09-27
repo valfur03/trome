@@ -27,7 +27,9 @@ The Xcode project is not in git. The file `ios/project.yml` describes it. If you
 | `make run` | Builds the app and opens it in the Simulator, without the train data key. |
 | `make run LIVE=1` | The same, with your train data key (see below). |
 | `make run SMALL=1` | The same, on the smallest supported iPhone (see [The smallest iPhone](#the-smallest-iphone)). |
-| `make check` | The quality gate: lint, recommended settings check, key leak check, build, unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
+| `make run LANGUAGE=fr` | The same, with the Simulator in French (see [The language of the Simulator](#the-language-of-the-simulator)). |
+| `make switch-language LANGUAGE=en` | After `make run`: puts the Simulator in English (or `fr`) and opens the app again, with its data. |
+| `make check` | The quality gate: lint, recommended settings check, key leak check, build, strings check (see [Languages](#languages)), unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make e2e ONLY=FakePositionTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=FakePositionTests/testTesterCanFakeThePositionAndGoBackToTheRealGPS` runs one test. The class names are the file names in `ios/UITests/`. |
 | `make merge` | Merges the branch of this folder into `main`, with the Simulator lock from start to end: rebase onto `main`, `make check`, the full `make e2e`, then a fast-forward of `main`. The manager runs it, after QA passed the task (see [Merge a task into main](#merge-a-task-into-main)). |
@@ -73,6 +75,19 @@ It opens the app in a second shared Simulator, named `RATP-Shared-Small`. It is 
 - It does not shut down `RATP-Shared`, and a job on `RATP-Shared` does not shut down `RATP-Shared-Small`. So after `make run SMALL=1`, the next job finds `RATP-Shared` still booted, and the other way around. Only one job uses a Simulator at a time.
 - `make simulator-shutdown` removes the app from `RATP-Shared-Small`, and keeps it booted for the next `make run SMALL=1`. Like `RATP-Shared`, it shuts down by itself after 5 minutes with no job.
 - `SMALL=1` works only with `make run`. The end-to-end tests and the docs screenshots always use `RATP-Shared`.
+
+### The language of the Simulator
+
+The app is in French and in English. It follows the language of the phone (see [Languages](#languages)). To see it in French, run:
+
+```sh
+make run LANGUAGE=fr
+```
+
+- `make run` puts the Simulator in English, as before. `LANGUAGE=fr` puts it in French (language French, region France). The whole Simulator changes: the app, the Live Activity, the Dynamic Island, the notifications and the permission popups.
+- To switch the language of the open app, run `make switch-language LANGUAGE=en` (or `LANGUAGE=fr`) after `make run`. It changes the language of the Simulator, restarts the home screen (SpringBoard), and opens the app again. It keeps the app, its data and its permissions, so you do not set up the app again. It works only while this folder keeps the Simulator after `make run`.
+- `make e2e` and `make docs-screenshots` always put the Simulator back in English: the tests and the docs screenshots are in English.
+- `LANGUAGE=` works only with `make run` and `make switch-language`.
 
 Before the shared Simulator, each folder had its own Simulator, named `RATP-<folder>-<hash>`. To delete these old Simulators, run `make simulator-delete-old`.
 
@@ -297,6 +312,16 @@ Rules to keep the docs true:
 
 - A change of a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. Run `make docs-screenshots` only when a screen that the docs show changed, and commit the new images. A docs text change alone needs no new screenshots.
 - `make docs-screenshots` is a Simulator job. It takes the Simulator lock, like `make e2e`, and frees it when the screenshots are taken. Run `make simulator-shutdown` when your job ends.
+
+## Languages
+
+Almost every user of the app is French. The app shows each text in French when the language of the iPhone is French, and in English for any other language (Settings > General > Language & Region). English is the language of the code: each text is written in English in the Swift code.
+
+- The French texts are in String Catalogs: `ios/App/Localizable.xcstrings` (the main screen and the notifications), `ios/App/InfoPlist.xcstrings` (the texts that iOS shows when it asks for the location) and `ios/Widget/Localizable.xcstrings` (the Live Activity and the Dynamic Island). Xcode shows them as tables. You can also edit the JSON by hand.
+- The "Testing tools" screen (debug builds only) stays in English: its texts are in the catalog of the app, marked "Don't translate" (`"shouldTranslate" : false`).
+- A new text on a screen needs its French text in the catalog, in the same task. Write a text that a Paris rider knows: "Prochains passages", "écran verrouillé", "activité en direct", "Réglages", "Toujours", as iOS and the RATP say them.
+- `make strings-check` (part of `make check`) builds the app, reads the texts that the compiler found in the code (`SWIFT_EMIT_LOC_STRINGS`), and fails when a text is not in its catalog, has no French text (state "translated"), or is no longer in the code. It also checks that each permission text of `ios/project.yml` (`NS...UsageDescription`) is in `ios/App/InfoPlist.xcstrings`, with the same English text and a French text. The command line builds do not update the catalogs: Xcode does it when you build in Xcode. Else add the new text to the catalog by hand.
+- For a text in the code, use a text that SwiftUI translates (`Text("...")`, `Button("...")`, a `LocalizedStringKey`), or `String(localized: "...")` for a `String` (for example a notification). A plain `String` given to `Text` is not translated. Use `Text(verbatim:)` for a text that never changes (a name).
 
 ## Project layout
 

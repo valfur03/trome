@@ -6,9 +6,6 @@ struct PermissionsSection: View {
     let permissions: PermissionsModel
     let nearestStationModel: NearestStationModel
 
-    private static let locationIndicatorHint = "While the Live Activity shows, your iPhone may show that the app uses "
-        + "your location to keep the train times up to date, and this is normal."
-
     var body: some View {
         Section("Permissions") {
             locationRow
@@ -27,7 +24,10 @@ struct PermissionsSection: View {
                 state: "Always",
                 isGranted: true,
                 kind: .location,
-                hint: Self.locationIndicatorHint
+                hint: """
+                    While the Live Activity shows, your iPhone may show that the app uses your location \
+                    to keep the train times up to date, and this is normal.
+                    """
             )
         case .whileUsing:
             PermissionRow(
@@ -35,9 +35,12 @@ struct PermissionsSection: View {
                 state: "While Using the App",
                 isGranted: false,
                 kind: .location,
-                hint: "The Live Activity can start by itself only while the app is open. "
-                    + "To get a notification near a station when the app is closed, set Location to Always. "
-                    + Self.locationIndicatorHint,
+                hint: """
+                    The Live Activity can start by itself only while the app is open. \
+                    To get a notification near a station when the app is closed, set Location to Always. \
+                    While the Live Activity shows, your iPhone may show that the app uses your location \
+                    to keep the train times up to date, and this is normal.
+                    """,
                 fix: .openSettings
             )
         case .denied:
@@ -46,8 +49,10 @@ struct PermissionsSection: View {
                 state: "Off",
                 isGranted: false,
                 kind: .location,
-                hint: "The app cannot find the nearest station without your location. "
-                    + "Turn on Location for RATP Activity in Settings, and choose Always.",
+                hint: """
+                    The app cannot find the nearest station without your location. \
+                    Turn on Location for RATP Activity in Settings, and choose Always.
+                    """,
                 fix: .openSettings
             )
         case .notDecided:
@@ -78,8 +83,10 @@ struct PermissionsSection: View {
                 state: "Off",
                 isGranted: false,
                 kind: .notifications,
-                hint: "The app cannot tell you that you are near a station while it is closed. "
-                    + "Turn on Notifications for RATP Activity in Settings.",
+                hint: """
+                    The app cannot tell you that you are near a station while it is closed. \
+                    Turn on Notifications for RATP Activity in Settings.
+                    """,
                 fix: .openSettings
             )
         case .notDecided:
@@ -102,14 +109,14 @@ private struct PermissionRow: View {
 
     enum Fix {
         case openSettings
-        case action(String, () -> Void)
+        case action(LocalizedStringKey, () -> Void)
     }
 
-    let title: String
-    let state: String
+    let title: LocalizedStringKey
+    let state: LocalizedStringKey
     let isGranted: Bool
     let kind: Kind
-    var hint: String?
+    var hint: LocalizedStringKey?
     var fix: Fix?
 
     @Environment(\.openURL) private var openURL

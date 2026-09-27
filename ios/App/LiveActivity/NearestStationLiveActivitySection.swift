@@ -67,7 +67,7 @@ struct NearestStationLiveActivitySection: View {
         }
     }
 
-    private func message(for problem: NearestStationProblem) -> String {
+    private func message(for problem: NearestStationProblem) -> LocalizedStringKey {
         switch problem {
         case .permissionUndecided:
             "The app needs your location to find the nearest station. Allow location below, then try again."

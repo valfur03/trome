@@ -14,7 +14,7 @@ struct ContentView: View {
         NavigationStack {
             Form {
                 Section {
-                    Text("RATP Activity")
+                    Text(verbatim: "RATP Activity")
                         .font(.largeTitle.bold())
                         .accessibilityIdentifier("appTitle")
                         .listRowBackground(Color.clear)

@@ -26,6 +26,7 @@ usage() {
     echo "       $0 open <command...>  Open the Simulator with the lock of a free slot, and keep the lock" >&2
     echo "       $0 free               Remove the app from the Simulator and free the lock that this folder keeps after 'open'" >&2
     echo "       $0 all <command...>   Run a command with the locks of every slot (waits until no other job runs)" >&2
+    echo "       $0 session            Succeed only when this folder keeps the Simulator after 'open'" >&2
     echo "       $0 udid               Print the ID of the Simulator that this folder keeps after 'open', or of the Simulator of slot 1" >&2
     echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job, and the one that boots during a job of the slot that does not use it" >&2
     echo "At most $slots Simulator jobs run at once (RATP_SIM_SLOTS). A job runs next to another one only when the CPU is at least $min_idle_percent% idle (RATP_SIM_MIN_IDLE_PERCENT)." >&2
@@ -388,6 +389,9 @@ case "$command" in
         done
         start_watcher
         "$@"
+        ;;
+    session)
+        find_session
         ;;
     udid)
         if find_session; then

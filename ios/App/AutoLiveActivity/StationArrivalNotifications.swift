@@ -14,8 +14,8 @@ final class UserNotificationArrivalNotifier: ArrivalNotifier {
 
     func notify(_ station: Station) async {
         let content = UNMutableNotificationContent()
-        content.title = "Next trains at \(station.name)"
-        content.body = "Tap to show them on your lock screen."
+        content.title = String(localized: "Next trains at \(station.name)")
+        content.body = String(localized: "Tap to show them on your lock screen.")
         content.sound = .default
         content.userInfo = [Self.stationIdKey: station.id]
         let request = UNNotificationRequest(identifier: Self.identifier, content: content, trigger: nil)

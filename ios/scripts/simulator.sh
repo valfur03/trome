@@ -17,6 +17,21 @@ default_name="RATP-Shared$suffix"
 small_name="RATP-Shared-Small$suffix"
 slot_names="$default_name $small_name"
 
+case "${RATP_SIM_LANGUAGE:-en}" in
+    en)
+        language=en
+        locale=en_US
+        ;;
+    fr)
+        language=fr
+        locale=fr_FR
+        ;;
+    *)
+        echo "Unknown RATP_SIM_LANGUAGE: $RATP_SIM_LANGUAGE (use 'en' or 'fr')" >&2
+        exit 1
+        ;;
+esac
+
 case "${RATP_SIM_SIZE:-}" in
     "")
         name=$default_name
@@ -123,9 +138,15 @@ wait_for_springboard() {
     done
 }
 
+set_language() {
+    xcrun simctl spawn "$1" defaults write -g AppleLanguages -array "$language"
+    xcrun simctl spawn "$1" defaults write -g AppleLocale -string "$locale"
+}
+
 reset_device() {
     uninstall_apps "$1"
     xcrun simctl privacy "$1" reset all
+    set_language "$1"
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.SpringBoard
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.locationd
     xcrun simctl location "$1" clear
@@ -204,6 +225,20 @@ case "$command" in
         xcrun simctl install "$udid" "$app"
         xcrun simctl launch "$udid" "$bundle_id"
         ;;
+    switch-language)
+        app=${1:?Usage: $0 switch-language <app path>}
+        udid=$(boot_device)
+        bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist")
+        if ! xcrun simctl get_app_container "$udid" "$bundle_id" > /dev/null 2>&1; then
+            echo "The app is not in the Simulator. Run 'make run' first." >&2
+            exit 1
+        fi
+        xcrun simctl terminate "$udid" "$bundle_id" 2> /dev/null || true
+        set_language "$udid"
+        xcrun simctl spawn "$udid" launchctl kickstart -k user/foreground/com.apple.SpringBoard
+        wait_for_springboard "$udid"
+        xcrun simctl launch "$udid" "$bundle_id"
+        ;;
     uninstall)
         udid=${1:-$(find_udid)}
         if [ -n "$udid" ] && is_booted "$udid"; then
@@ -233,8 +268,9 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
+        echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch' and 'switch-language'); the default is English (en)" >&2
         echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
         exit 1
         ;;

@@ -10,6 +10,7 @@ E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := RATPActivityDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
+STRINGSDATA := $(DERIVED_DATA)/Build/Intermediates.noindex/RATPActivity.build/Debug-iphonesimulator
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 CORE_PACKAGE := Packages/RATPCore
@@ -26,6 +27,15 @@ ifneq ($(filter-out run,$(MAKECMDGOALS)),)
 $(error SMALL=1 works only with 'make run')
 endif
 export RATP_SIM_SIZE := small
+endif
+
+ifeq ($(origin LANGUAGE),command line)
+ifneq ($(filter-out run switch-language,$(MAKECMDGOALS)),)
+$(error LANGUAGE= works only with 'make run' and 'make switch-language')
+endif
+export RATP_SIM_LANGUAGE := $(LANGUAGE)
+else ifneq ($(filter switch-language,$(MAKECMDGOALS)),)
+$(error Say the language: make switch-language LANGUAGE=en (or LANGUAGE=fr))
 endif
 
 ifeq ($(LIVE),1)
@@ -47,7 +57,7 @@ XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
 	SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
 
-.PHONY: help setup generate project lint lint-fix build test test-scripts check live-key-check recommended-settings-check run e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
+.PHONY: help setup generate project lint lint-fix build strings-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -55,7 +65,10 @@ help:
 	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
 	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
-	@echo "make check               iOS quality gate: lint + recommended settings check + key leak check + build (no warning allowed) + unit tests + script tests"
+	@echo "make run LANGUAGE=fr     Same, with the Simulator in French (the default is English: LANGUAGE=en)"
+	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
+	@echo "make check               iOS quality gate: lint + recommended settings check + key leak check + build (no warning allowed) + strings check + unit tests + script tests"
+	@echo "make strings-check       Build, then fail when a text of the app or the Live Activity has no French text in its String Catalog"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
@@ -107,6 +120,11 @@ else
 	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 endif
 
+strings-check: build
+	@./scripts/strings-check.py code App/Localizable.xcstrings $(STRINGSDATA)/RATPActivity.build/Objects-normal/*/*.stringsdata
+	@./scripts/strings-check.py code Widget/Localizable.xcstrings $(STRINGSDATA)/RATPActivityWidget.build/Objects-normal/*/*.stringsdata
+	@./scripts/strings-check.py info-plist App/InfoPlist.xcstrings App/Info.plist
+
 test:
 	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore -Xswiftc -warnings-as-errors
 
@@ -116,7 +134,7 @@ test-scripts:
 		$$test > $(BUILD_DIR)/test-scripts.log 2>&1 || { cat $(BUILD_DIR)/test-scripts.log; exit 1; }; \
 	done
 
-check: lint recommended-settings-check live-key-check build test test-scripts
+check: lint recommended-settings-check live-key-check build strings-check test test-scripts
 
 recommended-settings-check:
 	@./scripts/recommended-settings-check.sh project.yml "$$(xcodebuild -version | head -1)"
@@ -126,6 +144,10 @@ live-key-check: project
 
 run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
+
+switch-language:
+	@$(SIM_LOCK) session || { echo "No 'make run' of this folder keeps the Simulator. Run 'make run LANGUAGE=$(LANGUAGE)' instead." >&2; exit 1; }
+	@$(SIM_LOCK) open $(SIMULATOR) switch-language "$(APP_PATH)"
 
 e2e: project
 	@for test in $(ONLY); do \

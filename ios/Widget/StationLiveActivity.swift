@@ -139,7 +139,7 @@ private struct LinesPager: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(page.allLines.map(\.displayName).joined(separator: ", "))
+        .accessibilityLabel(page.allLines.map(\.localizedName).joined(separator: ", "))
     }
 }
 
@@ -165,7 +165,7 @@ private struct SnoozeButtons: View {
         }
     }
 
-    private func title(of duration: SnoozeDuration) -> String {
+    private func title(of duration: SnoozeDuration) -> LocalizedStringKey {
         switch duration {
         case .thirtyMinutes: "30 min"
         case .oneHour: "1 h"
@@ -173,7 +173,7 @@ private struct SnoozeButtons: View {
         }
     }
 
-    private func accessibilityTitle(of duration: SnoozeDuration) -> String {
+    private func accessibilityTitle(of duration: SnoozeDuration) -> LocalizedStringKey {
         switch duration {
         case .thirtyMinutes: "Snooze for 30 minutes"
         case .oneHour: "Snooze for 1 hour"
@@ -320,7 +320,7 @@ private struct LineBadge: View {
     let line: TransitLine
 
     var body: some View {
-        Text(line.displayName)
+        Text(line.localizedName)
             .font(.subheadline.bold())
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
@@ -343,7 +343,7 @@ private struct SmallLineBadge: View {
             .frame(minWidth: Self.minimumWidth)
             .background(isShown ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.quaternary), in: Capsule())
             .foregroundStyle(isShown ? .primary : .secondary)
-            .accessibilityLabel(line.displayName)
+            .accessibilityLabel(line.localizedName)
     }
 }
 
@@ -351,7 +351,7 @@ private struct OtherLinesBadge: View {
     let count: Int
 
     var body: some View {
-        Text("+\(count)")
+        Text(verbatim: "+\(count)")
             .font(.caption.bold())
             .lineLimit(1)
             .fixedSize()
