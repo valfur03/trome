@@ -61,8 +61,8 @@ enum LineDirections {
             group.side = group.trains.lazy.compactMap { side(of: $0.destination, in: sides, ends: ends) }.first
             return group
         }
-        inferSidesFromDirectionRefs(of: &groups)
         inferQuaySides(of: &groups, sideCount: sides.count)
+        inferSidesFromDirectionRefs(of: &groups)
 
         let showsEmptySides = quays.count != 1
         let sideDirections = sides.indices.compactMap { index -> LineDirection? in
