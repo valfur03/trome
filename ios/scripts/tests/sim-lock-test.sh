@@ -15,7 +15,7 @@ printf 'trap "kill \\$!; exit" TERM\nsleep 600 &\nwait\n' > "$state/idle-watcher
 idle_watcher=$(cat "$state/idle-watcher/pid")
 
 cleanup() {
-    kill "$idle_watcher" 2> /dev/null || true
+    kill "$idle_watcher" ${watcher:-} 2> /dev/null || true
     rm -rf "$state"
 }
 trap cleanup EXIT
@@ -72,6 +72,7 @@ watch_in_background() {
 stop_watcher() {
     kill "$watcher" 2> /dev/null || true
     wait "$watcher" 2> /dev/null || true
+    watcher=
     pretend_a_watcher_runs
 }
 
