@@ -139,6 +139,16 @@ expect "make merge leaves main unchanged when it cannot update the folder of mai
 expect "make merge says what to do with the changes of the folder of main" "$(contains "$state/busy.log" "Commit or stash the changes of that folder")" "yes"
 expect "make merge frees the Simulator lock when it cannot update the folder of main" "$(lock_state)" "free"
 
+new_task merged
+commit "$state/merged" merged merged
+advance_main before-merged before-merged
+git -C "$state/merged" merge -q --no-edit main
+git -C "$repo" config rebase.rebaseMerges true
+merge merged
+git -C "$repo" config --unset rebase.rebaseMerges
+expect "make merge succeeds on a task branch with a merge commit" "$status" "0"
+expect "make merge drops the merge commit of the task branch, even when git keeps merges by default" "$(git -C "$repo" rev-list --merges main)" ""
+
 new_task docs
 mkdir -p "$state/docs/docs"
 commit "$state/docs" docs/page page

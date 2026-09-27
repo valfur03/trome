@@ -70,7 +70,7 @@ merge() {
     check_worktree
     old=$(git rev-parse "refs/heads/$target")
     step "1/4 rebase $branch onto $target ($(git rev-parse --short "$old"))"
-    git rebase "$old" || step_failed rebase "Solve the conflict, run 'git rebase --continue', then run 'make merge' again."
+    git rebase --no-rebase-merges "$old" || step_failed rebase "Solve the conflict, run 'git rebase --continue', then run 'make merge' again."
     tested=$(git rev-parse HEAD)
     [ "$tested" != "$old" ] || fail "'$branch' has no change after the rebase. There is nothing to merge."
     step "2/4 quality gate ($check_command)"
