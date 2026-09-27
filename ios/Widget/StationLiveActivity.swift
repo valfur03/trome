@@ -143,7 +143,7 @@ private struct TrainRow: View {
     let isNext: Bool
 
     var body: some View {
-        HStack {
+        HStack(alignment: .firstTextBaseline) {
             Image(systemName: "arrow.right")
                 .font(.caption)
                 .opacity(isNext ? 1 : 0)
