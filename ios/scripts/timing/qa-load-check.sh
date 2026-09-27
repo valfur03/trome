@@ -21,6 +21,7 @@ if [ ! -d "$app" ]; then
     exit 1
 fi
 mkdir -p "$out"
+rm -f "$out/e2e.status"
 cd "$ios"
 
 qa_udid=$(xcrun simctl list devices available | grep -F "    $qa_name (" | head -n 1 | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
@@ -71,15 +72,18 @@ note "start ($mode)"
 if [ "$mode" = warm ]; then
     qa_start
 fi
-make e2e 2>&1 | "$dir/ts.pl" > "$out/e2e.log" &
+( make e2e 2>&1; echo $? > "$out/e2e.status" ) | "$dir/ts.pl" > "$out/e2e.log" &
 e2e=$!
 if [ "$mode" = cold ]; then
     until [ "$(cat /tmp/ratp-sim.lock/worktree 2> /dev/null)" = "$root" ] && [ -n "$(cat /tmp/ratp-sim.lock/pid 2> /dev/null)" ]; do
+        kill -0 "$e2e" 2> /dev/null || break
         sleep 2
     done
-    note "e2e got the lock"
-    sleep 20
-    qa_start
+    if kill -0 "$e2e" 2> /dev/null; then
+        note "e2e got the lock"
+        sleep 20
+        qa_start
+    fi
 fi
 ( n=0; while kill -0 "$e2e" 2> /dev/null; do
     n=$((n + 1))
@@ -87,7 +91,7 @@ fi
     sleep 15
 done ) &
 wait "$e2e"
-status=$?
+status=$(cat "$out/e2e.status" 2> /dev/null || echo 1)
 note "e2e end, status $status"
 sleep 10
 exit "$status"
