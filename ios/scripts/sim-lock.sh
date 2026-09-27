@@ -128,15 +128,15 @@ mark_held() {
 take() {
     echo "$$" > "$lock/pid"
     echo "$root" > "$lock/worktree"
-    write_size
     write_booted_before
+    write_size
     mark_held
 }
 
 join_session() {
     echo "$$" > "$lock/pid"
-    write_size
     write_booted_before
+    write_size
     mark_held
 }
 
