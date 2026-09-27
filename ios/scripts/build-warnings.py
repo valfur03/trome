@@ -25,7 +25,7 @@ def main():
     for issue in issues:
         target = issue.get("targetName")
         where = f"[{target}] " if target else ""
-        print(f"warning: {where}{location(issue)}{issue['message']}")
+        print(f"warning: {where}{location(issue)}{issue.get('message', '')}")
     if issues:
         print(f"The build has {len(issues)} warning(s). Fix them: make check accepts no warning.", file=sys.stderr)
         sys.exit(1)

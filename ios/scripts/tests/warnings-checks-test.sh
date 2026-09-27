@@ -37,6 +37,8 @@ expect "the settings check passes with a bug fix release of that Xcode" "$(setti
 expect "the settings check passes with an older Xcode" "$(settings_check 27.0 26.4)" "passes"
 expect "the settings check fails with a newer minor Xcode" "$(settings_check 27.0 27.1)" "fails"
 expect "the settings check fails with a newer major Xcode" "$(settings_check 27.0 28.0)" "fails"
+expect "the settings check passes with an older Xcode that has a two-digit minor" "$(settings_check 28.0 27.11)" "passes"
+expect "the settings check fails when the Xcode version is unknown" "$(settings_check 27.0 '')" "fails"
 printf 'name: RATPActivity\n' > "$state/project.yml"
 expect "the settings check fails when project.yml has no xcodeVersion" \
     "$("$scripts/recommended-settings-check.sh" "$state/project.yml" "Xcode 27.0" > /dev/null 2>&1 && echo "passes" || echo "fails")" "fails"

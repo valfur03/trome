@@ -3,11 +3,15 @@ set -eu
 
 project_yml=$1
 xcode_version=${2#Xcode }
+[ -n "$xcode_version" ] || {
+    echo "recommended-settings-check: could not read the Xcode version (is Xcode selected with xcode-select?)" >&2
+    exit 1
+}
 
 version_number() {
     major=$(echo "$1" | cut -d. -f1)
     minor=$(echo "$1" | cut -s -d. -f2)
-    echo $((major * 100 + ${minor:-0} * 10))
+    echo $((major * 1000 + ${minor:-0}))
 }
 
 checked_version=$(sed -n -E 's/^  xcodeVersion: "?([0-9.]+)"?$/\1/p' "$project_yml")
