@@ -45,15 +45,12 @@ struct ContentView: View {
             #endif
         }
         .onChange(of: scenePhase, initial: true) {
-            guard scenePhase == .active else {
-                Task { await autoLiveActivity.setAppActive(false) }
-                return
-            }
+            autoLiveActivity.setAppActive(scenePhase == .active)
+            guard scenePhase == .active else { return }
             Task { await permissions.refresh() }
             Task {
                 await nearestStationModel.refresh()
-                await autoLiveActivity.setAppActive(scenePhase == .active)
-                await permissions.refresh()
+                await autoLiveActivity.appDidBecomeActive()
             }
         }
     }

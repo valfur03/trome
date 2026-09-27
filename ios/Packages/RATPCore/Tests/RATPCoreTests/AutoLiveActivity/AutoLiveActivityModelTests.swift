@@ -168,8 +168,13 @@ struct AutoLiveActivityModelTests {
         await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: fix)
     }
 
+    func activate(_ model: AutoLiveActivityModel) async {
+        model.setAppActive(true)
+        await model.appDidBecomeActive()
+    }
+
     func arrive(at position: Coordinate, in model: AutoLiveActivityModel) async {
-        await model.setAppActive(true)
+        await activate(model)
         gps.report(position)
         await waitUntil { client.isShowing }
     }
@@ -201,7 +206,7 @@ struct AutoLiveActivityModelTests {
 
         await model.notificationTapped(stationId: "b")
         #expect(client.started.isEmpty)
-        await model.setAppActive(true)
+        await activate(model)
 
         #expect(client.started.map(\.stationName) == ["Station B"])
         #expect(model.shownStation == Places.stationB)
@@ -250,7 +255,7 @@ struct AutoLiveActivityModelTests {
         gps.report(Places.twoHundredMetersFromA)
         gps.report(Places.fiftyMetersFromA)
         await waitUntil { locationService.position == Places.fiftyMetersFromA }
-        await model.setAppActive(true)
+        await activate(model)
 
         #expect(client.started.count == 1)
         #expect(client.isShowing == false)
@@ -258,13 +263,13 @@ struct AutoLiveActivityModelTests {
 
     @Test func startsByHandForAStationFarFromThePhoneAndKeepsIt() async {
         let model = makeModel()
-        await model.setAppActive(true)
+        await activate(model)
         gps.report(Places.twoHundredMetersFromA)
         await waitUntil { locationService.position != nil }
 
         await model.startByHand(Places.stationB)
         gps.report(Places.fourHundredMetersFromA)
-        await model.setAppActive(true)
+        await activate(model)
 
         #expect(model.shownStation == Places.stationB)
         #expect(client.endCount == 0)
@@ -275,7 +280,7 @@ struct AutoLiveActivityModelTests {
         await arrive(at: Places.fiftyMetersFromA, in: model)
 
         client.isShowing = false
-        await model.setAppActive(true)
+        await activate(model)
 
         #expect(model.shownStation == nil)
         #expect(keeper.isKeeping == false)
@@ -316,12 +321,13 @@ struct AutoLiveActivityModelTests {
     @Test func asksForNotificationsOnceLocationIsAllowed() async {
         permission.authorization = .notDetermined
         let model = makeModel()
-        await model.setAppActive(true)
+        await activate(model)
         #expect(notifier.authorizationRequestCount == 0)
 
         permission.authorization = .authorized
-        await model.setAppActive(true)
-        await model.setAppActive(true)
+        await activate(model)
+        await activate(model)
+        await waitUntil { notifier.authorizationRequestCount > 0 }
 
         #expect(notifier.authorizationRequestCount == 1)
     }
@@ -329,14 +335,39 @@ struct AutoLiveActivityModelTests {
     @Test func asksForNotificationsOnlyOnceTheAlwaysLocationQuestionIsAnswered() async {
         permission.isAskingAlways = true
         let model = makeModel()
-        let activation = Task { await model.setAppActive(true) }
+        await activate(model)
         await waitUntil { permission.isWaitingForAlwaysQuestion }
         #expect(notifier.authorizationRequestCount == 0)
 
         permission.answerAlwaysQuestion()
-        await activation.value
+        await waitUntil { notifier.authorizationRequestCount > 0 }
 
         #expect(notifier.authorizationRequestCount == 1)
+    }
+
+    @Test func startsTheTappedLiveActivityWhileTheNotificationQuestionIsOpen() async {
+        permission.isAskingAlways = true
+        let model = makeModel()
+        await model.notificationTapped(stationId: "a")
+
+        await activate(model)
+        await waitUntil { permission.isWaitingForAlwaysQuestion }
+
+        #expect(permission.isWaitingForAlwaysQuestion)
+        #expect(model.shownStation == Places.stationA)
+        #expect(client.isShowing)
+    }
+
+    @Test func startsTheLiveActivityWhenTheFirstPositionComesBeforeTheAppFinishesComingOnScreen() async {
+        let model = makeModel()
+
+        model.setAppActive(true)
+        gps.report(Places.fiftyMetersFromA)
+        await waitUntil { client.isShowing }
+        await model.appDidBecomeActive()
+
+        #expect(client.started.map(\.stationName) == ["Station A"])
+        #expect(notifier.notified.isEmpty)
     }
 
     @Test func watchesTheStationsAroundTheRealPosition() async {
@@ -361,7 +392,7 @@ struct AutoLiveActivityModelTests {
 
     @Test func stopsWatchingRealStationsWhileAFakePositionIsOn() async {
         let model = makeModel()
-        await model.setAppActive(true)
+        await activate(model)
 
         locationService.use(.fake(Places.stationA.fakePosition))
         await waitUntil { client.isShowing }
@@ -377,7 +408,7 @@ struct AutoLiveActivityModelTests {
         await waitUntil { locationService.position != nil }
 
         await model.notificationTapped(stationId: "a")
-        await model.setAppActive(true)
+        await activate(model)
 
         #expect(model.shownStation == Places.stationA)
         #expect(client.endCount == 0)
@@ -388,7 +419,7 @@ struct AutoLiveActivityModelTests {
         gps.report(Places.twoHundredMetersFromA)
         await waitUntil { !watcher.watched.isEmpty }
 
-        await model.setAppActive(true)
+        await activate(model)
 
         #expect(watcher.watched.count == 2)
     }

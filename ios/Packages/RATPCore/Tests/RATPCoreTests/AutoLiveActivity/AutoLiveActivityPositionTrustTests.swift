@@ -19,7 +19,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func doesNotStartOnARoughPosition() async {
         let model = makeModel()
-        await model.setAppActive(true)
+        await activate(model)
 
         await reportAndWaitForRegions(roughFix(at: Places.fiftyMetersFromA))
 
@@ -60,7 +60,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func doesNotCountARoughPositionAsNearAStationStartedByHand() async {
         let model = makeModel()
-        await model.setAppActive(true)
+        await activate(model)
         await reportAndWaitForRegions(roughFix(at: Places.fiftyMetersFromA))
 
         await model.startByHand(Places.stationA)
@@ -72,7 +72,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func countsAnOldPrecisePositionAsNearAStationStartedByHand() async {
         let model = makeModel()
-        await model.setAppActive(true)
+        await activate(model)
         let stillFix = PositionFix(coordinate: Places.twoHundredMetersFromA, accuracyMeters: 10, timestamp: clock.now)
         await reportAndWaitForRegions(stillFix)
         clock.advance(by: 60)
@@ -87,7 +87,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func trustsAFakePositionSetLongAgo() async {
         let model = makeModel()
-        await model.setAppActive(true)
+        await activate(model)
         locationService.use(.fake(FakePosition(name: "Near A", coordinate: Places.twoHundredMetersFromA)))
         await waitUntil { locationService.position != nil }
         clock.advance(by: Date().timeIntervalSince(clock.now) + 60)

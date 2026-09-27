@@ -56,17 +56,23 @@ public final class AutoLiveActivityModel {
         feedTask?.cancel()
     }
 
-    public func setAppActive(_ isActive: Bool) async {
+    public func setAppActive(_ isActive: Bool) {
         appIsActive = isActive
         guard isActive else {
             restartFeed(fetchNow: false)
             return
         }
+        feedTask?.cancel()
+        feedTask = nil
+    }
+
+    public func appDidBecomeActive() async {
+        guard appIsActive else { return }
         syncWithSystem()
         if liveActivity.isShowing {
             services.locationKeeper.begin()
         }
-        await askForNotificationsIfAllowed()
+        askForNotificationsIfAllowed()
         await openTappedStation()
         await evaluate(position: nil)
         plannedRegions = nil
@@ -135,7 +141,7 @@ public final class AutoLiveActivityModel {
     private func followPositionIfShowing() {
         guard state.shown != nil else { return }
         services.locationKeeper.begin()
-        restartFeed(fetchNow: true)
+        startFeedAfterLaunch()
         guard inputs.permission.authorization == .authorized else { return }
         inputs.locationService.start()
     }
@@ -307,11 +313,25 @@ private extension AutoLiveActivityModel {
         await refreshRegions(around: position)
     }
 
-    func askForNotificationsIfAllowed() async {
+    func askForNotificationsIfAllowed() {
         guard !hasAskedForNotifications, inputs.permission.authorization == .authorized else { return }
         hasAskedForNotifications = true
-        await inputs.permission.waitForAlwaysQuestion()
-        await services.notifier.requestAuthorization()
+        Task { [permission = inputs.permission, notifier = services.notifier] in
+            await permission.waitForAlwaysQuestion()
+            await notifier.requestAuthorization()
+        }
+    }
+
+    func startFeedAfterLaunch() {
+        guard let station = shownStation, liveActivity.isShowing else { return }
+        feedTask = Task { [weak self, sleep = configuration.sleep] in
+            do {
+                try await sleep(.seconds(BackgroundTrainsRefresh.launchDelay))
+            } catch {
+                return
+            }
+            await self?.keepFeedingInBackground(station, fetchNow: true)
+        }
     }
 
     func restartFeed(fetchNow: Bool) {

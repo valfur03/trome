@@ -7,6 +7,8 @@ final class StubStationLiveActivityClient: StationLiveActivityClient {
     var isShowing = false
     var shownContent: StationActivityAttributes.ContentState?
     var startError: (any Error)?
+    var holdsNextUpdate = false
+    private var heldUpdate: CheckedContinuation<Void, Never>?
     private(set) var started: [StationActivityAttributes.ContentState] = []
     private(set) var updates: [StationActivityAttributes.ContentState] = []
     private(set) var endCount = 0
@@ -20,7 +22,15 @@ final class StubStationLiveActivityClient: StationLiveActivityClient {
         isShowing = true
     }
 
+    var isHoldingAnUpdate: Bool {
+        heldUpdate != nil
+    }
+
     func update(_ content: StationActivityAttributes.ContentState) async {
+        if holdsNextUpdate {
+            holdsNextUpdate = false
+            await withCheckedContinuation { heldUpdate = $0 }
+        }
         updates.append(content)
         shownContent = content
     }
@@ -28,6 +38,11 @@ final class StubStationLiveActivityClient: StationLiveActivityClient {
     func end() async {
         endCount += 1
         isShowing = false
+    }
+
+    func releaseHeldUpdate() {
+        heldUpdate?.resume()
+        heldUpdate = nil
     }
 }
 
@@ -130,6 +145,26 @@ struct StationLiveActivityModelTests {
         await model.update(station: pigalle, trains: .noLiveData)
 
         #expect(client.updates == [content(pigalle, .noLiveData)])
+    }
+
+    @Test func appliesTheUpdatesInTheOrderTheAppSendsThem() async {
+        let model = makeModel()
+        await model.start(station: abbesses, trains: .loading)
+        client.holdsNextUpdate = true
+
+        let first = Task { await model.update(station: abbesses, trains: .noLiveData) }
+        for _ in 0..<1_000 where !client.isHoldingAnUpdate {
+            await Task.yield()
+        }
+        let second = Task { await model.update(station: pigalle, trains: .noLiveData) }
+        for _ in 0..<100 {
+            await Task.yield()
+        }
+        client.releaseHeldUpdate()
+        await first.value
+        await second.value
+
+        #expect(client.updates == [content(abbesses, .noLiveData), content(pigalle, .noLiveData)])
     }
 
     @Test func doesNotUpdateALiveActivityThatDoesNotShow() async {

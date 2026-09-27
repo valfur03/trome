@@ -24,7 +24,7 @@ extension AutoLiveActivityModelTests {
         gps.report(Places.fiftyMetersFromA)
         await waitUntil { locationService.position == Places.fiftyMetersFromA }
         await wake(model, at: Places.atB)
-        await model.setAppActive(true)
+        await activate(model)
         gps.report(Places.fiftyMetersFromA)
         await wake(model, at: Places.fiftyMetersFromA)
 
@@ -48,7 +48,7 @@ extension AutoLiveActivityModelTests {
         automaticMode.setOn(false)
 
         await wake(model, at: Places.fiftyMetersFromA)
-        await model.setAppActive(true)
+        await activate(model)
         await wake(model, at: Places.atB)
 
         #expect(notifier.notified.isEmpty)

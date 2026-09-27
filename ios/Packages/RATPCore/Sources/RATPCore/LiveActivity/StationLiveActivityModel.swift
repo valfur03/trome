@@ -31,6 +31,7 @@ public final class StationLiveActivityModel {
     private let now: @Sendable () -> Date
     private var inputs: Inputs?
     private var firstLineIndex: Int
+    @ObservationIgnored private var lastSystemCall: Task<Void, Never>?
 
     public init(client: any StationLiveActivityClient, now: @escaping @Sendable () -> Date = { Date() }) {
         self.client = client
@@ -45,7 +46,7 @@ public final class StationLiveActivityModel {
         }
         let content = makeContent(station: station, trains: trains)
         if client.isShowing {
-            await client.update(content)
+            await send(content)
         } else {
             do {
                 try client.start(content)
@@ -71,7 +72,7 @@ public final class StationLiveActivityModel {
         let content = makeContent(station: station, trains: trains)
         inputs = Inputs(station: station, trains: trains)
         self.content = content
-        await client.update(content)
+        await send(content)
     }
 
     public func showNextLines() async {
@@ -82,7 +83,7 @@ public final class StationLiveActivityModel {
     }
 
     public func stop() async {
-        await client.end()
+        await inOrder { [client] in await client.end() }
         isShowing = false
         content = nil
         inputs = nil
@@ -96,6 +97,20 @@ public final class StationLiveActivityModel {
             inputs = nil
             firstLineIndex = 0
         }
+    }
+
+    private func send(_ content: StationActivityAttributes.ContentState) async {
+        await inOrder { [client] in await client.update(content) }
+    }
+
+    private func inOrder(_ call: @escaping @MainActor () async -> Void) async {
+        let previous = lastSystemCall
+        let next = Task {
+            await previous?.value
+            await call()
+        }
+        lastSystemCall = next
+        await next.value
     }
 
     private func switchesStation(to station: Station) -> Bool {
