@@ -49,8 +49,13 @@ public struct DepartureBoard: Hashable, Sendable {
 
     public let groups: [DepartureGroup]
     public let departures: [Departure]
+    public let stations: [Station]
+    public let lines: [TransitLine]
 
-    public init(departures: [Departure], lines: [TransitLine], now: Date) {
+    public init(departures: [Departure], stations: [Station], now: Date) {
+        let lines = stations.flatMap(\.lines).sorted(by: TransitLine.stationListOrder)
+        self.stations = stations
+        self.lines = lines
         let upcoming = departures
             .filter { $0.time > now.addingTimeInterval(-Self.departedGraceSeconds) }
             .filter { $0.time <= now.addingTimeInterval(Self.farthestTimeSeconds) }
@@ -82,6 +87,10 @@ public struct DepartureBoard: Hashable, Sendable {
 
     public var isEmpty: Bool {
         groups.isEmpty
+    }
+
+    func station(serving line: TransitLine) -> Station? {
+        stations.first { $0.lines.contains(line) }
     }
 }
 

@@ -13,6 +13,10 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         !Self.runningActivities.isEmpty
     }
 
+    var shownContent: StationActivityAttributes.ContentState? {
+        Self.runningActivities.first?.content.state
+    }
+
     func start(_ content: StationActivityAttributes.ContentState) throws {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             throw StationLiveActivityError.turnedOff

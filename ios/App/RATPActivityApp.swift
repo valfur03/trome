@@ -29,7 +29,8 @@ struct RATPActivityApp: App {
             catalog: stationCatalog,
             store: CurrentStationStore(storage: UserDefaults.standard)
         )
-        let nextTrainsModel = NextTrainsModel(provider: Self.departuresProvider(primConfiguration))
+        let departuresProvider = Self.departuresProvider(primConfiguration)
+        let nextTrainsModel = NextTrainsModel(provider: departuresProvider, catalog: stationCatalog)
         let liveActivityModel = StationLiveActivityModel(client: ActivityKitStationLiveActivityClient())
         let regionWatcher = CoreLocationStationRegionWatcher()
         let automaticModeModel = AutomaticModeModel(store: AutomaticModeStore(storage: UserDefaults.standard))
@@ -40,12 +41,14 @@ struct RATPActivityApp: App {
                 locationService: locationService,
                 permission: permission,
                 screenTrains: nextTrainsModel,
-                liveActivityTrains: NextTrainsModel(provider: Self.departuresProvider(primConfiguration)),
+                liveActivityTrains: NextTrainsModel(provider: departuresProvider, catalog: stationCatalog),
                 automaticMode: automaticModeModel
             ),
             regionWatcher: regionWatcher
         )
-        let notificationTapHandler = Self.connectSystemEvents(to: autoLiveActivityModel, regionWatcher: regionWatcher)
+        let notificationTapHandler = Self.connectSystemEvents(
+            to: autoLiveActivityModel, liveActivity: liveActivityModel, regionWatcher: regionWatcher
+        )
 
         #if DEBUG
         uiTestLocationKeeper = CoreLocationBackgroundLocationKeeper.begunIfAsked(by: ProcessInfo.processInfo.arguments)
@@ -118,9 +121,11 @@ struct RATPActivityApp: App {
 
     private static func connectSystemEvents(
         to autoLiveActivityModel: AutoLiveActivityModel,
+        liveActivity: StationLiveActivityModel,
         regionWatcher: CoreLocationStationRegionWatcher
     ) -> ArrivalNotificationTapHandler {
         AppDependencyManager.shared.add(dependency: autoLiveActivityModel)
+        AppDependencyManager.shared.add(dependency: liveActivity)
         let notificationTapHandler = ArrivalNotificationTapHandler { [weak autoLiveActivityModel] stationId in
             await autoLiveActivityModel?.notificationTapped(stationId: stationId)
         }

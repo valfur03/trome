@@ -9,6 +9,7 @@ public enum StationLiveActivityError: Error, Equatable, Sendable {
 @MainActor
 public protocol StationLiveActivityClient: AnyObject {
     var isShowing: Bool { get }
+    var shownContent: StationActivityAttributes.ContentState? { get }
     func start(_ content: StationActivityAttributes.ContentState) throws
     func update(_ content: StationActivityAttributes.ContentState) async
     func end() async
@@ -17,21 +18,32 @@ public protocol StationLiveActivityClient: AnyObject {
 @MainActor
 @Observable
 public final class StationLiveActivityModel {
+    private struct Inputs {
+        let station: Station
+        let trains: NextTrainsState
+    }
+
     public private(set) var isShowing: Bool
     public private(set) var startError: StationLiveActivityError?
     public private(set) var content: StationActivityAttributes.ContentState?
 
     private let client: any StationLiveActivityClient
     private let now: @Sendable () -> Date
+    private var inputs: Inputs?
+    private var firstLineIndex: Int
 
     public init(client: any StationLiveActivityClient, now: @escaping @Sendable () -> Date = { Date() }) {
         self.client = client
         self.now = now
         self.isShowing = client.isShowing
+        self.firstLineIndex = client.shownContent?.trains.linesPage?.firstIndex ?? 0
     }
 
     public func start(station: Station, trains: NextTrainsState) async {
-        let content = StationActivityAttributes.ContentState(station: station, trains: trains, now: now())
+        if !client.isShowing || switchesStation(to: station) {
+            firstLineIndex = 0
+        }
+        let content = makeContent(station: station, trains: trains)
         if client.isShowing {
             await client.update(content)
         } else {
@@ -47,26 +59,55 @@ public final class StationLiveActivityModel {
         }
         startError = nil
         isShowing = true
+        inputs = Inputs(station: station, trains: trains)
         self.content = content
     }
 
     public func update(station: Station, trains: NextTrainsState) async {
         guard isShowing else { return }
-        let content = StationActivityAttributes.ContentState(station: station, trains: trains, now: now())
+        if switchesStation(to: station) {
+            firstLineIndex = 0
+        }
+        let content = makeContent(station: station, trains: trains)
+        inputs = Inputs(station: station, trains: trains)
         self.content = content
         await client.update(content)
+    }
+
+    public func showNextLines() async {
+        guard isShowing, let page = (content ?? client.shownContent)?.trains.linesPage else { return }
+        firstLineIndex = page.nextFirstIndex
+        guard let inputs else { return }
+        await update(station: inputs.station, trains: inputs.trains)
     }
 
     public func stop() async {
         await client.end()
         isShowing = false
         content = nil
+        inputs = nil
+        firstLineIndex = 0
     }
 
     public func syncWithSystem() {
         isShowing = client.isShowing
         if !isShowing {
             content = nil
+            inputs = nil
+            firstLineIndex = 0
         }
+    }
+
+    private func switchesStation(to station: Station) -> Bool {
+        inputs.map { $0.station.id != station.id } ?? false
+    }
+
+    private func makeContent(station: Station, trains: NextTrainsState) -> StationActivityAttributes.ContentState {
+        StationActivityAttributes.ContentState(
+            station: station,
+            trains: trains,
+            now: now(),
+            firstLineIndex: firstLineIndex
+        )
     }
 }

@@ -11,13 +11,20 @@ final class StubDeparturesProvider: DeparturesProvider {
         calls.withLock { $0 }
     }
 
+    private let askedStations = Mutex<[[String]]>([])
+
+    var askedStationIds: [[String]] {
+        askedStations.withLock { $0 }
+    }
+
     func answer(_ result: Result<[Departure], NextTrainsError>, for station: Station) {
         results.withLock { $0[station.id] = result }
     }
 
-    func departures(at station: Station) async throws -> [Departure] {
+    func departures(at stations: [Station]) async throws -> [Departure] {
         calls.withLock { $0 += 1 }
-        return try results.withLock { $0[station.id] ?? .success([]) }.get()
+        askedStations.withLock { $0.append(stations.map(\.id)) }
+        return try results.withLock { $0[stations[0].id] ?? .success([]) }.get()
     }
 }
 
@@ -55,7 +62,27 @@ struct NextTrainsModelTests {
 
         await model.refresh(for: abbesses)
 
-        let board = DepartureBoard(departures: [departure(inMinutes: 2)], lines: [line12], now: now)
+        let board = DepartureBoard(departures: [departure(inMinutes: 2)], stations: [abbesses], now: now)
+        #expect(model.state == .departures(board, updatedAt: now))
+    }
+
+    @Test func showsTheTrainsOfEveryStationOfTheHubOfTheStation() async {
+        let rerB = TransitLine(mode: .rer, name: "B")
+        var metro = abbesses
+        metro.hubId = "hub"
+        let rer = Station(id: "rer", name: "RER", coordinate: Coordinate(48.8845, 2.3385), lines: [rerB], hubId: "hub")
+        let rerTrain = Departure(line: rerB, destination: "Robinson", time: now.addingTimeInterval(60))
+        provider.answer(.success([departure(inMinutes: 2), rerTrain]), for: metro)
+        let model = NextTrainsModel(
+            provider: provider,
+            catalog: StationCatalog(stations: [metro, rer, pigalle]),
+            now: { [now] in now }
+        )
+
+        await model.refresh(for: metro)
+
+        #expect(provider.askedStationIds == [["abbesses", "rer"]])
+        let board = DepartureBoard(departures: [departure(inMinutes: 2), rerTrain], stations: [metro, rer], now: now)
         #expect(model.state == .departures(board, updatedAt: now))
     }
 

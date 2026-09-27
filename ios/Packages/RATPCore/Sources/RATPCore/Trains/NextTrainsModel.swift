@@ -19,6 +19,7 @@ public final class NextTrainsModel {
     public private(set) var updatingStationId: String?
 
     private let provider: (any DeparturesProvider)?
+    private let catalog: StationCatalog?
     private let refreshInterval: Duration
     private let now: @Sendable () -> Date
     private let sleep: @Sendable (Duration) async throws -> Void
@@ -27,11 +28,13 @@ public final class NextTrainsModel {
 
     public init(
         provider: (any DeparturesProvider)?,
+        catalog: StationCatalog? = nil,
         refreshInterval: Duration = NextTrainsModel.refreshInterval,
         now: @escaping @Sendable () -> Date = { Date() },
         sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.provider = provider
+        self.catalog = catalog
         self.refreshInterval = refreshInterval
         self.now = now
         self.sleep = sleep
@@ -73,9 +76,10 @@ public final class NextTrainsModel {
             shownStationId = station.id
             state = .loading
         }
+        let stations = catalog?.hubStations(of: station) ?? [station]
         let result: Result<[Departure], NextTrainsError>
         do {
-            result = .success(try await provider.departures(at: station))
+            result = .success(try await provider.departures(at: stations))
         } catch let error as NextTrainsError {
             result = .failure(error)
         } catch {
@@ -85,7 +89,7 @@ public final class NextTrainsModel {
         switch result {
         case .success(let departures):
             let currentTime = now()
-            let board = DepartureBoard(departures: departures, lines: station.lines, now: currentTime)
+            let board = DepartureBoard(departures: departures, stations: stations, now: currentTime)
             state = board.isEmpty ? .noLiveData : .departures(board, updatedAt: currentTime)
         case .failure(let error):
             state = .failed(error)

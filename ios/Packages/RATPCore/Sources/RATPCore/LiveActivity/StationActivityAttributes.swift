@@ -15,7 +15,7 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
 
     public enum Trains: Codable, Hashable, Sendable {
         case loading
-        case directions(line: TransitLine, [LineDirection])
+        case lines(LinesPage)
         case noData
     }
 
@@ -25,16 +25,20 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
 extension StationActivityAttributes.ContentState {
     public static let loadingTimeout: TimeInterval = 60
 
-    public init(station: Station, trains: NextTrainsState, now: Date) {
-        self.init(stationName: station.name, trains: .init(trains, station: station, now: now), updatedAt: now)
+    public init(station: Station, trains: NextTrainsState, now: Date, firstLineIndex: Int = 0) {
+        self.init(
+            stationName: station.name,
+            trains: .init(trains, now: now, firstLineIndex: firstLineIndex),
+            updatedAt: now
+        )
     }
 
     public var staleDate: Date? {
         switch trains {
         case .loading:
             updatedAt.addingTimeInterval(Self.loadingTimeout)
-        case .directions(_, let directions):
-            directions.compactMap(\.times.first).min()
+        case .lines(let page):
+            page.soonestTrain?.time
         case .noData:
             nil
         }
@@ -42,9 +46,12 @@ extension StationActivityAttributes.ContentState {
 }
 
 extension StationActivityAttributes.Trains {
-    static let maximumDirectionsWithTwoTrains = 2
+    public var linesPage: LinesPage? {
+        guard case .lines(let page) = self else { return nil }
+        return page
+    }
 
-    init(_ state: NextTrainsState, station: Station, now: Date) {
+    init(_ state: NextTrainsState, now: Date, firstLineIndex: Int) {
         switch state {
         case .idle, .loading:
             self = .loading
@@ -52,26 +59,18 @@ extension StationActivityAttributes.Trains {
             self = .noData
         case .departures(let board, _):
             let upcoming = board.departures.filter { $0.time > now }
-            let shownLine = station.lines.first { line in
-                upcoming.contains { $0.line.mode == line.mode && $0.line.name == line.name }
-            } ?? station.lines.first
-            guard let shownLine else {
-                self = .noData
-                return
-            }
-            let directions = LineDirections.directions(of: shownLine, at: station, from: upcoming)
-            self = directions.isEmpty
-                ? .noData
-                : .directions(
-                    line: TransitLine(mode: shownLine.mode, name: shownLine.name),
-                    Self.fittingTheLiveActivity(directions)
+            let lines = board.lines.map { line in
+                LineTrains(
+                    line: TransitLine(mode: line.mode, name: line.name),
+                    directions: board.station(serving: line).map { station in
+                        LineDirections.directions(of: line, at: station, from: upcoming)
+                    } ?? []
                 )
+            }
+            self = lines.allSatisfy(\.directions.isEmpty)
+                ? .noData
+                : .lines(LinesPage(showing: lines, from: firstLineIndex))
         }
-    }
-
-    static func fittingTheLiveActivity(_ directions: [LineDirection]) -> [LineDirection] {
-        guard directions.count > maximumDirectionsWithTwoTrains else { return directions }
-        return directions.map { LineDirection(label: $0.label, trains: Array($0.trains.prefix(1))) }
     }
 }
 

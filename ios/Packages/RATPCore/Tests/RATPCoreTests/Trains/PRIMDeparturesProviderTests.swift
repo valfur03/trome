@@ -53,7 +53,7 @@ struct PRIMDeparturesProviderTests {
     @Test func asksForEachStopOfTheStationWithTheKey() async throws {
         let (provider, client) = provider { _ in (try Fixture.data("stop-monitoring-empty"), 200) }
 
-        _ = try await provider.departures(at: abbesses)
+        _ = try await provider.departures(at: [abbesses])
 
         #expect(Set(client.requests.compactMap(monitoringRef)) == [
             "STIF:StopPoint:Q:22059:",
@@ -67,15 +67,49 @@ struct PRIMDeparturesProviderTests {
     @Test func asksOnlyOnceForAStopSharedByTwoLines() async throws {
         let (provider, client) = provider { _ in (try Fixture.data("stop-monitoring-empty"), 200) }
 
-        _ = try await provider.departures(at: chateletLesHalles)
+        _ = try await provider.departures(at: [chateletLesHalles])
 
         #expect(client.requests.compactMap(monitoringRef) == ["STIF:StopArea:SP:45102:"])
+    }
+
+    @Test func asksForTheStopsOfEveryStationOfAHub() async throws {
+        let (provider, client) = provider { _ in (try Fixture.data("stop-monitoring-empty"), 200) }
+
+        _ = try await provider.departures(at: [chateletLesHalles, abbesses])
+
+        #expect(Set(client.requests.compactMap(monitoringRef)) == [
+            "STIF:StopArea:SP:45102:",
+            "STIF:StopPoint:Q:22059:",
+            "STIF:StopPoint:Q:463116:"
+        ])
+    }
+
+    @Test func dropsTrainsThatEndAtTheStationOfTheHubThatServesTheirLine() {
+        let visits = [
+            ("STIF:Line::C01742:", "Chatelet-Les Halles"),
+            ("STIF:Line::C01382:", "Chatelet-Les Halles"),
+            ("STIF:Line::C01382:", "Abbesses")
+        ].map {
+            MonitoredVisit(
+                monitoringRef: nil,
+                lineRef: $0.0,
+                destinationRef: nil,
+                destinationName: $0.1,
+                journeyRef: nil,
+                time: Fixture.date("2026-09-26T10:02:00Z")
+            )
+        }
+
+        let departures = PRIMDeparturesProvider.departures(from: visits, at: [chateletLesHalles, abbesses])
+
+        #expect(departures.map(\.line.name) == ["12"])
+        #expect(departures.map(\.destination) == ["Chatelet-Les Halles"])
     }
 
     @Test func keepsTheStationTrainsOnceEachAndDropsTrainsThatEndHere() async throws {
         let (provider, _) = provider { _ in (try Fixture.data("stop-monitoring-abbesses"), 200) }
 
-        let departures = try await provider.departures(at: abbesses)
+        let departures = try await provider.departures(at: [abbesses])
 
         #expect(departures.map(\.destination) == ["Mairie d'Issy", "Mairie d'Issy"])
         #expect(departures.map(\.time) == [
@@ -92,7 +126,7 @@ struct PRIMDeparturesProviderTests {
             return (try Fixture.data("stop-monitoring-empty"), 200)
         }
 
-        let departures = try await provider.departures(at: abbesses)
+        let departures = try await provider.departures(at: [abbesses])
 
         #expect(departures == [
             Departure(
@@ -119,7 +153,7 @@ struct PRIMDeparturesProviderTests {
             lines: [TransitLine(mode: .metro, name: "12", stopIds: ["IDFM:monomodalStopPlace:45102"])]
         )
 
-        let departures = try await provider.departures(at: rerStation)
+        let departures = try await provider.departures(at: [rerStation])
 
         #expect(!departures.isEmpty)
         #expect(departures.allSatisfy { $0.quayRef == nil })
@@ -128,7 +162,7 @@ struct PRIMDeparturesProviderTests {
     @Test func tellsTheQuayAndTheDirectionOfEachTrainOfAStopArea() async throws {
         let (provider, _) = provider { _ in (try Fixture.data("stop-monitoring-chatelet-rer"), 200) }
 
-        let departures = try await provider.departures(at: chateletLesHalles)
+        let departures = try await provider.departures(at: [chateletLesHalles])
 
         #expect(departures.map(\.line.name) == ["A", "A", "B", "B"])
         #expect(departures.map(\.quayRef) == [
@@ -150,7 +184,7 @@ struct PRIMDeparturesProviderTests {
             time: Fixture.date("2026-09-26T10:02:00Z")
         )
 
-        #expect(PRIMDeparturesProvider.departures(from: [visit], at: chateletLesHalles).isEmpty)
+        #expect(PRIMDeparturesProvider.departures(from: [visit], at: [chateletLesHalles]).isEmpty)
     }
 
     @Test func keepsTheLineOfEachTrainAtAStopSharedByTwoLines() {
@@ -165,7 +199,7 @@ struct PRIMDeparturesProviderTests {
             )
         }
 
-        let departures = PRIMDeparturesProvider.departures(from: visits, at: chateletLesHalles)
+        let departures = PRIMDeparturesProvider.departures(from: visits, at: [chateletLesHalles])
 
         #expect(departures.map(\.line.name) == ["A", "B"])
     }
@@ -173,7 +207,7 @@ struct PRIMDeparturesProviderTests {
     @Test func returnsNoDepartureWhenTheServiceHasNone() async throws {
         let (provider, _) = provider { _ in (try Fixture.data("stop-monitoring-empty"), 200) }
 
-        #expect(try await provider.departures(at: abbesses).isEmpty)
+        #expect(try await provider.departures(at: [abbesses]).isEmpty)
     }
 
     @Test func keepsTheTrainsOfOneStopWhenAnotherStopFails() async throws {
@@ -184,7 +218,7 @@ struct PRIMDeparturesProviderTests {
             return (Data(), 500)
         }
 
-        #expect(try await provider.departures(at: abbesses).count == 2)
+        #expect(try await provider.departures(at: [abbesses]).count == 2)
     }
 
     @Test(arguments: [
@@ -198,7 +232,7 @@ struct PRIMDeparturesProviderTests {
         let (provider, _) = provider { _ in (Data(), statusCode) }
 
         await #expect(throws: expected) {
-            try await provider.departures(at: abbesses)
+            try await provider.departures(at: [abbesses])
         }
     }
 
@@ -206,7 +240,7 @@ struct PRIMDeparturesProviderTests {
         let (provider, _) = provider { _ in (Data("<html>oops</html>".utf8), 200) }
 
         await #expect(throws: NextTrainsError.serviceFailure) {
-            try await provider.departures(at: abbesses)
+            try await provider.departures(at: [abbesses])
         }
     }
 
@@ -215,7 +249,7 @@ struct PRIMDeparturesProviderTests {
         let (provider, _) = provider { _ in throw URLError(code) }
 
         await #expect(throws: NextTrainsError.unreachable) {
-            try await provider.departures(at: abbesses)
+            try await provider.departures(at: [abbesses])
         }
     }
 }

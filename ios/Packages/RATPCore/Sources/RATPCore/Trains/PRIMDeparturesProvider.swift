@@ -8,7 +8,7 @@ public enum NextTrainsError: Error, Equatable, Sendable {
 }
 
 public protocol DeparturesProvider: Sendable {
-    func departures(at station: Station) async throws -> [Departure]
+    func departures(at stations: [Station]) async throws -> [Departure]
 }
 
 public struct PRIMDeparturesProvider: DeparturesProvider {
@@ -23,8 +23,8 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         self.httpClient = httpClient
     }
 
-    public func departures(at station: Station) async throws -> [Departure] {
-        let monitoringRefs = Self.monitoringRefs(for: station)
+    public func departures(at stations: [Station]) async throws -> [Departure] {
+        let monitoringRefs = Self.monitoringRefs(for: stations)
         let results = await withTaskGroup(of: Result<[MonitoredVisit], any Error>.self) { group in
             for monitoringRef in monitoringRefs {
                 group.addTask {
@@ -47,7 +47,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         try Task.checkCancellation()
 
         let visits = results.compactMap { try? $0.get() }.flatMap(\.self)
-        let departures = Self.departures(from: visits, at: station)
+        let departures = Self.departures(from: visits, at: stations)
         let firstError = results.lazy.compactMap { result -> (any Error)? in
             if case .failure(let error) = result { error } else { nil }
         }.first
@@ -57,23 +57,28 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         return departures
     }
 
-    static func monitoringRefs(for station: Station) -> [String] {
+    static func monitoringRefs(for stations: [Station]) -> [String] {
         var seen: Set<String> = []
-        return station.lines
+        return stations
+            .flatMap(\.lines)
             .flatMap(\.stopIds)
             .compactMap(PRIMStopReference.monitoringRef(forStopId:))
             .filter { seen.insert($0).inserted }
     }
 
-    static func departures(from visits: [MonitoredVisit], at station: Station) -> [Departure] {
+    static func departures(from visits: [MonitoredVisit], at stations: [Station]) -> [Departure] {
         let linesByCode = Dictionary(
-            station.lines.compactMap { line in line.primLineCode.map { ($0, line) } },
+            stations.flatMap { station in
+                station.lines.compactMap { line in
+                    line.primLineCode.map { ($0, (line: line, stationKey: StationCatalog.searchKey(station.name))) }
+                }
+            },
             uniquingKeysWith: { first, _ in first }
         )
-        let stationKey = StationCatalog.searchKey(station.name)
         var seenJourneys: Set<String> = []
         return visits.compactMap { visit in
-            guard let line = PRIMStopReference.lineCode(fromLineRef: visit.lineRef).flatMap({ linesByCode[$0] }),
+            guard let (line, stationKey) = PRIMStopReference.lineCode(fromLineRef: visit.lineRef)
+                    .flatMap({ linesByCode[$0] }),
                   visit.destinationRef == nil || visit.destinationRef != visit.monitoringRef,
                   StationCatalog.searchKey(visit.destinationName) != stationKey
             else {

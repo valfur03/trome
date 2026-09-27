@@ -5,10 +5,13 @@ import sys
 import urllib.request
 from pathlib import Path
 
-SOURCE_URL = (
-    "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/"
-    "arrets-lignes/exports/json"
+DATASETS_URL = "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/"
+SOURCE_URL = DATASETS_URL + "arrets-lignes/exports/json"
+HUBS_URL = (
+    DATASETS_URL
+    + "relations/exports/json?select=pdeid,zdaid,arrid&where=pdeid%20is%20not%20null"
 )
+STOP_AREA_PREFIX = "IDFM:monomodalStopPlace:"
 OUTPUT = (
     Path(__file__).resolve().parent.parent
     / "Packages/RATPCore/Sources/RATPCore/Resources/stations.json"
@@ -75,6 +78,36 @@ def station_name(row):
     return STATION_NAMES.get(row["stop_name"], row["stop_name"])
 
 
+def download(url):
+    with urllib.request.urlopen(url) as response:
+        return json.load(response)
+
+
+def hub_ids_by_stop_id(relations):
+    hubs = {}
+    for relation in relations:
+        if relation.get("arrid"):
+            hubs["IDFM:" + relation["arrid"]] = relation["pdeid"]
+        if relation.get("zdaid"):
+            hubs[STOP_AREA_PREFIX + relation["zdaid"]] = relation["pdeid"]
+    return hubs
+
+
+def add_hub_ids(stations, hubs_by_stop_id):
+    for station in stations:
+        stop_ids = [stop_id for line in station["lines"] for stop_id in line["stopIds"]]
+        hub_ids = sorted({hubs_by_stop_id[stop_id] for stop_id in stop_ids if stop_id in hubs_by_stop_id})
+        if hub_ids:
+            station["hubId"] = hub_ids[0]
+    station_count = {}
+    for station in stations:
+        if "hubId" in station:
+            station_count[station["hubId"]] = station_count.get(station["hubId"], 0) + 1
+    for station in stations:
+        if station_count.get(station.get("hubId"), 0) < 2:
+            station.pop("hubId", None)
+
+
 def build_station(rows):
     lines = {}
     for row in rows:
@@ -98,8 +131,7 @@ def build_station(rows):
 
 
 def main():
-    with urllib.request.urlopen(SOURCE_URL) as response:
-        rows = json.load(response)
+    rows = download(SOURCE_URL)
 
     by_name = {}
     for row in filter(is_wanted, rows):
@@ -111,6 +143,7 @@ def main():
         for cluster in cluster_by_distance(name_rows)
     ]
     stations.sort(key=lambda station: (station["name"], station["id"]))
+    add_hub_ids(stations, hub_ids_by_stop_id(download(HUBS_URL)))
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT.open("w", encoding="utf-8") as output:

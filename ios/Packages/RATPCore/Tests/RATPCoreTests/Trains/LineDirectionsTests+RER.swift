@@ -47,7 +47,7 @@ extension LineDirectionsTests {
             lines: [rerA, TransitLine(mode: .rer, name: "B", stopIds: ["IDFM:monomodalStopPlace:45102"])]
         )
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-chatelet-rer"))
-        let departures = PRIMDeparturesProvider.departures(from: visits, at: station)
+        let departures = PRIMDeparturesProvider.departures(from: visits, at: [station])
 
         let result = LineDirections.directions(of: rerA, at: station, from: departures)
 

@@ -27,8 +27,12 @@ struct StationActivityContentTests {
         Departure(line: line, destination: destination, time: time(inMinutes: minutes), quayRef: quay)
     }
 
-    private func board(_ departures: [Departure]) -> NextTrainsState {
-        .departures(DepartureBoard(departures: departures, lines: station.lines, now: now), updatedAt: now)
+    private func board(_ departures: [Departure], at stations: [Station]? = nil) -> NextTrainsState {
+        .departures(DepartureBoard(departures: departures, stations: stations ?? [station], now: now), updatedAt: now)
+    }
+
+    private func lines(of content: ContentState) -> [LineTrains] {
+        content.trains.linesPage?.lines ?? []
     }
 
     @Test func showsTheStationName() {
@@ -55,7 +59,7 @@ struct StationActivityContentTests {
         #expect(ContentState(station: station, trains: state, now: now).trains == .noData)
     }
 
-    @Test func showsBothDirectionsOfTheFirstLineWithoutItsStopIds() {
+    @Test func showsEveryLineOfTheStationWithItsDirectionsAndWithoutItsStopIds() {
         let trains = board([
             train(line12, to: "Mairie d'Issy", inMinutes: 3, from: southQuay),
             train(line12, to: "Mairie d'Issy", inMinutes: 9, from: southQuay),
@@ -65,13 +69,24 @@ struct StationActivityContentTests {
 
         let content = ContentState(station: station, trains: trains, now: now)
 
-        #expect(content.trains == .directions(line: TransitLine(mode: .metro, name: "12"), [
-            LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 1)]),
-            LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 3), time(inMinutes: 9)])
-        ]))
+        #expect(content.trains == .lines(LinesPage(
+            lines: [
+                LineTrains(line: TransitLine(mode: .metro, name: "2"), directions: [
+                    LineDirection(label: "Porte Dauphine", times: []),
+                    LineDirection(label: "Nation", times: [time(inMinutes: 2)])
+                ]),
+                LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [
+                    LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 1)]),
+                    LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 3)])
+                ])
+            ],
+            allLines: [TransitLine(mode: .metro, name: "2"), TransitLine(mode: .metro, name: "12")],
+            firstIndex: 0,
+            soonestTrain: SoonestTrain(line: TransitLine(mode: .metro, name: "12"), time: time(inMinutes: 1))
+        )))
     }
 
-    @Test func showsTheNextLineWhenTheFirstLineHasNoUpcomingTrain() {
+    @Test func keepsALineWithNoUpcomingTrainAndSaysNoTrainsInItsDirections() {
         let trains = board([
             train(line12, to: "Mairie d'Issy", inMinutes: -0.25, from: southQuay),
             train(line2, to: "Nation", inMinutes: 2, from: "STIF:StopPoint:Q:3:")
@@ -79,22 +94,78 @@ struct StationActivityContentTests {
 
         let content = ContentState(station: station, trains: trains, now: now)
 
-        #expect(content.trains == .directions(line: TransitLine(mode: .metro, name: "2"), [
-            LineDirection(label: "Porte Dauphine", times: []),
-            LineDirection(label: "Nation", times: [time(inMinutes: 2)])
-        ]))
+        #expect(lines(of: content).map(\.line.name) == ["2", "12"])
+        #expect(lines(of: content)[1].directions == [
+            LineDirection(label: "Mairie d'Aubervilliers", times: []),
+            LineDirection(label: "Mairie d'Issy", times: [])
+        ])
     }
 
-    @Test func saysNoTrainsInBothDirectionsWhenEveryTrainHasLeft() {
-        let trains = board([train(line12, to: "Mairie d'Issy", inMinutes: -0.25, from: southQuay)])
+    @Test func showsBothDirectionsWithTwoTrainsEachAtAStationWithOneLine() {
+        let abbesses = Station(
+            id: "abbesses",
+            name: "Abbesses",
+            coordinate: Coordinate(48.8844, 2.3384),
+            lines: [line12]
+        )
+        let trains = board([
+            train(line12, to: "Mairie d'Issy", inMinutes: 3, from: southQuay),
+            train(line12, to: "Mairie d'Issy", inMinutes: 9, from: southQuay),
+            train(line12, to: "Mairie d'Aubervilliers", inMinutes: 1, from: northQuay)
+        ], at: [abbesses])
 
-        #expect(ContentState(station: station, trains: trains, now: now).trains == .directions(
-            line: TransitLine(mode: .metro, name: "12"),
-            [
-                LineDirection(label: "Mairie d'Aubervilliers", times: []),
-                LineDirection(label: "Mairie d'Issy", times: [])
-            ]
-        ))
+        let content = ContentState(station: abbesses, trains: trains, now: now)
+
+        #expect(content.trains.linesPage?.allLines == [TransitLine(mode: .metro, name: "12")])
+        #expect(lines(of: content).flatMap(\.directions) == [
+            LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 1)]),
+            LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 3), time(inMinutes: 9)])
+        ])
+    }
+
+    @Test func showsTheLinesOfEveryStationOfTheHubEachWithTheStationThatServesIt() {
+        let mairieDIssy = Station(
+            id: "mairie-d-issy",
+            name: "Mairie d'Issy",
+            coordinate: Coordinate(48.8243, 2.2735),
+            lines: [line12]
+        )
+        let lineTwoOnly = Station(
+            id: "pigalle",
+            name: "Pigalle",
+            coordinate: Coordinate(48.8822, 2.3377),
+            lines: [line2]
+        )
+        let trains = board([
+            train(line12, to: "Mairie d'Aubervilliers", inMinutes: 4, from: northQuay),
+            train(line2, to: "Nation", inMinutes: 2, from: "STIF:StopPoint:Q:3:")
+        ], at: [lineTwoOnly, mairieDIssy])
+
+        let content = ContentState(station: lineTwoOnly, trains: trains, now: now)
+
+        #expect(content.stationName == "Pigalle")
+        #expect(lines(of: content).map(\.line.name) == ["2", "12"])
+        #expect(lines(of: content)[1].directions == [
+            LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 4)])
+        ])
+    }
+
+    @Test func startsThePageAtTheAskedLine() {
+        let trains = board([train(line2, to: "Nation", inMinutes: 2, from: "STIF:StopPoint:Q:3:")])
+
+        let content = ContentState(station: station, trains: trains, now: now, firstLineIndex: 1)
+
+        #expect(content.trains.linesPage?.firstIndex == 1)
+        #expect(lines(of: content).map(\.line.name) == ["12"])
+    }
+
+    @Test func saysThereIsNoDataWhenNoLineHasADirection() {
+        let unknownLine = TransitLine(mode: .metro, name: "99", stopIds: ["IDFM:9"])
+        let unknown = Station(id: "unknown", name: "Unknown", coordinate: Coordinate(48.87, 2.33), lines: [unknownLine])
+
+        let content = ContentState(station: unknown, trains: board([], at: [unknown]), now: now)
+
+        #expect(content.trains == .noData)
     }
 
     @Test func dropsTimesMoreThanAnHourAwayAndSaysNoTrainsForADirectionLeftEmpty() {
@@ -104,22 +175,22 @@ struct StationActivityContentTests {
             train(line12, to: "Mairie d'Aubervilliers", inMinutes: 75, from: northQuay)
         ])
 
-        #expect(ContentState(station: station, trains: trains, now: now).trains == .directions(
-            line: TransitLine(mode: .metro, name: "12"),
-            [
-                LineDirection(label: "Mairie d'Aubervilliers", times: []),
-                LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 8)])
-            ]
-        ))
+        #expect(lines(of: ContentState(station: station, trains: trains, now: now))[1].directions == [
+            LineDirection(label: "Mairie d'Aubervilliers", times: []),
+            LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 8)])
+        ])
     }
 
-    @Test func becomesStaleWhenTheFirstShownTrainLeaves() {
+    @Test func becomesStaleWhenTheSoonestTrainOfAnyLineLeaves() {
         let trains = board([
             train(line12, to: "Mairie d'Issy", inMinutes: 3, from: southQuay),
-            train(line12, to: "Mairie d'Aubervilliers", inMinutes: 5, from: northQuay)
+            train(line2, to: "Nation", inMinutes: 2, from: "STIF:StopPoint:Q:3:")
         ])
 
-        #expect(ContentState(station: station, trains: trains, now: now).staleDate == time(inMinutes: 3))
+        let content = ContentState(station: station, trains: trains, now: now, firstLineIndex: 1)
+
+        #expect(lines(of: content).map(\.line.name) == ["12"])
+        #expect(content.staleDate == time(inMinutes: 2))
     }
 
     @Test func neverBecomesStaleWhenNoDirectionHasATrain() {
@@ -136,36 +207,5 @@ struct StationActivityContentTests {
 
     @Test func neverBecomesStaleWithoutTrainTimes() {
         #expect(ContentState(station: station, trains: .noLiveData, now: now).staleDate == nil)
-    }
-
-    @Test func keepsTwoTrainsInEachDirectionWhenTheLiveActivityShowsTwoDirections() {
-        let directions = [
-            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", trains: [
-                LineDirection.Train(time: time(inMinutes: 1), destination: "Saint-Rémy-lès-Chevreuse"),
-                LineDirection.Train(time: time(inMinutes: 5), destination: "Massy - Palaiseau")
-            ]),
-            LineDirection(label: "Mitry - Claye", times: [time(inMinutes: 2), time(inMinutes: 9)])
-        ]
-
-        #expect(StationActivityAttributes.Trains.fittingTheLiveActivity(directions) == directions)
-    }
-
-    @Test func showsOnlyTheNextTrainOfEachDirectionWhenTheLiveActivityShowsThreeDirections() {
-        let directions = [
-            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", trains: [
-                LineDirection.Train(time: time(inMinutes: 1), destination: "Saint-Rémy-lès-Chevreuse"),
-                LineDirection.Train(time: time(inMinutes: 5), destination: "Massy - Palaiseau")
-            ]),
-            LineDirection(label: "Mitry - Claye", times: [time(inMinutes: 2), time(inMinutes: 9)]),
-            LineDirection(label: "Gare du Nord", times: [])
-        ]
-
-        #expect(StationActivityAttributes.Trains.fittingTheLiveActivity(directions) == [
-            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", trains: [
-                LineDirection.Train(time: time(inMinutes: 1), destination: "Saint-Rémy-lès-Chevreuse")
-            ]),
-            LineDirection(label: "Mitry - Claye", times: [time(inMinutes: 2)]),
-            LineDirection(label: "Gare du Nord", times: [])
-        ])
     }
 }

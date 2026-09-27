@@ -30,13 +30,15 @@ public struct Station: Codable, Hashable, Identifiable, Sendable {
     public var latitude: Double
     public var longitude: Double
     public var lines: [TransitLine]
+    public var hubId: String?
 
-    public init(id: String, name: String, coordinate: Coordinate, lines: [TransitLine]) {
+    public init(id: String, name: String, coordinate: Coordinate, lines: [TransitLine], hubId: String? = nil) {
         self.id = id
         self.name = name
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
         self.lines = lines
+        self.hubId = hubId
     }
 
     public var coordinate: Coordinate {
