@@ -27,8 +27,12 @@ public struct LineDirection: Codable, Hashable, Sendable {
         trains.map(\.time)
     }
 
+    public var name: String {
+        showsEachDestination ? label : trains.first?.destination ?? label
+    }
+
     public var showsEachDestination: Bool {
-        trains.contains { $0.destination != label }
+        Set(trains.map(\.destination)).count > 1
     }
 }
 

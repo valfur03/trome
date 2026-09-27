@@ -57,7 +57,7 @@ extension LineDirectionsTests {
         #expect(result.map(\.showsEachDestination) == [true, false])
     }
 
-    @Test func namesTheBranchOfEachTrainEvenWhenBothGoToTheSameBranch() {
+    @Test func namesTheBranchOfBothTrainsOnceWhenBothGoToTheSameBranch() {
         let result = directions(of: line13, at: "Place de Clichy", [
             train(line13, to: "Saint-Denis-Université", inMinutes: 1, from: quay(130)),
             train(line13, to: "Saint-Denis-Université", inMinutes: 6, from: quay(130))
@@ -67,7 +67,8 @@ extension LineDirectionsTests {
             branchTrain(1, to: "Saint-Denis - Université"),
             branchTrain(6, to: "Saint-Denis - Université")
         ])
-        #expect(result[0].showsEachDestination)
+        #expect(!result[0].showsEachDestination)
+        #expect(result[0].name == "Saint-Denis - Université")
     }
 
     @Test func namesOnlyTheOwnBranchOfAStationAfterTheFork() {
@@ -81,6 +82,7 @@ extension LineDirectionsTests {
             LineDirection(label: "Châtillon - Montrouge", times: [])
         ])
         #expect(brochant.allSatisfy { !$0.showsEachDestination })
+        #expect(brochant.map(\.name) == ["Asnières - Gennevilliers - Les Courtilles", "Châtillon - Montrouge"])
         #expect(porteDItalie.map(\.label) == ["La Courneuve - 8 Mai 1945", "Mairie d'Ivry"])
     }
 
@@ -128,7 +130,11 @@ extension LineDirectionsTests {
             branchTrain(5, to: "Saint-Denis - Université")
         ])
         #expect(result[1].trains == [branchTrain(3, to: "Gare Saint-Lazare")])
-        #expect(result[1].showsEachDestination)
+        #expect(result.map(\.showsEachDestination) == [true, false])
+        #expect(result.map(\.name) == [
+            "Saint-Denis - Université / Asnières - Gennevilliers - Les Courtilles",
+            "Gare Saint-Lazare"
+        ])
     }
 
     @Test func namesEveryBranchStationAsAStationOfItsLine() throws {

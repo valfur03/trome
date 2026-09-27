@@ -45,6 +45,7 @@ struct LineDirectionsTests {
             LineDirection(label: "Nation", times: [time(inMinutes: 2)])
         ])
         #expect(result.allSatisfy { !$0.showsEachDestination })
+        #expect(result.map(\.name) == ["Charles de Gaulle - Étoile", "Nation"])
     }
 
     @Test func showsNoTrainsForADirectionWithoutTrains() {
@@ -54,6 +55,7 @@ struct LineDirectionsTests {
             LineDirection(label: "Charles de Gaulle - Étoile", times: []),
             LineDirection(label: "Nation", times: [time(inMinutes: 2)])
         ])
+        #expect(result[0].name == "Charles de Gaulle - Étoile")
     }
 
     @Test func putsATrainThatEndsBeforeTheEndOfLineInTheDirectionOfItsQuay() {
@@ -68,7 +70,8 @@ struct LineDirectionsTests {
             ]),
             LineDirection(label: "Nation", times: [time(inMinutes: 2)])
         ])
-        #expect(result[0].showsEachDestination)
+        #expect(!result[0].showsEachDestination)
+        #expect(result.map(\.name) == ["Trocadéro", "Nation"])
     }
 
     @Test func showsTrainsOfAnUnknownDirectionUnderTheirDestination() {
@@ -109,6 +112,7 @@ struct LineDirectionsTests {
                 LineDirection.Train(time: time(inMinutes: 3), destination: "Charles de Gaulle - Étoile")
             ])
         ])
+        #expect(result[0].showsEachDestination)
     }
 
     @Test func showsOnlyTheDirectionOfAStationWithOneQuay() {

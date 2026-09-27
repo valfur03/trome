@@ -113,7 +113,7 @@ private struct DirectionRow: View {
             HStack {
                 Image(systemName: "arrow.right")
                     .font(.caption)
-                DirectionName(text: direction.label)
+                DirectionName(text: direction.name)
                     .font(.subheadline)
                 Spacer(minLength: 8)
                 if direction.times.isEmpty {
