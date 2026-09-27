@@ -158,12 +158,11 @@ try_to_take_a_slot() {
             return 1
         fi
     fi
-    for candidate in $free_slots; do
-        use_slot "$candidate"
-        if mkdir "$lock" 2> /dev/null; then
-            return 0
-        fi
-    done
+    set -- $free_slots
+    use_slot "$1"
+    if mkdir "$lock" 2> /dev/null; then
+        return 0
+    fi
     wait_kind=race
     return 1
 }
