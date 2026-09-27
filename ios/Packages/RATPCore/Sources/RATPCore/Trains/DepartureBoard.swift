@@ -7,6 +7,7 @@ public struct DepartureBoard: Hashable, Sendable {
 
     public let groups: [DepartureGroup]
     public let departures: [Departure]
+    let laterDepartures: [Departure]
     public let stations: [Station]
     public let lines: [TransitLine]
 
@@ -14,11 +15,14 @@ public struct DepartureBoard: Hashable, Sendable {
         let lines = stations.flatMap(\.lines).sorted(by: TransitLine.stationListOrder)
         self.stations = stations
         self.lines = lines
-        let upcoming = departures
+        let farthestTime = now.addingTimeInterval(Self.farthestTimeSeconds)
+        let notDeparted = departures
             .filter { $0.time > now.addingTimeInterval(-Self.departedGraceSeconds) }
-            .filter { $0.time <= now.addingTimeInterval(Self.farthestTimeSeconds) }
             .sorted { $0.time < $1.time }
+        let upcoming = notDeparted.filter { $0.time <= farthestTime }
+        let later = notDeparted.filter { $0.time > farthestTime }
         self.departures = upcoming
+        self.laterDepartures = later
         var groups: [DepartureGroup] = []
         for departure in upcoming {
             if let index = groups.firstIndex(where: {
@@ -37,6 +41,17 @@ public struct DepartureBoard: Hashable, Sendable {
                     )
                 )
             }
+        }
+        for departure in later where !groups.contains(where: {
+            $0.line == departure.line && $0.destination == departure.destination
+        }) {
+            groups.append(DepartureGroup(
+                line: departure.line,
+                destination: departure.destination,
+                times: [],
+                stationName: Self.otherStationName(serving: departure.line, in: stations),
+                nextTrainIsOverAnHourAway: true
+            ))
         }
         self.groups = groups.sorted { first, second in
             let firstLine = lines.firstIndex(of: first.line) ?? lines.count

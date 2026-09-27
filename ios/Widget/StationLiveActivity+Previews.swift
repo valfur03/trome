@@ -26,6 +26,12 @@ import WidgetKit
             LineDirection(label: "Châtillon - Montrouge", times: [.now.addingTimeInterval(120)])
         ])
     ])
+    StationActivityAttributes.ContentState.preview(stationName: "Boigneville", lines: [
+        LineTrains(line: TransitLine(mode: .rer, name: "D"), directions: [
+            LineDirection(label: "Creil", times: [.now.addingTimeInterval(720), .now.addingTimeInterval(2520)]),
+            LineDirection(label: "Malesherbes", times: [], nextTrainIsOverAnHourAway: true)
+        ])
+    ])
     StationActivityAttributes.ContentState.preview(
         stationName: "Châtelet",
         lines: [

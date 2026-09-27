@@ -63,7 +63,7 @@ extension StationActivityAttributes.Trains {
                 LineTrains(
                     line: TransitLine(mode: line.mode, name: line.name),
                     directions: board.station(serving: line).map { station in
-                        LineDirections.directions(of: line, at: station, from: upcoming)
+                        LineDirections.directions(of: line, at: station, from: upcoming, later: board.laterDepartures)
                     } ?? [],
                     stationName: board.otherStationName(serving: line)
                 )

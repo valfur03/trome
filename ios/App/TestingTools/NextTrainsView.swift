@@ -66,8 +66,8 @@ private struct DepartureBoardView: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: Self.clockTick)) { context in
             let groups = board.groups
+                .filter { $0.isShown(at: context.date) }
                 .map { ($0, $0.upcomingTimes(after: context.date)) }
-                .filter { !$0.1.isEmpty }
             VStack(spacing: 8) {
                 if groups.isEmpty {
                     ProgressView("Updating the next trains…")
@@ -91,7 +91,8 @@ private struct DepartureRow: View {
     let now: Date
 
     private var timesText: String {
-        times
+        guard !group.nextTrainIsOverAnHourAway else { return "Next train in over 1 hour" }
+        return times
             .map { time in
                 let minutes = DepartureTime.minutes(until: time, from: now)
                 return minutes == 0 ? "Now" : "\(minutes) min"

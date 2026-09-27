@@ -127,6 +127,29 @@ struct LinesPageTests {
         #expect(LinesPage(showing: [empty], from: 0).soonestTrain == nil)
     }
 
+    @Test func keepsSayingTheNextTrainIsOverAnHourAwayWhenItShowsOnlyOneTrainPerDirection() {
+        let later = LineTrains(line: TransitLine(mode: .rer, name: "D"), directions: [
+            LineDirection(label: "Malesherbes", times: [], nextTrainIsOverAnHourAway: true)
+        ])
+
+        let page = LinesPage(showing: [line("1", directions: 2), later], from: 0)
+
+        #expect(page.lines[1].directions == later.directions)
+    }
+
+    @Test func saysTheNextTrainIsOverAnHourAwayOnlyWhenNoLineHasATrainWithinTheHour() {
+        let later = LineTrains(line: TransitLine(mode: .rer, name: "D"), directions: [
+            LineDirection(label: "Malesherbes", times: [], nextTrainIsOverAnHourAway: true)
+        ])
+        let noTrains = LineTrains(line: TransitLine(mode: .rer, name: "C"), directions: [
+            LineDirection(label: "Versailles Château Rive Gauche", times: [])
+        ])
+
+        #expect(LinesPage(showing: [noTrains, later], from: 0).nextTrainIsOverAnHourAway)
+        #expect(!LinesPage(showing: [line("1", directions: 1), later], from: 0).nextTrainIsOverAnHourAway)
+        #expect(!LinesPage(showing: [noTrains], from: 0).nextTrainIsOverAnHourAway)
+    }
+
     @Test func showsSeveralLinesOnlyWhenTheStationHasMoreThanOneLine() {
         let oneLine = LinesPage(showing: [line("12", directions: 2)], from: 0)
         let severalLines = LinesPage(showing: [line("1", directions: 2), line("4", directions: 2)], from: 0)

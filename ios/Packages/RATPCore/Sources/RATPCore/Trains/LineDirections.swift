@@ -13,14 +13,20 @@ public struct LineDirection: Codable, Hashable, Sendable {
 
     public var label: String
     public var trains: [Train]
+    public var nextTrainIsOverAnHourAway: Bool
 
-    public init(label: String, trains: [Train]) {
+    public init(label: String, trains: [Train], nextTrainIsOverAnHourAway: Bool = false) {
         self.label = label
         self.trains = trains
+        self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
     }
 
-    public init(label: String, times: [Date]) {
-        self.init(label: label, trains: times.map { Train(time: $0, destination: label) })
+    public init(label: String, times: [Date], nextTrainIsOverAnHourAway: Bool = false) {
+        self.init(
+            label: label,
+            trains: times.map { Train(time: $0, destination: label) },
+            nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway
+        )
     }
 
     public var times: [Date] {
@@ -47,7 +53,34 @@ enum LineDirections {
         var side: Int?
     }
 
-    static func directions(of line: TransitLine, at station: Station, from departures: [Departure]) -> [LineDirection] {
+    static func directions(
+        of line: TransitLine,
+        at station: Station,
+        from departures: [Departure],
+        later laterDepartures: [Departure] = []
+    ) -> [LineDirection] {
+        var shown = directions(of: line, at: station, trainsFrom: departures)
+        guard !laterDepartures.isEmpty else { return shown }
+        let laterTimes = Set(laterDepartures.map(\.time))
+        let laterOnly = directions(of: line, at: station, trainsFrom: departures + laterDepartures)
+            .filter { direction in direction.trains.first.map { laterTimes.contains($0.time) } ?? false }
+        for later in laterOnly {
+            if let index = shown.firstIndex(where: { $0.label == later.label }) {
+                if shown[index].trains.isEmpty {
+                    shown[index].nextTrainIsOverAnHourAway = true
+                }
+            } else if shown.count < maximumDirections {
+                shown.append(LineDirection(label: later.label, trains: [], nextTrainIsOverAnHourAway: true))
+            }
+        }
+        return shown
+    }
+
+    private static func directions(
+        of line: TransitLine,
+        at station: Station,
+        trainsFrom departures: [Departure]
+    ) -> [LineDirection] {
         let trains = departures
             .filter { $0.line.mode == line.mode && $0.line.name == line.name }
             .sorted { $0.time < $1.time }

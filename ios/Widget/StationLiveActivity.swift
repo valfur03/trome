@@ -43,6 +43,10 @@ struct StationLiveActivity: Widget {
                 if !context.isStale, let time = context.state.nextTime {
                     WaitingTime(time: time)
                         .font(.caption.bold())
+                } else if !context.isStale, context.state.trains.linesPage?.nextTrainIsOverAnHourAway == true {
+                    Text("> 1 h")
+                        .font(.caption.bold())
+                        .accessibilityLabel("Next train in over 1 hour")
                 } else {
                     Image(systemName: "exclamationmark.circle")
                 }
@@ -264,9 +268,10 @@ private struct DirectionRow: View {
                     .font(.subheadline)
                 Spacer(minLength: 8)
                 if direction.times.isEmpty {
-                    Text("No trains")
+                    Text(direction.nextTrainIsOverAnHourAway ? "In over 1 hour" : "No trains")
                         .font(.subheadline.bold())
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                         .layoutPriority(1)
                 } else if !isStale {
                     VStack(alignment: .trailing, spacing: 0) {
@@ -314,52 +319,6 @@ private struct DirectionName: View {
             .lineLimit(1)
             .minimumScaleFactor(0.85)
             .layoutPriority(1)
-    }
-}
-
-private struct LineBadge: View {
-    let line: TransitLine
-
-    var body: some View {
-        Text(line.localizedName)
-            .font(.subheadline.bold())
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background(.quaternary, in: Capsule())
-    }
-}
-
-private struct SmallLineBadge: View {
-    static let minimumWidth: CGFloat = 24
-
-    let line: TransitLine
-    let isShown: Bool
-
-    var body: some View {
-        Text(line.name)
-            .font(.caption.bold())
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, 4)
-            .frame(minWidth: Self.minimumWidth)
-            .background(isShown ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.quaternary), in: Capsule())
-            .foregroundStyle(isShown ? .primary : .secondary)
-            .accessibilityLabel(line.localizedName)
-    }
-}
-
-private struct OtherLinesBadge: View {
-    let count: Int
-
-    var body: some View {
-        Text(verbatim: "+\(count)")
-            .font(.caption.bold())
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, 4)
-            .frame(minWidth: SmallLineBadge.minimumWidth)
-            .background(.quaternary, in: Capsule())
-            .foregroundStyle(.secondary)
     }
 }
 

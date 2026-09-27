@@ -95,6 +95,17 @@ struct NextTrainsModelTests {
         #expect(model.state == .noLiveData)
     }
 
+    @Test func showsTheTrainsWhenEveryTimeIsMoreThanAnHourAway() async {
+        provider.answer(.success([departure(inMinutes: 65)]), for: abbesses)
+        let model = makeModel()
+
+        await model.refresh(for: abbesses)
+
+        let board = DepartureBoard(departures: [departure(inMinutes: 65)], stations: [abbesses], now: now)
+        #expect(model.state == .departures(board, updatedAt: now))
+        #expect(board.groups.map(\.nextTrainIsOverAnHourAway) == [true])
+    }
+
     @Test(arguments: [NextTrainsError.unreachable, .keyRejected, .quotaExceeded, .serviceFailure])
     func reportsWhyTheTrainsCannotBeShown(error: NextTrainsError) async {
         provider.answer(.failure(error), for: abbesses)

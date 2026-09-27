@@ -170,14 +170,50 @@ struct DepartureBoardTests {
         #expect(board.groups.first?.times == [at(minutes: 60)])
     }
 
-    @Test func isEmptyWhenEveryTimeIsMoreThanAnHourAway() {
+    @Test func keepsADestinationWhoseEveryTimeIsMoreThanAnHourAwayAndSaysItsNextTrainIsOverAnHourAway() {
         let board = DepartureBoard(
-            departures: [Departure(line: line1, destination: "La Défense", time: at(minutes: 61))],
+            departures: [
+                Departure(line: line1, destination: "La Défense", time: at(minutes: 70)),
+                Departure(line: line1, destination: "La Défense", time: at(minutes: 61))
+            ],
             stations: [station("Station", line1)],
             now: now
         )
 
-        #expect(board.isEmpty)
+        #expect(!board.isEmpty)
+        #expect(board.groups == [
+            DepartureGroup(line: line1, destination: "La Défense", times: [], nextTrainIsOverAnHourAway: true)
+        ])
+        #expect(board.departures.isEmpty)
+        #expect(board.laterDepartures.map(\.time) == [at(minutes: 61), at(minutes: 70)])
+    }
+
+    @Test func showsEveryDestinationInOrderWhenOneHasOnlyTimesMoreThanAnHourAway() {
+        let rerD = TransitLine(mode: .rer, name: "D")
+        let board = DepartureBoard(
+            departures: [
+                Departure(line: rerD, destination: "Paris Gare de Lyon", time: at(minutes: 12)),
+                Departure(line: rerD, destination: "Paris Gare de Lyon", time: at(minutes: 42)),
+                Departure(line: rerD, destination: "Malesherbes", time: at(minutes: 65)),
+                Departure(line: rerD, destination: "Paris Gare de Lyon", time: at(minutes: 72))
+            ],
+            stations: [station("Boigneville", rerD)],
+            now: now
+        )
+
+        #expect(board.groups == [
+            DepartureGroup(line: rerD, destination: "Malesherbes", times: [], nextTrainIsOverAnHourAway: true),
+            DepartureGroup(line: rerD, destination: "Paris Gare de Lyon", times: [at(minutes: 12), at(minutes: 42)])
+        ])
+    }
+
+    @Test func showsADestinationWithOnlyTimesMoreThanAnHourAwayAtAnyTime() {
+        let later = DepartureGroup(line: line1, destination: "La Défense", times: [], nextTrainIsOverAnHourAway: true)
+        let left = DepartureGroup(line: line1, destination: "Château de Vincennes", times: [at(minutes: 1)])
+
+        #expect(later.isShown(at: at(minutes: 5)))
+        #expect(left.isShown(at: now))
+        #expect(!left.isShown(at: at(minutes: 2)))
     }
 
     @Test func isEmptyWithoutUpcomingDepartures() {

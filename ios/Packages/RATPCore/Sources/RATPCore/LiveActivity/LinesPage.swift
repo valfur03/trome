@@ -34,12 +34,20 @@ public struct LinesPage: Codable, Hashable, Sendable {
     public var allLines: [TransitLine]
     public var firstIndex: Int
     public var soonestTrain: SoonestTrain?
+    public var nextTrainIsOverAnHourAway: Bool
 
-    public init(lines: [LineTrains], allLines: [TransitLine], firstIndex: Int, soonestTrain: SoonestTrain?) {
+    public init(
+        lines: [LineTrains],
+        allLines: [TransitLine],
+        firstIndex: Int,
+        soonestTrain: SoonestTrain?,
+        nextTrainIsOverAnHourAway: Bool = false
+    ) {
         self.lines = lines
         self.allLines = allLines
         self.firstIndex = firstIndex
         self.soonestTrain = soonestTrain
+        self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
     }
 
     init(showing lines: [LineTrains], from index: Int) {
@@ -56,20 +64,25 @@ public struct LinesPage: Codable, Hashable, Sendable {
                 LineTrains(
                     line: line.line,
                     directions: line.directions.map { direction in
-                        LineDirection(label: direction.label, trains: Array(direction.trains.prefix(1)))
+                        var direction = direction
+                        direction.trains = Array(direction.trains.prefix(1))
+                        return direction
                     },
                     stationName: line.stationName
                 )
             }
         }
+        let soonestTrain = lines
+            .flatMap { line in line.directions.compactMap(\.trains.first).map { (line: line.line, time: $0.time) } }
+            .min { $0.time < $1.time }
+            .map { SoonestTrain(line: $0.line, time: $0.time) }
         self.init(
             lines: shown,
             allLines: lines.map(\.line),
             firstIndex: firstIndex,
-            soonestTrain: lines
-                .flatMap { line in line.directions.compactMap(\.trains.first).map { (line: line.line, time: $0.time) } }
-                .min { $0.time < $1.time }
-                .map { SoonestTrain(line: $0.line, time: $0.time) }
+            soonestTrain: soonestTrain,
+            nextTrainIsOverAnHourAway: soonestTrain == nil
+                && lines.contains { $0.directions.contains(where: \.nextTrainIsOverAnHourAway) }
         )
     }
 
