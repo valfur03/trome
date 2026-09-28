@@ -19,11 +19,57 @@ files_with_key() {
     ' sh "$3" {} +
 }
 
-if [ "${1:-}" = "files-with-key" ]; then
-    shift
-    files_with_key "$@"
-    exit
-fi
+logs_with_key() {
+    status=0
+    if [ -e "$1/DerivedData/Logs" ]; then
+        find -H "$1/DerivedData/Logs" -type f -name '*.xcactivitylog' -newer "$2" -exec sh -c '
+            key=$1
+            shift
+            status=0
+            for log do
+                if ! gzip -t -- "$log" 2> /dev/null; then
+                    if [ -e "$log" ]; then
+                        echo "live-key-check: cannot read the build log $log" >&2
+                        status=1
+                    fi
+                elif gzip -dc -- "$log" | grep -qF -- "$key"; then
+                    echo "$log"
+                fi
+            done
+            exit "$status"
+        ' sh "$3" {} + || status=1
+    fi
+    if [ -e "$1" ]; then
+        find -H "$1" -name '*.xcresult' -newer "$2" -prune -exec sh -c '
+            key=$1
+            shift
+            status=0
+            for bundle do
+                grep -rlF -- "$key" "$bundle" || {
+                    if [ $? -gt 1 ] && [ -e "$bundle" ]; then
+                        echo "live-key-check: cannot read the result bundle $bundle" >&2
+                        status=1
+                    fi
+                }
+            done
+            exit "$status"
+        ' sh "$3" {} + || status=1
+    fi
+    return "$status"
+}
+
+case "${1:-}" in
+    files-with-key)
+        shift
+        files_with_key "$@"
+        exit
+        ;;
+    logs-with-key)
+        shift
+        logs_with_key "$@"
+        exit
+        ;;
+esac
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 build="$root/.build"
@@ -49,15 +95,6 @@ build_app() {
     ! grep -qF "$fake_prefix" "$log" || fail "the build output shows the key ($*)"
 }
 
-new_logs_show_key() {
-    find "$build/DerivedData/Logs" -newer "$work/start" -name '*.xcactivitylog' 2> /dev/null | while read -r activity_log; do
-        if gzip -dc "$activity_log" | grep -qF "$fake_prefix"; then
-            echo "$activity_log"
-        fi
-    done
-    find "$build" -newer "$work/start" -name '*.xcresult' -prune -exec grep -rlF "$fake_prefix" {} + 2> /dev/null || true
-}
-
 rm -rf "$work"
 mkdir -p "$work"
 touch "$work/start"
@@ -77,7 +114,7 @@ build_app normal LIVE= PRIM_SECRETS="$work/Secrets.xcconfig"
 cache_leaks=$(files_with_key "$shared_cache" "$work/start" "$fake_prefix") || fail "could not search the whole shared build cache $shared_cache"
 [ -z "$cache_leaks" ] || fail "the shared build cache $shared_cache holds the key in: $cache_leaks"
 
-leaks=$(new_logs_show_key)
+leaks=$(logs_with_key "$build" "$work/start" "$fake_prefix") || fail "could not search all the new build logs and result bundles in $build"
 [ -z "$leaks" ] || fail "these build logs or result bundles show the key: $leaks"
 
 git -C "$root" check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore ios/Config/Secrets.xcconfig"

@@ -59,4 +59,55 @@ expect "a search that cannot read a new file fails" \
 expect "a search with no start file fails" \
     "$("$script" files-with-key "$cache" "$state/missing-start" "$key" 2> /dev/null && echo passed || echo failed)" "failed"
 
+build="$state/build"
+logs="$build/DerivedData/Logs/Build"
+bundle="$build/DerivedData/Logs/Test/Run.xcresult"
+
+logs_found() {
+    "$script" logs-with-key "$build" "$state/start" "$key" | sed "s|^$build/||" | sort | tr '\n' ' '
+}
+
+logs_search() {
+    "$script" logs-with-key "$1" "$2" "$key" > /dev/null 2>&1 && echo passed || echo failed
+}
+
+expect "a missing build folder reports nothing" "$(logs_search "$state/missing-build" "$state/start")" "passed"
+
+mkdir -p "$build"
+expect "a build folder with no logs yet reports nothing" "$(logs_search "$build" "$state/start")" "passed"
+
+mkdir -p "$logs" "$bundle/Data"
+printf 'build log\n' | gzip > "$logs/clean.xcactivitylog"
+printf 'result\n' > "$bundle/Data/clean"
+expect "new build logs and result bundles without the key are not reported" "$(logs_found)" ""
+
+printf 'build log %s\n' "$key" | gzip > "$logs/leak.xcactivitylog"
+printf 'result %s\n' "$key" > "$bundle/Data/leak"
+expect "a new build log and a new result bundle with the key are reported" \
+    "$(logs_found)" "DerivedData/Logs/Build/leak.xcactivitylog DerivedData/Logs/Test/Run.xcresult/Data/leak "
+
+rm "$logs/leak.xcactivitylog" "$bundle/Data/leak"
+printf 'not gzip %s\n' "$key" > "$logs/broken.xcactivitylog"
+expect "a build log that cannot be decompressed fails the search" "$(logs_search "$build" "$state/start")" "failed"
+rm "$logs/broken.xcactivitylog"
+
+printf 'build log\n' | gzip > "$logs/locked.xcactivitylog"
+chmod 000 "$logs/locked.xcactivitylog"
+expect "a build log that cannot be read fails the search" "$(logs_search "$build" "$state/start")" "failed"
+rm -f "$logs/locked.xcactivitylog"
+
+printf 'result\n' > "$bundle/Data/locked"
+chmod 000 "$bundle/Data/locked"
+expect "a result bundle file that cannot be read fails the search" "$(logs_search "$build" "$state/start")" "failed"
+rm -f "$bundle/Data/locked"
+
+mkdir -p "$logs/locked-folder"
+chmod 000 "$logs/locked-folder"
+expect "a logs folder that cannot be read fails the search" "$(logs_search "$build" "$state/start")" "failed"
+chmod 755 "$logs/locked-folder"
+
+expect "the search passes again once everything can be read" "$(logs_search "$build" "$state/start")" "passed"
+
+expect "a log search with no start file fails" "$(logs_search "$build" "$state/missing-start")" "failed"
+
 [ "$failures" -eq 0 ]
