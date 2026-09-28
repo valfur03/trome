@@ -28,7 +28,7 @@ class E2ETestCase: XCTestCase {
 
     @MainActor
     func makeApp() -> XCUIApplication {
-        XCUIDevice.shared.location = XCUILocation(location: Self.farFromAnyStation)
+        moveThePhone(to: Self.farFromAnyStation)
         let app = XCUIApplication()
         app.launchArguments.append("--reset-location-source")
         terminateWithItsRelaunches(app)
@@ -188,38 +188,43 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
-    func leaveEveryStation(in app: XCUIApplication) {
-        tap(app.buttons["testingTools"])
-        tap(app.buttons["farFromAnyStation"])
-        XCTAssertTrue(waitFor(app.staticTexts["48.42000, 2.63000"]))
-        goBack(in: app)
-        stopLiveActivityIfShowing(in: app)
+    func openNotificationCenter(over app: XCUIApplication, expectingALiveActivity: Bool = true) {
+        let top = app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.001))
+        let middle = app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.7))
+        top.press(forDuration: 0.05, thenDragTo: middle, withVelocity: .fast, thenHoldForDuration: 0)
+        let notificationCenter = springboard.otherElements["lockscreen-date-view"]
+        XCTAssertTrue(waitFor(notificationCenter), "The Notification Center did not open")
+        guard expectingALiveActivity else { return }
+        let allowLiveActivities = springboard.buttons["Allow"]
+        XCTAssertNotNil(waitForFirst(of: [allowLiveActivities, liveActivity]), "No Live Activity showed")
+        if allowLiveActivities.exists {
+            allowLiveActivities.tap()
+        }
     }
 
     @MainActor
-    func useFakePosition(atStation name: String, in app: XCUIApplication) {
-        tap(app.buttons["testingTools"])
-        tap(app.buttons["pickStation"])
-        let searchField = app.searchFields.firstMatch
-        tap(searchField)
-        searchField.typeText(name)
-        tap(app.buttons["station-\(name)"])
-        XCTAssertTrue(waitFor(app.staticTexts["Fake: \(name)"]))
-        goBack(in: app)
+    func closeNotificationCenter() {
+        XCUIDevice.shared.press(.home)
     }
 
     @MainActor
-    func goBack(in app: XCUIApplication) {
-        tap(app.navigationBars.buttons.firstMatch)
-        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
+    var liveActivity: XCUIElement {
+        springboard.otherElements["activity-content-view"]
     }
 
     @MainActor
-    func waitForLabel(_ label: String, of element: XCUIElement) {
-        guard element.label != label else { return }
-        let predicate = NSPredicate(format: "label == %@", label)
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: UITestTimeout.element), .completed)
+    func liveActivityStation(_ name: String) -> XCUIElement {
+        liveActivity.staticTexts[name]
+    }
+
+    @MainActor
+    func liveActivityElement(containing text: String) -> XCUIElement {
+        liveActivity.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+    }
+
+    @MainActor
+    func moveThePhone(to location: CLLocation) {
+        XCUIDevice.shared.location = XCUILocation(location: location)
     }
 
     @MainActor

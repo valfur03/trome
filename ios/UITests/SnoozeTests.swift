@@ -1,38 +1,42 @@
+// Seam: the widget process draws our ContentState (the station, both directions of a line, a branch,
+// the lines of a hub) on the real Live Activity, and iOS runs the intents of its buttons in the app
+// ("Show the next lines", snooze), whose effect the rider sees on the Live Activity and in the app.
+// Why not cheaper: unit tests check the ContentState and the intents' rules; only the widget process
+// draws the views, and only iOS runs a button's intent in the app.
+// Fake: `--fake-trains` replaces the PRIM train data (a daily quota, data that changes). The real path
+// stays covered by the unit tests of the PRIM client (recorded answers) and by QA with LIVE=1.
+import CoreLocation
 import XCTest
 
 final class SnoozeTests: E2ETestCase {
+    private static let lamarckCaulaincourt = CLLocation(latitude: 48.88969, longitude: 2.338524)
+    private static let gareDeLEst = CLLocation(latitude: 48.876242, longitude: 2.358023)
+
     @MainActor
     func testUserSnoozesTheLiveActivityFromTheLockScreenThenCancelsTheSnooze() {
         let app = makeApp()
         app.launchArguments.append("--fake-trains")
         launch(app)
         turnOnTheAutomaticMode(in: app)
-        leaveEveryStation(in: app)
-        useFakePosition(atStation: "Abbesses", in: app)
-        let lockScreenStation = app.staticTexts["liveActivityStationName"]
-        XCTAssertTrue(waitFor(lockScreenStation))
+        stopLiveActivityIfShowing(in: app)
+        moveThePhone(to: Self.lamarckCaulaincourt)
+        XCTAssertTrue(waitFor(app.buttons["stopLiveActivity"]))
 
-        XCUIDevice.shared.press(.home)
-        openNotificationCenter()
-        XCTAssertTrue(waitFor(springboard.staticTexts["Abbesses"]))
-        XCTAssertTrue(waitFor(springboard.staticTexts["Mairie d'Aubervilliers"]))
-        XCTAssertTrue(waitFor(springboard.staticTexts["Mairie d'Issy"]))
-        closeNotificationCenter()
+        openNotificationCenter(over: app)
+        XCTAssertTrue(waitFor(liveActivityStation("Lamarck - Caulaincourt")))
+        XCTAssertTrue(waitFor(liveActivityElement(containing: "Mairie d'Aubervilliers")))
+        XCTAssertTrue(waitFor(liveActivityElement(containing: "Mairie d'Issy")))
 
-        app.activate()
-        useFakePosition(atStation: "Gare de l'Est", in: app)
-        waitForLabel("On the lock screen: Gare de l'Est", of: lockScreenStation)
-        XCUIDevice.shared.press(.home)
-        openNotificationCenter(answeringTheLiveActivitiesPrompt: false)
-        XCTAssertTrue(waitFor(springboard.staticTexts["Gare de l'Est"]))
+        moveThePhone(to: Self.gareDeLEst)
+        XCTAssertTrue(waitFor(liveActivityStation("Gare de l'Est")))
         XCTAssertTrue(waitFor(liveActivityElement(containing: "Porte de Clignancourt")))
         XCTAssertFalse(liveActivityElement(containing: "Villejuif - Louis Aragon").exists)
-        tap(springboard.buttons["Show the next lines"])
+        tap(liveActivity.buttons["Show the next lines"])
         XCTAssertTrue(waitFor(liveActivityElement(containing: "Villejuif - Louis Aragon")))
         XCTAssertTrue(liveActivityElement(containing: "Mairie d'Ivry").exists)
         XCTAssertTrue(waitForNo(liveActivityElement(containing: "Porte de Clignancourt")))
-        tap(springboard.buttons["Snooze for 30 minutes"])
-        XCTAssertTrue(waitForNo(springboard.buttons["Snooze for 30 minutes"]))
+        tap(liveActivity.buttons["Snooze for 30 minutes"])
+        XCTAssertTrue(waitForNo(liveActivity))
         closeNotificationCenter()
 
         app.activate()
@@ -45,7 +49,6 @@ final class SnoozeTests: E2ETestCase {
         tap(app.buttons["cancelSnooze"])
         XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))
         XCTAssertFalse(snoozeState.exists)
-        leaveEveryStation(in: app)
     }
 
     @MainActor
@@ -60,27 +63,5 @@ final class SnoozeTests: E2ETestCase {
             toggle.switches.firstMatch.tap()
         }
         XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))
-    }
-
-    @MainActor
-    private func openNotificationCenter(answeringTheLiveActivitiesPrompt: Bool = true) {
-        let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.001))
-        let middle = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.7))
-        top.press(forDuration: 0.1, thenDragTo: middle)
-        guard answeringTheLiveActivitiesPrompt else { return }
-        let allowLiveActivities = springboard.buttons["Allow"]
-        if allowLiveActivities.waitForExistence(timeout: 5) {
-            allowLiveActivities.tap()
-        }
-    }
-
-    @MainActor
-    private func liveActivityElement(containing text: String) -> XCUIElement {
-        springboard.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
-    }
-
-    @MainActor
-    private func closeNotificationCenter() {
-        XCUIDevice.shared.press(.home)
     }
 }
