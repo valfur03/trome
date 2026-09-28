@@ -12,9 +12,7 @@ public struct DepartureBoard: Hashable, Sendable {
     public let lines: [TransitLine]
 
     public init(departures: [Departure], stations: [Station], now: Date) {
-        let headerName = stations.first?.name
-        let headerStationsFirst = stations.filter { $0.name == headerName } + stations.filter { $0.name != headerName }
-        let lines = headerStationsFirst.flatMap { $0.lines.sorted(by: TransitLine.stationListOrder) }
+        let lines = Self.lines(of: stations)
         self.stations = stations
         self.lines = lines
         let farthestTime = now.addingTimeInterval(Self.farthestTimeSeconds)
@@ -75,6 +73,12 @@ public struct DepartureBoard: Hashable, Sendable {
 
     func otherStationName(serving line: TransitLine) -> String? {
         Self.otherStationName(serving: line, in: stations)
+    }
+
+    private static func lines(of stations: [Station]) -> [TransitLine] {
+        let headerName = stations.first?.name
+        let headerStationsFirst = stations.filter { $0.name == headerName } + stations.filter { $0.name != headerName }
+        return headerStationsFirst.flatMap { $0.lines.sorted(by: TransitLine.stationListOrder) }
     }
 
     private static func station(serving line: TransitLine, in stations: [Station]) -> Station? {
