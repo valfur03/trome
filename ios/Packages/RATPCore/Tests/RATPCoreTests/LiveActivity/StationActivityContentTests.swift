@@ -267,6 +267,7 @@ struct StationActivityContentTests {
                     line: line,
                     destination: "A very long destination name number \(index % 2)",
                     time: time(inMinutes: 0.5 + Double(index)),
+                    arrivalTime: time(inMinutes: Double(index)),
                     isAtStop: index == 0
                 )
             }
