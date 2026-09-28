@@ -75,6 +75,24 @@ struct DepartureBoardTests {
         #expect(board.groups.map(\.stationName) == [nil, "Châtelet - Les Halles"])
     }
 
+    @Test func namesTheStationOfTheHubForADestinationWhoseTimesAreAllMoreThanAnHourAway() {
+        let board = DepartureBoard(
+            departures: [Departure(line: rerA, destination: "Boissy", time: at(minutes: 70))],
+            stations: [station("Châtelet", line1), station("Châtelet - Les Halles", rerA)],
+            now: now
+        )
+
+        #expect(board.groups == [
+            DepartureGroup(
+                line: rerA,
+                destination: "Boissy",
+                times: [],
+                stationName: "Châtelet - Les Halles",
+                nextTrainIsOverAnHourAway: true
+            )
+        ])
+    }
+
     @Test func namesNoStationForALineOfAnotherStationWithTheSameName() {
         let board = DepartureBoard(
             departures: [],
