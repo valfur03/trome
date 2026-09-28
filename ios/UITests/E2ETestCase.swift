@@ -3,6 +3,8 @@ import XCTest
 
 class E2ETestCase: XCTestCase {
     static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
+    private static let notificationCenterIdentifier = "lockscreen-date-view"
+    private static let liveActivityIdentifier = "activity-content-view"
     private static let locationPromptAnswer = "Allow While Using App"
     private static let alwaysPromptAnswer = "Keep Only While Using"
     private static let permissionAnswers = [locationPromptAnswer, alwaysPromptAnswer, "Allow"]
@@ -192,11 +194,19 @@ class E2ETestCase: XCTestCase {
         let top = app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.001))
         let middle = app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.7))
         top.press(forDuration: 0.05, thenDragTo: middle, withVelocity: .fast, thenHoldForDuration: 0)
-        let notificationCenter = springboard.otherElements["lockscreen-date-view"]
-        XCTAssertTrue(waitFor(notificationCenter), "The Notification Center did not open")
+        let notificationCenter = springboard.otherElements[Self.notificationCenterIdentifier]
+        XCTAssertTrue(
+            waitFor(notificationCenter),
+            "The Notification Center did not open, or iOS renamed its SpringBoard element "
+                + "'\(Self.notificationCenterIdentifier)'"
+        )
         guard expectingALiveActivity else { return }
         let allowLiveActivities = springboard.buttons["Allow"]
-        XCTAssertNotNil(waitForFirst(of: [allowLiveActivities, liveActivity]), "No Live Activity showed")
+        XCTAssertNotNil(
+            waitForFirst(of: [allowLiveActivities, liveActivity]),
+            "No Live Activity showed in the Notification Center, or iOS renamed its SpringBoard element "
+                + "'\(Self.liveActivityIdentifier)'"
+        )
         if allowLiveActivities.exists {
             allowLiveActivities.tap()
         }
@@ -209,7 +219,7 @@ class E2ETestCase: XCTestCase {
 
     @MainActor
     var liveActivity: XCUIElement {
-        springboard.otherElements["activity-content-view"]
+        springboard.otherElements[Self.liveActivityIdentifier]
     }
 
     @MainActor
