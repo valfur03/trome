@@ -1,8 +1,8 @@
 import SwiftUI
 
-struct ServiceEndedText: View {
+struct NoTrainsText: View {
     var body: some View {
-        Text("Service ended")
+        Text("No trains")
             .font(.subheadline.bold())
             .foregroundStyle(.secondary)
             .lineLimit(1)

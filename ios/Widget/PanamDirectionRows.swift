@@ -45,7 +45,7 @@ private struct PanamRow: View {
                 .fixedSize(horizontal: fitsTheWholeDestination, vertical: false)
             Spacer(minLength: 6)
             if trains.isEmpty {
-                ServiceEndedText()
+                NoTrainsText()
                     .fixedSize()
             } else if !isStale {
                 HStack(spacing: 4) {

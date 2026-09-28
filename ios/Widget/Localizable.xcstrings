@@ -141,16 +141,6 @@
         }
       }
     },
-    "Service ended" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Service terminé"
-          }
-        }
-      }
-    },
     "Show the next lines" : {
       "localizations" : {
         "fr" : {

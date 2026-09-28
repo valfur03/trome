@@ -210,7 +210,7 @@ private struct TrainsSummary: View {
             case .lines(let page):
                 ForEach(page.lines, id: \.self) { line in
                     if line.hasNoTrain {
-                        NoTrainsText(line: line.line)
+                        NoTrainsText()
                     } else {
                         ForEach(line.directions, id: \.self) { direction in
                             LineDirectionRow(direction: direction, line: line.line, isStale: isStale, isCompact: isCompact)
@@ -241,7 +241,7 @@ private struct LineTrainsView: View {
                     ServingStationName(name: stationName)
                 }
                 if line.hasNoTrain {
-                    NoTrainsText(line: line.line)
+                    NoTrainsText()
                 } else {
                     ForEach(line.directions, id: \.self) { direction in
                         LineDirectionRow(direction: direction, line: line.line, isStale: isStale, isCompact: isCompact)
@@ -265,21 +265,6 @@ private struct LineDirectionRow: View {
             PanamDirectionRows(direction: direction, line: line, isStale: isStale)
         case .rer:
             RERDirectionRow(direction: direction, isStale: isStale)
-        }
-    }
-}
-
-private struct NoTrainsText: View {
-    let line: TransitLine
-
-    var body: some View {
-        switch line.mode {
-        case .metro:
-            ServiceEndedText()
-        case .rer:
-            Text("No trains")
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
         }
     }
 }
