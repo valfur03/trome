@@ -5,6 +5,7 @@ BUILD_DIR := .build
 DERIVED_DATA := $(BUILD_DIR)/DerivedData
 APP_PATH := $(DERIVED_DATA)/Build/Products/Debug-iphonesimulator/RATPActivity.app
 E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
+XCODEGEN_CACHE := $(BUILD_DIR)/xcodegen-cache
 E2E_TARGET := RATPActivityUITests
 E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := RATPActivityDocsScreenshots
@@ -58,11 +59,13 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 
-.PHONY: help setup generate project lint lint-fix build strings-check strings-sync test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
 	@echo "make generate            Create the Xcode project again (after a change in project.yml)"
+	@echo "make git-hooks           Turn on the git hooks: after a git pull or a checkout in the main folder, the Xcode project is created again"
+	@echo "make git-hooks-off       Turn off the git hooks"
 	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
 	@echo "make run LIVE=1          Same, with the real PRIM key of the main repo folder (QA only, see CLAUDE.md)"
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
@@ -95,10 +98,16 @@ setup:
 	@$(MAKE) generate
 
 generate:
-	xcodegen generate --quiet
+	xcodegen generate --quiet --cache-path $(XCODEGEN_CACHE)
 
 project:
-	@xcodegen generate --use-cache --quiet
+	@xcodegen generate --use-cache --quiet --cache-path $(XCODEGEN_CACHE)
+
+git-hooks:
+	@./scripts/git-hooks.sh on
+
+git-hooks-off:
+	@./scripts/git-hooks.sh off
 
 lint:
 	swiftlint lint --strict --quiet

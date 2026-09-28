@@ -1,4 +1,4 @@
-IOS_TARGETS := setup generate project lint lint-fix build strings-check strings-sync test test-scripts live-key-check recommended-settings-check run switch-language e2e stations simulator \
+IOS_TARGETS := setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync test test-scripts live-key-check recommended-settings-check run switch-language e2e stations simulator \
 	simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
 DOCS_TARGETS := docs docs-dev docs-stop docs-check docs-check-if-changed
 SUB_MAKE := $(MAKE) --no-print-directory

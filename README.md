@@ -18,7 +18,25 @@ make setup
 
 This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `ios/RATPActivity.xcodeproj`.
 
-The Xcode project is not in git. The file `ios/project.yml` describes it. It does not update itself when the code changes. So run `make generate` after each `git pull` (or when `main` moves), and after you change `ios/project.yml`. Then open Xcode. An old project lists files that no longer exist, and misses the new ones: the build fails with "Build input file cannot be found" or "Cannot find ... in scope". The `make` commands update the project by themselves.
+The Xcode project is not in git. The file `ios/project.yml` describes it. The `make` commands update the project by themselves, but the Run button of Xcode does not. An old project lists files that no longer exist, and misses the new ones: the build fails with "Build input file cannot be found" or "Cannot find ... in scope". To update the project by hand, run `make generate`. Do it also after you change `ios/project.yml`.
+
+### Update the Xcode project after each git pull
+
+Run this one time in the main folder:
+
+```sh
+make git-hooks
+```
+
+It turns on the git hooks of the repo (`ios/scripts/git-hooks/`): it sets `core.hooksPath` in the git config of your clone. After that, each `git pull`, `git checkout`, `git switch`, `git merge` or `git rebase` in the main folder creates the Xcode project again (`make project`). So `make merge` updates it too, when it moves `main` in the main folder. XcodeGen writes the project only when the code or `ios/project.yml` changed (its cache is in `ios/.build/`). When Xcode is open, it loads the new project by itself.
+
+- The hooks change only the Xcode project and the cache in `ios/.build/`. Git ignores both, so the main folder stays clean.
+- The hooks do nothing in the other folders of the repo (the worktrees of the agents). Their `make` commands create the project before each build.
+- A hook never stops the git command. When XcodeGen fails, the hook prints a warning: run `make generate` before you build in Xcode.
+- `make git-hooks` refuses to start when your clone already uses other git hooks (in `.git/hooks/` or another `core.hooksPath`): git runs only one hooks folder.
+- `git reset --hard` runs no hook. After it, run `make generate`.
+
+To turn the hooks off, run `make git-hooks-off`. Then run `make generate` after each `git pull`, before you build in Xcode.
 
 ## Everyday commands
 
