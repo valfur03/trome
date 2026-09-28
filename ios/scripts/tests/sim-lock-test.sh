@@ -325,6 +325,63 @@ rm -rf "$RATP_SIM_LOCK"
 finish_background
 expect "that job runs once the lock is free" "$(ran not-nested)" "ran"
 
+mkdir -p "$state/other/ios" "$state/slow-bin"
+cp -R "$scripts" "$state/other/ios/scripts"
+other_scripts="$state/other/ios/scripts"
+cat > "$state/slow-bin/cat" << 'EOF'
+#!/bin/sh
+case "${1:-}" in
+    */udid)
+        if mkdir "$FAKE_SIM_STATE/slow-read" 2> /dev/null; then
+            sleep 4
+        fi
+        ;;
+esac
+exec /bin/cat "$@"
+EOF
+chmod +x "$state/slow-bin/cat"
+echo com.example.RATPActivity > "$state/apps.$default"
+"$other_scripts/sim-lock.sh" open sh -c '"$1" boot > /dev/null && sleep 2' sh "$other_scripts/simulator.sh" &
+other_open=$!
+tries=0
+until [ -e "$RATP_SIM_LOCK/pid" ] || [ "$tries" -ge 20 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+in_background env PATH="$state/slow-bin:$PATH" "$scripts/sim-lock.sh" job sh -c '"$1" reset > /dev/null && echo ran > "$FAKE_SIM_STATE/after-session"' sh "$scripts/simulator.sh"
+wait "$other_open"
+tries=0
+until grep -q "Waiting for the Simulator lock" "$state/background.log" || [ -e "$state/after-session" ] || [ "$tries" -ge 20 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+expect "a job of another folder that checks the lock while make run ends keeps waiting" "$(ran after-session)" "waiting"
+expect "make run keeps its lock after it ends, while a job of another folder waits" "$(cat "$RATP_SIM_LOCK/worktree") $(cat "$RATP_SIM_LOCK/udid")" "$state/other $default"
+expect "the waiting job says that make run of the other folder keeps the Simulator" "$(grep -c "the open Simulator of $state/other" "$state/background.log" || true)" "1"
+watch_in_background
+sleep 3
+stop_watcher
+expect "the watcher of another folder keeps the lock of make run" "$(cat "$RATP_SIM_LOCK/worktree" 2> /dev/null || true)" "$state/other"
+expect "the waiting job does not remove the app of make run of the other folder" "$(cat "$state/apps.$default")" "com.example.RATPActivity"
+"$other_scripts/sim-lock.sh" free
+finish_background
+expect "the waiting job runs once the other folder runs make simulator-shutdown" "$(ran after-session)" "ran"
+
+"$scripts/sim-lock.sh" job sleep 4 &
+this_job=$!
+tries=0
+until [ -e "$RATP_SIM_LOCK/pid" ] || [ "$tries" -ge 20 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+in_background "$other_scripts/sim-lock.sh" open sh -c 'echo ran > "$FAKE_SIM_STATE/open-after-job"'
+expect "make run in another folder waits while a job holds the lock" "$(ran open-after-job)" "waiting"
+wait "$this_job"
+finish_background
+expect "make run in the other folder runs once the job ends, and keeps the lock" "$(ran open-after-job) $(cat "$RATP_SIM_LOCK/worktree")" "ran $state/other"
+"$other_scripts/sim-lock.sh" free
+expect "make simulator-shutdown in the other folder frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
+
 export RATP_SIM_SLOTS=2
 hold "$RATP_SIM_LOCK"
 echo com.example.RATPActivity > "$state/apps.$default"
