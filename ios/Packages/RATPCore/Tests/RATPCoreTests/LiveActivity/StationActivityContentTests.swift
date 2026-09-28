@@ -3,25 +3,25 @@ import Testing
 @testable import RATPCore
 
 struct StationActivityContentTests {
-    private typealias ContentState = StationActivityAttributes.ContentState
+    typealias ContentState = StationActivityAttributes.ContentState
 
-    private let now = Date(timeIntervalSince1970: 1_000_000)
-    private let line12 = TransitLine(mode: .metro, name: "12", stopIds: ["IDFM:1", "IDFM:2"])
-    private let line2 = TransitLine(mode: .metro, name: "2", stopIds: ["IDFM:3", "IDFM:4"])
-    private let southQuay = "STIF:StopPoint:Q:1:"
-    private let northQuay = "STIF:StopPoint:Q:2:"
-    private var station: Station {
+    let now = Date(timeIntervalSince1970: 1_000_000)
+    let line12 = TransitLine(mode: .metro, name: "12", stopIds: ["IDFM:1", "IDFM:2"])
+    let line2 = TransitLine(mode: .metro, name: "2", stopIds: ["IDFM:3", "IDFM:4"])
+    let southQuay = "STIF:StopPoint:Q:1:"
+    let northQuay = "STIF:StopPoint:Q:2:"
+    var station: Station {
         Station(id: "pigalle", name: "Pigalle", coordinate: Coordinate(48.8822, 2.3377), lines: [line12, line2])
     }
     private var abbesses: Station {
         Station(id: "abbesses", name: "Abbesses", coordinate: Coordinate(48.8844, 2.3384), lines: [line12])
     }
 
-    private func time(inMinutes minutes: Double) -> Date {
+    func time(inMinutes minutes: Double) -> Date {
         now.addingTimeInterval(minutes * 60)
     }
 
-    private func train(
+    func train(
         _ line: TransitLine,
         to destination: String,
         inMinutes minutes: Double,
@@ -30,11 +30,11 @@ struct StationActivityContentTests {
         Departure(line: line, destination: destination, time: time(inMinutes: minutes), quayRef: quay)
     }
 
-    private func board(_ departures: [Departure], at stations: [Station]? = nil) -> NextTrainsState {
+    func board(_ departures: [Departure], at stations: [Station]? = nil) -> NextTrainsState {
         .departures(DepartureBoard(departures: departures, stations: stations ?? [station], now: now), updatedAt: now)
     }
 
-    private func lines(of content: ContentState) -> [LineTrains] {
+    func lines(of content: ContentState) -> [LineTrains] {
         content.trains.linesPage?.lines ?? []
     }
 
@@ -237,57 +237,6 @@ struct StationActivityContentTests {
             LineTrains(line: TransitLine(mode: .metro, name: "2"), directions: []),
             LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [])
         ])
-    }
-
-    @Test func dropsTimesMoreThanAnHourAwayAndSaysTheNextTrainIsOverAnHourAwayForADirectionLeftEmpty() {
-        let trains = board([
-            train(line12, to: "Mairie d'Issy", inMinutes: 154, from: southQuay),
-            train(line12, to: "Mairie d'Issy", inMinutes: 8, from: southQuay),
-            train(line12, to: "Mairie d'Aubervilliers", inMinutes: 75, from: northQuay)
-        ])
-
-        let content = ContentState(station: station, trains: trains, now: now)
-
-        #expect(lines(of: content)[1].directions == [
-            LineDirection(label: "Mairie d'Aubervilliers", times: [], nextTrainIsOverAnHourAway: true),
-            LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 8)])
-        ])
-        #expect(content.staleDate == time(inMinutes: 8))
-    }
-
-    @Test func saysTheNextTrainIsOverAnHourAwayAtTheEndOfAnHourlyLineRightAfterATrainLeaves() {
-        let rerC = TransitLine(mode: .rer, name: "C", stopIds: ["IDFM:monomodalStopPlace:47115"])
-        let saintMartin = Station(
-            id: "IDFM:monomodalStopPlace:47115",
-            name: "Saint-Martin d'Étampes",
-            coordinate: Coordinate(48.427488, 2.145259),
-            lines: [rerC]
-        )
-        let trains = board([
-            train(rerC, to: "Saint-Martin d'Étampes", inMinutes: -2, from: nil),
-            train(rerC, to: "Versailles Château Rive Gauche", inMinutes: -0.75, from: nil),
-            train(rerC, to: "Versailles Château Rive Gauche", inMinutes: 63, from: nil)
-        ], at: [saintMartin])
-
-        let content = ContentState(station: saintMartin, trains: trains, now: now)
-
-        #expect(lines(of: content).map(\.directions.count) == [1])
-        #expect(lines(of: content)[0].directions[0].nextTrainIsOverAnHourAway)
-        #expect(lines(of: content)[0].directions[0].times.isEmpty)
-        #expect(content.trains.linesPage?.nextTrainIsOverAnHourAway == true)
-        #expect(content.staleDate == time(inMinutes: 3))
-    }
-
-    @Test func becomesStaleWhenTheFirstTrainMoreThanAnHourAwayComesWithinTheHour() {
-        let trains = board([
-            train(line12, to: "Mairie d'Issy", inMinutes: 75, from: southQuay),
-            train(line2, to: "Nation", inMinutes: 64, from: "STIF:StopPoint:Q:3:")
-        ])
-
-        let content = ContentState(station: station, trains: trains, now: now)
-
-        #expect(content.trains.linesPage?.nextTrainIsOverAnHourAway == true)
-        #expect(content.staleDate == time(inMinutes: 4))
     }
 
     @Test func keepsTheColorOfEachLine() {
