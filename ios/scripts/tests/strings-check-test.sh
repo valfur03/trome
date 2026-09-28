@@ -79,6 +79,20 @@ expect "the check puts back the catalog that Xcode removed" "$(content "$folder/
 expect "the check ignores the build folder" "$(sync check sh -c 'printf other > .build/Localizations/Localizable.xcstrings')" "passes"
 expect "the check fails when the Xcode command fails" "$(sync check sh -c 'printf half > App/Localizable.xcstrings; exit 1')" "fails"
 expect "a failed Xcode command leaves the catalog as it was" "$(content "$folder/App/Localizable.xcstrings")" "committed"
+stop_check() {
+    rm -f "$folder/.build/started"
+    (cd "$folder" && exec "$scripts/strings-sync.sh" check sh -c \
+        'printf synced > App/Localizable.xcstrings; printf new > App/InfoPlist.xcstrings; touch .build/started; sleep 1') \
+        > /dev/null 2>&1 &
+    check_pid=$!
+    while [ ! -f "$folder/.build/started" ]; do sleep 0.1; done
+    kill -TERM "$check_pid"
+    wait "$check_pid" && echo "passes" || echo "fails"
+}
+
+expect "a stopped check fails" "$(stop_check)" "fails"
+expect "a stopped check puts the catalog back as it was" "$(content "$folder/App/Localizable.xcstrings")" "committed"
+expect "a stopped check removes the catalog that Xcode added" "$(content "$folder/App/InfoPlist.xcstrings")" "missing"
 expect "the sync passes when Xcode changes a catalog" "$(sync sync sh -c 'printf synced > App/Localizable.xcstrings')" "passes"
 expect "the sync keeps the change of Xcode" "$(content "$folder/App/Localizable.xcstrings")" "synced"
 expect "the sync fails when the Xcode command fails" "$(sync sync false)" "fails"

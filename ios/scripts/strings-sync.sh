@@ -19,7 +19,26 @@ catalogs() {
 }
 
 snapshot=$(mktemp -d)
-trap 'rm -rf "$snapshot"' EXIT
+restore=no
+
+put_back() {
+    catalogs | while IFS= read -r catalog; do
+        grep -qxF "$catalog" "$snapshot/before.list" || rm -f "$catalog"
+    done
+    cp -R "$snapshot/files/." .
+}
+
+finish() {
+    if [ "$restore" = yes ]; then
+        put_back
+    fi
+    rm -rf "$snapshot"
+}
+
+trap finish EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 mkdir -p "$snapshot/files"
 catalogs > "$snapshot/before.list"
@@ -27,11 +46,11 @@ while IFS= read -r catalog; do
     mkdir -p "$snapshot/files/$(dirname "$catalog")"
     cp "$catalog" "$snapshot/files/$catalog"
 done < "$snapshot/before.list"
+[ "$mode" = sync ] || restore=yes
 
 if ! "$@" > "$snapshot/command.log" 2>&1; then
     cat "$snapshot/command.log" >&2
     echo "strings-sync: the Xcode command failed" >&2
-    [ "$mode" = sync ] || cp -R "$snapshot/files/." .
     exit 1
 fi
 
@@ -40,7 +59,7 @@ changed=""
 while IFS= read -r catalog; do
     if [ ! -f "$snapshot/files/$catalog" ]; then
         changed="$changed ${catalog#./}"
-        [ "$mode" = sync ] || { cat "$catalog"; rm "$catalog"; }
+        [ "$mode" = sync ] || cat "$catalog"
     elif ! cmp -s "$snapshot/files/$catalog" "$catalog"; then
         changed="$changed ${catalog#./}"
         [ "$mode" = sync ] || { diff -u "$snapshot/files/$catalog" "$catalog" || true; }
@@ -59,7 +78,8 @@ if [ "$mode" = sync ]; then
     exit 0
 fi
 
-cp -R "$snapshot/files/." .
+put_back
+restore=no
 if [ -n "$changed" ]; then
     echo "strings-check: FAILED: a build in Xcode would change:$changed (see the diff above)." >&2
     echo "Run make strings-sync: Xcode then updates the String Catalogs. Check the change and commit it." >&2
