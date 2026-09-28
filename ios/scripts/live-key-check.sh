@@ -2,13 +2,27 @@
 set -eu
 
 files_with_key() {
-    find -H "$1" -type f -cnewer "$2" -exec grep -lF "$3" {} + 2> /dev/null || true
+    [ -e "$1" ] || return 0
+    find -H "$1" -type f -cnewer "$2" -exec sh -c '
+        key=$1
+        shift
+        status=0
+        for file do
+            if grep -qsF -- "$key" "$file"; then
+                echo "$file"
+            elif [ $? -gt 1 ] && [ -e "$file" ]; then
+                echo "live-key-check: cannot read $file" >&2
+                status=1
+            fi
+        done
+        exit "$status"
+    ' sh "$3" {} +
 }
 
 if [ "${1:-}" = "files-with-key" ]; then
     shift
     files_with_key "$@"
-    exit 0
+    exit
 fi
 
 root=$(cd "$(dirname "$0")/.." && pwd)
@@ -60,7 +74,7 @@ grep -qF "$fake" "$app_plist" || fail "after a change of the key file, the LIVE=
 build_app normal LIVE= PRIM_SECRETS="$work/Secrets.xcconfig"
 ! grep -qF "$fake_prefix" "$app_plist" || fail "the build without LIVE=1 kept the key in the app"
 
-cache_leaks=$(files_with_key "$shared_cache" "$work/start" "$fake_prefix")
+cache_leaks=$(files_with_key "$shared_cache" "$work/start" "$fake_prefix") || fail "could not search the whole shared build cache $shared_cache"
 [ -z "$cache_leaks" ] || fail "the shared build cache $shared_cache holds the key in: $cache_leaks"
 
 leaks=$(new_logs_show_key)

@@ -50,4 +50,13 @@ expect "a cache folder that is a symbolic link is searched" \
 expect "a missing cache folder reports nothing" \
     "$("$script" files-with-key "$state/missing" "$state/start" "$key")" ""
 
+mkdir -p "$state/unreadable-cache"
+printf 'module %s\n' "$key" > "$state/unreadable-cache/locked"
+chmod 000 "$state/unreadable-cache/locked"
+expect "a search that cannot read a new file fails" \
+    "$("$script" files-with-key "$state/unreadable-cache" "$state/start" "$key" 2> /dev/null && echo passed || echo failed)" "failed"
+
+expect "a search with no start file fails" \
+    "$("$script" files-with-key "$cache" "$state/missing-start" "$key" 2> /dev/null && echo passed || echo failed)" "failed"
+
 [ "$failures" -eq 0 ]
