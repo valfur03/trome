@@ -9,8 +9,6 @@ struct NextTrainsSection: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("Next trains")
-                .font(.headline)
             if let station = currentStation.station {
                 Text(station.name)
                     .font(.title2.bold())
