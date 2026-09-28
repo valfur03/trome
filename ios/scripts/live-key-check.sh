@@ -1,6 +1,16 @@
 #!/bin/sh
 set -eu
 
+files_with_key() {
+    find "$1" -type f -cnewer "$2" -exec grep -lF "$3" {} + 2> /dev/null || true
+}
+
+if [ "${1:-}" = "files-with-key" ]; then
+    shift
+    files_with_key "$@"
+    exit 0
+fi
+
 root=$(cd "$(dirname "$0")/.." && pwd)
 build="$root/.build"
 work="$build/live-key-check"
@@ -46,10 +56,12 @@ printf 'PRIM_API_KEY = %s\n' "$fake" > "$work/Secrets.xcconfig"
 build_app live LIVE=1 PRIM_SECRETS="$work/Secrets.xcconfig"
 grep -qF "$fake" "$app_plist" || fail "after a change of the key file, the LIVE=1 build did not put the new key in the app"
 ! grep -qF "$old_fake" "$app_plist" || fail "after a change of the key file, the LIVE=1 build kept the old key in the app"
-! grep -rqF "$fake_prefix" "$shared_cache" 2> /dev/null || fail "the shared build cache $shared_cache holds the key"
 
 build_app normal LIVE= PRIM_SECRETS="$work/Secrets.xcconfig"
 ! grep -qF "$fake_prefix" "$app_plist" || fail "the build without LIVE=1 kept the key in the app"
+
+cache_leaks=$(files_with_key "$shared_cache" "$work/start" "$fake_prefix")
+[ -z "$cache_leaks" ] || fail "the shared build cache $shared_cache holds the key in: $cache_leaks"
 
 leaks=$(new_logs_show_key)
 [ -z "$leaks" ] || fail "these build logs or result bundles show the key: $leaks"
