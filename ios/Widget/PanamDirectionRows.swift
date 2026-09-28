@@ -7,7 +7,7 @@ struct PanamDirectionRows: View {
     let isStale: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(direction.trainsByDestination, id: \.self) { branch in
                 PanamRow(destination: branch.destination, trains: branch.trains, line: line, isStale: isStale)
             }
@@ -59,15 +59,6 @@ private struct PanamRow: View {
     }
 }
 
-struct ServiceEndedText: View {
-    var body: some View {
-        Text("Service ended")
-            .font(.subheadline.bold())
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-    }
-}
-
 private struct PanamWait: View {
     static let amber = Color(red: 1, green: 190.0 / 255, blue: 0)
 
@@ -88,7 +79,6 @@ private struct PanamWait: View {
             .lineLimit(1)
             .foregroundStyle(Self.amber.opacity(isNext ? 1 : 0.8))
             .padding(.horizontal, 6)
-            .padding(.vertical, 2)
             .background(.black, in: RoundedRectangle(cornerRadius: 5))
     }
 
