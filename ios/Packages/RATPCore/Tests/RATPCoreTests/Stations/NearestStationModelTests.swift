@@ -34,15 +34,21 @@ struct NearestStationModelTests {
     private let nearNation = Coordinate(48.8490, 2.3960)
     private let farFromNation = Coordinate(48.9500, 2.3960)
 
+    private static let neverTimesOut: @Sendable (Duration) async throws -> Void = { _ in
+        try await Task.sleep(for: .seconds(3_600))
+    }
+    private static let timesOutAtOnce: @Sendable (Duration) async throws -> Void = { _ in }
+
     private func makeModel(
         _ permission: MockLocationPermission,
-        locationService: LocationService? = nil
+        locationService: LocationService? = nil,
+        sleep: @escaping @Sendable (Duration) async throws -> Void = neverTimesOut
     ) -> NearestStationModel {
         NearestStationModel(
             permission: permission,
             locationService: locationService ?? LocationService(realProvider: gps, sourceStore: nil),
             catalog: StationCatalog(stations: [nation]),
-            positionTimeout: .milliseconds(50)
+            sleep: sleep
         )
     }
 
@@ -118,7 +124,7 @@ struct NearestStationModelTests {
     }
 
     @Test func reportsWhenThePositionIsUnavailable() async {
-        let model = makeModel(MockLocationPermission(authorization: .authorized))
+        let model = makeModel(MockLocationPermission(authorization: .authorized), sleep: Self.timesOutAtOnce)
 
         await model.refresh()
         #expect(model.state == .locating)
@@ -170,7 +176,11 @@ struct NearestStationModelTests {
             sourceStore: LocationSourceStore(storage: InMemoryKeyValueStore())
         )
         locationService.use(.fake(FakePosition(name: "Near Nation", coordinate: nearNation)))
-        let model = makeModel(MockLocationPermission(authorization: .authorized), locationService: locationService)
+        let model = makeModel(
+            MockLocationPermission(authorization: .authorized),
+            locationService: locationService,
+            sleep: Self.timesOutAtOnce
+        )
         await model.refresh()
         await waitForState(foundNation(from: nearNation), in: model)
 
@@ -213,7 +223,7 @@ struct NearestStationModelTests {
         let undecided = makeModel(
             MockLocationPermission(authorization: .notDetermined, answerToRequest: .notDetermined)
         )
-        let unavailable = makeModel(MockLocationPermission(authorization: .authorized))
+        let unavailable = makeModel(MockLocationPermission(authorization: .authorized), sleep: Self.timesOutAtOnce)
 
         #expect(await denied.nearestStationNow() == .failure(.permissionDenied))
         #expect(await undecided.nearestStationNow() == .failure(.permissionUndecided))

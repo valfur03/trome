@@ -27,6 +27,7 @@ public final class NearestStationModel {
     private let locationService: LocationService
     private let catalog: StationCatalog
     private let positionTimeout: Duration
+    private let sleep: @Sendable (Duration) async throws -> Void
     private var isRefreshing = false
     private var isFollowingPosition = false
     private var positionTimeoutTask: Task<Void, Never>?
@@ -35,12 +36,14 @@ public final class NearestStationModel {
         permission: any LocationPermission,
         locationService: LocationService,
         catalog: StationCatalog,
-        positionTimeout: Duration = .seconds(20)
+        positionTimeout: Duration = .seconds(20),
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.permission = permission
         self.locationService = locationService
         self.catalog = catalog
         self.positionTimeout = positionTimeout
+        self.sleep = sleep
     }
 
     public func refresh() async {
@@ -134,8 +137,8 @@ public final class NearestStationModel {
     private func waitForPosition() {
         state = .locating
         guard positionTimeoutTask == nil else { return }
-        positionTimeoutTask = Task { [weak self, positionTimeout] in
-            try? await Task.sleep(for: positionTimeout)
+        positionTimeoutTask = Task { [weak self, positionTimeout, sleep] in
+            try? await sleep(positionTimeout)
             guard !Task.isCancelled else { return }
             self?.positionDidTimeOut()
         }
