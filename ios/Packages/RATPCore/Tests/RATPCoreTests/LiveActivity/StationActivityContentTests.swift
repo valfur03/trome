@@ -168,6 +168,19 @@ struct StationActivityContentTests {
         ])
     }
 
+    @Test func showsTheLinesOfTheHeaderStationOnTheFirstPageOfAHub() throws {
+        let catalog = try StationCatalog.bundled()
+        let station = try #require(catalog.stations.first { $0.name == "Châtelet - Les Halles" })
+        let hub = catalog.hubStations(of: station)
+
+        let content = ContentState(station: station, trains: board([], at: hub), now: now)
+        let page = try #require(content.trains.linesPage)
+
+        #expect(page.allLines.map(\.name) == ["A", "B", "D", "4", "1", "7", "11", "14"])
+        #expect(!page.lines.isEmpty)
+        #expect(page.lines.allSatisfy { $0.line.mode == .rer && $0.stationName == nil })
+    }
+
     @Test func startsThePageAtTheAskedLine() {
         let trains = board([train(line2, to: "Nation", inMinutes: 2, from: "STIF:StopPoint:Q:3:")])
 

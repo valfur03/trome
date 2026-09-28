@@ -12,7 +12,9 @@ public struct DepartureBoard: Hashable, Sendable {
     public let lines: [TransitLine]
 
     public init(departures: [Departure], stations: [Station], now: Date) {
-        let lines = stations.flatMap(\.lines).sorted(by: TransitLine.stationListOrder)
+        let headerName = stations.first?.name
+        let headerStationsFirst = stations.filter { $0.name == headerName } + stations.filter { $0.name != headerName }
+        let lines = headerStationsFirst.flatMap { $0.lines.sorted(by: TransitLine.stationListOrder) }
         self.stations = stations
         self.lines = lines
         let farthestTime = now.addingTimeInterval(Self.farthestTimeSeconds)
