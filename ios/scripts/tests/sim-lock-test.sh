@@ -248,8 +248,10 @@ expect "a job shuts down a small Simulator left booted" "$(booted)" "RATP-Shared
 
 echo "RATP-Shared Shutdown" > "$state/device.$default"
 echo "RATP-Shared-Small Booted" > "$state/device.$small"
-FAKE_SHUTDOWN_FAILS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null 2>&1 || true
+no_shutdown=$(FAKE_SHUTDOWN_FAILS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset sh -c 'echo ran > "$FAKE_SIM_STATE/no-shutdown"' > /dev/null 2>&1 && echo passes || echo fails)
 expect "a job does not boot RATP-Shared when it cannot shut down the small Simulator" "$(booted)" "RATP-Shared-Small "
+expect "a job fails and does not run its command when it cannot shut down the small Simulator" "$no_shutdown $(cat "$state/no-shutdown" 2> /dev/null || true)" "fails "
+expect "a job that cannot shut down the small Simulator frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
 
 "$scripts/sim-lock.sh" job false > /dev/null 2>&1 || true
 expect "a failed job frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
