@@ -112,6 +112,10 @@ FAKE_XCODEGEN_FAIL=1 git -C "$repo" checkout -q main 2> "$state/fail.err" || sta
 expect "a failing xcodegen does not fail the checkout" "$status" "0"
 expect "a failing xcodegen prints what to do" "$(grep -c "Run 'make generate' before you build in Xcode" "$state/fail.err")" "1"
 
+git -C "$repo" checkout -q feature
+LIVE=1 SMALL=1 git -C "$repo" checkout -q main 2> "$state/live.err"
+expect "LIVE=1 or SMALL=1 in the shell does not stop the hook" "$(cat "$state/live.err")" ""
+
 before=$(runs)
 make -C "$repo/ios" --no-print-directory git-hooks-off > "$state/off.out"
 expect "make git-hooks-off turns the hooks off" "$(git -C "$repo" config core.hooksPath || echo none)" "none"
