@@ -42,6 +42,11 @@ mv "$state/outside/moved" "$cache/modules/moved"
 expect "a file with the key is reported when its date is set back or when it is moved in" \
     "$(found)" "modules/backdated modules/deep/written modules/moved "
 
+ln -s "$cache" "$state/cache-link"
+expect "a cache folder that is a symbolic link is searched" \
+    "$("$script" files-with-key "$state/cache-link" "$state/start" "$key" | sed "s|^$state/cache-link/||" | sort | tr '\n' ' ')" \
+    "modules/backdated modules/deep/written modules/moved "
+
 expect "a missing cache folder reports nothing" \
     "$("$script" files-with-key "$state/missing" "$state/start" "$key")" ""
 

@@ -2,7 +2,7 @@
 set -eu
 
 files_with_key() {
-    find "$1" -type f -cnewer "$2" -exec grep -lF "$3" {} + 2> /dev/null || true
+    find -H "$1" -type f -cnewer "$2" -exec grep -lF "$3" {} + 2> /dev/null || true
 }
 
 if [ "${1:-}" = "files-with-key" ]; then
