@@ -21,10 +21,7 @@ struct RERDirectionRow: View {
                 Spacer(minLength: 8)
                 if direction.times.isEmpty {
                     if !direction.nextTrainIsOverAnHourAway || !isStale {
-                        Text(direction.nextTrainIsOverAnHourAway ? "In over 1 hour" : "No trains")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                        NoTrainsText(nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway)
                             .layoutPriority(1)
                     }
                 } else if !isStale {

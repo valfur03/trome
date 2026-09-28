@@ -9,7 +9,13 @@ struct PanamDirectionRows: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(direction.trainsByDestination, id: \.self) { branch in
-                PanamRow(destination: branch.destination, trains: branch.trains, line: line, isStale: isStale)
+                PanamRow(
+                    destination: branch.destination,
+                    trains: branch.trains,
+                    nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway,
+                    line: line,
+                    isStale: isStale
+                )
             }
         }
     }
@@ -18,6 +24,7 @@ struct PanamDirectionRows: View {
 private struct PanamRow: View {
     let destination: String
     let trains: [LineDirection.Train]
+    let nextTrainIsOverAnHourAway: Bool
     let line: TransitLine
     let isStale: Bool
 
@@ -45,8 +52,10 @@ private struct PanamRow: View {
                 .fixedSize(horizontal: fitsTheWholeDestination, vertical: false)
             Spacer(minLength: 6)
             if trains.isEmpty {
-                NoTrainsText()
-                    .fixedSize()
+                if !nextTrainIsOverAnHourAway || !isStale {
+                    NoTrainsText(nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway)
+                        .fixedSize()
+                }
             } else if !isStale {
                 HStack(spacing: 4) {
                     ForEach(Array(trains.prefix(timeCount).enumerated()), id: \.offset) { index, train in

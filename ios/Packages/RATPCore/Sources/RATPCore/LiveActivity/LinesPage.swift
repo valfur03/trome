@@ -26,7 +26,7 @@ public struct LineTrains: Codable, Hashable, Sendable {
     }
 
     public var hasNoTrain: Bool {
-        directions.allSatisfy(\.trains.isEmpty)
+        directions.allSatisfy { $0.trains.isEmpty && !$0.nextTrainIsOverAnHourAway }
     }
 }
 

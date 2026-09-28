@@ -202,4 +202,12 @@ struct LinesPageTests {
         #expect(LineTrains(line: line, directions: [empty, empty]).hasNoTrain)
         #expect(!LineTrains(line: line, directions: [empty, withTrain]).hasNoTrain)
     }
+
+    @Test func hasATrainWhenADirectionHasItsNextTrainInOverAnHour() {
+        let line = TransitLine(mode: .metro, name: "6")
+        let empty = LineDirection(label: "Nation", trains: [])
+        let later = LineDirection(label: "Charles de Gaulle-Etoile", trains: [], nextTrainIsOverAnHourAway: true)
+
+        #expect(!LineTrains(line: line, directions: [empty, later]).hasNoTrain)
+    }
 }
