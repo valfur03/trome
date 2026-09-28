@@ -1,8 +1,34 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "RATP Activity"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "RATPActivity"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
     "NSLocationAlwaysAndWhenInUseUsageDescription" : {
-      "comment" : "",
+      "comment" : "Privacy - Location Always and When In Use Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
@@ -20,7 +46,7 @@
       }
     },
     "NSLocationWhenInUseUsageDescription" : {
-      "comment" : "",
+      "comment" : "Privacy - Location When In Use Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {

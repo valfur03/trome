@@ -23,80 +23,65 @@ catalog() {
     printf '{"sourceLanguage": "en", "version": "1.0", "strings": {%s}}' "$1" > "$state/Localizable.xcstrings"
 }
 
-stringsdata() {
-    printf '{"source": "%s", "tables": {"Localizable": [%s]}}' "$1" "$2" > "$state/$3.stringsdata"
+check() {
+    "$scripts/strings-check.py" "$state/Localizable.xcstrings" > /dev/null 2>&1 && echo "passes" || echo "fails"
 }
-
-key() {
-    printf '{"comment": "", "key": "%s"}' "$1"
-}
-
-code_check() {
-    "$scripts/strings-check.py" code "$state/Localizable.xcstrings" "$state"/*.stringsdata > /dev/null 2>&1 \
-        && echo "passes" || echo "fails"
-}
-
-touch "$state/View.swift"
-stringsdata "$state/View.swift" "$(key "Open Settings"), $(key "Next trains at %@")" View
 
 catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french translated 'Prochains passages à %@')"
-expect "a catalog with each used text in French passes" "$(code_check)" "passes"
-
-catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages')"
-expect "a used text that is not in the catalog fails" "$(code_check)" "fails"
+expect "a catalog with each text in French passes" "$(check)" "passes"
 
 catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": {}"
-expect "a text with no French fails" "$(code_check)" "fails"
+expect "a new text with no French fails" "$(check)" "fails"
 
 catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french needs_review 'Prochains passages à %@')"
-expect "a French text that is not marked translated fails" "$(code_check)" "fails"
+expect "a French text that is not marked translated fails" "$(check)" "fails"
 
-catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": {\"shouldTranslate\": false}"
-expect "a text marked as not to translate passes" "$(code_check)" "passes"
+catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french translated '')"
+expect "an empty French text fails" "$(check)" "fails"
 
-catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french translated 'Prochains passages à %@'), \"Old text\": $(french translated 'Vieux texte')"
-expect "a text that is no longer in the code fails" "$(code_check)" "fails"
+catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"RATP Activity\": {\"shouldTranslate\": false}"
+expect "a text marked as not to translate passes" "$(check)" "passes"
 
-catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french translated 'Prochains passages à %@'), \"Manual\": {\"extractionState\": \"manual\", \"localizations\": {\"fr\": {\"stringUnit\": {\"state\": \"translated\", \"value\": \"Manuel\"}}}}"
-expect "a text added by hand passes" "$(code_check)" "passes"
+catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Old text\": {\"extractionState\": \"stale\", \"localizations\": {\"fr\": {\"stringUnit\": {\"state\": \"translated\", \"value\": \"Vieux texte\"}}}}"
+expect "a text that is no longer in the code fails" "$(check)" "fails"
 
-catalog "\"%lld stations\": {\"localizations\": {\"fr\": {\"variations\": {\"plural\": {\"one\": {\"stringUnit\": {\"state\": \"translated\", \"value\": \"%lld station\"}}, \"other\": {\"stringUnit\": {\"state\": \"new\", \"value\": \"\"}}}}}}}, \"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french translated 'Prochains passages à %@')"
-stringsdata "$state/View.swift" "$(key "Open Settings"), $(key "Next trains at %@"), $(key "%lld stations")" View
-expect "a plural with one case not translated fails" "$(code_check)" "fails"
+catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Manual\": {\"extractionState\": \"manual\", \"localizations\": {\"fr\": {\"stringUnit\": {\"state\": \"translated\", \"value\": \"Manuel\"}}}}"
+expect "a text added by hand passes" "$(check)" "passes"
 
-stringsdata "$state/View.swift" "$(key "Open Settings"), $(key "Next trains at %@")" View
-stringsdata "$state/Removed.swift" "$(key "Removed text")" Removed
-catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french translated 'Prochains passages à %@')"
-expect "the texts of a source file that no longer exists are ignored" "$(code_check)" "passes"
+catalog "\"%lld stations\": {\"localizations\": {\"fr\": {\"variations\": {\"plural\": {\"one\": {\"stringUnit\": {\"state\": \"translated\", \"value\": \"%lld station\"}}, \"other\": {\"stringUnit\": {\"state\": \"new\", \"value\": \"\"}}}}}}}"
+expect "a plural with one case not translated fails" "$(check)" "fails"
 
-plist() {
-    printf '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0"><dict>%s</dict></plist>\n' "$1" > "$state/Info.plist"
+printf '{"sourceLanguage": "en", "version": "1.0", "strings": {"Open Settings": %s}}' "$(french translated 'Ouvrir Réglages')" > "$state/Widget.xcstrings"
+catalog "\"Next trains at %@\": {}"
+expect "each catalog given is checked" \
+    "$("$scripts/strings-check.py" "$state/Widget.xcstrings" "$state/Localizable.xcstrings" > /dev/null 2>&1 && echo "passes" || echo "fails")" "fails"
+
+folder="$state/ios"
+mkdir -p "$folder/App" "$folder/.build/Localizations"
+printf 'committed' > "$folder/App/Localizable.xcstrings"
+printf 'build output' > "$folder/.build/Localizations/Localizable.xcstrings"
+
+sync() {
+    (cd "$folder" && "$scripts/strings-sync.sh" "$@" > /dev/null 2>&1) && echo "passes" || echo "fails"
 }
 
-info_catalog() {
-    printf '{"sourceLanguage": "en", "version": "1.0", "strings": {"NSLocationWhenInUseUsageDescription": {"localizations": {"en": {"stringUnit": {"state": "new", "value": "%s"}}, "fr": {"stringUnit": {"state": "%s", "value": "Pour trouver la station"}}}}}}' "$1" "$2" > "$state/InfoPlist.xcstrings"
+content() {
+    cat "$1" 2> /dev/null || echo "missing"
 }
 
-info_check() {
-    "$scripts/strings-check.py" info-plist "$state/InfoPlist.xcstrings" "$state/Info.plist" > /dev/null 2>&1 \
-        && echo "passes" || echo "fails"
-}
-
-plist '<key>CFBundleDisplayName</key><string>RATP Activity</string><key>NSLocationWhenInUseUsageDescription</key><string>To find the station</string>'
-info_catalog "To find the station" translated
-expect "a permission text with its French text passes" "$(info_check)" "passes"
-
-info_catalog "To find the station" new
-expect "a permission text with no French text fails" "$(info_check)" "fails"
-
-info_catalog "An old English text" translated
-expect "a permission text whose English is not the one of the Info.plist fails" "$(info_check)" "fails"
-
-plist '<key>NSLocationWhenInUseUsageDescription</key><string>To find the station</string><key>NSLocationAlwaysAndWhenInUseUsageDescription</key><string>Also when closed</string>'
-info_catalog "To find the station" translated
-expect "a permission text that is not in the catalog fails" "$(info_check)" "fails"
-
-plist '<key>CFBundleDisplayName</key><string>RATP Activity</string>'
-expect "a catalog text that is not in the Info.plist fails" "$(info_check)" "fails"
+expect "the check passes when Xcode changes no catalog" "$(sync check true)" "passes"
+expect "the check fails when Xcode changes a catalog" "$(sync check sh -c 'printf synced > App/Localizable.xcstrings')" "fails"
+expect "the check puts the catalog back as it was" "$(content "$folder/App/Localizable.xcstrings")" "committed"
+expect "the check fails when Xcode adds a catalog" "$(sync check sh -c 'printf new > App/InfoPlist.xcstrings')" "fails"
+expect "the check removes the catalog that Xcode added" "$(content "$folder/App/InfoPlist.xcstrings")" "missing"
+expect "the check fails when Xcode removes a catalog" "$(sync check rm App/Localizable.xcstrings)" "fails"
+expect "the check puts back the catalog that Xcode removed" "$(content "$folder/App/Localizable.xcstrings")" "committed"
+expect "the check ignores the build folder" "$(sync check sh -c 'printf other > .build/Localizations/Localizable.xcstrings')" "passes"
+expect "the check fails when the Xcode command fails" "$(sync check sh -c 'printf half > App/Localizable.xcstrings; exit 1')" "fails"
+expect "a failed Xcode command leaves the catalog as it was" "$(content "$folder/App/Localizable.xcstrings")" "committed"
+expect "the sync passes when Xcode changes a catalog" "$(sync sync sh -c 'printf synced > App/Localizable.xcstrings')" "passes"
+expect "the sync keeps the change of Xcode" "$(content "$folder/App/Localizable.xcstrings")" "synced"
+expect "the sync fails when the Xcode command fails" "$(sync sync false)" "fails"
+expect "an unknown mode fails" "$(sync format true)" "fails"
 
 [ "$failures" -eq 0 ]

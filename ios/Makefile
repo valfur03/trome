@@ -10,7 +10,6 @@ E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := RATPActivityDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
-STRINGSDATA := $(DERIVED_DATA)/Build/Intermediates.noindex/RATPActivity.build/Debug-iphonesimulator
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 CORE_PACKAGE := Packages/RATPCore
@@ -55,8 +54,11 @@ XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
 	COMPILER_INDEX_STORE_ENABLE=NO $(SHARED_SDK_MODULES) \
 	SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
+EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALLOWED=NO \
+	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
+STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 
-.PHONY: help setup generate project lint lint-fix build strings-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
+.PHONY: help setup generate project lint lint-fix build strings-check strings-sync test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -67,7 +69,8 @@ help:
 	@echo "make run LANGUAGE=fr     Same, with the Simulator in French (the default is English: LANGUAGE=en)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
 	@echo "make check               iOS quality gate: lint + recommended settings check + key leak check + build (no warning allowed) + strings check + unit tests + script tests"
-	@echo "make strings-check       Build, then fail when a text of the app or the Live Activity has no French text in its String Catalog"
+	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, or when a text of the app or the Live Activity has no French text"
+	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code)"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key and that a new key replaces the old one (uses fake keys)"
@@ -116,10 +119,12 @@ else
 	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 endif
 
-strings-check: build
-	@./scripts/strings-check.py code App/Localizable.xcstrings $(STRINGSDATA)/RATPActivity.build/Objects-normal/*/*.stringsdata
-	@./scripts/strings-check.py code Widget/Localizable.xcstrings $(STRINGSDATA)/RATPActivityWidget.build/Objects-normal/*/*.stringsdata
-	@./scripts/strings-check.py info-plist App/InfoPlist.xcstrings App/Info.plist
+strings-check: project
+	@./scripts/strings-sync.sh check $(EXPORT_STRINGS)
+	@./scripts/strings-check.py $(STRING_CATALOGS)
+
+strings-sync: project
+	@./scripts/strings-sync.sh sync $(EXPORT_STRINGS)
 
 test:
 	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore -Xswiftc -warnings-as-errors
