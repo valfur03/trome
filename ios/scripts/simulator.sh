@@ -71,6 +71,16 @@ booted_shared_udids() {
     done
 }
 
+shut_down_other_shared() {
+    others=$(booted_shared_udids) || return 1
+    for other in $others; do
+        if [ "$other" != "$1" ] && ! xcrun simctl shutdown "$other" 2> /dev/null && is_booted "$other"; then
+            echo "Could not shut down the other shared Simulator of slot $slot ($other), so this job does not boot a second one in its slot" >&2
+            return 1
+        fi
+    done
+}
+
 create_device() {
     runtime=$(xcrun simctl list runtimes available \
         | grep '^iOS ' \
@@ -93,6 +103,7 @@ device_udid() {
 
 boot_device() {
     udid=$(device_udid)
+    shut_down_other_shared "$udid" || exit 1
     xcrun simctl bootstatus "$udid" -b > /dev/null
     echo "$udid"
 }

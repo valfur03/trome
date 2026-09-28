@@ -11,7 +11,7 @@ scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/../.." && pwd)
 simulator="$scripts/simulator.sh"
 watch_seconds=${RATP_SIM_WATCH_SECONDS:-10}
-watcher_version=2
+watcher_version=3
 held_slots=
 
 case "$slots" in
@@ -28,7 +28,7 @@ usage() {
     echo "       $0 all <command...>   Run a command with the locks of every slot (waits until no other job runs)" >&2
     echo "       $0 reopen <command...> Run a command on the Simulator that this folder keeps after 'open' (same slot, same size), and keep the lock" >&2
     echo "       $0 udid               Print the ID of the Simulator that this folder keeps after 'open', or of the Simulator of slot 1" >&2
-    echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job, and the one that boots during a job of the slot that does not use it" >&2
+    echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job, and, during a job, the other shared Simulator of its slot" >&2
     echo "At most $slots Simulator jobs run at once (RATP_SIM_SLOTS). A job runs next to another one only when the CPU is at least $min_idle_percent% idle (RATP_SIM_MIN_IDLE_PERCENT)." >&2
     exit 1
 }
@@ -114,11 +114,6 @@ write_size() {
     mv "$lock/size.new" "$lock/size"
 }
 
-write_booted_before() {
-    "$simulator" booted > "$lock/booted-before.new" 2> /dev/null || true
-    mv "$lock/booted-before.new" "$lock/booted-before"
-}
-
 mark_held() {
     held_slots="$held_slots $RATP_SIM_SLOT"
     RATP_SIM_HELD_LOCK=$lock
@@ -129,14 +124,12 @@ mark_held() {
 take() {
     echo "$$" > "$lock/pid"
     echo "$root" > "$lock/worktree"
-    write_booted_before
     write_size
     mark_held
 }
 
 join_session() {
     echo "$$" > "$lock/pid"
-    write_booted_before
     write_size
     mark_held
 }
@@ -286,9 +279,6 @@ shut_down_the_other_shared() {
     size=$(cat "$lock/size" 2> /dev/null) || return 0
     others=$(RATP_SIM_SIZE=$size "$simulator" booted-others 2> /dev/null) || return 0
     for other in $others; do
-        if grep -qxF "$other" "$lock/booted-before" 2> /dev/null; then
-            continue
-        fi
         size_now=$(cat "$lock/size" 2> /dev/null) || return 0
         [ "$size_now" = "$size" ] || return 0
         xcrun simctl shutdown "$other" 2> /dev/null || true

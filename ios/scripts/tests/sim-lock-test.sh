@@ -134,21 +134,21 @@ echo "RATP-Shared Booted" > "$state/device.$default"
 
 small_open
 small=$("$scripts/simulator.sh" booted | grep -vxF "$default")
-expect "make run SMALL=1 keeps RATP-Shared booted and boots the small Simulator" "$(booted)" "RATP-Shared RATP-Shared-Small "
+expect "make run SMALL=1 shuts down RATP-Shared and boots only the small Simulator" "$(booted)" "RATP-Shared-Small "
 expect "the small Simulator is an iPhone SE" "$(cat "$state/type.$small")" "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation"
 expect "the lock keeps the small Simulator" "$(cat "$RATP_SIM_LOCK/udid")" "$small"
 mkdir -p "$state/RATPActivity.app"
 /usr/libexec/PlistBuddy -c 'Add CFBundleIdentifier string com.example.RATPActivity' "$state/RATPActivity.app/Info.plist" > /dev/null
 echo com.example.RATPActivity > "$state/apps.$small"
 RATP_SIM_LANGUAGE=en "$scripts/sim-lock.sh" reopen "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null
-expect "switch-language after make run SMALL=1 keeps the small Simulator booted and does not shut down RATP-Shared" "$(booted)" "RATP-Shared RATP-Shared-Small "
+expect "switch-language after make run SMALL=1 keeps only the small Simulator booted" "$(booted)" "RATP-Shared-Small "
 expect "switch-language after make run SMALL=1 opens the app again on the small Simulator" "$(cat "$state/launched.$small" 2> /dev/null || true)" "com.example.RATPActivity"
 expect "switch-language after make run SMALL=1 does not open the app on RATP-Shared" "$(cat "$state/launched.$default" 2> /dev/null || true)" ""
 expect "the lock keeps the small Simulator after switch-language" "$(cat "$RATP_SIM_LOCK/udid") $(cat "$RATP_SIM_LOCK/size")" "$small small"
 
 "$scripts/sim-lock.sh" open sh -c '"$1" boot && kill -0 "$(cat "$RATP_SIM_LOCK/pid")" && echo held > "$FAKE_SIM_STATE/switch"' \
     sh "$scripts/simulator.sh" > /dev/null
-expect "make run after make run SMALL=1 in the same folder keeps the small Simulator booted" "$(booted)" "RATP-Shared RATP-Shared-Small "
+expect "make run after make run SMALL=1 in the same folder shuts down the small Simulator and boots RATP-Shared again" "$(booted)" "RATP-Shared "
 expect "a live job holds the lock while the session switches Simulator" "$(cat "$state/switch" 2> /dev/null || true)" "held"
 expect "the session keeps the lock with no job after the switch" "$(test -e "$RATP_SIM_LOCK/pid" && echo job || true)" ""
 expect "the lock follows the Simulator of the session" "$(cat "$RATP_SIM_LOCK/udid")" "$default"
@@ -156,7 +156,7 @@ expect "the lock follows the Simulator of the session" "$(cat "$RATP_SIM_LOCK/ud
 small_open
 echo com.example.RATPActivity > "$state/apps.$small"
 "$scripts/sim-lock.sh" free
-expect "make simulator-shutdown after make run SMALL=1 keeps both shared Simulators booted" "$(booted)" "RATP-Shared RATP-Shared-Small "
+expect "make simulator-shutdown after make run SMALL=1 keeps only the small Simulator booted" "$(booted)" "RATP-Shared-Small "
 expect "make simulator-shutdown after make run SMALL=1 removes the app from the small Simulator" "$(cat "$state/apps.$small")" ""
 expect "make simulator-shutdown frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
 
@@ -167,12 +167,13 @@ expect "a job on the small Simulator removes the app that an earlier job left on
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job on RATP-Shared removes the app that an earlier job left on it" "$(cat "$state/apps.$default")" ""
 
-small_open
+echo "RATP-Shared Booted" > "$state/device.$default"
+echo "RATP-Shared-Small Booted" > "$state/device.$small"
+RATP_SIM_SIZE=small "$scripts/sim-lock.sh" open true
 watch_in_background
-sleep 3
-expect "while make run SMALL=1 keeps the lock, the watcher keeps RATP-Shared booted when it was booted before" "$(booted)" "RATP-Shared RATP-Shared-Small "
+wait_until_booted "RATP-Shared-Small "
+expect "while make run SMALL=1 keeps the lock, the watcher shuts down RATP-Shared even when it was booted before the job" "$(booted)" "RATP-Shared-Small "
 "$scripts/sim-lock.sh" free
-echo "RATP-Shared Shutdown" > "$state/device.$default"
 small_open
 echo "RATP-Shared Booted" > "$state/device.$default"
 wait_until_booted "RATP-Shared-Small "
@@ -183,7 +184,7 @@ sleep 3
 "$1" booted | tr '\n' ' ' > "$FAKE_SIM_STATE/joined"
 EOF
 "$scripts/sim-lock.sh" job sh "$state/e2e-after-small.sh" "$scripts/simulator.sh" > /dev/null
-expect "the watcher keeps both Simulators booted for make e2e after make run SMALL=1 in the same folder" "$(ran joined)" "$default $small "
+expect "make e2e after make run SMALL=1 in the same folder shuts down the small Simulator and keeps RATP-Shared booted" "$(ran joined)" "$default "
 echo "RATP-Shared-Small Shutdown" > "$state/device.$small"
 cat > "$state/boot-small-during-job.sh" << 'EOF'
 "$1" boot > /dev/null
@@ -243,7 +244,12 @@ expect "a job keeps RATP-Shared booted after it ends" "$(booted)" "RATP-Shared "
 
 echo "RATP-Shared-Small Booted" > "$state/device.$small"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null
-expect "a job keeps a small Simulator left booted" "$(booted)" "RATP-Shared RATP-Shared-Small "
+expect "a job shuts down a small Simulator left booted" "$(booted)" "RATP-Shared "
+
+echo "RATP-Shared Shutdown" > "$state/device.$default"
+echo "RATP-Shared-Small Booted" > "$state/device.$small"
+FAKE_SHUTDOWN_FAILS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null 2>&1 || true
+expect "a job does not boot RATP-Shared when it cannot shut down the small Simulator" "$(booted)" "RATP-Shared-Small "
 
 "$scripts/sim-lock.sh" job false > /dev/null 2>&1 || true
 expect "a failed job frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
@@ -350,10 +356,10 @@ rm -rf "$RATP_SIM_LOCK"
 hold "$RATP_SIM_LOCK"
 small_open
 second_small=$(RATP_SIM_SLOT=2 RATP_SIM_SIZE=small "$scripts/simulator.sh" find)
-expect "make run SMALL=1 next to a job on slot 1 keeps RATP-Shared and RATP-Shared-2 booted" "$(booted)" "RATP-Shared RATP-Shared-2 RATP-Shared-Small-2 "
+expect "make run SMALL=1 next to a job on slot 1 shuts down RATP-Shared-2 and keeps RATP-Shared booted" "$(booted)" "RATP-Shared RATP-Shared-Small-2 "
 expect "make simulator prints the Simulator that make run of this folder uses" "$("$scripts/sim-lock.sh" udid)" "$second_small"
 "$scripts/sim-lock.sh" free
-expect "make simulator-shutdown on slot 2 keeps the shared Simulators booted" "$(booted)" "RATP-Shared RATP-Shared-2 RATP-Shared-Small-2 "
+expect "make simulator-shutdown on slot 2 keeps the small Simulator of slot 2 booted" "$(booted)" "RATP-Shared RATP-Shared-Small-2 "
 expect "make simulator-shutdown on slot 2 frees slot 2 only" "$(test -e "$RATP_SIM_LOCK.2" && echo held || true) $(cat "$RATP_SIM_LOCK/pid")" " $idle_watcher"
 rm -rf "$RATP_SIM_LOCK"
 expect "make simulator prints the ID of RATP-Shared when this folder has no open Simulator" "$("$scripts/sim-lock.sh" udid)" "$default"
