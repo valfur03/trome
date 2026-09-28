@@ -174,15 +174,21 @@ enum LineDirections {
         ends: LineEnds
     ) -> Int? {
         let stationKey = StationCatalog.searchKey(stationName)
-        let branchSides = ends.sides.indices.filter { index in
-            ends.sides[index].contains { end in
-                ends.branchStations[end, default: []].contains { StationCatalog.searchKey($0) == stationKey }
-            }
+        func branchHoldsTheStation(_ end: String) -> Bool {
+            ends.branchStations[end, default: []].contains { StationCatalog.searchKey($0) == stationKey }
         }
-        let branchNames = ends.branchStations.values.flatMap { $0 }
-        guard branchSides.count == 1, let branchSide = branchSides.first,
-              !branchNames.contains(where: { isNamed(destination, $0) })
-        else { return nil }
+        func branchHoldsTheDestination(_ end: String) -> Bool {
+            ends.branchStations[end, default: []].contains { isNamed(destination, $0) }
+        }
+        let branchSides = ends.sides.indices.filter { ends.sides[$0].contains(where: branchHoldsTheStation) }
+        guard branchSides.count == 1, let branchSide = branchSides.first else { return nil }
+        let sideEnds = ends.sides[branchSide]
+        let isOnNoBranch = !ends.branchStations.keys.contains(where: branchHoldsTheDestination)
+        let stationEnds = sideEnds.filter(branchHoldsTheStation)
+        let otherEnds = sideEnds.filter { !branchHoldsTheStation($0) }
+        let isBeforeTheForkOfTheStation = stationEnds.contains(where: branchHoldsTheDestination)
+            && otherEnds.contains(where: branchHoldsTheDestination)
+        guard isOnNoBranch || isBeforeTheForkOfTheStation else { return nil }
         return sides.firstIndex(of: ends.sides[1 - branchSide])
     }
 

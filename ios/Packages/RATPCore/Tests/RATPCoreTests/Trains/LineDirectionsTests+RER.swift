@@ -181,6 +181,33 @@ extension LineDirectionsTests {
         #expect(result.map(\.name) == ["Paris Gare de Lyon", "Malesherbes"])
     }
 
+    @Test func putsATrainToTheSharedPartOfTwoRERBranchesInTheOtherDirection() {
+        let rerD = TransitLine(mode: .rer, name: "D", stopIds: ["IDFM:monomodalStopPlace:43092"])
+        let result = directions(of: rerD, at: "Saint-Fargeau", [
+            train(rerD, to: "Melun", inMinutes: 12, from: rerQuay(1)),
+            train(rerD, to: "Corbeil-Essonnes", inMinutes: 18, from: rerQuay(2))
+        ])
+
+        #expect(result == [
+            LineDirection(label: "Creil", trains: [rerTrain(18, to: "Corbeil-Essonnes")]),
+            LineDirection(label: "Melun", trains: [rerTrain(12, to: "Melun")])
+        ])
+    }
+
+    @Test func neverGuessesTheDirectionOfATrainToAStationOfAnotherBranchOfTheSameRERSide() {
+        let rerC = TransitLine(mode: .rer, name: "C", stopIds: ["IDFM:monomodalStopPlace:43091"])
+        let result = directions(of: rerC, at: "Orly Ville", [
+            train(rerC, to: "Juvisy", inMinutes: 5, from: rerQuay(1)),
+            train(rerC, to: "Paris Austerlitz", inMinutes: 8, from: rerQuay(2))
+        ])
+
+        #expect(result.map(\.label) == [
+            "Pontoise / Versailles Château Rive Gauche / Saint-Quentin en Yvelines - Montigny-le-Bretonneux",
+            "Massy - Palaiseau",
+            "Juvisy"
+        ])
+    }
+
     @Test func neverGuessesTheDirectionOfATrainToAStationOfAnRERBranch() {
         let rerC = TransitLine(mode: .rer, name: "C", stopIds: ["IDFM:monomodalStopPlace:43091"])
         let result = directions(of: rerC, at: "Orly Ville", [
