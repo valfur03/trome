@@ -85,7 +85,11 @@ stop_check() {
         'printf synced > App/Localizable.xcstrings; printf new > App/InfoPlist.xcstrings; touch .build/started; sleep 1') \
         > /dev/null 2>&1 &
     check_pid=$!
-    while [ ! -f "$folder/.build/started" ]; do sleep 0.1; done
+    tries=0
+    while [ ! -f "$folder/.build/started" ] && [ "$tries" -lt 100 ]; do
+        sleep 0.1
+        tries=$((tries + 1))
+    done
     kill -TERM "$check_pid"
     wait "$check_pid" && echo "passes" || echo "fails"
 }
