@@ -24,12 +24,14 @@ struct StationLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: context.state.multiLinePage == nil ? 8 : 4) {
-                        if let page = context.state.multiLinePage {
-                            StationAndLinesHeader(stationName: context.state.stationName, page: page)
-                        }
-                        TrainsSummary(state: context.state, isStale: context.isStale)
-                        SnoozeButtons()
+                    ViewThatFits(in: .vertical) {
+                        ExpandedIslandBottom(state: context.state, isStale: context.isStale)
+                        ExpandedIslandBottom(state: context.state.keepingOnlyTheNextTrains, isStale: context.isStale)
+                        ExpandedIslandBottom(
+                            state: context.state.keepingOnlyTheNextTrains,
+                            isStale: context.isStale,
+                            isCompact: true
+                        )
                     }
                 }
             } compactLeading: {
@@ -81,6 +83,22 @@ private struct LockScreenView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
+    }
+}
+
+private struct ExpandedIslandBottom: View {
+    let state: StationActivityAttributes.ContentState
+    let isStale: Bool
+    var isCompact = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: state.multiLinePage == nil && !isCompact ? 8 : 4) {
+            if let page = state.multiLinePage {
+                StationAndLinesHeader(stationName: state.stationName, page: page)
+            }
+            TrainsSummary(state: state, isStale: isStale, isCompact: isCompact)
+            SnoozeButtons()
+        }
     }
 }
 
@@ -189,9 +207,10 @@ private struct SnoozeButtons: View {
 private struct TrainsSummary: View {
     let state: StationActivityAttributes.ContentState
     let isStale: Bool
+    var isCompact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: isCompact ? 2 : 4) {
             switch state.trains {
             case .loading:
                 if !isStale {
@@ -206,11 +225,11 @@ private struct TrainsSummary: View {
                     .foregroundStyle(.secondary)
             case .lines(let page) where page.showsSeveralLines:
                 ForEach(page.lines, id: \.self) { line in
-                    LineTrainsView(line: line, isStale: isStale)
+                    LineTrainsView(line: line, isStale: isStale, isCompact: isCompact)
                 }
             case .lines(let page):
                 ForEach(page.lines.flatMap(\.directions), id: \.self) { direction in
-                    DirectionRow(direction: direction, isStale: isStale)
+                    DirectionRow(direction: direction, isStale: isStale, isCompact: isCompact)
                 }
             }
             if isStale {
@@ -226,6 +245,7 @@ private struct TrainsSummary: View {
 private struct LineTrainsView: View {
     let line: LineTrains
     let isStale: Bool
+    var isCompact = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -236,11 +256,11 @@ private struct LineTrainsView: View {
                 }
                 if line.directions.isEmpty {
                     Text("No trains")
-                        .font(.subheadline.bold())
+                        .font(isCompact ? .caption.bold() : .subheadline.bold())
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(line.directions, id: \.self) { direction in
-                        DirectionRow(direction: direction, isStale: isStale)
+                        DirectionRow(direction: direction, isStale: isStale, isCompact: isCompact)
                     }
                 }
             }
@@ -252,6 +272,7 @@ private struct LineTrainsView: View {
 private struct DirectionRow: View {
     let direction: LineDirection
     let isStale: Bool
+    var isCompact = false
 
     var body: some View {
         if direction.showsEachDestination && !isStale {
@@ -265,12 +286,12 @@ private struct DirectionRow: View {
                 Image(systemName: "arrow.right")
                     .font(.caption)
                 DirectionName(text: direction.name)
-                    .font(.subheadline)
+                    .font(isCompact ? .caption : .subheadline)
                 Spacer(minLength: 8)
                 if direction.times.isEmpty {
                     if !direction.nextTrainIsOverAnHourAway || !isStale {
                         Text(direction.nextTrainIsOverAnHourAway ? "In over 1 hour" : "No trains")
-                            .font(.subheadline.bold())
+                            .font(isCompact ? .caption.bold() : .subheadline.bold())
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .layoutPriority(1)
@@ -278,7 +299,7 @@ private struct DirectionRow: View {
                 } else if !isStale {
                     VStack(alignment: .trailing, spacing: 0) {
                         WaitingTime(time: direction.times[0])
-                            .font(.subheadline.bold())
+                            .font(isCompact ? .caption.bold() : .subheadline.bold())
                         if direction.times.count > 1 {
                             WaitingTime(time: direction.times[1])
                                 .font(.caption2)

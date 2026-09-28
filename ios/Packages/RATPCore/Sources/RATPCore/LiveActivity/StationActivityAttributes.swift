@@ -43,6 +43,13 @@ extension StationActivityAttributes.ContentState {
             nil
         }
     }
+
+    public var keepingOnlyTheNextTrains: Self {
+        guard let page = trains.linesPage else { return self }
+        var state = self
+        state.trains = .lines(page.keepingOnlyTheNextTrains)
+        return state
+    }
 }
 
 extension StationActivityAttributes.Trains {

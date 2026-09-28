@@ -89,6 +89,32 @@ struct LinesPageTests {
         #expect(page.lines.flatMap(\.directions).allSatisfy { $0.trains.count == 1 })
     }
 
+    @Test func keepsOnlyTheNextTrainOfEachDirectionAndTheRestOfThePage() {
+        let branches = LineTrains(line: TransitLine(mode: .rer, name: "A"), directions: [
+            LineDirection(label: "Poissy / Cergy le Haut", trains: [
+                LineDirection.Train(time: time(inMinutes: 2), destination: "Poissy"),
+                LineDirection.Train(time: time(inMinutes: 13), destination: "Cergy le Haut")
+            ]),
+            LineDirection(label: "Marne-la-Vallée Chessy", times: [time(inMinutes: 1), time(inMinutes: 11)])
+        ], stationName: "Auber")
+        let page = LinesPage(showing: [branches, line("3", directions: 2)], from: 0)
+
+        let island = page.keepingOnlyTheNextTrains
+
+        #expect(island.lines.map(\.directions) == [[
+            LineDirection(label: "Poissy / Cergy le Haut", trains: [
+                LineDirection.Train(time: time(inMinutes: 2), destination: "Poissy")
+            ]),
+            LineDirection(label: "Marne-la-Vallée Chessy", times: [time(inMinutes: 1)])
+        ]])
+        #expect(island.lines[0].directions.map(\.name) == ["Poissy", "Marne-la-Vallée Chessy"])
+        #expect(island.lines.map(\.stationName) == ["Auber"])
+        #expect(island.allLines == page.allLines)
+        #expect(island.firstIndex == page.firstIndex)
+        #expect(island.soonestTrain == page.soonestTrain)
+        #expect(island.nextFirstIndex == page.nextFirstIndex)
+    }
+
     @Test func goesToTheLineAfterThePageThenBackToTheFirstLine() {
         let lines = [line("1", directions: 2), line("4", directions: 2), line("7", directions: 2)]
 

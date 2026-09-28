@@ -14,6 +14,16 @@ public struct LineTrains: Codable, Hashable, Sendable {
     var rowCount: Int {
         max(1, directions.count) + (stationName == nil ? 0 : 1)
     }
+
+    var keepingOnlyTheNextTrains: LineTrains {
+        var line = self
+        line.directions = directions.map { direction in
+            var direction = direction
+            direction.trains = Array(direction.trains.prefix(1))
+            return direction
+        }
+        return line
+    }
 }
 
 public struct SoonestTrain: Codable, Hashable, Sendable {
@@ -61,17 +71,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
             rowCount += line.rowCount
         }
         if shown.flatMap(\.directions).count > Self.maximumRowsWithTwoTrains {
-            shown = shown.map { line in
-                LineTrains(
-                    line: line.line,
-                    directions: line.directions.map { direction in
-                        var direction = direction
-                        direction.trains = Array(direction.trains.prefix(1))
-                        return direction
-                    },
-                    stationName: line.stationName
-                )
-            }
+            shown = shown.map(\.keepingOnlyTheNextTrains)
         }
         let soonestTrain = lines
             .flatMap { line in line.directions.compactMap(\.trains.first).map { (line: line.line, time: $0.time) } }
@@ -110,5 +110,11 @@ public struct LinesPage: Codable, Hashable, Sendable {
 
     public func isShown(_ line: TransitLine) -> Bool {
         lines.contains { $0.line == line }
+    }
+
+    var keepingOnlyTheNextTrains: LinesPage {
+        var page = self
+        page.lines = lines.map(\.keepingOnlyTheNextTrains)
+        return page
     }
 }

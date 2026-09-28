@@ -140,6 +140,39 @@ struct StationActivityContentTests {
         ])
     }
 
+    @Test func keepsOnlyTheNextTrainOfEachDirectionForTheDynamicIsland() {
+        let abbesses = Station(
+            id: "abbesses",
+            name: "Abbesses",
+            coordinate: Coordinate(48.8844, 2.3384),
+            lines: [line12]
+        )
+        let trains = board([
+            train(line12, to: "Mairie d'Issy", inMinutes: 3, from: southQuay),
+            train(line12, to: "Mairie d'Issy", inMinutes: 9, from: southQuay),
+            train(line12, to: "Mairie d'Aubervilliers", inMinutes: 1, from: northQuay),
+            train(line12, to: "Mairie d'Aubervilliers", inMinutes: 7, from: northQuay)
+        ], at: [abbesses])
+        let content = ContentState(station: abbesses, trains: trains, now: now)
+
+        let island = content.keepingOnlyTheNextTrains
+
+        #expect(lines(of: content).flatMap(\.directions).map(\.trains.count) == [2, 2])
+        #expect(island.stationName == "Abbesses")
+        #expect(island.updatedAt == content.updatedAt)
+        #expect(lines(of: island).flatMap(\.directions) == [
+            LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 1)]),
+            LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 3)])
+        ])
+    }
+
+    @Test(arguments: [NextTrainsState.loading, .noLiveData])
+    func keepsTheContentWithoutTrainsForTheDynamicIsland(trains: NextTrainsState) {
+        let content = ContentState(station: station, trains: trains, now: now)
+
+        #expect(content.keepingOnlyTheNextTrains == content)
+    }
+
     @Test func showsTheLinesOfEveryStationOfTheHubEachWithTheStationThatServesIt() {
         let mairieDIssy = Station(
             id: "mairie-d-issy",
