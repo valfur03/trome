@@ -49,7 +49,7 @@ private struct PanamRow: View {
                 .font(.subheadline)
                 .lineLimit(1)
                 .minimumScaleFactor(fitsTheWholeDestination ? 0.85 : 0.7)
-                .fixedSize(horizontal: fitsTheWholeDestination, vertical: false)
+                .fixedSize(horizontal: fitsTheWholeDestination, vertical: true)
             Spacer(minLength: 6)
             if trains.isEmpty {
                 if !nextTrainIsOverAnHourAway || !isStale {
