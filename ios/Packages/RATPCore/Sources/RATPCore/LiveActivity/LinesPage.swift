@@ -95,6 +95,17 @@ public struct LinesPage: Codable, Hashable, Sendable {
         }
     }
 
+    func nextRedrawDate(after now: Date) -> Date? {
+        let trainDates = lines.flatMap { line in
+            line.directions.flatMap(\.trains).flatMap { train in
+                line.line.mode == .metro
+                    ? PlatformStatus.changeDates(arrival: train.arrivalTime, departure: train.time)
+                    : [train.time]
+            }
+        }
+        return (trainDates + [soonestTrain?.time].compactMap { $0 }).filter { $0 > now }.min()
+    }
+
     public var showsSeveralLines: Bool {
         allLines.count > 1
     }

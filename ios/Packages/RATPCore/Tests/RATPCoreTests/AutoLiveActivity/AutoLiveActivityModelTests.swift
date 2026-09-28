@@ -133,18 +133,22 @@ struct AutoLiveActivityModelTests {
         )
     }
 
-    func makeModel() -> AutoLiveActivityModel {
-        let model = makeModel(locationService: locationService, keeper: keeper)
+    func makeModel(catalog: StationCatalog = Places.catalog) -> AutoLiveActivityModel {
+        let model = makeModel(locationService: locationService, keeper: keeper, catalog: catalog)
         locationService.start()
         return model
     }
 
-    private func makeModel(locationService: LocationService, keeper: StubLocationKeeper) -> AutoLiveActivityModel {
+    private func makeModel(
+        locationService: LocationService,
+        keeper: StubLocationKeeper,
+        catalog: StationCatalog = Places.catalog
+    ) -> AutoLiveActivityModel {
         let clock = clock
         let now: @Sendable () -> Date = { clock.now }
         let sleep: @Sendable (Duration) async throws -> Void = { try await clock.sleep(for: $0) }
         return AutoLiveActivityModel(
-            catalog: Places.catalog,
+            catalog: catalog,
             liveActivity: StationLiveActivityModel(client: client, now: now),
             inputs: .init(
                 locationService: locationService,

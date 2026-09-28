@@ -78,6 +78,10 @@ public final class StationLiveActivityModel {
     public func showNextLines() async {
         guard isShowing, let page = (content ?? client.shownContent)?.trains.linesPage else { return }
         firstLineIndex = page.nextFirstIndex
+        await redraw()
+    }
+
+    func redraw() async {
         guard let inputs else { return }
         await update(station: inputs.station, trains: inputs.trains)
     }

@@ -5,11 +5,13 @@ public struct LineDirection: Codable, Hashable, Sendable {
         public var time: Date
         public var destination: String
         public var status: PlatformStatus?
+        public var arrivalTime: Date?
 
-        public init(time: Date, destination: String, status: PlatformStatus? = nil) {
+        public init(time: Date, destination: String, status: PlatformStatus? = nil, arrivalTime: Date? = nil) {
             self.time = time
             self.destination = destination
             self.status = status
+            self.arrivalTime = arrivalTime
         }
 
         public var roundedUpCountdownEnd: Date {
@@ -158,7 +160,8 @@ enum LineDirections {
         LineDirection.Train(
             time: train.time,
             destination: destination ?? train.destination,
-            status: PlatformStatus(of: train, at: now)
+            status: PlatformStatus(of: train, at: now),
+            arrivalTime: train.arrivalTime
         )
     }
 

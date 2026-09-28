@@ -31,26 +31,39 @@ extension AutoLiveActivityModel {
 
     func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
         var asksPRIM = true
-        var waits = !fetchNow
+        var nextCall = fetchNow ? configuration.now() : nextPRIMCall(asksPRIM: asksPRIM)
         while !Task.isCancelled {
-            if waits {
-                let staleDate = liveActivity.content?.staleDate
-                let delay = asksPRIM
-                    ? BackgroundTrainsRefresh.delay(untilStale: staleDate, now: configuration.now())
-                    : BackgroundTrainsRefresh.maximumDelay
+            let now = configuration.now()
+            let redrawDate = liveActivity.content?.trains.linesPage?.nextRedrawDate(after: now)
+                .flatMap { $0 < nextCall ? $0 : nil }
+            let delay = (redrawDate ?? nextCall).timeIntervalSince(now)
+            if delay > 0 {
                 do {
-                    try await configuration.sleep(.seconds(delay))
+                    try await configuration.sleep(.seconds(delay.rounded(.up)))
                 } catch {
                     return
                 }
             }
-            waits = true
             syncWithSystem()
             guard liveActivity.isShowing else { return }
-            guard asksPRIM else { continue }
-            await feed(station)
-            asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
+            if redrawDate != nil {
+                await liveActivity.redraw()
+                continue
+            }
+            if asksPRIM {
+                await feed(station)
+                asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
+            }
+            nextCall = nextPRIMCall(asksPRIM: asksPRIM)
         }
+    }
+
+    private func nextPRIMCall(asksPRIM: Bool) -> Date {
+        let now = configuration.now()
+        let delay = asksPRIM
+            ? BackgroundTrainsRefresh.delay(untilStale: liveActivity.content?.staleDate, now: now)
+            : BackgroundTrainsRefresh.maximumDelay
+        return now.addingTimeInterval(delay)
     }
 
     func keepFeeding(_ station: Station) async {

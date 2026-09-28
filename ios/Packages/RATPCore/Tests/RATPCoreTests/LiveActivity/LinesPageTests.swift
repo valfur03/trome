@@ -3,7 +3,7 @@ import Testing
 @testable import RATPCore
 
 struct LinesPageTests {
-    private let now = Date(timeIntervalSince1970: 1_000_000)
+    let now = Date(timeIntervalSince1970: 1_000_000)
 
     private func time(inMinutes minutes: Double) -> Date {
         now.addingTimeInterval(minutes * 60)

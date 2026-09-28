@@ -100,15 +100,11 @@ extension PRIMDeparturesProviderTests {
         let departures = try await provider.departures(at: [abbesses])
 
         #expect(departures.allSatisfy { $0.quayRef == nil })
-        #expect(LineDirections.directions(of: line12, at: abbesses, from: departures, now: Self.recordedAt) == [
-            LineDirection(label: "Mairie d'Aubervilliers", times: [
-                Fixture.date("2026-09-26T10:04:00Z"),
-                Fixture.date("2026-09-26T10:09:30Z")
-            ]),
-            LineDirection(label: "Mairie d'Issy", times: [
-                Fixture.date("2026-09-26T10:02:30Z"),
-                Fixture.date("2026-09-26T10:07:00Z")
-            ])
+        let directions = LineDirections.directions(of: line12, at: abbesses, from: departures, now: Self.recordedAt)
+        #expect(directions.map(\.label) == ["Mairie d'Aubervilliers", "Mairie d'Issy"])
+        #expect(directions.map(\.times) == [
+            [Fixture.date("2026-09-26T10:04:00Z"), Fixture.date("2026-09-26T10:09:30Z")],
+            [Fixture.date("2026-09-26T10:02:30Z"), Fixture.date("2026-09-26T10:07:00Z")]
         ])
     }
 }

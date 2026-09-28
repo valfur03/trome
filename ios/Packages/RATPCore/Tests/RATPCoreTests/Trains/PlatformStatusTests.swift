@@ -41,4 +41,20 @@ struct PlatformStatusTests {
     @Test func isAtThePlatformWhenPRIMSaysTheTrainIsAtTheStop() {
         #expect(PlatformStatus(of: departure(leavesIn: 40, arrivesIn: 20, atStop: true), at: now) == .atPlatform)
     }
+
+    @Test func changesWhenTheTrainStartsApproachingWhenItArrivesAndWhenItLeaves() {
+        let train = departure(leavesIn: 200, arrivesIn: 180)
+        let dates = PlatformStatus.changeDates(arrival: train.arrivalTime, departure: train.time)
+
+        #expect(dates == [now.addingTimeInterval(121), now.addingTimeInterval(180), now.addingTimeInterval(200)])
+        #expect(PlatformStatus(of: train, at: dates[0].addingTimeInterval(-1)) == nil)
+        #expect(PlatformStatus(of: train, at: dates[0]) == .approaching)
+        #expect(PlatformStatus(of: train, at: dates[1]) == .atPlatform)
+    }
+
+    @Test func changesFromTheDepartureTimeWhenPRIMGivesNoArrivalTime() {
+        let dates = PlatformStatus.changeDates(arrival: nil, departure: now.addingTimeInterval(200))
+
+        #expect(dates == [now.addingTimeInterval(141), now.addingTimeInterval(200), now.addingTimeInterval(200)])
+    }
 }

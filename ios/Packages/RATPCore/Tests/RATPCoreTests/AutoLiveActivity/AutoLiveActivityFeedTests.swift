@@ -115,4 +115,35 @@ extension AutoLiveActivityModelTests {
         #expect(model.shownStation == nil)
         #expect(provider.callCount == 2)
     }
+
+    @Test func redrawsTheLiveActivityInTheBackgroundWhenATrainStartsApproachingWithoutAskingPRIM() async {
+        let line12 = TransitLine(mode: .metro, name: "12")
+        let station = Station(id: "m", name: "Station M", coordinate: Coordinate(48.8600, 2.3600), lines: [line12])
+        provider.answer(.success([
+            Departure(
+                line: line12,
+                destination: "Mairie d'Issy",
+                time: clock.now.addingTimeInterval(110),
+                arrivalTime: clock.now.addingTimeInterval(100)
+            )
+        ]), for: station)
+        let model = makeModel(catalog: StationCatalog(stations: [station]))
+        await arrive(at: station.coordinate, in: model)
+        await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
+        #expect(client.updates.last?.shownTrains.map(\.status) == [nil])
+        model.setAppActive(false)
+        let callCount = provider.callCount
+
+        clock.letTimersFire(upTo: 41)
+        await waitUntil { client.updates.last?.shownTrains.first?.status == .approaching }
+
+        #expect(client.updates.last?.shownTrains.map(\.status) == [.approaching])
+        #expect(provider.callCount == callCount)
+    }
+}
+
+private extension StationActivityAttributes.ContentState {
+    var shownTrains: [LineDirection.Train] {
+        trains.linesPage?.lines.flatMap(\.directions).flatMap(\.trains) ?? []
+    }
 }

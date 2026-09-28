@@ -16,4 +16,9 @@ public enum PlatformStatus: String, Codable, Hashable, Sendable {
             return nil
         }
     }
+
+    static func changeDates(arrival: Date?, departure: Date) -> [Date] {
+        let arrival = arrival ?? departure
+        return [arrival.addingTimeInterval(1 - approachingSeconds), arrival, departure]
+    }
 }
