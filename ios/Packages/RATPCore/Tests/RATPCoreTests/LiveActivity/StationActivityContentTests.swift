@@ -13,6 +13,9 @@ struct StationActivityContentTests {
     private var station: Station {
         Station(id: "pigalle", name: "Pigalle", coordinate: Coordinate(48.8822, 2.3377), lines: [line12, line2])
     }
+    private var abbesses: Station {
+        Station(id: "abbesses", name: "Abbesses", coordinate: Coordinate(48.8844, 2.3384), lines: [line12])
+    }
 
     private func time(inMinutes minutes: Double) -> Date {
         now.addingTimeInterval(minutes * 60)
@@ -119,12 +122,6 @@ struct StationActivityContentTests {
     }
 
     @Test func showsBothDirectionsWithTwoTrainsEachAtAStationWithOneLine() {
-        let abbesses = Station(
-            id: "abbesses",
-            name: "Abbesses",
-            coordinate: Coordinate(48.8844, 2.3384),
-            lines: [line12]
-        )
         let trains = board([
             train(line12, to: "Mairie d'Issy", inMinutes: 3, from: southQuay),
             train(line12, to: "Mairie d'Issy", inMinutes: 9, from: southQuay),
@@ -141,12 +138,6 @@ struct StationActivityContentTests {
     }
 
     @Test func keepsOnlyTheNextTrainOfEachDirectionForTheDynamicIsland() {
-        let abbesses = Station(
-            id: "abbesses",
-            name: "Abbesses",
-            coordinate: Coordinate(48.8844, 2.3384),
-            lines: [line12]
-        )
         let trains = board([
             train(line12, to: "Mairie d'Issy", inMinutes: 3, from: southQuay),
             train(line12, to: "Mairie d'Issy", inMinutes: 9, from: southQuay),
