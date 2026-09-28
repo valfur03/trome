@@ -61,12 +61,12 @@ logs_with_key() {
 case "${1:-}" in
     files-with-key)
         shift
-        files_with_key "$@"
+        files_with_key "$@" || exit
         exit
         ;;
     logs-with-key)
         shift
-        logs_with_key "$@"
+        logs_with_key "$@" || exit
         exit
         ;;
 esac
