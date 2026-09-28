@@ -4,6 +4,7 @@ import SwiftUI
 struct RERDirectionRow: View {
     let direction: LineDirection
     let isStale: Bool
+    var isCompact = false
 
     var body: some View {
         if direction.showsEachDestination && !isStale {
@@ -17,17 +18,20 @@ struct RERDirectionRow: View {
                 Image(systemName: "arrow.right")
                     .font(.caption)
                 DirectionName(text: direction.name)
-                    .font(.subheadline)
+                    .font(isCompact ? .caption : .subheadline)
                 Spacer(minLength: 8)
                 if direction.times.isEmpty {
                     if !direction.nextTrainIsOverAnHourAway || !isStale {
-                        NoTrainsText(nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway)
-                            .layoutPriority(1)
+                        NoTrainsText(
+                            nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway,
+                            isCompact: isCompact
+                        )
+                        .layoutPriority(1)
                     }
                 } else if !isStale {
                     VStack(alignment: .trailing, spacing: 0) {
                         WaitingTime(time: direction.times[0])
-                            .font(.subheadline.bold())
+                            .font(isCompact ? .caption.bold() : .subheadline.bold())
                         if direction.times.count > 1 {
                             WaitingTime(time: direction.times[1])
                                 .font(.caption2)

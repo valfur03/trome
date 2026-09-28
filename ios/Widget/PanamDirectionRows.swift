@@ -5,6 +5,7 @@ struct PanamDirectionRows: View {
     let direction: LineDirection
     let line: TransitLine
     let isStale: Bool
+    var isCompact = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -14,7 +15,8 @@ struct PanamDirectionRows: View {
                     trains: branch.trains,
                     nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway,
                     line: line,
-                    isStale: isStale
+                    isStale: isStale,
+                    isCompact: isCompact
                 )
             }
         }
@@ -27,6 +29,7 @@ private struct PanamRow: View {
     let nextTrainIsOverAnHourAway: Bool
     let line: TransitLine
     let isStale: Bool
+    let isCompact: Bool
 
     var body: some View {
         if trains.count > 1 && !isStale {
@@ -46,20 +49,20 @@ private struct PanamRow: View {
                 .foregroundStyle(line.badgeColor)
                 .accessibilityHidden(true)
             Text(destination)
-                .font(.subheadline)
+                .font(isCompact ? .caption : .subheadline)
                 .lineLimit(1)
                 .minimumScaleFactor(fitsTheWholeDestination ? 0.85 : 0.7)
                 .fixedSize(horizontal: fitsTheWholeDestination, vertical: true)
             Spacer(minLength: 6)
             if trains.isEmpty {
                 if !nextTrainIsOverAnHourAway || !isStale {
-                    NoTrainsText(nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway)
+                    NoTrainsText(nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway, isCompact: isCompact)
                         .fixedSize()
                 }
             } else if !isStale {
                 HStack(spacing: 4) {
                     ForEach(Array(trains.prefix(timeCount).enumerated()), id: \.offset) { index, train in
-                        PanamWait(train: train, isNext: index == 0)
+                        PanamWait(train: train, isNext: index == 0, isCompact: isCompact)
                     }
                 }
                 .fixedSize()
@@ -73,6 +76,7 @@ private struct PanamWait: View {
 
     let train: LineDirection.Train
     let isNext: Bool
+    let isCompact: Bool
 
     private static let widestMinutes = SystemFormatStyle.DateOffset(
         to: Date(timeIntervalSinceReferenceDate: 59 * 60 + 30),
@@ -82,7 +86,7 @@ private struct PanamWait: View {
 
     var body: some View {
         label
-            .font(isNext ? .subheadline.bold() : .caption.bold())
+            .font(isNext && !isCompact ? .subheadline.bold() : .caption.bold())
             .fontWidth(.condensed)
             .monospacedDigit()
             .lineLimit(1)
