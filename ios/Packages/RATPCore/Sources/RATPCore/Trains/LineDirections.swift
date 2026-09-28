@@ -138,11 +138,7 @@ enum LineDirections {
             return LineDirection(
                 label: ends.reachableEnds(of: sides[index], from: station.name).joined(separator: " / "),
                 trains: sideTrains.prefix(timesPerDirection).map { train in
-                    LineDirection.Train(
-                        time: train.time,
-                        destination: endName(of: train.destination, in: sides[index], ends: ends) ?? train.destination,
-                        status: PlatformStatus(of: train, at: now)
-                    )
+                    shown(train, at: now, as: endName(of: train.destination, in: sides[index], ends: ends))
                 }
             )
         }
@@ -152,16 +148,18 @@ enum LineDirections {
             .map { group in
                 LineDirection(
                     label: group.trains[0].destination,
-                    trains: group.trains.prefix(timesPerDirection).map {
-                        LineDirection.Train(
-                            time: $0.time,
-                            destination: $0.destination,
-                            status: PlatformStatus(of: $0, at: now)
-                        )
-                    }
+                    trains: group.trains.prefix(timesPerDirection).map { shown($0, at: now) }
                 )
             }
         return Array((sideDirections + otherDirections).prefix(maximumDirections))
+    }
+
+    private static func shown(_ train: Departure, at now: Date, as destination: String? = nil) -> LineDirection.Train {
+        LineDirection.Train(
+            time: train.time,
+            destination: destination ?? train.destination,
+            status: PlatformStatus(of: train, at: now)
+        )
     }
 
     private static func groups(of trains: [Departure], quays: [String]) -> [Group] {
