@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import RATPCore
 
@@ -131,6 +132,21 @@ struct NearestStationModelTests {
 
         await waitForState(.locationUnavailable, in: model)
         #expect(model.state == .locationUnavailable)
+    }
+
+    @Test func waitsTwentySecondsForThePositionByDefault() async {
+        let waits = Mutex<[Duration]>([])
+        let model = NearestStationModel(
+            permission: MockLocationPermission(authorization: .authorized),
+            locationService: LocationService(realProvider: gps, sourceStore: nil),
+            catalog: StationCatalog(stations: [nation]),
+            sleep: { duration in waits.withLock { $0.append(duration) } }
+        )
+
+        await model.refresh()
+        await waitForState(.locationUnavailable, in: model)
+
+        #expect(waits.withLock { $0 } == [.seconds(20)])
     }
 
     @Test func followsTheNewPosition() async {
