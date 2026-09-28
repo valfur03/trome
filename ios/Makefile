@@ -70,7 +70,7 @@ help:
 	@echo "make strings-check       Build, then fail when a text of the app or the Live Activity has no French text in its String Catalog"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
-	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key (uses a fake key)"
+	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key and that a new key replaces the old one (uses fake keys)"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
@@ -109,7 +109,7 @@ ifeq ($(LIVE),1)
 	@test -f "$(PRIM_SECRETS)" || { echo "No PRIM key: $(PRIM_SECRETS) does not exist. Add the key there (see README), or build without LIVE=1." >&2; exit 1; }
 	@echo "LIVE=1: the build uses the PRIM key of $(PRIM_SECRETS)"
 	@if [ "$(PRIM_SECRETS)" = "$(OLD_PRIM_SECRETS)" ]; then echo "Note: the key is at its old place. Once the main folder has the ios/ folder, move it there: cd $(MAIN_FOLDER) && mv Config/Secrets.xcconfig ios/Config/ && rmdir Config"; fi
-	@$(BUILD_APP) -xcconfig "$(PRIM_SECRETS)"
+	@$(BUILD_APP) -xcconfig "$(PRIM_SECRETS)" PRIM_SECRETS_STAMP="$$(stat -f '%Fm-%i-%z' "$(PRIM_SECRETS)")"
 else
 	@rm -rf $(BUILD_RESULT)
 	$(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)

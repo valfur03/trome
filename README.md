@@ -255,7 +255,9 @@ Before TASK-43, the key file was `Config/Secrets.xcconfig` (at the root). `make 
 
 The other `make` commands (`make run` without `LIVE=1`, `make check`, `make e2e`) never use the key: they build with `ios/Config/NoKey.xcconfig`. Then the tests do not use your PRIM quota. The Run button in Xcode uses the key of the folder that you open.
 
-The build output never shows the key. `make live-key-check` proves it with a fake key. `make check` runs it.
+When you change your key, the next `make run LIVE=1` puts the new key in the app. Why this needs care: `make build LIVE=1` gives the key file to Xcode with `-xcconfig`. Xcode keeps a copy of the build settings (the build description, in `ios/.build/DerivedData/Build/Intermediates.noindex/XCBuildData/`), and it makes a new one only when the path of that file changes, not its content. So `make build LIVE=1` also passes `PRIM_SECRETS_STAMP`: the time, the file number and the size of the key file (never its content). A change of the key file changes the stamp, so Xcode reads the file again.
+
+The build output never shows the key. `make live-key-check` proves it with fake keys: it builds with a first key, changes the key file, builds again, and checks that the app has the new key and not the old one. Then it builds without `LIVE=1` and checks that the app has no key. `make check` runs it.
 
 ## Install on your iPhone (free Apple ID)
 
