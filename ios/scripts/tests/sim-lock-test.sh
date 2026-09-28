@@ -367,16 +367,11 @@ expect "the waiting job does not remove the app of make run of the other folder"
 finish_background
 expect "the waiting job runs once the other folder runs make simulator-shutdown" "$(ran after-session)" "ran"
 
-"$scripts/sim-lock.sh" job sleep 4 &
-this_job=$!
-tries=0
-until [ -e "$RATP_SIM_LOCK/pid" ] || [ "$tries" -ge 20 ]; do
-    sleep 1
-    tries=$((tries + 1))
-done
+hold "$RATP_SIM_LOCK"
+(cd "$scripts/../.." && pwd) > "$RATP_SIM_LOCK/worktree"
 in_background "$other_scripts/sim-lock.sh" open sh -c 'echo ran > "$FAKE_SIM_STATE/open-after-job"'
 expect "make run in another folder waits while a job holds the lock" "$(ran open-after-job)" "waiting"
-wait "$this_job"
+rm -rf "$RATP_SIM_LOCK"
 finish_background
 expect "make run in the other folder runs once the job ends, and keeps the lock" "$(ran open-after-job) $(cat "$RATP_SIM_LOCK/worktree")" "ran $state/other"
 "$other_scripts/sim-lock.sh" free
