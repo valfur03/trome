@@ -87,24 +87,33 @@ private struct LockScreenView: View {
 }
 
 private struct ExpandedIslandBottom: View {
+    static let cornerRoom: CGFloat = 8
+
     let state: StationActivityAttributes.ContentState
     let isStale: Bool
     var isCompact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: state.multiLinePage == nil && !isCompact ? 8 : 4) {
+        VStack(alignment: .leading, spacing: spacing) {
             if let page = state.multiLinePage {
-                StationAndLinesHeader(stationName: state.stationName, page: page)
+                StationAndLinesHeader(stationName: state.stationName, page: page, isCompact: isCompact)
             }
             TrainsSummary(state: state, isStale: isStale, isCompact: isCompact)
             SnoozeButtons()
         }
+        .padding(.bottom, Self.cornerRoom)
+    }
+
+    private var spacing: CGFloat {
+        if isCompact { return 2 }
+        return state.multiLinePage == nil ? 8 : 4
     }
 }
 
 private struct StationAndLinesHeader: View {
     let stationName: String
     let page: LinesPage
+    var isCompact = false
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
@@ -116,7 +125,7 @@ private struct StationAndLinesHeader: View {
     private func header(showsEveryBadge: Bool) -> some View {
         HStack {
             Text(stationName)
-                .font(.headline)
+                .font(isCompact ? .subheadline.bold() : .headline)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Spacer(minLength: 4)
