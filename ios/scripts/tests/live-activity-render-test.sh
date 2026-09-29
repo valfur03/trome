@@ -20,11 +20,57 @@ cat > "$state/fake-xcodebuild" <<'FAKE'
 echo "$TEST_RUNNER_RENDER_LANGUAGE $TEST_RUNNER_RENDER_OUT $*" >> "$FAKE_CALLS"
 printf 'station,page,stale,surface,size,height,limit,over\n"Nation",0,false,lock17,L,150.0,160.0,false\n' \
     > "$TEST_RUNNER_RENDER_OUT/heights.csv"
+echo '[]' > "$TEST_RUNNER_RENDER_OUT/texts.json"
 if [ "$TEST_RUNNER_RENDER_LANGUAGE" = fr ]; then
     echo '"Opéra",1,false,lock17,XXXL,200.0,195.0,true' >> "$TEST_RUNNER_RENDER_OUT/heights.csv"
+    cp "$FAKE_TEXTS" "$TEST_RUNNER_RENDER_OUT/texts.json"
 fi
 FAKE
 chmod +x "$state/fake-xcodebuild"
+text() {
+    printf '{"x":%s,"y":%s,"width":%s,"height":20,"isTruncated":%s,"visibleCharacters":%s,"ocr":"%s"}' "$@"
+}
+expected() {
+    printf '{"kind":"%s","text":"%s","line":%s,"direction":%s}' "$@"
+}
+render() {
+    printf '{"image":"%s","station":"Opéra","page":%s,"isStale":false,"surface":"%s","size":"XXXL","height":180,' "$@"
+}
+{
+    echo '['
+    render "Opéra-p2-lock17-XXXL.png" 2 lock17
+    echo '"drawn":['
+    text 40 40 80 true 12 "* Haussmann Sa..."; echo ,
+    text 130 40 30 true 2 "Na..."; echo ,
+    text 130 60 30 true 2 "→ Ch..."; echo ,
+    text 300 40 70 true 6 "dans 3..."; echo ,
+    text 300 60 73 false 10 ""
+    echo '],"expected":['
+    expected station "Opéra" null null; echo ,
+    expected label "Haussmann Saint-Lazare" 0 null; echo ,
+    expected destination "Nanterre - Préfecture" 0 0; echo ,
+    expected destination "Chessy" 0 1
+    echo ']},'
+    render "Opéra-p3-lockSE-XXXL.png" 3 lockSE
+    echo '"drawn":['
+    text 130 40 60 true 9 "→ Mairie d'..."; echo ,
+    text 130 60 60 true 9 "Mairie d'"; echo ,
+    text 130 80 60 true 6 "Gallie..."; echo ,
+    text 130 100 60 false 6 ""; echo ,
+    text 130 120 60 false 4 ""; echo ,
+    text 100 140 10 true 0 "..."; echo ,
+    text 280 40 75 false 5 ""
+    echo '],"expected":['
+    expected station "Opéra" null null; echo ,
+    expected destination "Mairie d'Issy" 0 0; echo ,
+    expected destination "Mairie d'Aubervilliers" 0 1; echo ,
+    expected destination "Gallieni" 1 0; echo ,
+    expected destination "Nation" 1 1; echo ,
+    expected destination "Orly" 2 0; echo ,
+    expected destination "Porte de Clignancourt" 2 1
+    echo ']}]'
+} > "$state/texts.json"
+export FAKE_TEXTS="$state/texts.json"
 out="$state/out"
 mkdir -p "$out/old"
 touch "$out/old/heights.csv"
@@ -52,6 +98,36 @@ expect "the report gives the too tall renders of each language" \
 Too tall for their text size: 1 (list: OUT/fr/too-tall.csv)
 == Language: en
 Too tall for their text size: 0 (list: OUT/en/too-tall.csv)"
+
+expect "the report counts each kind of breach of decision-15, for each phone, surface and size, 0 included" \
+    "$(echo "$report" | grep -E '^(Breaches|  iPhone)' | sed "s|$out|OUT|")" \
+    "Breaches of decision-15 (texts cut too much): 6 (list: OUT/fr/breaches.csv)
+  iPhone 17, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone 17, lock screen, XXXL: time cut 1, destination under 6 2, two directions the same 0, label cut 1
+  iPhone SE, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone SE, lock screen, XXXL: time cut 0, destination under 6 1, two directions the same 1, label cut 0
+  iPhone 17, island, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone 17, island, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+Breaches of decision-15 (texts cut too much): 0 (list: OUT/en/breaches.csv)
+  iPhone 17, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone 17, lock screen, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone SE, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone SE, lock screen, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone 17, island, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
+  iPhone 17, island, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0"
+expect "the list gives each breach with its station, page, surface and image" \
+    "$(sed 1d "$out/fr/breaches.csv")" \
+    "destination-under-6,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"Na…\"
+destination-under-6,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"Ch…\"
+destination-under-6,\"Opéra\",3,false,lockSE,XXXL,\"Opéra-p3-lockSE-XXXL.png\",\"…\"
+label-cut,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"Haussmann Sa…\"
+same-two-directions,\"Opéra\",3,false,lockSE,XXXL,\"Opéra-p3-lockSE-XXXL.png\",\"Mairie d'… / Mairie d'…\"
+time-cut,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"dans 3…\""
+
+rm "$out/fr/texts.json"
+expect "the report fails when the render wrote no texts.json" \
+    "$("$scripts/live-activity-render.sh" report "$out" > /dev/null 2>&1 && echo passes || echo fails)" "fails"
+cp "$FAKE_TEXTS" "$out/fr/texts.json"
 
 rm -rf "$out/en"
 expect "the report fails when a language was not drawn" \

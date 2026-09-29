@@ -41,6 +41,8 @@ final class LiveActivityRenderCheck: XCTestCase {
     static let maxPages = 12
 
     private let renderer = ImageRenderer(content: AnyView(EmptyView()))
+    private let recorder = DrawnTextRecorder()
+    private var imageTexts: [ImageTexts] = []
 
     func testRenderEveryStationPage() async throws {
         let started = Date()
@@ -83,6 +85,7 @@ final class LiveActivityRenderCheck: XCTestCase {
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
         )
+        try JSONEncoder().encode(imageTexts).write(to: outDir.appendingPathComponent("texts.json"))
         let seconds = Int(Date().timeIntervalSince(started))
         print(
             "RENDER-CHECK language=\(language) stations=\(catalog.stations.count) renders=\(rows.count - 1)"
@@ -132,7 +135,17 @@ final class LiveActivityRenderCheck: XCTestCase {
         .foregroundStyle(.white)
         .environment(\.dynamicTypeSize, render.size)
         .environment(\.colorScheme, .dark)
-        renderer.content = AnyView(content)
+        if savesImage {
+            recorder.reset()
+            let recorder = recorder
+            renderer.content = AnyView(
+                content.overlayPreferenceValue(Text.LayoutKey.self) { layouts in
+                    GeometryReader { proxy in recorder.record(layouts, in: proxy) }
+                }
+            )
+        } else {
+            renderer.content = AnyView(content)
+        }
         renderer.proposedSize = ProposedViewSize(
             width: render.surface.width,
             height: render.surface.heightLimit(of: render.state, at: "L")
@@ -143,6 +156,13 @@ final class LiveActivityRenderCheck: XCTestCase {
             let image = try XCTUnwrap(renderer.uiImage)
             height = image.size.height
             try XCTUnwrap(image.pngData()).write(to: outDir.appendingPathComponent(imageFile(of: render)))
+            imageTexts.append(
+                ImageTexts(
+                    image: imageFile(of: render), station: render.station.name, page: render.page,
+                    isStale: render.isStale, surface: render.surface.name, size: render.sizeName,
+                    height: height, drawn: recorder.texts, expected: ExpectedText.all(of: render.state)
+                )
+            )
         } else {
             renderer.render { size, _ in height = size.height.rounded(.up) }
         }

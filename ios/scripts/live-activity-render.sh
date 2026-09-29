@@ -4,7 +4,7 @@ set -eu
 usage() {
     echo "Usage: $0 render <output folder> <xcodebuild test command...>" >&2
     echo "       Run it through the Simulator lock, in ios/: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset ./scripts/simulator.sh with-destination $0 render ..." >&2
-    echo "       $0 report <output folder>   (on the Mac, after the render: the too tall renders and the cut texts)" >&2
+    echo "       $0 report <output folder>   (on the Mac, after the render: the too tall renders, the cut texts and the breaches of decision-15)" >&2
     echo "       It draws in the languages of RENDER_LANGUAGES (default: fr; for example \"fr en\"), each in its own folder: <output folder>/fr, <output folder>/en" >&2
     exit 1
 }
@@ -41,6 +41,7 @@ report() {
     sed 1d "$over" | awk -F, '{ print "  " $(NF-4) " " $(NF-3) " (limit " $(NF-1) " pt)" }' | sort | uniq -c
     echo "Cut texts in the images (OCR, for a person to read): $(wc -l < "$cuts" | tr -d ' ') (list: $cuts)"
     head -40 "$cuts"
+    swift "$scripts/live-activity-render-breaches.swift" "$dir"
 }
 
 case "$mode" in
