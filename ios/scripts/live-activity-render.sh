@@ -38,7 +38,7 @@ case "$mode" in
         images=$(find "$out" -name '*.png' | wc -l | tr -d ' ')
         echo "Renders: $renders (every station and page). Images: $images, in $out"
         echo "Too tall for their text size: $(($(wc -l < "$over") - 1)) (list: $over)"
-        sed 1d "$over" | head -20
+        sed 1d "$over" | awk -F, '{ print "  " $(NF-4) " " $(NF-3) " (limit " $(NF-1) " pt)" }' | sort | uniq -c
         echo "Cut texts in the images (OCR, for a person to read): $(wc -l < "$cuts" | tr -d ' ') (list: $cuts)"
         head -40 "$cuts"
         cat "$out/simulator-seconds.txt" 2> /dev/null || true

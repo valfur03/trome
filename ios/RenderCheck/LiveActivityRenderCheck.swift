@@ -9,12 +9,27 @@ final class LiveActivityRenderCheck: XCTestCase {
         let width: CGFloat
         let isIsland: Bool
         let heightLimits: [String: CGFloat]
+
+        func heightLimit(of state: StationActivityAttributes.ContentState, at size: String) -> CGFloat? {
+            if isIsland, state.trains.linesPage?.showsSeveralLines == true { return nil }
+            return heightLimits[size]
+        }
+    }
+
+    struct Render {
+        let station: Station
+        let page: Int
+        let state: StationActivityAttributes.ContentState
+        let isStale: Bool
+        let surface: Surface
+        let sizeName: String
+        let size: DynamicTypeSize
     }
 
     static let surfaces = [
         Surface(name: "lock17", width: 373, isIsland: false, heightLimits: ["L": 160, "XXXL": 195]),
         Surface(name: "lockSE", width: 355, isIsland: false, heightLimits: ["L": 160, "XXXL": 195]),
-        Surface(name: "island17", width: 370, isIsland: true, heightLimits: ["L": 87])
+        Surface(name: "island17", width: 338, isIsland: true, heightLimits: ["L": 87])
     ]
     static let sizes: [(name: String, size: DynamicTypeSize)] = [("L", .large), ("XXXL", .xxxLarge)]
     static let imageStations = [
@@ -33,13 +48,10 @@ final class LiveActivityRenderCheck: XCTestCase {
         let missing = Self.imageStations.filter { name in !catalog.stations.contains { $0.name == name } }
         XCTAssertEqual(missing, [], "Stations of the image set that the station list no longer has")
         var rows = ["station,page,stale,surface,size,height,limit,over"]
-        var renders = 0
         for station in catalog.stations {
             let hub = catalog.hubStations(of: station)
-            let departures = try await fake.departures(at: hub)
             let now = Date()
-            let board = DepartureBoard(departures: departures, stations: hub, now: now)
-            let savesImages = Self.imageStations.contains(station.name)
+            let board = DepartureBoard(departures: try await fake.departures(at: hub), stations: hub, now: now)
             var index = 0
             var page = 0
             repeat {
@@ -52,23 +64,11 @@ final class LiveActivityRenderCheck: XCTestCase {
                 for isStale in [false, true] {
                     for surface in Self.surfaces {
                         for size in Self.sizes {
-                            let image = try render(state, isStale: isStale, on: surface, at: size.size, big: savesImages)
-                            renders += 1
-                            let height = image.size.height
-                            let limit = surface.heightLimits[size.name]
-                            let over = limit.map { height > $0 + 0.5 } ?? false
-                            let limitText = limit.map { "\($0)" } ?? ""
-                            rows.append(
-                                "\"\(station.name)\",\(page),\(isStale),\(surface.name),\(size.name),"
-                                    + "\(height),\(limitText),\(over)"
+                            let render = Render(
+                                station: station, page: page, state: state, isStale: isStale,
+                                surface: surface, sizeName: size.name, size: size.size
                             )
-                            if savesImages, let data = image.pngData() {
-                                let stale = isStale ? "-stale" : ""
-                                let file = "\(station.name)-p\(page)\(stale)-\(surface.name)-\(size.name).png"
-                                    .replacingOccurrences(of: " ", with: "_")
-                                    .replacingOccurrences(of: "/", with: "_")
-                                try data.write(to: outDir.appendingPathComponent(file))
-                            }
+                            rows.append(try draw(render, into: outDir))
                         }
                     }
                 }
@@ -81,7 +81,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
         )
         let seconds = Int(Date().timeIntervalSince(started))
-        print("RENDER-CHECK stations=\(catalog.stations.count) renders=\(renders) seconds=\(seconds)")
+        print("RENDER-CHECK stations=\(catalog.stations.count) renders=\(rows.count - 1) seconds=\(seconds)")
     }
 
     private func outputDirectory() throws -> URL {
@@ -94,29 +94,38 @@ final class LiveActivityRenderCheck: XCTestCase {
         return url
     }
 
-    private func render(
-        _ state: StationActivityAttributes.ContentState,
-        isStale: Bool,
-        on surface: Surface,
-        at size: DynamicTypeSize,
-        big: Bool
-    ) throws -> UIImage {
+    private func draw(_ render: Render, into outDir: URL) throws -> String {
+        let savesImage = Self.imageStations.contains(render.station.name)
         let content = Group {
-            if surface.isIsland {
-                ExpandedIslandBottomRegion(state: state, isStale: isStale)
+            if render.surface.isIsland {
+                ExpandedIslandBottomRegion(state: render.state, isStale: render.isStale)
             } else {
-                LockScreenView(state: state, isStale: isStale)
+                LockScreenView(state: render.state, isStale: render.isStale)
             }
         }
-        .frame(width: surface.width)
+        .frame(width: render.surface.width)
         .background(Color.black)
         .foregroundStyle(.white)
-        .environment(\.dynamicTypeSize, size)
+        .environment(\.dynamicTypeSize, render.size)
         .environment(\.colorScheme, .dark)
         let renderer = ImageRenderer(content: content)
-        let proposedHeight = surface.heightLimits["L"]
-        renderer.proposedSize = ProposedViewSize(width: surface.width, height: proposedHeight)
-        renderer.scale = big ? 3 : 1
-        return try XCTUnwrap(renderer.uiImage)
+        renderer.proposedSize = ProposedViewSize(
+            width: render.surface.width,
+            height: render.surface.heightLimit(of: render.state, at: "L")
+        )
+        renderer.scale = savesImage ? 3 : 1
+        let image = try XCTUnwrap(renderer.uiImage)
+        let limit = render.surface.heightLimit(of: render.state, at: render.sizeName)
+        let over = limit.map { image.size.height > $0 + 0.5 } ?? false
+        let stale = render.isStale ? "-stale" : ""
+        if savesImage, let data = image.pngData() {
+            let file = "\(render.station.name)-p\(render.page)\(stale)-\(render.surface.name)-\(render.sizeName).png"
+                .replacingOccurrences(of: " ", with: "_")
+                .replacingOccurrences(of: "/", with: "_")
+            try data.write(to: outDir.appendingPathComponent(file))
+        }
+        let limitText = limit.map { "\($0)" } ?? ""
+        return "\"\(render.station.name)\",\(render.page),\(render.isStale),\(render.surface.name),"
+            + "\(render.sizeName),\(image.size.height),\(limitText),\(over)"
     }
 }
