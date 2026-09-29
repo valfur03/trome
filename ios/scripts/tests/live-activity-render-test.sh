@@ -105,14 +105,14 @@ Too tall for their text size: 0 (list: OUT/en/too-tall.csv)"
 
 expect "the report counts each kind of breach of decision-15, for each phone, surface and size, 0 included" \
     "$(echo "$report" | grep -E '^(Breaches|  iPhone)' | sed "s|$out|OUT|")" \
-    "Breaches of decision-15 (texts cut too much): 8 (list: OUT/fr/breaches.csv)
+    "Breaches of decision-15 (texts cut too much), in the images of 1 stations: 8 (list: OUT/fr/breaches.csv)
   iPhone 17, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, lock screen, XXXL: time cut 1, destination under 6 2, two directions the same 0, label cut 1
   iPhone SE, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone SE, lock screen, XXXL: time cut 0, destination under 6 2, two directions the same 1, label cut 1
   iPhone 17, island, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, island, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
-Breaches of decision-15 (texts cut too much): 0 (list: OUT/en/breaches.csv)
+Breaches of decision-15 (texts cut too much), in the images of 0 stations: 0 (list: OUT/en/breaches.csv)
   iPhone 17, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, lock screen, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone SE, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
@@ -132,6 +132,13 @@ time-cut,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"dans 3�
 
 rm "$out/fr/texts.json"
 expect "the report fails when the render wrote no texts.json" \
+    "$("$scripts/live-activity-render.sh" report "$out" > /dev/null 2>&1 && echo passes || echo fails)" "fails"
+{
+    echo '['
+    render "Nation-p0-lock17-XXXL.png" 0 lock17
+    echo '"drawn":[{"left":0,"top":0,"width":50,"height":20,"isTruncated":true,"visibleCharacters":3}],"expected":[]}]'
+} > "$out/fr/texts.json"
+expect "the report fails when it cannot read an image of texts.json" \
     "$("$scripts/live-activity-render.sh" report "$out" > /dev/null 2>&1 && echo passes || echo fails)" "fails"
 cp "$FAKE_TEXTS" "$out/fr/texts.json"
 

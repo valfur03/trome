@@ -140,12 +140,12 @@ enum Recognition {
     static let margin: CGFloat = 3
     static let padding = 24
 
-    static func texts(in render: ImageTexts, folder: URL) -> [String] {
+    static func texts(in render: ImageTexts, folder: URL) -> [String]? {
         let cuts = render.drawn.filter(\.isTruncated)
         if cuts.allSatisfy({ $0.ocr != nil }) { return cuts.map { $0.ocr ?? "" } }
         guard let image = NSImage(contentsOf: folder.appendingPathComponent(render.image)),
               let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            return cuts.map { _ in "" }
+            return nil
         }
         let scale = CGFloat(cgImage.height) / render.height
         return cuts.map { text in
@@ -278,12 +278,19 @@ do {
     exit(1)
 }
 
-var seen = [[String]](repeating: [], count: renders.count)
+var recognized = [[String]?](repeating: nil, count: renders.count)
 let lock = NSLock()
 DispatchQueue.concurrentPerform(iterations: renders.count) { index in
     let texts = Recognition.texts(in: renders[index], folder: folder)
-    lock.withLock { seen[index] = texts }
+    lock.withLock { recognized[index] = texts }
 }
+let unreadable = zip(renders, recognized).filter { $0.1 == nil }.map(\.0.image)
+guard unreadable.isEmpty else {
+    let images = unreadable.joined(separator: ", ")
+    FileHandle.standardError.write(Data("Cannot read the images of \(folder.path)/texts.json: \(images)\n".utf8))
+    exit(1)
+}
+let seen = recognized.map { $0 ?? [] }
 
 var breaches: [Breach] = []
 var unnamed: [(ImageTexts, String)] = []
@@ -306,7 +313,8 @@ let csv = ["kind,station,page,stale,surface,size,image,shown"] + breaches.map { 
 let list = folder.appendingPathComponent("breaches.csv")
 try csv.joined(separator: "\n").appending("\n").write(to: list, atomically: true, encoding: .utf8)
 
-print("Breaches of decision-15 (texts cut too much): \(breaches.count) (list: \(list.path))")
+let stations = Set(renders.map(\.station)).count
+print("Breaches of decision-15 (texts cut too much), in the images of \(stations) stations: \(breaches.count) (list: \(list.path))")
 for (surface, title) in surfaces {
     for size in sizes {
         let counts = BreachKind.allCases.map { kind in
