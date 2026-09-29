@@ -126,10 +126,7 @@ enum Naming {
             (expected, score(of: normalizedSeen, against: normalized(String(expected.text.prefix(text.visibleCharacters)))))
         }
         if let best = scored.map(\.1).max(), best >= 0.75 {
-            let tied = scored.filter { $0.1 == best }.map(\.0)
-            for kind in ["label", "destination", "station"] where tied.contains(where: { $0.kind == kind }) {
-                return .expected(tied.filter { $0.kind == kind })
-            }
+            return .expected(scored.filter { $0.1 == best }.map(\.0))
         }
         if normalizedSeen.isEmpty || text.visibleCharacters == 0 {
             let rightEdge = render.drawn.map { $0.left + $0.width }.max() ?? 0
@@ -190,8 +187,16 @@ enum Recognition {
 
 enum Breaches {
     static func of(_ render: ImageTexts, seen: [String]) -> (breaches: [Breach], unnamed: [String]) {
-        let cuts = zip(render.drawn.filter(\.isTruncated), seen).map { text, ocr in
+        let named = zip(render.drawn.filter(\.isTruncated), seen).map { text, ocr in
             CutText(text: text, name: Naming.name(text, seen: ocr, in: render))
+        }
+        let destinationColumn = named.compactMap { cut -> CGFloat? in
+            guard case .expected(let texts) = cut.name, texts.allSatisfy({ $0.kind == "destination" }) else { return nil }
+            return cut.text.left
+        }.min()
+        let cuts = named.map { cut in
+            guard case .expected(let texts) = cut.name else { return cut }
+            return CutText(text: cut.text, name: .expected(oneKind(of: texts, at: cut.text, destinationColumn: destinationColumn)))
         }
         var breaches: [Breach] = []
         var unnamed: [String] = []
@@ -225,6 +230,15 @@ enum Breaches {
             }
         }
         return (breaches, unnamed)
+    }
+
+    static func oneKind(of texts: [ExpectedText], at text: DrawnText, destinationColumn: CGFloat?) -> [ExpectedText] {
+        let isLeftOfTheDestinations = destinationColumn.map { text.left < $0 - 1 } ?? false
+        let kinds = isLeftOfTheDestinations ? ["label", "destination", "station"] : ["destination", "label", "station"]
+        for kind in kinds where texts.contains(where: { $0.kind == kind }) {
+            return texts.filter { $0.kind == kind }
+        }
+        return texts
     }
 
     static func sameDirections(

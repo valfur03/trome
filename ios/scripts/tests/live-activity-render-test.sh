@@ -59,6 +59,8 @@ render() {
     text 130 100 60 false 6 ""; echo ,
     text 130 120 60 false 4 ""; echo ,
     text 100 140 10 true 0 "..."; echo ,
+    text 130 160 20 true 1 "C..."; echo ,
+    text 40 160 20 true 1 "C..."; echo ,
     text 280 40 75 false 5 ""
     echo '],"expected":['
     expected station "Opéra" null null; echo ,
@@ -67,7 +69,9 @@ render() {
     expected destination "Gallieni" 1 0; echo ,
     expected destination "Nation" 1 1; echo ,
     expected destination "Orly" 2 0; echo ,
-    expected destination "Porte de Clignancourt" 2 1
+    expected destination "Porte de Clignancourt" 2 1; echo ,
+    expected label "Châtelet - Les Halles" 3 null; echo ,
+    expected destination "Corbeil-Essonnes" 3 0
     echo ']}]'
 } > "$state/texts.json"
 export FAKE_TEXTS="$state/texts.json"
@@ -101,11 +105,11 @@ Too tall for their text size: 0 (list: OUT/en/too-tall.csv)"
 
 expect "the report counts each kind of breach of decision-15, for each phone, surface and size, 0 included" \
     "$(echo "$report" | grep -E '^(Breaches|  iPhone)' | sed "s|$out|OUT|")" \
-    "Breaches of decision-15 (texts cut too much): 6 (list: OUT/fr/breaches.csv)
+    "Breaches of decision-15 (texts cut too much): 8 (list: OUT/fr/breaches.csv)
   iPhone 17, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, lock screen, XXXL: time cut 1, destination under 6 2, two directions the same 0, label cut 1
   iPhone SE, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
-  iPhone SE, lock screen, XXXL: time cut 0, destination under 6 1, two directions the same 1, label cut 0
+  iPhone SE, lock screen, XXXL: time cut 0, destination under 6 2, two directions the same 1, label cut 1
   iPhone 17, island, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, island, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
 Breaches of decision-15 (texts cut too much): 0 (list: OUT/en/breaches.csv)
@@ -115,12 +119,14 @@ Breaches of decision-15 (texts cut too much): 0 (list: OUT/en/breaches.csv)
   iPhone SE, lock screen, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, island, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, island, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0"
-expect "the list gives each breach with its station, page, surface and image" \
+expect "the list gives each breach, and a cut text that can be a label or a destination is named by its column with its station, page, surface and image" \
     "$(sed 1d "$out/fr/breaches.csv")" \
     "destination-under-6,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"Na…\"
 destination-under-6,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"Ch…\"
 destination-under-6,\"Opéra\",3,false,lockSE,XXXL,\"Opéra-p3-lockSE-XXXL.png\",\"…\"
+destination-under-6,\"Opéra\",3,false,lockSE,XXXL,\"Opéra-p3-lockSE-XXXL.png\",\"C…\"
 label-cut,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"Haussmann Sa…\"
+label-cut,\"Opéra\",3,false,lockSE,XXXL,\"Opéra-p3-lockSE-XXXL.png\",\"C…\"
 same-two-directions,\"Opéra\",3,false,lockSE,XXXL,\"Opéra-p3-lockSE-XXXL.png\",\"Mairie d'… / Mairie d'…\"
 time-cut,\"Opéra\",2,false,lock17,XXXL,\"Opéra-p2-lock17-XXXL.png\",\"dans 3…\""
 
