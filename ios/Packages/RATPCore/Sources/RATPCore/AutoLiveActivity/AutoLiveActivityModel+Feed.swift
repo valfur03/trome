@@ -31,7 +31,7 @@ extension AutoLiveActivityModel {
 
     func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
         var asksPRIM = true
-        var nextCall = fetchNow ? configuration.now() : nextPRIMCall(asksPRIM: asksPRIM)
+        var nextCall = fetchNow || waitsForItsTrains ? configuration.now() : nextPRIMCall(asksPRIM: asksPRIM)
         while !Task.isCancelled {
             let now = configuration.now()
             let redrawDate = liveActivity.nextRedrawDate(after: now)
@@ -56,6 +56,10 @@ extension AutoLiveActivityModel {
             }
             nextCall = nextPRIMCall(asksPRIM: asksPRIM)
         }
+    }
+
+    private var waitsForItsTrains: Bool {
+        liveActivity.content?.trains == .loading
     }
 
     private func nextPRIMCall(asksPRIM: Bool) -> Date {

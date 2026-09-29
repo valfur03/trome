@@ -6,6 +6,7 @@ import Testing
 final class StubDeparturesProvider: DeparturesProvider {
     private let results = Mutex<[String: Result<[Departure], NextTrainsError>]>([:])
     private let calls = Mutex(0)
+    private let holdsAnswers = Mutex(false)
 
     var callCount: Int {
         calls.withLock { $0 }
@@ -21,9 +22,20 @@ final class StubDeparturesProvider: DeparturesProvider {
         results.withLock { $0[station.id] = result }
     }
 
+    func holdAnswers() {
+        holdsAnswers.withLock { $0 = true }
+    }
+
+    func releaseAnswers() {
+        holdsAnswers.withLock { $0 = false }
+    }
+
     func departures(at stations: [Station]) async throws -> [Departure] {
         calls.withLock { $0 += 1 }
         askedStations.withLock { $0.append(stations.map(\.id)) }
+        while holdsAnswers.withLock({ $0 }) {
+            try await Task.sleep(for: .milliseconds(1))
+        }
         return try results.withLock { $0[stations[0].id] ?? .success([]) }.get()
     }
 }

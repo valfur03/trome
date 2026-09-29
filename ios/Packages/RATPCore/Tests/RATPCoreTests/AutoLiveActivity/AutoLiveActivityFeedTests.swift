@@ -113,6 +113,69 @@ extension AutoLiveActivityModelTests {
         #expect(client.isShowing)
     }
 
+    @Test func getsTheFirstTrainsAtOnceWhenTheAppLeavesTheScreenDuringTheFirstLoad() async {
+        provider.holdAnswers()
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await waitUntil { provider.callCount == 1 }
+        let start = clock.now
+
+        model.setAppActive(false)
+        provider.releaseAnswers()
+        await waitUntil { client.updates.last?.hasTrains ?? false }
+
+        #expect(client.updates.last?.stationName == "Station A")
+        #expect(client.updates.last?.hasTrains == true)
+        #expect(clock.now == start)
+    }
+
+    @Test func getsTheTrainsOfTheNewStationAtOnceWhenTheAppLeavesTheScreenDuringTheLoadOfASwitch() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await waitUntil { client.updates.last?.hasTrains ?? false }
+        provider.holdAnswers()
+        gps.report(Places.atB)
+        await waitUntil { provider.askedStationIds.last == ["b"] }
+        let start = clock.now
+
+        model.setAppActive(false)
+        provider.releaseAnswers()
+        await waitUntil { client.updates.last?.stationName == "Station B" && client.updates.last?.hasTrains == true }
+
+        #expect(client.updates.last?.stationName == "Station B")
+        #expect(client.updates.last?.hasTrains == true)
+        #expect(clock.now == start)
+    }
+
+    @Test func getsTheFirstTrainsAtOnceWhenTheScreenStopsLoadingThemAsTheAppLeavesTheScreen() async {
+        provider.holdAnswers()
+        let model = makeModel()
+        let screen = Task { await screenTrains.keepUpdated(for: Places.stationA) }
+        await waitUntil { provider.callCount == 1 }
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        let start = clock.now
+
+        screen.cancel()
+        model.setAppActive(false)
+        provider.releaseAnswers()
+        await waitUntil { client.updates.last?.hasTrains ?? false }
+
+        #expect(client.updates.last?.hasTrains == true)
+        #expect(clock.now == start)
+    }
+
+    @Test func asksNoMoreWhenTheAppLeavesTheScreenAfterTheFirstTrainsCame() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await waitUntil { client.updates.last?.hasTrains ?? false }
+        #expect(provider.callCount == 1)
+
+        model.setAppActive(false)
+        try? await Task.sleep(for: .milliseconds(100))
+
+        #expect(provider.callCount == 1)
+    }
+
     @Test func stopsAskingInTheBackgroundOnceTheLiveActivityIsDismissed() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
@@ -188,5 +251,9 @@ extension AutoLiveActivityModelTests {
 private extension StationActivityAttributes.ContentState {
     var shownTrains: [LineDirection.Train] {
         trains.linesPage?.lines.flatMap(\.directions).flatMap(\.trains) ?? []
+    }
+
+    var hasTrains: Bool {
+        trains.linesPage != nil
     }
 }
