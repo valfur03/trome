@@ -122,7 +122,7 @@ final class LiveActivityRenderCheck: XCTestCase {
     }
 
     private func draw(_ render: Render, into outDir: URL) throws -> String {
-        let savesImage = Self.imageStations.contains(render.station.name)
+        let savesImage = render.station.hubId != nil || Self.imageStations.contains(render.station.name)
         let content = Group {
             if render.surface.isIsland {
                 ExpandedIslandBottomRegion(state: render.state, isStale: render.isStale)
@@ -160,7 +160,7 @@ final class LiveActivityRenderCheck: XCTestCase {
                 ImageTexts(
                     image: imageFile(of: render), station: render.station.name, page: render.page,
                     isStale: render.isStale, surface: render.surface.name, size: render.sizeName,
-                    height: height, drawn: recorder.texts, expected: ExpectedText.all(of: render.state)
+                    width: render.surface.width, height: height, drawn: recorder.texts, expected: ExpectedText.all(of: render.state)
                 )
             )
         } else {
