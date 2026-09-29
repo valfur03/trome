@@ -56,6 +56,14 @@ step_failed() {
     exit 1
 }
 
+stop_rebase() {
+    conflicts=$(git diff --name-only --diff-filter=U | sed 's/^/  /')
+    git rebase --abort || step_failed rebase "The rebase had a conflict, and 'git rebase --abort' failed: the rebase is still in progress in $root."
+    step_failed rebase "The rebase had a conflict on these files:
+$conflicts
+make merge stopped the rebase (git rebase --abort): '$branch' is as it was before. The task goes back to its Software Engineer, who runs 'git -C $root rebase $target', solves the conflict, and hands the task over again."
+}
+
 changes_app_code() {
     git diff --name-only --no-renames "$1" "$2" | grep -qv -e '^docs/' -e '^README\.md$' -e '^CLAUDE\.md$' -e '^ios/Packages/RATPCore/Tests/'
 }
@@ -88,7 +96,7 @@ merge() {
     check_worktree
     old=$(git rev-parse "refs/heads/$target")
     step "1/4 rebase $branch onto $target ($(git rev-parse --short "$old"))"
-    git rebase --no-rebase-merges "$old" || step_failed rebase "Solve the conflict, run 'git rebase --continue', then run 'make merge' again."
+    git rebase --no-rebase-merges "$old" || stop_rebase
     tested=$(git rev-parse HEAD)
     [ "$tested" != "$old" ] || fail "'$branch' has no change after the rebase. There is nothing to merge."
     step "2/4 quality gate ($check_command)"

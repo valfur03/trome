@@ -236,13 +236,17 @@ new_task conflict
 commit "$state/conflict" shared "from the task"
 advance_main shared "from main"
 before=$(rev main)
+conflict_head=$(rev task/conflict)
 merge conflict
 expect "make merge fails on a rebase conflict" "$status" "1"
 expect "make merge runs no gate after a rebase conflict" "$(cat "$state/steps")" ""
 expect "make merge leaves main unchanged after a rebase conflict" "$(rev main)" "$before"
 expect "make merge says that the rebase failed" "$(contains "$state/conflict.log" "the step 'rebase' failed")" "yes"
 expect "make merge frees the Simulator lock after a rebase conflict" "$(lock_state)" "free"
-git -C "$state/conflict" rebase --abort
+expect "make merge stops the rebase after a conflict" "$(test -d "$(git -C "$state/conflict" rev-parse --git-path rebase-merge)" && echo in-progress || echo stopped)" "stopped"
+expect "make merge leaves the task branch as it was after a rebase conflict" "$(rev task/conflict)" "$conflict_head"
+expect "make merge leaves the worktree clean after a rebase conflict" "$(git -C "$state/conflict" status --porcelain)" ""
+expect "make merge names the files of the conflict" "$(contains "$state/conflict.log" "  shared")" "yes"
 
 new_task dirty
 commit "$state/dirty" dirty dirty
