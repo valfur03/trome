@@ -57,6 +57,7 @@ step_failed() {
 }
 
 stop_rebase() {
+    in_rebase || step_failed rebase "git rebase failed before it started, so no rebase is in progress: '$branch' is as it was before."
     conflicts=$(git diff --name-only --diff-filter=U | sed 's/^/  /')
     git rebase --abort || step_failed rebase "The rebase had a conflict, and 'git rebase --abort' failed: the rebase is still in progress in $root."
     step_failed rebase "The rebase had a conflict on these files:
