@@ -100,10 +100,15 @@ wait_until_stopped() {
     done
 }
 
+runs_the_watcher_itself() {
+    [ "$(basename "$(ps -p "$1" -o comm= 2> /dev/null)")" != perl ] &&
+        ps -p "$1" -o command= | grep -qF "sim-lock.sh watch"
+}
+
 command_of_started_watcher() {
     started=$(cat "$RATP_SIM_LOCK.slots-watcher")
     tries=0
-    until ps -p "$started" -o command= | grep -qF "sim-lock.sh watch" || [ "$tries" -ge 5 ]; do
+    until runs_the_watcher_itself "$started" || [ "$tries" -ge 5 ]; do
         sleep 1
         tries=$((tries + 1))
     done
