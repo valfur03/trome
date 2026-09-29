@@ -12,7 +12,7 @@ struct LiveActivityControls: View {
     var body: some View {
         VStack(spacing: 8) {
             if liveActivity.isShowing {
-                ShownLiveActivityControls()
+                ShownLiveActivityControls(translatesTexts: false)
             } else if let station {
                 Button {
                     Task { await autoLiveActivity.startByHand(station) }

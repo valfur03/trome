@@ -1,10 +1,14 @@
 import SwiftUI
 
 struct ButtonLabel: View {
-    let title: LocalizedStringKey
+    let title: Text
     let systemImage: String
 
     init(_ title: LocalizedStringKey, systemImage: String) {
+        self.init(Text(title), systemImage: systemImage)
+    }
+
+    init(_ title: Text, systemImage: String) {
         self.title = title
         self.systemImage = systemImage
     }
@@ -20,20 +24,20 @@ struct ButtonLabel: View {
             }
             VStack(spacing: 4) {
                 icon
-                Text(title)
+                title
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(title))
+        .accessibilityLabel(title)
     }
 
     private var oneLine: some View {
         HStack(spacing: 8) {
             icon
-            Text(title)
+            title
                 .lineLimit(1)
         }
     }
