@@ -40,6 +40,8 @@ final class LiveActivityRenderCheck: XCTestCase {
     ]
     static let maxPages = 12
 
+    private let renderer = ImageRenderer(content: AnyView(EmptyView()))
+
     func testRenderEveryStationPage() async throws {
         let started = Date()
         let language = try checkLanguage()
@@ -130,24 +132,31 @@ final class LiveActivityRenderCheck: XCTestCase {
         .foregroundStyle(.white)
         .environment(\.dynamicTypeSize, render.size)
         .environment(\.colorScheme, .dark)
-        let renderer = ImageRenderer(content: content)
+        renderer.content = AnyView(content)
         renderer.proposedSize = ProposedViewSize(
             width: render.surface.width,
             height: render.surface.heightLimit(of: render.state, at: "L")
         )
         renderer.scale = savesImage ? 3 : 1
-        let image = try XCTUnwrap(renderer.uiImage)
-        let limit = render.surface.heightLimit(of: render.state, at: render.sizeName)
-        let over = limit.map { image.size.height > $0 + 0.5 } ?? false
-        let stale = render.isStale ? "-stale" : ""
-        if savesImage, let data = image.pngData() {
-            let file = "\(render.station.name)-p\(render.page)\(stale)-\(render.surface.name)-\(render.sizeName).png"
-                .replacingOccurrences(of: " ", with: "_")
-                .replacingOccurrences(of: "/", with: "_")
-            try data.write(to: outDir.appendingPathComponent(file))
+        var height: CGFloat = 0
+        if savesImage {
+            let image = try XCTUnwrap(renderer.uiImage)
+            height = image.size.height
+            try XCTUnwrap(image.pngData()).write(to: outDir.appendingPathComponent(imageFile(of: render)))
+        } else {
+            renderer.render { size, _ in height = size.height.rounded(.up) }
         }
+        let limit = render.surface.heightLimit(of: render.state, at: render.sizeName)
+        let over = limit.map { height > $0 + 0.5 } ?? false
         let limitText = limit.map { "\($0)" } ?? ""
         return "\"\(render.station.name)\",\(render.page),\(render.isStale),\(render.surface.name),"
-            + "\(render.sizeName),\(image.size.height),\(limitText),\(over)"
+            + "\(render.sizeName),\(height),\(limitText),\(over)"
+    }
+
+    private func imageFile(of render: Render) -> String {
+        let stale = render.isStale ? "-stale" : ""
+        return "\(render.station.name)-p\(render.page)\(stale)-\(render.surface.name)-\(render.sizeName).png"
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
     }
 }
