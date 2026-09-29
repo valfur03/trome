@@ -176,6 +176,10 @@ RATP_SIM_SIZE=small "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /
 expect "a job on the small Simulator removes the app that an earlier job left on it" "$(cat "$state/apps.$small")" ""
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job on RATP-Shared removes the app that an earlier job left on it" "$(cat "$state/apps.$default")" ""
+printf '%s\n' com.example.RATPActivityRenderCheckHost com.example.RATPActivityUITests.xctrunner com.other.App > "$state/apps.$default"
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "a job removes the host app of the render check, and keeps the test runners and the other apps" \
+    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.RATPActivityUITests.xctrunner com.other.App "
 
 echo "RATP-Shared Booted" > "$state/device.$default"
 echo "RATP-Shared-Small Booted" > "$state/device.$small"

@@ -31,10 +31,19 @@ touch "$out/old/heights.csv"
 
 FAKE_CALLS="$state/calls" "$scripts/live-activity-render.sh" render "$out" "$state/fake-xcodebuild" test-without-building \
     > /dev/null
-expect "the render draws in French, then in English, each in its own folder" "$(cat "$state/calls")" \
+expect "the render draws in French only by default" "$(cat "$state/calls")" \
+    "fr $out/fr test-without-building -testLanguage fr -testRegion FR"
+expect "the render starts from an empty folder" "$(test -e "$out/old" && echo kept || echo removed)" "removed"
+expect "the report of the default render gives French only" \
+    "$("$scripts/live-activity-render.sh" report "$out" | grep '^== Language')" "== Language: fr"
+
+rm "$state/calls"
+export RENDER_LANGUAGES="fr en"
+FAKE_CALLS="$state/calls" "$scripts/live-activity-render.sh" render "$out" "$state/fake-xcodebuild" test-without-building \
+    > /dev/null
+expect "with RENDER_LANGUAGES, the render draws in French, then in English, each in its own folder" "$(cat "$state/calls")" \
     "fr $out/fr test-without-building -testLanguage fr -testRegion FR
 en $out/en test-without-building -testLanguage en -testRegion US"
-expect "the render starts from an empty folder" "$(test -e "$out/old" && echo kept || echo removed)" "removed"
 
 report=$("$scripts/live-activity-render.sh" report "$out")
 expect "the report gives the too tall renders of each language" \
