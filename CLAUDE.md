@@ -25,7 +25,7 @@ decision-6 (section 10) explains these rules and their sources. Follow them in e
 - **Texts in French and English.** Each text that a user sees is written in English in the code, and has its French text in the String Catalog of its target, in the same task (README, section "Languages"). `make check` fails on a text with no French text (`make strings-check`). Use a text that SwiftUI translates (`Text("...")`, a `LocalizedStringKey`) or `String(localized:)`, never a plain `String` given to `Text`. The texts of `ios/App/TestingTools/` stay in English: they are inside `#if DEBUG`, so Xcode keeps them out of the catalog. The catalogs in git must be the ones that Xcode writes, so that a build in Xcode in the main folder changes no file: after you change a text, run `make strings-sync`, then add the French texts and commit the catalogs (`make strings-check` fails when a build in Xcode would change a catalog). The texts of `RATPCore` (for example `TransitLine.displayName`) are not translated: the app and the widget make the texts that a user sees.
 - **Access control.** In `RATPCore`, only what the app or the widget uses is `public`. The rest stays `internal`. Tests use `@testable import RATPCore`.
 - **Files.** A file holds one main type and has its name. Small types that exist only for it (its state, its error, the protocol of its dependency) may stay in the same file. An extension that adds a topic goes in `Type+Topic.swift`. Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
-- **Tests.** Unit tests: `ios/Packages/RATPCore/Tests/RATPCoreTests/<Feature>/<Type>Tests.swift`. E2E tests: `ios/UITests/`, one file per seam with iOS (see "Test levels"). Tests of the scripts: `ios/scripts/tests/<name>-test.sh` (`make test-scripts`, with a fake `xcrun` for the Simulator scripts). Docs screenshots: `ios/DocsScreenshots/`. Code that needs a unit test goes in `RATPCore`.
+- **Tests.** Unit tests: `ios/Packages/RATPCore/Tests/RATPCoreTests/<Feature>/<Type>Tests.swift`. E2E tests: `ios/UITests/`, one file per seam with iOS (see "Test levels"). Tests of the scripts: `ios/scripts/tests/<name>-test.sh` (`make test-scripts`, with a fake `xcrun` for the Simulator scripts). Docs screenshots: `ios/DocsScreenshots/`. The render check of the Live Activity views: `ios/RenderCheck/`. Code that needs a unit test goes in `RATPCore`.
 - **No warnings.** `make check` fails on any build warning and when a newer Xcode may recommend new project settings (README, section "No warnings"). Fix the cause. Never silence a warning, and never raise `options.xcodeVersion` in `ios/project.yml` without adding the settings that Xcode proposes. An agent cannot open that Xcode dialog: when `make recommended-settings-check` fails, ask the prompter (label `needs-prompter`).
 - **New module.** Add a target in `ios/Packages/` only when it solves a real problem (code that must not see the rest, code shared with a new target, build time). Deeper changes that these rules call for are `tech` tasks.
 
@@ -73,7 +73,7 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 
   To boot the shared Simulator and remove the app of the last job first, run `ios/scripts/sim-lock.sh job ios/scripts/simulator.sh reset <command>`. The lock gives its slot to the command (`RATP_SIM_SLOT`), and `ios/scripts/simulator.sh` uses it. With `xcodebuild`, put `ios/scripts/simulator.sh with-destination` before it, and add `-project ios/RATPActivity.xcodeproj`: it adds the `-destination` of the Simulator of the job. Never name the Simulator (`name=RATP-Shared`), so the command still works when the second slot is on.
 
-`make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
+`make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end. So is `make live-activity-render` (the render check of the Live Activity views, see "The Live Activity render check").
 
 `make merge` takes the lock before the rebase and frees it after the fast-forward, success or failure (see "Merge a task into main"). Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots. A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock. It does not free the lock when it ends: the outer job does.
 
@@ -189,6 +189,16 @@ All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RA
 - **Never run `make git-hooks` or `make git-hooks-off`.** They change `core.hooksPath` in the git config, and all the worktrees share it with the prompter's main folder. Only the prompter turns the hooks on or off. In a test, use a repo of your own (as `ios/scripts/tests/git-hooks-test.sh` does).
 - The hooks do nothing in a worktree of an agent. The `make` commands create the project there.
 - A hook must never leave the main folder dirty, and must never make a git command fail. `make test-scripts` checks both.
+
+## The Live Activity render check
+
+`make live-activity-render` draws the Live Activity views (the lock screen and the bottom region of the expanded Dynamic Island) for every station and page, at both phone widths and at the Large and XXXL text sizes. It lists the drawings that are too tall and the cut texts, and saves images for a person to read (README, section "Check how the Live Activity draws").
+
+- **When to run it.** In any task that changes the Live Activity views or their data (`ios/Widget/`, `LinesPage`, `ContentState`), for example TASK-36, TASK-65 and TASK-37: once before the change and once after it. Write in the task notes the number of too tall drawings and the cut texts that changed, and put the images that matter in the notes for the reviewer and QA. Do not write a temporary UI test for this any more.
+- **It is not a gate.** It is not part of `make check` or `make e2e`, and it fails only when it cannot run. Adding it there needs a product list of the texts that must never be cut (decision-11), and is not for a Live Activity task to decide.
+- **Its two entry views.** It draws `LockScreenView(state:isStale:)` and `ExpandedIslandBottomRegion(state:isStale:)` of `ios/Widget/StationLiveActivity.swift`. Keep them `internal` with these parameters. A redesign may change what is inside them.
+- **Its numbers.** The widths and the height limits in `ios/RenderCheck/LiveActivityRenderCheck.swift` were measured on the real Live Activity (TASK-124). A task that changes the regions of the Dynamic Island, or a new iOS version, measures them again before it trusts the check.
+- It is a Simulator job, through the lock, like `make docs-screenshots`. It frees the lock when the drawing ends.
 
 ## The docs site (`docs/`)
 
