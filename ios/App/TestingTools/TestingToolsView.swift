@@ -80,6 +80,10 @@ struct TestingToolsView: View {
             TextField("48.8584, 2.2945", text: $coordinatesText)
                 .keyboardType(.numbersAndPunctuation)
                 .autocorrectionDisabled()
+                .submitLabel(.done)
+                .onSubmit {
+                    if !coordinatesText.isEmpty { useCoordinates() }
+                }
                 .accessibilityIdentifier("coordinatesField")
             Button("Use these coordinates", action: useCoordinates)
                 .disabled(coordinatesText.isEmpty)
