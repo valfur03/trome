@@ -109,6 +109,21 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: RATPActivity
 
+  RATPActivityRenderCheck:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - RenderCheck
+      - path: Widget
+        excludes:
+          - RATPActivityWidgetBundle.swift
+    dependencies:
+      - package: RATPCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityRenderCheck
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   RATPActivity:
     build:
@@ -138,3 +153,12 @@ schemes:
       config: Debug
       targets:
         - RATPActivityDocsScreenshots
+
+  RATPActivityRenderCheck:
+    build:
+      targets:
+        RATPActivityRenderCheck: all
+    test:
+      config: Debug
+      targets:
+        - RATPActivityRenderCheck

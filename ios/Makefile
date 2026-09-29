@@ -10,6 +10,8 @@ E2E_TARGET := RATPActivityUITests
 E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := RATPActivityDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
+RENDER_SCHEME := RATPActivityRenderCheck
+RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
@@ -59,7 +61,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -90,6 +92,7 @@ help:
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
 	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock)"
+	@echo "make live-activity-render  Draw the Live Activity views for every station and page, and list the too tall ones and the cut texts (takes the Simulator lock; not in the gate)"
 
 setup:
 	@command -v xcodegen > /dev/null || brew install xcodegen
@@ -198,6 +201,13 @@ clean-shared-cache:
 
 merge:
 	@./scripts/merge.sh
+
+live-activity-render: project
+	$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \
+		./scripts/live-activity-render.sh render $(RENDER_OUT) \
+		$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -collect-test-diagnostics never test-without-building
+	./scripts/live-activity-render.sh report $(RENDER_OUT)
 
 docs-screenshots: project
 	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \

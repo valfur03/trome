@@ -24,15 +24,7 @@ struct StationLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ViewThatFits(in: .vertical) {
-                        ExpandedIslandBottom(state: context.state, isStale: context.isStale)
-                        ExpandedIslandBottom(state: context.state.keepingOnlyTheNextTrains, isStale: context.isStale)
-                        ExpandedIslandBottom(
-                            state: context.state.keepingOnlyTheNextTrains,
-                            isStale: context.isStale,
-                            isCompact: true
-                        )
-                    }
+                    ExpandedIslandBottomRegion(state: context.state, isStale: context.isStale)
                 }
             } compactLeading: {
                 if let line = context.state.leadingLine {
@@ -59,7 +51,7 @@ struct StationLiveActivity: Widget {
     }
 }
 
-private struct LockScreenView: View {
+struct LockScreenView: View {
     let state: StationActivityAttributes.ContentState
     let isStale: Bool
 
@@ -93,6 +85,19 @@ private struct LockScreenView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
+    }
+}
+
+struct ExpandedIslandBottomRegion: View {
+    let state: StationActivityAttributes.ContentState
+    let isStale: Bool
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            ExpandedIslandBottom(state: state, isStale: isStale)
+            ExpandedIslandBottom(state: state.keepingOnlyTheNextTrains, isStale: isStale)
+            ExpandedIslandBottom(state: state.keepingOnlyTheNextTrains, isStale: isStale, isCompact: true)
+        }
     }
 }
 
