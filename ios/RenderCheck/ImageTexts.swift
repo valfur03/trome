@@ -39,7 +39,6 @@ struct ImageTexts: Encodable {
     let isStale: Bool
     let surface: String
     let size: String
-    let width: CGFloat
     let height: CGFloat
     let drawn: [DrawnText]
     let expected: [ExpectedText]

@@ -160,7 +160,7 @@ final class LiveActivityRenderCheck: XCTestCase {
                 ImageTexts(
                     image: imageFile(of: render), station: render.station.name, page: render.page,
                     isStale: render.isStale, surface: render.surface.name, size: render.sizeName,
-                    width: render.surface.width, height: height, drawn: recorder.texts, expected: ExpectedText.all(of: render.state)
+                    height: height, drawn: recorder.texts, expected: ExpectedText.all(of: render.state)
                 )
             )
         } else {
