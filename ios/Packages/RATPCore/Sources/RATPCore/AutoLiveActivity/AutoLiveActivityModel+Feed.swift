@@ -34,7 +34,7 @@ extension AutoLiveActivityModel {
         var nextCall = fetchNow ? configuration.now() : nextPRIMCall(asksPRIM: asksPRIM)
         while !Task.isCancelled {
             let now = configuration.now()
-            let redrawDate = liveActivity.content?.trains.linesPage?.nextRedrawDate(after: now)
+            let redrawDate = liveActivity.nextRedrawDate(after: now)
                 .flatMap { $0 < nextCall ? $0 : nil }
             let delay = (redrawDate ?? nextCall).timeIntervalSince(now)
             if delay > 0 {

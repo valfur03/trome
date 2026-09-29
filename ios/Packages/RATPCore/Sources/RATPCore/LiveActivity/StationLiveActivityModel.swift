@@ -31,6 +31,7 @@ public final class StationLiveActivityModel {
     private let now: @Sendable () -> Date
     private var inputs: Inputs?
     private var firstLineIndex: Int
+    private var keptTimesStaleDate: Date?
     @ObservationIgnored private var lastSystemCall: Task<Void, Never>?
 
     public init(client: any StationLiveActivityClient, now: @escaping @Sendable () -> Date = { Date() }) {
@@ -41,6 +42,11 @@ public final class StationLiveActivityModel {
     }
 
     public func start(station: Station, trains: NextTrainsState) async {
+        if client.isShowing, keepShownTimesIfFailed(trains, at: station) {
+            startError = nil
+            isShowing = true
+            return
+        }
         if !client.isShowing || switchesStation(to: station) {
             firstLineIndex = 0
         }
@@ -60,19 +66,15 @@ public final class StationLiveActivityModel {
         }
         startError = nil
         isShowing = true
+        keptTimesStaleDate = nil
         inputs = Inputs(station: station, trains: trains)
         self.content = content
     }
 
     public func update(station: Station, trains: NextTrainsState) async {
-        guard isShowing else { return }
-        if switchesStation(to: station) {
-            firstLineIndex = 0
-        }
-        let content = makeContent(station: station, trains: trains)
-        inputs = Inputs(station: station, trains: trains)
-        self.content = content
-        await send(content)
+        guard isShowing, !keepShownTimesIfFailed(trains, at: station) else { return }
+        keptTimesStaleDate = nil
+        await show(station: station, trains: trains)
     }
 
     public func showNextLines() async {
@@ -82,25 +84,62 @@ public final class StationLiveActivityModel {
     }
 
     func redraw() async {
-        guard let inputs else { return }
-        await update(station: inputs.station, trains: inputs.trains)
+        guard isShowing, let inputs, !keptTimesAreStale(at: now()) else { return }
+        await show(station: inputs.station, trains: inputs.trains)
+    }
+
+    func nextRedrawDate(after now: Date) -> Date? {
+        guard let date = content?.trains.linesPage?.nextRedrawDate(after: now) else { return nil }
+        return keptTimesAreStale(at: date) ? nil : date
     }
 
     public func stop() async {
         await inOrder { [client] in await client.end() }
         isShowing = false
-        content = nil
-        inputs = nil
-        firstLineIndex = 0
+        forgetShownContent()
     }
 
     public func syncWithSystem() {
         isShowing = client.isShowing
         if !isShowing {
-            content = nil
-            inputs = nil
+            forgetShownContent()
+        }
+    }
+
+    private func forgetShownContent() {
+        content = nil
+        inputs = nil
+        firstLineIndex = 0
+        keptTimesStaleDate = nil
+    }
+
+    private func show(station: Station, trains: NextTrainsState) async {
+        if switchesStation(to: station) {
             firstLineIndex = 0
         }
+        let content = makeContent(station: station, trains: trains)
+        inputs = Inputs(station: station, trains: trains)
+        self.content = content
+        await send(content)
+    }
+
+    private func keepShownTimesIfFailed(_ trains: NextTrainsState, at station: Station) -> Bool {
+        guard case .failed = trains, let staleDate = shownTimesStaleDate(of: station) else { return false }
+        keptTimesStaleDate = keptTimesStaleDate ?? staleDate
+        return true
+    }
+
+    private func shownTimesStaleDate(of station: Station) -> Date? {
+        let showsStation = inputs.map { $0.station.id == station.id }
+            ?? (client.shownContent?.stationName == station.name)
+        guard showsStation, let shown = content ?? client.shownContent, shown.trains.linesPage != nil else {
+            return nil
+        }
+        return shown.staleDate
+    }
+
+    private func keptTimesAreStale(at date: Date) -> Bool {
+        keptTimesStaleDate.map { date >= $0 } ?? false
     }
 
     private func send(_ content: StationActivityAttributes.ContentState) async {

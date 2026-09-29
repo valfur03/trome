@@ -44,6 +44,49 @@ extension AutoLiveActivityModelTests {
         #expect(client.updates.last?.trains == .noData)
     }
 
+    @Test func keepsTheShownTrainsWhenARefreshFailsInTheBackground() async {
+        let line12 = TransitLine(mode: .metro, name: "12")
+        let station = Station(id: "m", name: "Station M", coordinate: Coordinate(48.8600, 2.3600), lines: [line12])
+        provider.answer(.success([
+            Departure(line: line12, destination: "Mairie d'Issy", time: clock.now.addingTimeInterval(300))
+        ]), for: station)
+        let model = makeModel(catalog: StationCatalog(stations: [station]))
+        await arrive(at: station.coordinate, in: model)
+        await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
+        model.setAppActive(false)
+        provider.answer(.failure(.unreachable), for: station)
+        let callCount = provider.callCount
+
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { provider.callCount > callCount }
+        try? await Task.sleep(for: .milliseconds(50))
+
+        #expect(provider.callCount > callCount)
+        #expect(client.shownContent?.trains != .noData)
+        #expect(client.shownContent?.shownTrains.isEmpty == false)
+    }
+
+    @Test func stopsAskingButKeepsTheShownTrainsOnceTheKeyIsRejectedInTheBackground() async {
+        let line12 = TransitLine(mode: .metro, name: "12")
+        let station = Station(id: "m", name: "Station M", coordinate: Coordinate(48.8600, 2.3600), lines: [line12])
+        provider.answer(.success([
+            Departure(line: line12, destination: "Mairie d'Issy", time: clock.now.addingTimeInterval(300))
+        ]), for: station)
+        let model = makeModel(catalog: StationCatalog(stations: [station]))
+        await arrive(at: station.coordinate, in: model)
+        await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
+        model.setAppActive(false)
+        provider.answer(.failure(.keyRejected), for: station)
+        let callCount = provider.callCount
+
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { provider.callCount == callCount + 1 }
+        await waitUntil { provider.callCount > callCount + 1 }
+
+        #expect(provider.callCount == callCount + 1)
+        #expect(client.shownContent?.shownTrains.isEmpty == false)
+    }
+
     @Test func feedsTheLiveActivityItselfOnceTheScreenStopsUpdatingItsStation() async {
         let model = makeModel()
         let screen = Task { await screenTrains.keepUpdated(for: Places.stationA) }
