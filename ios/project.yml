@@ -109,16 +109,33 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: RATPActivity
 
+  RATPActivityRenderCheckHost:
+    type: application
+    platform: iOS
+    sources:
+      - RenderCheck/Host
+      - Widget/Localizable.xcstrings
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityRenderCheckHost
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+
   RATPActivityRenderCheck:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - RenderCheck
+      - path: RenderCheck
+        excludes:
+          - Host
       - path: Widget
         excludes:
           - RATPActivityWidgetBundle.swift
+          - Localizable.xcstrings
     dependencies:
       - package: RATPCore
+      - target: RATPActivityRenderCheckHost
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityRenderCheck

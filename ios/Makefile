@@ -92,7 +92,7 @@ help:
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
 	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock)"
-	@echo "make live-activity-render  Draw the Live Activity views for every station and page, and list the too tall ones and the cut texts (takes the Simulator lock; not in the gate)"
+	@echo "make live-activity-render  Draw the Live Activity views for every station and page, in French and in English, and list the too tall ones and the cut texts (takes the Simulator lock; not in the gate)"
 
 setup:
 	@command -v xcodegen > /dev/null || brew install xcodegen

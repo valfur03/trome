@@ -36,12 +36,13 @@ final class LiveActivityRenderCheck: XCTestCase {
         "Saint-Lazare", "Châtelet - Les Halles", "Châtelet", "Place de Clichy", "Cité Universitaire",
         "Sartrouville", "Abbesses", "Opéra", "Boigneville", "Haussmann Saint-Lazare",
         "Avenue du Président Kennedy Maison de Radio France", "Saint-Quentin en Yvelines - Montigny-le-Bretonneux",
-        "Nation", "République"
+        "Nation", "République", "Gare du Nord"
     ]
     static let maxPages = 12
 
     func testRenderEveryStationPage() async throws {
         let started = Date()
+        let language = try checkLanguage()
         let catalog = try StationCatalog.bundled()
         let fake = try XCTUnwrap(FakeDeparturesProvider.ifAsked(by: ["--fake-trains"]))
         let outDir = try outputDirectory()
@@ -81,7 +82,28 @@ final class LiveActivityRenderCheck: XCTestCase {
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
         )
         let seconds = Int(Date().timeIntervalSince(started))
-        print("RENDER-CHECK stations=\(catalog.stations.count) renders=\(rows.count - 1) seconds=\(seconds)")
+        print(
+            "RENDER-CHECK language=\(language) stations=\(catalog.stations.count) renders=\(rows.count - 1)"
+                + " seconds=\(seconds)"
+        )
+    }
+
+    private func checkLanguage() throws -> String {
+        let language = try XCTUnwrap(
+            ProcessInfo.processInfo.environment["RENDER_LANGUAGE"],
+            "Run it with make live-activity-render (it sets RENDER_LANGUAGE)"
+        )
+        XCTAssertEqual(
+            Bundle.main.preferredLocalizations.first, language,
+            "The views would draw in another language than \(language)"
+        )
+        if language == "fr" {
+            XCTAssertEqual(
+                String(localized: "Today"), "Aujourd’hui",
+                "The texts of the widget are not in French: the String Catalog of the widget is not in the host app"
+            )
+        }
+        return language
     }
 
     private func outputDirectory() throws -> URL {
