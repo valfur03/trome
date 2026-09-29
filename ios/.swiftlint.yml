@@ -3,6 +3,7 @@ included:
   - Widget
   - UITests
   - DocsScreenshots
+  - RenderCheck
   - Packages/RATPCore/Sources
   - Packages/RATPCore/Tests
   - Packages/RATPCore/Package.swift
