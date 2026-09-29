@@ -153,6 +153,33 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
+    func tapOnTheLiveActivity(_ button: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(waitFor(button), "\(button) did not show", file: file, line: line)
+        XCTAssertTrue(
+            waitUntilStill(button),
+            "\(button) kept moving: the Live Activity was still drawing its new content",
+            file: file,
+            line: line
+        )
+        button.tap()
+    }
+
+    @MainActor
+    private func waitUntilStill(_ element: XCUIElement) -> Bool {
+        let deadline = Date().addingTimeInterval(UITestTimeout.element)
+        var lastFrame: CGRect?
+        repeat {
+            let frame = element.isHittable ? try? element.snapshot().frame : nil
+            if let frame, frame == lastFrame {
+                return true
+            }
+            lastFrame = frame
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        } while Date() < deadline
+        return false
+    }
+
+    @MainActor
     func waitForNo(_ element: XCUIElement) -> Bool {
         !element.exists || element.waitForNonExistence(timeout: UITestTimeout.element)
     }

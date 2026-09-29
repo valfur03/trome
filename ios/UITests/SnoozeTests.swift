@@ -31,11 +31,15 @@ final class SnoozeTests: E2ETestCase {
         XCTAssertTrue(waitFor(liveActivityStation("Gare de l'Est")))
         XCTAssertTrue(waitFor(liveActivityElement(containing: "Porte de Clignancourt")))
         XCTAssertFalse(liveActivityElement(containing: "Villejuif - Louis Aragon").exists)
-        tap(liveActivity.buttons["Show the next lines"])
-        XCTAssertTrue(waitFor(liveActivityElement(containing: "Villejuif - Louis Aragon")))
+        tapOnTheLiveActivity(liveActivity.buttons["Show the next lines"])
+        XCTAssertTrue(
+            waitFor(liveActivityElement(containing: "Villejuif - Louis Aragon")),
+            "The next lines did not show. The app is \(app.state == .runningForeground ? "open" : "not open"), "
+                + "and the Live Activity \(liveActivity.exists ? "shows" : "does not show") in the Notification Center"
+        )
         XCTAssertTrue(liveActivityElement(containing: "Mairie d'Ivry").exists)
         XCTAssertTrue(waitForNo(liveActivityElement(containing: "Porte de Clignancourt")))
-        tap(liveActivity.buttons["Snooze for 30 minutes"])
+        tapOnTheLiveActivity(liveActivity.buttons["Snooze for 30 minutes"])
         XCTAssertTrue(waitForNo(liveActivity))
         closeNotificationCenter()
 
