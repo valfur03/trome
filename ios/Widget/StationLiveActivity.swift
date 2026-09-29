@@ -8,6 +8,8 @@ struct StationLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: StationActivityAttributes.self) { context in
             LockScreenView(state: context.state, isStale: context.isStale)
+                .activityBackgroundTint(.black)
+                .environment(\.colorScheme, .dark)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
