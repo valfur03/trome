@@ -3,8 +3,8 @@ import Foundation
 import Vision
 
 struct DrawnText: Decodable {
-    let x: CGFloat
-    let y: CGFloat
+    let left: CGFloat
+    let top: CGFloat
     let width: CGFloat
     let height: CGFloat
     let isTruncated: Bool
@@ -132,8 +132,8 @@ enum Naming {
             }
         }
         if normalizedSeen.isEmpty || text.visibleCharacters == 0 {
-            let rightEdge = render.drawn.map { $0.x + $0.width }.max() ?? 0
-            return text.x + text.width >= rightEdge - 1 ? .time(seen) : .destinationCutToNothing
+            let rightEdge = render.drawn.map { $0.left + $0.width }.max() ?? 0
+            return text.left + text.width >= rightEdge - 1 ? .time(seen) : .destinationCutToNothing
         }
         return .unnamed(seen)
     }
@@ -152,7 +152,7 @@ enum Recognition {
         }
         let scale = CGFloat(cgImage.height) / render.height
         return cuts.map { text in
-            let frame = CGRect(x: text.x, y: text.y, width: text.width, height: text.height)
+            let frame = CGRect(x: text.left, y: text.top, width: text.width, height: text.height)
                 .insetBy(dx: -margin, dy: -margin)
             let pixels = CGRect(
                 x: frame.minX * scale, y: frame.minY * scale, width: frame.width * scale, height: frame.height * scale
@@ -308,7 +308,7 @@ for breach in breaches {
     let stale = render.isStale ? " stale" : ""
     print("  \(breach.kind.title): \(breach.shown) | \(render.station) p\(render.page)\(stale) \(render.surface) \(render.size) | \(render.image)")
 }
-print("Cut texts that it could not name (a person reads them in cut-texts.txt): \(unnamed.count)")
+print("Other cut texts (not a time, a destination, a label or a station name; a person reads them): \(unnamed.count)")
 for (render, text) in unnamed.prefix(10) {
     print("  \(text)… | \(render.image)")
 }

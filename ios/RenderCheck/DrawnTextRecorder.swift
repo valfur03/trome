@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct DrawnText: Encodable {
-    let x: CGFloat
-    let y: CGFloat
+    let left: CGFloat
+    let top: CGFloat
     let width: CGFloat
     let height: CGFloat
     let isTruncated: Bool
@@ -11,8 +11,8 @@ struct DrawnText: Encodable {
     init?(_ layout: Text.Layout, at origin: CGPoint) {
         guard let bounds = layout.map(\.typographicBounds.rect).reduce(nil, Self.union) else { return nil }
         let frame = bounds.offsetBy(dx: origin.x, dy: origin.y)
-        x = frame.minX
-        y = frame.minY
+        left = frame.minX
+        top = frame.minY
         width = frame.width
         height = frame.height
         isTruncated = layout.isTruncated

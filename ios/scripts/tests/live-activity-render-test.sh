@@ -28,7 +28,7 @@ fi
 FAKE
 chmod +x "$state/fake-xcodebuild"
 text() {
-    printf '{"x":%s,"y":%s,"width":%s,"height":20,"isTruncated":%s,"visibleCharacters":%s,"ocr":"%s"}' "$@"
+    printf '{"left":%s,"top":%s,"width":%s,"height":20,"isTruncated":%s,"visibleCharacters":%s,"ocr":"%s"}' "$@"
 }
 expected() {
     printf '{"kind":"%s","text":"%s","line":%s,"direction":%s}' "$@"

@@ -99,7 +99,7 @@ help:
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
 	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock)"
-	@echo "make live-activity-render  Draw the Live Activity views for every station and page, in French, and list the too tall ones and the cut texts (takes the Simulator lock; not in the gate)"
+	@echo "make live-activity-render  Draw the Live Activity views for every station and page, in French, and list the too tall ones, the cut texts and the breaches of decision-15 (takes the Simulator lock; not in the gate)"
 	@echo "make live-activity-render ENGLISH=1  Same, in French, then in English"
 
 setup:
