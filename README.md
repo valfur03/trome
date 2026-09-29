@@ -352,7 +352,7 @@ Rules for the screenshot files:
 Rules to keep the docs true:
 
 - A change of a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. Run `make docs-screenshots` only when a screen that the docs show changed, and commit the new images. A docs text change alone needs no new screenshots.
-- `make docs-screenshots` is a Simulator job. It takes the Simulator lock, like `make e2e`, and frees it when the screenshots are taken. Run `make simulator-shutdown` when your job ends.
+- `make docs-screenshots` is a Simulator job. Like `make e2e`, it builds first, then takes the Simulator lock, and frees it when the screenshots are taken. Run `make simulator-shutdown` when your job ends.
 
 ## Languages
 

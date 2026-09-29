@@ -2,7 +2,8 @@
 set -eu
 
 usage() {
-    echo "Usage: $0 <result bundle> <test command...>" >&2
+    echo "Usage: $0 <result bundle> <xcodebuild command...>" >&2
+    echo "Build first with build-for-testing: the script runs test-without-building, so the Simulator lock is not held during the build." >&2
     echo "Run it through the Simulator lock, in ios/: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset ./scripts/simulator.sh with-destination $0 ..." >&2
     exit 1
 }
@@ -38,7 +39,7 @@ rm -rf "$result" "$exported"
 xcrun simctl location "$udid" set "$fake_position"
 xcrun simctl status_bar "$udid" override --time 9:41 --operatorName '' --batteryState charged --batteryLevel 100 \
     --cellularMode active --cellularBars 4 --wifiBars 3
-"$@" -resultBundlePath "$result" test \
+"$@" -resultBundlePath "$result" test-without-building \
     || { status=$?; "$scripts/e2e-failures.py" "$result"; exit $status; }
 
 mkdir -p "$exported"

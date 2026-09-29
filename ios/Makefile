@@ -210,6 +210,7 @@ live-activity-render: project
 	./scripts/live-activity-render.sh report $(RENDER_OUT)
 
 docs-screenshots: project
+	$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
 	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \
 		./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
