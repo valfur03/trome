@@ -418,7 +418,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 1. A Software Engineer implements a task on its branch `task/<id>`, and another Software Engineer reviews it.
 2. The Software Engineer rebases the branch onto `main` and hands it over to QA. The Software Engineer never merges.
 3. QA tests the branch.
-4. When QA passed the task, the manager runs `make merge` in the worktree of the task. It takes the Simulator lock, rebases the branch onto the tip of `main`, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs or unit tests), then fast-forwards `main` to the rebased branch. When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`. When a step fails, `main` stays as it was, and the task goes back to its Software Engineer.
+4. When QA passed the task, the manager runs `make merge` in the worktree of the task. It takes the Simulator lock, rebases the branch onto the tip of `main`, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs or unit tests), then fast-forwards `main` to the rebased branch. When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`. When that folder has changes that are not committed on the files of the task, `make merge` refuses at once, before it waits for a lock, and names the files. When a step fails, `main` stays as it was, and the task goes back to its Software Engineer.
 
 Why:
 

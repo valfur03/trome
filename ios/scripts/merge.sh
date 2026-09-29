@@ -29,6 +29,21 @@ check_worktree() {
     [ -z "${ONLY:-}" ] || fail "ONLY works only with 'make e2e'. make merge always runs the full E2E suite."
     [ -z "$(git status --porcelain)" ] || fail "the worktree has changes that are not committed. Commit them first, so the gate checks what $target gets."
     [ -n "$(git rev-list -n 1 "$target..HEAD")" ] || fail "'$branch' has no commit that '$target' does not have. There is nothing to merge."
+    check_target_folder
+}
+
+check_target_folder() {
+    checked_out=$(target_worktree)
+    [ -n "$checked_out" ] || return 0
+    blocked=$({
+        git diff --name-only --no-renames "$target...HEAD"
+        echo
+        git -C "$checked_out" diff --name-only --no-renames HEAD
+        git -C "$checked_out" ls-files --others --exclude-standard
+    } | awk '!sep && $0 == "" { sep = 1; next } !sep { task[$0]; next } ($0 in task) && !seen[$0]++ { print "  " $0 }')
+    [ -z "$blocked" ] || fail "$target is checked out in $checked_out, and that folder has changes that are not committed on files that '$branch' changes:
+$blocked
+The fast-forward could not update these files. Commit or stash the changes of that folder, then run 'make merge' again. $target is unchanged."
 }
 
 step_failed() {

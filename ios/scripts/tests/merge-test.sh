@@ -128,15 +128,57 @@ git -C "$repo" checkout -q main
 expect "make merge succeeds when main is checked out nowhere" "$status" "0"
 expect "main is the task branch when main is checked out nowhere" "$(rev main)" "$(rev task/detached)"
 
+mkfifo "$state/release-merge-lock"
+lockf -k "$RATP_MERGE_LOCK" sh -c 'read -r line < "$0"' "$state/release-merge-lock" &
+merge_lock_holder=$!
+until ! lockf -s -k -t 0 "$RATP_MERGE_LOCK" true 2> /dev/null; do sleep 0.1; done
 new_task busy
 commit "$state/busy" base "from the task"
+commit "$state/busy" fresh "from the task"
+commit "$state/busy" staged "from the task"
 echo "not committed" > "$repo/base"
+echo "not committed" > "$repo/fresh"
+echo "not committed" > "$repo/staged"
+git -C "$repo" add staged
 before=$(rev main)
 merge busy
-git -C "$repo" checkout -q -- base
-expect "make merge fails when the folder of main has changes on the files of the task" "$status" "1"
-expect "make merge leaves main unchanged when it cannot update the folder of main" "$(rev main)" "$before"
+echo release > "$state/release-merge-lock"
+wait "$merge_lock_holder"
+expect "make merge refuses at once, before the locks, when the folder of main has changes on the files of the task" "$status" "1"
+expect "make merge does not wait for the locks when the folder of main has changes on the files of the task" "$(contains "$state/busy.log" "waiting for the merge of another worktree")" "no"
+expect "make merge does not rebase when the folder of main has changes on the files of the task" "$(cat "$state/refs")" ""
+expect "make merge runs no gate when the folder of main has changes on the files of the task" "$(cat "$state/steps")" ""
+expect "make merge says in which folder main is checked out" "$(contains "$state/busy.log" "main is checked out in $(cd "$repo" && pwd -P),")" "yes"
+expect "make merge names a changed file of the folder of main" "$(contains "$state/busy.log" "  base")" "yes"
+expect "make merge names a file of the folder of main that git does not track" "$(contains "$state/busy.log" "  fresh")" "yes"
+expect "make merge names a staged file of the folder of main" "$(contains "$state/busy.log" "  staged")" "yes"
 expect "make merge says what to do with the changes of the folder of main" "$(contains "$state/busy.log" "Commit or stash the changes of that folder")" "yes"
+expect "make merge leaves main unchanged when the folder of main has changes on the files of the task" "$(rev main)" "$before"
+expect "make merge leaves the changes of the folder of main as they were" "$(cat "$repo/base") $(git -C "$repo" status --porcelain | tr '\n' ' ')" "not committed  M base A  staged ?? fresh "
+git -C "$repo" rm -q --cached staged
+rm "$repo/fresh" "$repo/staged"
+git -C "$repo" checkout -q -- base
+
+new_task elsewhere
+commit "$state/elsewhere" elsewhere elsewhere
+echo "not committed" > "$repo/base"
+merge elsewhere
+expect "make merge succeeds when the folder of main has changes only on files that the task does not change" "$status" "0"
+expect "main is the task branch when the folder of main has changes on other files" "$(rev main)" "$(rev task/elsewhere)"
+expect "make merge keeps the changes of the folder of main on other files" "$(cat "$repo/base")" "not committed"
+git -C "$repo" checkout -q -- base
+
+new_task late
+commit "$state/late" late "from the task"
+before=$(rev main)
+RATP_MERGE_CHECK="$passing_check && echo 'not committed' > '$repo/late'"
+merge late
+RATP_MERGE_CHECK=$passing_check
+rm "$repo/late"
+expect "make merge fails when the folder of main gets changes on the files of the task during the run" "$status" "1"
+expect "make merge leaves main unchanged when it cannot update the folder of main" "$(rev main)" "$before"
+expect "make merge says that the fast-forward failed" "$(contains "$state/late.log" "the step 'fast-forward' failed")" "yes"
+expect "make merge says what to do with the changes of the folder of main during the run" "$(contains "$state/late.log" "Commit or stash the changes of that folder")" "yes"
 expect "make merge frees the Simulator lock when it cannot update the folder of main" "$(lock_state)" "free"
 
 new_task merged
