@@ -1,7 +1,7 @@
 import CoreGraphics
 import RATPCore
 
-struct ExpectedText: Encodable, Hashable {
+struct ExpectedText: Encodable {
     enum Kind: String, Encodable {
         case station
         case label
