@@ -6,6 +6,7 @@ target=main
 check_command=${RATP_MERGE_CHECK:-make check}
 e2e_command=${RATP_MERGE_E2E:-make e2e}
 merge_lock=${RATP_MERGE_LOCK:-/tmp/ratp-merge.lock}
+prompter_changes="These changes belong to the prompter. The manager asks the prompter to commit, stash or drop them, and runs 'make merge' again when the prompter says the folder is clear. No agent touches them."
 
 fail() {
     echo "make merge: $1" >&2
@@ -43,7 +44,8 @@ check_target_folder() {
     } | awk '!sep && $0 == "" { sep = 1; next } !sep { task[$0]; next } ($0 in task) && !seen[$0]++ { print "  " $0 }')
     [ -z "$blocked" ] || fail "$target is checked out in $checked_out, and that folder has changes that are not committed on files that '$branch' changes:
 $blocked
-The fast-forward could not update these files. Commit or stash the changes of that folder, then run 'make merge' again. $target is unchanged."
+The fast-forward would not be able to update these files. $target is unchanged.
+$prompter_changes"
 }
 
 step_failed() {
@@ -78,7 +80,8 @@ fast_forward() {
     fi
     [ "$(git rev-parse "refs/heads/$target")" = "$old" ] || step_failed fast-forward "$target moved during the merge, outside 'make merge'."
     git -C "$checked_out" merge --ff-only -q "$tested" \
-        || step_failed fast-forward "$target is checked out in $checked_out, and git could not update its files. Commit or stash the changes of that folder, then run 'make merge' again."
+        || step_failed fast-forward "$target is checked out in $checked_out, and git could not update its files.
+$prompter_changes"
 }
 
 merge() {

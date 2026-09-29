@@ -416,9 +416,14 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 `main` is always green. It holds only the tasks that passed review and QA. There is no other long-lived branch.
 
 1. A Software Engineer implements a task on its branch `task/<id>`, and another Software Engineer reviews it.
-2. The Software Engineer rebases the branch onto `main` and hands it over to QA. The Software Engineer never merges.
-3. QA tests the branch.
-4. When QA passed the task, the manager runs `make merge` in the worktree of the task. It takes the Simulator lock, rebases the branch onto the tip of `main`, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs or unit tests), then fast-forwards `main` to the rebased branch. When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`. When that folder has changes that are not committed on the files of the task, `make merge` refuses at once, before it waits for a lock, and names the files. When a step fails, `main` stays as it was, and the task goes back to its Software Engineer.
+2. The Software Engineer runs `make check` on the last commit of the branch, plus the E2E test classes of the flows that the change touches, and hands the task over to QA. The Software Engineer does not rebase the branch, and never merges.
+3. The manager rebases the branch onto `main` right before QA, so QA tests the branch on the latest `main`.
+4. QA tests the branch.
+5. When QA passed the task, the manager runs `make merge` in the worktree of the task. It takes the Simulator lock, rebases the branch onto the tip of `main` again, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs or unit tests), then fast-forwards `main` to the rebased branch. When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`. When a step fails, `main` stays as it was.
+
+When a rebase has a conflict (before QA or in `make merge`), or the gate or the E2E suite fails, the task goes back to its Software Engineer, who fixes the cause on the branch (a rebase conflict too).
+
+The folder of `main` is the prompter's folder. When it has changes that are not committed on the files of the task, `make merge` refuses at once, before it waits for a lock, and names the files. The task does not go back to its Software Engineer for this. The manager tells the prompter the folder and the files, and the prompter decides: commit, stash or drop the changes. The manager runs `make merge` again when the prompter says that the folder is clear. The same holds when the fast-forward fails because such changes appeared during the run. No agent commits, stashes or discards the changes of the prompter's main folder without the prompter.
 
 Why:
 

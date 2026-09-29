@@ -112,9 +112,10 @@ These rules do not change the rule on flaky tests (below): a failing test may be
 A task reaches `main` only after QA passed it. The order is:
 
 1. The Software Engineer implements the task on its branch `task/<id>`, and another Software Engineer reviews it.
-2. The Software Engineer rebases the branch onto `main`, runs the light gate, and hands the task over to QA. The Software Engineer never merges, and never runs `make merge`.
-3. QA tests the branch.
-4. When QA passed the task, the manager runs one command in the worktree of the task, one task at a time, instead of the separate steps (rebase, gate, E2E run, fast-forward):
+2. The Software Engineer runs the quality gate (`make check`) on the last commit of the branch, plus the E2E test classes of the flows that the change touches (see "Which E2E tests to run"), and hands the task over to QA. The Software Engineer does not rebase the branch, never merges, and never runs `make merge`.
+3. The manager rebases the branch onto `main` right before QA, so QA tests the branch on the latest `main`. When this rebase has a conflict, the task goes back to its Software Engineer, who solves it.
+4. QA tests the branch.
+5. When QA passed the task, the manager runs one command in the worktree of the task, one task at a time, instead of the separate steps (rebase, gate, E2E run, fast-forward):
 
 ```sh
 make merge
@@ -129,7 +130,7 @@ It takes the Simulator lock, then does these steps. Each step runs only when the
 3. It runs the full E2E suite (`make e2e`), unless the branch changes no app code (see "Which E2E tests to run").
 4. It fast-forwards `main` to the rebased branch. When `main` is checked out in a folder (the main folder of the repo), it updates that folder too, with `git merge --ff-only`: a fast-forward, never a merge commit.
 
-Then it frees the lock. When a step fails (a rebase conflict, the gate, the E2E suite), it stops at once, says which step failed, leaves `main` as it was, and frees the lock. After a rebase conflict, the rebase stays in progress: solve it, run `git rebase --continue`, then run `make merge` again. When the folder of `main` has changes that are not committed (also staged or new files) on the files of the task, `make merge` refuses at once, before it waits for a lock, and names the folder and the files: commit or stash them in that folder, then run `make merge` again. Changes on other files of that folder do not stop it. It checks this again when its turn comes, and the fast-forward still fails safely when such changes appear during the run. It refuses to start on `main`, with changes that are not committed, with `ONLY=` (the E2E suite is always the full one), or with nothing to merge.
+Then it frees the lock. When a step fails (a rebase conflict, the gate, the E2E suite), it stops at once, says which step failed, leaves `main` as it was, and frees the lock. After a rebase conflict, the rebase stays in progress: solve it, run `git rebase --continue`, then run `make merge` again. When the folder of `main` has changes that are not committed (also staged or new files) on the files of the task, `make merge` refuses at once, before it waits for a lock, and names the folder and the files. Changes on other files of that folder do not stop it. It checks this again when its turn comes, and the fast-forward still fails safely when such changes appear during the run. It refuses to start on `main`, with changes that are not committed, with `ONLY=` (the E2E suite is always the full one), or with nothing to merge.
 
 Why one command, with the lock all along:
 
@@ -137,7 +138,11 @@ Why one command, with the lock all along:
 - **A full E2E run is never repeated.** Before, another merge could land between the end of a full run and the fast-forward. The fast-forward was then refused, and the full suite had to run again after a new rebase.
 - **History stays linear, and `main` stays green.** `main` moves only by fast-forward, to the exact commit that passed the gate and the E2E suite. No merge commit: a merge is always a rebase, then a fast-forward.
 
-`make merge` changes only `main` and the branch of the task. It never checks out `main` in the worktree of the task. When it fails, the task goes back to the Software Engineer (status `To Do`, with a comment). The Software Engineer fixes the cause on the branch and hands the task over again. Then the manager runs `make merge` again.
+Why the Software Engineer does not rebase: the manager rebases right before QA, and `make merge` rebases again, so a rebase at hand-over only repeated them. The permission system also refused it once.
+
+`make merge` changes only `main` and the branch of the task. It never checks out `main` in the worktree of the task. When a step fails for a reason on the branch (a rebase conflict, the gate, the E2E suite), the task goes back to its Software Engineer (status `To Do`, with a comment). The Software Engineer fixes the cause on the branch (it solves a rebase conflict too) and hands the task over again. Then the manager runs `make merge` again.
+
+When `make merge` refuses because the folder of `main` has changes that are not committed on the files of the task, the task does not go back to its Software Engineer: the branch is fine, and QA passed it. That folder is the prompter's folder, and the changes are the prompter's. The manager tells the prompter the folder and the files that `make merge` names, and the prompter decides: commit, stash or drop the changes. The task stays as it is. The manager runs `make merge` again when the prompter says that the folder is clear. The same holds when the fast-forward fails because such changes appeared during the run. No agent commits, stashes or discards the changes of the prompter's main folder without the prompter.
 
 ## Hold the Simulator only while you use it
 
