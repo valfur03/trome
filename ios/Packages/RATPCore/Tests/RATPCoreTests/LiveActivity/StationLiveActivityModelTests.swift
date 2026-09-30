@@ -288,10 +288,11 @@ struct StationLiveActivityModelTests {
             now: now,
             firstLineIndex: 2
         )
+        let shown = client.shownContent
         let model = makeModel()
 
         await model.showNextLines()
-        #expect(client.updates.isEmpty)
+        #expect(client.updates == [shown])
         await model.update(station: chatelet, trains: chateletTrains)
 
         #expect(client.updates.last?.trains.linesPage?.firstIndex == 0)
@@ -315,9 +316,10 @@ struct StationLiveActivityModelTests {
         client.shownContent = StationActivityAttributes.ContentState(station: gareDeLEst, trains: .noLiveData, now: now)
         let appStartedForTheTap = makeModel(savingIn: storage)
 
+        let shown = client.shownContent
         await appStartedForTheTap.showNextLines()
 
-        #expect(client.updates.isEmpty)
+        #expect(client.updates == [shown])
     }
 
     @Test func forgetsTheSavedTrainsWhenTheLiveActivityStops() async {

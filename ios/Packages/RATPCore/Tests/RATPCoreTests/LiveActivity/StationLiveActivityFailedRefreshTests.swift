@@ -84,6 +84,18 @@ struct StationLiveActivityFailedRefreshTests {
         #expect(client.shownContent == shown)
     }
 
+    @Test func sendsTheShownContentAgainWhenTheRiderAsksForTheNextLinesOfStaleTimes() async {
+        let model = makeModel()
+        await model.start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
+        let shown = client.shownContent
+        await model.update(station: concorde, trains: .failed(.unreachable))
+
+        clock.advance(by: 120)
+        await model.showNextLines()
+
+        #expect(client.updates == [shown])
+    }
+
     @Test func drawsTheTrainsSavedByTheLastAppUntilTheFirstShownTrainLeaves() async {
         let store = StationLiveActivityInputsStore(storage: InMemoryKeyValueStore())
         await makeModel(store: store).start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))

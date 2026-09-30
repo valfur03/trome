@@ -245,6 +245,7 @@ private struct TrainsSummary: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .invalidatableContent()
     }
 }
 
