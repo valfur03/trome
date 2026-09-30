@@ -6,7 +6,7 @@ struct StationLiveActivityInputs: Equatable {
 }
 
 public struct StationLiveActivityInputsStore {
-    public static let key = "stationLiveActivity.inputs"
+    static let key = "stationLiveActivity.inputs"
 
     private struct Saved: Codable {
         let station: Station
