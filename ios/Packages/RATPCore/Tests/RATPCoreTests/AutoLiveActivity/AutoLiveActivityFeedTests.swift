@@ -17,6 +17,21 @@ extension AutoLiveActivityModelTests {
         withExtendedLifetime((model, relaunched)) {}
     }
 
+    @Test func feedsTheLiveActivitySoonWhenIOSStartsTheAppInTheBackgroundWhileItShows() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await waitUntil { !client.updates.isEmpty }
+        let callCount = provider.callCount
+
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.launchDelay)
+        let startedInTheBackground = makeModel()
+        startedInTheBackground.setAppActive(false)
+        await waitUntil { provider.callCount > callCount }
+
+        #expect(provider.callCount > callCount)
+        withExtendedLifetime((model, startedInTheBackground)) {}
+    }
+
     @Test func asksOnceForTheTrainsWhenRelaunchedOnScreenWhileItShows() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)

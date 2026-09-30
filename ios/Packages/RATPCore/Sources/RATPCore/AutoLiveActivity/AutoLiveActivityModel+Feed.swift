@@ -13,6 +13,17 @@ extension AutoLiveActivityModel {
         }
     }
 
+    func feedAfterActivityChange(wasActive: Bool) {
+        guard !appIsActive else {
+            feedTask?.cancel()
+            feedTask = nil
+            return
+        }
+        if wasActive || feedTask == nil {
+            restartFeed(fetchNow: false)
+        }
+    }
+
     func restartFeed(fetchNow: Bool) {
         feedTask?.cancel()
         feedTask = nil

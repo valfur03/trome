@@ -58,13 +58,9 @@ public final class AutoLiveActivityModel {
     }
 
     public func setAppActive(_ isActive: Bool) {
+        let wasActive = appIsActive
         appIsActive = isActive
-        guard isActive else {
-            restartFeed(fetchNow: false)
-            return
-        }
-        feedTask?.cancel()
-        feedTask = nil
+        feedAfterActivityChange(wasActive: wasActive)
     }
 
     public func appDidBecomeActive() async {
