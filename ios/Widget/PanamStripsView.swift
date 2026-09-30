@@ -49,7 +49,7 @@ struct PanamStripsView: View {
             Text(state.stationName)
                 .font(.headline)
                 .lineLimit(1)
-                .minimumScaleFactor(showsColumnTitles ? 1 : 0.7)
+                .minimumScaleFactor(showsColumnTitles ? 1 : 0.6)
             Spacer(minLength: 4)
             if showsColumnTitles {
                 HStack(spacing: PanamStrip.ruleWidth) {
