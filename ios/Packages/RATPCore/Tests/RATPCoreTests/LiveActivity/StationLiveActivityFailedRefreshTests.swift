@@ -21,8 +21,8 @@ struct StationLiveActivityFailedRefreshTests {
         return .departures(board, updatedAt: clock.now)
     }
 
-    private func makeModel() -> StationLiveActivityModel {
-        StationLiveActivityModel(client: client, now: { [clock] in clock.now })
+    private func makeModel(store: StationLiveActivityInputsStore? = nil) -> StationLiveActivityModel {
+        StationLiveActivityModel(client: client, store: store, now: { [clock] in clock.now })
     }
 
     private func content(_ station: Station, _ trains: NextTrainsState) -> StationActivityAttributes.ContentState {
@@ -69,6 +69,31 @@ struct StationLiveActivityFailedRefreshTests {
         #expect(client.shownContent == shown)
         #expect(shown?.staleDate == clock.now)
         #expect(model.nextRedrawDate(after: clock.now) == nil)
+    }
+
+    @Test func letsTheTrainsSavedByTheLastAppGoStaleOnceTheFirstShownTrainHasLeft() async {
+        let store = StationLiveActivityInputsStore(storage: InMemoryKeyValueStore())
+        await makeModel(store: store).start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
+        let shown = client.shownContent
+        let appStartedAgain = makeModel(store: store)
+
+        clock.advance(by: 120)
+        await appStartedAgain.redraw()
+
+        #expect(client.updates.isEmpty)
+        #expect(client.shownContent == shown)
+    }
+
+    @Test func drawsTheTrainsSavedByTheLastAppUntilTheFirstShownTrainLeaves() async {
+        let store = StationLiveActivityInputsStore(storage: InMemoryKeyValueStore())
+        await makeModel(store: store).start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
+        let appStartedAgain = makeModel(store: store)
+
+        clock.advance(by: 60)
+        await appStartedAgain.redraw()
+
+        let firstTrain = clock.now.addingTimeInterval(60)
+        #expect(client.updates.last?.shownTrainTimes == [firstTrain, firstTrain.addingTimeInterval(280)])
     }
 
     @Test func drawsTheNextTrainWhenTheFirstOneLeavesAfterASuccessfulRefresh() async {

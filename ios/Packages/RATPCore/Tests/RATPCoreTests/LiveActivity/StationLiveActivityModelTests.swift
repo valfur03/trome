@@ -64,12 +64,29 @@ struct StationLiveActivityModelTests {
         )
     }
 
+    private var gareDeLEst: Station {
+        Station(
+            id: "gare-de-l-est",
+            name: "Gare de l'Est",
+            coordinate: Coordinate(48.8762, 2.3580),
+            lines: ["4", "5", "7"].map { TransitLine(mode: .metro, name: $0) }
+        )
+    }
+
     private var chateletTrains: NextTrainsState {
         .departures(DepartureBoard(departures: [], stations: [chatelet], now: now), updatedAt: now)
     }
 
     private func makeModel() -> StationLiveActivityModel {
         StationLiveActivityModel(client: client, now: { [now] in now })
+    }
+
+    private func makeModel(savingIn storage: InMemoryKeyValueStore) -> StationLiveActivityModel {
+        StationLiveActivityModel(
+            client: client,
+            store: StationLiveActivityInputsStore(storage: storage),
+            now: { [now] in now }
+        )
     }
 
     private func content(_ station: Station, _ trains: NextTrainsState) -> StationActivityAttributes.ContentState {
@@ -278,6 +295,49 @@ struct StationLiveActivityModelTests {
         await model.update(station: chatelet, trains: chateletTrains)
 
         #expect(client.updates.last?.trains.linesPage?.firstIndex == 0)
+    }
+
+    @Test func showsTheNextLinesAtOnceInAnAppThatIOSStartsForTheTap() async {
+        let storage = InMemoryKeyValueStore()
+        await makeModel(savingIn: storage).start(station: chatelet, trains: chateletTrains)
+        let appStartedForTheTap = makeModel(savingIn: storage)
+
+        await appStartedForTheTap.showNextLines()
+
+        #expect(client.updates.last?.trains.linesPage?.firstIndex == 2)
+        #expect(client.updates.last?.trains.linesPage?.lines.map(\.line.name) == ["7"])
+        #expect(appStartedForTheTap.content == client.updates.last)
+    }
+
+    @Test func doesNotShowTheSavedTrainsOnTheLiveActivityOfAnotherStation() async {
+        let storage = InMemoryKeyValueStore()
+        await makeModel(savingIn: storage).start(station: chatelet, trains: chateletTrains)
+        client.shownContent = StationActivityAttributes.ContentState(station: gareDeLEst, trains: .noLiveData, now: now)
+        let appStartedForTheTap = makeModel(savingIn: storage)
+
+        await appStartedForTheTap.showNextLines()
+
+        #expect(client.updates.isEmpty)
+    }
+
+    @Test func forgetsTheSavedTrainsWhenTheLiveActivityStops() async {
+        let storage = InMemoryKeyValueStore()
+        let model = makeModel(savingIn: storage)
+        await model.start(station: chatelet, trains: chateletTrains)
+
+        await model.stop()
+
+        #expect(StationLiveActivityInputsStore(storage: storage).load() == nil)
+    }
+
+    @Test func savesNoTrainsWhileTheLiveActivityLoads() async {
+        let storage = InMemoryKeyValueStore()
+        let model = makeModel(savingIn: storage)
+        await model.start(station: chatelet, trains: chateletTrains)
+
+        await model.update(station: gareDeLEst, trains: .loading)
+
+        #expect(StationLiveActivityInputsStore(storage: storage).load() == nil)
     }
 
     @Test func doesNotChangeTheLinesOfALiveActivityThatDoesNotShow() async {

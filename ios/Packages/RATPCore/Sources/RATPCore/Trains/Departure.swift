@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Departure: Hashable, Sendable {
+public struct Departure: Codable, Hashable, Sendable {
     public var line: TransitLine
     public var destination: String
     public var time: Date

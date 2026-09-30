@@ -31,7 +31,10 @@ struct RATPActivityApp: App {
         )
         let departuresProvider = Self.departuresProvider(primConfiguration)
         let nextTrainsModel = NextTrainsModel(provider: departuresProvider, catalog: stationCatalog)
-        let liveActivityModel = StationLiveActivityModel(client: ActivityKitStationLiveActivityClient())
+        let liveActivityModel = StationLiveActivityModel(
+            client: ActivityKitStationLiveActivityClient(),
+            store: StationLiveActivityInputsStore(storage: UserDefaults.standard)
+        )
         let regionWatcher = CoreLocationStationRegionWatcher()
         let automaticModeModel = AutomaticModeModel(store: AutomaticModeStore(storage: UserDefaults.standard))
         let autoLiveActivityModel = Self.makeAutoLiveActivityModel(

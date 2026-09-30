@@ -18,27 +18,34 @@ public protocol StationLiveActivityClient: AnyObject {
 @MainActor
 @Observable
 public final class StationLiveActivityModel {
-    private struct Inputs {
-        let station: Station
-        let trains: NextTrainsState
-    }
-
     public private(set) var isShowing: Bool
     public private(set) var startError: StationLiveActivityError?
     public private(set) var content: StationActivityAttributes.ContentState?
 
     private let client: any StationLiveActivityClient
+    private let store: StationLiveActivityInputsStore?
     private let now: @Sendable () -> Date
-    private var inputs: Inputs?
+    private var inputs: StationLiveActivityInputs?
     private var firstLineIndex: Int
     private var keptTimesStaleDate: Date?
     @ObservationIgnored private var lastSystemCall: Task<Void, Never>?
 
-    public init(client: any StationLiveActivityClient, now: @escaping @Sendable () -> Date = { Date() }) {
+    public init(
+        client: any StationLiveActivityClient,
+        store: StationLiveActivityInputsStore? = nil,
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.client = client
+        self.store = store
         self.now = now
         self.isShowing = client.isShowing
-        self.firstLineIndex = client.shownContent?.trains.linesPage?.firstIndex ?? 0
+        let shown = client.shownContent
+        self.firstLineIndex = shown?.trains.linesPage?.firstIndex ?? 0
+        if client.isShowing, let shown, shown.trains.linesPage != nil,
+           let saved = store?.load(), saved.station.name == shown.stationName {
+            inputs = saved
+            keptTimesStaleDate = shown.staleDate
+        }
     }
 
     public func start(station: Station, trains: NextTrainsState) async {
@@ -67,7 +74,7 @@ public final class StationLiveActivityModel {
         startError = nil
         isShowing = true
         keptTimesStaleDate = nil
-        inputs = Inputs(station: station, trains: trains)
+        remember(StationLiveActivityInputs(station: station, trains: trains))
         self.content = content
     }
 
@@ -108,7 +115,7 @@ public final class StationLiveActivityModel {
 
     private func forgetShownContent() {
         content = nil
-        inputs = nil
+        remember(nil)
         firstLineIndex = 0
         keptTimesStaleDate = nil
     }
@@ -118,9 +125,15 @@ public final class StationLiveActivityModel {
             firstLineIndex = 0
         }
         let content = makeContent(station: station, trains: trains)
-        inputs = Inputs(station: station, trains: trains)
+        remember(StationLiveActivityInputs(station: station, trains: trains))
         self.content = content
         await send(content)
+    }
+
+    private func remember(_ newInputs: StationLiveActivityInputs?) {
+        guard newInputs != inputs else { return }
+        inputs = newInputs
+        store?.save(newInputs)
     }
 
     private func keepShownTimesIfFailed(_ trains: NextTrainsState, at station: Station) -> Bool {
