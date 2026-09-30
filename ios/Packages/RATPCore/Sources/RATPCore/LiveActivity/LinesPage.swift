@@ -4,11 +4,18 @@ public struct LineTrains: Codable, Hashable, Sendable {
     public var line: TransitLine
     public var directions: [LineDirection]
     public var stationName: String?
+    var hasADirectionWithTwoEnds: Bool?
 
-    public init(line: TransitLine, directions: [LineDirection], stationName: String? = nil) {
+    public init(
+        line: TransitLine,
+        directions: [LineDirection],
+        stationName: String? = nil,
+        hasADirectionWithTwoEnds: Bool = false
+    ) {
         self.line = line
         self.directions = directions
         self.stationName = stationName
+        self.hasADirectionWithTwoEnds = hasADirectionWithTwoEnds
     }
 
     var rowCount: Int {

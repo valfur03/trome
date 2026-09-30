@@ -29,6 +29,13 @@ public struct LineEnds: Hashable, Sendable {
         }
         return branchEnds.isEmpty ? side : branchEnds
     }
+
+    func hasADirectionWithTwoEnds(from stationName: String) -> Bool {
+        let stationKey = StationCatalog.searchKey(stationName)
+        return sides
+            .filter { side in !side.contains { StationCatalog.searchKey($0) == stationKey } }
+            .contains { reachableEnds(of: $0, from: stationName).count > 1 }
+    }
 }
 
 extension TransitLine {

@@ -1,22 +1,34 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "1 h" : {
+    "%@, %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 h"
+            "value" : "%1$@, %2$@"
           }
         }
       }
     },
-    "30 min" : {
+    "%@, %@, then %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, then %3$@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "30 min"
+            "value" : "%1$@, %2$@, puis %3$@"
           }
         }
       }
@@ -27,6 +39,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "> 1 h"
+          }
+        }
+      }
+    },
+    "1 h" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 h"
+          }
+        }
+      }
+    },
+    "1st" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1er"
+          }
+        }
+      }
+    },
+    "2nd" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2e"
+          }
+        }
+      }
+    },
+    "30 min" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 min"
           }
         }
       }

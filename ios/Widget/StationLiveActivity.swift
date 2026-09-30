@@ -58,6 +58,14 @@ struct LockScreenView: View {
     let isStale: Bool
 
     var body: some View {
+        if let line = state.trains.linesPage?.panamStripsLine {
+            PanamStripsView(state: state, line: line, isStale: isStale)
+        } else {
+            rows
+        }
+    }
+
+    private var rows: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .center) {
                 if let page = state.multiLinePage {

@@ -36,7 +36,11 @@ final class LiveActivityRenderCheck: XCTestCase {
         "Saint-Lazare", "Châtelet - Les Halles", "Châtelet", "Place de Clichy", "Cité Universitaire",
         "Sartrouville", "Abbesses", "Opéra", "Boigneville", "Haussmann Saint-Lazare",
         "Avenue du Président Kennedy Maison de Radio France", "Saint-Quentin en Yvelines - Montigny-le-Bretonneux",
-        "Nation", "République", "Gare du Nord"
+        "Nation", "République", "Gare du Nord",
+        "Lamarck - Caulaincourt", "Brochant", "Asnières - Gennevilliers - Les Courtilles",
+        "École Vétérinaire de Maisons-Alfort", "Chevilly-Larue (Marché International)",
+        "Villejuif Paul Vaillant-Couturier", "Boulogne Jean Jaurès", "Pont de Levallois - Bécon", "Pelleport",
+        "Botzaris"
     ]
     static let maxPages = 12
 
@@ -66,21 +70,16 @@ final class LiveActivityRenderCheck: XCTestCase {
                     now: now,
                     firstLineIndex: index
                 )
-                for isStale in [false, true] {
-                    for surface in Self.surfaces {
-                        for size in Self.sizes {
-                            let render = Render(
-                                station: station, page: page, state: state, isStale: isStale,
-                                surface: surface, sizeName: size.name, size: size.size
-                            )
-                            rows.append(try draw(render, into: outDir))
-                        }
-                    }
-                }
+                rows += try drawEveryVariant(of: state, at: station, page: page, into: outDir)
                 guard let linesPage = state.trains.linesPage else { break }
                 index = linesPage.nextFirstIndex
                 page += 1
             } while index != 0 && page < Self.maxPages
+        }
+        let stripStation = try XCTUnwrap(catalog.stations.first { $0.name == Self.stripStatesStation })
+        for (page, state) in Self.stripStates(at: stripStation, now: Date()).enumerated() {
+            let pageNumber = Self.firstStripStatesPage + page
+            rows += try drawEveryVariant(of: state, at: stripStation, page: pageNumber, into: outDir)
         }
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
@@ -119,6 +118,27 @@ final class LiveActivityRenderCheck: XCTestCase {
         let url = URL(fileURLWithPath: path)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
+    }
+
+    private func drawEveryVariant(
+        of state: StationActivityAttributes.ContentState,
+        at station: Station,
+        page: Int,
+        into outDir: URL
+    ) throws -> [String] {
+        var rows: [String] = []
+        for isStale in [false, true] {
+            for surface in Self.surfaces {
+                for size in Self.sizes {
+                    let render = Render(
+                        station: station, page: page, state: state, isStale: isStale,
+                        surface: surface, sizeName: size.name, size: size.size
+                    )
+                    rows.append(try draw(render, into: outDir))
+                }
+            }
+        }
+        return rows
     }
 
     private func draw(_ render: Render, into outDir: URL) throws -> String {

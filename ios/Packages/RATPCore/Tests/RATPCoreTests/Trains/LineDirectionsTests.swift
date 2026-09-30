@@ -89,6 +89,16 @@ struct LineDirectionsTests {
         #expect(minutes == [3, 3, 2, 2, 1, 1])
     }
 
+    @Test func countsTheMinutesThatTheLiveActivityTimerShowsNeverZero() {
+        let train = LineDirection.Train(time: time(inMinutes: 10), destination: "Nation")
+
+        let minutes = [10.5, 9.99, 9, 8.99, 2.99, 0.01, -0.5].map { minutesLeft in
+            train.countdownMinutes(at: time(inMinutes: 10 - minutesLeft))
+        }
+
+        #expect(minutes == [11, 10, 10, 9, 3, 1, 1])
+    }
+
     @Test func showsNoTrainsForADirectionWithoutTrains() {
         let result = directions(of: line6, at: "Chevaleret", [train(line6, to: "Nation", inMinutes: 2, from: eastQuay)])
 

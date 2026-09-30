@@ -67,16 +67,21 @@ extension StationActivityAttributes.Trains {
         case .noLiveData:
             self = .lines(LinesPage(
                 showing: station.lines.sorted(by: TransitLine.stationListOrder).map { line in
-                    LineTrains(line: line.shown, directions: [])
+                    LineTrains(
+                        line: line.shown,
+                        directions: [],
+                        hasADirectionWithTwoEnds: line.hasADirectionWithTwoEnds(at: station)
+                    )
                 },
                 from: firstLineIndex
             ))
         case .departures(let board, _):
             let upcoming = board.departures.filter { $0.time > now }
             let lines = board.lines.map { line in
-                LineTrains(
+                let servingStation = board.station(serving: line)
+                return LineTrains(
                     line: line.shown,
-                    directions: board.station(serving: line).map { station in
+                    directions: servingStation.map { station in
                         LineDirections.directions(
                             of: line,
                             at: station,
@@ -85,7 +90,8 @@ extension StationActivityAttributes.Trains {
                             now: now
                         )
                     } ?? [],
-                    stationName: board.otherStationName(serving: line)
+                    stationName: board.otherStationName(serving: line),
+                    hasADirectionWithTwoEnds: line.hasADirectionWithTwoEnds(at: servingStation ?? station)
                 )
             }
             self = .lines(LinesPage(
@@ -100,6 +106,10 @@ extension StationActivityAttributes.Trains {
 private extension TransitLine {
     var shown: TransitLine {
         TransitLine(mode: mode, name: name, color: color)
+    }
+
+    func hasADirectionWithTwoEnds(at station: Station) -> Bool {
+        ends?.hasADirectionWithTwoEnds(from: station.name) ?? false
     }
 }
 

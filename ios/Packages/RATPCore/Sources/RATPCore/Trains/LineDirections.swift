@@ -17,6 +17,10 @@ public struct LineDirection: Codable, Hashable, Sendable {
         public var roundedUpCountdownEnd: Date {
             time.addingTimeInterval(60)
         }
+
+        public func countdownMinutes(at now: Date) -> Int {
+            max(1, Int((roundedUpCountdownEnd.timeIntervalSince(now) / 60).rounded(.down)))
+        }
     }
 
     public var label: String

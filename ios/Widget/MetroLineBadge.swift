@@ -12,19 +12,40 @@ struct MetroLineBadge: View {
     var isShown = true
 
     var body: some View {
-        ZStack {
-            Text(verbatim: "00")
-                .hidden()
-            Text(line.name)
+        CircleLayout {
+            name
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .padding(3)
         }
         .font(size == .regular ? .subheadline.bold() : .caption.bold())
-        .lineLimit(1)
-        .fixedSize()
-        .padding(3)
         .foregroundStyle(isShown ? line.badgeTextColor : .secondary)
-        .background(isShown ? line.badgeColor : .clear, in: Capsule())
-        .overlay(Capsule().stroke(isShown ? .clear : line.badgeColor, lineWidth: 2))
+        .background(isShown ? line.badgeColor : .clear, in: Circle())
+        .overlay(Circle().stroke(isShown ? .clear : line.badgeColor, lineWidth: 2))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(line.localizedName)
+    }
+
+    private var name: Text {
+        guard line.name.hasSuffix(Self.bis) else { return Text(line.name) }
+        return Text(line.name.dropLast(Self.bis.count))
+            + Text(Self.bis).font(.caption2.bold())
+    }
+
+    private static let bis = "bis"
+}
+
+private struct CircleLayout: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let height = subviews.first?.sizeThatFits(.unspecified).height ?? 0
+        return CGSize(width: height, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(
+            at: CGPoint(x: bounds.midX, y: bounds.midY),
+            anchor: .center,
+            proposal: ProposedViewSize(bounds.size)
+        )
     }
 }
