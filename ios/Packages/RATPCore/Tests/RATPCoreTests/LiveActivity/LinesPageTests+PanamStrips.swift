@@ -62,6 +62,24 @@ extension LinesPageTests {
         #expect(page.panamStripsLine == nil)
     }
 
+    @Test func keepsTheRowsWhenATrainOfUnknownDirectionAddsAThirdDirection() {
+        let line12 = TransitLine(mode: .metro, name: "12")
+        let directions = ["Mairie d'Aubervilliers", "Mairie d'Issy", "Pigalle"].enumerated().map { index, end in
+            LineDirection(
+                label: end,
+                trains: [.init(time: now.addingTimeInterval(Double(index + 1) * 60), destination: end)]
+            )
+        }
+        let page = LinesPage(
+            lines: [LineTrains(line: line12, directions: directions)],
+            allLines: [line12],
+            firstIndex: 0,
+            soonestTrain: nil
+        )
+
+        #expect(page.panamStripsLine == nil)
+    }
+
     @Test func keepsTheRowsOfAContentThatAnOlderAppWrote() throws {
         let line = LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [])
         var json = try #require(
