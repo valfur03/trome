@@ -82,7 +82,7 @@ struct FakeDeparturesProviderTests {
                 LineDirection(label: "Mairie d'Ivry / Villejuif - Louis Aragon", trains: [
                     LineDirection.Train(time: time(inMinutes: 4), destination: "Mairie d'Ivry"),
                     LineDirection.Train(time: time(inMinutes: 8), destination: "Villejuif - Louis Aragon")
-                ])
+                ], branchEnds: ["Mairie d'Ivry", "Villejuif - Louis Aragon"])
             ], hasADirectionWithTwoEnds: true)
         ])
     }

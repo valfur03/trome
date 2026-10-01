@@ -26,11 +26,18 @@ public struct LineDirection: Codable, Hashable, Sendable {
     public var label: String
     public var trains: [Train]
     public var nextTrainIsOverAnHourAway: Bool
+    public var branchEnds: [String]?
 
-    public init(label: String, trains: [Train], nextTrainIsOverAnHourAway: Bool = false) {
+    public init(
+        label: String,
+        trains: [Train],
+        nextTrainIsOverAnHourAway: Bool = false,
+        branchEnds: [String]? = nil
+    ) {
         self.label = label
         self.trains = trains
         self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
+        self.branchEnds = branchEnds
     }
 
     public init(label: String, times: [Date], nextTrainIsOverAnHourAway: Bool = false) {
@@ -145,11 +152,13 @@ enum LineDirections {
                 of: line
             )
             guard showsEmptySides || !sideTrains.isEmpty else { return nil }
+            let reachableEnds = ends.reachableEnds(of: sides[index], from: station.name)
             return LineDirection(
-                label: ends.reachableEnds(of: sides[index], from: station.name).joined(separator: " / "),
+                label: reachableEnds.joined(separator: " / "),
                 trains: sideTrains.prefix(timesPerDirection).map { train in
                     shown(train, at: now, as: endName(of: train.destination, in: sides[index], ends: ends))
-                }
+                },
+                branchEnds: line.mode == .metro && reachableEnds.count > 1 ? reachableEnds : nil
             )
         }
         let otherDirections = groups

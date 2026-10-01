@@ -17,13 +17,10 @@ struct PanamStrip: View {
             Rectangle()
                 .fill(line.badgeColor)
                 .frame(width: 5)
-            Text(direction.name)
-                .font(.subheadline.bold())
+            plate
                 .foregroundStyle(Self.plateBlue)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, direction.branchEnds == nil ? 8 : 6)
+                .padding(.vertical, direction.branchEnds == nil ? 4 : 3)
                 .frame(maxWidth: .infinity, alignment: .leading)
             screen
                 .frame(width: cellWidth * 2 + Self.ruleWidth)
@@ -35,6 +32,17 @@ struct PanamStrip: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
+    }
+
+    @ViewBuilder private var plate: some View {
+        if let ends = direction.branchEnds {
+            PanamBranchEnds(ends: ends)
+        } else {
+            Text(direction.name)
+                .font(.subheadline.bold())
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
     }
 
     @ViewBuilder private var screen: some View {
@@ -77,7 +85,18 @@ struct PanamStrip: View {
             .padding(.horizontal, 4)
     }
 
-    @ViewBuilder private func cell(_ train: LineDirection.Train?) -> some View {
+    private func cell(_ train: LineDirection.Train?) -> some View {
+        let mark = train.flatMap(direction.branchEndIndex(of:))
+        return HStack(spacing: 2) {
+            if let mark {
+                PanamBranchMark(index: mark)
+            }
+            wait(train, mark: mark)
+        }
+        .frame(width: cellWidth)
+    }
+
+    @ViewBuilder private func wait(_ train: LineDirection.Train?, mark: Int?) -> some View {
         Group {
             switch train?.status {
             case .approaching:
@@ -87,9 +106,9 @@ struct PanamStrip: View {
                 Text("At the platform")
                     .font(.caption2.bold())
                     .lineLimit(2)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(mark == nil ? 0.6 : 0.5)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 3)
+                    .padding(.horizontal, mark == nil ? 3 : 0)
             case nil:
                 if let train {
                     PanamMinutes(train: train, drawnAt: drawnAt)
@@ -99,11 +118,10 @@ struct PanamStrip: View {
         }
         .monospacedDigit()
         .foregroundStyle(Self.amber)
-        .frame(width: cellWidth)
     }
 
     private var accessibilityLabel: Text {
-        let name = Text(verbatim: direction.name)
+        let name = Text(verbatim: direction.branchEnds?.formatted(.list(type: .and)) ?? direction.name)
         let trains = direction.trains
         if isStale {
             return name
@@ -119,6 +137,11 @@ struct PanamStrip: View {
     }
 
     private func spoken(_ train: LineDirection.Train) -> Text {
+        guard direction.branchEnds != nil else { return spokenWait(train) }
+        return Text("\(spokenWait(train)) to \(train.destination)")
+    }
+
+    private func spokenWait(_ train: LineDirection.Train) -> Text {
         switch train.status {
         case .approaching:
             Text("Approaching")

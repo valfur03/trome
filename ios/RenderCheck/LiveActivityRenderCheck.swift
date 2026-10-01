@@ -40,7 +40,7 @@ final class LiveActivityRenderCheck: XCTestCase {
         "Lamarck - Caulaincourt", "Brochant", "Asnières - Gennevilliers - Les Courtilles",
         "École Vétérinaire de Maisons-Alfort", "Chevilly-Larue (Marché International)",
         "Villejuif Paul Vaillant-Couturier", "Boulogne Jean Jaurès", "Pont de Levallois - Bécon", "Pelleport",
-        "Botzaris"
+        "Botzaris", "Liège", "Tolbiac", "La Fourche", "Aubervilliers - Pantin - Quatre Chemins"
     ]
     static let maxPages = 12
     static let scale: CGFloat = 3
@@ -81,6 +81,11 @@ final class LiveActivityRenderCheck: XCTestCase {
         for (page, state) in Self.stripStates(at: stripStation, now: Date()).enumerated() {
             let pageNumber = Self.firstStripStatesPage + page
             rows += try drawEveryVariant(of: state, at: stripStation, page: pageNumber, into: outDir)
+        }
+        let taggedStation = try XCTUnwrap(catalog.stations.first { $0.name == Self.taggedStatesStation })
+        for (page, state) in Self.taggedStripStates(at: taggedStation, now: Date()).enumerated() {
+            let pageNumber = Self.firstTaggedStatesPage + page
+            rows += try drawEveryVariant(of: state, at: taggedStation, page: pageNumber, into: outDir)
         }
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8

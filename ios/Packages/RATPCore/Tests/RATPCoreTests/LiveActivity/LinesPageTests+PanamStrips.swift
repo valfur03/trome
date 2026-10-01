@@ -3,7 +3,7 @@ import Testing
 @testable import RATPCore
 
 extension LinesPageTests {
-    private func page(at name: String, trains: (Station, [Station]) -> NextTrainsState) throws -> LinesPage {
+    func page(at name: String, trains: (Station, [Station]) -> NextTrainsState) throws -> LinesPage {
         let catalog = try StationCatalog.bundled()
         let station = try #require(catalog.stations.first { $0.name == name })
         let hub = catalog.hubStations(of: station)
@@ -11,7 +11,7 @@ extension LinesPageTests {
         return try #require(content.trains.linesPage)
     }
 
-    private func pageWithFakeTrains(at name: String) throws -> LinesPage {
+    func pageWithFakeTrains(at name: String) throws -> LinesPage {
         try page(at: name) { _, hub in
             let departures = hub.flatMap { station in
                 station.lines.flatMap { FakeDeparturesProvider.departures(of: $0, at: station, from: now) }
@@ -25,11 +25,6 @@ extension LinesPageTests {
         let page = try pageWithFakeTrains(at: station)
 
         #expect(page.panamStripsLine == page.lines.first)
-    }
-
-    @Test(arguments: ["La Fourche", "Maison Blanche", "Châtillon - Montrouge", "La Courneuve - 8 Mai 1945"])
-    func keepsTheRowsWhereADirectionOfTheLineHasTwoEnds(station: String) throws {
-        #expect(try pageWithFakeTrains(at: station).panamStripsLine == nil)
     }
 
     @Test(arguments: ["Place d'Italie", "Châtelet", "Sartrouville", "Cité Universitaire"])
