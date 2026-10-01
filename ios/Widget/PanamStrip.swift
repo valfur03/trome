@@ -5,6 +5,8 @@ struct PanamStrip: View {
     static let ruleWidth: CGFloat = 1
     static let amber = Color(red: 1, green: 190.0 / 255, blue: 0)
     static let plateBlue = Color(red: 0.06, green: 0.1, blue: 0.47)
+    static let markGap: CGFloat = 1
+    static let markMargin: CGFloat = 2
 
     let direction: LineDirection
     let line: TransitLine
@@ -86,12 +88,24 @@ struct PanamStrip: View {
     }
 
     private func cell(_ train: LineDirection.Train?) -> some View {
-        let mark = train.flatMap(direction.branchEndIndex(of:))
-        return HStack(spacing: 2) {
-            if let mark {
-                PanamBranchMark(index: mark)
+        Group {
+            if let mark = train.flatMap(direction.branchEndIndex(of:)) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: Self.markGap) {
+                        PanamBranchMark(index: mark)
+                        wait(train, mark: mark)
+                        PanamBranchMark(index: mark)
+                            .hidden()
+                    }
+                    .padding(.horizontal, Self.markMargin)
+                    HStack(spacing: Self.markGap) {
+                        PanamBranchMark(index: mark)
+                        wait(train, mark: mark)
+                    }
+                }
+            } else {
+                wait(train, mark: nil)
             }
-            wait(train, mark: mark)
         }
         .frame(width: cellWidth)
     }
