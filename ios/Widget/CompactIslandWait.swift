@@ -2,7 +2,7 @@ import RATPCore
 import SwiftUI
 
 struct CompactIslandWait: View {
-    static let wordFont = Font.caption2.bold()
+    static let wordFont = Font.system(size: 11, weight: .bold)
     static let noTrainsWidth: CGFloat = 44
     static let wordMaximumWidth: CGFloat = 60
     static let wordMinimumScale: CGFloat = 0.8

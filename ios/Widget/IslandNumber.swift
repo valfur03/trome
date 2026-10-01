@@ -2,7 +2,7 @@ import RATPCore
 import SwiftUI
 
 struct IslandNumber: View {
-    static let font = Font.title3.bold()
+    static let font = Font.system(size: 20, weight: .bold)
 
     let value: DynamicIslandWait.MinimalWait
     let drawnAt: Date
