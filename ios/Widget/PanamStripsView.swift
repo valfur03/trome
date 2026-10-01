@@ -13,6 +13,7 @@ struct PanamStripsView: View {
             header
             if line.directions.isEmpty {
                 NoTrainsText()
+                    .invalidatableContent()
             }
             ForEach(line.directions, id: \.self) { direction in
                 PanamStrip(
@@ -22,6 +23,7 @@ struct PanamStripsView: View {
                     isStale: isStale,
                     cellWidth: cellWidth
                 )
+                .invalidatableContent()
             }
             if isStale {
                 Text("Open the app for new times.")
@@ -29,6 +31,7 @@ struct PanamStripsView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
+                    .invalidatableContent()
             }
             SnoozeButtons()
         }
