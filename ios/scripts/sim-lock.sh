@@ -157,13 +157,18 @@ keeps_running_watcher() {
     return 1
 }
 
+write_watcher_pid() {
+    echo "$1" > "$watcher.new.$$"
+    mv "$watcher.new.$$" "$watcher"
+}
+
 start_watcher() {
     if keeps_running_watcher "$watcher"; then
         return 0
     fi
     keeps_running_watcher "$base_lock.watcher" || true
     perl -MPOSIX -e 'setsid(); exec @ARGV' "$scripts/sim-lock.sh" watch "$watcher_version" < /dev/null > /dev/null 2>&1 &
-    echo "$!" > "$watcher"
+    write_watcher_pid "$!"
 }
 
 cpu_idle_percent() {
@@ -295,7 +300,7 @@ shut_down_if_idle() {
 }
 
 watch() {
-    echo "$$" > "$watcher"
+    write_watcher_pid "$$"
     trap 'if [ "$(cat "$watcher" 2> /dev/null)" = "$$" ]; then rm -f "$watcher"; fi' EXIT
     while [ -e "$simulator" ]; do
         active=
