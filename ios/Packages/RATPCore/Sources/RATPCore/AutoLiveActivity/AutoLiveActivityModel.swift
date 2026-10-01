@@ -13,7 +13,7 @@ public final class AutoLiveActivityModel {
     public private(set) var pausedStation: PausedStation?
     public private(set) var hasAskedNotificationQuestion = false
 
-    let catalog: StationCatalog
+    private let catalog: StationCatalog
     let liveActivity: StationLiveActivityModel
     let inputs: Inputs
     let services: Services
