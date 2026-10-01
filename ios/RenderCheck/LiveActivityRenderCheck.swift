@@ -43,6 +43,7 @@ final class LiveActivityRenderCheck: XCTestCase {
         "Botzaris"
     ]
     static let maxPages = 12
+    static let scale: CGFloat = 3
 
     private let renderer = ImageRenderer(content: AnyView(EmptyView()))
     private let recorder = DrawnTextRecorder()
@@ -170,7 +171,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             width: render.surface.width,
             height: render.surface.heightLimit(of: render.state, at: "L")
         )
-        renderer.scale = savesImage ? 3 : 1
+        renderer.scale = Self.scale
         var height: CGFloat = 0
         if savesImage {
             let image = try XCTUnwrap(renderer.uiImage)
@@ -184,7 +185,9 @@ final class LiveActivityRenderCheck: XCTestCase {
                 )
             )
         } else {
-            renderer.render { size, _ in height = size.height.rounded(.up) }
+            renderer.render(rasterizationScale: Self.scale) { size, _ in
+                height = (size.height * Self.scale).rounded(.up) / Self.scale
+            }
         }
         let limit = render.surface.heightLimit(of: render.state, at: render.sizeName)
         let over = limit.map { height > $0 + 0.5 } ?? false
