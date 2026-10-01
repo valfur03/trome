@@ -100,8 +100,11 @@ public final class StationLiveActivityModel {
     }
 
     func nextRedrawDate(after now: Date) -> Date? {
-        guard let date = content?.trains.linesPage?.nextRedrawDate(after: now) else { return nil }
-        return keptTimesAreStale(at: date) ? nil : date
+        guard let content, let date = content.trains.linesPage?.nextRedrawDate(after: content.updatedAt) else {
+            return nil
+        }
+        let due = max(date, now)
+        return keptTimesAreStale(at: due) ? nil : due
     }
 
     public func stop() async {

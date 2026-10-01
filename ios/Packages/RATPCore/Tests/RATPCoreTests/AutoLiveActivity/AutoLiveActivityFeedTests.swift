@@ -261,6 +261,31 @@ extension AutoLiveActivityModelTests {
         #expect(client.updates.last?.shownTrains.map(\.status) == [.approaching])
         #expect(provider.callCount == callCount)
     }
+
+    @Test func redrawsAtOnceWhenTheAppLeavesTheScreenAfterTheTrainAtThePlatformLeft() async {
+        let line12 = TransitLine(mode: .metro, name: "12")
+        let station = Station(id: "m", name: "Station M", coordinate: Coordinate(48.8600, 2.3600), lines: [line12])
+        let trainAtThePlatform = clock.now.addingTimeInterval(5)
+        let laterTrain = clock.now.addingTimeInterval(240)
+        provider.answer(.success([
+            Departure(line: line12, destination: "Mairie d'Issy", time: trainAtThePlatform, isAtStop: true),
+            Departure(line: line12, destination: "Mairie d'Issy", time: laterTrain)
+        ]), for: station)
+        let model = makeModel(catalog: StationCatalog(stations: [station]))
+        await arrive(at: station.coordinate, in: model)
+        await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
+        let callCount = provider.callCount
+        clock.advance(by: 8)
+        let leftTheScreen = clock.now
+
+        model.setAppActive(false)
+        await waitUntil { client.updates.last?.shownTrains.map(\.time) == [laterTrain] }
+
+        #expect(client.updates.last?.shownTrains.map(\.time) == [laterTrain])
+        #expect(client.updates.last?.staleDate == laterTrain)
+        #expect(clock.now == leftTheScreen)
+        #expect(provider.callCount == callCount)
+    }
 }
 
 private extension StationActivityAttributes.ContentState {
