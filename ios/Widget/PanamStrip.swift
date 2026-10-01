@@ -88,7 +88,7 @@ struct PanamStrip: View {
     }
 
     private func cell(_ train: LineDirection.Train?) -> some View {
-        Group {
+        ZStack {
             if let mark = train.flatMap(direction.branchEndIndex(of:)) {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: Self.markGap) {
