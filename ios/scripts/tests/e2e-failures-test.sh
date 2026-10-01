@@ -71,7 +71,7 @@ expect "the explanation of a failed run with a sleep succeeds" "$(explain)" "exi
 expect "it still prints the failing tests" "$(head -1 "$state/out")" "SnoozeTests.swift:42: SnoozeTests/testSnooze(): The next lines did not show."
 expect "it says when the Mac slept during the tests, from the sleep to the wake, as the night of TASK-140" "$(sleep_line)" "The Mac slept during the E2E tests, from 2026-09-30 22:26:22 to 2026-09-30 22:27:58 (96 s), says 'pmset -g log'."
 expect "it says that the failures may come from the sleep" "$(grep -c "may come from the sleep, not from the code" "$state/out")" "1"
-expect "it says to run the command again" "$(grep -c "^Run the same command again (make e2e, or make merge)" "$state/out")" "1"
+expect "it says to run the command again" "$(grep -c "^Run the same command again (make e2e, make merge or make docs-screenshots)" "$state/out")" "1"
 expect "the sleep comes after the failing tests" "$(sed -n 2p "$state/out" | cut -c1-14)" "The Mac slept "
 
 TZ=America/New_York

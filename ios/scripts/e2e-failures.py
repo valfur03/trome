@@ -60,7 +60,7 @@ def print_sleeps(summary):
     if spans:
         print(f"The Mac slept during the E2E tests, {', then '.join(spans)}, says 'pmset -g log'.")
         print("The Simulator stops while the Mac sleeps, but the waits of the tests count on the clock. So the failures above may come from the sleep, not from the code.")
-        print("Run the same command again (make e2e, or make merge) before you look for a bug.")
+        print("Run the same command again (make e2e, make merge or make docs-screenshots) before you look for a bug.")
 
 
 def main():
