@@ -35,7 +35,7 @@ final class SnoozeTests: E2ETestCase {
         XCTAssertTrue(waitFor(liveActivityPager))
         XCTAssertTrue(liveActivityPager.label.contains("2 other lines"), liveActivityPager.label)
         XCTAssertGreaterThanOrEqual(liveActivityPager.frame.height, 44, "The tap area of the pager is too small")
-        tapOnTheLiveActivity(liveActivityPager)
+        tapOnTheLiveActivity(liveActivityPager, pointsBelowItsTop: 3)
         XCTAssertTrue(
             waitFor(liveActivityElement(containing: "Bobigny - Pablo Picasso")),
             "The next lines did not show. The app is \(app.state == .runningForeground ? "open" : "not open"), "

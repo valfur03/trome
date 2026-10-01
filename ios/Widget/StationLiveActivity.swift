@@ -89,6 +89,7 @@ struct LockScreenView: View {
                     }
                 }
             }
+            .zIndex(1)
             TrainsSummary(state: state, isStale: isStale)
             SnoozeButtons()
         }
