@@ -75,6 +75,14 @@ case "$command" in
                     rm -f "$state/popup.$1"
                 fi
                 ;;
+            "log show")
+                log="$state/chronod-log.$1"
+                [ -e "$log" ] || exit 0
+                cat "$log"
+                if [ -e "$log.next" ]; then
+                    mv "$log.next" "$log"
+                fi
+                ;;
             "launchctl print")
                 [ -z "${FAKE_SPRINGBOARD_NOT_READY:-}" ] || exit 0
                 printf '\t\t"com.apple.springboard.services" = {\n\t\t\tport = 0x1\n\t\t\tactive = 1\n\t\t}\n'

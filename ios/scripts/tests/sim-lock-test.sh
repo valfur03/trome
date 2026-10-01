@@ -289,6 +289,34 @@ expect "a job closes a system popup that an earlier job left on the Simulator" "
 expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default" 2> /dev/null || echo "no restart")" ""
 expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 RATP_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
+chronod_line() {
+    echo "2026-10-01 15:31:19.389 Df chronod[28175:eb6459] [com.apple.chrono:taskservice] $1"
+}
+chronod_busy() {
+    chronod_line "Add pending task: descriptor<com.example.RATPActivity::com.example.RATPActivity.Widget>.84AB4E5B"
+    chronod_line "No available queue to process pending tasks"
+}
+chronod_idle() {
+    chronod_line "[84AB4E5B]: task session completed in 0.070800s. time since creation: 0.070854s"
+    chronod_line "No tasks pending"
+}
+wait_for_widget_host() {
+    "$scripts/sim-lock.sh" job "$scripts/simulator.sh" wait-for-widget-host sh -c 'echo ran > "$FAKE_SIM_STATE/after-widget-host"' 2> "$state/widget-host.err" > /dev/null
+    cat "$state/after-widget-host" 2> /dev/null || echo "did not run"
+    rm -f "$state/after-widget-host" "$state/chronod-log.$default" "$state/chronod-log.$default.next"
+}
+widget_host_message() {
+    sed -n -E 's/.*(Waiting for the widget host|still had work queued).*/\1/p' "$state/widget-host.err" | paste -s -d ' ' -
+}
+expect "a job runs at once when the widget host of the Simulator logs no work" "$(wait_for_widget_host) $(widget_host_message)" "ran "
+{ chronod_busy; chronod_idle; } > "$state/chronod-log.$default"
+expect "a job runs at once when the widget host has emptied its queue" "$(wait_for_widget_host) $(widget_host_message)" "ran "
+{ chronod_idle; chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.RATPActivity::com.example.RATPActivity.Widget>.84AB4E5B; pendingTasks.count = 12"; } > "$state/chronod-log.$default"
+chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.RATPActivity::com.example.RATPActivity.Widget>.84AB4E5B; pendingTasks.count = 0" > "$state/chronod-log.$default.next"
+expect "a job waits while the widget host has tasks queued, then runs" "$(wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host"
+chronod_line "Would pop task, but all extensions are busy, namely [com.example.RATPActivity::com.example.RATPActivity.Widget]" > "$state/chronod-log.$default"
+expect "a job goes on when the widget host keeps tasks queued after the limit" "$(RATP_WIDGET_HOST_WAIT_SECONDS=1 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
+
 language_at_restart() {
     cat "$state/language-at-springboard-restart.$default" 2> /dev/null || echo "no restart"
 }

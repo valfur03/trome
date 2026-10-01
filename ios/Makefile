@@ -179,7 +179,7 @@ e2e: project
 	done
 	@rm -rf $(E2E_RESULT)
 	$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) grant-location "$(APP_PATH)" \
+	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
 		$(SIMULATOR) with-destination $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
@@ -219,7 +219,7 @@ live-activity-render: project
 
 docs-screenshots: project
 	$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \
+	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
 		./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \

@@ -3,6 +3,8 @@ set -eu
 
 shared_name_pattern='RATP-Shared(-Small)?(-[0-9]+)?'
 springboard_wait_seconds=${RATP_SPRINGBOARD_WAIT_SECONDS:-60}
+widget_host_wait_seconds=${RATP_WIDGET_HOST_WAIT_SECONDS:-240}
+widget_host_log_seconds=60
 slot=${RATP_SIM_SLOT:-1}
 
 case "$slot" in
@@ -149,6 +151,32 @@ wait_for_springboard() {
     done
 }
 
+widget_host_state() {
+    xcrun simctl spawn "$1" log show --style compact --last "${widget_host_log_seconds}s" \
+        --predicate 'process == "chronod" AND category == "taskservice"' 2> /dev/null \
+        | awk '
+            /No tasks pending/ || /pendingTasks\.count = 0([^0-9]|$)/ { state = "idle"; next }
+            /No available queue to process pending tasks/ || /all extensions are busy/ || /pendingTasks\.count = [1-9]/ { state = "busy" }
+            END { print (state == "busy" ? "busy" : "idle") }
+        '
+}
+
+wait_for_widget_host() {
+    deadline=$(($(date +%s) + widget_host_wait_seconds))
+    waited=
+    while [ "$(widget_host_state "$1")" = busy ]; do
+        if [ "$(date +%s)" -ge "$deadline" ]; then
+            echo "The widget host of the Simulator (chronod) still had work queued after $widget_host_wait_seconds s; going on" >&2
+            return 0
+        fi
+        if [ -z "$waited" ]; then
+            echo "Waiting for the widget host of the Simulator (chronod) to finish the work queued at boot" >&2
+            waited=yes
+        fi
+        sleep 2
+    done
+}
+
 set_language() {
     xcrun simctl spawn "$1" defaults write -g AppleLanguages -array "$language"
     xcrun simctl spawn "$1" defaults write -g AppleLocale -string "$locale"
@@ -225,6 +253,12 @@ case "$command" in
             exec "$@"
         fi
         ;;
+    wait-for-widget-host)
+        wait_for_widget_host "$(boot_device)"
+        if [ $# -gt 0 ]; then
+            exec "$@"
+        fi
+        ;;
     grant-location)
         app=${1:?Usage: $0 grant-location <app path> [command...]}
         shift
@@ -239,6 +273,7 @@ case "$command" in
         bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist")
         open -a Simulator --args -CurrentDeviceUDID "$udid" 2> /dev/null || open -a DeviceHub
         reset_device "$udid"
+        wait_for_widget_host "$udid"
         xcrun simctl install "$udid" "$app"
         xcrun simctl launch "$udid" "$bundle_id"
         ;;
@@ -285,7 +320,7 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|grant-location <app path> [command...]|launch <app path>|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch' and 'switch-language'); the default is English (en)" >&2
         echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
