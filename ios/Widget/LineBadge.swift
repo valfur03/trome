@@ -9,7 +9,8 @@ struct LineBadge: View {
             .font(.subheadline.bold())
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background(.quaternary, in: Capsule())
+            .foregroundStyle(line.badgeTextColor)
+            .background(line.badgeColor, in: Capsule())
     }
 }
 
@@ -38,7 +39,8 @@ private struct RERLineBadge: View {
             .fixedSize()
             .padding(.horizontal, 4)
             .frame(minWidth: SmallLineBadge.minimumWidth)
-            .background(.tertiary, in: Capsule())
+            .foregroundStyle(line.badgeTextColor)
+            .background(line.badgeColor, in: Capsule())
             .accessibilityLabel(line.localizedName)
     }
 }
