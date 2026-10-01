@@ -19,12 +19,14 @@ struct SielRow<Box: View>: View {
                 .padding(.horizontal, 8)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, minHeight: rowHeight, maxHeight: rowHeight, alignment: .leading)
-            box
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(height: rowHeight)
-                .frame(width: boxWidth)
-                .frame(maxHeight: .infinity)
-                .background(.black)
+            ZStack {
+                box
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(height: rowHeight)
+            .frame(width: boxWidth)
+            .frame(maxHeight: .infinity)
+            .background(.black)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
