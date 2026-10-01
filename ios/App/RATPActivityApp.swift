@@ -15,7 +15,7 @@ struct RATPActivityApp: App {
     @State private var automaticModeModel: AutomaticModeModel
     private let stationCatalog: StationCatalog
     private let regionWatcher: CoreLocationStationRegionWatcher
-    private let notificationTapHandler: ArrivalNotificationTapHandler
+    private let notificationResponseHandler: ArrivalNotificationResponseHandler
     private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
     #if DEBUG
     private let uiTestLocationKeeper: CoreLocationBackgroundLocationKeeper?
@@ -49,7 +49,7 @@ struct RATPActivityApp: App {
             ),
             regionWatcher: regionWatcher
         )
-        let notificationTapHandler = Self.connectSystemEvents(
+        let notificationResponseHandler = Self.connectSystemEvents(
             to: autoLiveActivityModel, liveActivity: liveActivityModel, regionWatcher: regionWatcher
         )
 
@@ -59,7 +59,7 @@ struct RATPActivityApp: App {
         self.stationCatalog = stationCatalog
         _permissionsModel = State(initialValue: PermissionsModel(locationPermission: permission))
         self.regionWatcher = regionWatcher
-        self.notificationTapHandler = notificationTapHandler
+        self.notificationResponseHandler = notificationResponseHandler
         _locationService = State(initialValue: locationService)
         _nearestStationModel = State(
             initialValue: NearestStationModel(
@@ -126,18 +126,24 @@ struct RATPActivityApp: App {
         to autoLiveActivityModel: AutoLiveActivityModel,
         liveActivity: StationLiveActivityModel,
         regionWatcher: CoreLocationStationRegionWatcher
-    ) -> ArrivalNotificationTapHandler {
+    ) -> ArrivalNotificationResponseHandler {
         AppDependencyManager.shared.add(dependency: autoLiveActivityModel)
         AppDependencyManager.shared.add(dependency: liveActivity)
-        let notificationTapHandler = ArrivalNotificationTapHandler { [weak autoLiveActivityModel] stationId in
-            await autoLiveActivityModel?.notificationTapped(stationId: stationId)
-        }
-        UNUserNotificationCenter.current().delegate = notificationTapHandler
+        let notificationResponseHandler = ArrivalNotificationResponseHandler(
+            onTap: { [weak autoLiveActivityModel] stationId in
+                await autoLiveActivityModel?.notificationTapped(stationId: stationId)
+            },
+            onAction: { [weak autoLiveActivityModel] action in
+                await autoLiveActivityModel?.notificationActionChosen(action)
+            }
+        )
+        UserNotificationArrivalNotifier.registerActions(in: .current())
+        UNUserNotificationCenter.current().delegate = notificationResponseHandler
         regionWatcher.onWake = { [weak autoLiveActivityModel] enteredRegionId, lastKnownFix in
             await autoLiveActivityModel?.handleRegionEvent(enteredRegionId: enteredRegionId, lastKnownFix: lastKnownFix)
         }
         Task { await regionWatcher.resume() }
-        return notificationTapHandler
+        return notificationResponseHandler
     }
 
     private static func departuresProvider(_ configuration: PRIMConfiguration?) -> (any DeparturesProvider)? {

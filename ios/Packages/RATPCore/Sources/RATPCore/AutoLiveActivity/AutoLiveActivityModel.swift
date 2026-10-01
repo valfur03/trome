@@ -82,6 +82,10 @@ public final class AutoLiveActivityModel {
         await openTappedStation()
     }
 
+    public func notificationActionChosen(_ action: ArrivalNotificationAction) async {
+        await snooze(for: action.snoozeDuration)
+    }
+
     public func handleRegionEvent(enteredRegionId: String?, lastKnownFix: PositionFix?) async {
         guard inputs.locationService.source == .realGPS else { return }
         let fix = WatchedRegion.fix(

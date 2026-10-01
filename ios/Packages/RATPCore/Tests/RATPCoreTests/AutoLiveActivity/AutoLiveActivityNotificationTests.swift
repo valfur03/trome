@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import RATPCore
 
@@ -52,5 +53,32 @@ extension AutoLiveActivityModelTests {
         #expect(permission.isWaitingForAlwaysQuestion)
         #expect(model.shownStation == Places.stationA)
         #expect(client.isShowing)
+    }
+
+    @Test func notForOneHourOnTheNotificationSnoozesAsTheOneHourButtonDoes() async {
+        let model = makeModel()
+        await wake(model, at: Places.fiftyMetersFromA)
+        #expect(notifier.notified == [Places.stationA])
+
+        await model.notificationActionChosen(.notForOneHour)
+        await waitUntil { notifier.withdrawCount > 0 }
+
+        #expect(automaticMode.mode == .snoozed(until: clock.now.addingTimeInterval(60 * 60)))
+        #expect(notifier.withdrawCount > 0)
+        #expect(client.started.isEmpty)
+        #expect(model.shownStation == nil)
+    }
+
+    @Test func notTodayOnTheNotificationSnoozesUntilMidnight() async {
+        let model = makeModel()
+        await wake(model, at: Places.fiftyMetersFromA)
+
+        await model.notificationActionChosen(.notToday)
+
+        let midnight = Calendar.current.date(
+            byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: clock.now)
+        )
+        #expect(automaticMode.mode == midnight.map { .snoozed(until: $0) })
+        #expect(client.started.isEmpty)
     }
 }
