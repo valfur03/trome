@@ -6,6 +6,7 @@ struct CompactIslandWait: View {
     static let noTrainsWidth: CGFloat = 44
     static let wordMaximumWidth: CGFloat = 60
     static let wordMinimumScale: CGFloat = 0.8
+    static let wrappedWordCornerInset: CGFloat = 4
     static let markGap: CGFloat = 2
 
     let island: DynamicIslandWait
@@ -30,7 +31,7 @@ struct CompactIslandWait: View {
         case .approaching:
             IslandNumber(value: .zero, drawnAt: drawnAt)
         case .atPlatform:
-            IslandWordLayout(maximumWidth: Self.wordMaximumWidth) {
+            IslandWordLayout(maximumWidth: Self.wordMaximumWidth, wrappedCornerInset: Self.wrappedWordCornerInset) {
                 word(Text("At the platform"), color: PanamStrip.amber, lines: 2)
                     .multilineTextAlignment(.trailing)
                     .minimumScaleFactor(Self.wordMinimumScale)
