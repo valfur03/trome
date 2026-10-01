@@ -189,6 +189,8 @@ The app is the Live Activity. The main screen shows only:
   "Snooze" stops it for 30 minutes, 1 hour, or for the rest of today.
   While a snooze is on, the screen says "Snoozed", the time when the automatic mode comes back, and the time left.
   "Cancel the snooze" ends the snooze at once (see [Snooze or turn off the automatic mode](#snooze-or-turn-off-the-automatic-mode)).
+  After you swipe the Live Activity away, the screen says "Paused at <station> until <time>", with the time left, and "Cancel the pause at <station>" (see [Swipe the Live Activity away](#swipe-the-live-activity-away)).
+  This line and the snooze line can show together.
 - **The permissions.** The state of the location and of the notifications. When one is missing or refused, the screen says what does not work, with a button to fix it ("Open Settings", or "Allow location").
 
 The station picker and the next trains list are only for testers, in "Testing tools" (debug builds).
@@ -408,7 +410,9 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
    VoiceOver reads the line, then the wait in minutes, or "Approaching", or "At the platform", never "zero".
    The compact and minimal views have no button (Apple allows controls only on the lock screen and in the expanded view).
 3. To remove it, open the app and tap "Stop showing on the lock screen".
-4. To remove it and snooze the automatic mode, tap "30 min", "1 h" or "Today" at the bottom of the Live Activity (see [Snooze or turn off the automatic mode](#snooze-or-turn-off-the-automatic-mode)). The same buttons show in the Dynamic Island when you touch and hold it.
+4. To remove it and snooze the automatic mode, tap "30 min", "1 h" or "Today" at the bottom of the Live Activity (see [Snooze or turn off the automatic mode](#snooze-or-turn-off-the-automatic-mode)).
+   To remove it and pause only its station for 1 hour, swipe it away (see [Swipe the Live Activity away](#swipe-the-live-activity-away)).
+   The same buttons show in the Dynamic Island when you touch and hold it.
 
 The Live Activity can also start and stop by itself near a station (see below).
 
@@ -602,8 +606,39 @@ The app watches the metro and RER stations around you. The rules come from decis
   A Live Activity that you start by hand for a station far from you does not stop because of the distance.
   It stops at 250 meters only after you came near its station.
   The 45 minute limit applies to every Live Activity.
+- **Swipe.** When you swipe the Live Activity away, its station is paused for 1 hour (see [below](#swipe-the-live-activity-away)).
+  The other stations work as above.
 
 The main screen says which station shows on the lock screen ("On the lock screen: <station>").
+
+### Swipe the Live Activity away
+
+The rules come from decision-32 in the backlog.
+
+- **The pause.** When you swipe the Live Activity away (on the lock screen or in the Notification Center), the app pauses its station for 1 hour.
+  During this hour, at this station, no notification and no automatic Live Activity start, with the app open, in the background or closed, also when you leave the station and come back.
+  Every other station works as usual: the notification when the app is in the background, the start at once when the app is open.
+  After the hour, the station works again: the Live Activity starts at the next arrival at the station.
+  The app hears the swipe within about 1 second, and stops getting your position in the background at once.
+- **One pause at a time.** A swipe at another station replaces the pause.
+  "Show the Live Activity now" at the paused station, or a tap on its arrival notification, ends the pause.
+  A snooze does not change the pause.
+- **See and cancel it.** The main screen says "Paused at <station> until <time>" (in French "En pause à <station> jusqu’à <time>"), with the time left.
+  Tap "Cancel the pause at <station>" ("Annuler la pause à <station>") to end it at once.
+  If you are at the station with the app open, the Live Activity then starts.
+  The line goes away when the pause ends.
+  While the automatic mode is off, the screen does not show it.
+- **What is not a swipe.** The app ends the Live Activity itself (the snooze buttons, "Stop showing on the lock screen", the 250 meters, the 45 minutes): no pause.
+  You turn off Live Activities for the app in Settings: no pause.
+  iOS ends a Live Activity after 8 hours: no pause.
+- **Its limit.** The app sets the pause only when it runs at the swipe (normally the case: while a Live Activity shows, the app keeps getting your position in the background, so iOS keeps it running).
+  When the app was not running, iOS starts it in the background right after the swipe, but it does not tell the app why, and the app cannot tell this start from another one (for example a region wake hours later).
+  So the app sets no pause then, and it works as before decision-32: the Live Activity does not come back at this station until you leave it (more than 250 meters away, with no station within 150 meters) and come back.
+
+For developers: `AutoLiveActivityRules.outcome(of:shown:now:)` (in `RATPCore`) decides whether a removal is a swipe: the app did not end it (`LiveActivityRemoval.endedByTheApp`), it still had a shown Live Activity in its saved state, Live Activities are on (`ActivityAuthorizationInfo().areActivitiesEnabled`), and it started less than 8 hours ago.
+`AutoLiveActivityModel` applies it and saves the pause (`StationPause`) with its state, so the pause survives a relaunch.
+`ActivityKitStationLiveActivityClient` (in `ios/App/LiveActivity/`) follows each Live Activity of the app (`activityStateUpdates`) and reports its first `ended` or `dismissed` state, with whether the app ended it itself (it remembers the Live Activities that it ends).
+At launch, when the saved state says that a Live Activity shows and iOS lists none, the app forgets it with no pause (the limit above).
 
 ### Snooze or turn off the automatic mode
 
@@ -694,8 +729,8 @@ When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `io
 iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you.
 When you leave this larger area, the app picks the nearest stations again.
 Debug builds log the region monitoring: whether iOS can watch regions, and each region event with its state and its diagnostics (for example `conditionUnsupported`).
-They also log the Live Activity: at each launch, the Live Activities that iOS still lists with their state; each state change that iOS sends (`active`, `stale`, `ended`, `dismissed`); each end that the app asks for itself; and when the background location starts and stops.
-So you can see when iOS tells the app that you swiped the Live Activity away (TASK-146).
+They also log the Live Activity: at each launch, the Live Activities that iOS still lists with their state; each state change that iOS sends (`active`, `stale`, `ended`, `dismissed`); each end that the app asks for itself; when the background location starts and stops; and when a pause of a station starts, ends or is cancelled, with the reason (or why a removal set no pause).
+So you can see when iOS tells the app that you swiped the Live Activity away (TASK-146, TASK-166).
 They also log each content that the app sends to the Live Activity (category `LiveActivityContent`: each shown train with its time, its destination and its state, and at a fork the trains of each end row, after "rows:"),
 and each PRIM answer (category `PRIM`: one line per train of the answer, with its destination, its times, its quay, its journey, and whether the app keeps it or drops it, and why).
 The PRIM key is never in the log.
@@ -712,8 +747,7 @@ This costs battery, for at most 45 minutes (the limit of the Live Activity).
 In the background, the app gets new train times when the Live Activity starts or switches station, and when the app leaves the screen while the Live Activity still waits for its first trains (the load that ran on screen stops when the app leaves it, so `keepFeedingInBackground` asks PRIM again at once, instead of at the next background refresh),
 then again a few seconds after the first shown train leaves (`BackgroundTrainsRefresh`: at most every 30 seconds, at least every 2 minutes; it stops when PRIM rejects the key or the quota is used up).
 Before each refresh, the app checks that the Live Activity still shows.
-When you swipe it away, the app stops the background location.
-When the app no longer asks PRIM, it still does this check every 2 minutes.
+When you swipe it away, iOS tells the app within about 1 second, and the app stops the background location at once and pauses the station (see [Swipe the Live Activity away](#swipe-the-live-activity-away)).
 Each time it gets new train times, it asks PRIM once for each stop area of the station and of the other stations of its place (Châtelet: 2 calls, Saint-Lazare: 5 calls).
 While the app is open, the app gets the train times of the Live Activity every 30 seconds, unless the next trains screen of the testing tools already gets them for the same station.
 
@@ -1039,7 +1073,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 - `make build` builds the app for the processor of your Mac only (Apple silicon: arm64), and the command line builds make no code index (Xcode makes its own index when you open the project). Both make the build faster.
 - End-to-end tests are slow: all folders share one Simulator, one job at a time.
   So each test guards one seam where our code meets iOS, and nothing else (CLAUDE.md, section "Test levels", and decision-9 in the backlog): the real location popups, then a Live Activity that the app starts and stops by hand (`LiveActivityTests`), the automatic start, switch and end of the Live Activity from the position that iOS gives (`AutoLiveActivityTests`),
-  the arrival notification of an app in the background, the tap on it and its "Not for 1 h" action (`ArrivalNotificationTests`), and the trains on the real Live Activity with its two buttons (`SnoozeTests`).
+  the arrival notification of an app in the background, the tap on it and its "Not for 1 h" action (`ArrivalNotificationTests`), a real swipe of the Live Activity that pauses its station but not the next one (`SwipeAwayTests`), and the trains on the real Live Activity with its two buttons (`SnoozeTests`).
   Each test looks at the real Live Activity in the Notification Center (`openNotificationCenter(over:)` from `E2ETestCase` pulls it down over the app, and `liveActivity` is the Live Activity there), not at the app label "On the lock screen: <station>": at most, this label is a point to wait for.
   The tests move the phone with the Simulator position (`moveThePhone(to:)`, which sets `XCUIDevice.location`), so the app reads it through Core Location, with our real code.
   They never go through the Testing tools: the fake position for testers has no E2E test, and QA checks it when a task changes it.

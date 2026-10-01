@@ -31,6 +31,13 @@ struct AutomaticModeSection: View {
             case .turnedOff:
                 EmptyView()
             }
+            if automaticMode.mode != .turnedOff, let paused = autoLiveActivity.pausedStation {
+                PauseState(paused: paused)
+                Button("Cancel the pause at \(paused.station.name)", systemImage: "arrow.uturn.backward") {
+                    Task { await autoLiveActivity.cancelPause() }
+                }
+                .accessibilityIdentifier("cancelStationPause")
+            }
         } footer: {
             Text(footer)
         }
@@ -92,5 +99,20 @@ private struct SnoozeState: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("snoozeState")
+    }
+}
+
+private struct PauseState: View {
+    let paused: PausedStation
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Paused at \(paused.station.name) until \(paused.end, style: .time)")
+            Text(.currentDate, format: .reference(to: paused.end, allowedFields: [.hour, .minute]))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("stationPauseState")
     }
 }

@@ -32,10 +32,8 @@ struct RATPActivityApp: App {
         )
         let departuresProvider = Self.departuresProvider(primConfiguration)
         let nextTrainsModel = NextTrainsModel(provider: departuresProvider, catalog: stationCatalog)
-        let liveActivityModel = StationLiveActivityModel(
-            client: ActivityKitStationLiveActivityClient(),
-            store: StationLiveActivityInputsStore(storage: UserDefaults.standard)
-        )
+        let liveActivityClient = ActivityKitStationLiveActivityClient()
+        let liveActivityModel = Self.makeLiveActivityModel(client: liveActivityClient)
         let regionWatcher = CoreLocationStationRegionWatcher()
         let automaticModeModel = AutomaticModeModel(store: AutomaticModeStore(storage: UserDefaults.standard))
         let autoLiveActivityModel = Self.makeAutoLiveActivityModel(
@@ -48,7 +46,8 @@ struct RATPActivityApp: App {
                 liveActivityTrains: NextTrainsModel(provider: departuresProvider, catalog: stationCatalog),
                 automaticMode: automaticModeModel
             ),
-            regionWatcher: regionWatcher
+            regionWatcher: regionWatcher,
+            liveActivityRemovals: liveActivityClient
         )
         let notificationResponseHandler = Self.connectSystemEvents(
             to: autoLiveActivityModel, liveActivity: liveActivityModel, regionWatcher: regionWatcher
@@ -102,11 +101,18 @@ struct RATPActivityApp: App {
         }
     }
 
+    private static func makeLiveActivityModel(
+        client: ActivityKitStationLiveActivityClient
+    ) -> StationLiveActivityModel {
+        StationLiveActivityModel(client: client, store: StationLiveActivityInputsStore(storage: UserDefaults.standard))
+    }
+
     private static func makeAutoLiveActivityModel(
         catalog: StationCatalog,
         liveActivity: StationLiveActivityModel,
         inputs: AutoLiveActivityModel.Inputs,
-        regionWatcher: CoreLocationStationRegionWatcher
+        regionWatcher: CoreLocationStationRegionWatcher,
+        liveActivityRemovals: ActivityKitStationLiveActivityClient
     ) -> AutoLiveActivityModel {
         AutoLiveActivityModel(
             catalog: catalog,
@@ -115,7 +121,8 @@ struct RATPActivityApp: App {
             services: .init(
                 notifier: UserNotificationArrivalNotifier(),
                 regionWatcher: regionWatcher,
-                locationKeeper: CoreLocationBackgroundLocationKeeper()
+                locationKeeper: CoreLocationBackgroundLocationKeeper(),
+                liveActivityRemovals: liveActivityRemovals
             ),
             configuration: .init(
                 store: AutoLiveActivityStore(storage: UserDefaults.standard),

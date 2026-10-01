@@ -10,14 +10,15 @@ public final class AutoLiveActivityModel {
     }
 
     public private(set) var shownStation: Station?
+    public private(set) var pausedStation: PausedStation?
     public private(set) var hasAskedNotificationQuestion = false
 
-    private let catalog: StationCatalog
+    let catalog: StationCatalog
     let liveActivity: StationLiveActivityModel
     let inputs: Inputs
-    private let services: Services
+    let services: Services
     let configuration: Configuration
-    private var state: AutoLiveActivityState {
+    var state: AutoLiveActivityState {
         didSet { stateDidChange(from: oldValue) }
     }
     private var appPhase = AppPhase.background
@@ -28,6 +29,8 @@ public final class AutoLiveActivityModel {
     private var hasClearedRegions = false
     @ObservationIgnored private var timerTask: Task<Void, Never>?
     @ObservationIgnored var feedTask: Task<Void, Never>?
+    @ObservationIgnored var pauseTimerTask: Task<Void, Never>?
+    @ObservationIgnored var removedOutsideTheApp: AutoLiveActivityState.Shown?
 
     public init(
         catalog: StationCatalog,
@@ -47,6 +50,8 @@ public final class AutoLiveActivityModel {
         }
         self.state = state
         stateDidChange(from: AutoLiveActivityState())
+        endPauseIfOver()
+        watchLiveActivityRemovals()
         observePosition()
         observeScreenStation()
         observeAutomaticMode()
@@ -56,6 +61,7 @@ public final class AutoLiveActivityModel {
     deinit {
         timerTask?.cancel()
         feedTask?.cancel()
+        pauseTimerTask?.cancel()
     }
 
     public func setAppPhase(_ phase: AppPhase) {
@@ -103,12 +109,23 @@ public final class AutoLiveActivityModel {
     }
 
     public func startByHand(_ station: Station) async {
+        endPause(at: station.id, reason: "start by hand")
         let isNear = precisePosition().map {
             $0.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters
         }
         state.shown = .init(stationId: station.id, startedAt: configuration.now(), hasBeenNear: isNear ?? false)
         await show(station)
         await refreshRegions(around: inputs.locationService.position)
+    }
+
+    public func cancelPause() async {
+        guard let pause = state.pause else { return }
+        endPause(at: pause.stationId, reason: "cancelled by the rider")
+        if state.arrivalStationId == pause.stationId {
+            state.arrivalStationId = nil
+        }
+        guard let fix = inputs.locationService.fix else { return }
+        await handle(fix)
     }
 
     public func stopByHand() async {
@@ -178,6 +195,7 @@ public final class AutoLiveActivityModel {
 
     private func evaluate(position: Coordinate?) async {
         syncWithSystem()
+        endPauseIfOver()
         let response = AutoLiveActivityRules.ArrivalResponse(
             appPhase: appPhase,
             allowsAutomaticStart: inputs.automaticMode.allowsAutomaticStart
@@ -217,6 +235,7 @@ public final class AutoLiveActivityModel {
             state.shown = nil
             return
         }
+        removedOutsideTheApp = nil
         services.locationKeeper.begin()
         restartFeed(fetchNow: true)
     }
@@ -229,7 +248,8 @@ public final class AutoLiveActivityModel {
 
     func syncWithSystem() {
         liveActivity.syncWithSystem()
-        guard !liveActivity.isShowing, state.shown != nil else { return }
+        guard !liveActivity.isShowing, let shown = state.shown else { return }
+        removedOutsideTheApp = shown
         state.shown = nil
         services.locationKeeper.end()
         restartFeed(fetchNow: false)
@@ -239,6 +259,7 @@ public final class AutoLiveActivityModel {
         guard appIsActive, let stationId = pendingTappedStationId else { return }
         pendingTappedStationId = nil
         guard let station = catalog.station(withId: stationId) else { return }
+        endPause(at: stationId, reason: "tap on the arrival notification")
         state.arrivalStationId = stationId
         if liveActivity.isShowing, let shown = state.shown {
             guard shown.stationId != stationId else { return }
@@ -249,8 +270,10 @@ public final class AutoLiveActivityModel {
             await show(station)
         }
     }
+}
 
-    private func stateDidChange(from oldValue: AutoLiveActivityState) {
+private extension AutoLiveActivityModel {
+    func stateDidChange(from oldValue: AutoLiveActivityState) {
         guard state != oldValue else { return }
         let station = state.shown.flatMap { catalog.station(withId: $0.stationId) }
         if station != shownStation {
@@ -260,10 +283,14 @@ public final class AutoLiveActivityModel {
         if oldValue.shown?.startedAt != state.shown?.startedAt {
             scheduleTimer()
         }
+        if oldValue.pause != state.pause {
+            pausedStation = state.pause.flatMap { pause in
+                catalog.station(withId: pause.stationId).map { PausedStation(station: $0, end: pause.end) }
+            }
+            schedulePauseEnd()
+        }
     }
-}
 
-private extension AutoLiveActivityModel {
     func scheduleTimer() {
         timerTask?.cancel()
         timerTask = nil

@@ -1,5 +1,6 @@
 import ActivityKit
 import RATPCore
+import Synchronization
 
 @MainActor
 final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
@@ -9,10 +10,20 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         }
     }
 
+    private nonisolated let idsEndedByTheApp = Mutex<Set<String>>([])
+    private var followedIds: Set<String> = []
+    private var onRemoval: (@MainActor (LiveActivityRemoval) -> Void)?
+
     init() {
         #if DEBUG
-        Self.logStatesFromLaunch()
+        Self.logLaunch(Activity<StationActivityAttributes>.activities)
         #endif
+        Activity<StationActivityAttributes>.activities.forEach(follow)
+        Task { [weak self] in
+            for await activity in Activity<StationActivityAttributes>.activityUpdates {
+                self?.follow(activity)
+            }
+        }
     }
 
     var isShowing: Bool {
@@ -50,11 +61,50 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
     }
 
     nonisolated func end() async {
+        let activities = Activity<StationActivityAttributes>.activities
         #if DEBUG
-        Self.logEnd(of: Activity<StationActivityAttributes>.activities)
+        Self.logEnd(of: activities)
         #endif
-        for activity in Activity<StationActivityAttributes>.activities {
+        idsEndedByTheApp.withLock { $0.formUnion(activities.map(\.id)) }
+        for activity in activities {
             await activity.end(nil, dismissalPolicy: .immediate)
         }
+    }
+
+    private func follow(_ activity: Activity<StationActivityAttributes>) {
+        guard followedIds.insert(activity.id).inserted else { return }
+        #if DEBUG
+        Self.logFollowed(activity)
+        #endif
+        Task { [weak self] in
+            var isReported = false
+            for await state in activity.activityStateUpdates {
+                #if DEBUG
+                Self.log(state, of: activity.id)
+                #endif
+                guard !isReported, state == .dismissed || state == .ended else { continue }
+                isReported = true
+                self?.reportRemoval(of: activity.id)
+            }
+            #if DEBUG
+            Self.logEndOfStateUpdates(of: activity.id)
+            #endif
+        }
+    }
+
+    private func reportRemoval(of id: String) {
+        let endedByTheApp = idsEndedByTheApp.withLock { $0.contains(id) }
+        onRemoval?(
+            LiveActivityRemoval(
+                endedByTheApp: endedByTheApp,
+                activitiesAreEnabled: ActivityAuthorizationInfo().areActivitiesEnabled
+            )
+        )
+    }
+}
+
+extension ActivityKitStationLiveActivityClient: LiveActivityRemovalWatcher {
+    func watchRemovals(_ onRemoval: @escaping @MainActor (LiveActivityRemoval) -> Void) {
+        self.onRemoval = onRemoval
     }
 }

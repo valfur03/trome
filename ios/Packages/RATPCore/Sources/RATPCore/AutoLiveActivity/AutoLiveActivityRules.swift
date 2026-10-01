@@ -16,16 +16,24 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case arrivalStationId
         case shown
+        case pause
     }
 
     public var arrivalStationId: String?
     public var shown: Shown?
     public var pendingArrivalStationId: String?
+    public var pause: StationPause?
 
-    public init(arrivalStationId: String? = nil, shown: Shown? = nil, pendingArrivalStationId: String? = nil) {
+    public init(
+        arrivalStationId: String? = nil,
+        shown: Shown? = nil,
+        pendingArrivalStationId: String? = nil,
+        pause: StationPause? = nil
+    ) {
         self.arrivalStationId = arrivalStationId
         self.shown = shown
         self.pendingArrivalStationId = pendingArrivalStationId
+        self.pause = pause
     }
 }
 
@@ -33,6 +41,7 @@ public struct AutoLiveActivityRules: Sendable {
     public static let arrivalRadiusMeters = 150.0
     public static let stopRadiusMeters = 250.0
     public static let defaultMaximumDuration: TimeInterval = 45 * 60
+    static let systemMaximumDuration: TimeInterval = 8 * 60 * 60
     static let maximumAccuracyMeters = 100.0
     static let maximumPositionAge: TimeInterval = 15
     static let maximumMonitoredPositionAge: TimeInterval = 120
@@ -88,6 +97,28 @@ public struct AutoLiveActivityRules: Sendable {
         (0...maximumAccuracyMeters).contains(fix.accuracyMeters)
     }
 
+    enum RemovalOutcome: Equatable, Sendable {
+        case pause(StationPause)
+        case endedByTheApp
+        case noShownLiveActivity
+        case liveActivitiesTurnedOff
+        case olderThanTheSystemLimit
+    }
+
+    func outcome(
+        of removal: LiveActivityRemoval,
+        shown: AutoLiveActivityState.Shown?,
+        now: Date
+    ) -> RemovalOutcome {
+        guard !removal.endedByTheApp else { return .endedByTheApp }
+        guard let shown else { return .noShownLiveActivity }
+        guard removal.activitiesAreEnabled else { return .liveActivitiesTurnedOff }
+        guard now.timeIntervalSince(shown.startedAt) < Self.systemMaximumDuration else {
+            return .olderThanTheSystemLimit
+        }
+        return .pause(StationPause(stationId: shown.stationId, end: now.addingTimeInterval(StationPause.duration)))
+    }
+
     public func decide(
         state: AutoLiveActivityState,
         position: Coordinate?,
@@ -135,6 +166,7 @@ private extension AutoLiveActivityRules.Decision {
     }
 
     mutating func arrive(at station: Station, now: Date, response: AutoLiveActivityRules.ArrivalResponse) {
+        guard state.pause?.pauses(station.id, at: now) != true else { return }
         if let shown = state.shown {
             guard shown.stationId != station.id else { return }
             state.shown = .init(stationId: station.id, startedAt: shown.startedAt, hasBeenNear: true)

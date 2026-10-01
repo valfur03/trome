@@ -106,6 +106,7 @@ struct AutoLiveActivityModelTests {
     let notifier = StubArrivalNotifier()
     let watcher = StubRegionWatcher()
     let keeper = StubLocationKeeper()
+    let removals = StubLiveActivityRemovals()
     let permission = StubLocationPermission()
     let provider = StubDeparturesProvider()
     private let storage = InMemoryKeyValueStore()
@@ -157,7 +158,12 @@ struct AutoLiveActivityModelTests {
                 liveActivityTrains: NextTrainsModel(provider: provider, now: now, sleep: sleep),
                 automaticMode: automaticMode
             ),
-            services: .init(notifier: notifier, regionWatcher: watcher, locationKeeper: keeper),
+            services: .init(
+                notifier: notifier,
+                regionWatcher: watcher,
+                locationKeeper: keeper,
+                liveActivityRemovals: removals
+            ),
             configuration: .init(store: AutoLiveActivityStore(storage: storage), now: now, sleep: sleep)
         )
     }

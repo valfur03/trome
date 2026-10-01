@@ -61,6 +61,16 @@
         }
       }
     },
+    "Cancel the pause at %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler la pause à %@"
+          }
+        }
+      }
+    },
     "Cancel the snooze" : {
       "localizations" : {
         "fr" : {
@@ -237,6 +247,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir Réglages"
+          }
+        }
+      }
+    },
+    "Paused at %@ until %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Paused at %1$@ until %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause à %1$@ jusqu’à %2$@"
           }
         }
       }
