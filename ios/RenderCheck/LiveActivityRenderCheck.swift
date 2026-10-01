@@ -90,10 +90,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             let pageNumber = Self.firstTaggedStatesPage + page
             rows += try drawEveryVariant(of: state, at: taggedStation, page: pageNumber, into: outDir)
         }
-        for (page, rer) in Self.rerStates(at: catalog, now: Date()).enumerated() {
-            let pageNumber = Self.firstRERStatesPage + page
-            rows += try drawEveryVariant(of: rer.state, at: rer.station, page: pageNumber, into: outDir)
-        }
+        rows += try drawTheRERStates(of: catalog, into: outDir)
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
         )
@@ -131,6 +128,15 @@ final class LiveActivityRenderCheck: XCTestCase {
         let url = URL(fileURLWithPath: path)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
+    }
+
+    private func drawTheRERStates(of catalog: StationCatalog, into outDir: URL) throws -> [String] {
+        var rows: [String] = []
+        for (page, rer) in Self.rerStates(at: catalog, now: Date()).enumerated() {
+            let pageNumber = Self.firstRERStatesPage + page
+            rows += try drawEveryVariant(of: rer.state, at: rer.station, page: pageNumber, into: outDir)
+        }
+        return rows
     }
 
     private func drawEveryVariant(
