@@ -18,10 +18,6 @@ public struct LineTrains: Codable, Hashable, Sendable {
         self.hasADirectionWithTwoEnds = hasADirectionWithTwoEnds
     }
 
-    var rowCount: Int {
-        max(1, directions.count) + (stationName == nil ? 0 : 1)
-    }
-
     var keepingOnlyTheNextTrains: LineTrains {
         var line = self
         line.directions = directions.map { direction in
@@ -48,7 +44,6 @@ public struct SoonestTrain: Codable, Hashable, Sendable {
 }
 
 public struct LinesPage: Codable, Hashable, Sendable {
-    static let maximumRows = 4
     static let maximumRowsWithTwoTrains = 2
 
     public var lines: [LineTrains]
@@ -74,17 +69,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
 
     init(showing lines: [LineTrains], from index: Int, laterTrainTime: Date? = nil) {
         let firstIndex = lines.indices.contains(index) ? index : 0
-        var shown: [LineTrains] = []
-        var rowCount = 0
-        for line in lines[firstIndex...] {
-            if let first = shown.first {
-                guard first.line.mode == .rer, line.line.mode == .rer,
-                      rowCount + line.rowCount <= Self.maximumRows
-                else { break }
-            }
-            shown.append(line)
-            rowCount += line.rowCount
-        }
+        var shown = Array(lines[firstIndex...].prefix(1))
         if shown.flatMap(\.directions).count > Self.maximumRowsWithTwoTrains {
             shown = shown.map(\.keepingOnlyTheNextTrains)
         }
@@ -109,9 +94,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
     func nextRedrawDate(after now: Date) -> Date? {
         let trainDates = lines.flatMap { line in
             line.directions.flatMap(\.trains).flatMap { train in
-                line.line.mode == .metro
-                    ? PlatformStatus.changeDates(arrival: train.arrivalTime, departure: train.time)
-                    : [train.time]
+                PlatformStatus.changeDates(arrival: train.arrivalTime, departure: train.time)
             }
         }
         return (trainDates + [soonestTrain?.time].compactMap { $0 }).filter { $0 > now }.min()

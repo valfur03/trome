@@ -28,20 +28,20 @@ struct LinesPageTests {
         )
     }
 
-    @Test func showsAsManyRERLinesAsFitInFourRowsWithOneTrainEach() {
+    @Test func showsOneRERLinePerPageWithTheTrainsOfBothDirections() {
         let lines = [
             line("A", mode: .rer, directions: 2),
             line("B", mode: .rer, directions: 2),
             line("D", mode: .rer, directions: 2)
         ]
 
-        let page = LinesPage(showing: lines, from: 0)
+        let pages = [0, 1, 2].map { LinesPage(showing: lines, from: $0) }
 
-        #expect(page.lines.map(\.line.name) == ["A", "B"])
-        #expect(page.lines.flatMap(\.directions).allSatisfy { $0.trains.count == 1 })
-        #expect(page.allLines.map(\.name) == ["A", "B", "D"])
-        #expect(page.hasOtherLines)
-        #expect(page.otherLineCount == 1)
+        #expect(pages.map { $0.lines.map(\.line.name) } == [["A"], ["B"], ["D"]])
+        #expect(pages.allSatisfy { $0.lines.flatMap(\.directions).allSatisfy { $0.trains.count == 2 } })
+        #expect(pages.map(\.nextFirstIndex) == [1, 2, 0])
+        #expect(pages.map(\.otherLineCount) == [2, 2, 2])
+        #expect(pages[0].allLines.map(\.name) == ["A", "B", "D"])
     }
 
     @Test func showsOneMetroLinePerPageWithTheTrainsOfBothDirections() {
@@ -55,7 +55,7 @@ struct LinesPageTests {
         #expect(pages.map(\.otherLineCount) == [2, 2, 2])
     }
 
-    @Test func neverPutsAMetroLineAndAnRERLineOnOnePage() {
+    @Test func goesThroughTheMetroAndRERLinesOneLinePerPageInTheirOrder() {
         let lines = [
             line("4", directions: 1),
             line("A", mode: .rer, directions: 1),
@@ -63,15 +63,13 @@ struct LinesPageTests {
             line("14", directions: 1)
         ]
 
-        let first = LinesPage(showing: lines, from: 0)
-        let second = LinesPage(showing: lines, from: first.nextFirstIndex)
-        let third = LinesPage(showing: lines, from: second.nextFirstIndex)
+        var pages = [LinesPage(showing: lines, from: 0)]
+        while let last = pages.last, last.nextFirstIndex != 0 {
+            pages.append(LinesPage(showing: lines, from: last.nextFirstIndex))
+        }
 
-        #expect(first.lines.map(\.line.name) == ["4"])
-        #expect(second.lines.map(\.line.name) == ["A", "B"])
-        #expect(second.otherLineCount == 2)
-        #expect(third.lines.map(\.line.name) == ["14"])
-        #expect(third.nextFirstIndex == 0)
+        #expect(pages.map { $0.lines.map(\.line.name) } == [["4"], ["A"], ["B"], ["14"]])
+        #expect(pages.map(\.otherLineCount) == [3, 3, 3, 3])
     }
 
     @Test func keepsTwoTrainsInEachDirectionWhenThePageShowsTwoDirections() {
@@ -88,46 +86,22 @@ struct LinesPageTests {
         #expect(page.lines.flatMap(\.directions).map(\.trains.count) == [1, 1, 1])
     }
 
-    @Test func showsAtLeastOneLineEvenWhenItNeedsMoreThanFourRows() {
-        let page = LinesPage(showing: [line("1", directions: 2), line("B", directions: 5)], from: 1)
+    @Test func showsAnRERLineWithNoDirectionOnAPageOfItsOwn() {
+        let lines = [line("A", mode: .rer, directions: 2), line("B", mode: .rer, directions: 0)]
+
+        let page = LinesPage(showing: lines, from: 1)
 
         #expect(page.lines.map(\.line.name) == ["B"])
-    }
-
-    @Test func countsARowForALineWithoutDirection() {
-        let lines = [
-            line("A", mode: .rer, directions: 2),
-            line("B", mode: .rer, directions: 0),
-            line("D", mode: .rer, directions: 1),
-            line("E", mode: .rer, directions: 1)
-        ]
-
-        let page = LinesPage(showing: lines, from: 0)
-
-        #expect(page.lines.map(\.line.name) == ["A", "B", "D"])
-    }
-
-    @Test func countsARowForTheNameOfTheStationThatServesALine() {
-        let lines = [
-            line("A", mode: .rer, directions: 2),
-            line("E", mode: .rer, directions: 2, stationName: "Haussmann Saint-Lazare")
-        ]
-
-        let page = LinesPage(showing: lines, from: 0)
-
-        #expect(page.lines.map(\.line.name) == ["A"])
+        #expect(page.lines[0].hasNoTrain)
     }
 
     @Test func keepsTheNameOfTheStationThatServesALineWhenItKeepsOneTrainPerDirection() {
-        let lines = [
-            line("E", mode: .rer, directions: 2, stationName: "Haussmann Saint-Lazare"),
-            line("A", mode: .rer, directions: 1)
-        ]
+        let lines = [line("E", mode: .rer, directions: 3, stationName: "Haussmann Saint-Lazare")]
 
         let page = LinesPage(showing: lines, from: 0)
 
-        #expect(page.lines.map(\.stationName) == ["Haussmann Saint-Lazare", nil])
-        #expect(page.lines.flatMap(\.directions).allSatisfy { $0.trains.count == 1 })
+        #expect(page.lines.map(\.stationName) == ["Haussmann Saint-Lazare"])
+        #expect(page.lines.flatMap(\.directions).map(\.trains.count) == [1, 1, 1])
     }
 
     @Test func keepsOnlyTheNextTrainOfEachDirectionAndTheRestOfThePage() {
@@ -166,9 +140,12 @@ struct LinesPageTests {
         let first = LinesPage(showing: lines, from: 0)
         let second = LinesPage(showing: lines, from: first.nextFirstIndex)
 
-        #expect(second.firstIndex == 2)
-        #expect(second.lines.map(\.line.name) == ["7"])
-        #expect(second.nextFirstIndex == 0)
+        let third = LinesPage(showing: lines, from: second.nextFirstIndex)
+
+        #expect(second.lines.map(\.line.name) == ["B"])
+        #expect(third.firstIndex == 2)
+        #expect(third.lines.map(\.line.name) == ["7"])
+        #expect(third.nextFirstIndex == 0)
     }
 
     @Test func startsAtTheFirstLineWhenTheAskedLineDoesNotExist() {
@@ -199,13 +176,14 @@ struct LinesPageTests {
     }
 
     @Test func keepsSayingTheNextTrainIsOverAnHourAwayWhenItShowsOnlyOneTrainPerDirection() {
-        let later = LineTrains(line: TransitLine(mode: .rer, name: "D"), directions: [
-            LineDirection(label: "Malesherbes", times: [], nextTrainIsOverAnHourAway: true)
-        ])
+        var lineD = line("D", mode: .rer, directions: 2)
+        let later = LineDirection(label: "Malesherbes", times: [], nextTrainIsOverAnHourAway: true)
+        lineD.directions.append(later)
 
-        let page = LinesPage(showing: [line("A", mode: .rer, directions: 2), later], from: 0)
+        let page = LinesPage(showing: [lineD], from: 0)
 
-        #expect(page.lines[1].directions == later.directions)
+        #expect(page.lines[0].directions.map(\.trains.count) == [1, 1, 0])
+        #expect(page.lines[0].directions.last == later)
     }
 
     @Test func saysTheNextTrainIsOverAnHourAwayOnlyWhenNoLineHasATrainWithinTheHour() {

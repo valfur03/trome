@@ -40,10 +40,11 @@ extension LinesPageTests {
         #expect(page([metro]).nextRedrawDate(after: now.addingTimeInterval(10)) == now.addingTimeInterval(20))
     }
 
-    @Test func redrawsAnRERLineOnlyWhenItsTrainLeaves() {
-        let rer = lineTrains(.rer, [train(leavesIn: 200, arrivesIn: 180)])
+    @Test func redrawsAnRERLineWhenItsNextTrainStartsApproachingThenWhenItLeaves() {
+        let rer = lineTrains(.rer, [train(leavesIn: 200, arrivesIn: nil)])
 
-        #expect(page([rer]).nextRedrawDate(after: now) == now.addingTimeInterval(200))
+        #expect(page([rer]).nextRedrawDate(after: now) == now.addingTimeInterval(141))
+        #expect(page([rer]).nextRedrawDate(after: now.addingTimeInterval(141)) == now.addingTimeInterval(200))
     }
 
     @Test func redrawsWhenTheSoonestTrainOfALineOffThePageLeaves() {

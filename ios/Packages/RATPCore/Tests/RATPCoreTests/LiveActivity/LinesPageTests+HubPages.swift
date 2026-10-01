@@ -31,9 +31,12 @@ extension LinesPageTests {
         ("Châtelet", ["1", "4", "7", "11", "14", "A", "B", "D"]),
         ("Opéra", ["3", "7", "8", "A", "9", "E", "12", "13", "14"]),
         ("Saint-Lazare", ["3", "12", "13", "14", "E", "9", "A", "7", "8"]),
-        ("Gare du Nord", ["4", "5", "B+D", "E", "2"])
+        ("Gare du Nord", ["4", "5", "B", "D", "E", "2"]),
+        ("Châtelet - Les Halles", ["A", "B", "D", "4", "1", "7", "11", "14"]),
+        ("Auber", ["A", "3", "9", "7", "8", "E", "12", "13", "14"]),
+        ("Gare de Lyon", ["1", "14", "A", "D"])
     ])
-    func showsOnePageForEachMetroLineInTheOrderOfTheLinesOfThePlace(station: String, expected: [String]) throws {
+    func showsOnePageForEachLineInTheOrderOfTheLinesOfThePlace(station: String, expected: [String]) throws {
         let pages = try pagesWithFakeTrains(at: station)
 
         #expect(pages.map { $0.lines.map(\.line.name).joined(separator: "+") } == expected)
@@ -43,7 +46,7 @@ extension LinesPageTests {
     @Test func countsTheOtherLinesOfTheStationOnEachPage() throws {
         let pages = try pagesWithFakeTrains(at: "Gare du Nord")
 
-        #expect(pages.map(\.otherLineCount) == [5, 5, 4, 5, 5])
+        #expect(pages.map(\.otherLineCount) == [5, 5, 5, 5, 5, 5])
     }
 
     @Test(arguments: ["Opéra", "Saint-Lazare", "Châtelet", "Nation", "Pigalle", "Maison Blanche", "Gare de l'Est"])
