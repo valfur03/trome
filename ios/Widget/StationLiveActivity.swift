@@ -59,6 +59,8 @@ struct LockScreenView: View {
     var body: some View {
         if let page = state.trains.linesPage, let line = page.panamStripsLine {
             PanamStripsView(state: state, page: page, line: line, isStale: isStale)
+        } else if let page = state.trains.linesPage, let line = page.sielRowsLine {
+            SielRowsView(state: state, page: page, line: line, isStale: isStale)
         } else {
             rows
         }

@@ -83,3 +83,42 @@ extension StationActivityContentTests {
         #expect(trains.map(\.destination) == ["Saint-Germain-en-Laye"])
     }
 }
+
+extension StationActivityContentTests {
+    private var laDefense: Station {
+        Station(
+            id: "IDFM:22101",
+            name: "La Défense",
+            coordinate: Coordinate(48.892198, 2.237723),
+            lines: [TransitLine(mode: .rer, name: "A", stopIds: ["IDFM:monomodalStopPlace:470549"])]
+        )
+    }
+
+    private func laDefenseTrains(at now: Date) throws -> [LineDirection.Train] {
+        let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-la-defense-rer-a-at-stop"))
+        let departures = PRIMDeparturesProvider.departures(from: visits, at: [laDefense])
+        let trains = NextTrainsState.departures(
+            DepartureBoard(departures: departures, stations: [laDefense], now: now),
+            updatedAt: now
+        )
+        let content = ContentState(station: laDefense, trains: trains, now: now)
+        return (content.trains.linesPage?.lines ?? []).flatMap(\.directions).flatMap(\.trains)
+    }
+
+    @Test func saysAnRERTrainIsAtThePlatformWhenPRIMSaysVehicleAtStop() throws {
+        let beforeItsExpectedArrival = Fixture.date("2026-10-01T10:31:30Z")
+
+        let trains = try laDefenseTrains(at: beforeItsExpectedArrival)
+
+        #expect(trains.first { $0.destination == "Saint-Germain-en-Laye" }?.status == .atPlatform)
+        #expect(trains.first { $0.destination == "Poissy" }?.status == nil)
+        #expect(trains.first { $0.destination == "Boissy-Saint-Léger" }?.status == nil)
+    }
+
+    @Test func hidesAnRERTrainWhoseTimeHasPassedEvenWhenPRIMStillSaysVehicleAtStop() throws {
+        let trains = try laDefenseTrains(at: Fixture.date("2026-10-01T10:32:05Z"))
+
+        #expect(!trains.contains { $0.destination == "Saint-Germain-en-Laye" })
+        #expect(trains.map(\.destination).sorted() == ["Boissy-Saint-Léger", "Poissy"])
+    }
+}

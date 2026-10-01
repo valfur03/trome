@@ -69,14 +69,23 @@ struct PanamStripsHeader: View {
         .system(size: nameSize * scale, weight: .semibold)
     }
 
+    @ViewBuilder private var badge: some View {
+        switch line.line.mode {
+        case .metro:
+            MetroLineBadge(line: line.line, size: .regular)
+        case .rer:
+            RERSquareBadge(line: line.line)
+        }
+    }
+
     private func row(showsColumnTitles: Bool, @ViewBuilder name: () -> some View) -> some View {
         HStack(spacing: 6) {
-            MetroLineBadge(line: line.line, size: .regular)
+            badge
             name()
             Spacer(minLength: 4)
             if page.hasOtherLines {
                 OtherLinesControl(count: page.otherLineCount)
-            } else if showsColumnTitles {
+            } else if showsColumnTitles, line.line.mode == .metro {
                 HStack(spacing: PanamStrip.ruleWidth) {
                     Text("1st")
                         .frame(width: cellWidth)

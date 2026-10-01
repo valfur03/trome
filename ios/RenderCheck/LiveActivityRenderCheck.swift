@@ -41,7 +41,8 @@ final class LiveActivityRenderCheck: XCTestCase {
         "École Vétérinaire de Maisons-Alfort", "Chevilly-Larue (Marché International)",
         "Villejuif Paul Vaillant-Couturier", "Boulogne Jean Jaurès", "Pont de Levallois - Bécon", "Pelleport",
         "Botzaris", "Liège", "Tolbiac", "La Fourche", "Aubervilliers - Pantin - Quatre Chemins",
-        "Pigalle", "Maison Blanche", "Bibliothèque François Mitterrand", "Palais Royal - Musée du Louvre"
+        "Pigalle", "Maison Blanche", "Bibliothèque François Mitterrand", "Palais Royal - Musée du Louvre",
+        "Invalides", "Gare de Lyon", "Auber"
     ]
     static let maxPages = 12
     static let scale: CGFloat = 3
@@ -88,6 +89,10 @@ final class LiveActivityRenderCheck: XCTestCase {
         for (page, state) in Self.taggedStripStates(at: taggedStation, hub: taggedHub, now: Date()).enumerated() {
             let pageNumber = Self.firstTaggedStatesPage + page
             rows += try drawEveryVariant(of: state, at: taggedStation, page: pageNumber, into: outDir)
+        }
+        for (page, rer) in Self.rerStates(at: catalog, now: Date()).enumerated() {
+            let pageNumber = Self.firstRERStatesPage + page
+            rows += try drawEveryVariant(of: rer.state, at: rer.station, page: pageNumber, into: outDir)
         }
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
