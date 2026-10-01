@@ -77,6 +77,7 @@ public struct DestinationTrains: Hashable, Sendable {
 enum LineDirections {
     static let timesPerDirection = 2
     static let maximumDirections = 3
+    static let minimumMetroHeadway: TimeInterval = 60
 
     private struct Group {
         let isOneDirection: Bool
@@ -139,7 +140,10 @@ enum LineDirections {
             && groups.contains { $0.isOneDirection && $0.side == nil && !$0.trains.isEmpty }
         let showsEmptySides = quays.count != 1 && !hasMetroQuayOfUnknownSide
         let sideDirections = sides.indices.compactMap { index -> LineDirection? in
-            let sideTrains = groups.filter { $0.side == index }.flatMap(\.trains).sorted { $0.time < $1.time }
+            let sideTrains = oneEntryPerTrain(
+                groups.filter { $0.side == index }.flatMap(\.trains).sorted { $0.time < $1.time },
+                of: line
+            )
             guard showsEmptySides || !sideTrains.isEmpty else { return nil }
             return LineDirection(
                 label: ends.reachableEnds(of: sides[index], from: station.name).joined(separator: " / "),
@@ -154,10 +158,24 @@ enum LineDirections {
             .map { group in
                 LineDirection(
                     label: group.trains[0].destination,
-                    trains: group.trains.prefix(timesPerDirection).map { shown($0, at: now) }
+                    trains: oneEntryPerTrain(group.trains, of: line)
+                        .prefix(timesPerDirection)
+                        .map { shown($0, at: now) }
                 )
             }
         return Array((sideDirections + otherDirections).prefix(maximumDirections))
+    }
+
+    private static func oneEntryPerTrain(_ trains: [Departure], of line: TransitLine) -> [Departure] {
+        guard line.mode == .metro else { return trains }
+        var kept: [Departure] = []
+        for train in trains {
+            if let last = kept.last, train.time.timeIntervalSince(last.time) < minimumMetroHeadway {
+                continue
+            }
+            kept.append(train)
+        }
+        return kept
     }
 
     private static func shown(_ train: Departure, at now: Date, as destination: String? = nil) -> LineDirection.Train {
