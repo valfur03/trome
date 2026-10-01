@@ -48,7 +48,8 @@ struct PanamStripsHeader: View {
     private func oneLineName(scale: CGFloat) -> some View {
         name(Text(shownName)
             .font(nameFont(scale: scale))
-            .lineLimit(1))
+            .lineLimit(1)
+            .minimumScaleFactor(Self.nameScales.last ?? 1))
     }
 
     @ViewBuilder private func name(_ text: some View) -> some View {
