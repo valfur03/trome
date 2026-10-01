@@ -218,8 +218,8 @@ struct StationLiveActivityModelTests {
 
         await model.showNextLines()
 
-        #expect(client.updates.last?.trains.linesPage?.firstIndex == 2)
-        #expect(client.updates.last?.trains.linesPage?.lines.map(\.line.name) == ["7"])
+        #expect(client.updates.last?.trains.linesPage?.firstIndex == 1)
+        #expect(client.updates.last?.trains.linesPage?.lines.map(\.line.name) == ["4"])
         #expect(model.content == client.updates.last)
     }
 
@@ -230,13 +230,15 @@ struct StationLiveActivityModelTests {
 
         await model.update(station: chatelet, trains: chateletTrains)
 
-        #expect(client.updates.last?.trains.linesPage?.firstIndex == 2)
+        #expect(client.updates.last?.trains.linesPage?.firstIndex == 1)
     }
 
     @Test func goesBackToTheFirstLinesAfterTheLastOnes() async {
         let model = makeModel()
         await model.start(station: chatelet, trains: chateletTrains)
         await model.showNextLines()
+        await model.showNextLines()
+        #expect(client.updates.last?.trains.linesPage?.lines.map(\.line.name) == ["7"])
 
         await model.showNextLines()
 
@@ -305,8 +307,8 @@ struct StationLiveActivityModelTests {
 
         await appStartedForTheTap.showNextLines()
 
-        #expect(client.updates.last?.trains.linesPage?.firstIndex == 2)
-        #expect(client.updates.last?.trains.linesPage?.lines.map(\.line.name) == ["7"])
+        #expect(client.updates.last?.trains.linesPage?.firstIndex == 1)
+        #expect(client.updates.last?.trains.linesPage?.lines.map(\.line.name) == ["4"])
         #expect(appStartedForTheTap.content == client.updates.last)
     }
 

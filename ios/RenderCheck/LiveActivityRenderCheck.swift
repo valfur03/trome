@@ -40,7 +40,8 @@ final class LiveActivityRenderCheck: XCTestCase {
         "Lamarck - Caulaincourt", "Brochant", "Asnières - Gennevilliers - Les Courtilles",
         "École Vétérinaire de Maisons-Alfort", "Chevilly-Larue (Marché International)",
         "Villejuif Paul Vaillant-Couturier", "Boulogne Jean Jaurès", "Pont de Levallois - Bécon", "Pelleport",
-        "Botzaris", "Liège", "Tolbiac", "La Fourche", "Aubervilliers - Pantin - Quatre Chemins"
+        "Botzaris", "Liège", "Tolbiac", "La Fourche", "Aubervilliers - Pantin - Quatre Chemins",
+        "Pigalle", "Maison Blanche", "Bibliothèque François Mitterrand", "Palais Royal - Musée du Louvre"
     ]
     static let maxPages = 12
     static let scale: CGFloat = 3

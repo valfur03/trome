@@ -1,5 +1,4 @@
 import ActivityKit
-import AppIntents
 import RATPCore
 import SwiftUI
 import WidgetKit
@@ -58,8 +57,8 @@ struct LockScreenView: View {
     let isStale: Bool
 
     var body: some View {
-        if let line = state.trains.linesPage?.panamStripsLine {
-            PanamStripsView(state: state, line: line, isStale: isStale)
+        if let page = state.trains.linesPage, let line = page.panamStripsLine {
+            PanamStripsView(state: state, page: page, line: line, isStale: isStale)
         } else {
             rows
         }
@@ -141,61 +140,22 @@ private struct StationAndLinesHeader: View {
     var isCompact = false
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            header(showsEveryBadge: true)
-            header(showsEveryBadge: false)
-        }
-    }
-
-    private func header(showsEveryBadge: Bool) -> some View {
-        HStack(alignment: .center) {
-            Text(stationName)
-                .font(isCompact ? .subheadline.bold() : .headline)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Spacer(minLength: 4)
-            LinesPager(page: page, showsEveryBadge: showsEveryBadge)
-        }
-    }
-}
-
-private struct LinesPager: View {
-    let page: LinesPage
-    let showsEveryBadge: Bool
-
-    var body: some View {
-        if page.hasOtherLines {
-            Button(intent: ShowNextLinesIntent()) {
-                HStack(spacing: 3) {
-                    badges
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.bold())
-                }
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Show the next lines")
-        } else {
-            badges
-        }
-    }
-
-    private var badges: some View {
-        HStack(spacing: 3) {
-            if showsEveryBadge {
-                ForEach(page.allLines, id: \.self) { line in
-                    SmallLineBadge(line: line, isShown: page.isShown(line))
-                }
-            } else {
-                ForEach(page.lines.map(\.line), id: \.self) { line in
-                    SmallLineBadge(line: line, isShown: true)
-                }
-                if page.otherLineCount > 0 {
-                    OtherLinesBadge(count: page.otherLineCount)
+        LinesPagerButton(page: page, pageName: pageName) {
+            HStack(alignment: .center) {
+                Text(stationName)
+                    .font(isCompact ? .subheadline.bold() : .headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
+                if page.hasOtherLines {
+                    OtherLinesControl(count: page.otherLineCount)
                 }
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(page.allLines.map(\.localizedName).joined(separator: ", "))
+    }
+
+    private var pageName: Text {
+        Text(verbatim: (page.lines.map(\.line.localizedName) + [stationName]).joined(separator: ", "))
     }
 }
 
@@ -256,7 +216,7 @@ private struct LineTrainsView: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
-            SmallLineBadge(line: line.line, isShown: true)
+            SmallLineBadge(line: line.line)
             VStack(alignment: .leading, spacing: 0) {
                 if let stationName = line.stationName {
                     ServingStationName(name: stationName)

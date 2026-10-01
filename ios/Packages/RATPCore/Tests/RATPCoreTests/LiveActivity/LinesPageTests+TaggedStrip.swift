@@ -11,18 +11,24 @@ extension LinesPageTests {
         "Porte de Vanves", "Porte de la Villette", "Riquet", "Saint-François-Xavier", "Sully - Morland", "Tolbiac",
         "Varenne"
     ]
+    static let taggedStationsWithOtherLines = [
+        "Champs-Élysées - Clemenceau", "Chaussée d'Antin - La Fayette", "Château Landon", "Châtelet", "Duroc",
+        "Gare de l'Est", "Havre-Caumartin", "Invalides", "Jussieu", "Les Halles", "Louis Blanc", "Maison Blanche",
+        "Miromesnil", "Montparnasse Bienvenue", "Opéra", "Palais Royal - Musée du Louvre", "Place d'Italie",
+        "Place de Clichy", "Pyramides", "Saint-Augustin", "Saint-Lazare", "Stalingrad"
+    ]
 
-    @Test func drawsTheTaggedStripAtTheTrunkAndForkStationsOfLines7And13WithNoOtherLine() throws {
+    @Test func drawsTheTaggedStripAtTheTrunkAndForkStationsOfLines7And13() throws {
         let catalog = try StationCatalog.bundled()
         let tagged = try catalog.stations.filter { $0.lines.contains { $0.mode == .metro } }.filter { station in
-            let line = try pageWithFakeTrains(at: station.name).panamStripsLine
-            return line?.directions.contains { $0.branchEnds != nil } == true
+            try pagesWithFakeTrains(at: station.name).contains { page in
+                page.panamStripsLine?.directions.contains { $0.branchEnds != nil } == true
+            }
         }
+        let withOneLine = tagged.filter { $0.lines.count == 1 && catalog.hubStations(of: $0).count == 1 }
 
-        #expect(tagged.map(\.name) == Self.taggedStations)
-        #expect(tagged.allSatisfy { station in
-            station.lines.map(\.name) == ["7"] || station.lines.map(\.name) == ["13"]
-        })
+        #expect(withOneLine.map(\.name) == Self.taggedStations)
+        #expect(Set(tagged.map(\.name)) == Set(Self.taggedStations + Self.taggedStationsWithOtherLines))
     }
 
     @Test(arguments: ["Liège", "Tolbiac", "La Fourche", "Châtillon - Montrouge", "La Courneuve - 8 Mai 1945"])
@@ -41,8 +47,11 @@ extension LinesPageTests {
     }
 
     @Test(arguments: ["Maison Blanche", "Gare de l'Est", "Place de Clichy", "Château Landon"])
-    func keepsTheRowsAtAForkOrTrunkStationWithAnotherLineOrAHub(station: String) throws {
-        #expect(try pageWithFakeTrains(at: station).panamStripsLine == nil)
+    func drawsTheTaggedStripOnThePageOfTheForkLineAtAStationWithAnotherLineOrAHub(station: String) throws {
+        let pages = try pagesWithFakeTrains(at: station)
+        let forkLine = try #require(pages.compactMap(\.panamStripsLine).first { ["7", "13"].contains($0.line.name) })
+
+        #expect(forkLine.directions.filter { $0.branchEnds != nil }.count == 1)
     }
 
     @Test func marksEachTrainWithTheEndOfItsBranchInTheOrderOfTheLine() throws {

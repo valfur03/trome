@@ -12,7 +12,7 @@ extension StationActivityContentTests {
 
         let content = ContentState(station: station, trains: trains, now: now)
 
-        #expect(lines(of: content)[1].directions == [
+        #expect(linesOfEveryPage(at: station, trains: trains)[1].directions == [
             LineDirection(label: "Mairie d'Aubervilliers", times: [], nextTrainIsOverAnHourAway: true),
             LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 8)])
         ])

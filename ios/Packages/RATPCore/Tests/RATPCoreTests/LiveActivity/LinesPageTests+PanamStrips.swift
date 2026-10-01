@@ -27,8 +27,8 @@ extension LinesPageTests {
         #expect(page.panamStripsLine == page.lines.first)
     }
 
-    @Test(arguments: ["Place d'Italie", "Châtelet", "Sartrouville", "Cité Universitaire"])
-    func keepsTheRowsForAHubOrAnRERLine(station: String) throws {
+    @Test(arguments: ["Châtelet - Les Halles", "Sartrouville", "Cité Universitaire"])
+    func keepsTheRowsForAnRERLine(station: String) throws {
         #expect(try pageWithFakeTrains(at: station).panamStripsLine == nil)
     }
 

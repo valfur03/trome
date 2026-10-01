@@ -17,21 +17,19 @@ struct SmallLineBadge: View {
     static let minimumWidth: CGFloat = 24
 
     let line: TransitLine
-    let isShown: Bool
 
     var body: some View {
         switch line.mode {
         case .metro:
-            MetroLineBadge(line: line, isShown: isShown)
+            MetroLineBadge(line: line)
         case .rer:
-            RERLineBadge(line: line, isShown: isShown)
+            RERLineBadge(line: line)
         }
     }
 }
 
 private struct RERLineBadge: View {
     let line: TransitLine
-    let isShown: Bool
 
     var body: some View {
         Text(line.name)
@@ -40,23 +38,7 @@ private struct RERLineBadge: View {
             .fixedSize()
             .padding(.horizontal, 4)
             .frame(minWidth: SmallLineBadge.minimumWidth)
-            .background(isShown ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.quaternary), in: Capsule())
-            .foregroundStyle(isShown ? .primary : .secondary)
+            .background(.tertiary, in: Capsule())
             .accessibilityLabel(line.localizedName)
-    }
-}
-
-struct OtherLinesBadge: View {
-    let count: Int
-
-    var body: some View {
-        Text(verbatim: "+\(count)")
-            .font(.caption.bold())
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, 4)
-            .frame(minWidth: SmallLineBadge.minimumWidth)
-            .background(.quaternary, in: Capsule())
-            .foregroundStyle(.secondary)
     }
 }

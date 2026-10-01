@@ -9,7 +9,6 @@ struct MetroLineBadge: View {
 
     let line: TransitLine
     var size = Size.small
-    var isShown = true
 
     var body: some View {
         CircleLayout {
@@ -19,9 +18,8 @@ struct MetroLineBadge: View {
                 .padding(3)
         }
         .font(size == .regular ? .subheadline.bold() : .caption.bold())
-        .foregroundStyle(isShown ? line.badgeTextColor : .secondary)
-        .background(isShown ? line.badgeColor : .clear, in: Circle())
-        .overlay(Circle().stroke(isShown ? .clear : line.badgeColor, lineWidth: 2))
+        .foregroundStyle(line.badgeTextColor)
+        .background(line.badgeColor, in: Circle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(line.localizedName)
     }

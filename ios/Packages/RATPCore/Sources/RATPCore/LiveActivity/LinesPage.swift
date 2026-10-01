@@ -77,7 +77,11 @@ public struct LinesPage: Codable, Hashable, Sendable {
         var shown: [LineTrains] = []
         var rowCount = 0
         for line in lines[firstIndex...] {
-            guard shown.isEmpty || rowCount + line.rowCount <= Self.maximumRows else { break }
+            if let first = shown.first {
+                guard first.line.mode == .rer, line.line.mode == .rer,
+                      rowCount + line.rowCount <= Self.maximumRows
+                else { break }
+            }
             shown.append(line)
             rowCount += line.rowCount
         }
@@ -128,10 +132,6 @@ public struct LinesPage: Codable, Hashable, Sendable {
     public var nextFirstIndex: Int {
         let next = firstIndex + lines.count
         return next < allLines.count ? next : 0
-    }
-
-    public func isShown(_ line: TransitLine) -> Bool {
-        lines.contains { $0.line == line }
     }
 
     var keepingOnlyTheNextTrains: LinesPage {

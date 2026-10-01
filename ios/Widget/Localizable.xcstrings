@@ -33,6 +33,22 @@
         }
       }
     },
+    "%@, %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@, %3$@"
+          }
+        }
+      }
+    },
     "%@, %@, then %@" : {
       "localizations" : {
         "en" : {
@@ -45,6 +61,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@, %2$@, puis %3$@"
+          }
+        }
+      }
+    },
+    "%@, walk to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, walk to %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, à pied jusqu’à %2$@"
+          }
+        }
+      }
+    },
+    "%lld other lines" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld other line"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld other lines"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld autre ligne"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld autres lignes"
+                }
+              }
+            }
           }
         }
       }
@@ -209,12 +281,12 @@
         }
       }
     },
-    "Show the next lines" : {
+    "Show the next line" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Afficher les lignes suivantes"
+            "value" : "Afficher la ligne suivante"
           }
         }
       }

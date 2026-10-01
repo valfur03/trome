@@ -251,7 +251,14 @@ class E2ETestCase: XCTestCase {
 
     @MainActor
     func liveActivityStation(_ name: String) -> XCUIElement {
-        liveActivity.staticTexts[name]
+        liveActivity.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@ OR label CONTAINS %@", name, ", \(name), ")
+        ).firstMatch
+    }
+
+    @MainActor
+    var liveActivityPager: XCUIElement {
+        liveActivity.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Show the next line")).firstMatch
     }
 
     @MainActor

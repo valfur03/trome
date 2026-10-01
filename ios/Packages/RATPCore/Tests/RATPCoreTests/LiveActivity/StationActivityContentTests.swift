@@ -38,6 +38,18 @@ struct StationActivityContentTests {
         content.trains.linesPage?.lines ?? []
     }
 
+    func linesOfEveryPage(at station: Station, trains: NextTrainsState) -> [LineTrains] {
+        var shown: [LineTrains] = []
+        var index = 0
+        repeat {
+            let content = ContentState(station: station, trains: trains, now: now, firstLineIndex: index)
+            guard let page = content.trains.linesPage else { break }
+            shown += page.lines
+            index = page.nextFirstIndex
+        } while index != 0 && shown.count <= 20
+        return shown
+    }
+
     @Test func keepsTheContentOfTheBiggestHubSmall() throws {
         let catalog = try StationCatalog.bundled()
         let saintLazare = try #require(catalog.stations.first { $0.name == "Saint-Lazare" })
@@ -93,16 +105,19 @@ struct StationActivityContentTests {
                 LineTrains(line: TransitLine(mode: .metro, name: "2"), directions: [
                     LineDirection(label: "Porte Dauphine", times: []),
                     LineDirection(label: "Nation", times: [time(inMinutes: 2)])
-                ]),
-                LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [
-                    LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 1)]),
-                    LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 3)])
                 ])
             ],
             allLines: [TransitLine(mode: .metro, name: "2"), TransitLine(mode: .metro, name: "12")],
             firstIndex: 0,
             soonestTrain: SoonestTrain(line: TransitLine(mode: .metro, name: "12"), time: time(inMinutes: 1))
         )))
+        #expect(linesOfEveryPage(at: station, trains: trains).last == LineTrains(
+            line: TransitLine(mode: .metro, name: "12"),
+            directions: [
+                LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 1)]),
+                LineDirection(label: "Mairie d'Issy", times: [time(inMinutes: 3), time(inMinutes: 9)])
+            ]
+        ))
     }
 
     @Test func keepsALineWithNoUpcomingTrainAndSaysNoTrainsInItsDirections() {
@@ -111,10 +126,10 @@ struct StationActivityContentTests {
             train(line2, to: "Nation", inMinutes: 2, from: "STIF:StopPoint:Q:3:")
         ])
 
-        let content = ContentState(station: station, trains: trains, now: now)
+        let shown = linesOfEveryPage(at: station, trains: trains)
 
-        #expect(lines(of: content).map(\.line.name) == ["2", "12"])
-        #expect(lines(of: content)[1].directions == [
+        #expect(shown.map(\.line.name) == ["2", "12"])
+        #expect(shown[1].directions == [
             LineDirection(label: "Mairie d'Aubervilliers", times: []),
             LineDirection(label: "Mairie d'Issy", times: [])
         ])
@@ -182,11 +197,12 @@ struct StationActivityContentTests {
         ], at: [lineTwoOnly, mairieDIssy])
 
         let content = ContentState(station: lineTwoOnly, trains: trains, now: now)
+        let shown = linesOfEveryPage(at: lineTwoOnly, trains: trains)
 
         #expect(content.stationName == "Pigalle")
-        #expect(lines(of: content).map(\.line.name) == ["2", "12"])
-        #expect(lines(of: content).map(\.stationName) == [nil, "Mairie d'Issy"])
-        #expect(lines(of: content)[1].directions == [
+        #expect(shown.map(\.line.name) == ["2", "12"])
+        #expect(shown.map(\.stationName) == [nil, "Mairie d'Issy"])
+        #expect(shown[1].directions == [
             LineDirection(label: "Mairie d'Aubervilliers", times: [time(inMinutes: 4)])
         ])
     }
@@ -216,9 +232,7 @@ struct StationActivityContentTests {
     @Test func showsEveryLineWithoutTrainsWhenNoLineHasADirection() {
         let trains = board([train(line12, to: "Mairie d'Issy", inMinutes: -0.25, from: southQuay)])
 
-        let content = ContentState(station: station, trains: trains, now: now)
-
-        #expect(lines(of: content) == [
+        #expect(linesOfEveryPage(at: station, trains: trains) == [
             LineTrains(line: TransitLine(mode: .metro, name: "2"), directions: [
                 LineDirection(label: "Porte Dauphine", times: []),
                 LineDirection(label: "Nation", times: [])
@@ -231,9 +245,7 @@ struct StationActivityContentTests {
     }
 
     @Test func showsEveryLineOfTheStationWithoutTrainsWhenPRIMHasNoTrain() {
-        let content = ContentState(station: station, trains: .noLiveData, now: now)
-
-        #expect(lines(of: content) == [
+        #expect(linesOfEveryPage(at: station, trains: .noLiveData) == [
             LineTrains(line: TransitLine(mode: .metro, name: "2"), directions: []),
             LineTrains(line: TransitLine(mode: .metro, name: "12"), directions: [])
         ])

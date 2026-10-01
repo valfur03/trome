@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PanamStripsView: View {
     let state: StationActivityAttributes.ContentState
+    let page: LinesPage
     let line: LineTrains
     let isStale: Bool
 
@@ -10,12 +11,7 @@ struct PanamStripsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            PanamStripsHeader(
-                line: line.line,
-                stationName: state.stationName,
-                cellWidth: cellWidth,
-                wrapsALongName: line.hasRoomForATwoLineStationName
-            )
+            PanamStripsHeader(page: page, line: line, stationName: state.stationName, cellWidth: cellWidth)
             if line.directions.isEmpty {
                 NoTrainsText()
                     .invalidatableContent()
