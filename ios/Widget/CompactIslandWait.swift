@@ -4,6 +4,7 @@ import SwiftUI
 struct CompactIslandWait: View {
     static let wordFont = Font.caption2.bold()
     static let noTrainsWidth: CGFloat = 44
+    static let wordMaximumWidth: CGFloat = 52
     static let markGap: CGFloat = 2
 
     let island: DynamicIslandWait
@@ -28,7 +29,10 @@ struct CompactIslandWait: View {
         case .approaching:
             IslandNumber(value: .zero, drawnAt: drawnAt)
         case .atPlatform:
-            word(Text("At the platform"), color: PanamStrip.amber)
+            IslandWordLayout(maximumWidth: Self.wordMaximumWidth) {
+                word(Text("At the platform"), color: PanamStrip.amber, lines: 2)
+                    .multilineTextAlignment(.trailing)
+            }
         case .overAnHour:
             word(Text("> 1 h"), color: PanamStrip.amber)
         case .noTrain:
