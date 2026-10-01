@@ -114,7 +114,7 @@ struct PanamStrip: View {
         Group {
             switch train?.status {
             case .approaching:
-                Text(verbatim: "00")
+                Text(verbatim: "0")
                     .font(.title3.bold())
             case .atPlatform:
                 Text("At the platform")
