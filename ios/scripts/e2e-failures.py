@@ -20,7 +20,7 @@ def failures(node, test=None):
 
 
 def output_of(command):
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, errors="replace")
     if result.returncode != 0:
         return None
     return result.stdout
