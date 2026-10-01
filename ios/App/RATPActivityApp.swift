@@ -142,7 +142,8 @@ struct RATPActivityApp: App {
 
     private static func departuresProvider(_ configuration: PRIMConfiguration?) -> (any DeparturesProvider)? {
         #if DEBUG
-        if let fakeProvider = FakeDeparturesProvider.ifAsked(by: ProcessInfo.processInfo.arguments) {
+        let fakeTrainsStore = FakeTrainsStore(storage: UserDefaults.standard)
+        if let fakeProvider = fakeTrainsStore.provider(forLaunchWith: ProcessInfo.processInfo.arguments) {
             return fakeProvider
         }
         #endif
