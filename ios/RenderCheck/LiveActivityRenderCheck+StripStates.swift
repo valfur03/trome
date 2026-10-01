@@ -32,7 +32,11 @@ extension LiveActivityRenderCheck {
                 direction(south, [train(0.5, .atPlatform), train(0.75, .approaching)])
             ]
         ]
-        return pages.map { directions in
+        let countedDownBelowTen = [
+            direction(north, [train(4), train(8.5)]),
+            direction(south, [train(3), train(7)])
+        ]
+        func state(_ directions: [LineDirection], updatedAt: Date) -> StationActivityAttributes.ContentState {
             StationActivityAttributes.ContentState(
                 stationName: station.name,
                 trains: .lines(LinesPage(
@@ -41,8 +45,10 @@ extension LiveActivityRenderCheck {
                     firstIndex: 0,
                     soonestTrain: nil
                 )),
-                updatedAt: now
+                updatedAt: updatedAt
             )
         }
+        return pages.map { state($0, updatedAt: now) }
+            + [state(countedDownBelowTen, updatedAt: now.addingTimeInterval(-90))]
     }
 }
