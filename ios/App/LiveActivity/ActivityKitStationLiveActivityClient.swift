@@ -9,6 +9,12 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         }
     }
 
+    init() {
+        #if DEBUG
+        Self.logStatesFromLaunch()
+        #endif
+    }
+
     var isShowing: Bool {
         !Self.runningActivities.isEmpty
     }
@@ -35,6 +41,9 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
     }
 
     nonisolated func end() async {
+        #if DEBUG
+        Self.logEnd(of: Activity<StationActivityAttributes>.activities)
+        #endif
         for activity in Activity<StationActivityAttributes>.activities {
             await activity.end(nil, dismissalPolicy: .immediate)
         }

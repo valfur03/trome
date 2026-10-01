@@ -1,4 +1,5 @@
 import CoreLocation
+import os
 import RATPCore
 
 @MainActor
@@ -19,6 +20,7 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
 
     func begin() {
         guard !isKeeping else { return }
+        Self.log("begin")
         isKeeping = true
         manager.allowsBackgroundLocationUpdates = true
         manager.startUpdatingLocation()
@@ -26,6 +28,9 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
     }
 
     func end() {
+        if isKeeping {
+            Self.log("end")
+        }
         isKeeping = false
         manager.stopUpdatingLocation()
         manager.allowsBackgroundLocationUpdates = false
@@ -41,6 +46,16 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
         if session == nil {
             session = CLBackgroundActivitySession()
         }
+    }
+}
+
+extension CoreLocationBackgroundLocationKeeper {
+    nonisolated private static let logger = Logger(subsystem: "RATPActivity", category: "BackgroundLocation")
+
+    nonisolated private static func log(_ event: String) {
+        #if DEBUG
+        logger.notice("background location: \(event, privacy: .public)")
+        #endif
     }
 }
 
