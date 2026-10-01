@@ -53,6 +53,18 @@ extension LinesPageTests {
         #expect(page([rer], soonestIn: 90).nextRedrawDate(after: now) == now.addingTimeInterval(90))
     }
 
+    @Test func redrawsWhenTheSoonestTrainOfAnRERLineOffThePageStartsApproachingArrivesAndLeaves() {
+        let metro = lineTrains(.metro, [train(leavesIn: 900, arrivesIn: 880)])
+        let rer = lineTrains(.rer, [train(leavesIn: 200, arrivesIn: 180)])
+
+        let page = LinesPage(showing: [metro, rer], from: 0)
+
+        #expect(page.lines.map(\.line.mode) == [.metro])
+        #expect(page.nextRedrawDate(after: now) == now.addingTimeInterval(121))
+        #expect(page.nextRedrawDate(after: now.addingTimeInterval(121)) == now.addingTimeInterval(180))
+        #expect(page.nextRedrawDate(after: now.addingTimeInterval(180)) == now.addingTimeInterval(200))
+    }
+
     @Test func hasNoRedrawWithoutAnUpcomingTrain() {
         let metro = lineTrains(.metro, [train(leavesIn: -10, arrivesIn: -30)])
 

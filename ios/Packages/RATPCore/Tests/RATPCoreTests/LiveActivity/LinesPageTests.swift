@@ -164,7 +164,8 @@ struct LinesPageTests {
 
         let page = LinesPage(showing: lines, from: 0)
 
-        #expect(page.soonestTrain == SoonestTrain(line: TransitLine(mode: .metro, name: "7"), time: time(inMinutes: 1)))
+        #expect(page.soonestTrain?.line == TransitLine(mode: .metro, name: "7"))
+        #expect(page.soonestTrain?.time == time(inMinutes: 1))
     }
 
     @Test func hasNoSoonestTrainWhenNoLineHasATrain() {

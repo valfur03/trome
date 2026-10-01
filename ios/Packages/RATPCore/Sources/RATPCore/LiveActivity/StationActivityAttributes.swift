@@ -97,7 +97,7 @@ extension StationActivityAttributes.Trains {
             self = .lines(LinesPage(
                 showing: lines,
                 from: firstLineIndex,
-                laterTrainTime: board.laterDepartures.first?.time
+                laterTrain: board.laterDepartures.first
             ))
         }
     }

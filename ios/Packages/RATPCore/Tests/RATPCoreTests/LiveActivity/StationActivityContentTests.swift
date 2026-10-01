@@ -109,7 +109,11 @@ struct StationActivityContentTests {
             ],
             allLines: [TransitLine(mode: .metro, name: "2"), TransitLine(mode: .metro, name: "12")],
             firstIndex: 0,
-            soonestTrain: SoonestTrain(line: TransitLine(mode: .metro, name: "12"), time: time(inMinutes: 1))
+            soonestTrain: SoonestTrain(
+                line: TransitLine(mode: .metro, name: "12"),
+                train: LineDirection.Train(time: time(inMinutes: 1), destination: "Mairie d'Aubervilliers"),
+                branchEndIndex: nil
+            )
         )))
         #expect(linesOfEveryPage(at: station, trains: trains).last == LineTrains(
             line: TransitLine(mode: .metro, name: "12"),

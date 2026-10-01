@@ -28,25 +28,13 @@ struct StationLiveActivity: Widget {
                     ExpandedIslandBottomRegion(state: context.state, isStale: context.isStale)
                 }
             } compactLeading: {
-                if let line = context.state.leadingLine {
-                    Label(line.name, systemImage: line.symbolName)
-                        .font(.caption.bold())
-                } else {
-                    Image(systemName: "tram.fill")
+                if let line = context.island.line {
+                    IslandLineBadge(line: line)
                 }
             } compactTrailing: {
-                if !context.isStale, let time = context.state.nextTime {
-                    WaitingTime(time: time)
-                        .font(.caption.bold())
-                } else if !context.isStale, context.state.trains.linesPage?.nextTrainIsOverAnHourAway == true {
-                    Text("> 1 h")
-                        .font(.caption.bold())
-                        .accessibilityLabel("Next train in over 1 hour")
-                } else {
-                    Image(systemName: "exclamationmark.circle")
-                }
+                CompactIslandWait(island: context.island, drawnAt: context.state.updatedAt)
             } minimal: {
-                Image(systemName: context.state.leadingLine?.symbolName ?? "tram.fill")
+                MinimalIslandWait(island: context.island, drawnAt: context.state.updatedAt)
             }
         }
     }
@@ -253,14 +241,16 @@ private struct LineDirectionRow: View {
     }
 }
 
+private extension ActivityViewContext<StationActivityAttributes> {
+    var island: DynamicIslandWait {
+        state.dynamicIslandWait(isStale: isStale)
+    }
+}
+
 private extension StationActivityAttributes.ContentState {
     var leadingLine: TransitLine? {
         guard let page = trains.linesPage else { return nil }
         return page.soonestTrain?.line ?? page.allLines.first
-    }
-
-    var nextTime: Date? {
-        trains.linesPage?.soonestTrain?.time
     }
 
     var multiLinePage: LinesPage? {

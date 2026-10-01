@@ -36,10 +36,23 @@ public struct LineTrains: Codable, Hashable, Sendable {
 public struct SoonestTrain: Codable, Hashable, Sendable {
     public var line: TransitLine
     public var time: Date
+    var train: LineDirection.Train?
+    var branchEndIndex: Int?
 
     public init(line: TransitLine, time: Date) {
         self.line = line
         self.time = time
+    }
+
+    init(line: TransitLine, train: LineDirection.Train, branchEndIndex: Int?) {
+        self.init(line: line, time: train.time)
+        self.train = train
+        self.branchEndIndex = branchEndIndex
+    }
+
+    var redrawDates: [Date] {
+        guard let train else { return [time] }
+        return PlatformStatus.changeDates(arrival: train.arrivalTime, departure: train.time)
     }
 }
 
@@ -52,6 +65,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
     public var soonestTrain: SoonestTrain?
     public var nextTrainIsOverAnHourAway: Bool
     var nextTrainComesWithinTheHourAt: Date?
+    var lineOfTheTrainOverAnHourAway: TransitLine?
 
     public init(
         lines: [LineTrains],
@@ -67,16 +81,21 @@ public struct LinesPage: Codable, Hashable, Sendable {
         self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
     }
 
-    init(showing lines: [LineTrains], from index: Int, laterTrainTime: Date? = nil) {
+    init(showing lines: [LineTrains], from index: Int, laterTrain: Departure? = nil) {
         let firstIndex = lines.indices.contains(index) ? index : 0
         var shown = Array(lines[firstIndex...].prefix(1))
         if shown.flatMap(\.directions).count > Self.maximumRowsWithTwoTrains {
             shown = shown.map(\.keepingOnlyTheNextTrains)
         }
         let soonestTrain = lines
-            .flatMap { line in line.directions.compactMap(\.trains.first).map { (line: line.line, time: $0.time) } }
+            .flatMap { line in
+                line.directions.compactMap { direction in
+                    direction.trains.first.map { train in
+                        SoonestTrain(line: line.line, train: train, branchEndIndex: direction.branchEndIndex(of: train))
+                    }
+                }
+            }
             .min { $0.time < $1.time }
-            .map { SoonestTrain(line: $0.line, time: $0.time) }
         let nextTrainIsOverAnHourAway = soonestTrain == nil
             && lines.contains { $0.directions.contains(where: \.nextTrainIsOverAnHourAway) }
         self.init(
@@ -87,7 +106,10 @@ public struct LinesPage: Codable, Hashable, Sendable {
             nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway
         )
         if nextTrainIsOverAnHourAway {
-            nextTrainComesWithinTheHourAt = laterTrainTime?.addingTimeInterval(-DepartureBoard.farthestTimeSeconds)
+            nextTrainComesWithinTheHourAt = laterTrain?.time.addingTimeInterval(-DepartureBoard.farthestTimeSeconds)
+            lineOfTheTrainOverAnHourAway = laterTrain.flatMap { train in
+                lines.first { $0.line.mode == train.line.mode && $0.line.name == train.line.name }?.line
+            }
         }
     }
 
@@ -97,7 +119,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
                 PlatformStatus.changeDates(arrival: train.arrivalTime, departure: train.time)
             }
         }
-        return (trainDates + [soonestTrain?.time].compactMap { $0 }).filter { $0 > now }.min()
+        return (trainDates + (soonestTrain?.redrawDates ?? [])).filter { $0 > now }.min()
     }
 
     public var showsSeveralLines: Bool {
