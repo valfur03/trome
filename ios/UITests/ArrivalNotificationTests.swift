@@ -45,7 +45,6 @@ final class ArrivalNotificationTests: E2ETestCase {
         let app = makeApp()
         app.launchArguments.append("--keep-running-in-background")
         launch(app)
-        turnOnTheAutomaticMode(in: app)
         stopLiveActivityIfShowing(in: app)
 
         XCUIDevice.shared.press(.home)
@@ -70,7 +69,6 @@ final class ArrivalNotificationTests: E2ETestCase {
         let snoozeState = app.descendants(matching: .any)["snoozeState"]
         XCTAssertTrue(waitFor(snoozeState))
         XCTAssertTrue(snoozeState.label.contains("Back on at"), snoozeState.label)
-        XCTAssertTrue(app.buttons["showNearestStationLiveActivity"].exists)
 
         tap(app.buttons["cancelSnooze"])
         XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))

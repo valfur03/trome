@@ -2,7 +2,7 @@ public enum ArrivalNotificationAction: String, CaseIterable, Sendable {
     case notForOneHour = "stationArrival.snooze.oneHour"
     case notToday = "stationArrival.snooze.restOfToday"
 
-    public var snoozeDuration: SnoozeDuration {
+    var snoozeDuration: SnoozeDuration {
         switch self {
         case .notForOneHour:
             .oneHour

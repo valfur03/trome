@@ -170,20 +170,6 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
-    func turnOnTheAutomaticMode(in app: XCUIApplication) {
-        let cancelSnooze = app.buttons["cancelSnooze"]
-        let toggle = app.switches["automaticModeToggle"]
-        XCTAssertTrue(waitFor(toggle))
-        if cancelSnooze.exists {
-            cancelSnooze.tap()
-        }
-        if toggle.value as? String == "0" {
-            toggle.switches.firstMatch.tap()
-        }
-        XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))
-    }
-
-    @MainActor
     func stopLiveActivityIfShowing(in app: XCUIApplication) {
         let stopButton = app.buttons["stopLiveActivity"]
         let showButton = app.buttons["showNearestStationLiveActivity"]
