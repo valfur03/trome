@@ -84,7 +84,8 @@ final class LiveActivityRenderCheck: XCTestCase {
             rows += try drawEveryVariant(of: state, at: stripStation, page: pageNumber, into: outDir)
         }
         let taggedStation = try XCTUnwrap(catalog.stations.first { $0.name == Self.taggedStatesStation })
-        for (page, state) in Self.taggedStripStates(at: taggedStation, now: Date()).enumerated() {
+        let taggedHub = try XCTUnwrap(catalog.stations.first { $0.name == Self.taggedStatesHub })
+        for (page, state) in Self.taggedStripStates(at: taggedStation, hub: taggedHub, now: Date()).enumerated() {
             let pageNumber = Self.firstTaggedStatesPage + page
             rows += try drawEveryVariant(of: state, at: taggedStation, page: pageNumber, into: outDir)
         }

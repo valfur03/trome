@@ -5,7 +5,13 @@ extension LiveActivityRenderCheck {
     static let taggedStatesStation = "Liège"
     static let firstTaggedStatesPage = 95
 
-    static func taggedStripStates(at station: Station, now: Date) -> [StationActivityAttributes.ContentState] {
+    static let taggedStatesHub = "Place de Clichy"
+
+    static func taggedStripStates(
+        at station: Station,
+        hub: Station,
+        now: Date
+    ) -> [StationActivityAttributes.ContentState] {
         guard let line = station.lines.first, let ends = line.ends else { return [] }
         let northEnds = ends.first
         let south = ends.second[0]
@@ -32,18 +38,32 @@ extension LiveActivityRenderCheck {
             [north([train(3, northEnds[0]), train(9, northEnds[0])]), southward([])],
             [north([]), southward([train(4, south), train(8, south)])],
             [north([], overAnHour: true), southward([train(4, south)])],
-            [north([train(3, "Porte de Saint-Ouen"), train(7, northEnds[1])]), southward([train(4, south)])]
+            [north([train(3, "Porte de Saint-Ouen"), train(7, northEnds[1])]), southward([train(4, south)])],
+            [
+                north([train(0.4, northEnds[1], .atPlatform), train(14.5, northEnds[0])]),
+                southward([train(3.5, south), train(12.5, south)])
+            ],
+            [
+                north([train(10.5, northEnds[0]), train(0.4, northEnds[1], .atPlatform)]),
+                southward([train(0.3, south, .atPlatform), train(12.5, south)])
+            ],
+            [
+                north([train(0.2, northEnds[0], .atPlatform), train(0.5, northEnds[1], .atPlatform)]),
+                southward([train(4.5, south), train(59.5, south)])
+            ]
         ]
         let longName = "\(station.name) - Aubervilliers - Pantin - Quatre Chemins - Fort d'Aubervilliers"
-        let longNamePages = [pages[0], [pages[0][0]], []]
-        let names = Array(repeating: station.name, count: pages.count)
-            + Array(repeating: longName, count: longNamePages.count)
-        return zip(names, pages + longNamePages).map { name, directions in
+        let longNamePages = [pages[0], [pages[0][0]], [], pages[6]]
+        let hubPages = [pages[6], pages[8]]
+        let drawn = pages.map { (station.name, [line], $0) }
+            + longNamePages.map { (longName, [line], $0) }
+            + hubPages.map { (hub.name, hub.lines, $0) }
+        return drawn.map { name, allLines, directions in
             StationActivityAttributes.ContentState(
                 stationName: name,
                 trains: .lines(LinesPage(
                     lines: [LineTrains(line: line, directions: directions, hasADirectionWithTwoEnds: true)],
-                    allLines: [line],
+                    allLines: allLines,
                     firstIndex: 0,
                     soonestTrain: nil
                 )),
