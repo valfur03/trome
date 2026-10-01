@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PanamBranchEnds: View {
-    static let scales: [CGFloat] = [0.73]
+    static let scale: CGFloat = 0.73
     static let floorScale: CGFloat = 0.7
 
     let ends: [String]
@@ -10,9 +10,7 @@ struct PanamBranchEnds: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            ForEach(Self.scales, id: \.self) { scale in
-                endsList(textSize: textSize * scale, isWhole: true)
-            }
+            endsList(textSize: textSize * Self.scale, isWhole: true)
             endsList(textSize: textSize * Self.floorScale, isWhole: false)
         }
     }

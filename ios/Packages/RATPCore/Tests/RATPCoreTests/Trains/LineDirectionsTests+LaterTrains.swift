@@ -65,6 +65,24 @@ extension LineDirectionsTests {
         ])
     }
 
+    @Test func keepsTheTwoEndsOfADirectionWhoseTrainsAreAllLater() {
+        let line13 = TransitLine(mode: .metro, name: "13", stopIds: ["IDFM:130"])
+        let ends = ["Saint-Denis - Université", "Asnières - Gennevilliers - Les Courtilles"]
+
+        let result = directions(of: line13, at: "Liège", [], later: [
+            train(line13, to: "Saint-Denis-Université", inMinutes: 62, from: "STIF:StopPoint:Q:130:")
+        ])
+
+        #expect(result == [
+            LineDirection(
+                label: ends.joined(separator: " / "),
+                trains: [],
+                nextTrainIsOverAnHourAway: true,
+                branchEnds: ends
+            )
+        ])
+    }
+
     @Test func showsADestinationOfAnUnknownDirectionWhenItsTrainsAreAllLater() {
         let result = directions(of: metro6, at: "Chevaleret", [
             train(metro6, to: "Nation", inMinutes: 2, from: "STIF:StopPoint:Q:11:"),

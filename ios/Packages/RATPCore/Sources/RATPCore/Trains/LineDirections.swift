@@ -111,7 +111,12 @@ enum LineDirections {
                     shown[index].nextTrainIsOverAnHourAway = true
                 }
             } else if shown.count < maximumDirections {
-                shown.append(LineDirection(label: later.label, trains: [], nextTrainIsOverAnHourAway: true))
+                shown.append(LineDirection(
+                    label: later.label,
+                    trains: [],
+                    nextTrainIsOverAnHourAway: true,
+                    branchEnds: later.branchEnds
+                ))
             }
         }
         return shown
