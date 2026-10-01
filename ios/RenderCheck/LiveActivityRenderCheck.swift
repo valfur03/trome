@@ -172,7 +172,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             height: render.surface.heightLimit(of: render.state, at: "L")
         )
         renderer.scale = Self.scale
-        var height: CGFloat = 0
+        let height: CGFloat
         if savesImage {
             let image = try XCTUnwrap(renderer.uiImage)
             height = image.size.height
@@ -185,15 +185,21 @@ final class LiveActivityRenderCheck: XCTestCase {
                 )
             )
         } else {
-            renderer.render(rasterizationScale: Self.scale) { size, _ in
-                height = (size.height * Self.scale).rounded(.up) / Self.scale
-            }
+            height = measuredHeight()
         }
         let limit = render.surface.heightLimit(of: render.state, at: render.sizeName)
         let over = limit.map { height > $0 + 0.5 } ?? false
         let limitText = limit.map { "\($0)" } ?? ""
         return "\"\(render.station.name)\",\(render.page),\(render.isStale),\(render.surface.name),"
             + "\(render.sizeName),\(height),\(limitText),\(over)"
+    }
+
+    private func measuredHeight() -> CGFloat {
+        var height: CGFloat = 0
+        renderer.render(rasterizationScale: Self.scale) { size, _ in
+            height = (size.height * Self.scale).rounded(.up) / Self.scale
+        }
+        return height
     }
 
     private func imageFile(of render: Render) -> String {
