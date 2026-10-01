@@ -88,41 +88,42 @@ struct PanamStrip: View {
     }
 
     private func cell(_ train: LineDirection.Train?) -> some View {
-        ZStack {
-            if let mark = train.flatMap(direction.branchEndIndex(of:)) {
+        let mark = train.flatMap(direction.branchEndIndex(of:))
+        return ZStack {
+            if let mark, train?.status == .atPlatform {
+                VStack(spacing: Self.markGap) {
+                    PanamBranchMark(index: mark)
+                    wait(train)
+                }
+            } else if let mark {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: Self.markGap) {
                         PanamBranchMark(index: mark)
-                        wait(train, mark: mark)
+                        wait(train)
                         PanamBranchMark(index: mark)
                             .hidden()
                     }
                     .padding(.horizontal, Self.markMargin)
                     HStack(spacing: Self.markGap) {
                         PanamBranchMark(index: mark)
-                        wait(train, mark: mark)
+                        wait(train)
                     }
                 }
             } else {
-                wait(train, mark: nil)
+                wait(train)
             }
         }
         .frame(width: cellWidth)
     }
 
-    @ViewBuilder private func wait(_ train: LineDirection.Train?, mark: Int?) -> some View {
+    @ViewBuilder private func wait(_ train: LineDirection.Train?) -> some View {
         Group {
             switch train?.status {
             case .approaching:
                 Text(verbatim: "0")
                     .font(.title3.bold())
             case .atPlatform:
-                Text("At the platform")
-                    .font(.caption2.bold())
-                    .lineLimit(2)
-                    .minimumScaleFactor(mark == nil ? 0.6 : 0.5)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, mark == nil ? 3 : 0)
+                PanamAtPlatformText()
             case nil:
                 if let train {
                     PanamMinutes(train: train, drawnAt: drawnAt)
