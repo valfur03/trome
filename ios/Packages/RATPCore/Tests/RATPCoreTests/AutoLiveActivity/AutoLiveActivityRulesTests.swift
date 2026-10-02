@@ -20,7 +20,7 @@ struct AutoLiveActivityRulesTests {
     private func decide(
         _ state: AutoLiveActivityState = AutoLiveActivityState(),
         at position: Coordinate?,
-        appIsActive: Bool = false,
+        appPhase: AppPhase = .background,
         allowsAutomaticStart: Bool = true,
         after seconds: TimeInterval = 0
     ) -> AutoLiveActivityRules.Decision {
@@ -28,7 +28,7 @@ struct AutoLiveActivityRulesTests {
             state: state,
             position: position,
             now: now.addingTimeInterval(seconds),
-            onArrival: .init(appIsActive: appIsActive, allowsAutomaticStart: allowsAutomaticStart),
+            onArrival: .init(appPhase: appPhase, allowsAutomaticStart: allowsAutomaticStart),
             catalog: Places.catalog
         )
     }
@@ -48,15 +48,15 @@ struct AutoLiveActivityRulesTests {
     }
 
     @Test func startsAtOnceWhenTheAppIsOnScreen() {
-        let decision = decide(at: Places.fiftyMetersFromA, appIsActive: true)
+        let decision = decide(at: Places.fiftyMetersFromA, appPhase: .active)
 
         #expect(decision.actions == [.start(Places.stationA)])
         #expect(decision.state == showing(Places.stationA))
     }
 
-    @Test(arguments: [true, false])
-    func neitherNotifiesNorStartsWhileSnoozedOrOffButRemembersTheArrival(appIsActive: Bool) {
-        let decision = decide(at: Places.fiftyMetersFromA, appIsActive: appIsActive, allowsAutomaticStart: false)
+    @Test(arguments: [AppPhase.active, .inactive, .background])
+    func neitherNotifiesNorStartsWhileSnoozedOrOffButRemembersTheArrival(appPhase: AppPhase) {
+        let decision = decide(at: Places.fiftyMetersFromA, appPhase: appPhase, allowsAutomaticStart: false)
 
         #expect(decision.actions.isEmpty)
         #expect(decision.state == AutoLiveActivityState(arrivalStationId: "a"))
@@ -78,14 +78,74 @@ struct AutoLiveActivityRulesTests {
     @Test func respondsToAnArrivalByStartingOnlyWhenTheAppIsOnScreenAndTheAutomaticModeAllowsIt() {
         typealias Response = AutoLiveActivityRules.ArrivalResponse
 
-        #expect(Response(appIsActive: true, allowsAutomaticStart: true) == .start)
-        #expect(Response(appIsActive: false, allowsAutomaticStart: true) == .notify)
-        #expect(Response(appIsActive: true, allowsAutomaticStart: false) == .none)
-        #expect(Response(appIsActive: false, allowsAutomaticStart: false) == .none)
+        #expect(Response(appPhase: .active, allowsAutomaticStart: true) == .start)
+        #expect(Response(appPhase: .inactive, allowsAutomaticStart: true) == .later)
+        #expect(Response(appPhase: .background, allowsAutomaticStart: true) == .notify)
+        #expect(Response(appPhase: .active, allowsAutomaticStart: false) == .none)
+        #expect(Response(appPhase: .inactive, allowsAutomaticStart: false) == .none)
+        #expect(Response(appPhase: .background, allowsAutomaticStart: false) == .none)
+    }
+
+    @Test func waitsWithAnArrivalWhileASystemQuestionCoversTheApp() {
+        let decision = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
+
+        #expect(decision.actions.isEmpty)
+        #expect(decision.state == AutoLiveActivityState(arrivalStationId: "a", pendingArrivalStationId: "a"))
+    }
+
+    @Test func startsAWaitingArrivalWhenTheAppIsActiveAgainWithNoNewPosition() {
+        let covered = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
+        let stillCovered = decide(covered.state, at: nil, appPhase: .inactive)
+        let active = decide(stillCovered.state, at: nil, appPhase: .active)
+
+        #expect(stillCovered.actions.isEmpty)
+        #expect(active.actions == [.start(Places.stationA)])
+        #expect(active.state == showing(Places.stationA))
+    }
+
+    @Test func notifiesAWaitingArrivalWhenTheAppGoesToTheBackground() {
+        let covered = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
+        let background = decide(covered.state, at: nil, appPhase: .background)
+
+        #expect(background.actions == [.notify(Places.stationA)])
+        #expect(background.state == AutoLiveActivityState(arrivalStationId: "a"))
+    }
+
+    @Test func forgetsAWaitingArrivalWhenThePhoneLeavesTheStationArea() {
+        let covered = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
+        let left = decide(covered.state, at: Places.fourHundredMetersFromA, appPhase: .inactive)
+        let active = decide(left.state, at: nil, appPhase: .active)
+
+        #expect(left.state == AutoLiveActivityState())
+        #expect(active.actions.isEmpty)
+    }
+
+    @Test func answersOnlyTheNewestArrivalAfterTheAppIsActiveAgain() {
+        let coveredAtA = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
+        let coveredAtB = decide(coveredAtA.state, at: Places.atB, appPhase: .inactive)
+        let active = decide(coveredAtB.state, at: Places.atB, appPhase: .active)
+
+        #expect(coveredAtB.state.pendingArrivalStationId == "b")
+        #expect(active.actions == [.start(Places.stationB)])
+    }
+
+    @Test func switchesAShownLiveActivityAtOnceWhileASystemQuestionCoversTheApp() {
+        let decision = decide(showing(Places.stationA), at: Places.atB, appPhase: .inactive)
+
+        #expect(decision.actions == [.switchTo(Places.stationB)])
+        #expect(decision.state.pendingArrivalStationId == nil)
+    }
+
+    @Test func doesNotSaveAWaitingArrival() throws {
+        let state = AutoLiveActivityState(arrivalStationId: "a", pendingArrivalStationId: "a")
+
+        let saved = try JSONDecoder().decode(AutoLiveActivityState.self, from: JSONEncoder().encode(state))
+
+        #expect(saved == AutoLiveActivityState(arrivalStationId: "a"))
     }
 
     @Test func doesNothingOutsideTheArrivalRadius() {
-        let decision = decide(at: Places.twoHundredMetersFromA, appIsActive: true)
+        let decision = decide(at: Places.twoHundredMetersFromA, appPhase: .active)
 
         #expect(decision.actions.isEmpty)
         #expect(decision.state == AutoLiveActivityState())
@@ -113,7 +173,7 @@ struct AutoLiveActivityRulesTests {
     @Test func doesNotStartAgainAfterAStopByHandInTheSameArea() {
         let state = AutoLiveActivityState(arrivalStationId: "a")
 
-        #expect(decide(state, at: Places.fiftyMetersFromA, appIsActive: true).actions.isEmpty)
+        #expect(decide(state, at: Places.fiftyMetersFromA, appPhase: .active).actions.isEmpty)
     }
 
     @Test func switchesToANearerStationInsteadOfNotifying() {
@@ -171,7 +231,7 @@ struct AutoLiveActivityRulesTests {
     }
 
     @Test func doesNotStartAgainAfterTheMaximumDurationInTheSameArea() {
-        let decision = decide(showing(Places.stationA), at: Places.fiftyMetersFromA, appIsActive: true, after: 45 * 60)
+        let decision = decide(showing(Places.stationA), at: Places.fiftyMetersFromA, appPhase: .active, after: 45 * 60)
 
         #expect(decision.actions == [.end])
     }

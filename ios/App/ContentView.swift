@@ -45,7 +45,7 @@ struct ContentView: View {
             #endif
         }
         .onChange(of: scenePhase, initial: true) {
-            autoLiveActivity.setAppActive(scenePhase == .active)
+            autoLiveActivity.setAppPhase(AppPhase(scenePhase))
             guard scenePhase == .active else { return }
             Task { await permissions.refresh() }
             Task {
@@ -55,6 +55,16 @@ struct ContentView: View {
         }
         .onChange(of: autoLiveActivity.hasAskedNotificationQuestion) {
             Task { await permissions.refresh() }
+        }
+    }
+}
+
+private extension AppPhase {
+    init(_ scenePhase: ScenePhase) {
+        switch scenePhase {
+        case .active: self = .active
+        case .inactive: self = .inactive
+        default: self = .background
         }
     }
 }

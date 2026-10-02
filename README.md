@@ -240,6 +240,7 @@ The app watches the metro and RER stations around you. The rules come from decis
 
 - **Arrival.** When you come within about 150 meters of a station:
   - If the app is open on screen, the Live Activity of this station starts at once.
+  - If a system popup covers the open app (for example a permission question at the first launch), the app waits. The Live Activity starts as soon as the app is active again. If the app goes to the background first, the notification comes instead.
   - If the app is closed or in the background, the phone shows one notification: "Next trains at <station>". Tap it: the app opens and starts the Live Activity of this station. Touch and hold it (or pull it down) to see two actions: "Not for 1 h" and "Not today" (in French "Pas pendant 1 h" and "Pas aujourd’hui"). Each one snoozes the automatic mode (see below) without opening the app. They also work while the phone is locked.
 - **One station at a time.** If a Live Activity already shows and you come within 150 meters of another station, the Live Activity switches to the new station. There is no second Live Activity and no second notification.
 - **Stop.** The Live Activity ends by itself when you move more than about 250 meters away from its station, or 45 minutes after it started.

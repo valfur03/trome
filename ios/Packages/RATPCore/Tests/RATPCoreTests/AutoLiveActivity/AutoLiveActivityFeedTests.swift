@@ -25,7 +25,7 @@ extension AutoLiveActivityModelTests {
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.launchDelay)
         let startedInTheBackground = makeModel()
-        startedInTheBackground.setAppActive(false)
+        startedInTheBackground.setAppPhase(.background)
         await waitUntil { provider.callCount > callCount }
 
         #expect(provider.callCount > callCount)
@@ -68,7 +68,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel(catalog: StationCatalog(stations: [station]))
         await arrive(at: station.coordinate, in: model)
         await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         provider.answer(.failure(.unreachable), for: station)
         let callCount = provider.callCount
 
@@ -90,7 +90,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel(catalog: StationCatalog(stations: [station]))
         await arrive(at: station.coordinate, in: model)
         await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         provider.answer(.failure(.keyRejected), for: station)
         let callCount = provider.callCount
 
@@ -118,7 +118,7 @@ extension AutoLiveActivityModelTests {
     @Test func keepsFeedingTheLiveActivityWhileTheAppIsInTheBackground() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         let callCount = provider.callCount
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
@@ -135,7 +135,7 @@ extension AutoLiveActivityModelTests {
         await waitUntil { provider.callCount == 1 }
         let start = clock.now
 
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         provider.releaseAnswers()
         await waitUntil { client.updates.last?.hasTrains ?? false }
 
@@ -153,7 +153,7 @@ extension AutoLiveActivityModelTests {
         await waitUntil { provider.askedStationIds.last == ["b"] }
         let start = clock.now
 
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         provider.releaseAnswers()
         await waitUntil { client.updates.last?.stationName == "Station B" && client.updates.last?.hasTrains == true }
 
@@ -171,7 +171,7 @@ extension AutoLiveActivityModelTests {
         let start = clock.now
 
         screen.cancel()
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         provider.releaseAnswers()
         await waitUntil { client.updates.last?.hasTrains ?? false }
 
@@ -185,7 +185,7 @@ extension AutoLiveActivityModelTests {
         await waitUntil { client.updates.last?.hasTrains ?? false }
         #expect(provider.callCount == 1)
 
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         try? await Task.sleep(for: .milliseconds(100))
 
         #expect(provider.callCount == 1)
@@ -194,7 +194,7 @@ extension AutoLiveActivityModelTests {
     @Test func stopsAskingInTheBackgroundOnceTheLiveActivityIsDismissed() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         let callCount = provider.callCount
 
         client.isShowing = false
@@ -211,7 +211,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
         await waitUntil { provider.callCount == 1 }
-        model.setAppActive(false)
+        model.setAppPhase(.background)
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { provider.callCount == 2 }
@@ -225,7 +225,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
         await waitUntil { provider.callCount == 1 }
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { provider.callCount == 2 }
 
@@ -252,7 +252,7 @@ extension AutoLiveActivityModelTests {
         await arrive(at: station.coordinate, in: model)
         await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
         #expect(client.updates.last?.shownTrains.map(\.status) == [nil])
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         let callCount = provider.callCount
 
         clock.letTimersFire(upTo: 41)
@@ -278,7 +278,7 @@ extension AutoLiveActivityModelTests {
         clock.advance(by: 8)
         let leftTheScreen = clock.now
 
-        model.setAppActive(false)
+        model.setAppPhase(.background)
         await waitUntil { client.updates.last?.shownTrains.map(\.time) == [laterTrain] }
 
         #expect(client.updates.last?.shownTrains.map(\.time) == [laterTrain])

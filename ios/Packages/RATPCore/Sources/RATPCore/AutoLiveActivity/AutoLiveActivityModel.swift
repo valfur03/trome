@@ -20,7 +20,8 @@ public final class AutoLiveActivityModel {
     private var state: AutoLiveActivityState {
         didSet { stateDidChange(from: oldValue) }
     }
-    private(set) var appIsActive = false
+    private var appPhase = AppPhase.background
+    var appIsActive: Bool { appPhase == .active }
     private var hasAskedForNotifications = false
     private var pendingTappedStationId: String?
     private var plannedRegions: RegionPlanKey?
@@ -57,10 +58,13 @@ public final class AutoLiveActivityModel {
         feedTask?.cancel()
     }
 
-    public func setAppActive(_ isActive: Bool) {
+    public func setAppPhase(_ phase: AppPhase) {
         let wasActive = appIsActive
-        appIsActive = isActive
+        appPhase = phase
         feedAfterActivityChange(wasActive: wasActive)
+        if phase == .background, state.pendingArrivalStationId != nil {
+            Task { await evaluate(position: nil) }
+        }
     }
 
     public func appDidBecomeActive() async {
@@ -175,7 +179,7 @@ public final class AutoLiveActivityModel {
     private func evaluate(position: Coordinate?) async {
         syncWithSystem()
         let response = AutoLiveActivityRules.ArrivalResponse(
-            appIsActive: appIsActive,
+            appPhase: appPhase,
             allowsAutomaticStart: inputs.automaticMode.allowsAutomaticStart
         )
         let decision = configuration.rules.decide(
@@ -257,8 +261,10 @@ public final class AutoLiveActivityModel {
             scheduleTimer()
         }
     }
+}
 
-    private func scheduleTimer() {
+private extension AutoLiveActivityModel {
+    func scheduleTimer() {
         timerTask?.cancel()
         timerTask = nil
         guard let shown = state.shown else { return }
@@ -278,9 +284,7 @@ public final class AutoLiveActivityModel {
             }
         }
     }
-}
 
-private extension AutoLiveActivityModel {
     func precisePosition() -> Coordinate? {
         guard let fix = inputs.locationService.fix else { return nil }
         guard inputs.locationService.source != .realGPS || AutoLiveActivityRules.isPrecise(fix) else {

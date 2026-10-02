@@ -13,12 +13,19 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
         }
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case arrivalStationId
+        case shown
+    }
+
     public var arrivalStationId: String?
     public var shown: Shown?
+    public var pendingArrivalStationId: String?
 
-    public init(arrivalStationId: String? = nil, shown: Shown? = nil) {
+    public init(arrivalStationId: String? = nil, shown: Shown? = nil, pendingArrivalStationId: String? = nil) {
         self.arrivalStationId = arrivalStationId
         self.shown = shown
+        self.pendingArrivalStationId = pendingArrivalStationId
     }
 }
 
@@ -33,13 +40,18 @@ public struct AutoLiveActivityRules: Sendable {
     public enum ArrivalResponse: Equatable, Sendable {
         case start
         case notify
+        case later
         case none
 
-        public init(appIsActive: Bool, allowsAutomaticStart: Bool) {
-            if !allowsAutomaticStart {
+        public init(appPhase: AppPhase, allowsAutomaticStart: Bool) {
+            guard allowsAutomaticStart else {
                 self = .none
-            } else {
-                self = appIsActive ? .start : .notify
+                return
+            }
+            switch appPhase {
+            case .active: self = .start
+            case .inactive: self = .later
+            case .background: self = .notify
             }
         }
     }
@@ -87,9 +99,11 @@ public struct AutoLiveActivityRules: Sendable {
         if let shown = state.shown, now.timeIntervalSince(shown.startedAt) >= maximumDuration {
             decision.end()
         }
-        guard let position else { return decision }
-        decision.detectArrival(at: position, now: now, response: response, catalog: catalog)
-        decision.checkDistanceToShownStation(from: position, catalog: catalog)
+        if let position {
+            decision.detectArrival(at: position, now: now, response: response, catalog: catalog)
+            decision.checkDistanceToShownStation(from: position, catalog: catalog)
+        }
+        decision.answerPendingArrival(now: now, response: response, catalog: catalog)
         return decision
     }
 }
@@ -109,11 +123,13 @@ private extension AutoLiveActivityRules.Decision {
         let nearest = catalog.nearestStation(to: position, within: AutoLiveActivityRules.arrivalRadiusMeters)?.station
         if let nearest, nearest.id != state.arrivalStationId {
             state.arrivalStationId = nearest.id
+            state.pendingArrivalStationId = nil
             arrive(at: nearest, now: now, response: response)
         } else if nearest == nil, let arrivalId = state.arrivalStationId,
                   let arrival = catalog.station(withId: arrivalId),
                   position.distance(to: arrival.coordinate) > AutoLiveActivityRules.stopRadiusMeters {
             state.arrivalStationId = nil
+            state.pendingArrivalStationId = nil
             actions.append(.withdrawNotification)
         }
     }
@@ -131,9 +147,22 @@ private extension AutoLiveActivityRules.Decision {
             actions.append(.start(station))
         case .notify:
             actions.append(.notify(station))
+        case .later:
+            state.pendingArrivalStationId = station.id
         case .none:
             break
         }
+    }
+
+    mutating func answerPendingArrival(
+        now: Date,
+        response: AutoLiveActivityRules.ArrivalResponse,
+        catalog: StationCatalog
+    ) {
+        guard response != .later, let stationId = state.pendingArrivalStationId else { return }
+        state.pendingArrivalStationId = nil
+        guard let station = catalog.station(withId: stationId) else { return }
+        arrive(at: station, now: now, response: response)
     }
 
     mutating func checkDistanceToShownStation(from position: Coordinate, catalog: StationCatalog) {

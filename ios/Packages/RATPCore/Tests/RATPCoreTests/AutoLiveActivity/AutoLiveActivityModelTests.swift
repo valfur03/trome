@@ -174,7 +174,7 @@ struct AutoLiveActivityModelTests {
     }
 
     func activate(_ model: AutoLiveActivityModel) async {
-        model.setAppActive(true)
+        model.setAppPhase(.active)
         await model.appDidBecomeActive()
     }
 
@@ -327,7 +327,7 @@ struct AutoLiveActivityModelTests {
     @Test func startsTheLiveActivityWhenTheFirstPositionComesBeforeTheAppFinishesComingOnScreen() async {
         let model = makeModel()
 
-        model.setAppActive(true)
+        model.setAppPhase(.active)
         gps.report(Places.fiftyMetersFromA)
         await waitUntil { client.isShowing }
         await model.appDidBecomeActive()
