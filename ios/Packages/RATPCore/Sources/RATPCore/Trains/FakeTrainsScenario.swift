@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
 
-public enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
+enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
     case atPlatform = "at-platform"
     case atPlatformSecond = "at-platform-second"
     case atPlatformBoth = "at-platform-both"
