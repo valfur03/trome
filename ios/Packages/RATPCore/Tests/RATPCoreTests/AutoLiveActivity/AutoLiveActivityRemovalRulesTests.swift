@@ -48,14 +48,14 @@ struct AutoLiveActivityRemovalRulesTests {
         #expect(outcome == .pause(StationPause(stationId: "a", end: now.addingTimeInterval(3_600))))
     }
 
-    @Test(arguments: [true, false])
-    func neitherNotifiesNorStartsAtThePausedStationButRemembersTheArrival(appIsActive: Bool) {
+    @Test(arguments: [AppPhase.active, .inactive, .background])
+    func neitherNotifiesNorStartsAtThePausedStationButRemembersTheArrival(appPhase: AppPhase) {
         let pause = StationPause(stationId: "a", end: now.addingTimeInterval(60))
         let decision = rules.decide(
             state: AutoLiveActivityState(pause: pause),
             position: Places.fiftyMetersFromA,
             now: now,
-            onArrival: .init(appIsActive: appIsActive, allowsAutomaticStart: true),
+            onArrival: .init(appPhase: appPhase, allowsAutomaticStart: true),
             catalog: Places.catalog
         )
 
@@ -69,7 +69,7 @@ struct AutoLiveActivityRemovalRulesTests {
             state: AutoLiveActivityState(pause: pause),
             position: Places.fiftyMetersFromA,
             now: now,
-            onArrival: .init(appIsActive: false, allowsAutomaticStart: true),
+            onArrival: .init(appPhase: .background, allowsAutomaticStart: true),
             catalog: Places.catalog
         )
 
@@ -82,7 +82,7 @@ struct AutoLiveActivityRemovalRulesTests {
             state: AutoLiveActivityState(pause: pause),
             position: Places.fiftyMetersFromA,
             now: now,
-            onArrival: .init(appIsActive: true, allowsAutomaticStart: true),
+            onArrival: .init(appPhase: .active, allowsAutomaticStart: true),
             catalog: Places.catalog
         )
 
@@ -94,5 +94,17 @@ struct AutoLiveActivityRemovalRulesTests {
         storage.set(Data(#"{"arrivalStationId":"a"}"#.utf8), forKey: AutoLiveActivityStore.key)
 
         #expect(AutoLiveActivityStore(storage: storage).load() == AutoLiveActivityState(arrivalStationId: "a"))
+    }
+
+    @Test func savesThePause() {
+        let storage = InMemoryKeyValueStore()
+        let state = AutoLiveActivityState(
+            arrivalStationId: "a",
+            pause: StationPause(stationId: "a", end: Date(timeIntervalSince1970: 1_000))
+        )
+
+        AutoLiveActivityStore(storage: storage).save(state)
+
+        #expect(AutoLiveActivityStore(storage: storage).load() == state)
     }
 }

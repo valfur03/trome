@@ -24,7 +24,7 @@ extension AutoLiveActivityModelTests {
     func pausedAtA(_ model: AutoLiveActivityModel) async {
         await arrive(at: Places.fiftyMetersFromA, in: model)
         swipeAway()
-        model.setAppActive(false)
+        model.setAppPhase(.background)
     }
 
     @Test func aSwipePausesItsStationForOneHourAndStopsTheBackgroundLocation() async {
