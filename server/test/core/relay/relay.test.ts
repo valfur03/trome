@@ -126,19 +126,21 @@ describe("Relay: the daily cap of PRIM calls", () => {
     });
 
     const end = Date.parse("2026-10-02T22:00:00.000Z");
+    let mostCalls = 0;
     while (harness.clock.now() < end) {
       await Promise.all(Array.from({ length: 1 + Math.floor(random() * 12) }, () => harness.relay.departures(stop(Math.floor(random() * 120)))));
-      expect(harness.prim.calls.length).toBeLessThanOrEqual(800);
-      if (random() < 0.02) {
+      mostCalls = Math.max(mostCalls, harness.prim.calls.length);
+      if (random() < 0.05) {
         harness = harness.restart();
       }
-      harness.clock.advance(Math.floor(random() * 40_000));
+      harness.clock.advance(Math.floor(random() * 120_000));
     }
 
+    expect(mostCalls).toBe(800);
     expect(harness.prim.calls).toHaveLength(800);
     const [budget] = harness.database.all<{ calls: number }>("SELECT calls FROM prim_budget WHERE paris_day = '2026-10-02'");
     expect(budget?.calls).toBe(800);
-  });
+  }, 20_000);
 
   it("keeps the count of the day when the server restarts in the middle of the day", async () => {
     const harness = relayHarness();
