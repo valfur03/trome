@@ -77,7 +77,7 @@ describe_holder() {
     elif [ -n "$(holder udid)" ]; then
         echo "the open Simulator of $worktree (run 'make simulator-shutdown' there to free it)"
     else
-        echo "an agent that took it by hand${worktree:+ ($worktree)}"
+        echo "someone who took it by hand${worktree:+ ($worktree)}"
     fi
 }
 

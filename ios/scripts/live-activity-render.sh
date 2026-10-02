@@ -4,7 +4,7 @@ set -eu
 usage() {
     echo "Usage: $0 render <output folder> <xcodebuild test command...>" >&2
     echo "       Run it through the Simulator lock, in ios/: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset ./scripts/simulator.sh with-destination $0 render ..." >&2
-    echo "       $0 report <output folder>   (on the Mac, after the render: the too tall renders, the cut texts and the breaches of decision-15)" >&2
+    echo "       $0 report <output folder>   (on the Mac, after the render: the too tall renders, the cut texts and the breaches of the cut rules)" >&2
     echo "       It draws in the languages of RENDER_LANGUAGES (default: fr; for example \"fr en\"), each in its own folder: <output folder>/fr, <output folder>/en" >&2
     exit 1
 }

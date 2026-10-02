@@ -153,7 +153,7 @@ expect "make merge names a changed file of the folder of main" "$(contains "$sta
 expect "make merge names a file of the folder of main that git does not track" "$(contains "$state/busy.log" "  fresh")" "yes"
 expect "make merge names a staged file of the folder of main" "$(contains "$state/busy.log" "  staged")" "yes"
 expect "make merge says that the fast-forward would not be able to update these files" "$(contains "$state/busy.log" "The fast-forward would not be able to update these files.")" "yes"
-expect "make merge says that the changes of the folder of main belong to the prompter" "$(contains "$state/busy.log" "These changes belong to the prompter. The manager asks the prompter to commit, stash or drop them")" "yes"
+expect "make merge says that the changes of the folder of main belong to the owner of that folder" "$(contains "$state/busy.log" "These changes belong to the owner of that folder. Ask the owner to commit, stash or drop them")" "yes"
 expect "make merge leaves main unchanged when the folder of main has changes on the files of the task" "$(rev main)" "$before"
 expect "make merge leaves the changes of the folder of main as they were" "$(cat "$repo/base") $(git -C "$repo" status --porcelain | tr '\n' ' ')" "not committed  M base A  staged ?? fresh "
 git -C "$repo" rm -q --cached staged
@@ -179,7 +179,7 @@ rm "$repo/late"
 expect "make merge fails when the folder of main gets changes on the files of the task during the run" "$status" "1"
 expect "make merge leaves main unchanged when it cannot update the folder of main" "$(rev main)" "$before"
 expect "make merge says that the fast-forward failed" "$(contains "$state/late.log" "the step 'fast-forward' failed")" "yes"
-expect "make merge says that the changes of the folder of main during the run belong to the prompter" "$(contains "$state/late.log" "These changes belong to the prompter. The manager asks the prompter to commit, stash or drop them")" "yes"
+expect "make merge says that the changes of the folder of main during the run belong to the owner of that folder" "$(contains "$state/late.log" "These changes belong to the owner of that folder. Ask the owner to commit, stash or drop them")" "yes"
 expect "make merge frees the Simulator lock when it cannot update the folder of main" "$(lock_state)" "free"
 
 new_task merged

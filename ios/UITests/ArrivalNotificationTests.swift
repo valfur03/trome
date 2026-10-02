@@ -4,7 +4,8 @@
 // Why not cheaper: unit tests fake the notifier, the tap and the action; only iOS delivers the notification,
 // shows its actions, tells the tap from an action, opens the app (or not) from it, and draws the Live Activity.
 // Not guarded: the wake of a closed app by region monitoring. The Simulator cannot watch regions
-// (TASK-44), so `--keep-running-in-background` keeps the app awake. QA and the iPhone check the wake.
+// (in the iOS 27 Simulator, `isMonitoringAvailable` is false), so `--keep-running-in-background`
+// keeps the app awake. QA and the iPhone check the wake.
 import CoreLocation
 import XCTest
 

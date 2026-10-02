@@ -474,7 +474,7 @@ RATP_SIM_IDLE_MINUTES=1 "$scripts/sim-lock.sh" watch
 pretend_a_watcher_runs
 expect "the idle watcher shuts down the shared Simulators of every slot" "$(booted)" ""
 
-echo "RATP-task-1-abc Shutdown" > "$state/device.$old"
+echo "RATP-old-folder-abc Shutdown" > "$state/device.$old"
 "$scripts/simulator.sh" delete-old > /dev/null
 expect "make simulator-delete-old keeps the small Simulator" "$(test -e "$state/device.$small" && echo kept || true)" "kept"
 expect "make simulator-delete-old keeps the Simulators of slot 2" "$(test -e "$state/device.$second" && test -e "$state/device.$second_small" && echo kept || true)" "kept"

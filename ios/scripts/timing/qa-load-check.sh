@@ -5,7 +5,7 @@ if [ $# -ne 2 ] || { [ "$2" != cold ] && [ "$2" != warm ]; }; then
     echo "Measures the load of the Mac while a full make e2e runs on the shared Simulator and a QA session runs on its own Simulator (RATP-Shared-QA)." >&2
     echo "cold: the QA Simulator boots 20 s after the e2e job gets the Simulator lock. warm: the QA Simulator and the app are open before the e2e job starts." >&2
     echo "The logs go to ios/.build/timing/<label>/. When the 1-minute load goes above 200 or the free memory below 10%, it shuts down the QA Simulator at once. At the end, it shuts down and deletes RATP-Shared-QA." >&2
-    echo "It boots a second Simulator outside the Simulator lock: only the prompter, or a task that the prompter asked for, runs it. Run make build first." >&2
+    echo "It boots a second Simulator outside the Simulator lock: it can freeze the Mac, so run it only on purpose, to measure the load of a Mac. Run make build first." >&2
     exit 1
 fi
 label=$1

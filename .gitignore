@@ -16,3 +16,5 @@ Config/Secrets.xcconfig
 node_modules/
 docs/dist/
 docs/.astro/
+
+__pycache__/

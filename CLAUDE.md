@@ -212,7 +212,7 @@ All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RA
 ## The README
 
 - **One sentence per line.** Write each sentence of `README.md` on its own line, and edit only the sentences that your change makes false. Never reflow a paragraph. Why: git merges by line, so two tasks that change two sentences of one long line conflict (TASK-173).
-- `make readme-check` (part of `make check`) fails on a line of prose longer than 400 characters. Break a longer sentence after a comma, a colon or a semicolon. Tables and code blocks are exempt.
+- `make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters in any Markdown or MDX file of the repo (CLAUDE.md is skipped until it is split by topic). Break a longer sentence after a comma, a colon or a semicolon. Tables and code blocks are exempt. `make public-text-check` (part of `make check`) keeps backlog ids and the words of the factory out of public files (`CONTRIBUTING.md`, section "Public text").
 
 ## The docs site (`docs/`)
 

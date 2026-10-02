@@ -314,7 +314,7 @@ let list = folder.appendingPathComponent("breaches.csv")
 try csv.joined(separator: "\n").appending("\n").write(to: list, atomically: true, encoding: .utf8)
 
 let stations = Set(renders.map(\.station)).count
-print("Breaches of decision-15 (texts cut too much), in the images of \(stations) stations: \(breaches.count) (list: \(list.path))")
+print("Breaches of the cut rules (texts cut too much), in the images of \(stations) stations: \(breaches.count) (list: \(list.path))")
 for (surface, title) in surfaces {
     for size in sizes {
         let counts = BreachKind.allCases.map { kind in

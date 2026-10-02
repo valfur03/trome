@@ -103,16 +103,16 @@ Too tall for their text size: 1 (list: OUT/fr/too-tall.csv)
 == Language: en
 Too tall for their text size: 0 (list: OUT/en/too-tall.csv)"
 
-expect "the report counts each kind of breach of decision-15, for each phone, surface and size, 0 included" \
+expect "the report counts each kind of breach of the cut rules, for each phone, surface and size, 0 included" \
     "$(echo "$report" | grep -E '^(Breaches|  iPhone)' | sed "s|$out|OUT|")" \
-    "Breaches of decision-15 (texts cut too much), in the images of 1 stations: 8 (list: OUT/fr/breaches.csv)
+    "Breaches of the cut rules (texts cut too much), in the images of 1 stations: 8 (list: OUT/fr/breaches.csv)
   iPhone 17, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, lock screen, XXXL: time cut 1, destination under 6 2, two directions the same 0, label cut 1
   iPhone SE, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone SE, lock screen, XXXL: time cut 0, destination under 6 2, two directions the same 1, label cut 1
   iPhone 17, island, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, island, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
-Breaches of decision-15 (texts cut too much), in the images of 0 stations: 0 (list: OUT/en/breaches.csv)
+Breaches of the cut rules (texts cut too much), in the images of 0 stations: 0 (list: OUT/en/breaches.csv)
   iPhone 17, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone 17, lock screen, XXXL: time cut 0, destination under 6 0, two directions the same 0, label cut 0
   iPhone SE, lock screen, L: time cut 0, destination under 6 0, two directions the same 0, label cut 0
