@@ -71,42 +71,31 @@ struct SielWait: View {
 }
 
 private struct SielWord: View {
+    static let margin: CGFloat = 4
+
     let word: LocalizedStringKey
 
-    @ScaledMetric(relativeTo: .caption2) private var smallestSize: CGFloat = 10
+    @ScaledMetric(relativeTo: .title3) private var boxScale: CGFloat = 1
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             ForEach(Array(fonts.enumerated()), id: \.offset) { _, font in
-                WidestWordLayout {
-                    Text(word)
+                ZStack {
                     Text("Approaching").hidden()
                     Text("At the platform").hidden()
+                    Text(word)
                 }
                 .font(font)
                 .lineLimit(1)
-                .padding(.horizontal, 3)
+                .fixedSize()
+                .padding(.horizontal, Self.margin)
             }
         }
     }
 
     private var fonts: [Font] {
-        [.footnote.bold(), .caption.bold(), .caption2.bold(), .system(size: smallestSize, weight: .bold)]
-    }
-}
-
-private struct WidestWordLayout: Layout {
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
-        let shown = sizes.first ?? .zero
-        let widest = sizes.map(\.width).max() ?? 0
-        return CGSize(width: proposal.width == nil ? widest : shown.width, height: shown.height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        for subview in subviews {
-            subview.place(at: CGPoint(x: bounds.midX, y: bounds.midY), anchor: .center, proposal: .unspecified)
-        }
+        [.footnote.bold(), .caption.bold(), .caption2.bold()]
+            + [10, 9.5, 9].map { Font.system(size: $0 * boxScale, weight: .bold) }
     }
 }
 
