@@ -152,8 +152,10 @@ struct RATPActivityApp: App {
         if let fakeProvider = fakeTrainsStore.provider(forLaunchWith: ProcessInfo.processInfo.arguments) {
             return fakeProvider
         }
-        #endif
+        return configuration.map { PRIMDeparturesProvider.loggingEachAnswer(apiKey: $0.apiKey) }
+        #else
         return configuration.map { PRIMDeparturesProvider(apiKey: $0.apiKey) }
+        #endif
     }
 
     private static func liveActivityMaximumDuration() -> TimeInterval {

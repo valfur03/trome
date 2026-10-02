@@ -11,6 +11,13 @@ struct MonitoredVisit: Equatable, Sendable {
     var directionRef: String?
     var arrivalTime: Date?
     var isAtStop = false
+    var aimedTime: Date?
+    var status: String?
+    var itemIdentifier: String?
+
+    var isCancelled: Bool {
+        status == "cancelled"
+    }
 }
 
 enum StopMonitoringResponse {
@@ -84,8 +91,8 @@ private struct MonitoredCall: Decodable {
     let arrivalStatus: String?
     let vehicleAtStop: Bool?
 
-    var isCancelled: Bool {
-        (departureStatus ?? arrivalStatus) == "cancelled"
+    var status: String? {
+        departureStatus ?? arrivalStatus
     }
 
     var quayRef: String? {
@@ -108,6 +115,13 @@ private struct MonitoredCall: Decodable {
             .compactMap { $0.flatMap(SIRIDate.parse) }
             .first
     }
+
+    var aimedTime: Date? {
+        [aimedDepartureTime, aimedArrivalTime]
+            .lazy
+            .compactMap { $0.flatMap(SIRIDate.parse) }
+            .first
+    }
 }
 
 private struct MonitoredVehicleJourney: Decodable {
@@ -126,15 +140,23 @@ private struct MonitoredVehicleJourney: Decodable {
     }
 }
 
+private struct OptionalText: Decodable {
+    let text: String?
+
+    init(from decoder: any Decoder) throws {
+        text = try? decoder.singleValueContainer().decode(String.self)
+    }
+}
+
 private struct MonitoredStopVisit: Decodable {
     let monitoringRef: Value?
+    let itemIdentifier: OptionalText?
     let monitoredVehicleJourney: MonitoredVehicleJourney?
 
     var monitoredVisit: MonitoredVisit? {
         guard let journey = monitoredVehicleJourney,
               let lineRef = journey.lineRef?.value,
               let call = journey.monitoredCall,
-              !call.isCancelled,
               let time = call.bestTime,
               let destinationName = journey.bestDestinationName
         else {
@@ -150,7 +172,10 @@ private struct MonitoredStopVisit: Decodable {
             quayRef: call.quayRef,
             directionRef: journey.directionRef?.value,
             arrivalTime: call.arrivalTime,
-            isAtStop: call.vehicleAtStop ?? false
+            isAtStop: call.vehicleAtStop ?? false,
+            aimedTime: call.aimedTime,
+            status: call.status,
+            itemIdentifier: itemIdentifier?.text
         )
     }
 }

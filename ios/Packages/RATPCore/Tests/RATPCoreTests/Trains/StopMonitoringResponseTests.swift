@@ -17,7 +17,7 @@ struct StopMonitoringResponseTests {
     @Test func readsEveryVisitThatHasALineATimeAndADestination() throws {
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
 
-        #expect(visits.count == 4)
+        #expect(visits.count == 5)
         #expect(visits.first == MonitoredVisit(
             monitoringRef: "STIF:StopPoint:Q:463116:",
             lineRef: "STIF:Line::C01382:",
@@ -25,8 +25,16 @@ struct StopMonitoringResponseTests {
             destinationName: "Mairie d'Issy",
             journeyRef: "RATP-SIV:VehicleJourney::M12.R.1003:LOC",
             time: Fixture.date("2026-09-26T10:02:30Z"),
-            arrivalTime: Fixture.date("2026-09-26T10:02:10Z")
+            arrivalTime: Fixture.date("2026-09-26T10:02:10Z"),
+            status: "onTime",
+            itemIdentifier: "RATP-SIV:Item::1.12.A.463116:LOC"
         ))
+    }
+
+    @Test func readsACancelledVisitAsCancelled() throws {
+        let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
+
+        #expect(visits.map(\.isCancelled) == [false, false, false, false, true])
     }
 
     @Test func readsWhetherTheTrainIsAtTheStop() throws {
@@ -35,7 +43,7 @@ struct StopMonitoringResponseTests {
 
         let visits = try StopMonitoringResponse.visits(from: Data(answer.utf8))
 
-        #expect(visits.map(\.isAtStop) == [true, true, false, false])
+        #expect(visits.map(\.isAtStop) == [true, true, false, false, false])
     }
 
     @Test func readsTheQuayAndTheDirectionOfEachTrainOfAStopArea() throws {
@@ -66,12 +74,6 @@ struct StopMonitoringResponseTests {
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
 
         #expect(visits[2].time == Fixture.date("2026-09-26T10:04:00Z"))
-    }
-
-    @Test func skipsCancelledTrains() throws {
-        let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
-
-        #expect(!visits.contains { $0.journeyRef == "RATP-SIV:VehicleJourney::M12.R.1011:LOC" })
     }
 
     @Test func readsAnEmptyAnswer() throws {

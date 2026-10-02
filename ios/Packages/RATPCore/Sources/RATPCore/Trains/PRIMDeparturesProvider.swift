@@ -17,10 +17,16 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
 
     private let apiKey: String
     private let httpClient: any HTTPClient
+    private let log: (@Sendable (String) -> Void)?
 
-    public init(apiKey: String, httpClient: any HTTPClient = URLSession.shared) {
+    public init(
+        apiKey: String,
+        httpClient: any HTTPClient = URLSession.shared,
+        log: (@Sendable (String) -> Void)? = nil
+    ) {
         self.apiKey = apiKey
         self.httpClient = httpClient
+        self.log = log
     }
 
     struct StopRequest: Equatable {
@@ -28,17 +34,26 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         var lineCodes: Set<String>
     }
 
+    struct Answer {
+        let stopRequest: StopRequest
+        let visits: Result<[MonitoredVisit], any Error>
+    }
+
+    enum VisitOutcome: Equatable {
+        case kept(Departure)
+        case dropped(String)
+    }
+
     public func departures(at stations: [Station]) async throws -> [Departure] {
         let stopRequests = Self.stopRequests(for: stations)
-        let results = await withTaskGroup(of: Result<[MonitoredVisit], any Error>.self) { group in
+        let answers = await withTaskGroup(of: Answer.self) { group in
             for stopRequest in stopRequests {
                 group.addTask {
                     do {
-                        return .success(try await visits(at: stopRequest.monitoringRef).compactMap {
-                            Self.visit($0, askedBy: stopRequest)
-                        })
+                        let visits = try await visits(at: stopRequest.monitoringRef)
+                        return Answer(stopRequest: stopRequest, visits: .success(visits))
                     } catch {
-                        return .failure(error)
+                        return Answer(stopRequest: stopRequest, visits: .failure(error))
                     }
                 }
             }
@@ -46,10 +61,15 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         }
         try Task.checkCancellation()
 
-        let visits = results.compactMap { try? $0.get() }.flatMap(\.self)
+        let visits = answers.flatMap { answer in
+            ((try? answer.visits.get()) ?? []).compactMap { Self.visit($0, askedBy: answer.stopRequest) }
+        }
         let departures = Self.departures(from: visits, at: stations)
-        let firstError = results.lazy.compactMap { result -> (any Error)? in
-            if case .failure(let error) = result { error } else { nil }
+        if let log {
+            PRIMAnswerLog.lines(of: answers, at: stations).forEach(log)
+        }
+        let firstError = answers.lazy.compactMap { answer -> (any Error)? in
+            if case .failure(let error) = answer.visits { error } else { nil }
         }.first
         if departures.isEmpty, let firstError {
             throw firstError
@@ -90,6 +110,12 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
     }
 
     static func departures(from visits: [MonitoredVisit], at stations: [Station]) -> [Departure] {
+        outcomes(of: visits, at: stations).compactMap { outcome in
+            if case .kept(let departure) = outcome { departure } else { nil }
+        }
+    }
+
+    static func outcomes(of visits: [MonitoredVisit], at stations: [Station]) -> [VisitOutcome] {
         let linesByCode = Dictionary(
             stations.flatMap { station in
                 station.lines.compactMap { line in
@@ -99,20 +125,24 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
             uniquingKeysWith: { first, _ in first }
         )
         var seenJourneys: Set<String> = []
-        return visits.compactMap { visit in
+        return visits.map { visit in
+            guard !visit.isCancelled else { return .dropped("cancelled") }
             guard let (line, stationKey) = PRIMStopReference.lineCode(fromLineRef: visit.lineRef)
-                    .flatMap({ linesByCode[$0] }),
-                  visit.destinationRef == nil || visit.destinationRef != visit.monitoringRef,
+                    .flatMap({ linesByCode[$0] })
+            else {
+                return .dropped("other line")
+            }
+            guard visit.destinationRef == nil || visit.destinationRef != visit.monitoringRef,
                   StationCatalog.searchKey(visit.destinationName) != stationKey
             else {
-                return nil
+                return .dropped("ends here")
             }
             let journeyKey = visit.journeyRef.map { "\(line.mode)-\(line.name)-\($0)" }
                 ?? "\(line.mode)-\(line.name)-\(visit.destinationName)-\(visit.time.timeIntervalSince1970)"
             guard seenJourneys.insert(journeyKey).inserted else {
-                return nil
+                return .dropped("same journey as an earlier visit")
             }
-            return Departure(
+            return .kept(Departure(
                 line: line,
                 destination: visit.destinationName,
                 time: visit.time,
@@ -120,7 +150,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
                 directionRef: visit.directionRef,
                 arrivalTime: visit.arrivalTime,
                 isAtStop: visit.isAtStop
-            )
+            ))
         }
     }
 

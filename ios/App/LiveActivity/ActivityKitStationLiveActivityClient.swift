@@ -27,6 +27,9 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             throw StationLiveActivityError.turnedOff
         }
+        #if DEBUG
+        Self.log(content, sentBy: "start")
+        #endif
         _ = try Activity.request(
             attributes: StationActivityAttributes(),
             content: ActivityContent(state: content, staleDate: content.staleDate),
@@ -35,6 +38,9 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
     }
 
     nonisolated func update(_ content: StationActivityAttributes.ContentState) async {
+        #if DEBUG
+        Self.log(content, sentBy: "update")
+        #endif
         for activity in Self.runningActivities {
             await activity.update(ActivityContent(state: content, staleDate: content.staleDate))
         }
