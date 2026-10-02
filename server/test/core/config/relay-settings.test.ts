@@ -20,6 +20,7 @@ describe("relaySettings", () => {
       heldAge: 300_000,
       pauseAfterLimit: 3_600_000,
       pauseAfterFailure: 60_000,
+      retrySpread: 60_000,
       primTimeout: 10_000,
     });
   });

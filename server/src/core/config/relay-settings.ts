@@ -16,6 +16,7 @@ export interface RelaySettings {
   heldAge: number;
   pauseAfterLimit: number;
   pauseAfterFailure: number;
+  retrySpread: number;
   primTimeout: number;
 }
 
@@ -37,6 +38,7 @@ export function relaySettings(vars: { PRIM_DAILY_CAP?: string }): RelaySettings 
     heldAge: 5 * minute,
     pauseAfterLimit: hour,
     pauseAfterFailure: minute,
+    retrySpread: minute,
     primTimeout: 10_000,
   };
 }

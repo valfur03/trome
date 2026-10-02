@@ -4,6 +4,7 @@ import { hour, minute } from "../../../src/core/time/clock";
 import { answer } from "./fake-prim-client";
 import { primFixture } from "./prim-fixtures";
 import { relayHarness } from "./relay-harness";
+import { retrySpread } from "../../../src/core/relay/retry-spread";
 
 const abbesses = "STIF:StopArea:SP:42155:";
 const chatelet = "STIF:StopArea:SP:417675:";
@@ -13,6 +14,10 @@ const nextParisDay = Date.parse("2026-10-02T22:00:00.000Z");
 const lateInTheParisDay = "2026-10-02T21:30:00.000Z";
 const nextParisHour = Date.parse("2026-10-02T09:00:00.000Z");
 const allowedByTheEndOf1000Paris = 394;
+
+function spreadOf(stopRef: string): number {
+  return retrySpread(stopRef, minute);
+}
 
 function stop(index: number): string {
   return `STIF:StopArea:SP:${String(100_000 + index)}:`;
@@ -104,7 +109,7 @@ describe("Relay: the daily cap of PRIM calls", () => {
     const results = await Promise.all(answers);
     expect(results.filter((result) => result.kind === "times")).toHaveLength(1000);
     expect(results.filter((result) => result.kind === "out")).toEqual(
-      Array.from({ length: 200 }, () => ({ kind: "out", reason: "budget", retryAt: nextParisDay })),
+      Array.from({ length: 200 }, (_, index) => ({ kind: "out", reason: "budget", retryAt: nextParisDay + spreadOf(stop(800 + index)) })),
     );
   });
 
@@ -183,7 +188,7 @@ describe("Relay: the daily cap of PRIM calls", () => {
     expect(await relay.departures(stop(60))).toEqual({
       kind: "out",
       reason: "budget",
-      retryAt: Date.parse("2026-10-03T03:00:00.000Z"),
+      retryAt: Date.parse("2026-10-03T03:00:00.000Z") + spreadOf(stop(60)),
     });
     clock.set("2026-10-03T03:00:00.000Z");
     expect((await relay.departures(stop(60))).kind).toBe("times");
@@ -197,7 +202,7 @@ describe("Relay: the daily cap of PRIM calls", () => {
     expect(await relay.departures(stop(800))).toEqual({
       kind: "out",
       reason: "budget",
-      retryAt: Date.parse("2026-12-15T23:00:00.000Z"),
+      retryAt: Date.parse("2026-12-15T23:00:00.000Z") + spreadOf(stop(800)),
     });
     clock.set("2026-12-15T23:00:00.000Z");
     expect((await relay.departures(stop(800))).kind).toBe("times");
@@ -239,7 +244,7 @@ describe("Relay: the share of each Paris hour", () => {
     await spendTheHour(relay, 310);
 
     clock.advance(5 * minute);
-    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: Date.parse("2026-10-02T07:00:00.000Z") });
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: Date.parse("2026-10-02T07:00:00.000Z") + spreadOf(abbesses) });
     expect(await relay.departures(chatelet)).toEqual(times(abbessesAnswer, clock.now()));
     expect(prim.calls).toHaveLength(312);
 
@@ -260,12 +265,33 @@ describe("Relay: when it cannot ask PRIM", () => {
     expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, primAnsweredAt));
 
     clock.advance(1);
-    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour });
-    expect(await relay.departures(chatelet)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour });
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour + spreadOf(abbesses) });
+    expect(await relay.departures(chatelet)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour + spreadOf(chatelet) });
     expect(prim.calls).toHaveLength(allowedByTheEndOf1000Paris);
 
     clock.set("2026-10-02T09:00:00.000Z");
     expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, clock.now()));
+  });
+
+  it("spreads the time when it tries again over the first minute, by stop, so that the apps of different stops do not all ask at the same second", async () => {
+    const { relay, prim } = relayHarness();
+    await spendTheHour(relay, allowedByTheEndOf1000Paris);
+
+    const retryTimes = await Promise.all(
+      Array.from({ length: 120 }, async (_, index) => {
+        const answered = await relay.departures(`STIF:StopArea:SP:${String(500_000 + index)}:`);
+        return answered.kind === "out" ? answered.retryAt : Number.NaN;
+      }),
+    );
+
+    for (const retryAt of retryTimes) {
+      expect(retryAt).toBeGreaterThanOrEqual(nextParisHour);
+      expect(retryAt).toBeLessThan(nextParisHour + minute);
+      expect(retryAt % 1000).toBe(0);
+    }
+    expect(new Set(retryTimes).size).toBeGreaterThan(40);
+    expect(await relay.departures(stop(500_000))).toEqual(await relay.departures(stop(500_000)));
+    expect(prim.calls).toHaveLength(allowedByTheEndOf1000Paris);
   });
 
   it("makes no PRIM call for 1 hour after PRIM answers 429, for any stop, and says out until then", async () => {
@@ -273,10 +299,10 @@ describe("Relay: when it cannot ask PRIM", () => {
     prim.answerWith(() => answer(429, '{"message":"Too many requests"}'));
     const limitedAt = clock.now();
 
-    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "prim-limit", retryAt: limitedAt + hour });
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "prim-limit", retryAt: limitedAt + hour + spreadOf(abbesses) });
 
     clock.advance(hour - 1);
-    expect(await relay.departures(chatelet)).toEqual({ kind: "out", reason: "prim-limit", retryAt: limitedAt + hour });
+    expect(await relay.departures(chatelet)).toEqual({ kind: "out", reason: "prim-limit", retryAt: limitedAt + hour + spreadOf(chatelet) });
     expect(prim.calls).toEqual([abbesses]);
 
     prim.answerWith(() => answer(200, chateletAnswer));
@@ -311,7 +337,7 @@ describe("Relay: when it cannot ask PRIM", () => {
     expect(await relay.departures(abbesses)).toEqual({
       kind: "out",
       reason: "prim-limit",
-      retryAt: primAnsweredAt + 2 * minute + hour,
+      retryAt: primAnsweredAt + 2 * minute + hour + spreadOf(abbesses),
     });
     expect(prim.calls).toHaveLength(2);
   });
@@ -330,7 +356,7 @@ describe("Relay: when it cannot ask PRIM", () => {
     await spendTheHour(relay, allowedByTheEndOf1000Paris - 1);
     prim.answerWith(() => answer(503, ""));
 
-    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour });
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour + spreadOf(abbesses) });
   });
 
   it("gives the later time of a 429 pause and of the share of the hour", async () => {
@@ -338,7 +364,7 @@ describe("Relay: when it cannot ask PRIM", () => {
     await spendTheHour(relay, allowedByTheEndOf1000Paris - 1);
     prim.answerWith(() => answer(429, ""));
 
-    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "prim-limit", retryAt: clock.now() + hour });
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "prim-limit", retryAt: clock.now() + hour + spreadOf(abbesses) });
   });
 });
 

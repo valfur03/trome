@@ -7,6 +7,7 @@ import type { UsageCounts, UsageReport } from "../usage/usage-counts";
 import type { AnswerStore, StoredAnswer } from "./answer-store";
 import { isTimesAnswer } from "./prim-answer";
 import type { PrimClient, PrimReply } from "./prim-client";
+import { retrySpread } from "./retry-spread";
 
 export type OutReason = "budget" | "prim-limit" | "prim-failure";
 
@@ -72,7 +73,7 @@ export class Relay {
     }
 
     if (!budget.claim(now, age < settings.startAge ? "refresh" : "start")) {
-      return Promise.resolve(this.answerWhilePaused(stopRef, this.budgetPause(now), now));
+      return Promise.resolve(this.answerWhilePaused(stopRef, this.budgetPause(stopRef, now), now));
     }
 
     const newCall = this.callPrim(stopRef, now).finally(() => this.inFlight.delete(stopRef));
@@ -98,20 +99,21 @@ export class Relay {
     const pauses: Pause[] = [];
     const limitUntil = answers.limitPauseUntil();
     if (limitUntil > now) {
-      pauses.push({ reason: "prim-limit", until: limitUntil });
+      pauses.push({ reason: "prim-limit", until: limitUntil + retrySpread(stopRef, settings.retrySpread) });
     }
     const failedAt = this.lastFailureAt.get(stopRef);
     if (failedAt !== undefined && failedAt + settings.pauseAfterFailure > now) {
       pauses.push({ reason: "prim-failure", until: failedAt + settings.pauseAfterFailure });
     }
     if (pauses.length > 0 && budget.hasNoCallLeft(now)) {
-      pauses.push(this.budgetPause(now));
+      pauses.push(this.budgetPause(stopRef, now));
     }
     return pauses.reduce<Pause | undefined>((latest, pause) => (latest && latest.until >= pause.until ? latest : pause), undefined);
   }
 
-  private budgetPause(now: number): Pause {
-    return { reason: "budget", until: this.dependencies.budget.retryAt(now) };
+  private budgetPause(stopRef: string, now: number): Pause {
+    const { budget, settings } = this.dependencies;
+    return { reason: "budget", until: budget.retryAt(now) + retrySpread(stopRef, settings.retrySpread) };
   }
 
   private answerWhilePaused(stopRef: string, pause: Pause, now: number): RelayAnswer {
@@ -145,12 +147,12 @@ export class Relay {
     if (reply.kind === "answer" && reply.status === 429) {
       answers.pauseForLimitUntil(at + settings.pauseAfterLimit);
       this.recordError(stopRef, at, "prim-limit", reply.status);
-      return this.answerWhilePaused(stopRef, this.pause(stopRef, at) ?? this.budgetPause(at), at);
+      return this.answerWhilePaused(stopRef, this.pause(stopRef, at) ?? this.budgetPause(stopRef, at), at);
     }
 
     this.lastFailureAt.set(stopRef, at);
     this.recordError(stopRef, at, failureKind(reply), reply.kind === "answer" ? reply.status : null);
-    return this.answerWhilePaused(stopRef, this.pause(stopRef, at) ?? this.budgetPause(at), at);
+    return this.answerWhilePaused(stopRef, this.pause(stopRef, at) ?? this.budgetPause(stopRef, at), at);
   }
 
   private recordError(stopRef: string, at: number, kind: string, status: number | null): void {

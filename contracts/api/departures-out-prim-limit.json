@@ -1,5 +1,5 @@
 {
-  "description": "PRIM answered 429 (too many requests). The server makes no PRIM call for 1 hour, for any stop. The request is at 2026-10-02T08:30:00Z.",
+  "description": "PRIM answered 429 (too many requests). The server makes no PRIM call for 1 hour, for any stop. The request is at 2026-10-02T08:30:00Z. retryAt is 1 hour later, plus 0 to 59 seconds that depend on the stop (10 s for this stop), so that the apps of different stops do not all ask at the same second.",
   "request": {
     "method": "GET",
     "path": "/v1/stops/STIF:StopArea:SP:42155:/departures",
@@ -11,13 +11,13 @@
     "status": 503,
     "headers": {
       "content-type": "application/json",
-      "retry-after": "3600",
+      "retry-after": "3610",
       "cache-control": "no-store"
     },
     "body": {
       "status": "out",
       "reason": "prim-limit",
-      "retryAt": "2026-10-02T09:30:00.000Z"
+      "retryAt": "2026-10-02T09:30:10.000Z"
     }
   }
 }

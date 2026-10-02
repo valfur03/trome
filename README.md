@@ -876,6 +876,7 @@ What the server does:
 - When the share of the hour is gone, for 1 hour after PRIM answers 429, or for 60 s after another PRIM failure of a stop, the server gives the answer that it holds for the stop if it is younger than 5 minutes.
   Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` and the header `Retry-After`: the time when it will ask PRIM again.
   When the share of the hour is gone (`"reason":"budget"`), this time is the start of the next hour that has calls left: the next hour, or the next Paris day once the day's cap is spent.
+  After the share of the hour or a 429, this time is the same for every stop, so the server adds 0 to 59 seconds that depend on the stop: the apps of different stops do not all ask at the same second, and the riders of one stop still ask together and share one call.
   It never gives an answer older than 5 minutes as times, and never keeps a failed answer or a PRIM error body as times.
 - `GET /health` answers `{"status":"ok"}`, with no token.
 
