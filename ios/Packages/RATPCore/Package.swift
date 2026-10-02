@@ -13,6 +13,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "RATPCore", resources: [.copy("Resources/stations.json")]),
-        .testTarget(name: "RATPCoreTests", dependencies: ["RATPCore"], resources: [.copy("Fixtures")])
+        .testTarget(name: "RATPCoreTests", dependencies: ["RATPCore"])
     ]
 )

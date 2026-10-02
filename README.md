@@ -819,6 +819,54 @@ Rules to keep the docs true:
 - A change of a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. Run `make docs-screenshots` only when a screen that the docs show changed, and commit the new images. A docs text change alone needs no new screenshots.
 - `make docs-screenshots` is a Simulator job. Like `make e2e`, it builds first, then takes the Simulator lock, and frees it when the screenshots are taken. Run `make simulator-shutdown` when your job ends.
 
+## The server
+
+The folder `server/` holds the server of the app.
+It will hold the PRIM key, so that no build of the app that goes to another person holds it, and it will count and cap the PRIM calls of all riders in one place (decision-38 and decision-40 in the backlog).
+It runs on Cloudflare Workers, on the Free plan, with one Durable Object (a small object with its own SQLite storage) that counts.
+Today it is a skeleton: it answers `GET /health` with `{"status":"ok"}`, and nothing else uses it yet.
+No build of the app calls it.
+
+The server needs Node 24 LTS, like the docs (see [The docs site](#the-docs-site)): run `nvm use` in each new terminal before a server command.
+If the active Node is too old, the server commands stop and tell you to run `nvm use`.
+
+| Command | What it does |
+|---|---|
+| `make server-setup` | Installs the packages in `server/node_modules` (about 300 MB), when they are missing or older than `server/package-lock.json`. The other server commands run it first. |
+| `make server-check` | The server quality gate: no local secrets file in git, the generated types up to date, the type check, the lint, the unit tests and the tests of the server scripts. It needs no Simulator and no Cloudflare account. |
+| `make server-dev` | Runs the server on your Mac at `http://127.0.0.1:8787` (`/health` answers with no key). Each git worktree uses its own port: 8787 plus the number at the end of its folder name. `PORT=<n>` uses another port. Press Ctrl + C to stop it. |
+| `make server-stop` | Stops the server of this folder, when it runs in the background. |
+| `make server-login` | Logs in to your Cloudflare account, once on this Mac. It opens the browser. |
+| `make server-secret NAME=<name>` | Sets a secret of the production Worker. It asks for the value, so the value is not in your shell history. Add `STAGING=1` for the staging Worker. |
+| `make server-deploy-staging` | Runs `make server-check`, then deploys this folder to the staging Worker `ratp-activity-server-staging`. It needs your Cloudflare account. |
+| `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker `ratp-activity-server`. It needs your Cloudflare account, and it refuses another branch or changes that are not committed. |
+
+`make check` runs `make server-check` only when your branch changes files in `server/` or `contracts/` (compared with `main`).
+So a change of the app only does not install the packages of the server.
+
+The secrets:
+
+- The server has two secrets: `PRIM_API_KEY` (the PRIM key) and `APP_TOKEN` (the token that the app sends, so that only the app can ask the server).
+  `server/wrangler.jsonc` names them, with no value.
+- On your Mac, `make server-dev` reads fake values from `server/.dev.vars`.
+  The first `make server-dev` creates this file from `server/.dev.vars.example`.
+  Git ignores it, and `make server-check` fails when git tracks it.
+  Keep fake values in it: the server on your Mac never needs the real key.
+- On Cloudflare, the secrets are set with `make server-secret` and live only there.
+- The logs of the server never show a secret: the logger replaces each secret value with `[secret]`, and a unit test checks it.
+
+To put the server on Cloudflare (the first time):
+
+1. Create a free Cloudflare account at https://dash.cloudflare.com/sign-up (no card).
+2. In the main folder, run `nvm use`, then `make server-login`, and allow the access in the browser.
+3. Run `make server-deploy-staging`. Wrangler shows the address of the staging Worker: `https://ratp-activity-server-staging.<your subdomain>.workers.dev`. If your account has no `workers.dev` subdomain yet, the first deploy asks you to choose one.
+4. Open `https://ratp-activity-server-staging.<your subdomain>.workers.dev/health`. It shows `{"status":"ok"}`.
+5. Set the two secrets of the staging Worker: `make server-secret NAME=PRIM_API_KEY STAGING=1`, then paste your PRIM key; `make server-secret NAME=APP_TOKEN STAGING=1`, then paste a new random token (make one with `openssl rand -base64 32`).
+6. On `main`, run `make server-deploy`, then set the same two secrets without `STAGING=1`. Use another app token for production.
+
+The code of the server follows the rules of the CLAUDE.md, section "Code structure of the server": the logic is plain TypeScript in `server/src/core/`, and only `server/src/cloudflare/` uses the Cloudflare API.
+So the server can move to another host with a medium task (decision-40).
+
 ## Languages
 
 Almost every user of the app is French. The app shows each text in French when the language of the iPhone is French, and in English for any other language (Settings > General > Language & Region). English is the language of the code: each text is written in English in the Swift code.
@@ -849,10 +897,12 @@ Each part of the repo has its own folder. The root holds only the files of the w
 
 | Folder or file | What it holds |
 |---|---|
-| `README.md`, `CLAUDE.md`, `.gitignore`, `.nvmrc` | Files for the whole repo. `.nvmrc` pins the Node version of the Node parts (today `docs/`). |
+| `README.md`, `CLAUDE.md`, `.gitignore`, `.nvmrc` | Files for the whole repo. `.nvmrc` pins the Node version of the Node parts (`docs/` and `server/`). |
 | `Makefile` | Runs each `make` command in the folder of its part. It has no build logic. `make check` runs the checks of all parts. |
 | `ios/` | The iPhone app, with its own `Makefile`, `project.yml`, `.swiftlint.yml`, build settings and scripts. Its build output goes to `ios/.build/`. |
 | `docs/` | The docs site (Starlight), with its own `Makefile` and scripts. |
+| `server/` | The server (a Cloudflare Worker in TypeScript), with its own `Makefile`, scripts and `package.json` (see [The server](#the-server)). |
+| `contracts/` | The files that the app and the server both test against. Today `contracts/prim/`: the recorded PRIM answers of the unit tests. |
 
 Inside `ios/`:
 
@@ -956,7 +1006,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 3. The manager rebases the branch onto `main` right before QA, so QA tests the branch on the latest `main`.
 4. QA tests the branch.
 5. When QA passed the task, the manager runs `make merge` in the worktree of the task.
-   It takes the Simulator lock, rebases the branch onto the tip of `main` again, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs or unit tests), then fast-forwards `main` to the rebased branch.
+   It takes the Simulator lock, rebases the branch onto the tip of `main` again, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs, unit tests, `server/` or `contracts/`), then fast-forwards `main` to the rebased branch.
    When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`.
    When a step fails, `main` stays as it was.
 

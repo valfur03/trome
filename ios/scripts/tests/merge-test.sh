@@ -202,6 +202,14 @@ expect "make merge skips the E2E suite when the task changes only docs" "$(tr '\
 expect "make merge says why it skips the E2E suite" "$(contains "$state/docs.log" "changes no app code")" "yes"
 expect "main is the task that changes only docs" "$(rev main)" "$(rev task/docs)"
 
+new_task server
+mkdir -p "$state/server/server/src" "$state/server/contracts/prim"
+commit "$state/server" server/src/worker.ts worker
+commit "$state/server" contracts/prim/answer.json answer
+merge server
+expect "make merge of a task that changes only the server and the contracts succeeds" "$status" "0"
+expect "make merge skips the E2E suite when the task changes only the server and the contracts" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+
 advance_main app app
 new_task moved
 mkdir -p "$state/moved/docs"

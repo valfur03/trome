@@ -18,3 +18,7 @@ docs/dist/
 docs/.astro/
 
 __pycache__/
+server/.wrangler/
+server/.dev.vars*
+!server/.dev.vars.example
+server/.env*

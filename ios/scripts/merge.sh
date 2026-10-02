@@ -66,7 +66,7 @@ make merge stopped the rebase (git rebase --abort): '$branch' is as it was befor
 }
 
 changes_app_code() {
-    git diff --name-only --no-renames "$1" "$2" | grep -qv -e '^docs/' -e '^README\.md$' -e '^CLAUDE\.md$' -e '^ios/Packages/RATPCore/Tests/'
+    git diff --name-only --no-renames "$1" "$2" | grep -qv -e '^docs/' -e '^README\.md$' -e '^CLAUDE\.md$' -e '^ios/Packages/RATPCore/Tests/' -e '^server/' -e '^contracts/'
 }
 
 step() {
@@ -106,7 +106,7 @@ merge() {
         step "3/4 full E2E suite ($e2e_command)"
         sh -c "$e2e_command" || step_failed "full E2E suite"
     else
-        step "3/4 full E2E suite: skipped, $branch changes no app code (only docs or unit tests, see CLAUDE.md)"
+        step "3/4 full E2E suite: skipped, $branch changes no app code (only docs, unit tests, the server or the contracts, see CLAUDE.md)"
     fi
     step "4/4 fast-forward $target to $(git rev-parse --short "$tested")"
     [ "$(git rev-parse HEAD)" = "$tested" ] || step_failed fast-forward "HEAD moved during the merge."

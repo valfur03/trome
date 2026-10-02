@@ -2,17 +2,6 @@ import Foundation
 import Testing
 @testable import RATPCore
 
-enum Fixture {
-    static func data(_ name: String) throws -> Data {
-        let url = try #require(Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures"))
-        return try Data(contentsOf: url)
-    }
-
-    static func date(_ text: String) -> Date {
-        SIRIDate.parse(text) ?? .distantPast
-    }
-}
-
 struct StopMonitoringResponseTests {
     @Test func readsEveryVisitThatHasALineATimeAndADestination() throws {
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
