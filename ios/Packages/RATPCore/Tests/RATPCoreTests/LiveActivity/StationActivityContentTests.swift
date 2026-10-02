@@ -64,7 +64,7 @@ struct StationActivityContentTests {
         #expect(hub.flatMap(\.lines).count >= 9)
         #expect(!json.contains("stopIds"))
         #expect(!json.contains("stopAreaIds"))
-        #expect(json.utf8.count < 4_096)
+        #expect(json.utf8.count < Self.sizeLimitOfALiveActivity)
     }
 
     @Test func showsTheStationName() {
@@ -296,6 +296,6 @@ struct StationActivityContentTests {
         let content = ContentState(station: chatelet, trains: trains, now: now)
 
         #expect(content.trains.linesPage?.allLines.count ?? 0 >= 8)
-        #expect(try JSONEncoder().encode(content).count < 4096)
+        #expect(try JSONEncoder().encode(content).count < Self.sizeLimitOfALiveActivity)
     }
 }

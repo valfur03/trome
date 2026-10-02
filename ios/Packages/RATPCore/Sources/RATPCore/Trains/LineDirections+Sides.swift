@@ -45,12 +45,12 @@ extension LineDirections {
         guard var endTrains = direction.trainsOfEachEnd,
               let laterEndTrains = withLaterTrains.trainsOfEachEnd
         else { return }
-        let ends = endTrains.map(\.end)
-        let laterTrainsTellTheEnd = withLaterTrains.trains.allSatisfy { ends.contains($0.destination) }
+        let laterTrainsTellTheEnds = laterEndTrains.contains { !$0.trains.isEmpty }
         for index in endTrains.indices where endTrains[index].trains.isEmpty {
-            let laterTrainOfTheEnd = laterEndTrains.contains { $0.end == ends[index] && !$0.trains.isEmpty }
+            let end = endTrains[index].end
+            let laterTrainOfTheEnd = laterEndTrains.contains { $0.end == end && !$0.trains.isEmpty }
             endTrains[index].nextTrainIsOverAnHourAway = laterTrainOfTheEnd
-                || (!laterTrainsTellTheEnd && direction.nextTrainIsOverAnHourAway)
+                || (!laterTrainsTellTheEnds && direction.nextTrainIsOverAnHourAway)
         }
         direction.trainsOfEachEnd = endTrains
     }

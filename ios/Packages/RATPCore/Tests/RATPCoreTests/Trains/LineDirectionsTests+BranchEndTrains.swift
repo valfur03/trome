@@ -152,6 +152,20 @@ extension LineDirectionsTests {
         #expect(direction.trainsOfEachEnd?.map(\.nextTrainIsOverAnHourAway) == [true, true])
     }
 
+    @Test(arguments: [[62.0, 70.0], [70.0, 62.0]])
+    func saysNoTrainIsKnownForAnEndWhenTheLaterTrainsTellTheOtherEndAndAShortTrip(minutes: [Double]) throws {
+        let direction = try north(
+            [toChatillon(inMinutes: 3)],
+            later: [
+                train(line13, to: "Saint-Ouen", inMinutes: minutes[0], from: northQuay),
+                toSaintDenis(inMinutes: minutes[1])
+            ]
+        )
+
+        #expect(direction.nextTrainIsOverAnHourAway)
+        #expect(direction.trainsOfEachEnd?.map(\.nextTrainIsOverAnHourAway) == [true, false])
+    }
+
     @Test func countsATrainThatPRIMListsTwiceOnceForTheWholeDirection() throws {
         let direction = try north([
             toSaintDenis(inMinutes: 2),
