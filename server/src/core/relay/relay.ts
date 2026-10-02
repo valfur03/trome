@@ -99,7 +99,7 @@ export class Relay {
     const pauses: Pause[] = [];
     const limitUntil = answers.limitPauseUntil();
     if (limitUntil > now) {
-      pauses.push({ reason: "prim-limit", until: limitUntil + retrySpread(stopRef, settings.retrySpread) });
+      pauses.push({ reason: "prim-limit", until: limitUntil + retrySpread(stopRef, limitUntil, settings.retrySpread) });
     }
     const failedAt = this.lastFailureAt.get(stopRef);
     if (failedAt !== undefined && failedAt + settings.pauseAfterFailure > now) {
@@ -113,7 +113,8 @@ export class Relay {
 
   private budgetPause(stopRef: string, now: number): Pause {
     const { budget, settings } = this.dependencies;
-    return { reason: "budget", until: budget.retryAt(now) + retrySpread(stopRef, settings.retrySpread) };
+    const retryFrom = budget.retryAt(now);
+    return { reason: "budget", until: retryFrom + retrySpread(stopRef, retryFrom, settings.retrySpread) };
   }
 
   private answerWhilePaused(stopRef: string, pause: Pause, now: number): RelayAnswer {
