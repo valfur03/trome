@@ -32,6 +32,7 @@ struct ContentView: View {
                         .listRowBackground(Color.clear)
                 }
                 #endif
+                TrainDataSourceSection()
             }
             #if DEBUG
             .toolbar {

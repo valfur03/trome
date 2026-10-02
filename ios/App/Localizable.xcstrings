@@ -71,6 +71,16 @@
         }
       }
     },
+    "Contains information from the ‘[Prochains passages](https://prim.iledefrance-mobilites.fr)’ database of Île-de-France Mobilités (PRIM), made available under the ‘[Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences)’." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contient des informations de la base « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), présentement mises à disposition aux conditions de la « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) »."
+          }
+        }
+      }
+    },
     "Finding the nearest station…" : {
       "localizations" : {
         "fr" : {
