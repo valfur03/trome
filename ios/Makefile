@@ -68,7 +68,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync readme-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -80,9 +80,10 @@ help:
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
 	@echo "make run LANGUAGE=fr     Same, with the Simulator in French (the default is English: LANGUAGE=en)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
-	@echo "make check               iOS quality gate: lint + recommended settings check + key leak check + build (no warning allowed) + strings check + unit tests + script tests"
+	@echo "make check               iOS quality gate: lint + README line check + recommended settings check + key leak check + build (no warning allowed) + strings check + unit tests + script tests"
 	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, or when a text of the app or the Live Activity has no French text"
 	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code)"
+	@echo "make readme-check        Fail when a line of prose of README.md is longer than 400 characters (write one sentence per line)"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key and that a new key replaces the old one (uses fake keys)"
@@ -146,6 +147,9 @@ strings-check: project
 strings-sync: project
 	@./scripts/strings-sync.sh sync $(EXPORT_STRINGS)
 
+readme-check:
+	@./scripts/readme-check.py ../README.md
+
 test:
 	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore -Xswiftc -warnings-as-errors
 
@@ -155,7 +159,7 @@ test-scripts:
 		$$test > $(BUILD_DIR)/test-scripts.log 2>&1 || { cat $(BUILD_DIR)/test-scripts.log; exit 1; }; \
 	done
 
-check: lint recommended-settings-check live-key-check build strings-check test test-scripts
+check: lint readme-check recommended-settings-check live-key-check build strings-check test test-scripts
 
 recommended-settings-check:
 	@./scripts/recommended-settings-check.sh project.yml "$$(xcodebuild -version | head -1)"

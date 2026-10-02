@@ -209,6 +209,11 @@ All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RA
 - **Its numbers.** The widths and the height limits in `ios/RenderCheck/LiveActivityRenderCheck.swift` were measured on the real Live Activity (TASK-124). A task that changes the regions of the Dynamic Island, or a new iOS version, measures them again before it trusts the check.
 - It is a Simulator job, through the lock, like `make docs-screenshots`. It frees the lock when the drawing ends.
 
+## The README
+
+- **One sentence per line.** Write each sentence of `README.md` on its own line, and edit only the sentences that your change makes false. Never reflow a paragraph. Why: git merges by line, so two tasks that change two sentences of one long line conflict (TASK-173).
+- `make readme-check` (part of `make check`) fails on a line of prose longer than 400 characters. Break a longer sentence after a comma, a colon or a semicolon. Tables and code blocks are exempt.
+
 ## The docs site (`docs/`)
 
 The README explains the docs site and its commands (section "The docs site").
