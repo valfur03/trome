@@ -1,7 +1,7 @@
 // Seam: the widget process draws our ContentState (the station, both directions of a line, a train at the
-// platform, a branch, the lines of a hub, one line per page) on the real Live Activity, and iOS runs the
-// intents of its buttons in the app (the header of a hub page that shows the next line, snooze), whose effect
-// the rider sees on the Live Activity and in the app.
+// platform, a branch, one row for each end of a fork, the lines of a hub, one line per page) on the real Live
+// Activity, and iOS runs the intents of its buttons in the app (the header of a hub page that shows the next
+// line, snooze), whose effect the rider sees on the Live Activity and in the app.
 // Why not cheaper: unit tests check the ContentState and the intents' rules; only the widget process
 // draws the views, and only iOS runs a button's intent in the app.
 // Fake: `--fake-trains at-platform` replaces the PRIM train data (a daily quota, data that changes). The real

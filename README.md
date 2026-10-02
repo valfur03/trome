@@ -998,7 +998,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
   Each line of the station gets trains toward both ends, and a side with branches sends its trains to each branch in turn.
   Every E2E launch has launch arguments (`makeApp()` adds `--reset-location-source`), so a test without `--fake-trains` never keeps the fake trains of an earlier test.
   When iOS starts the app by itself (no launch argument), it keeps them (see [Test it with a fake position](#test-it-with-a-fake-position), "Fake trains").
-  Only `SnoozeTests` uses it (`--fake-trains at-platform`, see [Test it with a fake position](#test-it-with-a-fake-position), "Ask the fake trains for a state"), to check the station name, both directions, a train at the platform, a branch and the header button that shows the next line on the real Live Activity (Notification Center).
+  Only `SnoozeTests` uses it (`--fake-trains at-platform`, see [Test it with a fake position](#test-it-with-a-fake-position), "Ask the fake trains for a state"), to check the station name, both directions, a train at the platform, a branch, the header button that shows the next line, and one row for each end of the fork of line 7 on the next page, on the real Live Activity (Notification Center).
   It does not replace the real trains: QA still checks them with `make run LIVE=1`.
 - End-to-end tests: open the app with `launch(app)` from `E2ETestCase`, not with `app.launch()`.
   On the first launch of a run, it answers the notification popup at once.
