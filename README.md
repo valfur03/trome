@@ -56,7 +56,7 @@ To turn the hooks off, run `make git-hooks-off`. Then run `make generate` after 
 | `make run SMALL=1` | The same, on the smallest supported iPhone (see [The smallest iPhone](#the-smallest-iphone)). |
 | `make run LANGUAGE=fr` | The same, with the Simulator in French (see [The language of the Simulator](#the-language-of-the-simulator)). |
 | `make switch-language LANGUAGE=en` | After `make run`: puts the Simulator in English (or `fr`) and opens the app again, with its data. |
-| `make check` | The quality gate: lint, Markdown line check (see [Notes for developers](#notes-for-developers)), public text check (see [CONTRIBUTING.md](CONTRIBUTING.md#public-text)), bundle ID check (see [Install on your iPhone](#install-on-your-iphone-free-apple-id)), recommended settings check, key leak check, build, strings check (see [Languages](#languages)), unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
+| `make check` | The quality gate: lint, Markdown line check (see [Notes for developers](#notes-for-developers)), public text check (see [CLAUDE.md](CLAUDE.md#the-docs-site-docs), section "The docs site"), bundle ID check (see [Install on your iPhone](#install-on-your-iphone-free-apple-id)), recommended settings check, key leak check, build, strings check (see [Languages](#languages)), unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
 | `make e2e` | The end-to-end tests. They open the app in the Simulator. |
 | `make e2e ONLY=AutoLiveActivityTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=AutoLiveActivityTests/testLiveActivityStartsSwitchesAndStopsByItselfNearStations` runs one test. The class names are the file names in `ios/UITests/`. |
 | `make live-activity-render` | Draws the Live Activity views for every station and page, in French, and lists the too tall ones, the cut texts and the breaches of decision-15. `ENGLISH=1` draws them in English too. On demand, not in the gate (see [Check how the Live Activity draws](#check-how-the-live-activity-draws)). |
@@ -1086,7 +1086,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
   When one sentence is longer than 400 characters, break the line after a comma, a colon or a semicolon.
   When a change makes a sentence false, edit only that sentence, and never reflow a paragraph.
   Why: git merges by line, so two changes to two sentences of one long line conflict.
-  `make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters, in every Markdown and MDX file of the repo ([CONTRIBUTING.md](CONTRIBUTING.md)).
+  `make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters, in every Markdown and MDX file of the repo ([CLAUDE.md](CLAUDE.md#the-docs-site-docs), section "The docs site").
   Tables and code blocks may have long lines.
 - Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `RATPCore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
 - Build output goes to `ios/.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder. All worktrees share one Simulator, and Simulator jobs wait for each other (see above).

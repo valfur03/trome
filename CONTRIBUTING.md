@@ -1,63 +1,97 @@
 # Contributing to TROME
 
-TROME shows the next metro and RER trains of the nearest Paris station on the iPhone lock screen.
-This page is for people who change its code or its docs.
+TROME is an iPhone app that shows the next metro and RER trains of the nearest Paris station on the lock screen.
+This page is for you if you want to report a bug, ask a question, or change the code or the docs.
+It says what to do first, how to set up, and what happens to your change.
 
-## Issues and pull requests
+## Report a bug or ask a question
 
-Issues are welcome: a bug, a question or an idea.
-If you want to send a pull request, open an issue first and ask.
-Why: the app is small and shaped by one owner, and a pull request that the team cannot take would cost you a day of work.
+Open an issue in the **Issues** tab of the repo.
+You can write it in French or in English.
 
-## Before you start
+For a bug, say what you did, what you saw and what you expected, with your iPhone model, your iOS version and the station.
+A screenshot of the lock screen helps a lot.
 
-The [README](README.md) explains, for now, what you need, the first setup and the everyday commands.
+## Ask before you change something
+
+TROME does one thing on purpose: it shows when the next trains come, on the lock screen.
+It does not plan routes, show maps, cover other cities or other kinds of transport, or copy the transport apps that riders already use.
+
+So before you start a pull request, open an issue that says what you want to change and why, and wait for an answer.
+That way we agree on the change first, and you do not lose a day on a change that cannot be taken.
+
+## Use AI tools, and answer for your change
+
+TROME is built with Claude Code, Anthropic's coding assistant: it writes most of the code and the docs, and the maintainer directs the work.
+That is why the repo has a [CLAUDE.md](CLAUDE.md): it is the manual that Claude Code reads, and it is public so that you can read it too.
+If you use Claude Code, it reads that file by itself.
+
+You may use any tool, AI included.
+But read and run your change before you send it, be ready to explain it, and answer for it in the review.
+A large change that you cannot explain, or that you did not run, is not taken.
+
+## Set up
+
+Follow [What you need](README.md#what-you-need) and [First setup](README.md#first-setup) in the README.
+Then run `make run` from the root of the repo: it builds the app and opens it in the iPhone Simulator.
+With no train data key, the app shows no live times: [The train data key](README.md#the-train-data-key-prim) shows how to add your own free key.
 `make help` lists every command.
 
-## How a change lands
+## Make your change
 
-Make your change on a branch, and run `make check` (the quality gate) before each commit.
-Another person reviews the change, then it lands on `main` by a rebase and a fast-forward, so the history stays linear.
+### Find where the code goes
 
-## One sentence per line
+The iPhone app is in `ios/` and the server is in `server/`: [Project layout](README.md#project-layout) maps the folders.
+In the app, the rules and the state live in the `RATPCore` package, with their unit tests, and the screens and the Live Activity only show them.
+Where each file goes, and which part may use which, is in CLAUDE.md, for [the app](CLAUDE.md#code-structure-of-the-ios-app) and for [the server](CLAUDE.md#code-structure-of-the-server).
+These rules hold for every change, and the review checks them.
 
-Write each sentence of a Markdown or MDX file on its own line.
-When one sentence is longer than 400 characters, break the line after a comma, a colon or a semicolon.
-When a change makes a sentence false, edit only that sentence, and never reflow a paragraph.
-Why: git merges by line, so two changes to two sentences of one long line conflict.
-`make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters.
-Tables and code blocks may have long lines.
+### Give every text a French version
 
-## Public text
+Most riders are French, so each text that a rider sees gets its French version in the same change.
+Write the text in English in the code, then run `make strings-sync`: it adds the text to the String Catalog, where you write the French text.
+Write it the way a Paris rider would say it, with the words of the RATP signs and of iOS ("Prochains passages", "Réglages").
+Commit the catalog with your change.
+A missing French text is the most common reason why a first change fails `make check`.
+[Languages](README.md#languages) in the README explains the catalogs.
 
-This repo is public: anyone can read the README, the docs and the code.
-So a file of the repo has no number or name from the team's private task list, no word of the team's own way of working, no personal data and no local path of a computer.
-Write the rule and its reason instead: a stranger cannot open a private task, but they can read a reason.
-`make public-text-check` (part of `make check`) fails on each of these, and prints the file, the line and the reason.
-Its word list is in `ios/scripts/public-text-check.py`.
-When a hit is a normal word in its place (for example the name of a type), add it to `ALLOWED_TEXTS` in that file, with its path, its text and the reason.
-`CLAUDE.md` and the folder `.claude/` are the manual of Claude Code, the coding assistant that works on this repo.
-They may cite the private task list, but never personal data or a local path.
-For now, the check also lets `README.md` cite it, until its sections move to the files of the table below.
+### Update the docs in the same change
 
-## Where a change writes its text
+When your change makes a step, a command or a screen of the docs false, fix the docs in the same change.
+[Write the docs](docs/README.md) shows how to run the docs site, take the pictures again, and write a page.
 
-Each text lives in one file, chosen by its reader.
-Link to the file that holds a fact, and never copy the fact.
-A text in the wrong file is asked to move in the review, like a code file in the wrong folder.
+### Check your change
 
-| Kind of change | The file that the change edits |
-|---|---|
-| A new or changed `make` command | the `help` line of its Makefile, and the guide page of its topic; `CONTRIBUTING.md` only when one of its everyday commands changes |
-| A changed rule that a rider sees (the Live Activity) | the guide file of its feature (`ios/guide/<feature>.md`); a rider page of the docs site only when its summary becomes false |
-| The internals of a type | the doc comment on the type |
-| A new feature folder | a new guide file, a line in `ios/README.md`, a line in `ARCHITECTURE.md` |
-| Structure or dependency direction | `ARCHITECTURE.md` |
-| A screen that the docs site shows | the page of the site, and its screenshots |
-| A rule for Claude Code | the file of its topic in `.claude/rules/` |
-| A product rule | the team's decision record, outside the repo; the repo states the behaviour and its reason |
-| The notes of a version | not in a change: "What's new" and `CHANGELOG.md` are written at each release |
-| The server | `server/README.md` or `server/guide/` |
+Run `make check` from the root of the repo before each commit.
+It runs the lint, the build, the unit tests and the other checks of the repo, and it fails on any build warning.
+When a check fails, its message says what is wrong and where the rule is.
+When your change touches `docs/`, `make check` builds the site too, which needs Node 24 (see [Run the site](docs/README.md#run-the-site)).
 
-Some of these files do not exist yet.
-Until a file exists, edit the section of `README.md` (or of `CLAUDE.md`, for a rule for Claude Code) on the same topic.
+`make test` runs only the unit tests, on the Mac with no Simulator, and `make e2e` runs the end-to-end tests in the Simulator.
+
+### Write the commit title
+
+Start each commit title with the kind of change, then say what the change does, in lower case:
+
+```text
+feat: show the source notice of the PRIM train data at the foot of the app screen
+fix: keep the box of a stale fork row black
+```
+
+The kinds are `feat`, `fix`, `docs`, `test`, `refactor`, `build`, `chore` and `perf`.
+The changelog for developers will be made from these titles, so the kind says where your change goes.
+
+## Send your change
+
+Push your branch to your fork, and open a pull request that links the issue where we agreed on the change.
+Say what you changed and how you checked it.
+The repo has no automatic checks on pull requests yet, so also say that `make check` passes.
+
+Then the change gets a review, which may ask for changes: push them to the same branch, and the pull request updates.
+When the change is taken, it lands on `main`.
+
+## Licence
+
+The code of TROME is under the [MIT licence](LICENSE).
+When you send a change, you agree that it is under the same licence.
+The data in the repo, such as the station list, keeps its own licences: see [NOTICE.md](NOTICE.md).

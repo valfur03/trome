@@ -61,7 +61,7 @@ def main(arguments):
             "When one sentence is still too long, break the line after a comma, a colon or a semicolon.\n"
             "Edit only the sentences that your change makes false, and never reflow a paragraph. Tables and code blocks may have long lines.\n"
             "Why: git merges by line. Two changes to two sentences of one long line conflict "
-            "(CONTRIBUTING.md, section \"One sentence per line\").",
+            "(CLAUDE.md, section \"The docs site\", rule \"One sentence per line\").",
             file=sys.stderr,
         )
         sys.exit(1)

@@ -209,11 +209,6 @@ All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RA
 - **Its numbers.** The widths and the height limits in `ios/RenderCheck/LiveActivityRenderCheck.swift` were measured on the real Live Activity (TASK-124). A task that changes the regions of the Dynamic Island, or a new iOS version, measures them again before it trusts the check.
 - It is a Simulator job, through the lock, like `make docs-screenshots`. It frees the lock when the drawing ends.
 
-## The README
-
-- **One sentence per line.** Write each sentence of `README.md` on its own line, and edit only the sentences that your change makes false. Never reflow a paragraph. Why: git merges by line, so two tasks that change two sentences of one long line conflict (TASK-173).
-- `make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters in any Markdown or MDX file of the repo (CLAUDE.md is skipped until it is split by topic). Break a longer sentence after a comma, a colon or a semicolon. Tables and code blocks are exempt. `make public-text-check` (part of `make check`) keeps backlog ids and the words of the factory out of public files (`CONTRIBUTING.md`, section "Public text").
-
 ## Code structure of the server
 
 decision-6 (sections 2, 3 and 6) and decision-40 explain these rules. The reviewer checks them, as for the iOS app.
@@ -239,7 +234,27 @@ The README explains the server and its commands (section "The server").
 
 The README explains the docs site and its commands (section "The docs site").
 
+The rules on writing (who writes the pages, the writing guide, one sentence per line, public text, where a change writes its text) hold for the whole repo, not only for `docs/`.
+
 - **Keep the docs true.** A task that changes a step, a `make` command, a setting or a screen that the docs show also updates the docs, in the same task. Run `make docs-screenshots` only when a screen that the docs show changed, and commit the new images. A docs text change alone needs no new screenshots. The reviewer checks it.
+- **Who writes the pages.** The Technical Writer writes and rewrites the docs pages (decision-49, section 9). A Software Engineer writes only the docs lines that its own change makes false, in the file that the table below names. Why: each page is written for one reader and one job (decision-49); a page that grows by the facts of each task stops serving its reader, as the README did.
+- **The writing guide and the review bar.** A page follows `docs/README.md` ("Write a page"), and a docs review uses its "Review a page", the public form of the bar of decision-49 section 5. These rules for agents stay out of the public pages: `CONTRIBUTING.md` is for an outside contributor, and the checks below explain themselves when they fail.
+- **One sentence per line.** Write each sentence of a Markdown or MDX file of the repo on its own line. When one sentence is longer than 400 characters, break the line after a comma, a colon or a semicolon. When a change makes a sentence false, edit only that sentence, and never reflow a paragraph. Tables and code blocks may have long lines. Why: git merges by line, so two tasks that change two sentences of one long line conflict (TASK-173). `make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters (CLAUDE.md is skipped until it is split by topic).
+- **Public text.** The repo is public: anyone can read the README, the docs and the code. So a file of the repo has no backlog id, no word of the team's own way of working (the prompter, the factory, the manager, agents), no personal data (for example an email address that is not an example one), no local path of a computer, and not the old name of the app. Write the rule and its reason instead. Why: a stranger cannot open a private task, but they can read a reason. `make public-text-check` (part of `make check`) fails on each of these, and prints the file, the line and the reason. Its word list is in `ios/scripts/public-text-check.py`. When a hit is a normal word in its place (for example the name of a type), add it to `ALLOWED_TEXTS` in that file, with its path, its text and the reason. `CLAUDE.md` and `.claude/` are the manual of Claude Code: they may cite the backlog, but never personal data or a local path. For now, the check also lets `README.md` cite the backlog, until its sections move to the files of the table below (TASK-219 and the rewrites after it).
+- **Where a change writes its text.** Each text lives in one file, chosen by its reader. Link to the file that holds a fact, and never copy the fact. A text in the wrong file is asked to move in the review, like a code file in the wrong folder. Some of these files do not exist yet: until a file exists, edit the section of `README.md` (or of `CLAUDE.md`, for a rule for Claude Code) on the same topic.
+
+  | Kind of change | The file that the change edits |
+  |---|---|
+  | A new or changed `make` command | the `help` line of its Makefile, and the guide page of its topic; `CONTRIBUTING.md` only when a command that it names changes |
+  | A changed rule that a rider sees (the Live Activity) | the guide file of its feature (`ios/guide/<feature>.md`); a rider page of the docs site only when its summary becomes false |
+  | The internals of a type | the doc comment on the type |
+  | A new feature folder | a new guide file, a line in `ios/README.md`, a line in `ARCHITECTURE.md` |
+  | Structure or dependency direction | `ARCHITECTURE.md` |
+  | A screen that the docs site shows | the page of the site, and its screenshots |
+  | A rule for Claude Code | the file of its topic in `.claude/rules/` |
+  | A product rule | the decision in the backlog, outside the repo; the repo states the behaviour and its reason |
+  | The notes of a version | not in a change: "What's new" and `CHANGELOG.md` are written at each release |
+  | The server | `server/README.md` or `server/guide/` |
 - **Node 24.** Each Bash call starts a new shell with the old default Node. Run the docs commands like this: `. "$HOME/.nvm/nvm.sh" && nvm use && make docs-check`. The same goes for `make check` when your task changes `docs/`.
 - **Install `docs/node_modules` only when your task touches the docs.** It takes about 300 MB. `make check` runs `make docs-check` only when your branch changes `docs/`, so the other tasks never install it.
 - **Use your own port.** The default port 4321 is for the prompter. Run `make docs PORT=<n>` or `make docs-dev PORT=<n>` with a port that no other agent uses (for example 4300 plus your task number).
