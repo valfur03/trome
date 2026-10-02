@@ -84,30 +84,65 @@ struct FakeTrainsScenarioTests {
     }
 
     @Test(arguments: ["Liège", "Poissonnière"])
-    func countsTheSecondTrainOfTheTaggedStripFromTenToNineSoonAfterTheLaunchThenEverySixMinutes(
+    func countsTheSecondTrainOfTheForkDirectionFromTenToNineSoonAfterTheLaunchThenEverySixMinutes(
         station: String
     ) async throws {
         for drawnAfter in [0.0, 7.1] {
             let drawnAt = start.addingTimeInterval(drawnAfter * 60)
             let page = try await page(at: station, .tenToNine, afterMinutes: drawnAfter)
-            let tagged = try #require(page.lines[0].directions.first { $0.branchEnds != nil })
-            let first = try #require(tagged.trains.first)
-            let second = try #require(tagged.trains.dropFirst().first)
+            let fork = try #require(page.lines[0].directions.first { $0.branchEnds != nil })
+            let first = try #require(fork.trains.first)
+            let second = try #require(fork.trains.dropFirst().first)
             let countsToNine = second.time.addingTimeInterval(-9 * 60 + 1)
 
             #expect(first.countdownMinutes(at: drawnAt) < 10)
             #expect(second.countdownMinutes(at: drawnAt) >= 10)
             #expect(second.countdownMinutes(at: countsToNine) == 9)
             #expect((60...5 * 60).contains(countsToNine.timeIntervalSince(drawnAt)))
-            #expect(Set([first.destination, second.destination]) == Set(tagged.branchEnds ?? []))
+            #expect(Set([first.destination, second.destination]) == Set(fork.branchEnds ?? []))
         }
     }
 
     @Test(arguments: [FakeTrainsScenario.atPlatform, .atPlatformSecond, .atPlatformBoth])
-    func givesTheTwoBoxesOfTheTaggedStripOneTrainForEachEnd(scenario: FakeTrainsScenario) async throws {
+    func givesTheNextTwoTrainsOfTheForkDirectionOneForEachEnd(scenario: FakeTrainsScenario) async throws {
         let page = try await page(at: "Liège", scenario, afterMinutes: 1)
-        let tagged = try #require(page.lines[0].directions.first { $0.branchEnds != nil })
+        let fork = try #require(page.lines[0].directions.first { $0.branchEnds != nil })
 
-        #expect(Set(tagged.trains.map(\.destination)) == Set(tagged.branchEnds ?? []))
+        #expect(Set(fork.trains.map(\.destination)) == Set(fork.branchEnds ?? []))
+    }
+
+    private func endRows(at name: String, _ scenario: FakeTrainsScenario, afterMinutes minutes: Double)
+        async throws -> [BranchEndTrains] {
+        let page = try await page(at: name, scenario, afterMinutes: minutes)
+        let fork = try #require(page.lines[0].directions.first { $0.trainsOfEachEnd != nil })
+        return try #require(fork.trainsOfEachEnd)
+    }
+
+    @Test(arguments: ["Liège", "Tolbiac"])
+    func givesTheSecondEndOfTheForkOneTrainThenNone(station: String) async throws {
+        let withOneTrain = try await endRows(at: station, .forkEndWithOneTrain, afterMinutes: 1)
+        let afterItLeft = try await endRows(at: station, .forkEndWithOneTrain, afterMinutes: 9.5)
+
+        #expect(withOneTrain.map(\.trains.count) == [2, 1])
+        #expect(afterItLeft.map(\.trains.count) == [2, 0])
+        #expect(!afterItLeft[1].nextTrainIsOverAnHourAway)
+    }
+
+    @Test(arguments: [(FakeTrainsScenario.forkEndWithNoTrain, false), (.forkEndOverAnHour, true)])
+    func givesTheSecondEndOfTheForkNoTrainInTheHour(scenario: FakeTrainsScenario, isOverAnHour: Bool)
+        async throws {
+        for minutes in [0.0, 5, 9.5] {
+            let rows = try await endRows(at: "Liège", scenario, afterMinutes: minutes)
+
+            #expect(rows.map(\.trains.count) == [2, 0])
+            #expect(rows[1].nextTrainIsOverAnHourAway == isOverAnHour)
+        }
+    }
+
+    @Test(arguments: [FakeTrainsScenario.forkEndWithOneTrain, .forkEndWithNoTrain, .forkEndOverAnHour])
+    func keepsTheTrainsOfAStationWithNoForkForEachEndState(scenario: FakeTrainsScenario) async throws {
+        let directions = try await page(at: "Lamarck - Caulaincourt", scenario, afterMinutes: 1).lines[0].directions
+
+        #expect(directions.map(\.trains.count) == [2, 2])
     }
 }

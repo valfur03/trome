@@ -6,8 +6,12 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
     case atPlatformSecond = "at-platform-second"
     case atPlatformBoth = "at-platform-both"
     case tenToNine = "ten-to-nine"
+    case forkEndWithOneTrain = "fork-end-one-train"
+    case forkEndWithNoTrain = "fork-end-no-train"
+    case forkEndOverAnHour = "fork-end-over-an-hour"
 
     static let stopSeconds: TimeInterval = 30
+    static let laterTrainMinutes: Double = 70
 
     struct Train: Equatable {
         var index: Int
@@ -25,11 +29,29 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
             [waiting(leavesAt: 5), waiting(leavesAt: 7)]
         case .tenToNine:
             [arriving(leavesAt: 6), arriving(leavesAt: 12)]
+        case .forkEndWithOneTrain, .forkEndWithNoTrain, .forkEndOverAnHour:
+            [arriving(leavesAt: 4), arriving(leavesAt: 8)]
         }
     }
 
     private var minutesBetweenTrains: Double {
         self == .tenToNine ? 6 : 4
+    }
+
+    func endIndex(of train: Train, amongEnds count: Int) -> Int {
+        guard count > 1 else { return 0 }
+        switch self {
+        case .forkEndWithOneTrain:
+            return train.index == 1 ? 1 : 0
+        case .forkEndWithNoTrain, .forkEndOverAnHour:
+            return 0
+        case .atPlatform, .atPlatformSecond, .atPlatformBoth, .tenToNine:
+            return train.index % count
+        }
+    }
+
+    func laterTrainEndIndex(amongEnds count: Int) -> Int? {
+        self == .forkEndOverAnHour && count > 1 ? 1 : nil
     }
 
     func trains(leavingAfter minutes: Double, count: Int) -> [Train] {

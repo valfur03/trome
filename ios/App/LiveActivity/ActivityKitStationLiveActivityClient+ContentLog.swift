@@ -25,12 +25,22 @@ extension ActivityKitStationLiveActivityClient {
                 let directions = line.directions.map { direction in
                     let shown = direction.trains.map(describe).joined(separator: ", ")
                     let later = direction.nextTrainIsOverAnHourAway ? " (over 1 h)" : ""
-                    return "\(direction.label): \(shown.isEmpty ? "none" : shown)\(later)"
+                    return "\(direction.label): \(shown.isEmpty ? "none" : shown)\(later)\(describeRows(of: direction))"
                 }
                 return "\(line.line.mode.rawValue) \(line.line.name) [\(directions.joined(separator: " | "))]"
             }
             return "page from \(page.firstIndex): " + lines.joined(separator: " ")
         }
+    }
+
+    nonisolated private static func describeRows(of direction: LineDirection) -> String {
+        guard let rows = direction.trainsOfEachEnd else { return "" }
+        let described = rows.map { row in
+            let shown = row.trains.map(describe).joined(separator: ", ")
+            let later = row.nextTrainIsOverAnHourAway ? " (over 1 h)" : ""
+            return "\(row.end) = \(shown.isEmpty ? "none" : shown)\(later)"
+        }
+        return "; rows: " + described.joined(separator: "; ")
     }
 
     nonisolated private static func describe(_ train: LineDirection.Train) -> String {

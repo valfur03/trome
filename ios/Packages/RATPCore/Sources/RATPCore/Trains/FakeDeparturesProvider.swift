@@ -55,20 +55,28 @@ public struct FakeDeparturesProvider: DeparturesProvider {
         from start: Date,
         now: Date
     ) -> [Departure] {
-        sides(of: line, at: station).flatMap { sideIndex, destinations in
+        sides(of: line, at: station).flatMap { sideIndex, destinations -> [Departure] in
             let shift = Double(sideIndex)
             let minutesSinceStart = now.timeIntervalSince(start) / 60
-            return scenario.trains(leavingAfter: minutesSinceStart - shift, count: trainsPerSide).map { train in
+            let trains = scenario.trains(leavingAfter: minutesSinceStart - shift, count: trainsPerSide).map { train in
                 let time = start.addingTimeInterval((train.departureMinutes + shift) * 60)
                 return Departure(
                     line: line,
-                    destination: destinations[train.index % destinations.count],
+                    destination: destinations[scenario.endIndex(of: train, amongEnds: destinations.count)],
                     time: time,
                     arrivalTime: train.waitsAtThePlatformFromTheStart
                         ? start
                         : time.addingTimeInterval(-FakeTrainsScenario.stopSeconds)
                 )
             }
+            guard let laterEnd = scenario.laterTrainEndIndex(amongEnds: destinations.count) else { return trains }
+            let laterTime = start.addingTimeInterval((FakeTrainsScenario.laterTrainMinutes + shift) * 60)
+            return trains + [Departure(
+                line: line,
+                destination: destinations[laterEnd],
+                time: laterTime,
+                arrivalTime: laterTime.addingTimeInterval(-FakeTrainsScenario.stopSeconds)
+            )]
         }
     }
 

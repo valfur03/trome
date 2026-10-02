@@ -489,7 +489,9 @@ a Live Activity of an app older than TASK-140 has rows until the app updates it)
 The page gets the strips while each of the next two trains of the direction goes to one of these ends, and the fork direction is then the group of `PanamBranchEndRows`, one row for each end.
 `LinesPage.nextRedrawDate(after:)` also reads the trains of each end, so the second train of an end is drawn again when it arrives.
 `PanamStripsView` draws the page, `PanamStripsHeader` its header (the order above:
-the words "1er" and "2e", then smaller steps of the name, then a second line, only when `LineTrains.hasRoomForATwoLineStationName`), `PanamStrip` a plain strip, `PanamBranchEndRows` the group of a fork direction (with the plate `SielPlate` and the rule `SielRule` of the RER rows, and one shared size of the two end names, with `ViewThatFits`), `PanamCell` a column of a strip or of the group, and `PanamAtPlatformText` the words of a train at the platform (the largest of its one-line sizes that fits, else two lines, with `ViewThatFits`).
+the words "1er" and "2e", then smaller steps of the name, then a second line, only when `LineTrains.hasRoomForATwoLineStationName`), `PanamStrip` a plain strip,
+`PanamBranchEndRows` the group of a fork direction (with the plate `SielPlate` and the rule `SielRule` of the RER rows, and one shared size of the two end names, with `ViewThatFits`),
+`PanamCell` a column of a strip or of the group, and `PanamAtPlatformText` the words of a train at the platform (the largest of its one-line sizes that fits, else two lines, with `ViewThatFits`).
 Every strip of every page has the same width of its number boxes (`cellWidth` in `PanamStripsView`), so the plates and the boxes line up.
 The RER rows use `WaitingTime` (`Date.AnchoredRelativeFormatStyle`, "in 3 min."), which counts down by itself too.
 The header of a page with other lines is a button with `ShowNextLinesIntent` (`LinesPagerButton`, with `OtherLinesControl` for "+N >", used by the strips and the rows): iOS runs it in the app (in the background), and `StationLiveActivityModel.showNextLines()` shows the next lines.
@@ -665,7 +667,11 @@ The "Permissions" part of the main screen then says so, with a button to open Se
   - `at-platform-second`: the second box shows "À quai", next to a train that leaves first, for about 3 minutes. Then the first train comes ("0", then "À quai": both boxes), leaves, and the second one leaves 2 minutes later.
   - `at-platform-both`: both boxes show "À quai" for 5 minutes. Then the first train leaves, and the second one 2 minutes later.
   - `ten-to-nine`: trains every 6 minutes. The second box shows 10 or more, and counts down to 9 by itself about 3 to 4 minutes after the launch, then every 6 minutes. Look while the app is in the background, before the next update (at most 2 minutes).
-  - A fork with both ends: at a station of lines 7 or 13 before the fork (for example Liège or Poissonnière), the two boxes of the tagged strip always show one train for each end, with or without a state.
+  - A fork with both ends: at a station of lines 7 or 13 before the fork (for example Liège or Poissonnière), the trains go to each end in turn, so each row of the fork group shows two trains of its end, with or without a state.
+  - `fork-end-one-train`: at such a station, the second end gets one train only (it leaves 8 minutes after the launch, then that end says "Pas de train"), and the first end gets all the others.
+  - `fork-end-no-train`: the second end gets no train at all ("Pas de train" across both columns).
+  - `fork-end-over-an-hour`: the second end gets no train in the hour, and one train 70 minutes after the launch, so it says "> 1 h" for about 10 minutes, then counts down from 60.
+  - On a line with no fork, these three states give the trains of the default fake trains, every 4 minutes.
   - The RER lines get the same times. Their rows show "À quai" only when the RER look draws it.
   - Check that the app got the arguments: `ps -axww -o args | grep "RATPActivity.app/RATPActivity"` shows `--fake-trains` and the name.
     When the line ends with `RATPActivity` alone, iOS had already started the app again in the background (it does so while a Live Activity shows), and the launch only brought that app to the front: launch it again.
@@ -685,7 +691,8 @@ When you leave this larger area, the app picks the nearest stations again.
 Debug builds log the region monitoring: whether iOS can watch regions, and each region event with its state and its diagnostics (for example `conditionUnsupported`).
 They also log the Live Activity: at each launch, the Live Activities that iOS still lists with their state; each state change that iOS sends (`active`, `stale`, `ended`, `dismissed`); each end that the app asks for itself; and when the background location starts and stops.
 So you can see when iOS tells the app that you swiped the Live Activity away (TASK-146).
-They also log each content that the app sends to the Live Activity (category `LiveActivityContent`: each shown train with its time, its destination and its state), and each PRIM answer (category `PRIM`: one line per train of the answer, with its destination, its times, its quay, its journey, and whether the app keeps it or drops it, and why).
+They also log each content that the app sends to the Live Activity (category `LiveActivityContent`: each shown train with its time, its destination and its state, and at a fork the trains of each end row, after "rows:"),
+and each PRIM answer (category `PRIM`: one line per train of the answer, with its destination, its times, its quay, its journey, and whether the app keeps it or drops it, and why).
 The PRIM key is never in the log.
 So, with live data, you can tell whether a change on the Live Activity comes from PRIM, from the rules of the app (for example the 60 s rule of a metro direction), or from iOS (TASK-169).
 To read the log in the Simulator: `xcrun simctl spawn "$(make -s simulator)" log show --last 5m --predicate 'subsystem == "RATPActivity"'`.

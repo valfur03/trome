@@ -11,9 +11,13 @@ extension LinesPage {
 }
 
 extension LineDirection {
+    func branchEndIndex(of train: Train) -> Int? {
+        branchEnds?.firstIndex(of: train.destination)
+    }
+
     var fitsAPanamStrip: Bool {
-        guard let branchEnds else { return !showsEachDestination }
-        return trains.allSatisfy { branchEnds.contains($0.destination) }
+        guard branchEnds != nil else { return !showsEachDestination }
+        return trains.allSatisfy { branchEndIndex(of: $0) != nil }
     }
 
     var shownTrains: [Train] {
