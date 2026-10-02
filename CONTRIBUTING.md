@@ -18,7 +18,7 @@ TROME does one thing on purpose: it shows when the next trains come, on the lock
 It does not plan routes, show maps, cover other cities or other kinds of transport, or copy the transport apps that riders already use.
 
 So before you start a pull request, open an issue that says what you want to change and why, and wait for an answer.
-That way we agree on the change first, and you do not lose a day on a change that cannot be taken.
+That way we agree on the change first, and you do not lose a day on a change that we cannot accept.
 
 ## Use AI tools, and answer for your change
 
@@ -28,7 +28,7 @@ If you use Claude Code, it reads that file by itself.
 
 You may use any tool, AI included.
 But read and run your change before you send it, be ready to explain it, and answer for it in the review.
-A large change that you cannot explain, or that you did not run, is not taken.
+We do not accept a large change that you cannot explain, or that you did not run.
 
 ## Set up
 
@@ -63,7 +63,8 @@ When your change makes a step, a command or a screen of the docs false, fix the 
 ### Check your change
 
 Run `make check` from the root of the repo before each commit.
-It runs the lint, the build, the unit tests and the other checks of the repo, and it fails on any build warning.
+It lints the code, builds the app, and runs the unit tests and the other checks of the repo.
+It fails on any build warning.
 When a check fails, its message says what is wrong and where the rule is.
 When your change touches `docs/`, `make check` builds the site too, which needs Node 24 (see [Run the site](docs/README.md#run-the-site)).
 
@@ -88,7 +89,7 @@ Say what you changed and how you checked it.
 The repo has no automatic checks on pull requests yet, so also say that `make check` passes.
 
 Then the change gets a review, which may ask for changes: push them to the same branch, and the pull request updates.
-When the change is taken, it lands on `main`.
+When we accept the change, it lands on `main`.
 
 ## Licence
 
