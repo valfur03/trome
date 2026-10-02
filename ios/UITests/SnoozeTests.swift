@@ -44,6 +44,9 @@ final class SnoozeTests: E2ETestCase {
         )
         XCTAssertTrue(liveActivityElement(containing: "Place d'Italie").exists)
         XCTAssertTrue(waitForNo(liveActivityElement(containing: "Porte de Clignancourt")))
+        tapOnTheLiveActivity(liveActivityPager, pointsBelowItsTop: 3)
+        XCTAssertTrue(waitFor(liveActivityRow(of: "Mairie d'Ivry")), "The fork of line 7 has no row for each end")
+        XCTAssertTrue(liveActivityRow(of: "Villejuif - Louis Aragon").exists)
         tapOnTheLiveActivity(liveActivity.buttons["Snooze for 30 minutes"])
         XCTAssertTrue(waitForNo(liveActivity))
         closeNotificationCenter()
@@ -58,6 +61,12 @@ final class SnoozeTests: E2ETestCase {
         tap(app.buttons["cancelSnooze"])
         XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))
         XCTAssertFalse(snoozeState.exists)
+    }
+
+    @MainActor
+    private func liveActivityRow(of end: String) -> XCUIElement {
+        liveActivity.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "\(end), "))
+            .firstMatch
     }
 
     @MainActor

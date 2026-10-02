@@ -44,10 +44,12 @@ struct PanamBranchEndRows: View {
                 .fixedSize(horizontal: isWhole, vertical: true)
                 .padding(.horizontal, 8)
                 .frame(maxWidth: .infinity, minHeight: isStale ? nil : rowHeight, alignment: .leading)
-            box(of: row)
-                .frame(width: boxWidth)
-                .frame(maxHeight: .infinity)
-                .background(.black)
+            ZStack {
+                box(of: row)
+            }
+            .frame(width: boxWidth)
+            .frame(maxHeight: .infinity)
+            .background(.black)
         }
         .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .ignore)
