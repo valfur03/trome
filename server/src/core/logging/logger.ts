@@ -8,8 +8,9 @@ export interface Logger {
 export const redacted = "[secret]";
 
 export function createLogger(secrets: string[], write: (line: string) => void): Logger {
+  const forms = [...new Set(secrets.flatMap(printedForms))].sort((a, b) => b.length - a.length);
   const redact = (line: string) =>
-    secrets.reduce((text, secret) => text.split(secret).join(redacted), line);
+    forms.reduce((text, form) => text.split(form).join(redacted), line);
   const log = (level: string, event: string, fields: LogFields) => {
     write(redact(JSON.stringify({ level, event, ...fields }, errorsAsText)));
   };
@@ -21,6 +22,10 @@ export function createLogger(secrets: string[], write: (line: string) => void): 
       log("error", event, fields);
     },
   };
+}
+
+function printedForms(secret: string): string[] {
+  return [secret, JSON.stringify(secret).slice(1, -1), encodeURIComponent(secret)];
 }
 
 function errorsAsText(_key: string, value: unknown): unknown {

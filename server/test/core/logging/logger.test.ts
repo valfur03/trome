@@ -36,6 +36,24 @@ describe("createLogger", () => {
     }
   });
 
+  it("never prints a secret in the form that a URL or JSON gives it", () => {
+    const token = 'k+/3"q\\=';
+    const lines: string[] = [];
+    const logger = createLogger([token], (line) => lines.push(line));
+
+    logger.info("request", { path: `/${encodeURIComponent(token)}`, raw: token });
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).not.toContain(encodeURIComponent(token));
+    expect(lines[0]).not.toContain(JSON.stringify(token).slice(1, -1));
+    expect(JSON.parse(lines[0] ?? "")).toEqual({
+      level: "info",
+      event: "request",
+      path: `/${redacted}`,
+      raw: redacted,
+    });
+  });
+
   it("prints an error as its name and message", () => {
     const { lines, logger } = capture();
 

@@ -862,6 +862,7 @@ To put the server on Cloudflare (the first time):
 3. Run `make server-deploy-staging`. Wrangler shows the address of the staging Worker: `https://ratp-activity-server-staging.<your subdomain>.workers.dev`. If your account has no `workers.dev` subdomain yet, the first deploy asks you to choose one.
 4. Open `https://ratp-activity-server-staging.<your subdomain>.workers.dev/health`. It shows `{"status":"ok"}`.
 5. Set the two secrets of the staging Worker: `make server-secret NAME=PRIM_API_KEY STAGING=1`, then paste your PRIM key; `make server-secret NAME=APP_TOKEN STAGING=1`, then paste a new random token (make one with `openssl rand -base64 32`).
+   Keep each app token in your password manager: a later task puts it in a build setting of the app that git ignores.
 6. On `main`, run `make server-deploy`, then set the same two secrets without `STAGING=1`. Use another app token for production.
 
 The code of the server follows the rules of the CLAUDE.md, section "Code structure of the server": the logic is plain TypeScript in `server/src/core/`, and only `server/src/cloudflare/` uses the Cloudflare API.
