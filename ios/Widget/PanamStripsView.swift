@@ -18,7 +18,7 @@ struct PanamStripsView: View {
             }
             ForEach(line.directions, id: \.self) { direction in
                 Group {
-                    if let rows = direction.trainsOfEachEnd {
+                    if let rows = direction.branchEndRows {
                         PanamBranchEndRows(
                             rows: rows,
                             line: line.line,

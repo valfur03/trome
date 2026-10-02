@@ -247,6 +247,16 @@
         }
       }
     },
+    "no train announced" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucun train annoncé"
+          }
+        }
+      }
+    },
     "No train times for this station right now." : {
       "localizations" : {
         "fr" : {

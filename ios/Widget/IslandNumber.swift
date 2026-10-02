@@ -17,8 +17,7 @@ struct IslandNumber: View {
                 Text(verbatim: "0")
                     .foregroundStyle(PanamStrip.amber)
             case .dash:
-                Text(verbatim: "–")
-                    .foregroundStyle(.secondary)
+                WaitDash()
             }
         }
         .font(Self.font)

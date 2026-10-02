@@ -1,0 +1,297 @@
+{
+  "Source": "Built by a script from the debug log of a live run of the app at Liège: the log lines of the PRIM answer of 2026-10-02 17:05:58.920 (Europe/Paris). Each visit is one log line, in its order; no field was typed by hand.",
+  "Siri": {
+    "ServiceDelivery": {
+      "ResponseTimestamp": "2026-10-02T15:05:58.920Z",
+      "StopMonitoringDelivery": [
+        {
+          "ResponseTimestamp": "2026-10-02T15:05:58.920Z",
+          "Version": "2.0",
+          "Status": "true",
+          "MonitoredStopVisit": [
+            {
+              "RecordedAtTime": "2026-10-02T15:05:58.000Z",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:22225:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01383:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::20261002.273.A.C01383:LOC"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463302:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Saint-Denis-Université"
+                  }
+                ],
+                "MonitoredCall": {
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Saint-Denis-Université"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-02T15:08:49.000Z",
+                  "ExpectedArrivalTime": "2026-10-02T15:08:49.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              },
+              "ItemIdentifier": "RATP-SIV:Item::20261002.273.A.C01383.PALS.IDFM.C01383.A.RATP.50025935:LOC"
+            },
+            {
+              "RecordedAtTime": "2026-10-02T15:05:58.000Z",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:22225:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01383:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::20261002.274.A.C01383:LOC"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463302:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Saint-Denis-Université"
+                  }
+                ],
+                "MonitoredCall": {
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Saint-Denis-Université"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-02T15:11:04.000Z",
+                  "ExpectedArrivalTime": "2026-10-02T15:11:04.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              },
+              "ItemIdentifier": "RATP-SIV:Item::20261002.274.A.C01383.PALS.IDFM.C01383.A.RATP.50025935:LOC"
+            },
+            {
+              "RecordedAtTime": "2026-10-02T15:05:58.000Z",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:22225:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01383:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::20261002.275.A.C01383:LOC"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463302:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Saint-Denis-Université"
+                  }
+                ],
+                "MonitoredCall": {
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Saint-Denis-Université"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-02T15:13:16.000Z",
+                  "ExpectedArrivalTime": "2026-10-02T15:13:16.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              },
+              "ItemIdentifier": "RATP-SIV:Item::20261002.275.A.C01383.PALS.IDFM.C01383.A.RATP.50025935:LOC"
+            },
+            {
+              "RecordedAtTime": "2026-10-02T15:05:58.000Z",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:463066:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01383:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::20261002.260.R.C01383:LOC"
+                },
+                "DirectionRef": {
+                  "value": "Retour"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463087:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Châtillon Montrouge"
+                  }
+                ],
+                "MonitoredCall": {
+                  "VehicleAtStop": true,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Châtillon Montrouge"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-02T14:37:14.000Z",
+                  "ExpectedArrivalTime": "2026-10-02T14:37:14.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              },
+              "ItemIdentifier": "RATP-SIV:Item::20261002.260.R.C01383.PALS.IDFM.C01383.R.RATP.50026440:LOC"
+            },
+            {
+              "RecordedAtTime": "2026-10-02T15:05:58.000Z",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:463066:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01383:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::20261002.274.R.C01383:LOC"
+                },
+                "DirectionRef": {
+                  "value": "Retour"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463087:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Châtillon Montrouge"
+                  }
+                ],
+                "MonitoredCall": {
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Châtillon Montrouge"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-02T15:05:41.000Z",
+                  "ExpectedArrivalTime": "2026-10-02T15:05:41.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              },
+              "ItemIdentifier": "RATP-SIV:Item::20261002.274.R.C01383.PALS.IDFM.C01383.R.RATP.50026440:LOC"
+            },
+            {
+              "RecordedAtTime": "2026-10-02T15:05:58.000Z",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:463066:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01383:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::20261002.276.R.C01383:LOC"
+                },
+                "DirectionRef": {
+                  "value": "Retour"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463087:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Châtillon Montrouge"
+                  }
+                ],
+                "MonitoredCall": {
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Châtillon Montrouge"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-02T15:10:28.000Z",
+                  "ExpectedArrivalTime": "2026-10-02T15:10:28.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              },
+              "ItemIdentifier": "RATP-SIV:Item::20261002.276.R.C01383.PALS.IDFM.C01383.R.RATP.50026440:LOC"
+            },
+            {
+              "RecordedAtTime": "2026-10-02T15:05:58.000Z",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:463066:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01383:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::20261002.277.R.C01383:LOC"
+                },
+                "DirectionRef": {
+                  "value": "Retour"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463087:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Châtillon Montrouge"
+                  }
+                ],
+                "MonitoredCall": {
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Châtillon Montrouge"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-02T15:11:34.000Z",
+                  "ExpectedArrivalTime": "2026-10-02T15:11:34.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              },
+              "ItemIdentifier": "RATP-SIV:Item::20261002.277.R.C01383.PALS.IDFM.C01383.R.RATP.50026440:LOC"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

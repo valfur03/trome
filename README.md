@@ -355,11 +355,15 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
    The two ends have the same text size: when the long end (Asnières - Gennevilliers - Les Courtilles) does not fit, both names get smaller together, down to 70%, then both are cut.
    The words follow the metro: "0" in the last minute, "À quai" at the platform, drawn as in the plain strip.
    An end with one train leaves "2e" empty.
-   An end with no train in the hour says "In over 1 hour", or "> 1 h" when the words do not fit, across both columns, when a later train of that end is known, and "No trains" when none is known.
+   PRIM lists only 3 or 4 trains of a direction, for both ends together, so an end with one train is the usual look, and an end with nothing listed is common (decision-45).
+   An end that PRIM does not list, while the other end has trains, shows a grey dash "–" (the one of the Dynamic Island) in "1er", and "2e" stays empty: the app has no time for this end now, which does not mean that no train comes.
+   An end whose next train is more than 60 minutes away says "In over 1 hour", or "> 1 h" when the words do not fit, across both columns.
+   "No trains" shows in both rows only when PRIM lists no train at all for the direction (the night).
+   The rule is `LineDirection.branchEndRows` (in `RATPCore`), tested on three recorded PRIM answers of Liège.
    When the times are old, the rows keep their names with empty boxes, as high as their text.
    The other direction is a plain strip.
    A station after the fork names only the end of its branch, so its page has plain strips.
-   VoiceOver reads each strip as its end of line and its waits in minutes (for example "Mairie d'Issy, 4 minutes, then 8 minutes"), and each row of a fork group the same way, as its end and the waits of its trains (for example "Saint-Denis - Université, 4 minutes, then 12 minutes").
+   VoiceOver reads each strip as its end of line and its waits in minutes (for example "Mairie d'Issy, 4 minutes, then 8 minutes"), and each row of a fork group the same way, as its end and the waits of its trains (for example "Saint-Denis - Université, 4 minutes, then 12 minutes"), or as its end and "no train announced" ("aucun train annoncé") for the grey dash.
    The strips are for every metro page of the 321 metro stations of the station list: the 248 stations with one line and no hub (220 with plain strips and 28 with a fork group), and the 186 metro pages of the 73 stations with several lines or a hub (a fork group on the page of metro 7 or 13 at 22 of them, for example Maison Blanche, the fork of metro 7, which also has metro 14).
    A metro page keeps rows (one row for each direction, or for each branch of a direction: its destination, then the waiting times of its next trains, in amber in a black box, for example "4 minutes") only for as long as it lasts:
    a direction whose next two trains go to two different places (for example a train that ends early at Trocadéro on line 6), or a fork direction whose next two trains include a train that goes to neither of its two ends (a train that ends early), so that the rider always knows which train goes where.
@@ -526,7 +530,7 @@ It is not part of `make check` or `make e2e`: it saves images and lists for a pe
   the longest station names and ends of line, an end of line, 3bis and 7bis, and 4 stations of the fork page (TASK-143, now the group of TASK-181): Liège, Tolbiac, the fork La Fourche, and the longest name Aubervilliers - Pantin - Quatre Chemins, and 4 stations of the pages of one metro line of TASK-144:
   Pigalle, with two metro lines, Maison Blanche, the fork of metro 7 with metro 14, Bibliothèque François Mitterrand, the longest name of a station with several lines, and Palais Royal - Musée du Louvre, and 3 stations of the RER rows of TASK-65: Invalides, Gare de Lyon and Auber, Auber being also a station of a hub): 52 stations in all.
   It also draws the metro strips of Lamarck - Caulaincourt with every state of a wait (approaching, at the platform, one train, two digits, more than 60 minutes, no trains, the end of a line), as pages 90 to 94 of that station, and a wait drawn at 11 that counted down to 9 by itself, next to a wait drawn with one digit, as page 95,
-  and the fork group of Liège with every state, as pages 95 to 100: "0" (approaching) and "À quai" in the first column of each row, an end over an hour next to an end with one train, an end with no train known, a direction with no train (both ends "No trains"), both ends over an hour, and a train to a third end (a short trip, which gives rows),
+  and the fork group of Liège with every state, as pages 95 to 100: "0" (approaching) and "À quai" in the first column of each row, an end over an hour next to an end with one train, an end that PRIM does not list (the grey dash), a direction with no train (both ends "No trains"), both ends over an hour, and a train to a third end (a short trip, which gives rows),
   and a train at the platform in the first column of the second row next to a wait of two digits, in both columns of the first row (with the plain strip at the platform too), and in both rows (both columns of the second row), as pages 101 to 103.
   Pages 104 to 107 of Liège have a made-up station name that is too long for one line, with two strips (the name is cut), one strip, none (the name goes onto a second line), and two strips with a train at the platform.
   Pages 108 and 109 of Liège are the header of the hub Place de Clichy (with "+1 >") with a train at the platform.
@@ -668,8 +672,8 @@ The "Permissions" part of the main screen then says so, with a button to open Se
   - `at-platform-both`: both boxes show "À quai" for 5 minutes. Then the first train leaves, and the second one 2 minutes later.
   - `ten-to-nine`: trains every 6 minutes. The second box shows 10 or more, and counts down to 9 by itself about 3 to 4 minutes after the launch, then every 6 minutes. Look while the app is in the background, before the next update (at most 2 minutes).
   - A fork with both ends: at a station of lines 7 or 13 before the fork (for example Liège or Poissonnière), the trains go to each end in turn, so each row of the fork group shows two trains of its end, with or without a state.
-  - `fork-end-one-train`: at such a station, the second end gets one train only (it leaves 8 minutes after the launch, then that end says "Pas de train"), and the first end gets all the others.
-  - `fork-end-no-train`: the second end gets no train at all ("Pas de train" across both columns).
+  - `fork-end-one-train`: at such a station, the second end gets one train only (it leaves 8 minutes after the launch, then that end shows the grey dash), and the first end gets all the others.
+  - `fork-end-no-train`: the second end gets no train at all, so its row shows the grey dash "–" in "1er" (the first end has trains).
   - `fork-end-over-an-hour`: the second end gets no train in the hour, and one train 70 minutes after the launch, so it says "> 1 h" for about 10 minutes, then counts down from 60.
   - On a line with no fork, these three states give the trains of the default fake trains, every 4 minutes.
   - The RER lines get the same times. Their rows show "À quai" only when the RER look draws it.
