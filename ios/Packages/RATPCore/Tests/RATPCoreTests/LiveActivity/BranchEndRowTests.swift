@@ -60,6 +60,12 @@ struct BranchEndRowTests {
         #expect(direction.branchEndRows?.map(\.shown) == [.noTrain, .noTrain])
     }
 
+    @Test func showsTheDashForAnEndWithNothingListedWhenTheOtherEndHasALaterTrain() {
+        let direction = north([[], []], overAnHour: [true, false], directionOverAnHour: true)
+
+        #expect(direction.branchEndRows?.map(\.shown) == [.overAnHour, .notListed])
+    }
+
     @Test func saysOverAnHourForEachEndWhenTheDirectionHasOnlyLaterTrains() {
         let direction = north([[], []], overAnHour: [true, true], directionOverAnHour: true)
 

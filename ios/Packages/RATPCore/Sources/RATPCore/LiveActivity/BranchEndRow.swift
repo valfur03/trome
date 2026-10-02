@@ -24,6 +24,11 @@ extension LineDirection {
         if endTrains.nextTrainIsOverAnHourAway {
             return .overAnHour
         }
-        return trains.isEmpty ? .noTrain : .notListed
+        return listsNoTrain ? .noTrain : .notListed
+    }
+
+    private var listsNoTrain: Bool {
+        trains.isEmpty && !nextTrainIsOverAnHourAway
+            && !(trainsOfEachEnd ?? []).contains(where: \.nextTrainIsOverAnHourAway)
     }
 }

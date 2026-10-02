@@ -22,6 +22,7 @@ extension LiveActivityRenderCheck {
             + longNamePages.map { (longName, [line], $0, now) }
             + hubPages.map { (hub.name, hub.lines, $0, now) }
             + [(station.name, [line], pages.countedDownBelowTen, now.addingTimeInterval(-90))]
+        + [(station.name, [line], pages.oneEndOverAnHourOnly, now)]
         return drawn.map { name, allLines, directions, updatedAt in
             StationActivityAttributes.ContentState(
                 stationName: name,
@@ -86,6 +87,13 @@ private struct ForkGroupPages {
         [
             north(first: [train(4), train(8.5)], second: [train(6), train(8.5)]),
             southward([train(3), train(7)])
+        ]
+    }
+
+    var oneEndOverAnHourOnly: [LineDirection] {
+        [
+            north(first: [], firstOverAnHour: true, second: [], overAnHour: true),
+            southward([train(4), train(8)])
         ]
     }
 

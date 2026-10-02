@@ -358,7 +358,7 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
    PRIM lists only 3 or 4 trains of a direction, for both ends together, so an end with one train is the usual look, and an end with nothing listed is common (decision-45).
    An end that PRIM does not list, while the other end has trains, shows a grey dash "–" (the one of the Dynamic Island) in "1er", and "2e" stays empty: the app has no time for this end now, which does not mean that no train comes.
    An end whose next train is more than 60 minutes away says "In over 1 hour", or "> 1 h" when the words do not fit, across both columns.
-   "No trains" shows in both rows only when PRIM lists no train at all for the direction (the night).
+   "No trains" shows in both rows only when PRIM lists no train at all for the direction, not even beyond the hour (the night); when only one end has a train beyond the hour, the other end shows the dash.
    The rule is `LineDirection.branchEndRows` (in `RATPCore`), tested on three recorded PRIM answers of Liège.
    When the times are old, the rows keep their names with empty boxes, as high as their text.
    The other direction is a plain strip.
@@ -535,6 +535,7 @@ It is not part of `make check` or `make e2e`: it saves images and lists for a pe
   Pages 104 to 107 of Liège have a made-up station name that is too long for one line, with two strips (the name is cut), one strip, none (the name goes onto a second line), and two strips with a train at the platform.
   Pages 108 and 109 of Liège are the header of the hub Place de Clichy (with "+1 >") with a train at the platform.
   Page 110 of Liège has a wait drawn at 11 that counted down to 9 by itself in each row of the group, next to waits drawn with one digit.
+  Page 111 of Liège has a fork direction with no train in the hour: one end over an hour ("> 1 h"), the other end with the dash.
   The RER rows are drawn with every state of a wait as pages 100 to 102 of Auber ("At the platform" and "Approaching" with two-digit waits, no trains and more than 60 minutes, three directions with one train each) and page 103 of Invalides (RER C with the longest ends of line).
   `cut-texts.txt` lists each text of these images that ends with "…" (the text recognition of macOS, Vision, reads it as "...").
   `cut-texts.txt` does not decide if a cut is a bug: a person reads the list and the images.
