@@ -841,7 +841,7 @@ Rules to keep the docs true:
 The folder `server/` holds the server of the app.
 It holds the PRIM key, so that no build of the app that goes to another person holds it, and it counts and caps the PRIM calls of all riders in one place (decision-38 and decision-40 in the backlog).
 It runs on Cloudflare Workers, on the Free plan, with one Durable Object (a small object with its own SQLite storage) that holds the answers and the counts.
-No build of the app calls it yet (TASK-190 does that).
+No build of the app calls it yet.
 
 What the server does:
 
@@ -854,7 +854,7 @@ What the server does:
 - The cap: at most 800 PRIM calls each Paris day (`PRIM_DAILY_CAP` in `server/wrangler.jsonc`; 60 for the staging Worker, so that a test there cannot use the budget of the riders).
   The server adds to its count before each PRIM call, failed calls too, and keeps the count in its storage, so a restart does not reset it.
 - When the cap is reached, for 1 hour after PRIM answers 429, or for 60 s after another PRIM failure of a stop, the server gives the answer that it holds for the stop if it is younger than 5 minutes.
-  Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` and the header `Retry-After`: the time when it will ask PRIM again (decision-39).
+  Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` and the header `Retry-After`: the time when it will ask PRIM again.
   It never gives an answer older than 5 minutes as times, and never keeps a failed answer or a PRIM error body as times.
 - `GET /health` answers `{"status":"ok"}`, with no token.
 
@@ -916,7 +916,7 @@ Wrangler refuses the first deploy of a Worker whose secrets are not set yet, so 
 When a new secret is added to the table later, run `make server-secret NAME=<its name>` for each Worker that already exists (add `STAGING=1` for the staging Worker), before you deploy the change.
 `make server-deploy-staging` and `make server-deploy` check the secrets before they deploy: when one is missing, they stop, name it, and say which command sets it.
 
-The counts, for you (decision-40 point 6):
+The counts, for you:
 
 - Run `make server-counts URL=https://ratp-activity-server.<your subdomain>.workers.dev` and paste the owner token.
   It shows the counts as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, newest first.
@@ -927,7 +927,7 @@ The counts, for you (decision-40 point 6):
   Turn them on only to find a problem, and then for 3 days at most (the Free plan keeps them 3 days).
   `npx wrangler tail` in `server/` shows the log lines live, and keeps none of them.
 
-The CPU time of a request is small next to the limits of the Free plan (10 ms for the Worker, 30 s for the Durable Object, decision-40): `npm run bench` in `server/` measures it (TASK-188 has the numbers).
+The CPU time of a request is small next to the limits of the Free plan (10 ms for the Worker, 30 s for the Durable Object): `npm run bench` in `server/` measures it.
 
 The code of the server follows the rules of the CLAUDE.md, section "Code structure of the server": the logic is plain TypeScript in `server/src/core/`, and only `server/src/cloudflare/` uses the Cloudflare API.
 So the server can move to another host with a medium task (decision-40).
