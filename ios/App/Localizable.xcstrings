@@ -317,6 +317,16 @@
         }
       }
     },
+    "Station list adapted by %@ from Île-de-France Mobilités data, under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) and the [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste des stations adaptée par %@ à partir des données d’Île-de-France Mobilités, sous licences [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) et [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0)."
+          }
+        }
+      }
+    },
     "Stop showing on the lock screen" : {
       "localizations" : {
         "fr" : {

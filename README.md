@@ -219,6 +219,7 @@ For developers: all code must read the position from `LocationService` (in `RATP
 The app finds the nearest station without the network. It reads the file `ios/Packages/RATPCore/Sources/RATPCore/Resources/stations.json`.
 
 This file lists every metro station (lines 1 to 14, 3bis and 7bis) and every RER station (lines A to E). It has no bus, tram or Transilien stop. The data comes from the open data of Île-de-France Mobilités (dataset `arrets-lignes`, no key needed).
+The list is made from four datasets of Île-de-France Mobilités under two licences, the ODbL and the Licence Ouverte v2.0: [NOTICE.md](NOTICE.md) names them, and says what you must do when you reuse the list.
 
 Each line of a station also has its official color (`color`: the color of the line, and the color of the text on it).
 It comes from the dataset `referentiel-des-lignes` of Île-de-France Mobilités (fields `colourweb_hexa` and `textcolourweb_hexa`, made for web and phone screens).

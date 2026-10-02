@@ -33,7 +33,15 @@ struct ContentView: View {
                         .listRowBackground(Color.clear)
                 }
                 #endif
-                TrainDataSourceSection()
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TrainDataSourceNotice()
+                        StationDataSourceNotice()
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .listRowBackground(Color.clear)
+                }
             }
             #if DEBUG
             .toolbar {
