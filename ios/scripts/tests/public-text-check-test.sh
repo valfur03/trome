@@ -45,14 +45,16 @@ file ios/package.json "\"micromark-factory-space\": \"^2.0.0\", \"package-manage
 file ios/scripts/tests/git-test.sh "export GIT_AUTHOR_EMAIL=test@example.com OTHER=jane@mail.example ALSO=ci@build.test"
 file ios/scripts/tests/cache-test.sh "[ -f \"\$cache/users/\$build\" ]"
 file ios/App/Bundle.swift "let id = \"io.github.trome\"; let task = Task { }; let decision = \"doc\""
+file ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json "{ \"filename\" : \"AppIcon@2x.png\" }, { \"filename\" : \"AppIcon@3x.png\" } git clone git@github.com:owner/trome.git"
 expect "a public text with no internal word, no personal data and no local path passes" "$(check)" "passes"
-expect "it says how many files it checked" "$(grep -c "OK (7 files" "$state/out")" "1"
+expect "it says how many files it checked" "$(grep -c "OK (8 files" "$state/out")" "1"
 
 reset_repo
 file docs/page.mdx "Wait: the factory agents use the Simulator (TASK-140, decision-15, doc-3)."
 file ios/scripts/merge.sh "echo \"The manager asks the prompter.\""
 file ios/scripts/lock.sh "echo \"an agent took it\"; echo \"the Prompters decide\""
-file docs/help.md "Write to jane.doe@company.fr. Built in /Users/jane/repo."
+file docs/help.md "Write to jane.doe@company.fr. Built in /Users/jane/repo.
+Or to legit@github.com."
 expect "a public text with internal words, personal data or a local path fails" "$(check)" "fails"
 expect "it names the file, the line and a backlog id" "$(hit 'docs/page.mdx:1: a backlog id: "TASK-140"')" "1"
 expect "it finds a decision id" "$(hit 'docs/page.mdx:1: a backlog id: "decision-15"')" "1"
@@ -64,6 +66,7 @@ expect "it finds the manager" "$(hit "ios/scripts/merge.sh:1: a word of the team
 expect "it finds the word prompter" "$(hit "ios/scripts/merge.sh:1: a word of the team's own process: \"prompter\"")" "1"
 expect "it finds the word prompters, in any case" "$(hit "ios/scripts/lock.sh:1: a word of the team's own process: \"Prompters\"")" "1"
 expect "it finds a real email address" "$(hit 'docs/help.md:1: an email address: "jane.doe@company.fr"')" "1"
+expect "it finds an email address of a git host that is not its SSH user" "$(hit 'docs/help.md:2: an email address: "legit@github.com"')" "1"
 expect "it finds a local path" "$(hit 'docs/help.md:1: a local path: "/Users/"')" "1"
 expect "it says what to write instead" "$(grep -c "write the rule and its reason instead" "$state/out")" "1"
 expect "it says how to allow a word" "$(grep -c "add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py" "$state/out")" "1"

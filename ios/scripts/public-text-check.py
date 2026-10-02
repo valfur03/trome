@@ -25,10 +25,11 @@ INTERNAL_RULES = [
 ]
 EXAMPLE_EMAIL = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$",
                            re.IGNORECASE)
+NOT_AN_EMAIL = re.compile(r"^git@|@\d+x\.", re.IGNORECASE)
 
 INTERNAL_FILES = {
-    "CLAUDE.md": "the manual of the agents may cite the private backlog",
-    ".claude/": "the manual of the agents may cite the private backlog",
+    "CLAUDE.md": "the manual of Claude Code may cite the private task list",
+    ".claude/": "the manual of Claude Code may cite the private task list",
     "README.md": "until the front page is rewritten: its sections that cite the backlog move out first",
 }
 SKIPPED_FILES = {
@@ -61,7 +62,7 @@ def hits(root, path):
         for reason, pattern in rules:
             for found in pattern.finditer(line):
                 text = found.group(0)
-                if reason == "an email address" and EXAMPLE_EMAIL.search(text):
+                if reason == "an email address" and (EXAMPLE_EMAIL.search(text) or NOT_AN_EMAIL.search(text)):
                     continue
                 if not is_allowed(path, text):
                     yield number, reason, text
