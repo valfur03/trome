@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-USAGE = "Usage: app-name-sync.py <xcconfig with APP_NAME> <InfoPlist String Catalog>"
+USAGE = "Usage: app-name-sync.py [--check] <xcconfig with APP_NAME> <InfoPlist String Catalog>"
 VALUE_LINE = re.compile(r'^(\s*"value" : )(".*")(,?)$')
 
 
@@ -45,11 +45,44 @@ def renamed_line(line, old_names, new_name):
     return f"{match.group(1)}{json.dumps(value, ensure_ascii=False)}{match.group(3)}"
 
 
+def says_name(value, name):
+    return re.search(rf"(?<!\w){re.escape(name)}(?!\w)", value) is not None
+
+
+def missing_names(catalog, name):
+    for key, entry in sorted(catalog["strings"].items()):
+        localizations = entry.get("localizations", {})
+        english = localizations.get("en", {}).get("stringUnit", {}).get("value", "")
+        if not says_name(english, name):
+            continue
+        for language, localization in sorted(localizations.items()):
+            value = localization.get("stringUnit", {}).get("value", "")
+            if language != "en" and not says_name(value, name):
+                yield f"{key} ({language}): \"{value}\""
+
+
+def check(catalog_path, name):
+    with open(catalog_path, encoding="utf-8") as file:
+        problems = list(missing_names(json.load(file), name))
+    for problem in problems:
+        print(f"app-name-sync: {catalog_path}: {problem} does not say {name}", file=sys.stderr)
+    if problems:
+        sys.exit(f"app-name-sync: FAILED. The English text says {name} (APP_NAME), and this translation does not: "
+                 f"put {name} in place of the old name by hand.")
+
+
 def main():
-    if len(sys.argv) != 3:
+    arguments = sys.argv[1:]
+    checking = arguments[:1] == ["--check"]
+    if checking:
+        arguments = arguments[1:]
+    if len(arguments) != 2:
         sys.exit(USAGE)
-    xcconfig_path, catalog_path = sys.argv[1:]
+    xcconfig_path, catalog_path = arguments
     new_name = app_name(xcconfig_path)
+    if checking:
+        check(catalog_path, new_name)
+        return
     with open(catalog_path, encoding="utf-8") as file:
         text = file.read()
     names = [catalog_name(json.loads(text)), catalog_name(committed_catalog(catalog_path))]

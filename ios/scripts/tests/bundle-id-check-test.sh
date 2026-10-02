@@ -47,7 +47,7 @@ check() {
 
 expect "the IDs of the project pass" \
     "$(check %s.trome.dev %s.trome.dev.widget io.github.valfur03.trome Manual)" passes
-expect "a Debug ID built from the prefix alone fails with the prefix of the prompter" \
+expect "a Debug ID built from the prefix alone fails with the prefix of the App Store ID" \
     "$(check %s.trome %s.trome.widget io.github.valfur03.trome Manual)" fails
 expect "a Debug ID equal to the shipping ID fails" \
     "$(check io.github.valfur03.trome io.github.valfur03.trome.widget io.github.valfur03.trome Manual)" fails

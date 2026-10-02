@@ -82,7 +82,7 @@ help:
 	@echo "make run LANGUAGE=fr     Same, with the Simulator in French (the default is English: LANGUAGE=en)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
 	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + bundle ID check + recommended settings check + key leak check + build (no warning allowed) + strings check + unit tests + script tests"
-	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, or when a text of the app or the Live Activity has no French text"
+	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, when a text of the app or the Live Activity has no French text, or when a French permission text does not say APP_NAME"
 	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code), and put APP_NAME of Config/Base.xcconfig in the permission texts"
 	@echo "make prose-check         Fail when a line of prose of a Markdown or MDX file of the repo is longer than 400 characters (write one sentence per line)"
 	@echo "make public-text-check   Fail when a file of the repo has a backlog id, a word of the team's own process, a personal email address, a local path or the old name of the app"
@@ -146,6 +146,7 @@ endif
 strings-check: project
 	@./scripts/strings-sync.sh check $(EXPORT_STRINGS)
 	@./scripts/strings-check.py $(STRING_CATALOGS)
+	@./scripts/app-name-sync.py --check Config/Base.xcconfig App/InfoPlist.xcstrings
 
 strings-sync: project
 	@./scripts/app-name-sync.py Config/Base.xcconfig App/InfoPlist.xcstrings

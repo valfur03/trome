@@ -42,7 +42,7 @@ check_debug() {
     widget=$(id_of "$debug" "$widget_target")
     for id in $(echo "$debug" | awk '{ print $2 }'); do
         if [ "$id" = "$shipping_app" ] || [ "$id" = "$shipping_widget" ]; then
-            fail "a Debug build ($label) has the shipping bundle ID $id: a free Apple account that signs it registers it for good (decision-43)"
+            fail "a Debug build ($label) has the shipping bundle ID $id: a free Apple account that signs it registers it for good, and the paid account can never take it"
         fi
     done
     case $widget in

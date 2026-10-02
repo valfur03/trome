@@ -113,7 +113,7 @@ The project reads your settings from a file that only you have: `ios/Config/Loca
 
    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
-9. In the **Team** menu, choose **Your Name (Personal Team)**. Xcode can now show red errors. This is normal: the next steps fix them.
+9. In the **Team** menu, choose **Your Name (Personal Team)**. Xcode can now show red errors. This is normal: the next steps fix them. An error for Release can stay: it is on purpose ([why](#part-2-team-id-and-bundle-id)).
 
    If you see a **Set Up Signing** button instead of the **Team** menu, click it. In the window that opens, choose **Your Name (Personal Team)** in the **Team** menu. In **Bundle Identifier**, type your prefix followed by `.trome.dev`, for example `io.github.janedoe.trome.dev`. Click **Set Up**.
 
@@ -454,6 +454,8 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
 - **Step 11 shows nothing.** Xcode did not save the team. Do steps 7 to 11 again. Choose the team in step 9, then quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>.
 - **Xcode says "Signing for … requires a development team".** The Team ID is not in `ios/Config/Local.xcconfig`, or you did not save the file. Check the file, quit Xcode, run `make generate`, and open the project again.
 - **Xcode says that the app identifier "cannot be registered to your development team because it is not available".** Someone else uses your bundle ID prefix. Choose another one in `ios/Config/Local.xcconfig` (step 13). Quit Xcode, run `make generate`, and open the project again.
+- **Signing & Capabilities shows an error for Release, for example a missing provisioning profile.** This is on purpose: leave it as it is. Release builds are only for the App Store, and Xcode never signs them for you. The Run button builds Debug, so the app still goes on your iPhone.
+  Never turn on **Automatically manage signing** for Release: Xcode would then give the App Store ID of TROME to your free Apple ID for good.
 - **Xcode says that you have reached the maximum number of App IDs.** A free Apple ID can create 10 bundle IDs in 7 days. Put back the prefix that you used before, or wait some days.
 
 ### Part 3: iPhone and Developer Mode

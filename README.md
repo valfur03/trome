@@ -770,6 +770,7 @@ Your build gets the bundle ID `<prefix>.trome.dev`, and its Live Activity gets `
 These IDs end with `.dev`, so they are never the App Store ID of the app, `io.github.valfur03.trome`, whatever your prefix.
 Why: when a free Apple ID signs a build, Apple registers its bundle ID to that Apple ID for good, and the paid account of the app could then never take it.
 Only the Release builds (for the App Store) carry `io.github.valfur03.trome` and `io.github.valfur03.trome.widget`, and Xcode never signs them automatically.
+So Xcode can show an error for Release in Signing & Capabilities: leave it, and never turn on "Automatically manage signing" for Release, or Xcode registers the App Store ID to your Apple ID.
 `make bundle-id-check` (part of `make check`) checks both.
 A build from before the app was called TROME has another bundle ID, so iOS keeps it as a second app: delete it, so that its notifications and its Live Activities stop.
 
@@ -951,6 +952,7 @@ Almost every user of the app is French. The app shows each text in French when t
 - The name of the app, TROME, is written once: `APP_NAME` in `ios/Config/Base.xcconfig`.
   The name on the home screen, the file name of the app, the permission texts that iOS shows and the texts of the app that name it read it from there (a text of the code gets it as `%@`).
   To change the name, change that line and run `make strings-sync`: it puts the new name in the French permission texts of `ios/App/InfoPlist.xcstrings` too.
+  `make strings-check` fails when one of these French texts does not say the name, for example after a build in Xcode wrote the new English texts: then write the name in it by hand.
   `make public-text-check` fails when the older name of the app comes back in a file of the repo.
 - The name of the app (`CFBundleDisplayName` and `CFBundleName`, in `ios/App/InfoPlist.xcstrings`) is the same in French: it is marked "Don't translate" (`"shouldTranslate" : false`).
 - A new text on a screen needs its French text in the catalog, in the same task. Write a text that a Paris rider knows: "Prochains passages", "écran verrouillé", "activité en direct", "Réglages", "Toujours", as iOS and the RATP say them.

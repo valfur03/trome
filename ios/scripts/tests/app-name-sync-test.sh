@@ -82,6 +82,19 @@ sync
 expect "after a build in Xcode wrote the new English texts, the old name of the commit is replaced in the French texts" \
     "$(cat "$repo/InfoPlist.xcstrings")" "$(catalog NOVA NOVA NOVA)"
 
+check() {
+    "$scripts/app-name-sync.py" --check "$repo/Base.xcconfig" "$repo/InfoPlist.xcstrings" > /dev/null 2>&1 && echo passes || echo fails
+}
+
+expect "the check passes when each French text says the name of its English text" "$(check)" "passes"
+catalog NOVA NOVA "Old Name" > "$repo/InfoPlist.xcstrings"
+git -C "$repo" add InfoPlist.xcstrings
+git -C "$repo" -c user.name=test -c user.email=test@example.com commit -q -m "catalog of a build in Xcode"
+sync
+expect "the check fails on a committed French text that still says the old name, which the sync cannot see" "$(check)" "fails"
+name "Old Name"
+expect "the check passes on a catalog that does not say APP_NAME yet: the strings check of Xcode sees it" "$(check)" "passes"
+
 printf 'MARKETING_VERSION = 0.1.0\n' > "$repo/Base.xcconfig"
 expect "an xcconfig with no APP_NAME fails" "$(sync 2> /dev/null && echo passes || echo fails)" "fails"
 
