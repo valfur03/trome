@@ -7,9 +7,17 @@ public struct FakeDeparturesProvider: DeparturesProvider {
     static let minutesBetweenTrains = 4
     static let trainsPerSide = 4
 
+    let scenario: FakeTrainsScenario?
+    let start: Date
     private let now: @Sendable () -> Date
 
-    init(now: @escaping @Sendable () -> Date = { Date() }) {
+    init(
+        scenario: FakeTrainsScenario? = nil,
+        start: Date = Date(),
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
+        self.scenario = scenario
+        self.start = start
         self.now = now
     }
 
@@ -18,20 +26,18 @@ public struct FakeDeparturesProvider: DeparturesProvider {
     }
 
     public func departures(at stations: [Station]) async throws -> [Departure] {
-        let start = now()
+        let now = now()
         return stations.flatMap { station in
-            station.lines.flatMap { line in Self.departures(of: line, at: station, from: start) }
+            station.lines.flatMap { line in
+                guard let scenario else { return Self.departures(of: line, at: station, from: now) }
+                return Self.departures(of: line, at: station, in: scenario, from: start, now: now)
+            }
         }
     }
 
     static func departures(of line: TransitLine, at station: Station, from start: Date) -> [Departure] {
-        guard let ends = line.ends else { return [] }
-        let stationKey = StationCatalog.searchKey(station.name)
-        return ends.sides.enumerated().flatMap { sideIndex, side -> [Departure] in
-            guard !side.contains(where: { StationCatalog.searchKey($0) == stationKey }) else { return [] }
-            let destinations = ends.reachableEnds(of: side, from: station.name)
-            guard !destinations.isEmpty else { return [] }
-            return (0..<trainsPerSide).map { index in
+        sides(of: line, at: station).flatMap { sideIndex, destinations in
+            (0..<trainsPerSide).map { index in
                 let minutes = firstTrainMinutes + sideIndex + index * minutesBetweenTrains
                 return Departure(
                     line: line,
@@ -39,6 +45,40 @@ public struct FakeDeparturesProvider: DeparturesProvider {
                     time: start.addingTimeInterval(TimeInterval(minutes * 60))
                 )
             }
+        }
+    }
+
+    static func departures(
+        of line: TransitLine,
+        at station: Station,
+        in scenario: FakeTrainsScenario,
+        from start: Date,
+        now: Date
+    ) -> [Departure] {
+        sides(of: line, at: station).flatMap { sideIndex, destinations in
+            let shift = Double(sideIndex)
+            let minutesSinceStart = now.timeIntervalSince(start) / 60
+            return scenario.trains(leavingAfter: minutesSinceStart - shift, count: trainsPerSide).map { train in
+                let time = start.addingTimeInterval((train.departureMinutes + shift) * 60)
+                return Departure(
+                    line: line,
+                    destination: destinations[train.index % destinations.count],
+                    time: time,
+                    arrivalTime: train.waitsAtThePlatformFromTheStart
+                        ? start
+                        : time.addingTimeInterval(-FakeTrainsScenario.stopSeconds)
+                )
+            }
+        }
+    }
+
+    private static func sides(of line: TransitLine, at station: Station) -> [(Int, [String])] {
+        guard let ends = line.ends else { return [] }
+        let stationKey = StationCatalog.searchKey(station.name)
+        return ends.sides.enumerated().compactMap { sideIndex, side in
+            guard !side.contains(where: { StationCatalog.searchKey($0) == stationKey }) else { return nil }
+            let destinations = ends.reachableEnds(of: side, from: station.name)
+            return destinations.isEmpty ? nil : (sideIndex, destinations)
         }
     }
 }

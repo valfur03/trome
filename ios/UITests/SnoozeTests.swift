@@ -1,11 +1,11 @@
-// Seam: the widget process draws our ContentState (the station, both directions of a line, a branch,
-// the lines of a hub, one line per page) on the real Live Activity, and iOS runs the intents of its buttons
-// in the app (the header of a hub page that shows the next line, snooze), whose effect the rider sees on the
-// Live Activity and in the app.
+// Seam: the widget process draws our ContentState (the station, both directions of a line, a train at the
+// platform, a branch, the lines of a hub, one line per page) on the real Live Activity, and iOS runs the
+// intents of its buttons in the app (the header of a hub page that shows the next line, snooze), whose effect
+// the rider sees on the Live Activity and in the app.
 // Why not cheaper: unit tests check the ContentState and the intents' rules; only the widget process
 // draws the views, and only iOS runs a button's intent in the app.
-// Fake: `--fake-trains` replaces the PRIM train data (a daily quota, data that changes). The real path
-// stays covered by the unit tests of the PRIM client (recorded answers) and by QA with LIVE=1.
+// Fake: `--fake-trains at-platform` replaces the PRIM train data (a daily quota, data that changes). The real
+// path stays covered by the unit tests of the PRIM client (recorded answers) and by QA with LIVE=1.
 import CoreLocation
 import XCTest
 
@@ -16,7 +16,7 @@ final class SnoozeTests: E2ETestCase {
     @MainActor
     func testUserSnoozesTheLiveActivityFromTheLockScreenThenCancelsTheSnooze() {
         let app = makeApp()
-        app.launchArguments.append("--fake-trains")
+        app.launchArguments += ["--fake-trains", "at-platform"]
         launch(app)
         turnOnTheAutomaticMode(in: app)
         stopLiveActivityIfShowing(in: app)
@@ -27,6 +27,7 @@ final class SnoozeTests: E2ETestCase {
         XCTAssertTrue(waitFor(liveActivityStation("Lamarck - Caulaincourt")))
         XCTAssertTrue(waitFor(liveActivityElement(containing: "Mairie d'Aubervilliers")))
         XCTAssertTrue(waitFor(liveActivityElement(containing: "Mairie d'Issy")))
+        XCTAssertTrue(liveActivityElement(containing: "At the platform").exists)
 
         moveThePhone(to: Self.gareDeLEst)
         XCTAssertTrue(waitFor(liveActivityStation("Gare de l'Est")))
