@@ -1085,7 +1085,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 3. The manager rebases the branch onto `main` right before QA, so QA tests the branch on the latest `main`.
 4. QA tests the branch.
 5. When QA passed the task, the manager runs `make merge` in the worktree of the task.
-   It takes the Simulator lock, rebases the branch onto the tip of `main` again, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs, unit tests, `server/` or `contracts/`), then fast-forwards `main` to the rebased branch.
+   It takes the Simulator lock, rebases the branch onto the tip of `main` again, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs, Markdown files outside the sources of the app, `LICENSE`, `.claude/`, unit tests, `server/` or `contracts/`), then fast-forwards `main` to the rebased branch.
    When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`.
    When a step fails, `main` stays as it was.
 

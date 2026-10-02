@@ -65,8 +65,22 @@ $conflicts
 make merge stopped the rebase (git rebase --abort): '$branch' is as it was before. The task goes back to its Software Engineer, who runs 'git -C $root rebase $target', solves the conflict, and hands the task over again."
 }
 
+is_app_code() {
+    case "$1" in
+        ios/Packages/RATPCore/Tests/*) return 1 ;;
+        ios/App/* | ios/Widget/* | ios/UITests/* | ios/DocsScreenshots/* | ios/RenderCheck/* | ios/Packages/*) return 0 ;;
+        docs/* | server/* | contracts/* | .claude/* | *.md | *.mdx | LICENSE) return 1 ;;
+    esac
+    return 0
+}
+
 changes_app_code() {
-    git diff --name-only --no-renames "$1" "$2" | grep -qv -e '^docs/' -e '^README\.md$' -e '^CLAUDE\.md$' -e '^ios/Packages/RATPCore/Tests/' -e '^server/' -e '^contracts/'
+    git diff --name-only --no-renames "$1" "$2" | {
+        while IFS= read -r path; do
+            ! is_app_code "$path" || exit 0
+        done
+        exit 1
+    }
 }
 
 step() {
@@ -106,7 +120,7 @@ merge() {
         step "3/4 full E2E suite ($e2e_command)"
         sh -c "$e2e_command" || step_failed "full E2E suite"
     else
-        step "3/4 full E2E suite: skipped, $branch changes no app code (only docs, unit tests, the server or the contracts, see CLAUDE.md)"
+        step "3/4 full E2E suite: skipped, $branch changes no app code (only docs, Markdown, LICENSE, .claude/, unit tests, the server or the contracts, see CLAUDE.md)"
     fi
     step "4/4 fast-forward $target to $(git rev-parse --short "$tested")"
     [ "$(git rev-parse HEAD)" = "$tested" ] || step_failed fast-forward "HEAD moved during the merge."

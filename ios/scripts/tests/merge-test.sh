@@ -210,6 +210,31 @@ merge server
 expect "make merge of a task that changes only the server and the contracts succeeds" "$status" "0"
 expect "make merge skips the E2E suite when the task changes only the server and the contracts" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
 
+new_task markdown
+mkdir -p "$state/markdown/ios/guide" "$state/markdown/.claude/rules" "$state/markdown/ios/Packages/RATPCore/Tests/RATPCoreTests/Stations"
+for file in CONTRIBUTING.md ARCHITECTURE.md NOTICE.md LICENSE ios/README.md ios/guide/stations.md ios/guide/page.mdx .claude/rules/docs.md .claude/settings.json ios/Packages/RATPCore/Tests/RATPCoreTests/Stations/StationTests.swift; do
+    commit "$state/markdown" "$file" text
+done
+merge markdown
+expect "make merge of a task that changes only Markdown, LICENSE, .claude/ and the unit tests succeeds" "$status" "0"
+expect "make merge skips the E2E suite when the task changes only Markdown or MDX files, LICENSE, .claude/ and the unit tests" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+
+for folder in ios/App ios/Widget ios/UITests ios/DocsScreenshots ios/RenderCheck ios/Packages/RATPCore/Sources/RATPCore; do
+    name=$(echo "$folder" | tr '/' '_')
+    new_task "$name"
+    mkdir -p "$state/$name/$folder"
+    commit "$state/$name" "$folder/README.md" text
+    merge "$name"
+    expect "make merge runs the E2E suite when the task changes a Markdown file in $folder, which the build of the app reads" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job "
+done
+
+new_task mixed
+mkdir -p "$state/mixed/ios/guide"
+commit "$state/mixed" ios/guide/trains.md text
+commit "$state/mixed" NOTICE notice
+merge mixed
+expect "make merge runs the E2E suite when the task changes Markdown and one other file" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job "
+
 advance_main app app
 new_task moved
 mkdir -p "$state/moved/docs"
