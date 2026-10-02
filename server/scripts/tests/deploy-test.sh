@@ -90,13 +90,14 @@ put_secrets() {
 target=staging
 expect "staging: a first deploy before the secrets refuses" "$(deploy staging)" "refuses"
 expect "staging: it does not call wrangler deploy then" "$(deployed staging)" "not deployed"
-expect "staging: the message names the missing secrets" "$(contains "$state/out" "PRIM_API_KEY APP_TOKEN")" "yes"
+expect "staging: the message names the missing secrets" "$(contains "$state/out" "PRIM_API_KEY APP_TOKEN OWNER_TOKEN.")" "yes"
 expect "staging: the message says to set them first with make server-secrets STAGING=1" "$(contains "$state/out" "Set the secrets first with 'make server-secrets STAGING=1'")" "yes"
 expect "staging: the message warns never to use a secrets file" "$(contains "$state/out" "Never use a secrets file")" "yes"
 
-expect "staging: make server-secrets sets each secret in turn" "$(put_secrets prim-value token-value)" "set"
+expect "staging: make server-secrets sets each secret in turn" "$(put_secrets prim-value token-value owner-value)" "set"
 expect "staging: it set the PRIM key" "$(cat "$cloudflare/staging/secret-PRIM_API_KEY")" "prim-value"
 expect "staging: it set the app token" "$(cat "$cloudflare/staging/secret-APP_TOKEN")" "token-value"
+expect "staging: it set the owner token" "$(cat "$cloudflare/staging/secret-OWNER_TOKEN")" "owner-value"
 expect "staging: it says to answer yes to the new Worker question" "$(contains "$state/put" "Answer y (yes)")" "yes"
 expect "staging: the deploy after the secrets succeeds (the README order)" "$(deploy staging)" "deploys"
 expect "staging: it deploys the staging environment" "$(deployed staging)" "deploy --env=staging"
@@ -107,8 +108,8 @@ expect "production: the staging secrets do not count for production" "$(deploy p
 expect "production: the message says make server-secrets with no STAGING" "$(contains "$state/out" "Set the secrets first with 'make server-secrets',")" "yes"
 printf 'prim-value\n' | "$repo/server/node_modules/.bin/wrangler" secret put PRIM_API_KEY --env= 
 expect "production: one secret only still refuses" "$(deploy production)" "refuses"
-expect "production: the message names only the missing one" "$(contains "$state/out" "yet (or it does not exist yet): APP_TOKEN.")" "yes"
-expect "production: make server-secrets, then the deploy (the README order)" "$(put_secrets prim-value other-token)$(deploy production)" "setdeploys"
+expect "production: the message names only the missing ones" "$(contains "$state/out" "yet (or it does not exist yet): APP_TOKEN OWNER_TOKEN.")" "yes"
+expect "production: make server-secrets, then the deploy (the README order)" "$(put_secrets prim-value other-token other-owner)$(deploy production)" "setdeploys"
 expect "production: it deploys the top-level environment" "$(deployed production)" "deploy --env="
 
 touch "$cloudflare/fail-deploy"
