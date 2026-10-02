@@ -111,26 +111,23 @@ extension LineDirectionsTests {
             LineDirection(label: "Aéroport Charles de Gaulle 2 TGV / Mitry - Claye", trains: [
                 rerTrain(2, to: "Mitry - Claye")
             ]),
-            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", times: []),
-            LineDirection(label: "Gare du Nord", times: [time(inMinutes: 4)])
+            LineDirection(label: "Robinson / Saint-Rémy-lès-Chevreuse", times: [])
         ])
     }
 
     @Test func ignoresATrainDirectionThatIsTheSameForBothWays() {
-        let result = directions(of: rerA, at: "La Défense", [
-            train(rerA, to: "Torcy", inMinutes: 1, from: rerQuay(4), direction: "Aller"),
+        let result = directions(of: rerA, at: "Sartrouville", [
+            train(rerA, to: "Houilles - Carrières-sur-Seine", inMinutes: 1, from: rerQuay(4), direction: "Aller"),
             train(rerA, to: "Boissy-Saint-Léger", inMinutes: 2, from: rerQuay(1), direction: "Aller"),
-            train(rerA, to: "Saint-Germain-en-Laye", inMinutes: 3, from: rerQuay(2), direction: "Aller")
+            train(rerA, to: "Cergy le Haut", inMinutes: 3, from: rerQuay(2), direction: "Aller")
         ])
 
         #expect(result == [
-            LineDirection(label: "Saint-Germain-en-Laye / Cergy le Haut / Poissy", trains: [
-                rerTrain(3, to: "Saint-Germain-en-Laye")
-            ]),
+            LineDirection(label: "Cergy le Haut / Poissy", trains: [rerTrain(3, to: "Cergy le Haut")]),
             LineDirection(label: "Boissy-Saint-Léger / Marne-la-Vallée - Chessy", trains: [
                 rerTrain(2, to: "Boissy-Saint-Léger")
             ]),
-            LineDirection(label: "Torcy", times: [time(inMinutes: 1)])
+            LineDirection(label: "Houilles - Carrières-sur-Seine", times: [time(inMinutes: 1)])
         ])
     }
 

@@ -137,12 +137,12 @@ enum LineDirections {
         let sides = ends.sides.filter { names in
             !names.isEmpty && !names.contains { StationCatalog.searchKey($0) == stationKey }
         }
+        let isOnTheRERTrunk = line.mode == .rer && sides.count == 2 && !ends.branchStations.values.contains { names in
+            names.contains { StationCatalog.searchKey($0) == stationKey }
+        }
         var groups = groups(of: trains, quays: quays).map { group in
             var group = group
-            group.side = group.trains.lazy.compactMap { side(of: $0.destination, in: sides, ends: ends) }.first
-                ?? group.trains.lazy.compactMap {
-                    sideTowardTheTrunk(of: $0.destination, from: station.name, in: sides, ends: ends)
-                }.first
+            group.side = side(of: group, at: station, in: sides, ends: ends, isOnTheRERTrunk: isOnTheRERTrunk)
             return group
         }
         inferQuaySides(of: &groups, sideCount: sides.count)
@@ -167,7 +167,7 @@ enum LineDirections {
             )
         }
         let otherDirections = groups
-            .filter { $0.side == nil && !$0.trains.isEmpty }
+            .filter { $0.side == nil && !$0.trains.isEmpty && !isOnTheRERTrunk }
             .sorted { $0.trains[0].time < $1.trains[0].time }
             .map { group in
                 LineDirection(
@@ -266,6 +266,26 @@ enum LineDirections {
         groups[unknown[0]].side = freeSide
     }
 
+    private static func side(
+        of group: Group,
+        at station: Station,
+        in sides: [[String]],
+        ends: LineEnds,
+        isOnTheRERTrunk: Bool
+    ) -> Int? {
+        let destinations = group.trains.lazy.map(\.destination)
+        if let side = destinations.compactMap({ side(of: $0, in: sides, ends: ends) }).first {
+            return side
+        }
+        if let side = destinations.compactMap({
+            sideTowardTheTrunk(of: $0, from: station.name, in: sides, ends: ends)
+        }).first {
+            return side
+        }
+        guard isOnTheRERTrunk else { return nil }
+        return destinations.compactMap { sideOfTheBranches(naming: $0, ends: ends) }.first
+    }
+
     private static func side(of destination: String, in sides: [[String]], ends: LineEnds) -> Int? {
         sides.firstIndex { endName(of: destination, in: $0, ends: ends) != nil }
     }
@@ -293,6 +313,15 @@ enum LineDirections {
             && otherEnds.contains(where: branchHoldsTheDestination)
         guard isOnNoBranch || isBeforeTheForkOfTheStation else { return nil }
         return sides.firstIndex(of: ends.sides[1 - branchSide])
+    }
+
+    private static func sideOfTheBranches(naming destination: String, ends: LineEnds) -> Int? {
+        let namingSides = ends.sides.indices.filter { index in
+            ends.sides[index].contains { end in
+                ends.branchStations[end, default: []].contains { isNamed(destination, $0) }
+            }
+        }
+        return namingSides.count == 1 ? namingSides.first : nil
     }
 
     private static func endName(of destination: String, in names: [String], ends: LineEnds) -> String? {

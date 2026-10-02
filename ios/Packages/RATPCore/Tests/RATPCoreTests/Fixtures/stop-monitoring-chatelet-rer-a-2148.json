@@ -1,0 +1,225 @@
+{
+  "Siri": {
+    "ServiceDelivery": {
+      "ResponseTimestamp": "2026-10-01T19:48:00.000Z",
+      "ProducerRef": "IVTR_HET",
+      "StopMonitoringDelivery": [
+        {
+          "ResponseTimestamp": "2026-10-01T19:48:00.000Z",
+          "Version": "2.0",
+          "Status": "true",
+          "MonitoredStopVisit": [
+            {
+              "RecordedAtTime": "2026-10-01T19:48:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-1:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-a-2148-1:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:43206:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Poissy"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Poissy"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-01T19:48:30.000Z",
+                  "DepartureStatus": "onTime",
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-10-01T19:48:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-2:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-a-2148-2:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:43231:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Saint-Germain-en-Laye"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Saint-Germain-en-Laye"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-01T19:54:30.000Z",
+                  "DepartureStatus": "onTime",
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-10-01T19:48:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-3:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-a-2148-3:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:43097:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Marne-la-Vallée - Chessy"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Marne-la-Vallée - Chessy"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-01T19:56:30.000Z",
+                  "DepartureStatus": "onTime",
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-10-01T19:48:00.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-4:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:45102:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-a-2148-4:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:43215:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Sartrouville"
+                  }
+                ],
+                "JourneyNote": [
+                  {
+                    "value": "ZEUS"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Châtelet les Halles"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Sartrouville"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-01T20:00:30.000Z",
+                  "DepartureStatus": "onTime",
+                  "ArrivalStatus": "onTime"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
