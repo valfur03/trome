@@ -84,11 +84,11 @@ final class LiveActivityRenderCheck: XCTestCase {
             let pageNumber = Self.firstStripStatesPage + page
             rows += try drawEveryVariant(of: state, at: stripStation, page: pageNumber, into: outDir)
         }
-        let taggedStation = try XCTUnwrap(catalog.stations.first { $0.name == Self.taggedStatesStation })
-        let taggedHub = try XCTUnwrap(catalog.stations.first { $0.name == Self.taggedStatesHub })
-        for (page, state) in Self.taggedStripStates(at: taggedStation, hub: taggedHub, now: Date()).enumerated() {
-            let pageNumber = Self.firstTaggedStatesPage + page
-            rows += try drawEveryVariant(of: state, at: taggedStation, page: pageNumber, into: outDir)
+        let forkStation = try XCTUnwrap(catalog.stations.first { $0.name == Self.forkStatesStation })
+        let forkHub = try XCTUnwrap(catalog.stations.first { $0.name == Self.forkStatesHub })
+        for (page, state) in Self.forkGroupStates(at: forkStation, hub: forkHub, now: Date()).enumerated() {
+            let pageNumber = Self.firstForkStatesPage + page
+            rows += try drawEveryVariant(of: state, at: forkStation, page: pageNumber, into: outDir)
         }
         rows += try drawTheRERStates(of: catalog, into: outDir)
         try rows.joined(separator: "\n").write(

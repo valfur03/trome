@@ -70,4 +70,20 @@ extension LinesPageTests {
 
         #expect(page([metro]).nextRedrawDate(after: now) == nil)
     }
+
+    @Test func redrawsAForkWhenTheSecondTrainOfAnEndArrivesAfterTheTrainsOfTheDirectionLeft() {
+        let first = train(leavesIn: 20, arrivesIn: 10)
+        let secondOfTheEnd = train(leavesIn: 300, arrivesIn: 280)
+        let fork = LineTrains(
+            line: TransitLine(mode: .metro, name: "13"),
+            directions: [LineDirection(
+                label: "Mairie d'Issy",
+                trains: [first],
+                branchEnds: ["Mairie d'Issy"],
+                trainsOfEachEnd: [BranchEndTrains(end: "Mairie d'Issy", trains: [first, secondOfTheEnd])]
+            )]
+        )
+
+        #expect(page([fork]).nextRedrawDate(after: now.addingTimeInterval(20)) == now.addingTimeInterval(221))
+    }
 }

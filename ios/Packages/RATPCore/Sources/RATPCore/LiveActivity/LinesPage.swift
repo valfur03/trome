@@ -120,7 +120,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
 
     func nextRedrawDate(after now: Date) -> Date? {
         let trainDates = lines.flatMap { line in
-            line.directions.flatMap(\.trains).flatMap { train in
+            line.directions.flatMap(\.shownTrains).flatMap { train in
                 PlatformStatus.changeDates(arrival: train.arrivalTime, departure: train.time)
             }
         }

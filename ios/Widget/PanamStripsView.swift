@@ -17,13 +17,25 @@ struct PanamStripsView: View {
                     .invalidatableContent()
             }
             ForEach(line.directions, id: \.self) { direction in
-                PanamStrip(
-                    direction: direction,
-                    line: line.line,
-                    drawnAt: state.updatedAt,
-                    isStale: isStale,
-                    cellWidth: cellWidth
-                )
+                Group {
+                    if let rows = direction.trainsOfEachEnd {
+                        PanamBranchEndRows(
+                            rows: rows,
+                            line: line.line,
+                            drawnAt: state.updatedAt,
+                            isStale: isStale,
+                            cellWidth: cellWidth
+                        )
+                    } else {
+                        PanamStrip(
+                            direction: direction,
+                            line: line.line,
+                            drawnAt: state.updatedAt,
+                            isStale: isStale,
+                            cellWidth: cellWidth
+                        )
+                    }
+                }
                 .invalidatableContent()
             }
             if isStale {

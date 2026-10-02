@@ -3,7 +3,7 @@ import Testing
 @testable import RATPCore
 
 extension LinesPageTests {
-    static let taggedStations = [
+    static let forkStations = [
         "Aubervilliers - Pantin - Quatre Chemins", "Cadet", "Censier - Daubenton", "Châtillon - Montrouge",
         "Corentin Cariou", "Crimée", "Fort d'Aubervilliers", "Gaîté", "La Courneuve - 8 Mai 1945", "La Fourche",
         "Le Peletier", "Les Gobelins", "Liège", "Malakoff - Plateau de Vanves", "Malakoff - Rue Étienne Dolet",
@@ -11,31 +11,31 @@ extension LinesPageTests {
         "Porte de Vanves", "Porte de la Villette", "Riquet", "Saint-François-Xavier", "Sully - Morland", "Tolbiac",
         "Varenne"
     ]
-    static let taggedStationsWithOtherLines = [
+    static let forkStationsWithOtherLines = [
         "Champs-Élysées - Clemenceau", "Chaussée d'Antin - La Fayette", "Château Landon", "Châtelet", "Duroc",
         "Gare de l'Est", "Havre-Caumartin", "Invalides", "Jussieu", "Les Halles", "Louis Blanc", "Maison Blanche",
         "Miromesnil", "Montparnasse Bienvenue", "Opéra", "Palais Royal - Musée du Louvre", "Place d'Italie",
         "Place de Clichy", "Pyramides", "Saint-Augustin", "Saint-Lazare", "Stalingrad"
     ]
 
-    @Test func drawsTheTaggedStripAtTheTrunkAndForkStationsOfLines7And13() throws {
+    @Test func drawsTheForkGroupAtTheTrunkAndForkStationsOfLines7And13() throws {
         let catalog = try StationCatalog.bundled()
-        let tagged = try catalog.stations.filter { $0.lines.contains { $0.mode == .metro } }.filter { station in
+        let withAGroup = try catalog.stations.filter { $0.lines.contains { $0.mode == .metro } }.filter { station in
             try pagesWithFakeTrains(at: station.name).contains { page in
-                page.panamStripsLine?.directions.contains { $0.branchEnds != nil } == true
+                page.panamStripsLine?.directions.contains { $0.trainsOfEachEnd != nil } == true
             }
         }
-        let withOneLine = tagged.filter { $0.lines.count == 1 && catalog.hubStations(of: $0).count == 1 }
+        let withOneLine = withAGroup.filter { $0.lines.count == 1 && catalog.hubStations(of: $0).count == 1 }
 
-        #expect(withOneLine.map(\.name) == Self.taggedStations)
-        #expect(Set(tagged.map(\.name)) == Set(Self.taggedStations + Self.taggedStationsWithOtherLines))
+        #expect(withOneLine.map(\.name) == Self.forkStations)
+        #expect(Set(withAGroup.map(\.name)) == Set(Self.forkStations + Self.forkStationsWithOtherLines))
     }
 
     @Test(arguments: ["Liège", "Tolbiac", "La Fourche", "Châtillon - Montrouge", "La Courneuve - 8 Mai 1945"])
-    func drawsOneTaggedStripAndOnePlainStrip(station: String) throws {
+    func drawsOneForkGroupAndOnePlainStrip(station: String) throws {
         let line = try #require(try pageWithFakeTrains(at: station).panamStripsLine)
 
-        #expect(line.directions.filter { $0.branchEnds != nil }.count == 1)
+        #expect(line.directions.filter { $0.trainsOfEachEnd != nil }.count == 1)
         #expect(line.directions.count <= 2)
     }
 
@@ -43,47 +43,40 @@ extension LinesPageTests {
     func drawsPlainStripsOnABranch(station: String) throws {
         let line = try #require(try pageWithFakeTrains(at: station).panamStripsLine)
 
-        #expect(line.directions.allSatisfy { $0.branchEnds == nil })
+        #expect(line.directions.allSatisfy { $0.trainsOfEachEnd == nil })
     }
 
     @Test(arguments: ["Maison Blanche", "Gare de l'Est", "Place de Clichy", "Château Landon"])
-    func drawsTheTaggedStripOnThePageOfTheForkLineAtAStationWithAnotherLineOrAHub(station: String) throws {
+    func drawsTheForkGroupOnThePageOfTheForkLineAtAStationWithAnotherLineOrAHub(station: String) throws {
         let pages = try pagesWithFakeTrains(at: station)
         let forkLine = try #require(pages.compactMap(\.panamStripsLine).first { ["7", "13"].contains($0.line.name) })
 
-        #expect(forkLine.directions.filter { $0.branchEnds != nil }.count == 1)
+        #expect(forkLine.directions.filter { $0.trainsOfEachEnd != nil }.count == 1)
     }
 
-    @Test func marksEachTrainWithTheEndOfItsBranchInTheOrderOfTheLine() throws {
+    @Test func givesEachEndOfTheForkItsOwnRowInTheOrderOfTheLine() throws {
         let line = try #require(try pageWithFakeTrains(at: "Liège").panamStripsLine)
         let north = try #require(line.directions.first { $0.branchEnds != nil })
+        let rows = try #require(north.trainsOfEachEnd)
 
-        #expect(north.branchEnds == Self.line13NorthEnds)
-        #expect(north.trains.map(north.branchEndIndex(of:)) == [0, 1])
+        #expect(rows.map(\.end) == Self.line13NorthEnds)
+        #expect(rows.allSatisfy { row in row.trains.allSatisfy { $0.destination == row.end } })
     }
 
-    @Test(arguments: [
-        ([1, 0], [1, 0]),
-        ([0, 0], [0, 0]),
-        ([1, 1], [1, 1]),
-        ([1], [1])
-    ])
-    func marksEachTrainWithItsEndWhateverTheOrderOfTheTrains(ends: [Int], marks: [Int]) {
+    @Test(arguments: [[1, 0], [0, 0], [1, 1], [1]])
+    func drawsTheGroupWhateverTheOrderOfTheTrains(ends: [Int]) {
         let direction = Self.line13North(trainsTo: ends.map { Self.line13NorthEnds[$0] })
 
-        #expect(direction.branchEnds == Self.line13NorthEnds)
-        #expect(direction.trains.map(direction.branchEndIndex(of:)) == marks)
         #expect(page(with: direction).panamStripsLine != nil)
     }
 
-    @Test func keepsTheRowsWhileATrainOfTheTaggedDirectionEndsAtAThirdPlace() {
+    @Test func keepsTheRowsWhileATrainOfTheForkDirectionEndsAtAThirdPlace() {
         let direction = Self.line13North(trainsTo: ["Porte de Saint-Ouen", Self.line13NorthEnds[1]])
 
-        #expect(direction.branchEndIndex(of: direction.trains[0]) == nil)
         #expect(page(with: direction).panamStripsLine == nil)
     }
 
-    @Test func drawsTheTaggedStripWithNoTrain() {
+    @Test func drawsTheForkGroupWithNoTrain() {
         let direction = Self.line13North(trainsTo: [])
 
         #expect(page(with: direction).panamStripsLine?.directions == [direction])

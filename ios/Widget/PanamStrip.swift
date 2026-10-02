@@ -5,8 +5,6 @@ struct PanamStrip: View {
     static let ruleWidth: CGFloat = 1
     static let amber = Color(red: 1, green: 190.0 / 255, blue: 0)
     static let plateBlue = Color(red: 0.06, green: 0.1, blue: 0.47)
-    static let markGap: CGFloat = 1
-    static let markMargin: CGFloat = 2
 
     let direction: LineDirection
     let line: TransitLine
@@ -19,10 +17,13 @@ struct PanamStrip: View {
             Rectangle()
                 .fill(line.badgeColor)
                 .frame(width: 5)
-            plate
+            Text(direction.name)
+                .font(.subheadline.bold())
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Self.plateBlue)
-                .padding(.horizontal, direction.branchEnds == nil ? 8 : 6)
-                .padding(.vertical, direction.branchEnds == nil ? 4 : 3)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
                 .frame(maxWidth: .infinity, alignment: .leading)
             screen
                 .frame(width: cellWidth * 2 + Self.ruleWidth)
@@ -33,18 +34,12 @@ struct PanamStrip: View {
         .background(.white)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel)
-    }
-
-    @ViewBuilder private var plate: some View {
-        if let ends = direction.branchEnds {
-            PanamBranchEnds(ends: ends)
-        } else {
-            Text(direction.name)
-                .font(.subheadline.bold())
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
+        .accessibilityLabel(Self.accessibilityLabel(
+            name: direction.name,
+            trains: direction.trains,
+            nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway,
+            isStale: isStale
+        ))
     }
 
     @ViewBuilder private var screen: some View {
@@ -88,82 +83,26 @@ struct PanamStrip: View {
     }
 
     private func cell(_ train: LineDirection.Train?) -> some View {
-        let mark = train.flatMap(direction.branchEndIndex(of:))
-        return ZStack {
-            if let mark, train?.status == .atPlatform {
-                VStack(spacing: Self.markGap) {
-                    PanamBranchMark(index: mark)
-                    wait(train)
-                }
-            } else if let mark {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: Self.markGap) {
-                        PanamBranchMark(index: mark)
-                        wait(train)
-                        PanamBranchMark(index: mark)
-                            .hidden()
-                    }
-                    .padding(.horizontal, Self.markMargin)
-                    HStack(spacing: Self.markGap) {
-                        PanamBranchMark(index: mark)
-                        wait(train)
-                    }
-                }
-            } else {
-                wait(train)
-            }
-        }
-        .frame(width: cellWidth)
+        PanamCell(train: train, drawnAt: drawnAt, numberFont: .title3.bold(), width: cellWidth)
     }
 
-    @ViewBuilder private func wait(_ train: LineDirection.Train?) -> some View {
-        Group {
-            switch train?.status {
-            case .approaching:
-                Text(verbatim: "0")
-                    .font(.title3.bold())
-            case .atPlatform:
-                PanamAtPlatformText()
-            case nil:
-                if let train {
-                    PanamMinutes(train: train, drawnAt: drawnAt)
-                        .font(.title3.bold())
-                }
-            }
-        }
-        .monospacedDigit()
-        .foregroundStyle(Self.amber)
-    }
-
-    private var accessibilityLabel: Text {
-        let name = Text(verbatim: direction.branchEnds?.formatted(.list(type: .and)) ?? direction.name)
-        let trains = direction.trains
+    static func accessibilityLabel(
+        name: String,
+        trains: [LineDirection.Train],
+        nextTrainIsOverAnHourAway: Bool,
+        isStale: Bool
+    ) -> Text {
+        let name = Text(verbatim: name)
         if isStale {
             return name
         }
         guard let first = trains.first else {
-            let state: Text = direction.nextTrainIsOverAnHourAway ? Text("In over 1 hour") : Text("No trains")
+            let state: Text = nextTrainIsOverAnHourAway ? Text("In over 1 hour") : Text("No trains")
             return Text("\(name), \(state)")
         }
         guard let second = trains.dropFirst().first else {
-            return Text("\(name), \(spoken(first))")
+            return Text("\(name), \(PanamCell.spoken(first))")
         }
-        return Text("\(name), \(spoken(first)), then \(spoken(second))")
-    }
-
-    private func spoken(_ train: LineDirection.Train) -> Text {
-        guard direction.branchEnds != nil else { return spokenWait(train) }
-        return Text("\(spokenWait(train)) to \(train.destination)")
-    }
-
-    private func spokenWait(_ train: LineDirection.Train) -> Text {
-        switch train.status {
-        case .approaching:
-            Text("Approaching")
-        case .atPlatform:
-            Text("At the platform")
-        case nil:
-            Text(.currentDate, format: .offset(to: train.roundedUpCountdownEnd, allowedFields: [.minute], sign: .never))
-        }
+        return Text("\(name), \(PanamCell.spoken(first)), then \(PanamCell.spoken(second))")
     }
 }

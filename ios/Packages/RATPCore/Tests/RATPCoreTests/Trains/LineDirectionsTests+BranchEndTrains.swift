@@ -70,7 +70,7 @@ extension LineDirectionsTests {
         ])
     }
 
-    @Test func keepsTheFirstTwoTrainsOfTheDirectionByTimeForTheTaggedStrip() throws {
+    @Test func keepsTheFirstTwoTrainsOfTheDirectionByTimeForTheSoonestTrain() throws {
         let direction = try north([
             toSaintDenis(inMinutes: 7),
             toAsnieres(inMinutes: 1),

@@ -20,7 +20,8 @@ struct ExpectedText: Encodable {
                 texts.append(ExpectedText(kind: .label, text: stationName, line: lineIndex))
             }
             for (directionIndex, direction) in line.directions.enumerated() {
-                let names = [direction.label, direction.name] + direction.trains.map(\.destination)
+                let names = [direction.label, direction.name] + (direction.branchEnds ?? [])
+                    + direction.trains.map(\.destination)
                 for name in names.reduce(into: [String](), { if !$0.contains($1) { $0.append($1) } }) {
                     texts.append(
                         ExpectedText(kind: .destination, text: name, line: lineIndex, direction: directionIndex)
