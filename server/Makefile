@@ -4,7 +4,7 @@ BUILD_DIR := .wrangler
 
 export WRANGLER_SEND_METRICS := false
 
-.PHONY: help node-check server-setup server-check server-check-if-changed server-dev server-stop server-login server-secret server-deploy-staging server-deploy
+.PHONY: help node-check server-setup server-check server-check-if-changed server-dev server-stop server-login server-secrets server-secret server-deploy-staging server-deploy
 
 help:
 	@echo "make server-setup        Install the packages of the server (server/node_modules), when they are missing or old"
@@ -12,9 +12,10 @@ help:
 	@echo "make server-dev          Run the server on this folder's own port ($(PORT); PORT=<n> for another one), with the fake secrets of server/.dev.vars"
 	@echo "make server-stop         Stop the server of this folder (make server-dev)"
 	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret)"
-	@echo "make server-secret NAME=<name>  Set a secret of the production Worker (STAGING=1: of the staging Worker); it asks for the value"
-	@echo "make server-deploy-staging  Deploy this folder to the staging Worker (needs the Cloudflare account)"
-	@echo "make server-deploy       Deploy main to the production Worker (needs the Cloudflare account; main folder, on main, committed)"
+	@echo "make server-secrets      Set each secret of the production Worker in turn (STAGING=1: of the staging Worker), before its first deploy; it asks for each value"
+	@echo "make server-secret NAME=<name>  Change one secret of the production Worker (STAGING=1: of the staging Worker); it asks for the value"
+	@echo "make server-deploy-staging  Deploy this folder to the staging Worker (needs the Cloudflare account, and make server-secrets STAGING=1 first)"
+	@echo "make server-deploy       Deploy main to the production Worker (needs the Cloudflare account and make server-secrets first; main folder, on main, committed)"
 
 node-check:
 	@./scripts/node-check.sh
@@ -51,6 +52,9 @@ server-stop:
 
 server-login: server-setup
 	./node_modules/.bin/wrangler login
+
+server-secrets: server-setup
+	@./scripts/put-secrets.sh $(if $(STAGING),staging,production)
 
 server-secret: server-setup
 	@if [ -z "$(NAME)" ]; then echo "Give the name of the secret: make server-secret NAME=PRIM_API_KEY (or NAME=APP_TOKEN)." >&2; exit 1; fi

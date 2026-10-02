@@ -6,7 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json && tsc -p test/core/tsconfig.json && tsc -p test/cloudflare/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p test/core/tsconfig.json && tsc -p test/cloudflare/tsconfig.json && tsc -p scripts/tsconfig.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",

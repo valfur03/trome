@@ -834,36 +834,50 @@ If the active Node is too old, the server commands stop and tell you to run `nvm
 |---|---|
 | `make server-setup` | Installs the packages in `server/node_modules` (about 300 MB), when they are missing or older than `server/package-lock.json`. The other server commands run it first. |
 | `make server-check` | The server quality gate: no local secrets file in git, the generated types up to date, the type check, the lint, the unit tests and the tests of the server scripts. It needs no Simulator and no Cloudflare account. |
-| `make server-dev` | Runs the server on your Mac at `http://127.0.0.1:8787` (`/health` answers with no key). Each git worktree uses its own port: 8787 plus the number at the end of its folder name. `PORT=<n>` uses another port. Press Ctrl + C to stop it. |
+| `make server-dev` | Runs the server on your Mac at `http://127.0.0.1:8787` (`/health` answers with no key). Only the main folder uses 8787. Each git worktree uses its own port: 8787 plus the number at the end of its folder name, or a port from 9800 to 9899 when its name ends with no number. `PORT=<n>` uses another port. Press Ctrl + C to stop it. |
 | `make server-stop` | Stops the server of this folder, when it runs in the background. |
 | `make server-login` | Logs in to your Cloudflare account, once on this Mac. It opens the browser. |
-| `make server-secret NAME=<name>` | Sets a secret of the production Worker. It asks for the value, so the value is not in your shell history. Add `STAGING=1` for the staging Worker. |
-| `make server-deploy-staging` | Runs `make server-check`, then deploys this folder to the staging Worker `ratp-activity-server-staging`. It needs your Cloudflare account. |
-| `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker `ratp-activity-server`. It needs your Cloudflare account, and it refuses another branch or changes that are not committed. |
+| `make server-secrets` | Sets each secret of the production Worker, one after the other (see the table of the secrets below). Run it before the first deploy. It asks for each value, so no value is in your shell history or in a file. Add `STAGING=1` for the staging Worker. |
+| `make server-secret NAME=<name>` | Changes one secret of the production Worker (for example a new app token). It asks for the value. Add `STAGING=1` for the staging Worker. |
+| `make server-deploy-staging` | Runs `make server-check`, then deploys this folder to the staging Worker `ratp-activity-server-staging`. It needs your Cloudflare account, and it refuses when a secret of the staging Worker is not set yet. |
+| `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker `ratp-activity-server`. It needs your Cloudflare account, and it refuses another branch, changes that are not committed, or a secret that is not set yet. |
 
 `make check` runs `make server-check` only when your branch changes files in `server/` or `contracts/` (compared with `main`).
 So a change of the app only does not install the packages of the server.
 
 The secrets:
 
-- The server has two secrets: `PRIM_API_KEY` (the PRIM key) and `APP_TOKEN` (the token that the app sends, so that only the app can ask the server).
-  `server/wrangler.jsonc` names them, with no value.
+- The server has these secrets. `server/wrangler.jsonc` names them, with no value (`secrets.required`), and `make server-secrets` asks for each one of them.
+
+  | Secret | Its value |
+  |---|---|
+  | `PRIM_API_KEY` | Your PRIM key (see [The train data key (PRIM)](#the-train-data-key-prim)). |
+  | `APP_TOKEN` | The token that the app sends, so that only the app can ask the server. Make a new one for each Worker with `openssl rand -base64 32`, and keep it in your password manager: a later task puts it in a build setting of the app that git ignores. |
+
 - On your Mac, `make server-dev` reads fake values from `server/.dev.vars`.
   The first `make server-dev` creates this file from `server/.dev.vars.example`.
   Git ignores it, and `make server-check` fails when git tracks it.
   Keep fake values in it: the server on your Mac never needs the real key.
-- On Cloudflare, the secrets are set with `make server-secret` and live only there.
+- On Cloudflare, the secrets are set with `make server-secrets` (or `make server-secret` for one) and live only there.
+- **Never put a real secret in a file**, and never use `wrangler deploy --secrets-file`, even when wrangler suggests it: the real PRIM key must never be on disk.
 - The logs of the server never show a secret: the logger replaces each secret value with `[secret]`, and a unit test checks it.
 
 To put the server on Cloudflare (the first time):
 
+Wrangler refuses the first deploy of a Worker whose secrets are not set yet, so set the secrets first, then deploy.
+
 1. Create a free Cloudflare account at https://dash.cloudflare.com/sign-up (no card).
 2. In the main folder, run `nvm use`, then `make server-login`, and allow the access in the browser.
-3. Run `make server-deploy-staging`. Wrangler shows the address of the staging Worker: `https://ratp-activity-server-staging.<your subdomain>.workers.dev`. If your account has no `workers.dev` subdomain yet, the first deploy asks you to choose one.
-4. Open `https://ratp-activity-server-staging.<your subdomain>.workers.dev/health`. It shows `{"status":"ok"}`.
-5. Set the two secrets of the staging Worker: `make server-secret NAME=PRIM_API_KEY STAGING=1`, then paste your PRIM key; `make server-secret NAME=APP_TOKEN STAGING=1`, then paste a new random token (make one with `openssl rand -base64 32`).
-   Keep each app token in your password manager: a later task puts it in a build setting of the app that git ignores.
-6. On `main`, run `make server-deploy`, then set the same two secrets without `STAGING=1`. Use another app token for production.
+3. Run `make server-secrets STAGING=1`.
+   For each secret of the table above, wrangler asks "Enter a secret value:": paste the value and press Return (the value does not show).
+   After the first value, wrangler asks "There doesn't seem to be a Worker called "ratp-activity-server-staging". Do you want to create a new Worker with that name and add secrets to it?": answer `y` (yes).
+   It creates an empty Worker that holds the secrets until the first deploy.
+4. Run `make server-deploy-staging`. Wrangler shows the address of the staging Worker: `https://ratp-activity-server-staging.<your subdomain>.workers.dev`. If your account has no `workers.dev` subdomain yet, the first deploy asks you to choose one.
+5. Open `https://ratp-activity-server-staging.<your subdomain>.workers.dev/health`. It shows `{"status":"ok"}`.
+6. For production, in the main folder on `main`: run `make server-secrets` (with another app token), answer `y` to the same question for "ratp-activity-server", then run `make server-deploy`, and open its `/health` address.
+
+When a new secret is added to the table later, run `make server-secret NAME=<its name>` for each Worker that already exists (add `STAGING=1` for the staging Worker), before you deploy the change.
+`make server-deploy-staging` and `make server-deploy` check the secrets before they deploy: when one is missing, they stop, name it, and say which command sets it.
 
 The code of the server follows the rules of the CLAUDE.md, section "Code structure of the server": the logic is plain TypeScript in `server/src/core/`, and only `server/src/cloudflare/` uses the Cloudflare API.
 So the server can move to another host with a medium task (decision-40).
