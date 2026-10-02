@@ -66,7 +66,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         }
         let departures = Self.departures(from: visits, at: stations)
         if let log {
-            PRIMAnswerLog.lines(of: answers, at: stations).forEach(log)
+            PRIMAnswerLog.lines(of: answers, at: stations, now: Date()).forEach(log)
         }
         let firstError = answers.lazy.compactMap { answer -> (any Error)? in
             if case .failure(let error) = answer.visits { error } else { nil }

@@ -6,6 +6,7 @@ import Testing
 struct PRIMAnswerLogTests {
     private let base = PRIMDeparturesProviderTests()
     private let stopArea = "STIF:StopArea:SP:42155:"
+    private let answerTime = Fixture.date("2026-09-26T10:00:00Z")
 
     private func answer(_ visits: Result<[MonitoredVisit], any Error>) -> PRIMDeparturesProvider.Answer {
         PRIMDeparturesProvider.Answer(
@@ -17,7 +18,12 @@ struct PRIMAnswerLogTests {
     @Test func writesEachVisitOfAnAnswerWithWhatTheAppKeepsOrDrops() throws {
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))
 
-        let lines = PRIMAnswerLog.lines(of: [answer(.success(visits))], at: [base.abbesses], timeZone: .gmt)
+        let lines = PRIMAnswerLog.lines(
+            of: [answer(.success(visits))],
+            at: [base.abbesses],
+            now: answerTime,
+            timeZone: .gmt
+        )
 
         let prefix = "PRIM \(stopArea) | "
         #expect(lines == [
@@ -49,7 +55,12 @@ struct PRIMAnswerLogTests {
             aimedTime: Fixture.date("2026-09-26T10:01:00Z")
         )
 
-        let lines = PRIMAnswerLog.lines(of: [answer(.success([visit, visit]))], at: [base.abbesses], timeZone: .gmt)
+        let lines = PRIMAnswerLog.lines(
+            of: [answer(.success([visit, visit]))],
+            at: [base.abbesses],
+            now: answerTime,
+            timeZone: .gmt
+        )
 
         #expect(lines.dropFirst() == [
             "PRIM \(stopArea) | kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:02:00"
@@ -59,8 +70,40 @@ struct PRIMAnswerLogTests {
         ])
     }
 
+    @Test(arguments: [
+        ("2026-09-26T09:46:18Z", "dropped, left at least 30 s ago"),
+        ("2026-09-26T09:59:30Z", "dropped, left at least 30 s ago"),
+        ("2026-09-26T09:59:31Z", "kept, time passed (not on the Live Activity)"),
+        ("2026-09-26T09:59:45Z", "kept, time passed (not on the Live Activity)"),
+        ("2026-09-26T10:00:00Z", "kept, time passed (not on the Live Activity)"),
+        ("2026-09-26T10:02:07Z", "kept"),
+        ("2026-09-26T11:00:00Z", "kept"),
+        ("2026-09-26T11:00:01Z", "kept, over 1 h away")
+    ])
+    func saysWhatTheBoardDoesWithAKeptTrainFromItsTime(time: String, fate: String) {
+        let visit = MonitoredVisit(
+            lineRef: "STIF:Line::C01382:",
+            destinationName: "Mairie d'Issy",
+            journeyRef: "M12.R.1",
+            time: Fixture.date(time)
+        )
+
+        let lines = PRIMAnswerLog.lines(
+            of: [answer(.success([visit]))],
+            at: [base.abbesses],
+            now: answerTime,
+            timeZone: .gmt
+        )
+
+        #expect(lines.last?.hasPrefix("PRIM \(stopArea) | \(fate) | line") == true)
+    }
+
     @Test func writesAFailedCall() {
-        let lines = PRIMAnswerLog.lines(of: [answer(.failure(NextTrainsError.quotaExceeded))], at: [base.abbesses])
+        let lines = PRIMAnswerLog.lines(
+            of: [answer(.failure(NextTrainsError.quotaExceeded))],
+            at: [base.abbesses],
+            now: answerTime
+        )
 
         #expect(lines == ["PRIM \(stopArea) | failed: quotaExceeded"])
     }

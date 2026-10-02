@@ -15,12 +15,11 @@ public struct DepartureBoard: Hashable, Sendable {
         let lines = Self.lines(of: stations)
         self.stations = stations
         self.lines = lines
-        let farthestTime = now.addingTimeInterval(Self.farthestTimeSeconds)
         let notDeparted = departures
-            .filter { $0.time > now.addingTimeInterval(-Self.departedGraceSeconds) }
+            .filter { !Self.hasLeft(at: $0.time, now: now) }
             .sorted { $0.time < $1.time }
-        let upcoming = notDeparted.filter { $0.time <= farthestTime }
-        let later = notDeparted.filter { $0.time > farthestTime }
+        let upcoming = notDeparted.filter { !Self.isOverAnHourAway($0.time, now: now) }
+        let later = notDeparted.filter { Self.isOverAnHourAway($0.time, now: now) }
         self.departures = upcoming
         self.laterDepartures = later
         var groups: [DepartureGroup] = []
@@ -61,6 +60,14 @@ public struct DepartureBoard: Hashable, Sendable {
             }
             return first.destination.localizedStandardCompare(second.destination) == .orderedAscending
         }
+    }
+
+    static func hasLeft(at time: Date, now: Date) -> Bool {
+        time <= now.addingTimeInterval(-departedGraceSeconds)
+    }
+
+    static func isOverAnHourAway(_ time: Date, now: Date) -> Bool {
+        time > now.addingTimeInterval(farthestTimeSeconds)
     }
 
     public var isEmpty: Bool {

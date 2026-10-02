@@ -4,6 +4,7 @@ enum PRIMAnswerLog {
     static func lines(
         of answers: [PRIMDeparturesProvider.Answer],
         at stations: [Station],
+        now: Date,
         timeZone: TimeZone = .current
     ) -> [String] {
         var asked: [MonitoredVisit] = []
@@ -24,7 +25,7 @@ enum PRIMAnswerLog {
             case .success(let visits):
                 let visitLines = zip(visits, indices).map { visit, index in
                     let shown = index.map { asked[$0] } ?? visit
-                    let fate = index.map { outcomes[$0] }.map(describe) ?? "dropped, line not asked"
+                    let fate = index.map { describe(outcomes[$0], of: shown, now: now) } ?? "dropped, line not asked"
                     return "\(prefix) | \(fate) | \(describe(shown, timeStyle: timeStyle))"
                 }
                 return ["\(prefix) | \(visits.count) visits"] + visitLines
@@ -32,10 +33,22 @@ enum PRIMAnswerLog {
         }
     }
 
-    private static func describe(_ outcome: PRIMDeparturesProvider.VisitOutcome) -> String {
+    private static func describe(
+        _ outcome: PRIMDeparturesProvider.VisitOutcome,
+        of visit: MonitoredVisit,
+        now: Date
+    ) -> String {
         switch outcome {
-        case .kept: "kept"
-        case .dropped(let reason): "dropped, \(reason)"
+        case .dropped(let reason):
+            "dropped, \(reason)"
+        case .kept where DepartureBoard.hasLeft(at: visit.time, now: now):
+            "dropped, left at least \(Int(DepartureBoard.departedGraceSeconds)) s ago"
+        case .kept where visit.time <= now:
+            "kept, time passed (not on the Live Activity)"
+        case .kept where DepartureBoard.isOverAnHourAway(visit.time, now: now):
+            "kept, over 1 h away"
+        case .kept:
+            "kept"
         }
     }
 
