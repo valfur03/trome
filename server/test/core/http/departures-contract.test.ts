@@ -29,12 +29,12 @@ const scenarios: Record<string, (harness: RelayHarness) => Promise<unknown>> = {
     harness.clock.advance(-3 * minute);
     await harness.relay.departures(abbesses);
     harness.clock.advance(3 * minute);
-    for (let index = 1; index < 800; index += 1) {
+    for (let index = 1; index < 394; index += 1) {
       await harness.relay.departures(`STIF:StopArea:SP:${String(index)}:`);
     }
   },
   "departures-out-budget.json": async (harness) => {
-    for (let index = 1; index <= 800; index += 1) {
+    for (let index = 1; index <= 394; index += 1) {
       await harness.relay.departures(`STIF:StopArea:SP:${String(index)}:`);
     }
   },

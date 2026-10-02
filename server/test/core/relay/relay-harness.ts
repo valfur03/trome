@@ -1,5 +1,5 @@
 import { PrimBudget } from "../../../src/core/budget/prim-budget";
-import { relaySettings } from "../../../src/core/config/relay-settings";
+import { relaySettings, type RelaySettings } from "../../../src/core/config/relay-settings";
 import { createLogger } from "../../../src/core/logging/logger";
 import { AnswerStore } from "../../../src/core/relay/answer-store";
 import { Relay } from "../../../src/core/relay/relay";
@@ -26,20 +26,22 @@ export function relayHarness({
   database = new NodeSqliteDatabase(),
   clock = FakeClock.at(now),
   prim = new FakePrimClient(),
+  settings: overrides = {},
 }: {
   now?: string;
   dailyCap?: string;
   database?: SqlDatabase;
   clock?: FakeClock;
   prim?: FakePrimClient;
+  settings?: Partial<RelaySettings>;
 } = {}): RelayHarness {
-  const settings = relaySettings({ PRIM_DAILY_CAP: dailyCap });
+  const settings = { ...relaySettings({ PRIM_DAILY_CAP: dailyCap }), ...overrides };
   const logLines: string[] = [];
   const flushTimes: number[] = [];
   const usage = new UsageCounts(database, (at) => flushTimes.push(at));
   const relay = new Relay({
     answers: new AnswerStore(database),
-    budget: new PrimBudget(database, settings.dailyCap),
+    budget: new PrimBudget(database, settings),
     usage,
     prim,
     clock,
@@ -54,6 +56,6 @@ export function relayHarness({
     database,
     logLines,
     flushTimes,
-    restart: () => relayHarness({ dailyCap, database, clock, prim }),
+    restart: () => relayHarness({ dailyCap, database, clock, prim, settings: overrides }),
   };
 }

@@ -7,6 +7,7 @@ import { fakePrim, recordedAnswer } from "./fake-prim";
 const abbesses = "STIF:StopArea:SP:42155:";
 
 afterEach(async () => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
   await abortAllDurableObjects();
@@ -51,6 +52,7 @@ describe("RelayObject", () => {
 
   it("never passes its cap of 800 with many simultaneous requests for many stops, and keeps its count when it restarts", async () => {
     expect(env.PRIM_DAILY_CAP).toBe("800");
+    vi.useFakeTimers({ toFake: ["Date"], now: Date.parse("2026-10-02T21:30:00.000Z") });
     const prim = fakePrim(undefined, { wait: true });
 
     const answers = Array.from({ length: 900 }, (_, index) => departures(stop(index)));
@@ -120,7 +122,7 @@ describe("RelayObject", () => {
     );
 
     expect(tables.map(({ name }) => name)).toEqual(
-      expect.arrayContaining(["answers", "relay_pauses", "prim_budget", "usage_hours", "usage_stops", "error_lines"]),
+      expect.arrayContaining(["answers", "relay_pauses", "prim_budget", "prim_budget_hours", "usage_hours", "usage_stops", "error_lines"]),
     );
   });
 });

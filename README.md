@@ -858,12 +858,24 @@ What the server does:
   The body is the PRIM answer of that stop, as PRIM gave it, so the app keeps its own PRIM parser.
   The header `Last-Modified` is the time when PRIM gave it.
   The examples of each answer are in `contracts/api/`, and the server tests check them.
-- One answer for each stop serves every rider: a stop asked again while its answer is younger than 60 s gets the same answer, with no PRIM call.
+- One answer for each stop serves every rider: a stop asked again while its answer is younger than 60 s gets the same answer, with no PRIM call (older when the budget runs low, see below).
   The requests for a stop that come while its PRIM call is in flight wait for that one call.
 - The cap: at most 800 PRIM calls each Paris day (`PRIM_DAILY_CAP` in `server/wrangler.jsonc`; 60 for the staging Worker, so that a test there cannot use the budget of the riders).
   The server adds to its count before each PRIM call, failed calls too, and keeps the count in its storage, so a restart does not reset it.
-- When the cap is reached, for 1 hour after PRIM answers 429, or for 60 s after another PRIM failure of a stop, the server gives the answer that it holds for the stop if it is younger than 5 minutes.
+- The day shape: each Paris hour may spend its share of the day's cap, so that the morning peak cannot use up the evening peak.
+  The shares are 15% at 07:00, 24% at 08:00, 8% at 09:00, 6% at 16:00, 17% at 17:00, 18% at 18:00 and 7% at 19:00, and the other 17 hours share the last 5% (about 2 calls each with the cap of 800).
+  What an hour does not spend goes to the next hour.
+  So the hours from 00:00 to 02:00 in Paris have less than 5 calls, and a PRIM day that starts at 00:00 UTC still holds less than 1,000 calls.
+  With the staging cap of 60, the hours before 05:00 in Paris have no call: test the staging Worker later in the day.
+  The shape is `dayShapePercents` in `server/src/core/config/relay-settings.ts`, and the ages below are in the same file.
+  It comes from a model of riders, not from real use: after two weeks of real use, replace it with the share of each hour in the PRIM calls of `make server-counts`.
+- When the budget runs low, the shared answer gets older before the server asks PRIM again, so the times that a rider sees can come from a PRIM answer that is up to 2 or 5 minutes old.
+  The answer may get 60 s old while the hour has spent up to 70% of its share, 120 s old above 70%, and 300 s old above 90%.
+  The last 5% of the share of an hour go first to a stop that has no answer younger than 10 minutes (a rider who starts a Live Activity), and not to a stop that only refreshes its answer: a rider who waits for a refresh still has times that count down, and a rider who starts has nothing.
+  When the share of the hour is gone, the server makes no PRIM call until the next hour.
+- When the share of the hour is gone, for 1 hour after PRIM answers 429, or for 60 s after another PRIM failure of a stop, the server gives the answer that it holds for the stop if it is younger than 5 minutes.
   Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` and the header `Retry-After`: the time when it will ask PRIM again.
+  When the share of the hour is gone (`"reason":"budget"`), this time is the start of the next hour that has calls left: the next hour, or the next Paris day once the day's cap is spent.
   It never gives an answer older than 5 minutes as times, and never keeps a failed answer or a PRIM error body as times.
 - `GET /health` answers `{"status":"ok"}`, with no token.
 

@@ -1,5 +1,5 @@
 {
-  "description": "The server cannot ask PRIM now (here: its daily cap is reached), and it holds an answer of the stop that is younger than 5 minutes: it gives that answer, with the older time when PRIM gave it. The request is at 2026-10-02T08:30:00Z, PRIM answered at 08:27:00Z.",
+  "description": "The server cannot ask PRIM now (here: the share of PRIM calls of this Paris hour is gone), or the hour has spent most of its share so the shared answer may get older (up to 120 s above 70% of the share, up to 300 s above 90%), and it holds an answer of the stop that is younger than 5 minutes: it gives that answer, with the older time when PRIM gave it. The request is at 2026-10-02T08:30:00Z, PRIM answered at 08:27:00Z.",
   "request": {
     "method": "GET",
     "path": "/v1/stops/STIF:StopArea:SP:42155:/departures",

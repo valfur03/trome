@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextParisDayStart, parisDay, parisHour } from "../../../src/core/time/paris-time";
+import { nextParisDayStart, parisDay, parisHour, parisHourOfDay } from "../../../src/core/time/paris-time";
 
 const at = (iso: string) => Date.parse(iso);
 
@@ -15,6 +15,8 @@ describe("Paris time", () => {
     expect(parisHour(at("2026-10-02T06:15:00.000Z"))).toBe("08:00");
     expect(parisHour(at("2026-12-02T06:15:00.000Z"))).toBe("07:00");
     expect(parisHour(at("2026-10-02T22:00:00.000Z"))).toBe("00:00");
+    expect(parisHourOfDay(at("2026-10-02T06:15:00.000Z"))).toBe(8);
+    expect(parisHourOfDay(at("2026-10-02T21:59:59.999Z"))).toBe(23);
   });
 
   it("gives the start of the next Paris day", () => {

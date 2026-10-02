@@ -10,6 +10,9 @@ const chatelet = "STIF:StopArea:SP:417675:";
 const abbessesAnswer = primFixture("stop-monitoring-abbesses-stop-area.json");
 const chateletAnswer = primFixture("stop-monitoring-chatelet-rer.json");
 const nextParisDay = Date.parse("2026-10-02T22:00:00.000Z");
+const lateInTheParisDay = "2026-10-02T21:30:00.000Z";
+const nextParisHour = Date.parse("2026-10-02T09:00:00.000Z");
+const allowedByTheEndOf1000Paris = 394;
 
 function stop(index: number): string {
   return `STIF:StopArea:SP:${String(100_000 + index)}:`;
@@ -82,9 +85,15 @@ describe("Relay: one shared answer for each stop", () => {
   });
 });
 
+async function spendTheHour(relay: { departures(stopRef: string): Promise<RelayAnswer> }, calls = allowedByTheEndOf1000Paris): Promise<void> {
+  for (let index = 0; index < calls; index += 1) {
+    await relay.departures(stop(index));
+  }
+}
+
 describe("Relay: the daily cap of PRIM calls", () => {
   it("never passes the cap when many requests for many stops come at the same time", async () => {
-    const { relay, prim } = relayHarness();
+    const { relay, prim } = relayHarness({ now: lateInTheParisDay });
     prim.answerWith(() => "wait");
 
     const answers = Array.from({ length: 1200 }, (_, index) => relay.departures(stop(index % 1000)));
@@ -142,8 +151,8 @@ describe("Relay: the daily cap of PRIM calls", () => {
     expect(budget?.calls).toBe(800);
   }, 20_000);
 
-  it("keeps the count of the day when the server restarts in the middle of the day", async () => {
-    const harness = relayHarness();
+  it("keeps the count of the day when the server restarts", async () => {
+    const harness = relayHarness({ now: lateInTheParisDay });
     for (let index = 0; index < 500; index += 1) {
       await harness.relay.departures(stop(index));
     }
@@ -157,7 +166,7 @@ describe("Relay: the daily cap of PRIM calls", () => {
   });
 
   it("counts the failed calls too", async () => {
-    const { relay, prim } = relayHarness({ dailyCap: "3" });
+    const { relay, prim } = relayHarness({ now: lateInTheParisDay, dailyCap: "3" });
     prim.answerWith(() => answer(500, "PRIM failed"));
 
     for (let index = 0; index < 10; index += 1) {
@@ -167,43 +176,96 @@ describe("Relay: the daily cap of PRIM calls", () => {
     expect(prim.calls).toHaveLength(3);
   });
 
-  it("takes the cap from its setting, and starts a new count at the start of the next Paris day", async () => {
-    const { relay, prim, clock } = relayHarness({ now: "2026-10-02T21:59:00.000Z", dailyCap: "2" });
+  it("takes the cap from its setting, and starts a new count in the first hour of the next Paris day that has a share: 05:00 with the staging cap of 60", async () => {
+    const { relay, prim, clock } = relayHarness({ now: "2026-10-02T21:59:00.000Z", dailyCap: "60" });
+    await spendTheHour(relay, 60);
 
-    await relay.departures(stop(1));
-    await relay.departures(stop(2));
-    expect(await relay.departures(stop(3))).toEqual({ kind: "out", reason: "budget", retryAt: nextParisDay });
-
-    clock.set("2026-10-02T22:00:00.000Z");
-    expect((await relay.departures(stop(3))).kind).toBe("times");
-    expect(prim.calls).toEqual([stop(1), stop(2), stop(3)]);
+    expect(await relay.departures(stop(60))).toEqual({
+      kind: "out",
+      reason: "budget",
+      retryAt: Date.parse("2026-10-03T03:00:00.000Z"),
+    });
+    clock.set("2026-10-03T03:00:00.000Z");
+    expect((await relay.departures(stop(60))).kind).toBe("times");
+    expect(prim.calls).toHaveLength(61);
   });
 
   it("counts by the Paris day in winter too", async () => {
-    const { relay } = relayHarness({ now: "2026-12-15T22:30:00.000Z", dailyCap: "1" });
+    const { relay, prim, clock } = relayHarness({ now: "2026-12-15T22:30:00.000Z" });
+    await spendTheHour(relay, 800);
 
-    await relay.departures(stop(1));
-
-    expect(await relay.departures(stop(2))).toEqual({
+    expect(await relay.departures(stop(800))).toEqual({
       kind: "out",
       reason: "budget",
       retryAt: Date.parse("2026-12-15T23:00:00.000Z"),
     });
+    clock.set("2026-12-15T23:00:00.000Z");
+    expect((await relay.departures(stop(800))).kind).toBe("times");
+    expect(prim.calls).toHaveLength(801);
+  });
+});
+
+describe("Relay: the share of each Paris hour", () => {
+  const at0800Paris = "2026-10-02T06:00:00.000Z";
+
+  it("lets the shared answer get 120 s old when the hour has spent more than 70% of its share, and 300 s old above 90%", async () => {
+    const { relay, prim, clock } = relayHarness({ now: at0800Paris });
+    let answeredAt = clock.now();
+    await relay.departures(abbesses);
+    await spendTheHour(relay, 230);
+
+    clock.advance(2 * minute - 1);
+    expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, answeredAt));
+    expect(prim.calls).toHaveLength(231);
+    clock.advance(1);
+    answeredAt = clock.now();
+    expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, answeredAt));
+    expect(prim.calls).toHaveLength(232);
+
+    for (let index = 230; index < 295; index += 1) {
+      await relay.departures(stop(index));
+    }
+    clock.advance(5 * minute - 1);
+    expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, answeredAt));
+    expect(prim.calls).toHaveLength(297);
+    clock.advance(1);
+    expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, clock.now()));
+    expect(prim.calls).toHaveLength(298);
+  });
+
+  it("gives the last calls of the share to a stop with no answer before a stop that only refreshes its answer", async () => {
+    const { relay, prim, clock } = relayHarness({ now: at0800Paris });
+    await relay.departures(abbesses);
+    await spendTheHour(relay, 310);
+
+    clock.advance(5 * minute);
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: Date.parse("2026-10-02T07:00:00.000Z") });
+    expect(await relay.departures(chatelet)).toEqual(times(abbessesAnswer, clock.now()));
+    expect(prim.calls).toHaveLength(312);
+
+    clock.advance(5 * minute);
+    expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, clock.now()));
+    expect(prim.calls).toHaveLength(313);
   });
 });
 
 describe("Relay: when it cannot ask PRIM", () => {
-  it("gives the answer it holds while it is younger than 5 minutes when the cap is reached, then says out until the next Paris day", async () => {
-    const { relay, prim, clock } = relayHarness({ dailyCap: "1" });
+  it("gives the answer it holds while it is younger than 5 minutes when the share of the hour is gone, then says out until the next Paris hour", async () => {
+    const { relay, prim, clock } = relayHarness();
     const primAnsweredAt = clock.now();
     await relay.departures(abbesses);
+    await spendTheHour(relay, allowedByTheEndOf1000Paris - 1);
 
     clock.advance(5 * minute - 1);
     expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, primAnsweredAt));
 
     clock.advance(1);
-    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisDay });
-    expect(prim.calls).toHaveLength(1);
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour });
+    expect(await relay.departures(chatelet)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour });
+    expect(prim.calls).toHaveLength(allowedByTheEndOf1000Paris);
+
+    clock.set("2026-10-02T09:00:00.000Z");
+    expect(await relay.departures(abbesses)).toEqual(times(abbessesAnswer, clock.now()));
   });
 
   it("makes no PRIM call for 1 hour after PRIM answers 429, for any stop, and says out until then", async () => {
@@ -263,15 +325,17 @@ describe("Relay: when it cannot ask PRIM", () => {
     expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "prim-failure", retryAt: failedAt + minute });
   });
 
-  it("gives the later time when the cap is also reached", async () => {
-    const { relay, prim } = relayHarness({ dailyCap: "1" });
+  it("gives the later time when the share of the hour is also gone", async () => {
+    const { relay, prim } = relayHarness();
+    await spendTheHour(relay, allowedByTheEndOf1000Paris - 1);
     prim.answerWith(() => answer(503, ""));
 
-    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisDay });
+    expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "budget", retryAt: nextParisHour });
   });
 
-  it("gives the later time of a 429 pause and of the cap", async () => {
-    const { relay, prim, clock } = relayHarness({ now: "2026-10-02T21:30:00.000Z", dailyCap: "1" });
+  it("gives the later time of a 429 pause and of the share of the hour", async () => {
+    const { relay, prim, clock } = relayHarness();
+    await spendTheHour(relay, allowedByTheEndOf1000Paris - 1);
     prim.answerWith(() => answer(429, ""));
 
     expect(await relay.departures(abbesses)).toEqual({ kind: "out", reason: "prim-limit", retryAt: clock.now() + hour });

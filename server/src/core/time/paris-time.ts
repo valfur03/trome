@@ -50,8 +50,12 @@ export function parisDay(at: number): string {
   return `${String(year)}-${twoDigits(month)}-${twoDigits(day)}`;
 }
 
+export function parisHourOfDay(at: number): number {
+  return parisTime(at).hour;
+}
+
 export function parisHour(at: number): string {
-  return `${twoDigits(parisTime(at).hour)}:00`;
+  return `${twoDigits(parisHourOfDay(at))}:00`;
 }
 
 export function nextParisDayStart(at: number): number {

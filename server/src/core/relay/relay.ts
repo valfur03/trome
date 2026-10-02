@@ -2,7 +2,7 @@ import type { PrimBudget } from "../budget/prim-budget";
 import type { RelaySettings } from "../config/relay-settings";
 import type { Logger } from "../logging/logger";
 import { day, type Clock } from "../time/clock";
-import { nextParisDayStart, parisDay } from "../time/paris-time";
+import { parisDay } from "../time/paris-time";
 import type { UsageCounts, UsageReport } from "../usage/usage-counts";
 import type { AnswerStore, StoredAnswer } from "./answer-store";
 import { isTimesAnswer } from "./prim-answer";
@@ -49,7 +49,8 @@ export class Relay {
     usage.count("appCalls", now);
 
     const held = answers.answer(stopRef);
-    if (held && now - held.primAnsweredAt < settings.freshAge) {
+    const age = held ? now - held.primAnsweredAt : Number.POSITIVE_INFINITY;
+    if (held && age < settings.freshAge) {
       usage.count("cacheHits", now);
       return Promise.resolve(times(held));
     }
@@ -60,9 +61,18 @@ export class Relay {
       return call;
     }
 
-    const pause = this.pause(stopRef, now) ?? (budget.claim(parisDay(now)) ? undefined : this.budgetPause(now));
+    const pause = this.pause(stopRef, now);
     if (pause) {
       return Promise.resolve(this.answerWhilePaused(stopRef, pause, now));
+    }
+
+    if (held && age < budget.answerAge(now)) {
+      usage.count("cacheHits", now);
+      return Promise.resolve(times(held));
+    }
+
+    if (!budget.claim(now, age < settings.startAge ? "refresh" : "start")) {
+      return Promise.resolve(this.answerWhilePaused(stopRef, this.budgetPause(now), now));
     }
 
     const newCall = this.callPrim(stopRef, now).finally(() => this.inFlight.delete(stopRef));
@@ -94,14 +104,14 @@ export class Relay {
     if (failedAt !== undefined && failedAt + settings.pauseAfterFailure > now) {
       pauses.push({ reason: "prim-failure", until: failedAt + settings.pauseAfterFailure });
     }
-    if (pauses.length > 0 && budget.isSpent(parisDay(now))) {
+    if (pauses.length > 0 && budget.hasNoCallLeft(now)) {
       pauses.push(this.budgetPause(now));
     }
     return pauses.reduce<Pause | undefined>((latest, pause) => (latest && latest.until >= pause.until ? latest : pause), undefined);
   }
 
   private budgetPause(now: number): Pause {
-    return { reason: "budget", until: nextParisDayStart(now) };
+    return { reason: "budget", until: this.dependencies.budget.retryAt(now) };
   }
 
   private answerWhilePaused(stopRef: string, pause: Pause, now: number): RelayAnswer {

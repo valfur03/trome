@@ -24,7 +24,7 @@ export class RelayObject extends DurableObject<Env> {
     });
     this.relay = new Relay({
       answers: new AnswerStore(database),
-      budget: new PrimBudget(database, settings.dailyCap),
+      budget: new PrimBudget(database, settings),
       usage: this.usage,
       prim: createPrimClient({
         apiKey: env.PRIM_API_KEY,
