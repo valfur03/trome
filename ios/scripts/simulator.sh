@@ -165,13 +165,13 @@ wait_for_widget_host() {
     deadline=$(($(date +%s) + widget_host_wait_seconds))
     waited=
     while [ "$(widget_host_state "$1")" = busy ]; do
-        if [ "$(date +%s)" -ge "$deadline" ]; then
-            echo "The widget host of the Simulator (chronod) still had work queued after $widget_host_wait_seconds s; going on" >&2
-            return 0
-        fi
         if [ -z "$waited" ]; then
             echo "Waiting for the widget host of the Simulator (chronod) to finish the work queued at boot" >&2
             waited=yes
+        fi
+        if [ "$(date +%s)" -ge "$deadline" ]; then
+            echo "The widget host of the Simulator (chronod) still had work queued after $widget_host_wait_seconds s; going on" >&2
+            return 0
         fi
         sleep 2
     done

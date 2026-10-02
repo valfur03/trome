@@ -216,9 +216,9 @@ acquire() {
             sleep 1
             continue
         fi
-        if [ "$wait_kind" != "$said" ]; then
+        if [ "$wait_kind $busy" != "$said" ]; then
             echo "Waiting for the Simulator lock: $wait_reason" >&2
-            said=$wait_kind
+            said="$wait_kind $busy"
         fi
         sleep "$poll_seconds"
     done
@@ -239,9 +239,10 @@ acquire_slot() {
         if remove_if_stale; then
             continue
         fi
-        if [ -z "$said" ]; then
-            echo "Waiting for the Simulator lock of slot $RATP_SIM_SLOT, held by $(describe_holder)" >&2
-            said=1
+        held_by=$(describe_holder)
+        if [ "$held_by" != "$said" ]; then
+            echo "Waiting for the Simulator lock of slot $RATP_SIM_SLOT, held by $held_by" >&2
+            said=$held_by
         fi
         sleep "$poll_seconds"
     done
