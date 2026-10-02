@@ -6,6 +6,9 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     private let now: @Sendable () -> Date
     private var continuation: AsyncStream<LocationEvent>.Continuation?
     private(set) var isReporting = false
+    private(set) var currentFixRequestCount = 0
+    private var lastCoordinate: Coordinate?
+    var givesACurrentFix = true
 
     init(now: @escaping @Sendable () -> Date = { Date() }) {
         self.now = now
@@ -26,7 +29,14 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     }
 
     func report(_ fix: PositionFix) {
+        lastCoordinate = fix.coordinate
         continuation?.yield(.position(fix))
+    }
+
+    func currentFix() async -> PositionFix? {
+        currentFixRequestCount += 1
+        guard givesACurrentFix, let lastCoordinate else { return nil }
+        return PositionFix(coordinate: lastCoordinate, accuracyMeters: 0, timestamp: now())
     }
 
     func report(_ problem: LocationProblem) {
@@ -72,6 +82,19 @@ struct LocationServiceTests {
 
         #expect(service.source == .realGPS)
         #expect(service.position == realPosition)
+    }
+
+    @Test func aCurrentPositionRequestGivesAFreshFixAndKeepsIt() async {
+        let service = makeService()
+        service.start()
+        gps.report(PositionFix(coordinate: realPosition, accuracyMeters: 5, timestamp: Date(timeIntervalSinceNow: -60)))
+        await waitForPosition(realPosition, in: service)
+
+        let fix = await service.requestCurrentFix()
+
+        #expect(fix?.coordinate == realPosition)
+        #expect(fix.map { abs($0.timestamp.timeIntervalSinceNow) < 5 } == true)
+        #expect(service.fix == fix)
     }
 
     @Test func reportsTheFakePositionOnceChosen() async {

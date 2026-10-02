@@ -1,9 +1,12 @@
 // Seam: the rider swipes the real Live Activity away in the Notification Center (the same view as the
 // lock screen), with the app in the background, and iOS tells the app (ActivityKit `activityStateUpdates`).
 // The app then pauses that station: the rider sees the Live Activity start at another station, and not come
-// back at the swiped station after leaving it and coming back.
-// Why not cheaper: unit tests check the pause rules with a fake removal; only iOS removes a Live Activity
-// on a swipe and tells the app, and a fake cannot say when or whether it does.
+// back at the swiped station after leaving it and coming back. Then the rider, standing still at that station
+// for longer than the app trusts a position, cancels the pause: the app asks iOS for a fresh position (Core
+// Location sends none while the phone does not move), and the Live Activity of that station comes back.
+// Why not cheaper: unit tests check the pause rules with a fake removal and a fake position; only iOS removes
+// a Live Activity on a swipe and tells the app, and only Core Location says whether a fresh position comes
+// while the phone stands still.
 import CoreLocation
 import XCTest
 
@@ -11,6 +14,7 @@ final class SwipeAwayTests: E2ETestCase {
     private static let liege = CLLocation(latitude: 48.879648, longitude: 2.327028)
     private static let cadet = CLLocation(latitude: 48.876018, longitude: 2.344616)
     private static let clearButtonLabels = ["Clear", "Dismiss", "Close", "Remove"]
+    private static let longerThanThePositionTrust: TimeInterval = 20
 
     @MainActor
     func testASwipeOfTheLiveActivityPausesItsStationButNotTheOtherStations() {
@@ -43,8 +47,22 @@ final class SwipeAwayTests: E2ETestCase {
         closeNotificationCenter()
 
         app.activate()
-        cancelThePauseIfAny(in: app)
+        standStillLongerThanTheAppTrustsAPosition()
+        tap(app.buttons["cancelStationPause"])
+        openNotificationCenter(over: app)
+        XCTAssertTrue(
+            waitFor(liveActivityStation("Liège")),
+            "The Live Activity did not come back at Liège after the cancel of the pause"
+        )
+        closeNotificationCenter()
+
+        app.activate()
         stopLiveActivityIfShowing(in: app)
+    }
+
+    @MainActor
+    private func standStillLongerThanTheAppTrustsAPosition() {
+        RunLoop.current.run(until: Date().addingTimeInterval(Self.longerThanThePositionTrust))
     }
 
     @MainActor

@@ -120,11 +120,12 @@ public final class AutoLiveActivityModel {
 
     public func cancelPause() async {
         guard let pause = state.pause else { return }
+        let fix = await positionForTheCancel(of: pause)
         endPause(at: pause.stationId, reason: "cancelled by the rider")
         if state.arrivalStationId == pause.stationId {
             state.arrivalStationId = nil
         }
-        guard let fix = inputs.locationService.fix else { return }
+        guard let fix else { return }
         await handle(fix)
     }
 
@@ -323,6 +324,16 @@ private extension AutoLiveActivityModel {
     func trusts(_ fix: PositionFix, maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge) -> Bool {
         guard inputs.locationService.source == .realGPS else { return true }
         return AutoLiveActivityRules.trusts(fix, now: configuration.now(), maximumAge: maximumAge)
+    }
+
+    func positionForTheCancel(of pause: StationPause) async -> PositionFix? {
+        if let fix = inputs.locationService.fix, trusts(fix) {
+            return fix
+        }
+        let fresh = await inputs.locationService.requestCurrentFix()
+        let answer = fresh.map { "accuracy \(Int($0.accuracyMeters)) m" } ?? "no position"
+        Self.logPause("cancel of the pause at \(pause.stationId): the last position is old, iOS gave \(answer)")
+        return fresh ?? inputs.locationService.fix
     }
 
     func handle(_ fix: PositionFix, maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge) async {

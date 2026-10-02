@@ -10,4 +10,5 @@ public enum LocationEvent: Equatable, Sendable {
 
 public protocol LocationProvider: Sendable {
     func events() -> AsyncStream<LocationEvent>
+    @MainActor func currentFix() async -> PositionFix?
 }

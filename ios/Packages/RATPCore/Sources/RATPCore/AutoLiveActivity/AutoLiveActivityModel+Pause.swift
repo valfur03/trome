@@ -61,7 +61,7 @@ extension AutoLiveActivityModel {
         }
     }
 
-    private static func logPause(_ event: String) {
+    static func logPause(_ event: String) {
         #if DEBUG
         pauseLogger.notice("\(event, privacy: .public)")
         #endif

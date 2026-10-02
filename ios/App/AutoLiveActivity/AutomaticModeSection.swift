@@ -4,6 +4,7 @@ import SwiftUI
 struct AutomaticModeSection: View {
     @Environment(AutomaticModeModel.self) private var automaticMode
     @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
+    @State private var isCancellingThePause = false
 
     private var isOn: Binding<Bool> {
         Binding {
@@ -34,8 +35,13 @@ struct AutomaticModeSection: View {
             if automaticMode.mode != .turnedOff, let paused = autoLiveActivity.pausedStation {
                 PauseState(paused: paused)
                 Button("Cancel the pause at \(paused.station.name)", systemImage: "arrow.uturn.backward") {
-                    Task { await autoLiveActivity.cancelPause() }
+                    isCancellingThePause = true
+                    Task {
+                        await autoLiveActivity.cancelPause()
+                        isCancellingThePause = false
+                    }
                 }
+                .disabled(isCancellingThePause)
                 .accessibilityIdentifier("cancelStationPause")
             }
         } footer: {

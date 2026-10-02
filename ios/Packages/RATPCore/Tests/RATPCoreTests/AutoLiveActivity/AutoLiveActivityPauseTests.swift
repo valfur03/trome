@@ -252,6 +252,37 @@ extension AutoLiveActivityModelTests {
         #expect(model.pausedStation == nil)
         #expect(client.started.count == 2)
         #expect(model.shownStation == Places.stationA)
+        #expect(gps.currentFixRequestCount == 0)
+    }
+
+    @Test func cancellingThePauseAtTheStationStartsTheLiveActivityWhenTheRiderHasNotMovedForAWhile() async {
+        let model = makeModel()
+        await pausedAtA(model)
+        clock.advance(by: 45)
+        await activate(model)
+
+        await model.cancelPause()
+
+        #expect(model.pausedStation == nil)
+        #expect(client.started.count == 2)
+        #expect(model.shownStation == Places.stationA)
+        #expect(gps.currentFixRequestCount == 1)
+    }
+
+    @Test func cancellingThePauseWhenIOSGivesNoPositionLetsTheNextPositionAtTheStationStartIt() async {
+        let model = makeModel()
+        await pausedAtA(model)
+        clock.advance(by: 45)
+        await activate(model)
+        gps.givesACurrentFix = false
+
+        await model.cancelPause()
+        #expect(model.pausedStation == nil)
+        #expect(client.started.count == 1)
+
+        gps.report(Places.fiftyMetersFromA)
+        await waitUntil { client.started.count == 2 }
+        #expect(model.shownStation == Places.stationA)
     }
 
     @Test func cancellingThePauseAwayFromTheStationLetsTheNextArrivalWork() async {

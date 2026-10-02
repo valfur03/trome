@@ -24,6 +24,11 @@ struct CoreLocationProvider: LocationProvider {
         }
     }
 
+    @MainActor
+    func currentFix() async -> PositionFix? {
+        await CurrentLocationRequest().fix()
+    }
+
     private static func event(from update: CLLocationUpdate) -> LocationEvent? {
         if let fix = update.location.flatMap(PositionFix.init) {
             return .position(fix)
@@ -35,5 +40,41 @@ struct CoreLocationProvider: LocationProvider {
             return .problem(.unavailable)
         }
         return nil
+    }
+}
+
+@MainActor
+private final class CurrentLocationRequest: NSObject {
+    private let manager = CLLocationManager()
+    private var continuation: CheckedContinuation<PositionFix?, Never>?
+
+    func fix() async -> PositionFix? {
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            manager.delegate = self
+            manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+            manager.requestLocation()
+        }
+    }
+
+    private func finish(with fix: PositionFix?) {
+        continuation?.resume(returning: fix)
+        continuation = nil
+        manager.delegate = nil
+    }
+}
+
+extension CurrentLocationRequest: CLLocationManagerDelegate {
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let fix = locations.last.flatMap(PositionFix.init)
+        MainActor.assumeIsolated {
+            finish(with: fix)
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
+        MainActor.assumeIsolated {
+            finish(with: nil)
+        }
     }
 }

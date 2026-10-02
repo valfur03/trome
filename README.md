@@ -625,7 +625,7 @@ The rules come from decision-32 in the backlog.
   A snooze does not change the pause.
 - **See and cancel it.** The main screen says "Paused at <station> until <time>" (in French "<station> : en sourdine jusqu’à <time>"), with the time left.
   Tap "Cancel the pause at <station>" ("Réactiver <station>") to end it at once.
-  If you are at the station with the app open, the Live Activity then starts.
+  If you are at the station with the app open, the Live Activity then starts, also when you have not moved for a while: the app asks iOS for your position once, and the button waits for the answer (usually a second or two).
   The line goes away when the pause ends.
   While the automatic mode is off, the screen does not show it.
 - **What is not a swipe.** The app ends the Live Activity itself (the snooze buttons, "Stop showing on the lock screen", the 250 meters, the 45 minutes): no pause.
@@ -639,6 +639,8 @@ For developers: `AutoLiveActivityRules.outcome(of:shown:now:)` (in `RATPCore`) d
 `AutoLiveActivityModel` applies it and saves the pause (`StationPause`) with its state, so the pause survives a relaunch.
 `ActivityKitStationLiveActivityClient` (in `ios/App/LiveActivity/`) follows each Live Activity of the app (`activityStateUpdates`) and reports its first `ended` or `dismissed` state, with whether the app ended it itself (it remembers the Live Activities that it ends).
 At launch, when the saved state says that a Live Activity shows and iOS lists none, the app forgets it with no pause (the limit above).
+The cancel trusts a position only when it is at most 15 seconds old, as an arrival does, and iOS sends no new position while the phone stands still (`CLLocationUpdate.liveUpdates` pauses), so the cancel asks for one with `CLLocationManager.requestLocation()` (`LocationProvider.currentFix()`, in `CoreLocationProvider`) when the last one is older.
+If iOS gives none, the pause still ends, and the next position at the station starts the Live Activity.
 
 ### Snooze or turn off the automatic mode
 

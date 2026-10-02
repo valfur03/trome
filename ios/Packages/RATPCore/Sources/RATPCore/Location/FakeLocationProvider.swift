@@ -10,4 +10,8 @@ public struct FakeLocationProvider: LocationProvider {
             continuation.yield(.position(.exact(coordinate)))
         }
     }
+
+    public func currentFix() async -> PositionFix? {
+        .exact(coordinate)
+    }
 }

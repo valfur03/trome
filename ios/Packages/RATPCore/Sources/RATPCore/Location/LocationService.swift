@@ -55,6 +55,16 @@ public final class LocationService {
         }
     }
 
+    func requestCurrentFix() async -> PositionFix? {
+        let requestedSource = source
+        guard let newFix = await provider(for: requestedSource).currentFix(), source == requestedSource else {
+            return nil
+        }
+        fix = newFix
+        problem = nil
+        return newFix
+    }
+
     private func provider(for source: LocationSource) -> any LocationProvider {
         switch source {
         case .realGPS:
