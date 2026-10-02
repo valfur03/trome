@@ -1,0 +1,85 @@
+---
+title: Help
+description: What to do when the TROME Live Activity does not show, does not start by itself or stops updating, and how to write to us.
+sidebar:
+  order: 1
+---
+
+import DraftNotice from '../../../components/DraftNotice.astro';
+import Placeholder from '../../../components/Placeholder.astro';
+
+<DraftNotice />
+
+This page helps when TROME does not do what you expect: each heading is a problem, followed by what fixes it.
+If nothing works, [write to us](#write-to-us).
+
+## The Live Activity does not show
+
+- **Check that Live Activities are allowed.**
+  Open **Settings > Apps > TROME**, and turn on **Live Activities**.
+- **Go near a station.**
+  The Live Activity starts about 150 meters from a metro or RER station.
+  It ends when you move more than 250 meters away, or 45 minutes after it started.
+- **Check that the automatic mode is on.**
+  Open TROME: if **Automatic mode** is off, turn it on.
+  If it says **Snoozed**, tap **Cancel the snooze**, or wait for the end time that it shows.
+
+The Live Activity shows on the lock screen and in the Notification Center, and in the Dynamic Island on an iPhone that has one.
+
+## It does not start by itself near a station
+
+When TROME is open, the Live Activity starts as soon as you come near a station.
+When TROME is closed, the iPhone sends you a notification, for example **“Next trains at Châtelet”**: tap it to show the Live Activity.
+
+To get this notification, TROME needs two permissions, in **Settings > Apps > TROME**:
+
+- **Location** set to **Always**.
+  With **While Using the App**, the Live Activity starts by itself only while TROME is open.
+- **Notifications** turned on.
+
+You get one notification for each arrival.
+After a snooze (the **30 min**, **1 h** and **Today** buttons of the Live Activity, or **Not for 1 h** and **Not today** on the notification), nothing starts until the snooze ends.
+
+## The times stop updating
+
+When the Live Activity has no recent times, its boxes empty and it says **“Open the app for new times.”**
+This happens when iOS stops TROME in the background, or when the iPhone has no internet.
+
+Open TROME: the app asks for new times at once.
+If nothing changes, check that the iPhone is connected to the internet.
+
+## “Times unavailable for now”
+
+TROME can ask for train times a limited number of times each day, and all its users share this limit.
+When many people use it at the same time, the limit can be reached, and the Live Activity then shows this message.
+
+The times already shown keep counting down until the first train leaves.
+You have nothing to do: TROME asks for the times again by itself, at the time that the app shows.
+In the meantime, trust the platform screen.
+
+## The minutes differ from the platform screen
+
+TROME shows the wait in whole minutes, and counts it down from the last times it got.
+Between two updates, a train can run early or late, and at busy times the times that TROME gets can be a few minutes old.
+So a gap of a minute or two with the platform screen is normal: when in doubt, trust the platform screen.
+
+## Write to us
+
+Write to us at <Placeholder>contact address</Placeholder>.
+We usually answer within <Placeholder>answer delay</Placeholder>.
+
+To help us find the cause quickly, tell us the model of your iPhone, its iOS version, the station, and what you see.
+A screenshot helps a lot.
+
+A bug or an idea?
+You can also report it on [GitHub](https://github.com/valfur03/trome/issues).
+
+## Data source
+
+Contains information from the ‘[Prochains passages](https://prim.iledefrance-mobilites.fr)’ database of Île-de-France Mobilités (PRIM), made available under the ‘[Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences)’.
+
+Station list adapted by TROME from Île-de-France Mobilités data, under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) and the [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0).
+
+TROME is not an app of RATP or of Île-de-France Mobilités, and neither of them endorses it.
+The names, the signs and the colours of the lines belong to their owners.
+The sources and their licences are listed in full in [NOTICE.md](https://github.com/valfur03/trome/blob/main/NOTICE.md).

@@ -1,0 +1,85 @@
+---
+title: Aide
+description: Que faire quand l’activité en direct de TROME ne s’affiche pas, ne démarre pas toute seule ou ne se met plus à jour, et comment nous écrire.
+sidebar:
+  order: 1
+---
+
+import DraftNotice from '../../../components/DraftNotice.astro';
+import Placeholder from '../../../components/Placeholder.astro';
+
+<DraftNotice />
+
+Cette page vous aide quand TROME ne fait pas ce que vous attendez : chaque titre est un problème, suivi de ce qui le règle.
+Si rien ne marche, [écrivez-nous](#nous-écrire).
+
+## L’activité en direct ne s’affiche pas
+
+- **Vérifiez que les activités en direct sont autorisées.**
+  Ouvrez **Réglages > Apps > TROME**, et activez **Activités en direct**.
+- **Approchez-vous d’une station.**
+  L’activité en direct démarre à environ 150 mètres d’une station de métro ou de RER.
+  Elle s’arrête quand vous vous éloignez de plus de 250 mètres, ou 45 minutes après son début.
+- **Vérifiez que le mode automatique est activé.**
+  Ouvrez TROME : si **Mode automatique** est désactivé, activez-le.
+  S’il est **En pause**, touchez **Annuler la pause**, ou attendez l’heure de fin indiquée.
+
+L’activité en direct s’affiche sur l’écran verrouillé et dans le Centre de notifications, et dans la Dynamic Island sur les iPhone qui en ont une.
+
+## Elle ne démarre pas toute seule près d’une station
+
+Quand TROME est ouvert, l’activité en direct démarre dès que vous arrivez près d’une station.
+Quand TROME est fermé, l’iPhone vous envoie une notification, par exemple **« Châtelet : prochains passages »** : touchez-la pour afficher l’activité en direct.
+
+Pour recevoir cette notification, TROME a besoin de deux autorisations, dans **Réglages > Apps > TROME** :
+
+- **Position** sur **Toujours**.
+  Avec **Lorsque l’app est active**, l’activité en direct ne démarre toute seule que si TROME est ouvert.
+- **Notifications** activées.
+
+Vous recevez une seule notification à chaque arrivée.
+Après une pause (les boutons **30 min**, **1 h** et **Aujourd’hui** de l’activité en direct, ou **Pas pendant 1 h** et **Pas aujourd’hui** sur la notification), rien ne démarre jusqu’à la fin de la pause.
+
+## Les horaires ne se mettent plus à jour
+
+Quand l’activité en direct n’a plus d’horaires récents, ses cases se vident et elle affiche **« Ouvrez l’app pour mettre à jour les horaires. »**
+Cela arrive quand iOS arrête TROME en arrière-plan, ou quand l’iPhone n’a plus internet.
+
+Ouvrez TROME : l’app demande de nouveaux horaires tout de suite.
+Si rien ne change, vérifiez que l’iPhone est connecté à internet.
+
+## « Horaires indisponibles pour le moment »
+
+TROME peut demander les horaires un nombre limité de fois par jour, et tous ses utilisateurs partagent cette limite.
+Quand beaucoup de monde l’utilise en même temps, la limite peut être atteinte : l’activité en direct affiche alors ce message.
+
+Les horaires déjà affichés continuent de défiler jusqu’au départ du premier train.
+Vous n’avez rien à faire : TROME redemande les horaires tout seul, à l’heure indiquée dans l’app.
+En attendant, fiez-vous à l’écran du quai.
+
+## Les minutes diffèrent de l’écran du quai
+
+TROME affiche l’attente en minutes entières, et la décompte à partir des derniers horaires reçus.
+Entre deux mises à jour, un train peut prendre de l’avance ou du retard, et aux heures chargées les horaires reçus peuvent dater de quelques minutes.
+Un écart d’une ou deux minutes avec l’écran du quai est donc normal : en cas de doute, fiez-vous à l’écran du quai.
+
+## Nous écrire
+
+Écrivez-nous à <Placeholder>adresse de contact</Placeholder>.
+Nous répondons en général sous <Placeholder>délai de réponse</Placeholder>.
+
+Pour que nous trouvions vite la cause, dites-nous le modèle de votre iPhone, sa version d’iOS, la station, et ce que vous voyez.
+Une capture d’écran aide beaucoup.
+
+Un bug ou une idée ?
+Vous pouvez aussi les signaler sur [GitHub](https://github.com/valfur03/trome/issues).
+
+## Source des données
+
+Contient des informations de la base « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), présentement mises à disposition aux conditions de la « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) ».
+
+Liste des stations adaptée par TROME à partir des données d’Île-de-France Mobilités, sous licences [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) et [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0).
+
+TROME n’est pas une app de la RATP ni d’Île-de-France Mobilités, et aucune des deux ne la soutient.
+Les noms, les pictogrammes et les couleurs des lignes appartiennent à leurs propriétaires.
+Le détail des sources et de leurs licences est dans le fichier [NOTICE.md](https://github.com/valfur03/trome/blob/main/NOTICE.md) (en anglais).

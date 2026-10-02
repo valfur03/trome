@@ -1,0 +1,97 @@
+---
+title: Privacy policy
+description: The data that the TROME app uses, where it goes, what is kept and for how long, and what you can ask us.
+sidebar:
+  label: Privacy
+  order: 2
+---
+
+import DraftNotice from '../../../components/DraftNotice.astro';
+import Placeholder from '../../../components/Placeholder.astro';
+
+<DraftNotice />
+
+Updated: <Placeholder>date</Placeholder>.
+
+This page says which data the TROME iPhone app uses, where it goes, and what is kept.
+
+## In short
+
+- TROME has no account, shows no ads, and does not measure what you do in the app.
+- Your position stays on your iPhone.
+- To show the train times, the app sends our server the identifier of the stop, and nothing else.
+- Our server keeps no data that could identify you.
+
+## Your position
+
+TROME uses your position, on the iPhone, to find the nearest station, and to show or remove the Live Activity when you come near a station or move away from it.
+With **Always** access, iOS tells TROME when you come near a station, even when the app is closed.
+
+The app sends your position to nobody: not to us, and not to anyone else.
+You can change this access at any time in **Settings > Apps > TROME > Location**.
+Without your position, TROME cannot find the nearest station.
+
+## What the app sends to our server
+
+To show the next trains, the app asks our server for the times.
+It sends the identifier of the stop (for example the one of Châtelet station) and a code that every copy of the app shares, which says nothing about you.
+It sends neither your position, nor an identifier of your iPhone, nor an identifier of you.
+
+Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and of iOS.
+Our server does not read them and does not keep them.
+
+Our server keeps:
+
+- the latest times of each stop, to give them to everyone who asks;
+- totals, for 30 days: the number of requests it got each hour, and the number of times it asked for the times of each stop each day, to stay within the limit of the source of the times;
+- the list of errors, for 7 days: the time, the stop and the kind of error.
+
+None of this data says who made the request.
+
+Our server asks Île-de-France Mobilités (PRIM) for the times with the identifier of the stop only: PRIM gets nothing that comes from you.
+
+## Our host
+
+Our server runs on Cloudflare.
+Cloudflare gets each request before our server does, so it sees your IP address and the technical details of the request, to deliver it.
+We have turned off the request logs that Cloudflare can keep for us.
+Cloudflare handles this data under its own [privacy policy](https://www.cloudflare.com/privacypolicy/).
+
+## What stays on your iPhone
+
+TROME keeps your settings (the automatic mode and the snooze), the last station shown, and the latest times it got, on your iPhone.
+The app sends them nowhere, but they are part of the backups of your iPhone, like the data of every app.
+Deleting the app deletes them.
+
+## Notifications
+
+TROME makes its notifications on your iPhone, when you come near a station.
+We send no notification from a server, and the app asks for no notification identifier.
+
+## What Apple gives us
+
+If you share analytics with app developers (**Settings > Privacy & Security > Analytics & Improvements > Share With App Developers**), Apple gives us crash reports and usage statistics, which do not say who you are.
+Apple explains it in [Device Analytics & Privacy](https://www.apple.com/legal/privacy/data/en/device-analytics/).
+
+If you test TROME with TestFlight, Apple gives us your crash reports, usage data, and the feedback that you send.
+If you were invited by email, they come with your name and email address, but not if you joined the test through a public link.
+Apple explains it in [TestFlight & Privacy](https://www.apple.com/legal/privacy/data/en/test-flight/).
+
+We use this information only to fix and improve TROME, and we share it with nobody.
+
+## Your rights
+
+Apart from what Apple gives us and the messages that you send us, we keep no data about you, so there is nothing else to see or delete on our side.
+We keep your messages for as long as it takes to answer you and fix the problem, and we delete them if you ask.
+
+For any question, or to see or delete what we have about you, write to <Placeholder>contact address</Placeholder>.
+You can also complain to the [CNIL](https://www.cnil.fr/en), the French data protection authority.
+
+## Who we are
+
+TROME is made by <Placeholder>legal name</Placeholder>, <Placeholder>city</Placeholder>, France.
+Contact: <Placeholder>contact address</Placeholder>.
+
+## Changes
+
+When this page changes, we change its date, at the top of the page.

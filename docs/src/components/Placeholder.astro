@@ -1,0 +1,16 @@
+---
+// A fact that the page still waits for, such as a contact address.
+// A page that uses it must also show the DraftNotice: a test checks it.
+---
+
+<mark class="placeholder">[<slot />]</mark>
+
+<style>
+  .placeholder {
+    padding: 0 0.2em;
+    border-radius: 0.2em;
+    background-color: var(--sl-color-orange-low);
+    color: var(--sl-color-orange-high);
+    font-weight: 600;
+  }
+</style>

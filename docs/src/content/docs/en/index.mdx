@@ -1,0 +1,33 @@
+---
+title: TROME
+description: TROME shows the next metro and RER trains of the nearest station on the iPhone lock screen, as a Live Activity.
+template: splash
+hero:
+  tagline: The next metro and RER trains of the nearest station, on the lock screen of your iPhone.
+  actions:
+    - text: Help
+      link: /trome/en/support/
+      icon: right-arrow
+    - text: Privacy
+      link: /trome/en/privacy/
+      variant: minimal
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import liveActivity from '../../../assets/screenshots/live-activity-notification-center.png';
+import Screenshot from '../../../components/Screenshot.astro';
+
+When you come near a metro or RER station in the Paris region, TROME shows its next trains on the lock screen, as a Live Activity: both directions of each line, and the wait for the next trains.
+There is nothing to look up in the app, and no account to create.
+
+<Screenshot src={liveActivity} alt="The lock screen of an iPhone, with the TROME Live Activity for Champ de Mars Tour Eiffel station at the bottom, with no train times yet, and its snooze buttons: 30 min, 1 h and Today." />
+
+TROME is not on the App Store yet.
+Until then, you can install it yourself with a Mac.
+
+<CardGrid>
+  <LinkCard title="Help" description="The Live Activity does not show, or stops updating? The fixes, and how to write to us." href="/trome/en/support/" />
+  <LinkCard title="Privacy" description="Your position stays on your iPhone. What the app sends, and what is kept." href="/trome/en/privacy/" />
+  <LinkCard title="What’s new" description="What changes in each version of TROME." href="/trome/en/whats-new/" />
+  <LinkCard title="Build it yourself" description="Install TROME on your iPhone with Xcode and a free Apple ID." href="/trome/en/build/install-on-your-iphone/" />
+</CardGrid>

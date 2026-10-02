@@ -21,8 +21,8 @@ Run the docs commands from the root of the repo:
 
 | Command | What it does |
 |---|---|
-| `make docs-dev` | Serves the site at http://localhost:4321, and reloads the page each time you save a file. The search box does not work here. |
-| `make docs` | Builds the site as it is published, and serves it at http://localhost:4321, with the search. |
+| `make docs-dev` | Serves the site at http://localhost:4321/trome/, and reloads the page each time you save a file. The search box does not work here. |
+| `make docs` | Builds the site as it is published, and serves it at http://localhost:4321/trome/, with the search. |
 | `make docs-stop` | Stops the server when it runs in the background, which Astro does when the command does not run in a terminal. In a terminal, press Ctrl + C instead. |
 | `make docs-check` | Runs the tests of the components, checks the pages, builds the site, and fails on a broken internal link. |
 
@@ -32,10 +32,16 @@ The first docs command installs the packages in `docs/node_modules`, about 300 M
 
 ## Add a page
 
-Each page is an `.mdx` file in [`src/content/docs/`](src/content/docs/).
-Its folder gives its section in the sidebar: a page in `tutorial/` shows under **Tutorial**.
-A new folder needs a section of its own in [`astro.config.mjs`](astro.config.mjs).
-Its address is its path, so `tutorial/install-on-your-iphone.mdx` is at `/tutorial/install-on-your-iphone/`.
+Each page is an `.mdx` file in [`src/content/docs/`](src/content/docs/), in the folder of its language: `fr/` or `en/`.
+Its address is its path after the base path of the site, `/trome/`, so `fr/support.mdx` is at `/trome/fr/support/`.
+The site lives at https://valfur03.github.io/trome/, and [`astro.config.mjs`](astro.config.mjs) sets this address in one place.
+
+The sidebar has one section for each reader, set in `astro.config.mjs`:
+
+- **Utiliser TROME** (**Use TROME** in English) lists the riders' pages one by one, so add a new riders' page to its list.
+- **Build it yourself** shows each page of `en/build/`.
+
+Write a link to another page of the site with the base path and the language, for example `[Aide](/trome/fr/support/)`: Astro does not add them.
 
 Start the file with a title and a description, which search engines and link previews show.
 `sidebar.order` sets the place of the page in its section:
@@ -49,8 +55,10 @@ sidebar:
 ---
 ```
 
-A page for riders has a French page and an English page, with the same facts, and both come in the same change.
-The site has no French section yet, so for now every page is in English.
+A page for riders has a French page and an English page at the same path, with the same facts, and both come in the same change.
+The language menu of each page then opens the same page in the other language.
+`make docs-check` fails when a riders' page exists in one language only.
+The pages for builders are in English only, in `en/build/`, and the French home links to them: [`src/site-pages.ts`](src/site-pages.ts) lists these English-only folders.
 
 ### The components
 
@@ -61,18 +69,20 @@ The site has no French section yet, so for now every page is in English.
 | [`Checklist`](src/components/Checklist.astro) | around a `Steps` list: a tick box on each step, and a count at the top ("3 of 11 steps done"); add `kind="things"` for a list of things to have ("3 of 8 things ready") |
 | [`Screenshot`](src/components/Screenshot.astro) | one picture of the app |
 | [`Screenshots`](src/components/Screenshots.astro) | pictures side by side, each in its own `Screenshot` |
+| [`Placeholder`](src/components/Placeholder.astro) | a fact that the page still waits for, such as a contact address: `<Placeholder>contact address</Placeholder>` shows it highlighted, between brackets |
+| [`DraftNotice`](src/components/DraftNotice.astro) | at the top of a page that is not signed off yet: it says, in the language of the page, that the page must not go online; a page with a `Placeholder` must have it, and `make docs-check` fails when it does not |
 
 Give each `Checklist` its own `id`: the browser saves the ticks of the reader under it.
 Show a picture of the app only with `Screenshot`, never with a Markdown image or the `Image` component of Astro.
 `Screenshot` shows the picture 300 pixels wide, with the rounded corners of an iPhone screen, and the browser downloads a small file that fits its screen.
 Import the components after the title.
-The paths start from the folder of the page, here a page in `tutorial/`:
+The paths start from the folder of the page, here a page in `en/build/`:
 
 ```mdx
 import { Aside, Steps } from '@astrojs/starlight/components';
-import Checklist from '../../../components/Checklist.astro';
-import Screenshot from '../../../components/Screenshot.astro';
-import appMainScreen from '../../../assets/screenshots/app-main-screen.png';
+import Checklist from '../../../../components/Checklist.astro';
+import Screenshot from '../../../../components/Screenshot.astro';
+import appMainScreen from '../../../../assets/screenshots/app-main-screen.png';
 
 <Screenshot src={appMainScreen} alt="The main screen of the app: the button to show the Live Activity of the nearest station, the automatic mode, and the permissions." />
 ```
@@ -284,4 +294,4 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
 7. **Pictures.** They show the current app, and each alt text says what the picture shows, in the language of the page.
 8. **One home for each fact.** A fact is on one page, and the other pages link to it.
 9. **French.** A riders' page reads as French that a Paris rider would write, and the French and English pages say the same facts.
-10. **The checks pass.** `make check` checks the length of the lines, the public text and the internal links of the site, and `make docs-screenshots` checks the pictures.
+10. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.

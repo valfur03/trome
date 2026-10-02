@@ -1,0 +1,33 @@
+---
+title: TROME
+description: TROME montre les prochains métros et RER de la station la plus proche sur l’écran verrouillé de l’iPhone, en activité en direct.
+template: splash
+hero:
+  tagline: Les prochains métros et RER de la station la plus proche, sur l’écran verrouillé de votre iPhone.
+  actions:
+    - text: Aide
+      link: /trome/fr/support/
+      icon: right-arrow
+    - text: Confidentialité
+      link: /trome/fr/privacy/
+      variant: minimal
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import liveActivity from '../../../assets/screenshots/live-activity-notification-center.png';
+import Screenshot from '../../../components/Screenshot.astro';
+
+Quand vous arrivez près d’une station de métro ou de RER d’Île-de-France, TROME affiche ses prochains passages sur l’écran verrouillé, dans une activité en direct : les deux directions de chaque ligne, et l’attente des prochains trains.
+Il n’y a rien à chercher dans l’app, ni compte à créer.
+
+<Screenshot src={liveActivity} alt="L’écran verrouillé d’un iPhone, avec en bas l’activité en direct de TROME pour la station Champ de Mars Tour Eiffel, en anglais et encore sans horaires, et ses boutons de pause : 30 min, 1 h et Today." />
+
+TROME n’est pas encore sur l’App Store.
+En attendant, vous pouvez l’installer vous-même avec un Mac.
+
+<CardGrid>
+  <LinkCard title="Aide" description="L’activité en direct ne s’affiche pas, ou ne se met plus à jour ? Les solutions, et comment nous écrire." href="/trome/fr/support/" />
+  <LinkCard title="Confidentialité" description="Votre position reste sur votre iPhone. Ce que l’app envoie, et ce qui est gardé." href="/trome/fr/privacy/" />
+  <LinkCard title="Nouveautés" description="Ce qui change dans chaque version de TROME." href="/trome/fr/whats-new/" />
+  <LinkCard title="L’installer vous-même" description="Installez TROME sur votre iPhone avec Xcode et un identifiant Apple gratuit. Guide en anglais." href="/trome/en/build/install-on-your-iphone/" />
+</CardGrid>

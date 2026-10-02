@@ -66,7 +66,7 @@ To turn the hooks off, run `make git-hooks-off`. Then run `make generate` after 
 | `make stations` | Downloads the metro and RER station list again (see below). |
 | `make clean` | Deletes the build folder and the Xcode project. |
 | `make clean-shared-cache` | Deletes the build cache that all folders share (see [Notes for developers](#notes-for-developers)). |
-| `make docs` | Builds the docs site and serves it at http://localhost:4321 (see [The docs site](#the-docs-site)). |
+| `make docs` | Builds the docs site and serves it at http://localhost:4321/trome/ (see [The docs site](#the-docs-site)). |
 | `make help` | Shows all the commands. |
 
 ## Run on the Simulator
@@ -804,7 +804,7 @@ The build output never shows the key. `make live-key-check` proves it with fake 
 
 ## Install on your iPhone (free Apple ID)
 
-The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open "Tutorial" in the sidebar. The page is `docs/src/content/docs/tutorial/install-on-your-iphone.mdx`.
+The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open http://localhost:4321/trome/en/build/install-on-your-iphone/. The page is `docs/src/content/docs/en/build/install-on-your-iphone.mdx`.
 
 In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git).
 Run `make generate`, open the project `ios/RATPActivity.xcodeproj` in Xcode, choose your iPhone, and click Run.
@@ -838,7 +838,7 @@ Install it one time with [nvm](https://github.com/nvm-sh/nvm): run `nvm install`
 
 | Command | What it does |
 |---|---|
-| `make docs` | Builds the site and serves it at http://localhost:4321. The search works only here. `make docs PORT=4400` uses port 4400. |
+| `make docs` | Builds the site and serves it at http://localhost:4321/trome/. The search works only here. `make docs PORT=4400` uses port 4400. |
 | `make docs-dev` | Serves the site with live reload while you change a page. No search. It also accepts `PORT=<n>`. |
 | `make docs-stop` | Stops the docs server of this folder. Use it when the server runs in the background (for agents, Astro starts it in the background). In a terminal, press Ctrl + C. |
 | `make docs-check` | The docs quality gate: installs the packages if needed, runs the unit tests and `astro check`, builds the site, and fails on a broken internal link. It needs no Simulator. |
@@ -850,19 +850,19 @@ The first docs command installs the packages in `docs/node_modules` (about 300 M
 
 To write a page:
 
-- Add an `.mdx` file in `docs/src/content/docs/tutorial/`. The sidebar shows it under "Tutorial".
+- Add an `.mdx` file in the folder of its language, `docs/src/content/docs/fr/` or `docs/src/content/docs/en/` (see [the docs guide](docs/README.md#add-a-page)).
 - Use the Starlight components: `Steps` for a step list, `Aside` for a callout. See https://starlight.astro.build/components/using-components/.
 - Inline code (between backticks) never breaks across two lines (`docs/src/styles/custom.css`), so a reader can copy a command as one piece. Keep it short: at most about 30 characters. Put a longer command in a code block, on its own line.
 - To show the progress of a step list ("3 of 11 steps done"), put the list inside the `Checklist` component of `docs/src/components/Checklist.astro`.
   Give each list its own `id`: the browser saves the ticks under this id.
-  The home page (`docs/src/content/docs/index.mdx`) shows an example.
+  The tutorial (`docs/src/content/docs/en/build/install-on-your-iphone.mdx`) shows an example.
   For a list of things to have, not steps, add `kind="things"`: it shows "3 of 8 things ready".
-- Show an app screenshot with the `Screenshot` component of `docs/src/components/Screenshot.astro`. Do not use a Markdown image or the `Image` component of Astro. To show many screenshots side by side, put them inside the `Screenshots` component. The home page shows an example:
+- Show an app screenshot with the `Screenshot` component of `docs/src/components/Screenshot.astro`. Do not use a Markdown image or the `Image` component of Astro. To show many screenshots side by side, put them inside the `Screenshots` component. For example, in a page of `docs/src/content/docs/en/build/`:
 
   ```mdx
-  import Screenshot from '../../../components/Screenshot.astro';
-  import Screenshots from '../../../components/Screenshots.astro';
-  import appMainScreen from '../../../assets/screenshots/app-main-screen.png';
+  import Screenshot from '../../../../components/Screenshot.astro';
+  import Screenshots from '../../../../components/Screenshots.astro';
+  import appMainScreen from '../../../../assets/screenshots/app-main-screen.png';
 
   <Screenshot src={appMainScreen} alt="The main screen of the app." />
   ```

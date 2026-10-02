@@ -1,0 +1,97 @@
+---
+title: Politique de confidentialité
+description: Les données que l’app TROME utilise, où elles vont, ce qui est gardé et combien de temps, et ce que vous pouvez nous demander.
+sidebar:
+  label: Confidentialité
+  order: 2
+---
+
+import DraftNotice from '../../../components/DraftNotice.astro';
+import Placeholder from '../../../components/Placeholder.astro';
+
+<DraftNotice />
+
+Mise à jour : <Placeholder>date</Placeholder>.
+
+Cette page dit quelles données l’app TROME pour iPhone utilise, où elles vont, et ce qui est gardé.
+
+## En bref
+
+- TROME n’a pas de compte, n’affiche pas de publicité et ne mesure pas ce que vous faites dans l’app.
+- Votre position reste sur votre iPhone.
+- Pour afficher les horaires, l’app envoie à notre serveur l’identifiant de l’arrêt, et rien d’autre.
+- Notre serveur ne garde aucune donnée qui permette de vous reconnaître.
+
+## Votre position
+
+TROME utilise votre position, sur l’iPhone, pour trouver la station la plus proche, et pour afficher ou retirer l’activité en direct quand vous arrivez près d’une station ou que vous vous en éloignez.
+Avec l’accès **Toujours**, iOS prévient TROME quand vous arrivez près d’une station, même quand l’app est fermée.
+
+L’app n’envoie votre position à personne : ni à nous, ni à qui que ce soit d’autre.
+Vous pouvez changer cet accès à tout moment dans **Réglages > Apps > TROME > Position**.
+Sans votre position, TROME ne peut pas trouver la station la plus proche.
+
+## Ce que l’app envoie à notre serveur
+
+Pour afficher les prochains passages, l’app demande les horaires à notre serveur.
+Elle lui envoie l’identifiant de l’arrêt (par exemple celui de la station Châtelet) et un code commun à toutes les copies de l’app, qui ne dit rien de vous.
+Elle n’envoie ni votre position, ni un identifiant de votre iPhone, ni un identifiant de vous.
+
+Comme toute connexion à internet, la demande arrive avec l’adresse IP de votre iPhone et des informations techniques, comme les versions de l’app et d’iOS.
+Notre serveur ne les lit pas et ne les garde pas.
+
+Notre serveur garde :
+
+- les derniers horaires de chaque arrêt, pour les donner à tous ceux qui les demandent ;
+- des totaux, pendant 30 jours : le nombre de demandes reçues chaque heure, et le nombre de fois où il a demandé les horaires de chaque arrêt chaque jour, pour rester dans la limite de la source des horaires ;
+- la liste des erreurs, pendant 7 jours : l’heure, l’arrêt et le type d’erreur.
+
+Aucune de ces données ne dit qui a fait la demande.
+
+Notre serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de l’arrêt : PRIM ne reçoit rien qui vienne de vous.
+
+## Notre hébergeur
+
+Notre serveur fonctionne chez Cloudflare.
+Cloudflare reçoit chaque demande avant notre serveur : il voit donc votre adresse IP et les informations techniques de la demande, pour la livrer.
+Nous avons désactivé l’enregistrement des demandes que Cloudflare peut faire pour nous.
+Cloudflare traite ces données selon sa [politique de confidentialité](https://www.cloudflare.com/fr-fr/privacypolicy/).
+
+## Ce qui reste sur votre iPhone
+
+TROME garde sur votre iPhone vos réglages (le mode automatique et la pause), la dernière station affichée, et les derniers horaires reçus.
+L’app ne les envoie nulle part, mais ils font partie des sauvegardes de votre iPhone, comme les données de toutes les apps.
+Supprimer l’app les supprime.
+
+## Notifications
+
+Les notifications de TROME sont créées sur votre iPhone, quand vous arrivez près d’une station.
+Nous n’envoyons aucune notification depuis un serveur, et l’app ne demande pas d’identifiant de notification.
+
+## Ce qu’Apple nous transmet
+
+Si vous partagez les analyses avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple nous transmet des rapports de plantage et des statistiques d’usage, qui ne disent pas qui vous êtes.
+Apple l’explique dans [Analyse de l’appareil et confidentialité](https://www.apple.com/legal/privacy/data/fr/device-analytics/).
+
+Si vous testez TROME avec TestFlight, Apple nous transmet vos rapports de plantage, des données d’usage et les commentaires que vous envoyez.
+Si vous avez été invité par e-mail, ils arrivent avec votre nom et votre adresse e-mail, mais pas si vous avez rejoint le test par un lien public.
+Apple l’explique dans [TestFlight et confidentialité](https://www.apple.com/legal/privacy/data/fr/test-flight/).
+
+Nous utilisons ces informations seulement pour corriger et améliorer TROME, et nous ne les partageons avec personne.
+
+## Vos droits
+
+En dehors de ce qu’Apple nous transmet et des messages que vous nous envoyez, nous ne gardons aucune donnée sur vous : il n’y a rien d’autre à consulter ni à supprimer chez nous.
+Nous gardons vos messages le temps de vous répondre et de régler le problème, et nous les supprimons si vous le demandez.
+
+Pour toute question, ou pour voir ou supprimer ce que nous avons sur vous, écrivez à <Placeholder>adresse de contact</Placeholder>.
+Vous pouvez aussi adresser une réclamation à la [CNIL](https://www.cnil.fr/fr/plaintes).
+
+## Qui sommes-nous
+
+TROME est fait par <Placeholder>nom légal</Placeholder>, <Placeholder>ville</Placeholder>, France.
+Contact : <Placeholder>adresse de contact</Placeholder>.
+
+## Changements
+
+Quand cette page change, nous changeons sa date, en haut de la page.
