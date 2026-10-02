@@ -35,6 +35,7 @@ INTERNAL_FILES = {
 SKIPPED_FILES = {
     "ios/scripts/public-text-check.py": "it holds the word list of this check",
     "ios/scripts/tests/public-text-check-test.sh": "it holds the examples that this check must find",
+    "server/worker-configuration.d.ts": "wrangler types generates it from the runtime types of Cloudflare, so its words are Cloudflare's",
 }
 ALLOWED_TEXTS: list[Allowed] = []
 

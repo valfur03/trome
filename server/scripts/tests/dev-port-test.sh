@@ -33,15 +33,15 @@ worktree() {
 }
 
 expect "the main folder uses 8787" "$(port_in "$main")" "8787"
-expect "the worktree of a task adds its number" "$(worktree task-187)" "8974"
-expect "two worktrees get two ports" "$(worktree task-12)" "8799"
-expect "a leading zero is not read as octal" "$(worktree task-019)" "8806"
+expect "the worktree of a task adds its number" "$(worktree feature-187)" "8974"
+expect "two worktrees get two ports" "$(worktree feature-12)" "8799"
+expect "a leading zero is not read as octal" "$(worktree feature-019)" "8806"
 
 qa=$(worktree qa)
 expect "a worktree with no number at its end does not use 8787" "$([ "$qa" != 8787 ] && echo yes || echo no)" "yes"
 expect "it gets a port above the ports of the task numbers" "$([ "$qa" -ge 9800 ] && [ "$qa" -lt 9900 ] && echo yes || echo no)" "yes"
 expect "it gets the same port each time" "$(port_in "$state/worktrees/qa")" "$qa"
-expect "a worktree that ends with 0 does not use 8787" "$([ "$(worktree task-0)" != 8787 ] && echo yes || echo no)" "yes"
+expect "a worktree that ends with 0 does not use 8787" "$([ "$(worktree feature-0)" != 8787 ] && echo yes || echo no)" "yes"
 
 mv "$main" "$state/ratp-activity-ios2"
 git -C "$state/ratp-activity-ios2" worktree repair > /dev/null 2>&1 || true
