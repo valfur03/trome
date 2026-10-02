@@ -89,6 +89,18 @@ extension LinesPageTests {
         #expect(page(with: direction).panamStripsLine?.directions == [direction])
     }
 
+    @Test func keepsTheTwoTrainsOfEachEndAndOnlyTheNextOneOnTheIsland() throws {
+        let page = try pageWithFakeTrains(at: "Liège")
+        let north = try #require(page.lines.first?.directions.first { $0.branchEnds != nil })
+        let islandNorth = try #require(page.keepingOnlyTheNextTrains.lines.first?.directions.first {
+            $0.branchEnds != nil
+        })
+
+        #expect(north.trainsOfEachEnd?.map(\.end) == Self.line13NorthEnds)
+        #expect(north.trainsOfEachEnd?.map(\.trains.count) == [2, 2])
+        #expect(islandNorth.trainsOfEachEnd?.map(\.trains.count) == [1, 1])
+    }
+
     @Test func leavesRoomForATwoLineStationNameOnlyWithOneStripOrNone() throws {
         let line = try #require(try pageWithFakeTrains(at: "Liège").panamStripsLine)
         var oneStrip = line

@@ -31,7 +31,13 @@ extension LineDirectionsTests {
             LineDirection(label: "Mairie d'Ivry / Villejuif - Louis Aragon", trains: [
                 branchTrain(2, to: "Villejuif - Louis Aragon"),
                 branchTrain(5, to: "Mairie d'Ivry")
-            ], branchEnds: ["Mairie d'Ivry", "Villejuif - Louis Aragon"])
+            ], branchEnds: ["Mairie d'Ivry", "Villejuif - Louis Aragon"], trainsOfEachEnd: [
+                BranchEndTrains(end: "Mairie d'Ivry", trains: [branchTrain(5, to: "Mairie d'Ivry")]),
+                BranchEndTrains(
+                    end: "Villejuif - Louis Aragon",
+                    trains: [branchTrain(2, to: "Villejuif - Louis Aragon")]
+                )
+            ])
         ])
         #expect(result.map(\.showsEachDestination) == [false, true])
     }
@@ -47,7 +53,16 @@ extension LineDirectionsTests {
             LineDirection(label: "Saint-Denis - Université / Asnières - Gennevilliers - Les Courtilles", trains: [
                 branchTrain(1, to: "Asnières - Gennevilliers - Les Courtilles"),
                 branchTrain(4, to: "Saint-Denis - Université")
-            ], branchEnds: ["Saint-Denis - Université", "Asnières - Gennevilliers - Les Courtilles"]),
+            ], branchEnds: ["Saint-Denis - Université", "Asnières - Gennevilliers - Les Courtilles"], trainsOfEachEnd: [
+                BranchEndTrains(
+                    end: "Saint-Denis - Université",
+                    trains: [branchTrain(4, to: "Saint-Denis - Université")]
+                ),
+                BranchEndTrains(
+                    end: "Asnières - Gennevilliers - Les Courtilles",
+                    trains: [branchTrain(1, to: "Asnières - Gennevilliers - Les Courtilles")]
+                )
+            ]),
             LineDirection(label: "Châtillon - Montrouge", times: [time(inMinutes: 2)])
         ])
         #expect(result.map(\.showsEachDestination) == [true, false])

@@ -27,17 +27,20 @@ public struct LineDirection: Codable, Hashable, Sendable {
     public var trains: [Train]
     public var nextTrainIsOverAnHourAway: Bool
     public var branchEnds: [String]?
+    public var trainsOfEachEnd: [BranchEndTrains]?
 
     public init(
         label: String,
         trains: [Train],
         nextTrainIsOverAnHourAway: Bool = false,
-        branchEnds: [String]? = nil
+        branchEnds: [String]? = nil,
+        trainsOfEachEnd: [BranchEndTrains]? = nil
     ) {
         self.label = label
         self.trains = trains
         self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
         self.branchEnds = branchEnds
+        self.trainsOfEachEnd = trainsOfEachEnd
     }
 
     public init(label: String, times: [Date], nextTrainIsOverAnHourAway: Bool = false) {
@@ -103,7 +106,8 @@ enum LineDirections {
         var shown = directions(of: line, at: station, trainsFrom: departures, now: now)
         guard !laterDepartures.isEmpty else { return shown }
         let laterTimes = Set(laterDepartures.map(\.time))
-        let laterOnly = directions(of: line, at: station, trainsFrom: departures + laterDepartures, now: now)
+        let withLater = directions(of: line, at: station, trainsFrom: departures + laterDepartures, now: now)
+        let laterOnly = withLater
             .filter { direction in direction.trains.first.map { laterTimes.contains($0.time) } ?? false }
         for later in laterOnly {
             if let index = shown.firstIndex(where: { $0.label == later.label }) {
@@ -115,9 +119,14 @@ enum LineDirections {
                     label: later.label,
                     trains: [],
                     nextTrainIsOverAnHourAway: true,
-                    branchEnds: later.branchEnds
+                    branchEnds: later.branchEnds,
+                    trainsOfEachEnd: later.trainsOfEachEnd?.map { BranchEndTrains(end: $0.end, trains: []) }
                 ))
             }
+        }
+        for index in shown.indices {
+            guard let later = withLater.first(where: { $0.label == shown[index].label }) else { continue }
+            markEndsWhoseNextTrainIsOverAnHourAway(of: &shown[index], knowing: later)
         }
         return shown
     }
@@ -157,14 +166,7 @@ enum LineDirections {
                 of: line
             )
             guard showsEmptySides || !sideTrains.isEmpty else { return nil }
-            let reachableEnds = ends.reachableEnds(of: sides[index], from: station.name)
-            return LineDirection(
-                label: reachableEnds.joined(separator: " / "),
-                trains: sideTrains.prefix(timesPerDirection).map { train in
-                    shown(train, at: now, as: endName(of: train.destination, in: sides[index], ends: ends))
-                },
-                branchEnds: line.mode == .metro && reachableEnds.count > 1 ? reachableEnds : nil
-            )
+            return direction(of: line, toward: sides[index], from: station, trains: sideTrains, now: now)
         }
         let otherDirections = groups
             .filter { $0.side == nil && !$0.trains.isEmpty && !isOnTheRERTrunk }
@@ -192,7 +194,7 @@ enum LineDirections {
         return kept
     }
 
-    private static func shown(_ train: Departure, at now: Date, as destination: String? = nil) -> LineDirection.Train {
+    static func shown(_ train: Departure, at now: Date, as destination: String? = nil) -> LineDirection.Train {
         LineDirection.Train(
             time: train.time,
             destination: destination ?? train.destination,
@@ -324,7 +326,7 @@ enum LineDirections {
         return namingSides.count == 1 ? namingSides.first : nil
     }
 
-    private static func endName(of destination: String, in names: [String], ends: LineEnds) -> String? {
+    static func endName(of destination: String, in names: [String], ends: LineEnds) -> String? {
         names.lazy
             .flatMap { [$0] + ends.otherNames[$0, default: []] }
             .first { isNamed(destination, $0) }

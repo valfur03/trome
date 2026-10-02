@@ -78,7 +78,11 @@ extension LineDirectionsTests {
                 label: ends.joined(separator: " / "),
                 trains: [],
                 nextTrainIsOverAnHourAway: true,
-                branchEnds: ends
+                branchEnds: ends,
+                trainsOfEachEnd: [
+                    BranchEndTrains(end: ends[0], trains: [], nextTrainIsOverAnHourAway: true),
+                    BranchEndTrains(end: ends[1], trains: [])
+                ]
             )
         ])
     }

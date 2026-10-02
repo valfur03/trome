@@ -23,6 +23,11 @@ public struct LineTrains: Codable, Hashable, Sendable {
         line.directions = directions.map { direction in
             var direction = direction
             direction.trains = Array(direction.trains.prefix(1))
+            direction.trainsOfEachEnd = direction.trainsOfEachEnd?.map { endTrains in
+                var endTrains = endTrains
+                endTrains.trains = Array(endTrains.trains.prefix(1))
+                return endTrains
+            }
             return direction
         }
         return line
