@@ -58,15 +58,19 @@ The site has no French section yet, so for now every page is in English.
 |---|---|
 | [`Steps`](https://starlight.astro.build/components/steps/) | a numbered list of actions that the reader does in order |
 | [`Aside`](https://starlight.astro.build/components/asides/) | a callout: `type="caution"` or `type="danger"` for a risk, `type="note"` or `type="tip"` for a fact that the reader must not miss |
-| [`Checklist`](src/components/Checklist.astro) | a tick box on each item of a step list, and a count at the top ("3 of 11 steps done"); add `kind="things"` for a list of things to have ("3 of 8 things ready") |
+| [`Checklist`](src/components/Checklist.astro) | around a `Steps` list: a tick box on each step, and a count at the top ("3 of 11 steps done"); add `kind="things"` for a list of things to have ("3 of 8 things ready") |
 | [`Screenshot`](src/components/Screenshot.astro) | one picture of the app |
 | [`Screenshots`](src/components/Screenshots.astro) | pictures side by side, each in its own `Screenshot` |
 
 Give each `Checklist` its own `id`: the browser saves the ticks of the reader under it.
 Show a picture of the app only with `Screenshot`, never with a Markdown image or the `Image` component of Astro.
-`Screenshot` shows the picture 300 pixels wide, with the rounded corners of an iPhone screen, and the browser downloads a small file that fits its screen:
+`Screenshot` shows the picture 300 pixels wide, with the rounded corners of an iPhone screen, and the browser downloads a small file that fits its screen.
+Import the components after the title.
+The paths start from the folder of the page, here a page in `tutorial/`:
 
 ```mdx
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Checklist from '../../../components/Checklist.astro';
 import Screenshot from '../../../components/Screenshot.astro';
 import appMainScreen from '../../../assets/screenshots/app-main-screen.png';
 
@@ -85,13 +89,16 @@ make docs-screenshots
 It builds the app with no train data key, gives the Simulator a fixed position (near Champ de Mars Tour Eiffel) and a fixed clock, and saves each picture in [`src/assets/screenshots/`](src/assets/screenshots/), under a fixed name.
 A change of text alone needs no new pictures.
 
-The script fails when a picture breaks one of these rules:
+The pictures follow three rules:
 
-- **Full screen, on one iPhone model.** Then all pictures have the same size side by side.
+- **Full screen, on one iPhone model,** so that pictures side by side have the same size.
   A picture of the Live Activity shows the whole Notification Center, not a crop.
+  The script fails when two pictures do not have the same size.
 - **900 pixels wide.** The page shows a picture 300 pixels wide, and the 3x screen of an iPhone needs three times as many pixels.
-- **At most 500 KB for each file.** The files stay in the git history for good, and each new run adds them again.
-  The script compresses them with no visible loss, and the reader downloads smaller files that Astro makes from them.
+  The script resizes each picture to this width.
+- **At most 500 KB for each file,** because the files stay in the git history for good, and each new run adds them again.
+  The script compresses them with no visible loss, and fails when a file is still too large.
+  The reader downloads smaller files that Astro makes from them.
 
 To add a picture, add a `saveScreenshot(named:)` call to [the test](../ios/DocsScreenshots/DocsScreenshotTests.swift), and its name to `names` in [the script](../ios/scripts/docs-screenshots.sh).
 
@@ -154,11 +161,12 @@ Use the words of the RATP signs and of iOS in French, then write the English pag
 | Notification Center | Centre de notifications |
 | Dynamic Island | Dynamic Island |
 | next trains | prochains passages |
-| Approaching | À l'approche |
+| Approaching | À l’approche |
 | At the platform | À quai |
 | No trains | Pas de train |
 | Automatic mode | Mode automatique |
-| Snooze, Snoozed | Mettre en pause, En pause |
+| Snooze | Mettre en pause in the app, Pause on the Live Activity |
+| Snoozed | En pause |
 | Permissions | Autorisations |
 | Settings | Réglages |
 | Tap | Touchez |
@@ -212,8 +220,8 @@ A text that belongs in the flow of the page stays in the flow.
 </Aside>
 ```
 
-- Not: a note that says "Start with the tutorial", which is a link in the first lines.
-- Not: a note that says "This page does not cover the App Store", which is a sentence of the first lines.
+- Not: a note that says "Start with the tutorial": put the link in the first lines.
+- Not: a note that says "This page does not cover the App Store": say it in the first lines.
 
 ### Give a reason only when the reader needs it
 
@@ -263,8 +271,9 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
 
 1. **Reader and job.** The page serves one main reader, and its first lines say what it gives.
    A second reader gets a link, or a page of their own.
-2. **Kind.** The page is one kind.
+2. **Kind and shape.** The page is one kind.
    A tutorial works from a clean start; a how-to has its goal, what you need, the steps and the result; a reference is complete and easy to scan; an explanation has no steps.
+   Each step list, section, table and callout is used as [Choose the right shape](#choose-the-right-shape) says.
 3. **Each section earns its place.** For each section, ask what this reader would lose without it.
    If the answer is nothing, the section goes.
 4. **Nothing for another reader.** No inner workings of the team, no history, no measurements, no task numbers, and a reason only when the reader needs it.
