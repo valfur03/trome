@@ -55,6 +55,13 @@ wait_for() {
     done
 }
 
+wait_for_two_watcher_passes() {
+    for pass in 1 2; do
+        rm -f "$RATP_SIM_LOCK.last"
+        wait_for test -e "$RATP_SIM_LOCK.last"
+    done
+}
+
 logged() {
     grep -qF "$1" "$state/background.log" 2> /dev/null
 }
@@ -210,7 +217,14 @@ wait_until_booted "RATP-Shared-Small "
 expect "while make run SMALL=1 keeps the lock, the watcher shuts down RATP-Shared that another tool boots" "$(booted)" "RATP-Shared-Small "
 cat > "$state/e2e-after-small.sh" << 'EOF'
 "$1" boot > /dev/null
-sleep 3
+for pass in 1 2; do
+    rm -f "$RATP_SIM_LOCK.last"
+    tries=0
+    until [ -e "$RATP_SIM_LOCK.last" ] || [ "$tries" -ge 20 ]; do
+        sleep 1
+        tries=$((tries + 1))
+    done
+done
 "$1" booted | tr '\n' ' ' > "$FAKE_SIM_STATE/joined"
 EOF
 "$scripts/sim-lock.sh" job sh "$state/e2e-after-small.sh" "$scripts/simulator.sh" > /dev/null
@@ -428,9 +442,8 @@ done
 expect "a job of another folder that checks the lock while make run ends keeps waiting" "$(ran after-session)" "waiting"
 expect "make run keeps its lock after it ends, while a job of another folder waits" "$(cat "$RATP_SIM_LOCK/worktree") $(cat "$RATP_SIM_LOCK/udid")" "$state/other $default"
 expect "the waiting job says that make run of the other folder keeps the Simulator" "$(grep -c "the open Simulator of $state/other" "$state/background.log" || true)" "1"
-rm -f "$RATP_SIM_LOCK.last"
 watch_in_background
-wait_for test -e "$RATP_SIM_LOCK.last"
+wait_for_two_watcher_passes
 stop_watcher
 expect "the watcher of another folder keeps the lock of make run" "$(cat "$RATP_SIM_LOCK/worktree" 2> /dev/null || true)" "$state/other"
 expect "the waiting job does not remove the app of make run of the other folder" "$(cat "$state/apps.$default")" "com.example.trome.dev"
