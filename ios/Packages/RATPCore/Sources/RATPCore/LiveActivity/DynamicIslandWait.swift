@@ -19,12 +19,10 @@ public struct DynamicIslandWait: Hashable, Sendable {
     }
 
     public var line: TransitLine?
-    public var branchEndIndex: Int?
     public var wait: Wait
 
-    init(line: TransitLine?, branchEndIndex: Int? = nil, wait: Wait) {
+    init(line: TransitLine?, wait: Wait) {
         self.line = line
-        self.branchEndIndex = branchEndIndex
         self.wait = wait
     }
 
@@ -60,7 +58,7 @@ private extension LinesPage {
             case .atPlatform: .atPlatform
             case nil: .minutes(train)
             }
-            return DynamicIslandWait(line: soonest.line, branchEndIndex: soonest.branchEndIndex, wait: wait)
+            return DynamicIslandWait(line: soonest.line, wait: wait)
         }
         if nextTrainIsOverAnHourAway {
             return DynamicIslandWait(

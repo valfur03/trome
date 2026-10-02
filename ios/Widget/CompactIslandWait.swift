@@ -7,21 +7,15 @@ struct CompactIslandWait: View {
     static let wordMaximumWidth: CGFloat = 60
     static let wordMinimumScale: CGFloat = 0.8
     static let wrappedWordCornerInset: CGFloat = 4
-    static let markGap: CGFloat = 2
 
     let island: DynamicIslandWait
     let drawnAt: Date
 
     var body: some View {
-        HStack(spacing: Self.markGap) {
-            if let mark = island.branchEndIndex {
-                PanamBranchMark(index: mark)
-            }
-            wait
-        }
-        .fixedSize()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(island.spokenWait)
+        wait
+            .fixedSize()
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(island.spokenWait)
     }
 
     @ViewBuilder private var wait: some View {

@@ -63,7 +63,6 @@ struct DynamicIslandWaitTests {
         }
         #expect(train.time == Fixture.date("2026-09-26T10:02:30Z"))
         #expect(train.countdownMinutes(at: recordedAt) == 3)
-        #expect(island.branchEndIndex == nil)
     }
 
     @Test func readsZeroWhenTheNextTrainIsApproachingThenAtThePlatformFromARecordedAnswer() throws {
@@ -127,7 +126,7 @@ struct DynamicIslandWaitTests {
         #expect(content(after).dynamicIslandWait(isStale: false).line == line14)
     }
 
-    @Test func givesTheMarkOfTheEndOfTheSoonestTrainOnABranch() {
+    @Test func leadsWithTheLineAndTheMinutesOfTheSoonestTrainOfAForkWithNoMarkOfItsEnd() {
         let ends = ["Saint-Denis Université", "Les Courtilles"]
         let fork = LineTrains(line: line13, directions: [
             direction("Châtillon - Montrouge", [train(inSeconds: 300, to: "Châtillon - Montrouge")]),
@@ -139,19 +138,26 @@ struct DynamicIslandWaitTests {
 
         let island = content([fork]).dynamicIslandWait(isStale: false)
 
-        #expect(island.line == line13)
-        #expect(island.branchEndIndex == 1)
-        #expect(island.wait == .minutes(train(inSeconds: 120, to: "Les Courtilles")))
+        #expect(island == DynamicIslandWait(line: line13, wait: .minutes(train(inSeconds: 120, to: "Les Courtilles"))))
     }
 
-    @Test func givesNoMarkWhenTheSoonestTrainIsOnTheTrunk() {
-        let ends = ["Saint-Denis Université", "Les Courtilles"]
-        let fork = LineTrains(line: line13, directions: [
-            direction("Châtillon - Montrouge", [train(inSeconds: 60 + 30, to: "Châtillon - Montrouge")]),
-            direction(ends.joined(separator: " / "), [train(inSeconds: 120, to: "Les Courtilles")], branchEnds: ends)
-        ])
+    @Test func readsTheSoonestTrainOfALiveActivityWhoseOlderAppSentTheMarkOfItsEnd() throws {
+        let page = LinesPage(
+            lines: [],
+            allLines: [line13],
+            firstIndex: 0,
+            soonestTrain: SoonestTrain(line: line13, train: train(inSeconds: 120, to: "Les Courtilles"))
+        )
+        var json = try #require(
+            try JSONSerialization.jsonObject(with: JSONEncoder().encode(page)) as? [String: Any]
+        )
+        var soonest = try #require(json["soonestTrain"] as? [String: Any])
+        soonest["branchEndIndex"] = 1
+        json["soonestTrain"] = soonest
 
-        #expect(content([fork]).dynamicIslandWait(isStale: false).branchEndIndex == nil)
+        let decoded = try JSONDecoder().decode(LinesPage.self, from: JSONSerialization.data(withJSONObject: json))
+
+        #expect(decoded.soonestTrain == page.soonestTrain)
     }
 
     @Test func saysNoTrainWithTheFirstLineWhenNoLineHasATrain() {
@@ -195,7 +201,6 @@ struct DynamicIslandWaitTests {
 
         #expect(stale.line == line13)
         #expect(stale.wait == .stale)
-        #expect(stale.branchEndIndex == nil)
         #expect(stale.minimalWait == .dash)
         #expect(content(laterLines).dynamicIslandWait(isStale: true).wait == .stale)
     }

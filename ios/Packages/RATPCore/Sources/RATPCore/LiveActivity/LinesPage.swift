@@ -42,17 +42,15 @@ public struct SoonestTrain: Codable, Hashable, Sendable {
     public var line: TransitLine
     public var time: Date
     var train: LineDirection.Train?
-    var branchEndIndex: Int?
 
     public init(line: TransitLine, time: Date) {
         self.line = line
         self.time = time
     }
 
-    init(line: TransitLine, train: LineDirection.Train, branchEndIndex: Int?) {
+    init(line: TransitLine, train: LineDirection.Train) {
         self.init(line: line, time: train.time)
         self.train = train
-        self.branchEndIndex = branchEndIndex
     }
 
     var redrawDates: [Date] {
@@ -96,7 +94,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
             .flatMap { line in
                 line.directions.compactMap { direction in
                     direction.trains.first.map { train in
-                        SoonestTrain(line: line.line, train: train, branchEndIndex: direction.branchEndIndex(of: train))
+                        SoonestTrain(line: line.line, train: train)
                     }
                 }
             }

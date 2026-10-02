@@ -62,7 +62,7 @@ extension LinesPageTests {
             let line = try stripsAtLiege(afterAnAnswerOf: answer.trains, at: now.addingTimeInterval(answer.seconds))
             let north = try #require(line.directions.first { $0.branchEnds != nil })
 
-            #expect(north.trains.map(north.branchEndIndex(of:)) == [0, 1])
+            #expect(north.trains.map(\.destination) == north.branchEnds)
             #expect(north.trains.map(\.time) == answer.trains.prefix(2).map {
                 now.addingTimeInterval(answer.seconds + $0.secondsAway)
             })

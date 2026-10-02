@@ -397,7 +397,7 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
    With no upcoming train, the island says "No trains" ("Pas de train") on two small grey lines; when the next train is more than 60 minutes away, it says "> 1 h".
    These words have one size.
    When the times are old (the Live Activity is stale), it shows a grey dash, never a number that may be wrong.
-   On metro 7 and 13, when the next train is on a tagged strip, its mark (the yellow dot or the blue square) sits at the left of the number.
+   At a fork of metro 7 and 13, it shows the badge and the wait too, with no mark of the end (decision-41).
    When another app's Live Activity also shows, iOS gives ours a small round place (the minimal view): it shows the wait alone, as a bare amber number, with no badge.
    There the last minute and the platform both say "0" (a word does not fit), and stale, no train and "> 1 h" show a grey dash.
    The cost of this choice (the prompter's, decision-28): next to another app's Live Activity, the number alone does not say which line it is.
@@ -461,8 +461,8 @@ No metro train leaves a platform less than a minute after the train before it, s
 An RER direction keeps them: two RER trains of one direction can leave in the same minute from two tracks.
 `LinesPage` (in `RATPCore`) decides which lines the Live Activity shows: from the first asked line, one metro line alone, or as many RER lines as fit in 4 rows (at least one line, and never a metro line with an RER line).
 With more than 2 rows, it keeps only the next train of each row, so the Live Activity stays under the 160 points of the lock screen.
-It also keeps the soonest train of all the lines, for the Dynamic Island (`SoonestTrain`: its line, the train with its state, and the mark of its end on a tagged strip), and, when no line has a train in the next 60 minutes, the line of the first later train.
-`ContentState.dynamicIslandWait(isStale:)` (in `RATPCore`, `DynamicIslandWait`) decides what the compact and minimal views show: the line, the mark, and the wait (minutes, approaching, at the platform, over an hour, no train, stale, loading or no data), and what the minimal view shows instead (`minimalWait`: the minutes, "0" or a dash).
+It also keeps the soonest train of all the lines, for the Dynamic Island (`SoonestTrain`: its line and the train with its state), and, when no line has a train in the next 60 minutes, the line of the first later train.
+`ContentState.dynamicIslandWait(isStale:)` (in `RATPCore`, `DynamicIslandWait`) decides what the compact and minimal views show: the line and the wait (minutes, approaching, at the platform, over an hour, no train, stale, loading or no data), and what the minimal view shows instead (`minimalWait`: the minutes, "0" or a dash).
 The views are `IslandLineBadge` (`MetroLineBadge`, or the `RERSquareBadge` of the RER pages), `CompactIslandWait`, `MinimalIslandWait` and `IslandNumber`, in `ios/Widget/`.
 The number (20 points) and the words (11 points) have fixed sizes: the compact island of iOS draws every text style at about the same size (title3 at about 14 points, caption2 at about 13), so with text styles the number was smaller and the words bigger than in the picked drawing (TASK-37 review).
 When you touch and hold the Dynamic Island, the view tries the page as it is, then the page with only the next train of each row (`ContentState.keepingOnlyTheNextTrains`), then the same with a smaller text, and shows the first one that fits (`ViewThatFits`).
