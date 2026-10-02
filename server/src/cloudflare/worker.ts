@@ -1,6 +1,7 @@
 import { secretValues } from "../core/config/secrets";
 import { route } from "../core/http/router";
 import { createLogger } from "../core/logging/logger";
+import { relayObject } from "./relay-object";
 
 export { RelayObject } from "./relay-object";
 
@@ -9,6 +10,15 @@ export default {
     const logger = createLogger(secretValues(env), (line) => {
       console.log(line);
     });
-    return route(request, { logger });
+    const relay = relayObject(env);
+    return route(request, {
+      logger,
+      clock: { now: () => Date.now() },
+      tokens: { app: env.APP_TOKEN, owner: env.OWNER_TOKEN },
+      relay: {
+        departures: (stopRef) => relay.departures(stopRef),
+        counts: () => relay.counts(),
+      },
+    });
   },
 } satisfies ExportedHandler<Env>;

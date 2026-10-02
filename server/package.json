@@ -11,7 +11,8 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "types": "wrangler types",
-    "types:check": "wrangler types --check"
+    "types:check": "wrangler types --check",
+    "bench": "vitest bench --run --project core"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "1.3.6",

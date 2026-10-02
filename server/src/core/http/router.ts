@@ -1,22 +1,80 @@
+import { hasBearerToken } from "../auth/bearer-token";
 import type { Logger } from "../logging/logger";
+import type { CountsReport, RelayAnswer } from "../relay/relay";
+import { isStopReference } from "../relay/stop-reference";
+import type { Clock } from "../time/clock";
+import { departuresResponse, errorResponse } from "./relay-responses";
+
+export interface RelayService {
+  departures(stopRef: string): Promise<RelayAnswer>;
+  counts(): Promise<CountsReport>;
+}
 
 export interface RouterDependencies {
   logger: Logger;
+  clock: Clock;
+  tokens: { app: string; owner: string };
+  relay: RelayService;
 }
 
-export function route(request: Request, { logger }: RouterDependencies): Response {
+const departuresPath = /^\/v1\/stops\/([^/]+)\/departures$/;
+const countsPath = "/v1/owner/counts";
+
+export async function route(request: Request, dependencies: RouterDependencies): Promise<Response> {
   const { pathname } = new URL(request.url);
-  const response = answer(request.method, pathname);
-  logger.info("request", { method: request.method, path: pathname, status: response.status });
+  const response = await answer(request, pathname, dependencies);
+  dependencies.logger.info("request", { method: request.method, path: pathname, status: response.status });
   return response;
 }
 
-function answer(method: string, pathname: string): Response {
-  if (pathname !== "/health") {
-    return Response.json({ error: "not found" }, { status: 404 });
+async function answer(request: Request, pathname: string, dependencies: RouterDependencies): Promise<Response> {
+  const { tokens, relay, clock } = dependencies;
+  if (pathname === "/health") {
+    return onlyGet(request) ?? Response.json({ status: "ok" });
   }
-  if (method !== "GET" && method !== "HEAD") {
-    return Response.json({ error: "method not allowed" }, { status: 405, headers: { allow: "GET, HEAD" } });
+
+  const departures = departuresPath.exec(pathname);
+  if (departures) {
+    const refusal = onlyGet(request) ?? refuseWithout(request, tokens.app);
+    if (refusal) {
+      return refusal;
+    }
+    const stopRef = decoded(departures[1] ?? "");
+    if (stopRef === undefined || !isStopReference(stopRef)) {
+      return errorResponse(400, "bad stop reference");
+    }
+    return departuresResponse(await relay.departures(stopRef), clock.now());
   }
-  return Response.json({ status: "ok" });
+
+  if (pathname === countsPath) {
+    return (
+      onlyGet(request) ??
+      refuseWithout(request, tokens.owner) ??
+      Response.json(await relay.counts(), { headers: { "cache-control": "no-store" } })
+    );
+  }
+
+  return errorResponse(404, "not found");
+}
+
+function onlyGet(request: Request): Response | undefined {
+  if (request.method === "GET" || request.method === "HEAD") {
+    return undefined;
+  }
+  return errorResponse(405, "method not allowed", { allow: "GET, HEAD" });
+}
+
+function refuseWithout(request: Request, token: string): Response | undefined {
+  if (hasBearerToken(request.headers, token)) {
+    return undefined;
+  }
+  return errorResponse(401, "unauthorized", { "www-authenticate": "Bearer" });
+}
+
+function decoded(segment: string): string | undefined {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return undefined;
+  }
 }

@@ -839,10 +839,28 @@ Rules to keep the docs true:
 ## The server
 
 The folder `server/` holds the server of the app.
-It will hold the PRIM key, so that no build of the app that goes to another person holds it, and it will count and cap the PRIM calls of all riders in one place (decision-38 and decision-40 in the backlog).
-It runs on Cloudflare Workers, on the Free plan, with one Durable Object (a small object with its own SQLite storage) that counts.
-Today it is a skeleton: it answers `GET /health` with `{"status":"ok"}`, and nothing else uses it yet.
-No build of the app calls it.
+It holds the PRIM key, so that no build of the app that goes to another person holds it, and it counts and caps the PRIM calls of all riders in one place (decision-38 and decision-40 in the backlog).
+It runs on Cloudflare Workers, on the Free plan, with one Durable Object (a small object with its own SQLite storage) that holds the answers and the counts.
+No build of the app calls it yet (TASK-190 does that).
+
+What the server does:
+
+- `GET /v1/stops/{stopRef}/departures`, with the app token in the header `Authorization: Bearer <token>`, gives the next trains of one PRIM stop (`STIF:StopArea:SP:<number>:` or `STIF:StopPoint:Q:<number>:`).
+  The body is the PRIM answer of that stop, as PRIM gave it, so the app keeps its own PRIM parser.
+  The header `Last-Modified` is the time when PRIM gave it.
+  The examples of each answer are in `contracts/api/`, and the server tests check them.
+- One answer for each stop serves every rider: a stop asked again while its answer is younger than 60 s gets the same answer, with no PRIM call.
+  The requests for a stop that come while its PRIM call is in flight wait for that one call.
+- The cap: at most 800 PRIM calls each Paris day (`PRIM_DAILY_CAP` in `server/wrangler.jsonc`; 60 for the staging Worker, so that a test there cannot use the budget of the riders).
+  The server adds to its count before each PRIM call, failed calls too, and keeps the count in its storage, so a restart does not reset it.
+- When the cap is reached, for 1 hour after PRIM answers 429, or for 60 s after another PRIM failure of a stop, the server gives the answer that it holds for the stop if it is younger than 5 minutes.
+  Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` and the header `Retry-After`: the time when it will ask PRIM again (decision-39).
+  It never gives an answer older than 5 minutes as times, and never keeps a failed answer or a PRIM error body as times.
+- `GET /health` answers `{"status":"ok"}`, with no token.
+
+What the server keeps about riders: nothing.
+A request holds only a stop reference and the app token.
+The server reads nothing else of it (no position, no device or account identifier, no push token, no IP address, no user agent, no body), and a test sends all of these and checks that none is stored or logged.
 
 The server needs Node 24 LTS, like the docs (see [The docs site](#the-docs-site)): run `nvm use` in each new terminal before a server command.
 If the active Node is too old, the server commands stop and tell you to run `nvm use`.
@@ -856,6 +874,7 @@ If the active Node is too old, the server commands stop and tell you to run `nvm
 | `make server-login` | Logs in to your Cloudflare account, once on this Mac. It opens the browser. |
 | `make server-secrets` | Sets each secret of the production Worker, one after the other (see the table of the secrets below). Run it before the first deploy. It asks for each value, so no value is in your shell history or in a file. Add `STAGING=1` for the staging Worker. |
 | `make server-secret NAME=<name>` | Changes one secret of the production Worker (for example a new app token). It asks for the value. Add `STAGING=1` for the staging Worker. |
+| `make server-counts URL=<address>` | Shows the counts of the server at this address: today and the last 30 days. It asks for the owner token, so the token is not in your shell history. |
 | `make server-deploy-staging` | Runs `make server-check`, then deploys this folder to the staging Worker `ratp-activity-server-staging`. It needs your Cloudflare account, and it refuses when a secret of the staging Worker is not set yet. |
 | `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker `ratp-activity-server`. It needs your Cloudflare account, and it refuses another branch, changes that are not committed, or a secret that is not set yet. |
 
@@ -870,9 +889,10 @@ The secrets:
   |---|---|
   | `PRIM_API_KEY` | Your PRIM key (see [The train data key (PRIM)](#the-train-data-key-prim)). |
   | `APP_TOKEN` | The token that the app sends, so that only the app can ask the server. Make a new one for each Worker with `openssl rand -base64 32`, and keep it in your password manager: a later task puts it in a build setting of the app that git ignores. |
+  | `OWNER_TOKEN` | The token with which you read the counts of the server (`make server-counts`, below). The app never holds it. Make a new one for each Worker with `openssl rand -base64 32`, and keep it in your password manager. |
 
 - On your Mac, `make server-dev` reads fake values from `server/.dev.vars`.
-  The first `make server-dev` creates this file from `server/.dev.vars.example`.
+  The first `make server-dev` creates this file from `server/.dev.vars.example`, and a later one adds the names that the example has and the file does not have.
   Git ignores it, and `make server-check` fails when git tracks it.
   Keep fake values in it: the server on your Mac never needs the real key.
 - On Cloudflare, the secrets are set with `make server-secrets` (or `make server-secret` for one) and live only there.
@@ -891,10 +911,23 @@ Wrangler refuses the first deploy of a Worker whose secrets are not set yet, so 
    It creates an empty Worker that holds the secrets until the first deploy.
 4. Run `make server-deploy-staging`. Wrangler shows the address of the staging Worker: `https://ratp-activity-server-staging.<your subdomain>.workers.dev`. If your account has no `workers.dev` subdomain yet, the first deploy asks you to choose one.
 5. Open `https://ratp-activity-server-staging.<your subdomain>.workers.dev/health`. It shows `{"status":"ok"}`.
-6. For production, in the main folder on `main`: run `make server-secrets` (with another app token), answer `y` to the same question for "ratp-activity-server", then run `make server-deploy`, and open its `/health` address.
+6. For production, in the main folder on `main`: run `make server-secrets` (with other tokens), answer `y` to the same question for "ratp-activity-server", then run `make server-deploy`, and open its `/health` address.
 
 When a new secret is added to the table later, run `make server-secret NAME=<its name>` for each Worker that already exists (add `STAGING=1` for the staging Worker), before you deploy the change.
 `make server-deploy-staging` and `make server-deploy` check the secrets before they deploy: when one is missing, they stop, name it, and say which command sets it.
+
+The counts, for you (decision-40 point 6):
+
+- Run `make server-counts URL=https://ratp-activity-server.<your subdomain>.workers.dev` and paste the owner token.
+  It shows the counts as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, newest first.
+  Each day has its app calls, cache hits (an answer shared with no PRIM call), held answers (an older answer given while the server could not ask PRIM), out answers, PRIM calls and errors, then the same for each hour (`parisHour`), and the PRIM calls of each stop.
+  `errorLines` lists the failed PRIM calls of the last 7 days: the time, the stop, the kind and the HTTP status, with no IP.
+- The server writes the counts of app calls and cache hits at most every 30 s, not at each request, to stay far below the 100,000 rows that the Free plan lets it write each day.
+- Cloudflare keeps no request log of the server: Workers Logs are off in `server/wrangler.jsonc` (`"observability": { "enabled": false }`), for both Workers.
+  Turn them on only to find a problem, and then for 3 days at most (the Free plan keeps them 3 days).
+  `npx wrangler tail` in `server/` shows the log lines live, and keeps none of them.
+
+The CPU time of a request is small next to the limits of the Free plan (10 ms for the Worker, 30 s for the Durable Object, decision-40): `npm run bench` in `server/` measures it (TASK-188 has the numbers).
 
 The code of the server follows the rules of the CLAUDE.md, section "Code structure of the server": the logic is plain TypeScript in `server/src/core/`, and only `server/src/cloudflare/` uses the Cloudflare API.
 So the server can move to another host with a medium task (decision-40).

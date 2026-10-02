@@ -4,7 +4,7 @@ BUILD_DIR := .wrangler
 
 export WRANGLER_SEND_METRICS := false
 
-.PHONY: help node-check server-setup server-check server-check-if-changed server-dev server-stop server-login server-secrets server-secret server-deploy-staging server-deploy
+.PHONY: help node-check server-setup server-check server-check-if-changed server-dev server-stop server-login server-secrets server-secret server-counts server-deploy-staging server-deploy
 
 help:
 	@echo "make server-setup        Install the packages of the server (server/node_modules), when they are missing or old"
@@ -14,6 +14,7 @@ help:
 	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret)"
 	@echo "make server-secrets      Set each secret of the production Worker in turn (STAGING=1: of the staging Worker), before its first deploy; it asks for each value"
 	@echo "make server-secret NAME=<name>  Change one secret of the production Worker (STAGING=1: of the staging Worker); it asks for the value"
+	@echo "make server-counts URL=<address>  Read the counts of the server at this address (today and the last 30 days); it asks for the owner token"
 	@echo "make server-deploy-staging  Deploy this folder to the staging Worker (needs the Cloudflare account, and make server-secrets STAGING=1 first)"
 	@echo "make server-deploy       Deploy main to the production Worker (needs the Cloudflare account and make server-secrets first; main folder, on main, committed)"
 
@@ -57,8 +58,11 @@ server-secrets: server-setup
 	@./scripts/put-secrets.sh $(if $(STAGING),staging,production)
 
 server-secret: server-setup
-	@if [ -z "$(NAME)" ]; then echo "Give the name of the secret: make server-secret NAME=PRIM_API_KEY (or NAME=APP_TOKEN)." >&2; exit 1; fi
+	@if [ -z "$(NAME)" ]; then echo "Give the name of the secret: make server-secret NAME=PRIM_API_KEY (or NAME=APP_TOKEN, or NAME=OWNER_TOKEN)." >&2; exit 1; fi
 	./node_modules/.bin/wrangler secret put $(NAME) $(if $(STAGING),--env staging,--env="")
+
+server-counts:
+	@./scripts/counts.sh "$(URL)"
 
 server-deploy-staging: server-check
 	@./scripts/deploy.sh staging

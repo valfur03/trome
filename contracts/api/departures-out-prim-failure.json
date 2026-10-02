@@ -1,0 +1,23 @@
+{
+  "description": "PRIM did not answer, or gave an error, for this stop. The server asks PRIM again for this stop 60 s later. The request is at 2026-10-02T08:30:00Z.",
+  "request": {
+    "method": "GET",
+    "path": "/v1/stops/STIF:StopArea:SP:42155:/departures",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>"
+    }
+  },
+  "response": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "60",
+      "cache-control": "no-store"
+    },
+    "body": {
+      "status": "out",
+      "reason": "prim-failure",
+      "retryAt": "2026-10-02T08:31:00.000Z"
+    }
+  }
+}

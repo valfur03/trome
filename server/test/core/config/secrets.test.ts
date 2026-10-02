@@ -14,8 +14,8 @@ function wranglerConfig(): WranglerSecrets {
 }
 
 describe("secrets", () => {
-  it("names the PRIM key and the app token", () => {
-    expect(secretNames).toEqual(["PRIM_API_KEY", "APP_TOKEN"]);
+  it("names the PRIM key, the app token and the owner token", () => {
+    expect(secretNames).toEqual(["PRIM_API_KEY", "APP_TOKEN", "OWNER_TOKEN"]);
   });
 
   it("are the required secrets of wrangler.jsonc, for production and for staging", () => {

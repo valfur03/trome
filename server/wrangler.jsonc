@@ -4,8 +4,10 @@
   "main": "src/cloudflare/worker.ts",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
+  "observability": { "enabled": false },
+  "vars": { "PRIM_DAILY_CAP": "800" },
   "secrets": {
-    "required": ["PRIM_API_KEY", "APP_TOKEN"]
+    "required": ["PRIM_API_KEY", "APP_TOKEN", "OWNER_TOKEN"]
   },
   "durable_objects": {
     "bindings": [{ "name": "RELAY", "class_name": "RelayObject" }]
@@ -14,8 +16,10 @@
   "env": {
     "staging": {
       "name": "ratp-activity-server-staging",
+      "observability": { "enabled": false },
+      "vars": { "PRIM_DAILY_CAP": "60" },
       "secrets": {
-        "required": ["PRIM_API_KEY", "APP_TOKEN"]
+        "required": ["PRIM_API_KEY", "APP_TOKEN", "OWNER_TOKEN"]
       },
       "durable_objects": {
         "bindings": [{ "name": "RELAY", "class_name": "RelayObject" }]

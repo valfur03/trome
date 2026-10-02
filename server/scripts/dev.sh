@@ -8,6 +8,13 @@ if [ ! -f .dev.vars ]; then
     cp .dev.vars.example .dev.vars
     echo "Created server/.dev.vars with the fake secrets of .dev.vars.example (git ignores it)."
 fi
+while IFS= read -r line; do
+    name=${line%%=*}
+    if ! grep -q "^$name=" .dev.vars; then
+        printf '%s\n' "$line" >> .dev.vars
+        echo "Added the fake secret $name of .dev.vars.example to server/.dev.vars."
+    fi
+done < .dev.vars.example
 
 mkdir -p .wrangler
 echo $$ > .wrangler/dev.pid

@@ -1,0 +1,20 @@
+{
+  "description": "A stop reference that is not a PRIM stop area (STIF:StopArea:SP:<number>:) or quay (STIF:StopPoint:Q:<number>:). The server makes no PRIM call.",
+  "request": {
+    "method": "GET",
+    "path": "/v1/stops/IDFM:22059/departures",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>"
+    }
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "cache-control": "no-store"
+    },
+    "body": {
+      "error": "bad stop reference"
+    }
+  }
+}

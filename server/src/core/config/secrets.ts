@@ -1,4 +1,4 @@
-export const secretNames = ["PRIM_API_KEY", "APP_TOKEN"] as const;
+export const secretNames = ["PRIM_API_KEY", "APP_TOKEN", "OWNER_TOKEN"] as const;
 
 export type SecretName = (typeof secretNames)[number];
 

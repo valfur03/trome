@@ -1,7 +1,7 @@
 IOS_TARGETS := setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check test test-scripts live-key-check recommended-settings-check run switch-language e2e stations simulator \
 	simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
 DOCS_TARGETS := docs docs-dev docs-stop docs-check docs-check-if-changed
-SERVER_TARGETS := server-setup server-check server-check-if-changed server-dev server-stop server-login server-secrets server-secret server-deploy-staging server-deploy
+SERVER_TARGETS := server-setup server-check server-check-if-changed server-dev server-stop server-login server-secrets server-secret server-counts server-deploy-staging server-deploy
 SUB_MAKE := $(MAKE) --no-print-directory
 
 .PHONY: help check $(IOS_TARGETS) $(DOCS_TARGETS) $(SERVER_TARGETS)

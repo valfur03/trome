@@ -1,0 +1,19 @@
+{
+  "description": "The server asks PRIM for the stop, or the answer of the stop is younger than 60 s. The body is the PRIM answer of the stop, as PRIM gave it. Last-Modified is the time when PRIM gave it. The request is at 2026-10-02T08:30:00Z.",
+  "request": {
+    "method": "GET",
+    "path": "/v1/stops/STIF:StopArea:SP:42155:/departures",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "last-modified": "Fri, 02 Oct 2026 08:30:00 GMT",
+      "cache-control": "no-store"
+    },
+    "bodyIsPrimAnswer": "stop-monitoring-abbesses-stop-area.json"
+  }
+}
