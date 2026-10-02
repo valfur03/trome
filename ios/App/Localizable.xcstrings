@@ -66,7 +66,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Annuler la pause à %@"
+            "value" : "Réactiver %@"
           }
         }
       }
@@ -262,7 +262,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En pause à %1$@ jusqu’à %2$@"
+            "value" : "%1$@ : en sourdine jusqu’à %2$@"
           }
         }
       }

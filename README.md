@@ -412,7 +412,7 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
 3. To remove it, open the app and tap "Stop showing on the lock screen".
 4. To remove it and snooze the automatic mode, tap "30 min", "1 h" or "Today" at the bottom of the Live Activity (see [Snooze or turn off the automatic mode](#snooze-or-turn-off-the-automatic-mode)).
    To remove it and pause only its station for 1 hour, swipe it away (see [Swipe the Live Activity away](#swipe-the-live-activity-away)).
-   The same buttons show in the Dynamic Island when you touch and hold it.
+   The snooze buttons show in the Dynamic Island too, when you touch and hold it.
 
 The Live Activity can also start and stop by itself near a station (see below).
 
@@ -623,8 +623,8 @@ The rules come from decision-32 in the backlog.
 - **One pause at a time.** A swipe at another station replaces the pause.
   "Show the Live Activity now" at the paused station, or a tap on its arrival notification, ends the pause.
   A snooze does not change the pause.
-- **See and cancel it.** The main screen says "Paused at <station> until <time>" (in French "En pause à <station> jusqu’à <time>"), with the time left.
-  Tap "Cancel the pause at <station>" ("Annuler la pause à <station>") to end it at once.
+- **See and cancel it.** The main screen says "Paused at <station> until <time>" (in French "<station> : en sourdine jusqu’à <time>"), with the time left.
+  Tap "Cancel the pause at <station>" ("Réactiver <station>") to end it at once.
   If you are at the station with the app open, the Live Activity then starts.
   The line goes away when the pause ends.
   While the automatic mode is off, the screen does not show it.
