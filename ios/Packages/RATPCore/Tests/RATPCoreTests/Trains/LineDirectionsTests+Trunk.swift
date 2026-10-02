@@ -137,7 +137,7 @@ extension LineDirectionsTests {
         ])
     }
 
-    @Test func putsTheShortTripsOfEveryRERLineInTheirSideAtAStationOfItsTrunk() {
+    @Test func neverMakesAThirdDirectionFromAShortTripAtAStationOfTheTrunkOfAnyRERLine() {
         let rerC = TransitLine(mode: .rer, name: "C", stopIds: ["IDFM:monomodalStopPlace:1"])
         let rerD = TransitLine(mode: .rer, name: "D", stopIds: ["IDFM:monomodalStopPlace:2"])
         let rerE = TransitLine(mode: .rer, name: "E", stopIds: ["IDFM:monomodalStopPlace:3"])
