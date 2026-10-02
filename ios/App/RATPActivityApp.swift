@@ -17,6 +17,7 @@ struct RATPActivityApp: App {
     private let regionWatcher: CoreLocationStationRegionWatcher
     private let notificationResponseHandler: ArrivalNotificationResponseHandler
     private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
+    private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? ""
     #if DEBUG
     private let uiTestLocationKeeper: CoreLocationBackgroundLocationKeeper?
     #endif
@@ -89,6 +90,7 @@ struct RATPActivityApp: App {
             .environment(autoLiveActivityModel)
             .environment(automaticModeModel)
             .environment(\.stationCatalog, stationCatalog)
+            .environment(\.appName, appName)
         }
     }
 

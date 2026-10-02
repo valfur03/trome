@@ -37,6 +37,7 @@ struct ShownLiveActivityControls: View {
 
 struct LiveActivityStartError: View {
     @Environment(StationLiveActivityModel.self) private var liveActivity
+    @Environment(\.appName) private var appName
 
     var body: some View {
         if let error = liveActivity.startError {
@@ -51,7 +52,7 @@ struct LiveActivityStartError: View {
     private func message(for error: StationLiveActivityError) -> LocalizedStringKey {
         switch error {
         case .turnedOff:
-            "Live Activities are turned off for this app. Turn them on in Settings > RATP Activity."
+            "Live Activities are turned off for this app. Turn them on in Settings > \(appName)."
         case .failed:
             "The lock screen display could not start. Try again."
         }

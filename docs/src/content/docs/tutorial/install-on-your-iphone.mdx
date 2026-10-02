@@ -1,6 +1,6 @@
 ---
 title: Install the app on your iPhone
-description: Put RATP Activity on your own iPhone with a free Apple ID, step by step. For beginners.
+description: Put TROME on your own iPhone with a free Apple ID, step by step. For beginners.
 sidebar:
   order: 1
 ---
@@ -15,7 +15,7 @@ import liveActivity from '../../../assets/screenshots/live-activity-notification
 import Checklist from '../../../components/Checklist.astro';
 import Screenshot from '../../../components/Screenshot.astro';
 
-This page tells you how to put the RATP Activity app on your own iPhone. You use Xcode on your Mac and your free Apple ID. You do not pay anything.
+This page tells you how to put the TROME app on your own iPhone. You use Xcode on your Mac and your free Apple ID. You do not pay anything.
 
 You need no experience with Xcode or with iOS apps. Do the steps in order. Tick each step when it is done: the top of the list shows how many steps you have done.
 
@@ -45,12 +45,12 @@ Make sure that you have all these things. Tick each one.
 
 ## Words you will see
 
-- **Terminal**: the Mac app where you type commands. Each command in this page runs in the **project folder**: the main folder of the RATP Activity repo on your Mac, not a git worktree. To go there in Terminal, type `cd` and a space, drag the folder from the Finder into the Terminal window, then press <kbd>Return</kbd>.
+- **Terminal**: the Mac app where you type commands. Each command in this page runs in the **project folder**: the main folder of the TROME repo on your Mac, not a git worktree. To go there in Terminal, type `cd` and a space, drag the folder from the Finder into the Terminal window, then press <kbd>Return</kbd>.
 - **Xcode**: the Apple app that builds iPhone apps. It puts the app on your iPhone.
 - **Apple ID** (Apple calls it "Apple Account"): the email and password that you use for iCloud and the App Store.
 - **Personal Team**: a free developer account that Xcode makes from your Apple ID. It lets you put apps on your own iPhone only.
 - **Team ID**: the code of your Personal Team. It has 10 letters and digits, for example `AB12CD34EF`.
-- **Bundle ID**: the name of the app for Apple, for example `io.github.yourname.RATPActivity`. No other app in the world can use the same one.
+- **Bundle ID**: the name of the app for Apple, for example `io.github.yourname.trome.dev`. No other app in the world can use the same one.
 - **Signing**: Xcode puts a digital signature on the app. The iPhone uses it to check who made the app. Xcode does it for you.
 - **Developer Mode**: an iPhone setting. The iPhone runs apps from Xcode only when it is on.
 - **Trust**: you tell the iPhone that you know the person who made the app (you).
@@ -99,6 +99,8 @@ The project reads your settings from a file that only you have: `ios/Config/Loca
 
 6. Choose your **bundle ID prefix**: a name that only you use. Use `io.github.` and your GitHub name, for example `io.github.janedoe`. Use only lowercase letters, digits, hyphens and dots. Do not use `com.example`: someone else already has it. Write your prefix down: the next steps use it.
 
+   Your app gets the bundle ID `<your prefix>.trome.dev`, for example `io.github.janedoe.trome.dev`. It ends with `.dev`, so it is never the ID of TROME on the App Store, whatever prefix you choose: your free Apple ID cannot take that ID by mistake.
+
 7. In Terminal, in the project folder, create the Xcode project and open it:
 
    ```sh
@@ -107,11 +109,13 @@ The project reads your settings from a file that only you have: `ios/Config/Loca
 
 8. In Xcode, in the left column, click the blue icon **RATPActivity** at the top. In the middle, under **TARGETS**, click **RATPActivity**. Click the tab **Signing & Capabilities**.
 
+   The Xcode project, its target and its scheme keep the older name **RATPActivity**: the app on your iPhone is called TROME.
+
    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
 9. In the **Team** menu, choose **Your Name (Personal Team)**. Xcode can now show red errors. This is normal: the next steps fix them.
 
-   If you see a **Set Up Signing** button instead of the **Team** menu, click it. In the window that opens, choose **Your Name (Personal Team)** in the **Team** menu. In **Bundle Identifier**, type your prefix followed by `.RATPActivity`, for example `io.github.janedoe.RATPActivity`. Click **Set Up**.
+   If you see a **Set Up Signing** button instead of the **Team** menu, click it. In the window that opens, choose **Your Name (Personal Team)** in the **Team** menu. In **Bundle Identifier**, type your prefix followed by `.trome.dev`, for example `io.github.janedoe.trome.dev`. Click **Set Up**.
 
 10. Quit Xcode: press <kbd>Cmd</kbd> + <kbd>Q</kbd>. Xcode saves the project.
 
@@ -232,7 +236,7 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 30. The app asks to use your location. Tap **Allow While Using App**. The app uses your location to find the stations near you.
 
-    <Screenshot src={appLocationPermission} alt="The iPhone asks: Allow RATP Activity to use your location? The buttons are Allow Once, Allow While Using App, and Don't Allow." />
+    <Screenshot src={appLocationPermission} alt="The iPhone asks: Allow TROME to use your location? The buttons are Allow Once, Allow While Using App, and Don't Allow." />
 
 31. Right after, the app asks if it can also use your location when you do not use it.
     Tap **Change to Always Allow**.
@@ -244,11 +248,11 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
     With "While Using the App", iOS turns the status bar blue (or shows a blue bubble in the Dynamic Island) while the Live Activity shows.
     This is normal: the app cannot hide it.
 
-    <Screenshot src={appAlwaysPermission} alt="The iPhone asks: Allow RATP Activity to also use your location even when you are not using the app? The buttons are Keep Only While Using and Change to Always Allow." />
+    <Screenshot src={appAlwaysPermission} alt="The iPhone asks: Allow TROME to also use your location even when you are not using the app? The buttons are Keep Only While Using and Change to Always Allow." />
 
 32. The app asks to send you notifications. Tap **Allow**. The app uses them to tell you when you arrive at a station.
 
-    <Screenshot src={appNotificationPermission} alt="The iPhone asks: RATP Activity would like to send you notifications. The buttons are Don't Allow and Allow." />
+    <Screenshot src={appNotificationPermission} alt="The iPhone asks: TROME would like to send you notifications. The buttons are Don't Allow and Allow." />
 
 33. Look at the main screen of the app. It has a button to show the Live Activity of the nearest station now, the automatic mode, and the **Permissions** part. The app is ready. Later versions of the app can show this screen a bit differently.
 
@@ -260,7 +264,7 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 ## What you should see now
 
-- The RATP Activity icon is on the home screen of your iPhone.
+- The TROME icon is on the home screen of your iPhone.
 - The app opens and shows its main screen.
 - Without the PRIM key, the Live Activity has no train times. **Testing tools > Next trains of a station** says "Train data key: not set". To see live trains, [add the key](#add-the-train-data-key-prim).
 
@@ -268,7 +272,7 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 After the first launch, iOS asks you one more question. It comes later, so this page has no picture of it ([why](#why-some-steps-have-no-picture)).
 
-- **Live Activities.** The first time the app shows the next trains on the lock screen, iOS asks on the lock screen if RATP Activity can show Live Activities. Tap **Allow**.
+- **Live Activities.** The first time the app shows the next trains on the lock screen, iOS asks on the lock screen if TROME can show Live Activities. Tap **Allow**.
 
 If you tapped the wrong button, you can change your choice later in the iPhone Settings (see [In the app](#in-the-app)).
 
@@ -327,6 +331,7 @@ These steps take about 5 minutes. You do not need to trust the developer or turn
 </Checklist>
 
 Do not delete the app before you install it again. When you install over the old app, the app keeps its data and your choices.
+One exception: a build from before the app was called TROME has another bundle ID, so the iPhone keeps it as a second app, with another name under its icon. Delete that one, or it goes on sending its notifications. The new app asks for its permissions again.
 
 If the iPhone says **Untrusted Developer** again, do steps 27 to 29 of [Install the app](#install-the-app) again.
 
@@ -482,10 +487,10 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
   ```
 
   If it still says "not set", in Xcode choose **Product > Clean Build Folder**, then click **Run** again.
-- **The app cannot find the nearest station, or the Permissions part shows Location as Off.** Tap **Open Settings** in the app, or on the iPhone open **Settings > Apps > RATP Activity > Location** (on older iOS: **Settings > RATP Activity > Location**). Choose **While Using the App** or **Always**.
-- **You get no notification near a station.** Open **Settings > Apps > RATP Activity** (on older iOS: **Settings > RATP Activity**). Turn on **Notifications**. Under **Location**, choose **Always**.
+- **The app cannot find the nearest station, or the Permissions part shows Location as Off.** Tap **Open Settings** in the app, or on the iPhone open **Settings > Apps > TROME > Location** (on older iOS: **Settings > TROME > Location**). Choose **While Using the App** or **Always**.
+- **You get no notification near a station.** Open **Settings > Apps > TROME** (on older iOS: **Settings > TROME**). Turn on **Notifications**. Under **Location**, choose **Always**.
 - **The app shows "Fake position" in orange.** You turned on a fake position in Testing tools. Open Testing tools and tap **Use the real GPS**.
-- **Live Activities are turned off.** Open **Settings > Apps > RATP Activity** (on older iOS: **Settings > RATP Activity**) and turn on **Live Activities**.
+- **Live Activities are turned off.** Open **Settings > Apps > TROME** (on older iOS: **Settings > TROME**) and turn on **Live Activities**.
 
 If a step does not match what you see, open an issue in the GitHub repository of the app: the name of the step and what you see.
 A screenshot helps, but check first that it does not show your PRIM key.

@@ -22,6 +22,12 @@ settings:
     STRING_CATALOG_GENERATE_SYMBOLS: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
+  configs:
+    Debug:
+      APP_BUNDLE_ID: $(RATP_BUNDLE_ID_PREFIX).trome.dev
+    Release:
+      APP_BUNDLE_ID: io.github.valfur03.trome
+      CODE_SIGN_STYLE: Manual
 
 packages:
   RATPCore:
@@ -39,7 +45,7 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: RATP Activity
+        CFBundleDisplayName: $(APP_NAME)
         CFBundleLocalizations: [en, fr]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
@@ -47,14 +53,15 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         NSSupportsLiveActivities: true
-        NSLocationWhenInUseUsageDescription: RATP Activity uses your location to find the nearest metro or RER station.
-        NSLocationAlwaysAndWhenInUseUsageDescription: RATP Activity uses your location to tell you when you reach a metro or RER station, also when the app is closed.
+        NSLocationWhenInUseUsageDescription: $(APP_NAME) uses your location to find the nearest metro or RER station.
+        NSLocationAlwaysAndWhenInUseUsageDescription: $(APP_NAME) uses your location to tell you when you reach a metro or RER station, also when the app is closed.
         UIBackgroundModes:
           - location
         PRIMAPIKey: $(PRIM_API_KEY)
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivity
+        PRODUCT_NAME: $(APP_NAME)
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
 
@@ -70,7 +77,7 @@ targets:
     info:
       path: Widget/Info.plist
       properties:
-        CFBundleDisplayName: RATP Activity
+        CFBundleDisplayName: $(APP_NAME)
         CFBundleLocalizations: [en, fr]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
@@ -78,7 +85,8 @@ targets:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivity.Widget
+        PRODUCT_NAME: $(APP_NAME)Widget
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).widget
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
 
@@ -91,7 +99,7 @@ targets:
       - target: RATPActivity
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityUITests
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).trome.dev.uitests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: RATPActivity
 
@@ -105,7 +113,7 @@ targets:
       - target: RATPActivity
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityDocsScreenshots
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).trome.dev.docs-screenshots
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: RATPActivity
 
@@ -117,7 +125,7 @@ targets:
       - Widget/Localizable.xcstrings
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityRenderCheckHost
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).trome.dev.render-check-host
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -138,7 +146,7 @@ targets:
       - target: RATPActivityRenderCheckHost
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).RATPActivityRenderCheck
+        PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).trome.dev.render-check
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:

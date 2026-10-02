@@ -8,7 +8,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "RATP Activity"
+            "value" : "TROME"
           }
         }
       },
@@ -21,7 +21,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "RATPActivity"
+            "value" : "TROME"
           }
         }
       },
@@ -34,13 +34,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "RATP Activity uses your location to tell you when you reach a metro or RER station, also when the app is closed."
+            "value" : "TROME uses your location to tell you when you reach a metro or RER station, also when the app is closed."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RATP Activity utilise votre position pour vous prévenir quand vous arrivez à une station de métro ou de RER, même quand l’app est fermée."
+            "value" : "TROME utilise votre position pour vous prévenir quand vous arrivez à une station de métro ou de RER, même quand l’app est fermée."
           }
         }
       }
@@ -52,13 +52,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "RATP Activity uses your location to find the nearest metro or RER station."
+            "value" : "TROME uses your location to find the nearest metro or RER station."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RATP Activity utilise votre position pour trouver la station de métro ou de RER la plus proche."
+            "value" : "TROME utilise votre position pour trouver la station de métro ou de RER la plus proche."
           }
         }
       }

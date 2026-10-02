@@ -1,4 +1,4 @@
-# RATP Activity
+# TROME
 
 An iPhone app. It shows the next metro and RER trains of the nearest Paris station on the lock screen, as a Live Activity.
 
@@ -412,7 +412,7 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
 
 The Live Activity can also start and stop by itself near a station (see below).
 
-The first time, iOS asks on the lock screen if it can show Live Activities from RATP Activity. Tap "Allow".
+The first time, iOS asks on the lock screen if it can show Live Activities from TROME. Tap "Allow".
 
 The waiting times count down by themselves, in whole minutes (a bare "3" in a metro strip or an RER row, or "3 minutes" in a metro row, see above).
 The app sends new train times every 30 seconds while the app is open.
@@ -438,7 +438,7 @@ The next refresh that works shows its times at once.
 If the app has no train times for the station (no key, or the first load fails, also after a switch to another station), the Live Activity says "No data available".
 It says the same when a refresh fails after an answer with no train at all ("No trains"), because "No trains" never goes stale.
 
-If the app says that Live Activities are turned off, turn them on in Settings > RATP Activity > Live Activities.
+If the app says that Live Activities are turned off, turn them on in Settings > TROME > Live Activities.
 
 For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity.
 `LineDirections` splits the trains of the line into its two directions.
@@ -636,7 +636,7 @@ The "Permissions" part of the main screen then says so, with a button to open Se
 
 - **App open (the Live Activity starts at once).** Open "Testing tools", pick a station (for example Abbesses), and go back. The Live Activity starts. Pick a station near it (for example Pigalle): the Live Activity switches. Tap "Far from any station": the Live Activity ends.
 - **App in the background (the notification).** The in-app fake position cannot change while the app is in the background. Use the Simulator location instead:
-  1. In "Testing tools", tap "Use the real GPS". In iOS Settings, set the location of RATP Activity to "Always".
+  1. In "Testing tools", tap "Use the real GPS". In iOS Settings, set the location of TROME to "Always".
   2. Set a position far from any station: `xcrun simctl location "$(make -s simulator)" set 48.42,2.63`.
   3. Go to the home screen or lock the Simulator.
   4. Set a position at a station, for example Abbesses: `xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838`. The notification shows. iOS can take a few seconds to a few minutes to notice the move.
@@ -649,9 +649,9 @@ The "Permissions" part of the main screen then says so, with a button to open Se
 
   On your iPhone connected to the Mac, use Xcode > Debug > Simulate Location in the same way.
 - **The 45 minute limit.** In debug builds, you can make it shorter.
-  Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.RATPActivity -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
+  Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
 - **Fake trains.** A build with no train data key shows no trains.
-  In debug builds, launch the app with `--fake-trains` to get fake next trains instead, with no PRIM call: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.RATPActivity --fake-trains`.
+  In debug builds, launch the app with `--fake-trains` to get fake next trains instead, with no PRIM call: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains`.
   The app saves this choice (`FakeTrainsStore`, in `RATPCore`), so the rule is:
   - A launch with launch arguments comes from you or from a test (`xcrun simctl launch` with arguments, XCUITest, the Run button of Xcode when the scheme has arguments).
     It turns the fake trains on with `--fake-trains`, and off without it.
@@ -661,11 +661,11 @@ The "Permissions" part of the main screen then says so, with a button to open Se
     To drop them, run the app once with any other argument in the scheme (Product > Scheme > Edit Scheme > Run > Arguments), or delete the app.
   - A launch with no launch argument comes from iOS itself: the tap on a button of the Live Activity after iOS closed the app, a region wake, a relaunch in the background.
     iOS passes no argument, so the app keeps the last choice.
-    So you can close the app (`xcrun simctl terminate "$(make -s simulator)" com.example.RATPActivity`), tap the Live Activity, and still see the fake trains.
+    So you can close the app (`xcrun simctl terminate "$(make -s simulator)" com.example.trome.dev`), tap the Live Activity, and still see the fake trains.
     While a Live Activity shows, iOS starts the app again in the background a moment after you close it (it keeps getting the position in the background), so the tap often reaches an app that iOS started, not a closed one.
   - `make run` installs the app again, with no saved data, so it starts with no fake trains. `make switch-language` keeps the data of the app, so it keeps the fake trains.
 - **Ask the fake trains for a state.** Live trains show some states only by luck: PRIM shows a train at the platform for 20 to 30 seconds, and the app updates the Live Activity only every 2 minutes in the background.
-  So, in debug builds, add the name of a state after `--fake-trains`, for example `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.RATPActivity --fake-trains at-platform`.
+  So, in debug builds, add the name of a state after `--fake-trains`, for example `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains at-platform`.
   The times start at this launch, the same for each line and each direction of the station (the second direction is one minute later), and the app follows its real rules with them (`FakeTrainsScenario`, in `RATPCore`).
   Then start the Live Activity at once (a fake position, or "Show the Live Activity now"), and put the app in the background to look at the lock screen and the Notification Center.
   - `at-platform`: the first box of each strip shows "À quai" for 5 minutes. Then the train leaves, and trains come every 4 minutes, each one 30 seconds at the platform, like real trains.
@@ -678,8 +678,8 @@ The "Permissions" part of the main screen then says so, with a button to open Se
   - `fork-end-over-an-hour`: the second end gets no train in the hour, and one train 70 minutes after the launch, so it says "> 1 h" for about 10 minutes, then counts down from 60.
   - On a line with no fork, these three states give the trains of the default fake trains, every 4 minutes.
   - The RER lines get the same times. Their rows show "À quai" only when the RER look draws it.
-  - Check that the app got the arguments: `ps -axww -o args | grep "RATPActivity.app/RATPActivity"` shows `--fake-trains` and the name.
-    When the line ends with `RATPActivity` alone, iOS had already started the app again in the background (it does so while a Live Activity shows), and the launch only brought that app to the front: launch it again.
+  - Check that the app got the arguments: `ps -axww -o args | grep "TROME.app/TROME"` shows `--fake-trains` and the name.
+    When the line ends with `TROME` alone, iOS had already started the app again in the background (it does so while a Live Activity shows), and the launch only brought that app to the front: launch it again.
     On 2026-10-02 (TASK-170), the first launch after `make run` lost its arguments both times, and one or two more launches fixed it.
   - To start the state again, launch the app again with the same arguments. A launch by iOS (no argument) keeps the state and its start time. A name that the app does not know gives no fake trains, so the Live Activity says "No data available".
 
@@ -763,7 +763,15 @@ The tutorial "Install the app on your iPhone" of the docs site explains it step 
 
 In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git).
 Run `make generate`, open the project `ios/RATPActivity.xcodeproj` in Xcode, choose your iPhone, and click Run.
+The Xcode project, its targets and its schemes keep the older name `RATPActivity`: the app on the iPhone is called TROME.
 With a free Apple ID, the app stops after 7 days: run `make generate` again, then click Run again to renew it.
+
+Your build gets the bundle ID `<prefix>.trome.dev`, and its Live Activity gets `<prefix>.trome.dev.widget`.
+These IDs end with `.dev`, so they are never the App Store ID of the app, `io.github.valfur03.trome`, whatever your prefix.
+Why: when a free Apple ID signs a build, Apple registers its bundle ID to that Apple ID for good, and the paid account of the app could then never take it.
+Only the Release builds (for the App Store) carry `io.github.valfur03.trome` and `io.github.valfur03.trome.widget`, and Xcode never signs them automatically.
+`make bundle-id-check` (part of `make check`) checks both.
+A build from before the app was called TROME has another bundle ID, so iOS keeps it as a second app: delete it, so that its notifications and its Live Activities stop.
 
 On a device, the Run button of Xcode uses the PRIM key of `ios/Config/Secrets.xcconfig` in the folder that you open. There is no `make` command for a device build.
 
@@ -940,6 +948,10 @@ Almost every user of the app is French. The app shows each text in French when t
   Xcode shows them as tables.
   You can also edit the JSON by hand.
 - The "Testing tools" screen (debug builds only) stays in English. Its texts are inside `#if DEBUG`, so Xcode keeps them out of the catalog.
+- The name of the app, TROME, is written once: `APP_NAME` in `ios/Config/Base.xcconfig`.
+  The name on the home screen, the file name of the app, the permission texts that iOS shows and the texts of the app that name it read it from there (a text of the code gets it as `%@`).
+  To change the name, change that line and run `make strings-sync`: it puts the new name in the French permission texts of `ios/App/InfoPlist.xcstrings` too.
+  `make public-text-check` fails when the older name of the app comes back in a file of the repo.
 - The name of the app (`CFBundleDisplayName` and `CFBundleName`, in `ios/App/InfoPlist.xcstrings`) is the same in French: it is marked "Don't translate" (`"shouldTranslate" : false`).
 - A new text on a screen needs its French text in the catalog, in the same task. Write a text that a Paris rider knows: "Prochains passages", "écran verrouillé", "activité en direct", "Réglages", "Toujours", as iOS and the RATP say them.
 - **A build in Xcode updates the catalogs.** When you build in Xcode, Xcode reads the texts of the code and of the Info.plist, and writes the catalogs again: it adds a new text, marks a text that is no longer in the code as "stale", marks a French text "needs review" when its English text changed, and leaves out the texts inside `#if DEBUG`.

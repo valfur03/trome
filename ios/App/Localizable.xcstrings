@@ -101,12 +101,12 @@
         }
       }
     },
-    "Live Activities are turned off for this app. Turn them on in Settings > RATP Activity." : {
+    "Live Activities are turned off for this app. Turn them on in Settings > %@." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les activités en direct sont désactivées pour cette app. Activez-les dans Réglages > RATP Activity."
+            "value" : "Les activités en direct sont désactivées pour cette app. Activez-les dans Réglages > %@."
           }
         }
       }
@@ -311,12 +311,12 @@
         }
       }
     },
-    "The app cannot find the nearest station without your location. Turn on Location for RATP Activity in Settings, and choose Always." : {
+    "The app cannot find the nearest station without your location. Turn on Location for %@ in Settings, and choose Always." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sans votre position, l’app ne peut pas trouver la station la plus proche. Activez la localisation pour RATP Activity dans Réglages, et choisissez Toujours."
+            "value" : "Sans votre position, l’app ne peut pas trouver la station la plus proche. Activez la localisation pour %@ dans Réglages, et choisissez Toujours."
           }
         }
       }
@@ -331,12 +331,12 @@
         }
       }
     },
-    "The app cannot tell you that you are near a station while it is closed. Turn on Notifications for RATP Activity in Settings." : {
+    "The app cannot tell you that you are near a station while it is closed. Turn on Notifications for %@ in Settings." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quand l’app est fermée, elle ne peut pas vous prévenir que vous êtes près d’une station. Activez les notifications pour RATP Activity dans Réglages."
+            "value" : "Quand l’app est fermée, elle ne peut pas vous prévenir que vous êtes près d’une station. Activez les notifications pour %@ dans Réglages."
           }
         }
       }

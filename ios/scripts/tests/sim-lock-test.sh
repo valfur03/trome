@@ -147,12 +147,12 @@ small=$("$scripts/simulator.sh" booted | grep -vxF "$default")
 expect "make run SMALL=1 shuts down RATP-Shared and boots only the small Simulator" "$(booted)" "RATP-Shared-Small "
 expect "the small Simulator is an iPhone SE" "$(cat "$state/type.$small")" "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation"
 expect "the lock keeps the small Simulator" "$(cat "$RATP_SIM_LOCK/udid")" "$small"
-mkdir -p "$state/RATPActivity.app"
-/usr/libexec/PlistBuddy -c 'Add CFBundleIdentifier string com.example.RATPActivity' "$state/RATPActivity.app/Info.plist" > /dev/null
-echo com.example.RATPActivity > "$state/apps.$small"
-RATP_SIM_LANGUAGE=en "$scripts/sim-lock.sh" reopen "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null
+mkdir -p "$state/TROME.app"
+/usr/libexec/PlistBuddy -c 'Add CFBundleIdentifier string com.example.trome.dev' "$state/TROME.app/Info.plist" > /dev/null
+echo com.example.trome.dev > "$state/apps.$small"
+RATP_SIM_LANGUAGE=en "$scripts/sim-lock.sh" reopen "$scripts/simulator.sh" switch-language "$state/TROME.app" > /dev/null
 expect "switch-language after make run SMALL=1 keeps only the small Simulator booted" "$(booted)" "RATP-Shared-Small "
-expect "switch-language after make run SMALL=1 opens the app again on the small Simulator" "$(cat "$state/launched.$small" 2> /dev/null || true)" "com.example.RATPActivity"
+expect "switch-language after make run SMALL=1 opens the app again on the small Simulator" "$(cat "$state/launched.$small" 2> /dev/null || true)" "com.example.trome.dev"
 expect "switch-language after make run SMALL=1 does not open the app on RATP-Shared" "$(cat "$state/launched.$default" 2> /dev/null || true)" ""
 expect "the lock keeps the small Simulator after switch-language" "$(cat "$RATP_SIM_LOCK/udid") $(cat "$RATP_SIM_LOCK/size")" "$small small"
 
@@ -164,22 +164,26 @@ expect "the session keeps the lock with no job after the switch" "$(test -e "$RA
 expect "the lock follows the Simulator of the session" "$(cat "$RATP_SIM_LOCK/udid")" "$default"
 
 small_open
-echo com.example.RATPActivity > "$state/apps.$small"
+echo com.example.trome.dev > "$state/apps.$small"
 "$scripts/sim-lock.sh" free
 expect "make simulator-shutdown after make run SMALL=1 keeps only the small Simulator booted" "$(booted)" "RATP-Shared-Small "
 expect "make simulator-shutdown after make run SMALL=1 removes the app from the small Simulator" "$(cat "$state/apps.$small")" ""
 expect "make simulator-shutdown frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
 
-echo com.example.RATPActivity > "$state/apps.$small"
-echo com.example.RATPActivity > "$state/apps.$default"
+echo com.example.trome.dev > "$state/apps.$small"
+echo com.example.trome.dev > "$state/apps.$default"
 RATP_SIM_SIZE=small "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job on the small Simulator removes the app that an earlier job left on it" "$(cat "$state/apps.$small")" ""
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job on RATP-Shared removes the app that an earlier job left on it" "$(cat "$state/apps.$default")" ""
-printf '%s\n' com.example.RATPActivityRenderCheckHost com.example.RATPActivityUITests.xctrunner com.other.App > "$state/apps.$default"
+printf '%s\n' com.example.trome.dev.render-check-host com.example.trome.dev.uitests.xctrunner com.other.App > "$state/apps.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job removes the host app of the render check, and keeps the test runners and the other apps" \
-    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.RATPActivityUITests.xctrunner com.other.App "
+    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.trome.dev.uitests.xctrunner com.other.App "
+printf '%s\n' com.example.RATPActivity com.example.RATPActivityRenderCheckHost com.example.RATPActivityUITests.xctrunner > "$state/apps.$default"
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "a job removes the app and the render check host of a build with the old bundle IDs" \
+    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.RATPActivityUITests.xctrunner "
 
 echo "RATP-Shared Booted" > "$state/device.$default"
 echo "RATP-Shared-Small Booted" > "$state/device.$small"
@@ -276,14 +280,14 @@ pretend_a_watcher_runs
 expect "the idle watcher shuts down every shared Simulator" "$(booted)" ""
 
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null
-printf '%s\n' com.apple.Maps com.example.RATPActivity com.example.RATPActivityUITests.xctrunner com.other.App > "$state/prefs.$default"
+printf '%s\n' com.apple.Maps com.example.trome.dev com.example.trome.dev.uitests.xctrunner com.other.App > "$state/prefs.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job deletes the saved settings that the app of an earlier job left on the Simulator" "$(tr '\n' ' ' < "$state/prefs.$default")" "com.apple.Maps com.other.App "
-echo com.example.RATPActivity >> "$state/prefs.$default"
+echo com.example.trome.dev >> "$state/prefs.$default"
 expect "a job goes on when the Simulator lists settings of the app that it cannot delete" "$(FAKE_DEFAULTS_DELETE_FAILS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
-echo com.example.RATPActivity > "$state/apps.$default"
-echo "Allow RATP Activity to also use your location even when you are not using the app?" > "$state/popup.$default"
+echo com.example.trome.dev > "$state/apps.$default"
+echo "Allow TROME to also use your location even when you are not using the app?" > "$state/popup.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job closes a system popup that an earlier job left on the Simulator" "$(test -e "$state/popup.$default" && echo shown || true)" ""
 expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default" 2> /dev/null || echo "no restart")" ""
@@ -293,7 +297,7 @@ chronod_line() {
     echo "2026-10-01 15:31:19.389 Df chronod[28175:eb6459] [com.apple.chrono:taskservice] $1"
 }
 chronod_busy() {
-    chronod_line "Add pending task: descriptor<com.example.RATPActivity::com.example.RATPActivity.Widget>.84AB4E5B"
+    chronod_line "Add pending task: descriptor<com.example.trome.dev::com.example.trome.dev.widget>.84AB4E5B"
     chronod_line "No available queue to process pending tasks"
 }
 chronod_idle() {
@@ -311,10 +315,10 @@ widget_host_message() {
 expect "a job runs at once when the widget host of the Simulator logs no work" "$(wait_for_widget_host) $(widget_host_message)" "ran "
 { chronod_busy; chronod_idle; } > "$state/chronod-log.$default"
 expect "a job runs at once when the widget host has emptied its queue" "$(wait_for_widget_host) $(widget_host_message)" "ran "
-{ chronod_idle; chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.RATPActivity::com.example.RATPActivity.Widget>.84AB4E5B; pendingTasks.count = 12"; } > "$state/chronod-log.$default"
-chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.RATPActivity::com.example.RATPActivity.Widget>.84AB4E5B; pendingTasks.count = 0" > "$state/chronod-log.$default.next"
+{ chronod_idle; chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.trome.dev::com.example.trome.dev.widget>.84AB4E5B; pendingTasks.count = 12"; } > "$state/chronod-log.$default"
+chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.trome.dev::com.example.trome.dev.widget>.84AB4E5B; pendingTasks.count = 0" > "$state/chronod-log.$default.next"
 expect "a job waits while the widget host has tasks queued, then runs" "$(wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host"
-chronod_line "Would pop task, but all extensions are busy, namely [com.example.RATPActivity::com.example.RATPActivity.Widget]" > "$state/chronod-log.$default"
+chronod_line "Would pop task, but all extensions are busy, namely [com.example.trome.dev::com.example.trome.dev.widget]" > "$state/chronod-log.$default"
 expect "a job goes on when the widget host keeps tasks queued after the limit" "$(RATP_WIDGET_HOST_WAIT_SECONDS=1 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
 
 language_at_restart() {
@@ -327,10 +331,10 @@ expect "a job sets the Simulator back to English by default" "$(language_at_rest
 expect "an unknown language fails" "$(RATP_SIM_LANGUAGE=de "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || echo fails)" "fails"
 : > "$state/apps.$default"
 expect "sim-lock.sh reopen fails when this folder keeps no Simulator" "$("$scripts/sim-lock.sh" reopen true > /dev/null 2>&1 && echo reopened || echo fails)" "fails"
-expect "switch-language fails when the app is not in the Simulator" "$(RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null 2>&1 && echo switched || echo fails)" "fails"
-echo com.example.RATPActivity > "$state/apps.$default"
-RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" switch-language "$state/RATPActivity.app" > /dev/null
-expect "switch-language keeps the app, sets the language and opens the app again" "$(cat "$state/apps.$default") $(language_at_restart) $(cat "$state/launched.$default")" "com.example.RATPActivity fr fr_FR com.example.RATPActivity"
+expect "switch-language fails when the app is not in the Simulator" "$(RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" switch-language "$state/TROME.app" > /dev/null 2>&1 && echo switched || echo fails)" "fails"
+echo com.example.trome.dev > "$state/apps.$default"
+RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" switch-language "$state/TROME.app" > /dev/null
+expect "switch-language keeps the app, sets the language and opens the app again" "$(cat "$state/apps.$default") $(language_at_restart) $(cat "$state/launched.$default")" "com.example.trome.dev fr fr_FR com.example.trome.dev"
 echo accessibility-extra-extra-extra-large > "$state/ui.$default.content_size"
 echo dark > "$state/ui.$default.appearance"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
@@ -382,7 +386,7 @@ esac
 exec /bin/cat "$@"
 EOF
 chmod +x "$state/slow-bin/cat"
-echo com.example.RATPActivity > "$state/apps.$default"
+echo com.example.trome.dev > "$state/apps.$default"
 "$other_scripts/sim-lock.sh" open sh -c '"$1" boot > /dev/null && sleep 2' sh "$other_scripts/simulator.sh" &
 other_open=$!
 tries=0
@@ -404,7 +408,7 @@ watch_in_background
 sleep 3
 stop_watcher
 expect "the watcher of another folder keeps the lock of make run" "$(cat "$RATP_SIM_LOCK/worktree" 2> /dev/null || true)" "$state/other"
-expect "the waiting job does not remove the app of make run of the other folder" "$(cat "$state/apps.$default")" "com.example.RATPActivity"
+expect "the waiting job does not remove the app of make run of the other folder" "$(cat "$state/apps.$default")" "com.example.trome.dev"
 "$other_scripts/sim-lock.sh" free
 finish_background
 expect "the waiting job runs once the other folder runs make simulator-shutdown" "$(ran after-session)" "ran"
@@ -421,7 +425,7 @@ expect "make simulator-shutdown in the other folder frees the lock" "$(test -e "
 
 export RATP_SIM_SLOTS=2
 hold "$RATP_SIM_LOCK"
-echo com.example.RATPActivity > "$state/apps.$default"
+echo com.example.trome.dev > "$state/apps.$default"
 "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/slot" && "$1" reset && "$1" with-destination echo > "$FAKE_SIM_STATE/destination"' \
     sh "$scripts/simulator.sh" > /dev/null
 second=$(RATP_SIM_SLOT=2 "$scripts/simulator.sh" find)
@@ -429,7 +433,7 @@ expect "a job runs on slot 2 while another job holds slot 1" "$(ran slot)" "2"
 expect "the job on slot 2 boots RATP-Shared-2 and keeps RATP-Shared booted" "$(booted)" "RATP-Shared RATP-Shared-2 "
 expect "RATP-Shared-2 is an iPhone 17, like RATP-Shared" "$(cat "$state/type.$second")" "com.apple.CoreSimulator.SimDeviceType.iPhone-17"
 expect "the job on slot 2 runs its tests on RATP-Shared-2" "$(ran destination)" "-destination platform=iOS Simulator,id=$second"
-expect "the job on slot 2 does not remove the app of the job on slot 1" "$(cat "$state/apps.$default")" "com.example.RATPActivity"
+expect "the job on slot 2 does not remove the app of the job on slot 1" "$(cat "$state/apps.$default")" "com.example.trome.dev"
 expect "the job on slot 2 frees its lock and leaves the lock of slot 1 to its holder" "$(test -e "$RATP_SIM_LOCK.2" && echo held || true) $(cat "$RATP_SIM_LOCK/pid")" " $idle_watcher"
 
 in_background env FAKE_CPU_IDLE=10 "$scripts/sim-lock.sh" job sh -c 'echo "$RATP_SIM_SLOT" > "$FAKE_SIM_STATE/cpu-slot"'

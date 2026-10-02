@@ -112,13 +112,13 @@ boot_device() {
 
 installed_apps() {
     xcrun simctl listapps "$1" \
-        | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.RATPActivity(RenderCheckHost)?)"?;$/\1/p'
+        | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.(trome\.dev(\.render-check-host)?|RATPActivity(RenderCheckHost)?))"?;$/\1/p'
 }
 
 left_preference_domains() {
     xcrun simctl spawn "$1" defaults domains \
         | tr ',' '\n' \
-        | sed -n -E 's/^ *([^ ]*\.RATPActivity[A-Za-z.]*) *$/\1/p'
+        | sed -n -E 's/^ *([^ ]*\.(trome\.dev[a-z.-]*|RATPActivity[A-Za-z.]*)) *$/\1/p'
 }
 
 uninstall_apps() {

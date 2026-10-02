@@ -9,12 +9,13 @@ struct ContentView: View {
     @Environment(LocationService.self) private var locationService
     @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appName) private var appName
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    Text(verbatim: "RATP Activity")
+                    Text(verbatim: appName)
                         .font(.largeTitle.bold())
                         .accessibilityIdentifier("appTitle")
                         .listRowBackground(Color.clear)

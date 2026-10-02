@@ -14,7 +14,8 @@ dir=$(cd "$(dirname "$0")" && pwd)
 ios=$(cd "$dir/../.." && pwd)
 root=$(cd "$ios/.." && pwd)
 out="$ios/.build/timing/$label"
-app="$ios/.build/DerivedData/Build/Products/Debug-iphonesimulator/RATPActivity.app"
+app_name=$(sed -n -E 's/^APP_NAME = (.+)$/\1/p' "$ios/Config/Base.xcconfig")
+app="$ios/.build/DerivedData/Build/Products/Debug-iphonesimulator/$app_name.app"
 qa_name=RATP-Shared-QA
 if [ ! -d "$app" ]; then
     echo "No app at $app: run make build first." >&2

@@ -45,9 +45,10 @@ file ios/package.json "\"micromark-factory-space\": \"^2.0.0\", \"package-manage
 file ios/scripts/tests/git-test.sh "export GIT_AUTHOR_EMAIL=test@example.com OTHER=jane@mail.example ALSO=ci@build.test"
 file ios/scripts/tests/cache-test.sh "[ -f \"\$cache/users/\$build\" ]"
 file ios/App/Bundle.swift "let id = \"io.github.trome\"; let task = Task { }; let decision = \"doc\""
+file ios/project.yml "name: RATPActivity; packages: RATPCore; git clone https://github.com/owner/ratp-activity-ios"
 file ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json "{ \"filename\" : \"AppIcon@2x.png\" }, { \"filename\" : \"AppIcon@3x.png\" } git clone git@github.com:owner/trome.git"
 expect "a public text with no internal word, no personal data and no local path passes" "$(check)" "passes"
-expect "it says how many files it checked" "$(grep -c "OK (8 files" "$state/out")" "1"
+expect "it says how many files it checked" "$(grep -c "OK (9 files" "$state/out")" "1"
 
 reset_repo
 file docs/page.mdx "Wait: the factory agents use the Simulator (TASK-140, decision-15, doc-3)."
@@ -77,7 +78,7 @@ file .claude/rules/merge.md "The factory merges one task at a time (TASK-159)."
 file README.md "See TASK-173 and decision-15."
 expect "CLAUDE.md, .claude/ and, for now, README.md may cite the backlog and its words" "$(check)" "passes"
 expect "it says which files it checks only for personal data, and why" \
-    "$(grep -c "checks only personal data and local paths in" "$state/out")" "3"
+    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
 
 file CLAUDE.md "Ask jane.doe@company.fr, or look in /Users/jane/repo."
 file .claude/rules/merge.md "Logs go to /Users/jane/logs."
@@ -85,6 +86,16 @@ expect "CLAUDE.md and .claude/ still fail on personal data and local paths" "$(c
 expect "it finds the email address of CLAUDE.md" "$(hit 'CLAUDE.md:1: an email address: "jane.doe@company.fr"')" "1"
 expect "it finds the local path of CLAUDE.md" "$(hit 'CLAUDE.md:1: a local path: "/Users/"')" "1"
 expect "it finds the local path of .claude/" "$(hit '.claude/rules/merge.md:1: a local path: "/Users/"')" "1"
+
+reset_repo
+file README.md "# RATP Activity"
+file docs/page.mdx "Open Settings > Apps > RATP&nbsp;Activity."
+file ios/App/InfoPlist.xcstrings "\"value\" : \"Ratp  activité\""
+expect "the old name of the app fails in every file, the README too" "$(check)" "fails"
+expect "it finds the old name in the README" "$(hit 'README.md:1: the old name of the app: "RATP Activit"')" "1"
+expect "it finds the old name with a no-break space" "$(hit 'docs/page.mdx:1: the old name of the app: "RATP&nbsp;Activit"')" "1"
+expect "it finds the old name in any case and spacing" "$(hit 'ios/App/InfoPlist.xcstrings:1: the old name of the app: "Ratp  activit"')" "1"
+expect "it says the new name" "$(grep -c "not the old name of the app (it is TROME)" "$state/out")" "1"
 
 reset_repo
 file ios/scripts/public-text-check.py "INTERNAL_RULES = [\"prompter\", \"/Users/\"]"

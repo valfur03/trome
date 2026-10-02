@@ -6,6 +6,8 @@ struct PermissionsSection: View {
     let permissions: PermissionsModel
     let nearestStationModel: NearestStationModel
 
+    @Environment(\.appName) private var appName
+
     var body: some View {
         Section("Permissions") {
             locationRow
@@ -51,7 +53,7 @@ struct PermissionsSection: View {
                 kind: .location,
                 hint: """
                     The app cannot find the nearest station without your location. \
-                    Turn on Location for RATP Activity in Settings, and choose Always.
+                    Turn on Location for \(appName) in Settings, and choose Always.
                     """,
                 fix: .openSettings
             )
@@ -85,7 +87,7 @@ struct PermissionsSection: View {
                 kind: .notifications,
                 hint: """
                     The app cannot tell you that you are near a station while it is closed. \
-                    Turn on Notifications for RATP Activity in Settings.
+                    Turn on Notifications for \(appName) in Settings.
                     """,
                 fix: .openSettings
             )

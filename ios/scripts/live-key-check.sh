@@ -74,7 +74,8 @@ esac
 root=$(cd "$(dirname "$0")/.." && pwd)
 build="$root/.build"
 work="$build/live-key-check"
-app_plist="$build/DerivedData/Build/Products/Debug-iphonesimulator/RATPActivity.app/Info.plist"
+app_name=$(sed -n -E 's/^APP_NAME = (.+)$/\1/p' "$root/Config/Base.xcconfig")
+app_plist="$build/DerivedData/Build/Products/Debug-iphonesimulator/$app_name.app/Info.plist"
 fake_prefix="LEAKCHECK$(date +%s)$$"
 old_fake="${fake_prefix}A"
 fake="${fake_prefix}B"

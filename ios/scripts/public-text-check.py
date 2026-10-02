@@ -15,6 +15,7 @@ class Allowed(NamedTuple):
 PERSONAL_RULES = [
     ("an email address", re.compile(r"[\w.%+-]+@[\w-]+(?:\.[\w-]+)*\.[A-Za-z]{2,}\b")),
     ("a local path", re.compile(r"/Users/")),
+    ("the old name of the app", re.compile(r"RATP(?:\s|&nbsp;)+Activit", re.IGNORECASE)),
 ]
 INTERNAL_RULES = [
     ("a backlog id", re.compile(r"\b(?:task|decision|doc)-\d+\b", re.IGNORECASE)),
@@ -70,7 +71,7 @@ def hits(root, path):
 
 
 def describe_exceptions(paths):
-    for listing, what in ((INTERNAL_FILES, "checks only personal data and local paths in"), (SKIPPED_FILES, "skips")):
+    for listing, what in ((INTERNAL_FILES, "checks only personal data, local paths and the old app name in"), (SKIPPED_FILES, "skips")):
         for prefix, reason in listing.items():
             if any(matching(path, [prefix]) for path in paths):
                 print(f"public-text-check: {what} {prefix}: {reason}")
@@ -90,14 +91,15 @@ def main(arguments):
         print(
             "public-text-check: FAILED. The files of this repo are public: write the rule and its reason instead.\n"
             "No backlog id and no word of the team's own process (the backlog is private, and a stranger cannot read it),\n"
-            "no email address other than an example one, and no local path. CLAUDE.md and .claude/ may cite the backlog.\n"
+            "no email address other than an example one, no local path, and not the old name of the app (it is TROME).\n"
+            "CLAUDE.md and .claude/ may cite the backlog.\n"
             "When a hit is a normal word in its place, add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py,\n"
             "with its reason (CONTRIBUTING.md, section \"Public text\").",
             file=sys.stderr,
         )
         sys.exit(1)
     print(f"public-text-check: OK ({len(checked)} files: no backlog id, no word of the team's own process, "
-          "no personal email address, no local path)")
+          "no personal email address, no local path, no old name of the app)")
 
 
 main(sys.argv[1:])

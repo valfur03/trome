@@ -5,4 +5,7 @@
 DEVELOPMENT_TEAM =
 
 // A prefix that is unique to you, for example io.github.your-github-name
+// The app gets the bundle ID <prefix>.trome.dev, and its Live Activity <prefix>.trome.dev.widget.
+// They end with .dev, so they are never the App Store ID of the app (io.github.valfur03.trome), whatever your prefix.
+// So your free Apple ID can never register the App Store ID: Apple would then never give it to the paid account of the app.
 RATP_BUNDLE_ID_PREFIX = com.example

@@ -39,7 +39,7 @@ expect "a French text that is not marked translated fails" "$(check)" "fails"
 catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Next trains at %@\": $(french translated '')"
 expect "an empty French text fails" "$(check)" "fails"
 
-catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"RATP Activity\": {\"shouldTranslate\": false}"
+catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"TROME\": {\"shouldTranslate\": false}"
 expect "a text marked as not to translate passes" "$(check)" "passes"
 
 catalog "\"Open Settings\": $(french translated 'Ouvrir Réglages'), \"Old text\": {\"extractionState\": \"stale\", \"localizations\": {\"fr\": {\"stringUnit\": {\"state\": \"translated\", \"value\": \"Vieux texte\"}}}}"

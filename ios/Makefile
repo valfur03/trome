@@ -3,7 +3,8 @@ APP_SCHEME := RATPActivity
 E2E_SCHEME := RATPActivityE2E
 BUILD_DIR := .build
 DERIVED_DATA := $(BUILD_DIR)/DerivedData
-APP_PATH := $(DERIVED_DATA)/Build/Products/Debug-iphonesimulator/RATPActivity.app
+APP_NAME := $(shell sed -n -E 's/^APP_NAME = (.+)$$/\1/p' Config/Base.xcconfig)
+APP_PATH := $(DERIVED_DATA)/Build/Products/Debug-iphonesimulator/$(APP_NAME).app
 E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
 XCODEGEN_CACHE := $(BUILD_DIR)/xcodegen-cache
 E2E_TARGET := RATPActivityUITests
@@ -68,7 +69,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -80,14 +81,15 @@ help:
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
 	@echo "make run LANGUAGE=fr     Same, with the Simulator in French (the default is English: LANGUAGE=en)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
-	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + recommended settings check + key leak check + build (no warning allowed) + strings check + unit tests + script tests"
+	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + bundle ID check + recommended settings check + key leak check + build (no warning allowed) + strings check + unit tests + script tests"
 	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, or when a text of the app or the Live Activity has no French text"
-	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code)"
+	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code), and put APP_NAME of Config/Base.xcconfig in the permission texts"
 	@echo "make prose-check         Fail when a line of prose of a Markdown or MDX file of the repo is longer than 400 characters (write one sentence per line)"
-	@echo "make public-text-check   Fail when a file of the repo has a backlog id, a word of the team's own process, a personal email address or a local path"
+	@echo "make public-text-check   Fail when a file of the repo has a backlog id, a word of the team's own process, a personal email address, a local path or the old name of the app"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key and that a new key replaces the old one (uses fake keys)"
+	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID, or when a Release build is signed automatically"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
@@ -146,6 +148,7 @@ strings-check: project
 	@./scripts/strings-check.py $(STRING_CATALOGS)
 
 strings-sync: project
+	@./scripts/app-name-sync.py Config/Base.xcconfig App/InfoPlist.xcstrings
 	@./scripts/strings-sync.sh sync $(EXPORT_STRINGS)
 
 prose-check:
@@ -163,7 +166,10 @@ test-scripts:
 		$$test > $(BUILD_DIR)/test-scripts.log 2>&1 || { cat $(BUILD_DIR)/test-scripts.log; exit 1; }; \
 	done
 
-check: lint prose-check public-text-check recommended-settings-check live-key-check build strings-check test test-scripts
+check: lint prose-check public-text-check bundle-id-check recommended-settings-check live-key-check build strings-check test test-scripts
+
+bundle-id-check: project
+	@./scripts/bundle-id-check.sh $(PROJECT)
 
 recommended-settings-check:
 	@./scripts/recommended-settings-check.sh project.yml "$$(xcodebuild -version | head -1)"
