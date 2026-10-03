@@ -219,6 +219,21 @@ merge markdown
 expect "make merge of a task that changes only Markdown, LICENSE, .claude/ and the unit tests succeeds" "$status" "0"
 expect "make merge skips the E2E suite when the task changes only Markdown or MDX files, LICENSE, .claude/ and the unit tests" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
 
+new_task github
+mkdir -p "$state/github/.github/workflows" "$state/github/.github/ISSUE_TEMPLATE"
+commit "$state/github" .github/workflows/docs-site.yml workflow
+commit "$state/github" .github/ISSUE_TEMPLATE/bug.yml form
+merge github
+expect "make merge of a task that changes only .github/ succeeds" "$status" "0"
+expect "make merge skips the E2E suite when the task changes only .github/, which no build and no test reads" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+
+new_task github_app
+mkdir -p "$state/github_app/.github/workflows" "$state/github_app/ios/App"
+commit "$state/github_app" .github/workflows/docs-site.yml "new workflow"
+commit "$state/github_app" ios/App/Feature.swift code
+merge github_app
+expect "make merge runs the E2E suite when the task changes .github/ and app code" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job "
+
 for folder in ios/App ios/Widget ios/UITests ios/DocsScreenshots ios/RenderCheck ios/Packages/TROMECore/Sources/TROMECore; do
     name=$(echo "$folder" | tr '/' '_')
     new_task "$name"

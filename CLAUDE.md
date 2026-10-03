@@ -96,7 +96,7 @@ Never fix it with retries or longer timeouts alone: find the cause (a race, a sh
 ## Repo layout
 
 Each part of the repo has its own folder: `ios/` (the iPhone app, with its config and scripts), `docs/` (the docs site), `server/` (the server, a Cloudflare Worker, decision-40) and `contracts/` (the files that the app and the server both test against, decision-6 section 3).
-The root holds only the files of the whole repo: `README.md`, `CLAUDE.md`, `Makefile`, `.gitignore`, `.nvmrc`, and `.claude/` (the rules and the hook of Claude Code).
+The root holds only the files of the whole repo: `README.md`, `CLAUDE.md`, `Makefile`, `.gitignore`, `.nvmrc`, `.claude/` (the rules and the hook of Claude Code), and `.github/` (the GitHub workflows, which GitHub reads only at the root).
 
 - Run the `make` commands from the root.
   The root `Makefile` has no build logic: it runs each command in the `Makefile` of its part (`make e2e` runs `make -C ios e2e`).
