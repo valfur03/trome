@@ -1,12 +1,24 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { draftsWithoutNotice, pagesWithoutTwin } from './site-pages.ts';
+import { draftsWithoutNotice, isInBothLanguages, pagesWithoutTwin } from './site-pages.ts';
 
 const contentFolder = new URL('content/docs/', import.meta.url);
 const sitePages = readdirSync(contentFolder, { recursive: true, encoding: 'utf8' })
   .map((path) => path.split('\\').join('/'))
   .filter((path) => /\.mdx?$/.test(path));
+
+describe('isInBothLanguages', () => {
+  it('accepts a riders page and a home', () => {
+    assert.equal(isInBothLanguages('fr/support'), true);
+    assert.equal(isInBothLanguages('en'), true);
+  });
+
+  it('refuses a page of a section in English only, and a page outside the language folders', () => {
+    assert.equal(isInBothLanguages('en/build/install-on-your-iphone'), false);
+    assert.equal(isInBothLanguages('404'), false);
+  });
+});
 
 describe('pagesWithoutTwin', () => {
   it('accepts a page that exists in both languages', () => {

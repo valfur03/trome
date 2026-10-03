@@ -59,6 +59,7 @@ A page for riders has a French page and an English page at the same path, with t
 The language menu of each page then opens the same page in the other language.
 `make docs-check` fails when a riders' page exists in one language only.
 The pages for builders are in English only, in `en/build/`, and the French home links to them: [`src/site-pages.ts`](src/site-pages.ts) lists these English-only folders.
+A page in English only shows no language menu ([`src/components/LanguageSelect.astro`](src/components/LanguageSelect.astro)), because its French page does not exist.
 
 ### The components
 

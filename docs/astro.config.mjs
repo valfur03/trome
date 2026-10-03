@@ -28,6 +28,7 @@ export default defineConfig({
       customCss: ['./src/styles/custom.css'],
       plugins: [starlightLinksValidator()],
       routeMiddleware: './src/route-data.ts',
+      components: { LanguageSelect: './src/components/LanguageSelect.astro' },
       sidebar: [
         {
           label: 'Utiliser TROME',
@@ -35,7 +36,7 @@ export default defineConfig({
           items: ['support', 'privacy', 'whats-new'],
         },
         {
-          // In English only: src/route-data.ts hides it in the French sidebar, and the French home links to it.
+          // In English only: src/route-data.ts hides it in the French sidebar, src/components/LanguageSelect.astro hides the language menu of its pages, and the French home links to it.
           label: 'Build it yourself',
           items: [{ autogenerate: { directory: 'build' } }],
         },

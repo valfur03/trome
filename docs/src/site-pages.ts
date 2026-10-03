@@ -6,15 +6,21 @@ export const englishOnlyFolders = ['build/'];
 
 const languages = ['fr', 'en'];
 
+export function isInBothLanguages(path: string): boolean {
+  const [language, ...rest] = path.split('/');
+  const page = rest.join('/');
+  return languages.includes(language) && !englishOnlyFolders.some((folder) => page.startsWith(folder));
+}
+
 // The pages that miss their twin in the other language, for paths such as "fr/support.mdx".
 export function pagesWithoutTwin(paths: string[]): string[] {
   const pages = new Set(paths);
   return paths.filter((path) => {
-    const [language, ...rest] = path.split('/');
-    const page = rest.join('/');
-    if (!languages.includes(language) || englishOnlyFolders.some((folder) => page.startsWith(folder))) {
+    if (!isInBothLanguages(path)) {
       return false;
     }
+    const [language, ...rest] = path.split('/');
+    const page = rest.join('/');
     return languages.some((other) => other !== language && !pages.has(`${other}/${page}`));
   });
 }
