@@ -1,0 +1,592 @@
+---
+title: Release TROME on the App Store
+description: The first release by hand, from the Apple Developer Program to TROME on the store, in nine steps, with the steps that you cannot undo marked.
+sidebar:
+  order: 1
+---
+
+import { Aside, Badge, Steps } from '@astrojs/starlight/components';
+import Checklist from '../../../../components/Checklist.astro';
+
+Nine steps take TROME from your free Apple ID to the App Store, and this page walks you through each one, in the order that Apple asks for them.
+Your own work adds up to about a day, but the whole release takes a few weeks, because most of the time you wait: for Apple, and for some riders to test TROME.
+A few choices can never be undone: the list below names them before you start, and the step where you meet each one says why.
+
+You need your Mac with the TROME repo, App Store Connect open in a browser, and your iPhone for the identity check and the tests.
+Steps 1 to 8 need your Apple Account, because you are the Account Holder and nobody else can sign in.
+What can be prepared without your account is in [Have these ready](#have-these-ready).
+
+<Aside type="caution" title="Written from Apple's help, not tried yet">
+  Nobody has followed these steps on a paid account yet.
+  They come from Apple's help pages, read on 3 October 2026, and each step names the pages that it follows.
+  Each step that could not be tried without an account is marked <Badge text="Not checked on an account" variant="caution" />.
+  When a screen differs from the page, trust the screen, note the difference, and see [Fix this page](#fix-this-page).
+</Aside>
+
+## The nine steps at a glance
+
+The times are rough estimates of your own work, not Apple's figures.
+
+| Step | Your time | Then you wait for |
+|---|---|---|
+| [1. Join the Apple Developer Program](#1-join-the-apple-developer-program) | 30 minutes | Apple's confirmation email: Apple says to contact them if it has not come 24 hours after you pay |
+| [2. Create the app in App Store Connect](#2-create-the-app-in-app-store-connect) | 20 minutes | nothing |
+| [3. Sign the release build with your paid team](#3-sign-the-release-build-with-your-paid-team) | 15 minutes | a change of the repo, prepared for you |
+| [4. Build, upload and check the first build](#4-build-upload-and-check-the-first-build) | 1 hour | Apple's email that the build is processed |
+| [5. Test with TestFlight: your iPhone first, then a small group](#5-test-with-testflight-your-iphone-first-then-a-small-group) | 30 minutes, then days of use | the beta review of the first external build |
+| [6. Fill in the store page](#6-fill-in-the-store-page) | 1 to 2 hours | nothing |
+| [7. Give App Review the notes, the recording and your contact](#7-give-app-review-the-notes-the-recording-and-your-contact) | 20 minutes, plus filming | nothing |
+| [8. Submit, read the status, and release](#8-submit-read-the-status-and-release) | 15 minutes | the review (Apple: 90% of submissions in less than 24 hours), then up to 24 hours before the app shows |
+| [9. Watch the first days](#9-watch-the-first-days) | 10 minutes a day | nothing |
+
+## The choices that you cannot undo
+
+In the order that you meet them:
+
+1. **The App Store ID on a free team.** If a free Personal Team signs `io.github.valfur03.trome`, Apple keeps that ID for the free team, and your paid account cannot use it: the risk lasts until your paid team registers the ID in step 2.
+2. **Your seller name.** As an individual, your legal name is the seller on the App Store, and it becomes the developer name of the app, which you can never edit (step 1).
+3. **The Paid Apps Agreement.** TROME is free and does not need it, and Apple says that once you accept it, you cannot undo it: leave it unsigned (step 1).
+4. **The SKU and the bundle ID.** The SKU is fixed once the app record exists, and the bundle ID once the first build is uploaded (step 2).
+5. **Made for Kids.** Once App Review approves it, it stays for every later version: answer **Not Applicable** (step 6).
+6. **A released version.** You cannot go back to an earlier version on the store: you can only send a new one, or remove the app from sale (step 8).
+
+## Have these ready
+
+Each step needs some things that can be made without your Apple account.
+Check that each one is ready before you start the step that needs it, so that you never stop halfway through a form.
+
+<Checklist id="release-have-ready" kind="things">
+
+- **For steps 2 and 6: the store text,** in French and in English: three store titles in order of preference, the subtitle, the promotional text, the description, the keywords, the category, the answers of the age rating questionnaire, and the copyright line.
+  The name on the home screen stays TROME, whatever store title you get.
+- **For step 3: the change of the repo that signs the release build with your paid team,** and with no other team.
+  It can only be made after step 1.
+- **For step 4: the build checks in the repo.** The version is 1.0.0 and the build number is 1, the app has its icon, its privacy manifest and its answer on encryption, and `make check` passes.
+- **For step 4: the production server.** You set its secrets in your own terminal with `make server-secrets`, which asks for each value at a hidden prompt, then you run `make server-deploy`, and its `/health` address answers `{"status":"ok"}`.
+  Never put a secret in a file or in a message: a file can end up in git, and git keeps it for good.
+- **For step 4: the server address and the app token in the release build.** The release build reads them from a build settings file that git ignores, never from a file of the repo.
+- **For step 5: the privacy page and the help page online,** with your legal name, your city and your contact address filled in: [Confidentialité](/trome/fr/privacy/), [Privacy](/trome/en/privacy/), [Aide](/trome/fr/support/) and [Help](/trome/en/support/).
+  The app opens the same two pages from its screen, and the build of step 4 must already have these addresses.
+- **For step 5: the beta app description,** a few lines in English for the testers: the first lines of the store description work.
+- **For step 6: the App Privacy answers,** written from the privacy page, so that the store and the page say the same thing.
+- **For step 6: the screenshots,** in French and in English, at the 6.9-inch size of App Store Connect (for example 1260 × 2736 pixels), made by one command in the repo.
+- **For step 7: the review notes,** in English and under 4,000 bytes, and **the recording script**: you film the recording yourself, on your iPhone, at a real station, with the final build.
+- **For step 8: the notes of the version,** in two layers.
+  For developers, the commit log, whose messages start with their type (`feat`, `fix`, `docs`), and `CHANGELOG.md` in the repo, which sums it up for each version.
+  For riders, three or four lines in their own words, in French and in English, written by a person: they go on the site's What's new page ([Nouveautés](/trome/fr/whats-new/), [What's new](/trome/en/whats-new/)), and from the second version on, in the What's New field of the store.
+
+</Checklist>
+
+## 1. Join the Apple Developer Program
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [Program enrollment](https://developer.apple.com/help/account/membership/program-enrollment/), [Enrolling with the Apple Developer app](https://developer.apple.com/help/account/membership/enrolling-in-the-app/), [Become a member](https://developer.apple.com/programs/enroll/),
+[EU Digital Services Act trader requirements](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements/), [Sign and update agreements](https://developer.apple.com/help/app-store-connect/manage-agreements/sign-and-update-agreements/).
+
+You can enrol before the rest is ready: enrolling creates no app and registers no bundle ID.
+The membership costs 99 USD a year, shown in your own currency when you pay, and its year starts on the day you pay.
+From that day, you sign with a paid team, which does not have the two limits of the free one: builds that stop after 7 days, and 10 new App IDs a week.
+
+You need an Apple Account with two-factor authentication, your legal first and last name in that account (not a nickname), your own payment card, and a passport, a driving licence or another government photo ID.
+
+<Checklist id="release-enrol">
+
+<Steps>
+
+1. On your iPhone, install the **Apple Developer** app from the App Store, and open it.
+
+2. Tap the **Account** tab, and sign in with your Apple Account.
+   If the app asks you to agree to the Apple Developer Agreement, tap **Agree**.
+
+3. Tap **Enroll Now**, read the benefits and requirements, and tap **Continue**.
+
+4. Enter your legal first name, last name and phone number.
+   Apple shows this name as the seller of TROME on the App Store, and an alias or a nickname delays the approval.
+
+5. Take a picture of your photo ID when the app asks.
+   Apple says that it checks the ID and reads your name and address from it, and does not keep the image.
+   Give a street address: Apple does not accept a P.O. box here.
+
+6. Choose **Individual** as the entity type, then read and agree to the Apple Developer Program License Agreement.
+
+7. Tap **Subscribe**.
+   In the app, the membership renews every year until you cancel it, and Apple uses the default payment method of your Apple Account: a gift card balance does not work.
+
+8. Wait for the confirmation email.
+   If it has not come 24 hours after your payment, [contact Apple Developer Support](https://developer.apple.com/contact/) with your Enrollment ID.
+
+9. Sign in to [App Store Connect](https://appstoreconnect.apple.com).
+   Under **Business**, on the **Agreements** tab, accept the latest agreement if App Store Connect asks for it: you cannot create an app before that.
+   Leave the **Paid Apps** agreement unsigned.
+
+10. Still under **Business > Agreements**, in the **Compliance** section, click **Complete Compliance Requirements** next to **Digital Services Act**, and answer whether you are a trader.
+    If you skip it here, App Store Connect asks the same question when you submit your first app.
+
+</Steps>
+
+</Checklist>
+
+<Aside type="caution" title="Trader or not: your legal call">
+  The European Union's Digital Services Act asks whether you sell as a trader.
+  A trader gives an address (or a P.O. box), a phone number and an email address, which Apple checks and then shows on the store page in the 27 countries of the EU, and also uploads a document that proves the address.
+  A non-trader gives nothing, and Apple tells buyers in the EU that consumer protection rights do not apply.
+  A free app with no income, made by one person outside any business, looks like a non-trader, but the definition comes from EU law, and you certify the answer: this page is not legal advice.
+  You can change the answer later, under **App Information > App Store Regulations and Permits**.
+</Aside>
+
+## 2. Create the app in App Store Connect
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [Register an App ID](https://developer.apple.com/help/account/identifiers/register-an-app-id/), [Delete an App ID](https://developer.apple.com/help/account/identifiers/delete-an-app-id/), [Add a new app](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-a-new-app/),
+[Set your developer name](https://developer.apple.com/help/app-store-connect/create-an-app-record/set-your-developer-name/), [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/), [Localize app information](https://developer.apple.com/help/app-store-connect/manage-app-information/localize-app-information/).
+
+First you register the two bundle IDs of TROME to your paid team: one for the app, and one for its Live Activity.
+Then you create the app record, which is the page of TROME in App Store Connect.
+
+<Aside type="danger" title="These IDs are for good">
+  The bundle ID of the app is `io.github.valfur03.trome`.
+  Type it exactly, in lowercase: after the first build is uploaded, it can never change, and Apple refuses to delete an App ID of an uploaded app.
+  The SKU can never change once the app record exists.
+</Aside>
+
+<Checklist id="release-app-record">
+
+<Steps>
+
+1. Sign in to your [developer account](https://developer.apple.com/account), and open **Certificates, Identifiers & Profiles**.
+   Click **Identifiers** in the sidebar, then the **+** button.
+
+2. Select **App IDs** and click **Continue**, then keep the type **App** and click **Continue**.
+
+3. Enter `TROME` as the description, select **Explicit**, and enter `io.github.valfur03.trome` as the bundle ID.
+   Leave the capabilities as they are: TROME uses none of them.
+   Click **Continue**, check the ID letter by letter, and click **Register**.
+
+4. Do the same for the Live Activity: description `TROME Live Activity`, bundle ID `io.github.valfur03.trome.widget`.
+
+5. If the developer account says that an ID is not available, stop there and do not pick another ID.
+   A free team may still hold it: [contact Apple Developer Support](https://developer.apple.com/contact/), and ask them to release it to your paid team.
+
+6. In [App Store Connect](https://appstoreconnect.apple.com), open **Apps**, click the **+** button at the top left, and choose **New App**.
+
+7. Fill in the **New App** form:
+   - **Platforms:** iOS.
+   - **Name:** the first store title of the store text.
+     If App Store Connect says that the name is taken, try the second title, then the third.
+   - **Primary Language:** French (France), because most riders are French.
+     You add English later in this step.
+   - **Bundle ID:** `io.github.valfur03.trome`, from the list.
+   - **SKU:** `trome-ios`, or another code of your choice.
+     Riders never see it, and it may hold letters, digits, hyphens, periods and underscores.
+   - **User Access:** Full Access.
+
+   As an individual, your developer name is your legal name, and the form has no field to change it.
+
+8. Click **Create**.
+   The app shows the status **Prepare for Submission**.
+
+9. Add English: at the top right, click the primary language, hold the pointer over **English (U.S.)** under **Not Localized**, click the **+** button, and save.
+
+</Steps>
+
+</Checklist>
+
+## 3. Sign the release build with your paid team
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [Preparing your app for distribution](https://developer.apple.com/documentation/xcode/preparing-your-app-for-distribution), [Team ID](https://developer.apple.com/help/glossary/team-id/).
+
+The release build of TROME signs by hand, on purpose: so a free Personal Team that tries to sign it gets an error, and can never register the App Store ID.
+Now that the paid team owns these IDs, a change of the repo lets the release build sign with your paid team, and with no other team.
+That change can only be made after step 1, and it is ready before you start this step.
+
+<Aside type="danger" title="Never on a free team">
+  Never turn on **Automatically manage signing** for Release while the team in Xcode is a **Personal Team**.
+  Xcode would register `io.github.valfur03.trome` to the free team, and your paid account could then not use it.
+  If Xcode shows a red signing error for Release before the change of the repo is on `main`, leave it.
+</Aside>
+
+<Checklist id="release-signing">
+
+<Steps>
+
+1. In Xcode, choose **Xcode > Settings**, click **Apple Accounts**, and select your account.
+   Your paid team now shows, with your name, next to your **Personal Team**.
+
+2. Find your Team ID: in your [developer account](https://developer.apple.com/account), click **Membership details**.
+   It has 10 letters and digits.
+
+3. In `ios/Config/Local.xcconfig`, replace the value of `DEVELOPMENT_TEAM` with the Team ID of the paid team.
+   If the file still has the two lines that pin the bundle IDs of your old Debug builds, delete them.
+   Save the file.
+
+4. Update `main`, which now has the change that signs the release build with your paid team, and run:
+
+   ```sh
+   make generate
+   ```
+
+   Its last line shows the IDs of your Debug build, `<your prefix>.trome.dev` and `<your prefix>.trome.dev.widget`: they differ from the App Store ID, so your Debug build and the TestFlight build can both be on your iPhone.
+
+5. Click **Run** in Xcode once, with your iPhone connected, to check that the Debug build still installs.
+   If Xcode says that a Debug ID is not available, your free team still holds it: wait until 7 days after your last build with the free team, and try again.
+
+</Steps>
+
+</Checklist>
+
+`make generate` makes the Xcode project from `ios/project.yml`, so a setting that you change in the **Signing & Capabilities** pane of Xcode is lost the next time it runs.
+
+## 4. Build, upload and check the first build
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [Distributing your app for beta testing and releases](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases), [Upload builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/),
+[App build statuses](https://developer.apple.com/help/app-store-connect/reference/app-uploads/app-build-statuses/), [Overview of export compliance](https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/),
+[Describing use of required reason API](https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api).
+
+The version that riders see and the build number are in `ios/Config/Base.xcconfig`: `MARKETING_VERSION` (1.0.0 for the first release) and `CURRENT_PROJECT_VERSION` (the build number, 1 for the first upload).
+App Store Connect accepts each build number of a version only once.
+So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` by 1 and commit it.
+
+<Checklist id="release-upload">
+
+<Steps>
+
+1. Update `main`, and check that the build is ready:
+
+   ```sh
+   make check
+   ```
+
+   Among other checks, it fails with a message when the build misses its version, its privacy manifest or its answer on encryption.
+
+2. Run `make generate`, then open `ios/TROME.xcodeproj` in Xcode.
+
+3. In the toolbar, choose the scheme **TROME** and the destination **Any iOS Device (arm64)**.
+   Then choose **Product > Archive**.
+   When the archive is built, the **Organizer** window opens on it.
+
+4. Click **Validate App**, and fix each error that it shows before you go on.
+
+5. Click **Distribute App**, choose **TestFlight & App Store**, and click **Distribute**.
+   Xcode signs the build and uploads it, and with this choice it may also change the build number of the archive.
+
+6. Wait for Apple's email that says the build has been processed.
+   Then, in App Store Connect, open **TROME > TestFlight**, and find the build under **Builds > iOS**.
+
+7. Look at its status first:
+   - **Ready to Submit:** the build passed the upload checks, so go on to [TestFlight](#5-test-with-testflight-your-iphone-first-then-a-small-group).
+   - **Missing Compliance:** the build does not answer the encryption question by itself.
+     For this build, click **Manage** and say that TROME uses only the encryption built into iOS (its HTTPS connections), which is exempt from documents.
+     Then open an issue in the repo, so that the next build answers by itself.
+   - **Invalid Binary:** the build failed a check of Apple, and the email says which one.
+
+8. Read every email that Apple sends about this upload.
+   A message about a missing API declaration (code ITMS-91053) means that the privacy manifest does not give a reason for an API that the app uses: Apple refuses such builds.
+   Fix it in the repo, raise the build number, and upload again.
+
+9. Write down the build number that App Store Connect shows, and make the build number of the repo higher than it before the next upload.
+
+</Steps>
+
+</Checklist>
+
+## 5. Test with TestFlight: your iPhone first, then a small group
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/), [Add internal testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers/),
+[Provide test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information/), [Invite external testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-external-testers/), [App Review Guidelines, rule 2.2](https://developer.apple.com/app-store/review/guidelines/#beta-testing).
+
+You test first on your own iPhone, as an internal tester: this needs no review.
+Then a small group of riders tests the same build, as external testers: Apple reviews the first build that goes to them, against the same rules as the store, so this review is the free rehearsal of the real one.
+A TestFlight build works for 90 days.
+
+### On your iPhone
+
+<Checklist id="release-testflight-internal">
+
+<Steps>
+
+1. In App Store Connect, open **TROME > TestFlight**, and click the **+** button next to **Internal Testing**.
+   Name the group, for example `Me`, select **Enable automatic distribution**, and click **Create**.
+
+2. In the group, click **Invite Testers**, select yourself, and click **Add**.
+
+3. On your iPhone, install **TestFlight** from the App Store.
+   Open the invitation email on the iPhone, accept it in TestFlight, and tap **Install**.
+
+4. Use this build yourself, at real stations, for some days, before you invite anyone.
+   It gets its trains from the production server, as the store build will.
+
+</Steps>
+
+</Checklist>
+
+### With a small group of riders
+
+The server shares one daily budget of train data calls between all riders, and today it serves about 40 riders well.
+So the group stays small until the quota of the PRIM account is raised.
+
+<Aside type="danger" title="Always a tester limit">
+  Set the **Tester Limit** of the public link to 40 at most, or invite at most 40 people by email.
+  Never use a public link with no limit, and never go above 50 before the PRIM quota is raised: anyone can pass the link on.
+</Aside>
+
+<Checklist id="release-testflight-external">
+
+<Steps>
+
+1. Check that the privacy page and the help page are online, and that the build opens them from the app screen.
+
+2. Open **TestFlight > Test Information** (under **Additional**).
+   Fill in the **Beta App Description** and the **Feedback Email**: testers see this address, so use the contact address of the help page.
+   If the page also asks for a privacy policy URL, give the same address as in the app.
+
+3. Click the **+** button next to **External Testing**, name the group, for example `First riders`, and click **Create**.
+   App Store Connect needs the internal group of the steps above before it lets you create this one.
+
+4. In the group, click **Add Builds**, choose the build, enter what testers should look at in **What to Test**, and click **Submit Review**.
+   If App Store Connect asks for a contact and notes for the beta review, give your name, email and phone, and paste the review notes.
+
+5. Wait for the beta review: App Store Connect emails you when it approves the build.
+   If it rejects it, the build status is **Rejected**: open **App Review** in the sidebar to read why, then fix and upload a new build, as in [step 8](#when-apple-refuses-the-build).
+
+6. In the group, under **Testers**, click **Create Public Link**, choose **Open to Anyone**, click **Set Limit** under **Tester Limit**, enter `40`, and click **Confirm**.
+   Or click the **+** button next to **Testers**, and invite people by email.
+
+7. Each day, read the counts of the server, as in [step 9](#9-watch-the-first-days).
+   After about two weeks of real use, ask PRIM for a higher quota: on your PRIM account, the page **Ma consommation API** has a button **Augmenter vos quotas**.
+   The counts show how many calls a rider really uses, which is the figure that you need.
+
+</Steps>
+
+</Checklist>
+
+## 6. Fill in the store page
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/), [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/),
+[Upload app previews and screenshots](https://developer.apple.com/help/app-store-connect/manage-app-information/upload-app-previews-and-screenshots/), [Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/),
+[Manage app privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/), [Set an app age rating](https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating/), [Set a price](https://developer.apple.com/help/app-store-connect/manage-app-pricing/set-a-price/),
+[Manage availability](https://developer.apple.com/help/app-store-connect/manage-your-apps-availability/manage-availability-for-your-app-on-the-app-store/).
+
+Paste the store text, in French first, then in English: choose the language at the top right of each page.
+Apple counts the limits in characters, except the keywords, which it counts in bytes, and an accented letter such as é takes two bytes.
+
+<Checklist id="release-store-page">
+
+<Steps>
+
+1. Open **App Information**, and fill in the **Name** and the **Subtitle** of each language, at most 30 characters each.
+   Then set the **Category**.
+
+2. Still in **App Information**, answer **Content Rights**: TROME shows train data of Île-de-France Mobilités, so say that it shows third-party content and that you have the rights.
+   The licence of the data, the Licence Mobilités, allows its reuse in an app, commercial use included, when the app names the source, which TROME does.
+
+3. Still in **App Information**, click **Set Up Age Ratings**, and give the answers of the store text.
+   Under **Age Categories and Override**, choose **Not Applicable**: once App Review approves **Made for Kids**, it can never be removed.
+
+4. Open **App Privacy**, click **Edit** next to **Privacy Policy**, and enter the address of the privacy page in each language, the French one for French:
+
+   ```text
+   https://valfur03.github.io/trome/fr/privacy/
+   https://valfur03.github.io/trome/en/privacy/
+   ```
+
+   Then click **Get Started**, and give the App Privacy answers.
+   Check the preview, then click **Publish**: you confirm that the answers are true, and you must update them if the app changes.
+   They show on the store page once the app is live.
+
+5. Open the version **1.0** under **iOS App**, and fill in for each language: the **Promotional Text** (at most 170 characters), the **Description** (at most 4,000 characters), the **Keywords** (at most 100 bytes, with no name of another app or company), the **Support URL** (the help page of that language, below) and the **Copyright** (the year and your legal name, without the © sign, which Apple adds):
+
+   ```text
+   https://valfur03.github.io/trome/fr/support/
+   https://valfur03.github.io/trome/en/support/
+   ```
+
+   The first version has no **What's New** field.
+
+6. Under **Previews and Screenshots**, choose the **iPhone** tab, and drag the screenshots of that language, in their order, into the 6.9-inch well.
+   Apple scales them down for the smaller iPhones.
+
+7. Open **Pricing and Availability**, click **Add Pricing**, choose **France** as the base country and the free price, and confirm.
+
+8. In the same page, click **Set Up Availability**, choose **All Countries or Regions**, and confirm.
+   China mainland then shows **ICP Filing Number Missing**: that number is a filing with the Chinese government that TROME does not have, so the app stays unavailable there, and that is expected.
+
+</Steps>
+
+</Checklist>
+
+## 7. Give App Review the notes, the recording and your contact
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [Platform version information, section App Review information](https://developer.apple.com/help/app-store-connect/reference/app-review-information/), [App Review](https://developer.apple.com/distribute/app-review/).
+
+App Review is rarely in Paris, so a reviewer cannot see a station arrive.
+The notes tell them how to see the Live Activity from anywhere, and the recording shows it at a real station.
+Only App Review sees this part, and you can edit it at any time.
+
+<Checklist id="release-review-info">
+
+<Steps>
+
+1. Film the recording on your iPhone, at a real station, with the build that you will submit, as the recording script says.
+
+2. In the version **1.0**, scroll to **App Review Information**.
+   Leave **Sign-in required** off: TROME has no account.
+
+3. Fill in the contact: your first name, last name, email address, and phone number in international format, with a plus sign and the country code (for example `+33 6 12 34 56 78`).
+   Apple uses it only when the reviewer has a question.
+
+4. Paste the review notes into **Notes**.
+   The field holds 4,000 bytes at most.
+
+5. Attach the recording.
+
+6. Click **Save** at the top right.
+
+</Steps>
+
+</Checklist>
+
+## 8. Submit, read the status, and release
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [Choose a build to submit](https://developer.apple.com/help/app-store-connect/manage-builds/choose-a-build-to-submit/), [Select a release option](https://developer.apple.com/help/app-store-connect/manage-your-apps-availability/select-an-app-store-version-release-option/),
+[Submit an app](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-app/), [App and submission statuses](https://developer.apple.com/help/app-store-connect/reference/app-information/app-and-submission-statuses/),
+[Reply to App Review messages](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/reply-to-app-review-messages/), [Manage a submission with unresolved issues](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/manage-a-submission-with-unresolved-issues/),
+[Create a new version](https://developer.apple.com/help/app-store-connect/update-your-app/create-a-new-version/).
+
+Choose to release the version yourself: then an approval does not publish TROME, and you pick the day.
+The store has no tester limit, so release only when the PRIM quota has been raised and the server is ready for everyone.
+
+<Checklist id="release-submit">
+
+<Steps>
+
+1. In the version **1.0**, scroll to **Build**, click the **+** button, choose the build that you tested with TestFlight, and click **Done**.
+
+2. In **App Store Version Release**, select **Manually release this version**.
+
+3. Click **Save**, then **Add for Review** at the top right.
+   The status becomes **Ready for Review**.
+
+4. Click **Submit for Review**.
+   The status becomes **Waiting for Review**, then **In Review**.
+
+5. Wait for Apple's email.
+   Apple says that 90% of submissions are reviewed in less than 24 hours.
+
+6. When the status is **Pending Developer Release**, check that the PRIM quota has been raised, that the server answers, and that the What's new page has the 1.0 lines.
+   Then click **Release This Version**, and **Confirm**.
+   TROME can take up to 24 hours to show on the App Store.
+
+</Steps>
+
+</Checklist>
+
+<Aside type="caution" title="No way back to an earlier version">
+  Once a version is on the store, you cannot go back to the one before it.
+  To fix it, you send a new version.
+  To take TROME off the store at once, open **Pricing and Availability**, and click **Remove App From Sale** at the bottom of the page.
+</Aside>
+
+### What the statuses mean
+
+| Status | What it means | What you do |
+|---|---|---|
+| Prepare for Submission | The app record exists, and you are still filling it in. | Finish steps 6 and 7. |
+| Ready for Review | Everything is filled in, but nothing is sent yet. | Click **Submit for Review**. |
+| Waiting for Review | Apple has your submission, but nobody has opened it yet. | Wait. You cannot change the screenshots now. |
+| In Review | A reviewer is testing TROME. | Wait, and keep the server running. |
+| Rejected | App Review refused the build. | Read the message, as below. |
+| Metadata Rejected | App Review refused a text or a picture of the store page, not the build. | Fix the text or the picture, and reply to the message. |
+| Invalid Binary | The build does not meet Apple's current requirements. | Upload a new build. |
+| Pending Developer Release | Apple approved the version, and it waits for you. | Release it on the day of your choice. |
+| Processing for Distribution | You released it, and Apple is putting it on the store. | Wait up to 24 hours. |
+| Ready for Distribution | TROME is on the App Store. | Go to step 9. |
+| Developer Rejected | You took the version out of the review yourself. | Submit it again when it is ready. |
+
+### When Apple refuses the build
+
+A refusal is a message, not a penalty, and each round usually costs a day.
+
+<Checklist id="release-refused">
+
+<Steps>
+
+1. In App Store Connect, click the link at the top of the TROME page that says there are unresolved issues, then **Resolve** next to the submission.
+
+2. Read the message: it names the rule of the [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) and what the reviewer saw.
+
+3. If the reviewer misunderstood the app, click **Reply to App Review**, explain it, and attach a screenshot or a video if it helps.
+
+4. If only the store page is wrong, fix the text or the picture, and resubmit the same build.
+
+5. If the build is wrong, fix it in the repo, raise the build number, and upload it as in [step 4](#4-build-upload-and-check-the-first-build).
+   Then, in the version, replace the build with the new one, and click **Resubmit to App Review**.
+
+6. If you are sure that TROME follows the rules, you can appeal to the App Review Board, once for each refusal, from the [App Review page](https://developer.apple.com/distribute/app-review/).
+
+</Steps>
+
+</Checklist>
+
+### Phased release, for later versions
+
+A phased release gives a new version to the riders with automatic updates over 7 days, so that a bug reaches fewer of them.
+Apple offers it only for an update, not for the first version: choose it from version 1.1 on, in the version page, under **Phased Release for Automatic Updates**.
+
+## 9. Watch the first days
+
+<Badge text="Not checked on an account" variant="caution" />
+
+Apple's help, read on 3 October 2026: [View ratings and reviews](https://developer.apple.com/help/app-store-connect/monitor-ratings-and-reviews/view-ratings-and-reviews/), [View tester feedback](https://developer.apple.com/help/app-store-connect/test-a-beta-version/view-tester-feedback/),
+[Acquiring crash reports and diagnostic logs](https://developer.apple.com/documentation/xcode/acquiring-crash-reports-and-diagnostic-logs).
+Cloudflare's docs, read on 3 October 2026: [workers.dev](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/).
+
+For the first week, look at these once a day:
+
+| What | Where |
+|---|---|
+| The reviews of riders | App Store Connect, **TROME > Ratings and Reviews**, by country. You can answer a review in public. |
+| The feedback of testers | App Store Connect, **TROME > TestFlight**, under **Feedback**: **Screenshots** and **Crashes**. |
+| The crashes | Xcode, **Window > Organizer > Crashes**. It shows the crashes of TestFlight testers, and those of App Store riders who share analytics with Apple. |
+| The emails of riders | The contact address of the help page. |
+| The train data calls of the day | `make server-counts URL=<address of the production server>`, with your owner token. It shows today and the last 30 days. Your PRIM account shows the same calls on **Ma consommation API**. |
+
+### Stop the server for a while
+
+If the server must stop, for example when it uses too many PRIM calls or answers wrong times, turn off its address.
+Riders then get no new times until you turn it on again.
+
+<Checklist id="release-pause-server">
+
+<Steps>
+
+1. In the [Cloudflare dashboard](https://dash.cloudflare.com), open **Workers & Pages**, and select the production Worker.
+
+2. Open **Settings > Domains & Routes**, and click **Disable** next to **workers.dev**.
+
+3. To start it again, click **Enable** in the same place.
+   The next `make server-deploy` also turns it on again, as Cloudflare's docs warn.
+
+</Steps>
+
+</Checklist>
+
+## Fix this page
+
+This page was written from Apple's help, before anyone followed it on a paid account, so your first release is its test.
+When a step differs from what you see, write down the step, what the page said, what the screen showed, and what you did instead: a screenshot helps.
+Then open an issue in the repo, titled with the step, for example "Release page, step 4: the Organizer shows another button".
+The page is fixed in the same week, and each step that you followed loses its mark <Badge text="Not checked on an account" variant="caution" />, so that the next release follows tried steps.
