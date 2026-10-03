@@ -788,6 +788,7 @@ It asks the server of the app for the trains (see [The server](../server/README.
 Only the Release builds read this file.
 A Release build or an archive fails when this file has no host, a host with more than the host name (for example `https://` or a path), or no app token, and its error names the file and its example: so no build can ship with no train source.
 `make live-key-check` proves it with fake values.
+**Product > Profile** in Xcode makes a Release build too, so it needs this file as well.
 The server gives the PRIM answer as PRIM gave it, and the time when PRIM gave it: the app counts the age of the times from that moment, not from the moment when it got them, and it never shows a train that left in the meantime.
 When the server does not answer, gives an error or has no times for now, the refresh fails, and the Live Activity keeps the last times as for any failed refresh (see [Show the next trains on the lock screen (Live Activity)](#show-the-next-trains-on-the-lock-screen-live-activity)).
 The app sends the server only the stop and the app token: no position, no identifier of the device or of an account, and no push token.
