@@ -7,7 +7,9 @@ extension AutoLiveActivityModel {
             if let held { return held }
             return await freshPosition()
         }
-        if ResumePositionRules.usesWithoutWaiting(held, now: configuration.now()) {
+        let heldAt = configuration.now()
+        if ResumePositionRules.usesWithoutWaiting(held, now: heldAt) {
+            Self.logPause("resume: the held position is \(describe(held, now: heldAt)), it uses it with no wait")
             return held
         }
         let fresh = await freshPosition()
