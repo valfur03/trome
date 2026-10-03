@@ -1,6 +1,7 @@
 import starlight from '@astrojs/starlight';
 import { defineConfig } from 'astro/config';
 import starlightLinksValidator from 'starlight-links-validator';
+import { searchIndex } from './src/search-index.ts';
 
 // The address of the site on GitHub Pages: https://valfur03.github.io/trome/.
 // The App Store page and the app link to its pages, so the address must not change once they do.
@@ -46,5 +47,6 @@ export default defineConfig({
         },
       ],
     }),
+    searchIndex(),
   ],
 });

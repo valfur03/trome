@@ -36,6 +36,11 @@ When a new version fixes it, the build no longer prints it, and `make docs-check
 The install also says that npm found vulnerabilities, and that `npm audit fix --force` fixes them: do not run it, because it replaces Astro with a version from 2023 and breaks the site.
 The vulnerabilities come from one package of Astro, `http-cache-semantics`, that has [no fixed version yet](https://github.com/advisories/GHSA-ch52-4w7c-c8xp), and the site does not use the part of it that is affected.
 
+The search is [Pagefind](https://pagefind.app), which Starlight runs at the end of the build.
+Pagefind splits a word only at a straight apostrophe, so it would index “l’écran” as one word, and a search for “écran” would find nothing.
+So [`src/search-index.ts`](src/search-index.ts) indexes the site again, with a straight apostrophe after l’, d’, qu’ and the other French elisions, and a space before each line break.
+The pages keep their apostrophes, but the texts of the search results show the straight ones.
+
 ## Add a page
 
 Each page is an `.mdx` file in [`src/content/docs/`](src/content/docs/), in the folder of its language: `fr/` or `en/`.
