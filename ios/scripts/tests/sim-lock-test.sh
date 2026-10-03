@@ -372,10 +372,10 @@ echo false > "$state/global.$default.AppleMetricUnits"
 echo Inches > "$state/global.$default.AppleMeasurementUnits"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job sets metres and the clock of its language, whatever an earlier job left" "$(cat "$state/global.$default.AppleMetricUnits" "$state/global.$default.AppleMeasurementUnits" | paste -s -d ' ' -) $(ls "$state" | grep -c "^global\.$default\.AppleICUForce" || true)" "true Centimeters 0"
-RATP_SIM_CLOCK=12 RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" language > /dev/null
-expect "language with RATP_SIM_CLOCK=12 forces a 12-hour clock, so that the lock screen shows the override time" "$(language_at_restart) $(cat "$state/global.$default.AppleICUForce12HourTime" 2> /dev/null || echo none)" "fr fr_FR true"
+TROME_SIM_CLOCK=12 RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" language > /dev/null
+expect "language with TROME_SIM_CLOCK=12 forces a 12-hour clock, so that the lock screen shows the override time" "$(language_at_restart) $(cat "$state/global.$default.AppleICUForce12HourTime" 2> /dev/null || echo none)" "fr fr_FR true"
 RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" language > /dev/null
-expect "language with no RATP_SIM_CLOCK removes the forced clock" "$(ls "$state" | grep -c "^global\.$default\.AppleICUForce" || true)" "0"
+expect "language with no TROME_SIM_CLOCK removes the forced clock" "$(ls "$state" | grep -c "^global\.$default\.AppleICUForce" || true)" "0"
 echo accessibility-extra-extra-extra-large > "$state/ui.$default.content_size"
 echo dark > "$state/ui.$default.appearance"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
