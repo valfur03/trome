@@ -112,7 +112,7 @@ boot_device() {
 
 installed_apps() {
     xcrun simctl listapps "$1" \
-        | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.(trome\.dev(\.render-check-host)?|RATPActivity(RenderCheckHost|UITests\.xctrunner|DocsScreenshots\.xctrunner)?))"?;$/\1/p'
+        | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.(trome\.dev(\.render-check-host)?|RATPActivity[A-Za-z]*(\.xctrunner)?))"?;$/\1/p'
 }
 
 left_preference_domains() {
