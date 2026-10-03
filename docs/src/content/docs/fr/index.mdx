@@ -16,6 +16,11 @@ hero:
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import Screenshots from '../../../components/Screenshots.astro';
+import liveActivityMetro from '../../../assets/screenshots/live-activity-metro-fr.png';
+import liveActivityFork from '../../../assets/screenshots/live-activity-fork-fr.png';
+import liveActivityRer from '../../../assets/screenshots/live-activity-rer-fr.png';
 
 Vous arrivez à Châtelet, et votre iPhone vous prévient : **« Châtelet : prochains passages »**.
 Touchez la notification.
@@ -23,6 +28,14 @@ L’attente des prochains trains s’affiche sur l’écran verrouillé, et elle
 Quand vous vous éloignez de la station, elle disparaît.
 
 Rien à chercher dans l’app, et pas de compte à créer.
+
+## Ce que vous verrez sur l’écran verrouillé
+
+<Screenshots>
+  <Screenshot src={liveActivityMetro} caption="Une ligne avec un terminus dans chaque sens" alt="L’écran verrouillé avec l’activité en direct de TROME à Saint-Paul (Le Marais), ligne 1 du métro : prochains trains vers La Défense dans 3 et 7 minutes, et vers Château de Vincennes dans 4 et 8 minutes, au-dessus des boutons Pause 30 min, 1 h et Aujourd’hui." />
+  <Screenshot src={liveActivityFork} caption="Une ligne avec deux branches" alt="L’écran verrouillé avec l’activité en direct de TROME à Pont Neuf, ligne 7 du métro : prochains trains vers La Courneuve - 8 Mai 1945 dans 3 et 7 minutes ; dans l’autre sens, une rangée par branche : Mairie d’Ivry dans 4 et 12 minutes, Villejuif - Louis Aragon dans 8 et 16 minutes." />
+  <Screenshot src={liveActivityRer} caption="Une ligne de RER" alt="L’écran verrouillé avec l’activité en direct de TROME à Luxembourg, RER B : prochains trains vers Aéroport Charles de Gaulle 2 TGV dans 3 minutes et Mitry - Claye dans 7 minutes ; dans l’autre sens, vers Robinson dans 4 minutes et Saint-Rémy-lès-Chevreuse dans 8 minutes." />
+</Screenshots>
 
 TROME n’est pas encore sur l’App Store.
 En attendant, vous pouvez [l’installer vous-même avec un Mac](/trome/en/build/install-on-your-iphone/) (guide en anglais).

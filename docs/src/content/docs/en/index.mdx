@@ -16,6 +16,11 @@ hero:
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import Screenshots from '../../../components/Screenshots.astro';
+import liveActivityMetro from '../../../assets/screenshots/live-activity-metro-en.png';
+import liveActivityFork from '../../../assets/screenshots/live-activity-fork-en.png';
+import liveActivityRer from '../../../assets/screenshots/live-activity-rer-en.png';
 
 You walk up to Châtelet, and your iPhone tells you: **“Next trains at Châtelet”**.
 Tap the notification.
@@ -23,6 +28,14 @@ The wait for the next trains shows on the lock screen, and it stays there while 
 When you walk away from the station, it goes away.
 
 Nothing to look up in the app, and no account to create.
+
+## What you will see on your lock screen
+
+<Screenshots>
+  <Screenshot src={liveActivityMetro} caption="A line with one end in each direction" alt="The lock screen with the TROME Live Activity of Saint-Paul (Le Marais), metro line 1: the next trains to La Défense in 3 and 7 minutes, and to Château de Vincennes in 4 and 8 minutes, above the Snooze buttons 30 min, 1 h and Today." />
+  <Screenshot src={liveActivityFork} caption="A line with a branch" alt="The lock screen with the TROME Live Activity of Pont Neuf, metro line 7: the next trains to La Courneuve - 8 Mai 1945 in 3 and 7 minutes; the other way, one row for each branch: Mairie d'Ivry in 4 and 12 minutes, Villejuif - Louis Aragon in 8 and 16 minutes." />
+  <Screenshot src={liveActivityRer} caption="An RER line" alt="The lock screen with the TROME Live Activity of Luxembourg, RER B: the next trains to Aéroport Charles de Gaulle 2 TGV in 3 minutes and Mitry - Claye in 7 minutes; the other way, to Robinson in 4 minutes and Saint-Rémy-lès-Chevreuse in 8 minutes." />
+</Screenshots>
 
 TROME is not on the App Store yet.
 Until then, you can [install it yourself with a Mac](/trome/en/build/install-on-your-iphone/).

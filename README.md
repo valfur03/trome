@@ -879,7 +879,7 @@ To write a page:
 It saves one PNG file for each screenshot, with a fixed name: `app-location-permission.png` (the location question at the first launch), `app-always-permission.png` (the location "Always" question, right after it), `app-notification-permission.png` (the notifications question at the first launch), `app-main-screen.png` (the main app screen),
 and `app-testing-tools.png` (the Testing tools screen), in English.
 Then it opens the app with the fake trains (`--fake-trains`, no key) and takes the Live Activity in the Notification Center at three stations, in English, then again in French:
-`live-activity-metro-<language>.png` (Saint-Paul (Le Marais), metro 1: one end in each direction), `live-activity-fork-<language>.png` (Pont Neuf, metro 7: the direction with two branch ends), `live-activity-rer-<language>.png` (Luxembourg, RER B), and `live-activity-island-<language>.png` (the home screen with the compact Dynamic Island of Saint-Paul (Le Marais)).
+`live-activity-metro-<language>.png` (Saint-Paul (Le Marais), metro 1: one end in each direction), `live-activity-fork-<language>.png` (Pont Neuf, metro 7: the direction with two branch ends), `live-activity-rer-<language>.png` (Luxembourg, RER B), and `live-activity-island-<language>.png` (the compact Dynamic Island of Saint-Paul (Le Marais), over the Settings app; no page shows it yet).
 `<language>` is `en` or `fr`.
 The job sets the language, the clock (9:41), the units (metres) and the appearance itself, so two runs give the same pictures whatever the Simulator held before.
 The PNG files are in git.
