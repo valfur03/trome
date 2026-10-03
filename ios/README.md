@@ -186,10 +186,10 @@ xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
 
 The app is the Live Activity. The main screen shows only:
 
-- **One action.** "Show the Live Activity now" shows the Live Activity of the station nearest to you.
-  You do not pick the station.
-  If the app cannot find a station (no location access, no metro or RER station near you, no position), it says why.
-  While a Live Activity shows, the screen says which station ("On the lock screen: <station>") and has "Stop showing on the lock screen" instead.
+- **The state of the Live Activity, and no button.** While a Live Activity shows, the screen says which station ("On the lock screen: <station>").
+  Otherwise, it says what the Live Activity does.
+  The Live Activity starts by itself near a station, and the snooze, the swipe and the pause stop it, so the screen has no button to show or stop it (decision-47).
+  When iOS refuses to start it because Live Activities are off for the app, the screen says so, with "Open Settings"; the line goes once they are on again and you come back to the app.
 - **The automatic mode.** The Live Activity starts by itself near a station (see [below](#the-live-activity-starts-and-stops-by-itself-near-a-station)).
   The switch "Automatic mode" turns it off or on.
   "Snooze" stops it for 30 minutes, 1 hour, or for the rest of today.
@@ -288,7 +288,7 @@ The app keeps only the trains of the lines that it asked this stop area for.
 
 The app shows the next trains of a station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
 
-1. On the main screen, tap "Show the Live Activity now". It shows the Live Activity of the station nearest to you. Testers can also pick any station in "Testing tools" > "Next trains of a station", and tap "Show on the lock screen".
+1. Open the app within about 150 meters of a metro or RER station: the Live Activity of this station shows at once. Testers can also tap "Show the Live Activity now" in "Testing tools" (the station nearest to you, up to 2 km away), or pick any station in "Testing tools" > "Next trains of a station", and tap "Show on the lock screen".
 2. Lock the phone.
    The Live Activity shows the station, the line, and the next trains in both directions of the line.
    Each direction has the name of its end of line, the waiting time of the next train, and the waiting time of the train after it (when there is one).
@@ -420,7 +420,7 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
    The cost of this choice (the prompter's, decision-28): next to another app's Live Activity, the number alone does not say which line it is.
    VoiceOver reads the line, then the wait in minutes, or "Approaching", or "At the platform", never "zero".
    The compact and minimal views have no button (Apple allows controls only on the lock screen and in the expanded view).
-3. To remove it, open the app and tap "Stop showing on the lock screen".
+3. Testers can remove it in "Testing tools", with "Stop showing on the lock screen". The main screen has no such button.
 4. To remove it and snooze the automatic mode, tap "30 min", "1 h" or "Today" at the bottom of the Live Activity (see [Snooze or turn off the automatic mode](#snooze-or-turn-off-the-automatic-mode)).
    To remove it and pause only its station for 1 hour, swipe it away (see [Swipe the Live Activity away](#swipe-the-live-activity-away)).
    The snooze buttons show in the Dynamic Island too, when you touch and hold it.
@@ -617,7 +617,7 @@ The app watches the metro and RER stations around you. The rules come from decis
 - **One station at a time.** If a Live Activity already shows and you come within 150 meters of another station, the Live Activity switches to the new station. There is no second Live Activity and no second notification.
 - **Stop.** The Live Activity ends by itself when you move more than about 250 meters away from its station, or 45 minutes after it started.
 - **No repeat.** You get at most one notification and one automatic start for each arrival. After you stop the Live Activity by hand, it does not start again until you leave the station (more than 250 meters) and come back.
-- **By hand.** "Show the Live Activity now", "Show on the lock screen" (testing tools) and "Stop showing on the lock screen" still work.
+- **By hand (testers).** "Show the Live Activity now", "Show on the lock screen" and "Stop showing on the lock screen", in "Testing tools", still work.
   A Live Activity that you start by hand for a station far from you does not stop because of the distance.
   It stops at 250 meters only after you came near its station.
   The 45 minute limit applies to every Live Activity.
@@ -636,7 +636,7 @@ The rules come from decision-32 in the backlog.
   After the hour, the station works again: the Live Activity starts at the next arrival at the station.
   The app hears the swipe within about 1 second, and stops getting your position in the background at once.
 - **One pause at a time.** A swipe at another station replaces the pause.
-  "Show the Live Activity now" at the paused station, or a tap on its arrival notification, ends the pause.
+  "Show the Live Activity now" (in "Testing tools") at the paused station, or a tap on its arrival notification, ends the pause.
   A snooze does not change the pause.
 - **See and cancel it.** The main screen says "Paused at <station> until <time>" (in French "<station> : en sourdine jusqu’à <time>"), with the time left.
   Tap "Cancel the pause at <station>" ("Réactiver <station>") to end it at once.
@@ -655,7 +655,7 @@ For developers: `AutoLiveActivityRules.outcome(of:shown:now:)` (in `TROMECore`) 
 `AutoLiveActivityModel` applies it and saves the pause (`StationPause`) with its state, so the pause survives a relaunch.
 `ActivityKitStationLiveActivityClient` (in `ios/App/LiveActivity/`) follows each Live Activity of the app (`activityStateUpdates`) and reports its first `ended` or `dismissed` state, with whether the app ended it itself (it remembers the Live Activities that it ends).
 At launch, when the saved state says that a Live Activity shows and iOS lists none, the app forgets it with no pause (the limit above).
-The cancel is a resume, and it follows the resume rule of decision-55, `ResumePositionRules` (in `TROMECore`), called through `AutoLiveActivityModel.positionForAResume()`, then `resume(at:)`, which evaluates that position with the arrival rules or shows the line when there is none.
+The cancel is a resume, and it follows the resume rule of decision-55, `ResumePositionRules` (in `TROMECore`), called through `AutoLiveActivityModel.positionForAResume()`, then `AutoLiveActivityRules.resume(state:position:now:onArrival:catalog:)`, which evaluates that position with the arrival rules (as a new arrival) or shows the line when there is none.
 iOS sends no new position while the phone stands still (`CLLocationUpdate.liveUpdates` pauses), so the rule uses the last position only when it is precise and at most 15 seconds old.
 Otherwise it asks iOS for one with `CLLocationManager.requestLocation()` (`LocationProvider.currentFix()`, in `CoreLocationProvider`) and waits at most 5 seconds; with no answer, it uses the last position when it is precise and at most 2 minutes old.
 A position that comes later goes through the usual arrival rules.
@@ -675,7 +675,11 @@ The rules come from decision-3 in the backlog.
   It starts at the next station that you come to.
 - **Cancel the snooze.** The main screen shows "Snoozed", the time when the automatic mode comes back, and the time left. Tap "Cancel the snooze" to end it at once.
 - **Turn off.** Turn off the switch "Automatic mode" on the main screen. Then no notification and no automatic Live Activity ever start, until you turn the switch on again. The app keeps this choice when you close it.
-- **By hand.** While the automatic mode is snoozed or off, "Show the Live Activity now" still works. A Live Activity that you start by hand still switches to a new station and stops by itself (250 meters, 45 minutes), as above.
+- **Back on at a station.** When you cancel the snooze, or turn the switch on, with the app open within about 150 meters of a station, the Live Activity of this station starts at once, with no notification.
+  It is a resume, with the same position rule as the cancel of a pause (see [Swipe the Live Activity away](#swipe-the-live-activity-away)),
+  and the same small spinner in place of the icon of the row while the app waits for your position.
+  Away from every station, nothing starts and the screen says nothing.
+  A paused station stays paused.
 
 The first time, the app asks for your location and for notifications.
 To get the notification while the app is closed, the app needs the location "Always".
@@ -723,7 +727,7 @@ The "Permissions" part of the main screen then says so, with a button to open Se
 - **Ask the fake trains for a state.** Live trains show some states only by luck: PRIM shows a train at the platform for 20 to 30 seconds, and the app updates the Live Activity only every 2 minutes in the background.
   So, in debug builds, add the name of a state after `--fake-trains`, for example `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains at-platform`.
   The times start at this launch, the same for each line and each direction of the station (the second direction is one minute later), and the app follows its real rules with them (`FakeTrainsScenario`, in `TROMECore`).
-  Then start the Live Activity at once (a fake position, or "Show the Live Activity now"), and put the app in the background to look at the lock screen and the Notification Center.
+  Then start the Live Activity at once (a fake position, or "Show the Live Activity now" in "Testing tools"), and put the app in the background to look at the lock screen and the Notification Center.
   - `at-platform`: the first box of each strip shows "À quai" for 5 minutes. Then the train leaves, and trains come every 4 minutes, each one 30 seconds at the platform, like real trains.
   - `at-platform-second`: the second box shows "À quai", next to a train that leaves first, for about 3 minutes. Then the first train comes ("0", then "À quai": both boxes), leaves, and the second one leaves 2 minutes later.
   - `at-platform-both`: both boxes show "À quai" for 5 minutes. Then the first train leaves, and the second one 2 minutes later.
@@ -934,7 +938,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
   To use another folder, add `RATP_SHARED_CACHE=<folder>` to the `make` command.
 - `make build` builds the app for the processor of your Mac only (Apple silicon: arm64), and the command line builds make no code index (Xcode makes its own index when you open the project). Both make the build faster.
 - End-to-end tests are slow: all folders share one Simulator, one job at a time.
-  So each test guards one seam where our code meets iOS, and nothing else (CLAUDE.md, section "Test levels", and decision-9 in the backlog): the real location popups, then a Live Activity that the app starts and stops by hand (`LiveActivityTests`), the automatic start, switch and end of the Live Activity from the position that iOS gives (`AutoLiveActivityTests`),
+  So each test guards one seam where our code meets iOS, and nothing else (CLAUDE.md, section "Test levels", and decision-9 in the backlog): the real location popups, then a Live Activity that starts with the app open at a station and that "Snooze" ends (`LiveActivityTests`), the automatic start, switch and end of the Live Activity from the position that iOS gives (`AutoLiveActivityTests`),
   the arrival notification of an app in the background, the tap on it, its "Not for 1 h" action, and the app opened at the station with no tap (`ArrivalNotificationTests`), a real swipe of the Live Activity that pauses its station but not the next one (`SwipeAwayTests`), and the trains on the real Live Activity with its two buttons (`SnoozeTests`).
   Each test looks at the real Live Activity in the Notification Center (`openNotificationCenter(over:)` from `E2ETestCase` pulls it down over the app, and `liveActivity` is the Live Activity there), not at the app label "On the lock screen: <station>": at most, this label is a point to wait for.
   The tests move the phone with the Simulator position (`moveThePhone(to:)`, which sets `XCUIDevice.location`), so the app reads it through Core Location, with our real code.
@@ -949,9 +953,10 @@ You can also run the commands of one part in its folder: `make -C ios check` run
   Wait for a condition that the app shows, never for a fixed time.
   Each test class inherits from `E2ETestCase`.
   It sets `continueAfterFailure = false`: a test stops at its first failure.
-- End-to-end tests: when a test changes the Simulator position, wait for what the new position changes before the next step (the position reaches the app some time later): the Live Activity in the Notification Center, or the "Stop showing on the lock screen" button of the app before the test leaves the app.
+- End-to-end tests: when a test changes the Simulator position, wait for what the new position changes before the next step (the position reaches the app some time later): the Live Activity in the Notification Center, or the app label "On the lock screen: <station>" before the test leaves the app.
   While a Live Activity shows, the app keeps getting positions in the background (the path of a phone in a pocket), so `AutoLiveActivityTests` and `SnoozeTests` move the phone while the Notification Center is open.
   A test that needs the app awake in the background with no Live Activity (`ArrivalNotificationTests`) adds the launch argument `--keep-running-in-background` (debug builds only).
+  `makeApp()` adds `--end-live-activity` (debug builds only): at launch, the app ends the Live Activity that the last test left, so each test starts with none, and no test taps a button of the app to end it.
   The app then keeps a background location session, so iOS does not suspend it before the new position reaches it.
 - End-to-end tests: the E2E builds have no train data key, so the Live Activity says "No data available".
   A test that checks the trains on the Live Activity adds the launch argument `--fake-trains` (debug builds only).
