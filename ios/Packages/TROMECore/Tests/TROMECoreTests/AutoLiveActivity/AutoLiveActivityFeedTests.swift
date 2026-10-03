@@ -53,6 +53,26 @@ extension AutoLiveActivityModelTests {
         withExtendedLifetime((model, startedInTheBackground)) {}
     }
 
+    @Test func getsTheTrainsAtOnceWhenTheAppLeavesTheScreenRightAfterARelaunchWhileItShows() async {
+        provider.answer(.failure(.unreachable), for: Places.stationA)
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await waitUntil { client.updates.last?.trains == .noData }
+        provider.answer(.success([]), for: Places.stationA)
+        let start = clock.now
+
+        let relaunched = makeModel()
+        relaunched.setAppPhase(.active)
+        relaunched.setAppPhase(.inactive)
+        relaunched.setAppPhase(.background)
+        await waitUntil { client.updates.last?.hasTrains ?? false }
+
+        #expect(client.updates.last?.stationName == "Station A")
+        #expect(client.updates.last?.hasTrains == true)
+        #expect(clock.now == start)
+        withExtendedLifetime((model, relaunched)) {}
+    }
+
     @Test func asksOnceForTheTrainsWhenRelaunchedOnScreenWhileItShows() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)

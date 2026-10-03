@@ -70,7 +70,8 @@ extension AutoLiveActivityModel {
     }
 
     private var waitsForItsTrains: Bool {
-        liveActivity.content?.trains == .loading
+        guard let content = liveActivity.content else { return true }
+        return content.trains == .loading
     }
 
     private func nextPRIMCall(asksPRIM: Bool) -> Date {
