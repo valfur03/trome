@@ -219,7 +219,7 @@ For developers: all code must read the position from `LocationService` (in `RATP
 The app finds the nearest station without the network. It reads the file `ios/Packages/RATPCore/Sources/RATPCore/Resources/stations.json`.
 
 This file lists every metro station (lines 1 to 14, 3bis and 7bis) and every RER station (lines A to E). It has no bus, tram or Transilien stop. The data comes from the open data of Île-de-France Mobilités (dataset `arrets-lignes`, no key needed).
-The list is made from four datasets of Île-de-France Mobilités under two licences, the ODbL and the Licence Ouverte v2.0: [NOTICE.md](NOTICE.md) names them, and says what you must do when you reuse the list.
+In all, the list is made from four datasets of Île-de-France Mobilités under two licences, the ODbL and the Licence Ouverte v2.0: [NOTICE.md](NOTICE.md) names them, and says what you must do when you reuse the list.
 
 Each line of a station also has its official color (`color`: the color of the line, and the color of the text on it).
 It comes from the dataset `referentiel-des-lignes` of Île-de-France Mobilités (fields `colourweb_hexa` and `textcolourweb_hexa`, made for web and phone screens).
@@ -229,7 +229,9 @@ To see the list in the app, open "Testing tools" and tap "All stations". Each st
 
 To download the list again, run `make stations`. It needs Python 3. Commit the new `stations.json`.
 The script writes the day of the download in the `date` field of `stations.json`: the app shows it in the notice of the station list.
-Write the same date in [NOTICE.md](NOTICE.md), in the same commit: a unit test fails when the two dates differ.
+Write the same date in [NOTICE.md](NOTICE.md), in the same commit: once as the script prints it (2026-09-27), and once in the quote of the app's English sentence (September 27, 2026).
+`make test` fails when a date differs.
+Then open the four dataset pages that NOTICE.md links, check that they still show the same licences, and write the day of this check in NOTICE.md.
 
 The script also gives a `hubId` to the stations of one place with different names (for example Châtelet and Châtelet - Les Halles).
 It comes from the "pôles d'échange" of Île-de-France Mobilités (dataset `relations`, field `pdeid`).

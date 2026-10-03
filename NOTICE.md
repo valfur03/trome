@@ -35,16 +35,18 @@ When you share `stations.json`, an extract of it, or a work made from it, in pub
 
 - Say that the data comes from Île-de-France Mobilités and was adapted by TROME, name the two licences, and link to them.
 - Give the date of the data, as the Licence Ouverte asks.
-- Keep any database that you make from it under the ODbL, and let people get it, as the ODbL asks.
-  A work that only shows the data, such as a screen or a picture, needs only the notice above.
+- If you make a new database from it, keep that database under the ODbL, and offer a copy of it to the people who use it or a work made from it, as the ODbL asks.
 
-The app shows this notice for the station list on its main screen, with links to the two licences and the date in the language of the phone:
+A work that only shows the data, such as an app screen or a picture, may have any licence, but it still needs the first two points.
+
+The app shows this notice for the station list on its main screen, with links to the two licences.
+It writes the date the way the phone writes dates, so on an iPhone in English with the region United States it reads:
 
 > Station list adapted by TROME from Île-de-France Mobilités data of September 27, 2026, under the ODbL and the Licence Ouverte v2.0.
 
 ## The train times
 
-The app gets the next trains from the "Prochains passages" API of [PRIM](https://prim.iledefrance-mobilites.fr), the portal of Île-de-France Mobilités.
+The app and the server in [`server/`](server/) get the next trains from the "Prochains passages" API of [PRIM](https://prim.iledefrance-mobilites.fr), the portal of Île-de-France Mobilités.
 This data is under the [Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences).
 As this licence asks, the app shows this notice on its main screen, with a link to PRIM on the name of the database and a link to the licence on its name:
 
