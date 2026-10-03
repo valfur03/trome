@@ -635,7 +635,7 @@ The rules come from decision-32 in the backlog.
   A snooze does not change the pause.
 - **See and cancel it.** The main screen says "Paused at <station> until <time>" (in French "<station> : en sourdine jusqu’à <time>"), with the time left.
   Tap "Cancel the pause at <station>" ("Réactiver <station>") to end it at once.
-  If you are at the station with the app open, the Live Activity then starts, also when you have not moved for a while: the app asks iOS for your position once, and the button waits for the answer (at most 5 seconds).
+  If you are at the station with the app open, the Live Activity then starts, also when you have not moved for a while: the app asks iOS for your position once, and the button waits for the answer (at most 5 seconds), with a small spinner in place of its icon.
   When no position comes, the pause still ends, nothing starts, and the screen says "Can’t find your position for now" ("Position introuvable pour l’instant") until a position comes or you leave the app.
   The line goes away when the pause ends.
   While the automatic mode is off, the screen does not show it.

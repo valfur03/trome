@@ -10,6 +10,7 @@ struct PositionWaitIcon: View {
             .overlay {
                 if isWaiting {
                     ProgressView()
+                        .tint(.accentColor)
                         .accessibilityLabel(Text("Looking for your position"))
                 }
             }
