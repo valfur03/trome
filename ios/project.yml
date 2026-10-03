@@ -40,6 +40,7 @@ settings:
       RATP_APP_PRIM_API_KEY: ""
       RATP_APP_TRAIN_SERVER_HOST: $(TRAIN_SERVER_HOST)
       RATP_APP_TRAIN_SERVER_APP_TOKEN: $(TRAIN_SERVER_APP_TOKEN)
+      RATP_REQUIRE_TRAIN_SERVER: YES
 
 packages:
   TROMECore:
@@ -54,6 +55,13 @@ targets:
     dependencies:
       - package: TROMECore
       - target: TROMEWidget
+    preBuildScripts:
+      - name: Check the train server settings
+        script: '"${SRCROOT}/scripts/train-server-check.sh"'
+        inputFiles:
+          - $(SRCROOT)/scripts/train-server-check.sh
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
     info:
       path: App/Info.plist
       properties:

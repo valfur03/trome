@@ -1,6 +1,7 @@
 // Copy this file to ios/Config/Server.xcconfig to make a Release build (an archive for TestFlight or the App Store).
 // ios/Config/Server.xcconfig is ignored by git. Never commit the app token.
 // Only Release builds read these settings: they ask the server for the trains, and they never hold the PRIM key.
+// A Release build or an archive with no host or no app token here fails.
 // Debug builds ignore them and keep asking PRIM with the key of Secrets.xcconfig.
 
 // The host of the server, with no https:// and no path, for example trome-server.your-subdomain.workers.dev.

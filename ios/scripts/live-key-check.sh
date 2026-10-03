@@ -114,18 +114,36 @@ build_app normal LIVE= PRIM_SECRETS="$work/Secrets.xcconfig"
 
 release_key="${fake_prefix}RELEASEKEY"
 release_token="${fake_prefix}TOKEN"
-release_settings="$work/release-$(date +%s)-$$.xcconfig"
 release_products="$build/DerivedData/Build/Products/Release-iphonesimulator"
 release_app="$release_products/$app_name.app"
-printf 'PRIM_API_KEY = %s\nTRAIN_SERVER_HOST = live-key-check.invalid\nTRAIN_SERVER_APP_TOKEN = %s\n' \
-    "$release_key" "$release_token" > "$release_settings"
+
+build_release() {
+    release_settings="$work/$1-$(date +%s)-$$.xcconfig"
+    printf 'PRIM_API_KEY = %s\nTRAIN_SERVER_HOST = %s\nTRAIN_SERVER_APP_TOKEN = %s\n' \
+        "$release_key" "$2" "$3" > "$release_settings"
+    (cd "$root" && xcodebuild -quiet \
+        -project TROME.xcodeproj -scheme TROME -configuration Release \
+        -destination 'generic/platform=iOS Simulator' ARCHS="$(uname -m)" \
+        -derivedDataPath "$build/DerivedData" -clonedSourcePackagesDirPath "$build/SourcePackages" \
+        COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO \
+        -xcconfig "$release_settings" build) > "$work/$1.log" 2>&1
+}
+
+refused_release() {
+    missing=$1
+    shift
+    if build_release "$@"; then
+        fail "a Release build with no $missing succeeded: it must fail, so that no build ships with no train source"
+    fi
+    grep -F 'ios/Config/Server.xcconfig' "$work/$1.log" | grep -qF 'ios/Config/Server.example.xcconfig' || {
+        cat "$work/$1.log" >&2
+        fail "the Release build with no $missing failed, but its output does not name ios/Config/Server.xcconfig and its example"
+    }
+    ! grep -qF "$fake_prefix" "$work/$1.log" || fail "the output of the Release build with no $missing shows the key or the app token"
+}
+
 rm -rf "$release_products"
-(cd "$root" && xcodebuild -quiet \
-    -project TROME.xcodeproj -scheme TROME -configuration Release \
-    -destination 'generic/platform=iOS Simulator' ARCHS="$(uname -m)" \
-    -derivedDataPath "$build/DerivedData" -clonedSourcePackagesDirPath "$build/SourcePackages" \
-    COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO \
-    -xcconfig "$release_settings" build) > "$work/release.log" 2>&1 || {
+build_release release live-key-check.invalid "$release_token" || {
     cat "$work/release.log" >&2
     fail "the Release build failed"
 }
@@ -145,6 +163,9 @@ elif [ $? -gt 1 ]; then
 fi
 ! grep -qF "$release_token" "$app_plist" || fail "a Debug build holds the app token of the server"
 
+refused_release "server host" release-no-host "" "$release_token"
+refused_release "app token" release-no-token live-key-check.invalid ""
+
 cache_leaks=$(files_with_key "$shared_cache" "$work/start" "$fake_prefix") || fail "could not search the whole shared build cache $shared_cache"
 [ -z "$cache_leaks" ] || fail "the shared build cache $shared_cache holds the key in: $cache_leaks"
 
@@ -156,4 +177,4 @@ git -C "$root" check-ignore -q Config/Server.xcconfig || fail "git does not igno
 git -C "$root/.." check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore the old path Config/Secrets.xcconfig"
 
 rm -rf "$work"
-echo "live-key-check: OK (a LIVE=1 build puts the key in the app only, a new key replaces the old one, a build without LIVE=1 removes it, a Release build holds the app token and never the key, and no build output or log shows the key or the token)"
+echo "live-key-check: OK (a LIVE=1 build puts the key in the app only, a new key replaces the old one, a build without LIVE=1 removes it, a Release build holds the app token and never the key, a Release build with no server host or no app token fails, and no build output or log shows the key or the token)"
