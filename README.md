@@ -919,7 +919,8 @@ What the server does:
   Each hour gets at least 0.5% (4 calls with the cap of 800), so that a lone rider at 03:00 still gets times: `make server-check` fails on a shape that gives an hour less.
   What an hour does not spend goes to the next hour.
   The hours from 00:00 to 02:00 in Paris may spend at most 5% of the cap together (8 calls with this shape), so that a PRIM day that starts at 00:00 UTC still holds less than 1,000 calls: `make server-check` fails on a shape that gives them more.
-  For the same reason, the server refuses a cap that these hours of the next Paris day could take above 1,000 calls in one PRIM day (above 990 with this shape).
+  For the same reason, the server refuses a cap that these hours of the next Paris day could take above 1,000 calls in one PRIM day (above 990 with this shape), and `make server-check` fails on such a cap in `server/wrangler.jsonc`.
+  The 1,000 calls are those of your PRIM key, and the staging Worker and an app built with the key (`make run LIVE=1`) use the same key: keep the two caps together well under 1,000 (800 and 60 today), not one of them at 990.
   With the staging cap of 60, the hours before 03:00 in Paris have no call, and the hours before 06:00 have 2 calls in total: test the staging Worker later in the day.
   The shape is `dayShapePercents` in `server/src/core/config/relay-settings.ts`, and the ages below are in the same file.
   Its source: the open data of Île-de-France Mobilités, dataset "Validations sur le réseau ferré : Profils horaires par jour type" (2nd quarter of 2026, `validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre`, Licence Ouverte v2.0 (Etalab)).

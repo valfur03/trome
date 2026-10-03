@@ -1,5 +1,17 @@
+import { readFileSync } from "node:fs";
+import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { relaySettings } from "../../../src/core/config/relay-settings";
+
+interface WranglerVars {
+  vars?: { PRIM_DAILY_CAP?: string };
+  env?: { staging?: { vars?: { PRIM_DAILY_CAP?: string } } };
+}
+
+function wranglerConfig(): WranglerVars {
+  const path = new URL("../../../wrangler.jsonc", import.meta.url).pathname;
+  return ts.parseConfigFileTextToJson(path, readFileSync(path, "utf8")).config as WranglerVars;
+}
 
 describe("relaySettings", () => {
   it("reads the daily cap, and gives the day shape, the ages and pauses of the relay", () => {
@@ -40,5 +52,12 @@ describe("relaySettings", () => {
       "PRIM_DAILY_CAP 991 and the 10 calls from 00:00 to 02:00 of the next Paris day could make 1001 calls in a PRIM day that starts at 00:00 UTC: give a cap of 990 or less.",
     );
     expect(() => relaySettings({ PRIM_DAILY_CAP: "1000" })).toThrow("give a cap of 990 or less");
+  });
+
+  it("accepts the caps of wrangler.jsonc, for production and for staging, so that a deploy cannot give the Worker a cap that it refuses", () => {
+    const config = wranglerConfig();
+
+    expect(() => relaySettings(config.vars ?? {})).not.toThrow();
+    expect(() => relaySettings(config.env?.staging?.vars ?? {})).not.toThrow();
   });
 });
