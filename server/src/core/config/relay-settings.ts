@@ -22,7 +22,10 @@ export interface RelaySettings {
 
 export const primQuota = 1000;
 
-export const dayShapePercents: DayShapePercents = { 7: 15, 8: 24, 9: 8, 16: 6, 17: 17, 18: 18, 19: 7 };
+export const dayShapePercents: DayShapePercents = {
+  0: 0.6, 1: 0.5, 2: 0.5, 3: 0.5, 4: 0.5, 5: 1.7, 6: 4.3, 7: 9.2, 8: 10.2, 9: 6.1, 10: 4.6, 11: 4.6,
+  12: 5.1, 13: 4.9, 14: 4.9, 15: 5.5, 16: 7, 17: 8.5, 18: 7.5, 19: 5.1, 20: 3.2, 21: 2.1, 22: 1.7, 23: 1.2,
+};
 
 export function relaySettings(vars: { PRIM_DAILY_CAP?: string }): RelaySettings {
   return {

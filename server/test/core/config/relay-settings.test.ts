@@ -5,7 +5,7 @@ describe("relaySettings", () => {
   it("reads the daily cap, and gives the day shape, the ages and pauses of the relay", () => {
     const shape = relaySettings({ PRIM_DAILY_CAP: "800" }).dayShape;
     expect(shape.map((share) => Math.round(share * 10_000) / 100)).toEqual([
-      0.29, 0.29, 0.29, 0.29, 0.29, 0.29, 0.29, 15, 24, 8, 0.29, 0.29, 0.29, 0.29, 0.29, 0.29, 6, 17, 18, 7, 0.29, 0.29, 0.29, 0.29,
+      0.6, 0.5, 0.5, 0.5, 0.5, 1.7, 4.3, 9.2, 10.2, 6.1, 4.6, 4.6, 5.1, 4.9, 4.9, 5.5, 7, 8.5, 7.5, 5.1, 3.2, 2.1, 1.7, 1.2,
     ]);
     expect(relaySettings({ PRIM_DAILY_CAP: "800" })).toEqual({
       dailyCap: 800,

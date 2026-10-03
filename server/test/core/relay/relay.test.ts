@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { RelayAnswer } from "../../../src/core/relay/relay";
 import { hour, minute } from "../../../src/core/time/clock";
+import { peakDayShape } from "../budget/peak-day-shape";
 import { answer } from "./fake-prim-client";
 import { primFixture } from "./prim-fixtures";
-import { relayHarness } from "./relay-harness";
+import { relayHarness as relayHarnessOf } from "./relay-harness";
 import { retrySpread } from "../../../src/core/relay/retry-spread";
 
 const abbesses = "STIF:StopArea:SP:42155:";
@@ -14,6 +15,10 @@ const nextParisDay = Date.parse("2026-10-02T22:00:00.000Z");
 const lateInTheParisDay = "2026-10-02T21:30:00.000Z";
 const nextParisHour = Date.parse("2026-10-02T09:00:00.000Z");
 const allowedByTheEndOf1000Paris = 394;
+
+function relayHarness(options: Parameters<typeof relayHarnessOf>[0] = {}): ReturnType<typeof relayHarnessOf> {
+  return relayHarnessOf({ ...options, settings: { dayShape: peakDayShape, ...options.settings } });
+}
 
 function spreadAt(retryFrom: number, stopRef: string): number {
   return retryFrom + retrySpread(stopRef, retryFrom, minute);
@@ -181,7 +186,7 @@ describe("Relay: the daily cap of PRIM calls", () => {
     expect(prim.calls).toHaveLength(3);
   });
 
-  it("takes the cap from its setting, and starts a new count in the first hour of the next Paris day that has a share: 05:00 with the staging cap of 60", async () => {
+  it("takes the cap from its setting, and starts a new count in the first hour of the next Paris day that has a share: 05:00 with a cap of 60 and a day shape that gives 5% to the 17 hours out of the peaks", async () => {
     const { relay, prim, clock } = relayHarness({ now: "2026-10-02T21:59:00.000Z", dailyCap: "60" });
     await spendTheHour(relay, 60);
 

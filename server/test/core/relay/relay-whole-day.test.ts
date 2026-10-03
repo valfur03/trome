@@ -1,23 +1,52 @@
 import { describe, expect, it } from "vitest";
 import type { RelayAnswer } from "../../../src/core/relay/relay";
-import { hour, minute } from "../../../src/core/time/clock";
+import { minute } from "../../../src/core/time/clock";
 import { parisHourOfDay } from "../../../src/core/time/paris-time";
+import { peakDayShape } from "../budget/peak-day-shape";
 import { answer } from "./fake-prim-client";
 import { primFixture } from "./prim-fixtures";
 import { relayHarness } from "./relay-harness";
-import { riderDay, type RiderRequest } from "./rider-day";
+import { measuredStartShares, riderDay, type RiderRequest } from "./rider-day";
 
 const parisMidnight = Date.parse("2026-10-05T22:00:00.000Z");
-const allowedByTheEndOf = [2, 4, 7, 9, 11, 14, 16, 136, 328, 392, 394, 397, 399, 401, 404, 406, 454, 590, 734, 790, 792, 795, 797, 800];
+const allowedByTheEndOf = [4, 8, 12, 16, 20, 34, 68, 142, 224, 272, 309, 346, 387, 426, 465, 509, 565, 633, 693, 734, 760, 776, 790, 800];
+const earlyHours = { from: 5, to: 7 };
+
+interface Figures {
+  calls: number;
+  outAnswers: number;
+  answers: number;
+  liveActivities: number;
+  liveActivitiesWithNoTimes: number;
+}
 
 interface DayResult {
   callsByParisHour: number[];
-  outAnswers: number;
-  timesAnswers: number;
-  liveActivities: number;
-  liveActivitiesWithNoTimes: number;
-  firstRequestsOut: number;
   callsWithNoBudget: number;
+  day: Figures;
+  early: Figures;
+}
+
+interface LiveActivityAnswers {
+  start: number;
+  answers: { at: number; answer: RelayAnswer }[];
+}
+
+const isEarly = (at: number) => {
+  const parisHour = parisHourOfDay(at);
+  return parisHour >= earlyHours.from && parisHour < earlyHours.to;
+};
+
+function figures(liveActivities: readonly LiveActivityAnswers[], calls: number, inWindow: (at: number) => boolean): Figures {
+  const answers = liveActivities.flatMap((liveActivity) => liveActivity.answers).filter(({ at }) => inWindow(at));
+  const started = liveActivities.filter(({ start }) => inWindow(start));
+  return {
+    calls,
+    outAnswers: answers.filter(({ answer: answered }) => answered.kind === "out").length,
+    answers: answers.length,
+    liveActivities: started.length,
+    liveActivitiesWithNoTimes: started.filter((liveActivity) => liveActivity.answers.every(({ answer: answered }) => answered.kind === "out")).length,
+  };
 }
 
 async function runTheDay(requests: readonly RiderRequest[]): Promise<DayResult> {
@@ -30,26 +59,22 @@ async function runTheDay(requests: readonly RiderRequest[]): Promise<DayResult> 
     return answer(200, body);
   });
 
-  const answersOf = new Map<number, RelayAnswer[]>();
-  let firstRequestsOut = 0;
+  const liveActivities = new Map<number, LiveActivityAnswers>();
   for (const request of requests) {
     clock.set(new Date(request.at).toISOString());
     const answers = await Promise.all(request.stopRefs.map((stopRef) => relay.departures(stopRef)));
-    if (!answersOf.has(request.liveActivity) && answers.every((answered) => answered.kind === "out")) {
-      firstRequestsOut += 1;
-    }
-    answersOf.set(request.liveActivity, [...(answersOf.get(request.liveActivity) ?? []), ...answers]);
+    const liveActivity = liveActivities.get(request.liveActivity) ?? { start: request.at, answers: [] };
+    liveActivity.answers.push(...answers.map((answered) => ({ at: request.at, answer: answered })));
+    liveActivities.set(request.liveActivity, liveActivity);
   }
 
-  const all = [...answersOf.values()].flat();
+  const all = [...liveActivities.values()];
+  const sum = (hours: readonly number[]) => hours.reduce((total, calls) => total + calls, 0);
   return {
     callsByParisHour,
-    outAnswers: all.filter((answered) => answered.kind === "out").length,
-    timesAnswers: all.filter((answered) => answered.kind === "times").length,
-    liveActivities: answersOf.size,
-    liveActivitiesWithNoTimes: [...answersOf.values()].filter((answers) => answers.every((answered) => answered.kind === "out")).length,
-    firstRequestsOut,
     callsWithNoBudget: callsWithASharedAnswerOf60s(requests),
+    day: figures(all, sum(callsByParisHour), () => true),
+    early: figures(all, sum(callsByParisHour.slice(earlyHours.from, earlyHours.to)), isEarly),
   };
 }
 
@@ -68,30 +93,61 @@ function callsWithASharedAnswerOf60s(requests: readonly RiderRequest[]): number 
   return calls;
 }
 
-function report(riders: number, result: DayResult): void {
+function report(run: Record<string, unknown>): void {
   if (process.env.RIDER_DAY_REPORT === "1") {
-    console.log(JSON.stringify({ riders, ...result }));
+    console.log(JSON.stringify(run));
   }
 }
 
-describe("Relay: a whole Paris day of riders of the model of the server spike (2 Live Activities a rider, at 08:15 and 18:00)", () => {
-  for (const riders of [50, 100]) {
-    it(`never passes the cap or the share of an hour for ${String(riders)} riders, and still gives 17:00 and 18:00 at least their own share after the morning peak`, async () => {
-      const requests = riderDay({ riders, parisMidnight });
-      expect(requests.at(-1)?.at ?? 0).toBeLessThan(parisMidnight + 24 * hour);
+function expectWithinTheShares(result: DayResult): void {
+  let spent = 0;
+  result.callsByParisHour.forEach((calls, parisHour) => {
+    spent += calls;
+    expect(spent, `calls by the end of ${String(parisHour)}:00`).toBeLessThanOrEqual(allowedByTheEndOf[parisHour] ?? 0);
+  });
+  expect(spent).toBeLessThanOrEqual(800);
+  expect(result.callsWithNoBudget).toBeGreaterThan(800);
+}
 
-      const result = await runTheDay(requests);
-      report(riders, result);
+describe("Relay: a whole Paris day of riders of the model of the server spike (2 Live Activities a rider, 6 to 14 minutes each)", () => {
+  describe("riders who start by the measured hourly profile of the Paris rail validations", () => {
+    it("serves 50 riders within the cap and the shares of the hours, with times for more than 95 in 100 Live Activities and for every Live Activity that starts from 05:00 to 07:00, over 4 days", async () => {
+      let liveActivities = 0;
+      let withNoTimes = 0;
+      let earlyLiveActivities = 0;
+      let earlyWithNoTimes = 0;
+      for (const seed of [1, 2, 3, 4]) {
+        const result = await runTheDay(riderDay({ riders: 50, parisMidnight, startShares: measuredStartShares, seed }));
+        report({ starts: "measured", riders: 50, seed, ...result });
 
-      let spent = 0;
-      result.callsByParisHour.forEach((calls, parisHour) => {
-        spent += calls;
-        expect(spent, `calls by the end of ${String(parisHour)}:00`).toBeLessThanOrEqual(allowedByTheEndOf[parisHour] ?? 0);
-      });
-      expect(spent).toBeLessThanOrEqual(800);
-      expect(result.callsWithNoBudget).toBeGreaterThan(800);
-      expect(result.callsByParisHour[17]).toBeGreaterThanOrEqual(0.17 * 800);
-      expect(result.callsByParisHour[18]).toBeGreaterThanOrEqual(0.18 * 800);
+        expectWithinTheShares(result);
+        liveActivities += result.day.liveActivities;
+        withNoTimes += result.day.liveActivitiesWithNoTimes;
+        earlyLiveActivities += result.early.liveActivities;
+        earlyWithNoTimes += result.early.liveActivitiesWithNoTimes;
+      }
+
+      expect(withNoTimes / liveActivities).toBeLessThan(0.05);
+      expect(earlyLiveActivities).toBeGreaterThan(5);
+      expect(earlyWithNoTimes).toBe(0);
     });
-  }
+
+    it("never passes the cap or the shares of the hours for 100 riders", async () => {
+      const result = await runTheDay(riderDay({ riders: 100, parisMidnight, startShares: measuredStartShares }));
+      report({ starts: "measured", riders: 100, ...result });
+
+      expectWithinTheShares(result);
+    });
+  });
+
+  describe("riders who start more at the peaks than all riders, by the old guessed day shape", () => {
+    for (const riders of [50, 100]) {
+      it(`never passes the cap or the shares of the hours for ${String(riders)} riders`, async () => {
+        const result = await runTheDay(riderDay({ riders, parisMidnight, startShares: peakDayShape }));
+        report({ starts: "peak-heavy", riders, ...result });
+
+        expectWithinTheShares(result);
+      });
+    }
+  });
 });

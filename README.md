@@ -915,12 +915,16 @@ What the server does:
 - The cap: at most 800 PRIM calls each Paris day (`PRIM_DAILY_CAP` in `server/wrangler.jsonc`; 60 for the staging Worker, so that a test there cannot use the budget of the riders).
   The server adds to its count before each PRIM call, failed calls too, and keeps the count in its storage, so a restart does not reset it.
 - The day shape: each Paris hour may spend its share of the day's cap, so that the morning peak cannot use up the evening peak.
-  The shares are 15% at 07:00, 24% at 08:00, 8% at 09:00, 6% at 16:00, 17% at 17:00, 18% at 18:00 and 7% at 19:00, and the other 17 hours share the last 5% (about 2 calls each with the cap of 800).
+  The shares follow the hours when Paris rail riders enter a station, which is when a Live Activity starts: 1.7% at 05:00, 4.3% at 06:00, 9.2% at 07:00, 10.2% at 08:00, 4.6% to 6.1% each hour from 09:00 to 15:00, 7% at 16:00, 8.5% at 17:00, 7.5% at 18:00, then less each hour down to 1.2% at 23:00.
+  Each hour gets at least 0.5% (4 calls with the cap of 800), so that a lone rider at 03:00 still gets times: `make server-check` fails on a shape that gives an hour less.
   What an hour does not spend goes to the next hour.
-  So the hours from 00:00 to 02:00 in Paris have less than 5 calls, and a PRIM day that starts at 00:00 UTC still holds less than 1,000 calls.
-  With the staging cap of 60, the hours before 05:00 in Paris have no call: test the staging Worker later in the day.
+  The hours from 00:00 to 02:00 in Paris may spend at most 5% of the cap together (8 calls with this shape), so that a PRIM day that starts at 00:00 UTC still holds less than 1,000 calls: `make server-check` fails on a shape that gives them more.
+  With the staging cap of 60, the hours before 03:00 in Paris have no call, and the hours before 06:00 have 2 calls in total: test the staging Worker later in the day.
   The shape is `dayShapePercents` in `server/src/core/config/relay-settings.ts`, and the ages below are in the same file.
-  It comes from a model of riders, not from real use: after two weeks of real use, replace it with the share of each hour in the PRIM calls of `make server-counts`.
+  Its source: the open data of Île-de-France Mobilités, dataset "Validations sur le réseau ferré : Profils horaires par jour type" (2nd quarter of 2026, `validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre`, Licence Ouverte v2.0 (Etalab)).
+  It is the mean of the hourly percents of every rail stop (each stop counts the same), for a week of 5 weekdays out of the school holidays (`JOHV`), 1 Saturday (`SAHV`) and 1 Sunday (`DIJFP`), rounded to 0.1%.
+  It counts every rider of the network, and our riders may start more at the peaks: after two weeks of real use, replace it with the share of each hour in the app calls of `make server-counts` (not its PRIM calls, which follow the shape itself), read on days with few out answers, since an app that gets an out answer asks again.
+  With this shape, the cap of 800 serves about 60 riders (two Live Activities of about 10 minutes each a day) with fewer than 5 in 100 Live Activities left with no times at all, and about 50 riders if they start at the peaks as much as the first guess of the shape said (47% of the day from 07:00 to 10:00).
 - When the budget runs low, the shared answer gets older before the server asks PRIM again, so the times that a rider sees can come from a PRIM answer that is up to 2 or 5 minutes old.
   The answer may get 60 s old while the hour has spent up to 70% of its share, 120 s old above 70%, and 300 s old above 90%.
   The last 5% of the share of an hour go first to a stop that has no answer younger than 10 minutes (a rider who starts a Live Activity), and not to a stop that only refreshes its answer: a rider who waits for a refresh still has times that count down, and a rider who starts has nothing.

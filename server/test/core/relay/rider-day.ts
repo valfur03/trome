@@ -6,6 +6,10 @@ export interface RiderRequest {
   stopRefs: readonly string[];
 }
 
+export const measuredStartShares: readonly number[] = [
+  0.6, 0.1, 0, 0, 0.2, 1.7, 4.4, 9.4, 10.3, 6.3, 4.7, 4.7, 5.2, 5, 5, 5.6, 7.1, 8.7, 7.6, 5.2, 3.2, 2.1, 1.7, 1.3,
+].map((percent) => percent / 100);
+
 const stationCount = 551;
 const stopAreasOfTheBusiestStations = [...Array<number>(6).fill(6), ...Array<number>(3).fill(4), ...Array<number>(6).fill(3), ...Array<number>(19).fill(2)];
 const trafficSlope = 0.43;
@@ -30,31 +34,40 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-export function riderDay({ riders, parisMidnight, seed = 1 }: { riders: number; parisMidnight: number; seed?: number }): RiderRequest[] {
+export function riderDay({
+  riders,
+  parisMidnight,
+  startShares,
+  seed = 1,
+}: {
+  riders: number;
+  parisMidnight: number;
+  startShares: readonly number[];
+  seed?: number;
+}): RiderRequest[] {
   const random = seededRandom(seed);
   const uniform = (low: number, high: number) => low + random() * (high - low);
-  const gauss = (mean: number, deviation: number) =>
-    mean + deviation * Math.sqrt(-2 * Math.log(1 - random())) * Math.cos(2 * Math.PI * random());
   const station = () => {
     let draw = random() * totalWeight;
     return stations.find((candidate) => (draw -= candidate.weight) < 0) ?? lastStation;
   };
-  const startOfDay = (mean: number, deviation: number) => Math.min(Math.max(gauss(mean, deviation), 5.5 * hour), 23.5 * hour);
+  const sharesTotal = startShares.reduce((total, share) => total + share, 0);
+  const start = () => {
+    let draw = random() * sharesTotal;
+    const parisHour = startShares.findIndex((share) => (draw -= share) < 0);
+    return (parisHour === -1 ? startShares.length - 1 : parisHour) * hour + random() * hour;
+  };
 
-  const liveActivities = Array.from({ length: riders }, () => {
-    const home = station();
-    const work = station();
-    return [
-      { start: startOfDay(8.25 * hour, 45 * minute), station: home },
-      { start: startOfDay(18 * hour, 60 * minute), station: work },
-    ];
-  }).flat();
+  const liveActivities = Array.from({ length: riders }, () => [
+    { start: start(), station: station() },
+    { start: start(), station: station() },
+  ]).flat();
 
   const requests: RiderRequest[] = [];
-  liveActivities.forEach(({ start, station: { stopRefs } }, liveActivity) => {
-    const end = start + uniform(6 * minute, 14 * minute);
-    for (let at = start; at < end; at += uniform(minute, 2 * minute)) {
-      requests.push({ at: parisMidnight + Math.round(at), liveActivity, stopRefs });
+  liveActivities.forEach(({ start: startAt, station: { stopRefs } }, liveActivity) => {
+    const end = Math.min(startAt + uniform(6 * minute, 14 * minute), 24 * hour);
+    for (let at = startAt; at < end; at += uniform(minute, 2 * minute)) {
+      requests.push({ at: parisMidnight + Math.floor(at), liveActivity, stopRefs });
     }
   });
   return requests.sort((first, second) => first.at - second.at);

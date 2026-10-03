@@ -4,6 +4,7 @@ import { relaySettings, type RelaySettings } from "../../../src/core/config/rela
 import type { SqlDatabase } from "../../../src/core/storage/sql-database";
 import { hour, minute } from "../../../src/core/time/clock";
 import { NodeSqliteDatabase } from "../storage/node-sqlite-database";
+import { peakDayShape } from "./peak-day-shape";
 
 const at = (iso: string) => Date.parse(iso);
 const parisMidnight = at("2026-10-01T22:00:00.000Z");
@@ -14,7 +15,7 @@ function budget({
   database = new NodeSqliteDatabase(),
   settings = {},
 }: { cap?: string; database?: SqlDatabase; settings?: Partial<RelaySettings> } = {}): PrimBudget {
-  return new PrimBudget(database, { ...relaySettings({ PRIM_DAILY_CAP: cap }), ...settings });
+  return new PrimBudget(database, { ...relaySettings({ PRIM_DAILY_CAP: cap }), dayShape: peakDayShape, ...settings });
 }
 
 function claimAll(prim: PrimBudget, now: number, kind: CallKind = "start"): number {
@@ -32,7 +33,7 @@ function claim(prim: PrimBudget, now: number, calls: number): void {
 }
 
 describe("PrimBudget: the share of each Paris hour", () => {
-  it("lets each Paris hour spend its share of the day's cap, by the day shape of 07:00 15%, 08:00 24%, 09:00 8%, 16:00 6%, 17:00 17%, 18:00 18%, 19:00 7%, and 5% for the other hours", () => {
+  it("lets each Paris hour spend its share of the day's cap, by a day shape of 07:00 15%, 08:00 24%, 09:00 8%, 16:00 6%, 17:00 17%, 18:00 18%, 19:00 7%, and 5% for the other hours", () => {
     const prim = budget();
 
     const spentByTheEndOf = Array.from({ length: 24 }, (_, parisHour) => {
@@ -50,10 +51,28 @@ describe("PrimBudget: the share of each Paris hour", () => {
     expect(claimAll(prim, parisHourStart(9))).toBe(392 - 328);
   });
 
-  it("keeps the Paris hours from 00:00 to 02:00 under 5 calls, so that a PRIM day that starts at 00:00 UTC still holds less than 1,000 calls", () => {
-    const prim = budget();
+  it("lets each Paris hour spend its share of the day's cap of 800 by the server's own day shape, from 4 calls by the end of 00:00 and 68 by the end of 06:00", () => {
+    const prim = budget({ settings: { dayShape: relaySettings({ PRIM_DAILY_CAP: "800" }).dayShape } });
 
-    expect(claimAll(prim, parisHourStart(0)) + claimAll(prim, parisHourStart(1))).toBe(4);
+    const spentByTheEndOf = Array.from({ length: 24 }, (_, parisHour) => {
+      claimAll(prim, parisHourStart(parisHour) + 30 * minute);
+      return prim.used("2026-10-02");
+    });
+
+    expect(spentByTheEndOf).toEqual([4, 8, 12, 16, 20, 34, 68, 142, 224, 272, 309, 346, 387, 426, 465, 509, 565, 633, 693, 734, 760, 776, 790, 800]);
+  });
+
+  it("keeps the Paris hours from 00:00 to 02:00 of the server's own day shape at 5% of the cap or less (40 calls of 800), so that a PRIM day that starts at 00:00 UTC still holds less than 1,000 calls", () => {
+    const prim = budget({ settings: { dayShape: relaySettings({ PRIM_DAILY_CAP: "800" }).dayShape } });
+
+    expect(claimAll(prim, parisHourStart(0)) + claimAll(prim, parisHourStart(1))).toBeLessThanOrEqual(40);
+  });
+
+  it("gives the staging cap of 60 its first call at 03:00 in Paris, with the server's own day shape", () => {
+    const prim = budget({ cap: "60", settings: { dayShape: relaySettings({ PRIM_DAILY_CAP: "60" }).dayShape } });
+
+    expect(claimAll(prim, parisHourStart(2) + 59 * minute)).toBe(0);
+    expect(claimAll(prim, parisHourStart(3))).toBe(1);
   });
 
   it("never passes the day's cap, and starts again at the next Paris day", () => {
