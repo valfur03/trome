@@ -1,9 +1,9 @@
 export type DayShapePercents = Readonly<Partial<Record<number, number>>>;
 
 export const hoursOfADay = 24;
-export const smallestHourPercent = 0.5;
+const smallestHourPercent = 0.5;
 export const nightHours: readonly number[] = [0, 1];
-export const largestNightPercent = 5;
+const largestNightPercent = 5;
 
 export function dayShape(percents: DayShapePercents): number[] {
   const named = Object.entries(percents).map(([hour, percent]) => [Number(hour), percent ?? Number.NaN] as const);

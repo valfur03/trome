@@ -1,4 +1,4 @@
-import { dayShape, type DayShapePercents } from "../budget/day-shape";
+import { dayShape, nightHours, type DayShapePercents } from "../budget/day-shape";
 import { hour, minute } from "../time/clock";
 
 export interface AgedAnswerStep {
@@ -28,9 +28,10 @@ export const dayShapePercents: DayShapePercents = {
 };
 
 export function relaySettings(vars: { PRIM_DAILY_CAP?: string }): RelaySettings {
+  const shape = dayShape(dayShapePercents);
   return {
-    dailyCap: dailyCap(vars.PRIM_DAILY_CAP),
-    dayShape: dayShape(dayShapePercents),
+    dailyCap: dailyCap(vars.PRIM_DAILY_CAP, shape),
+    dayShape: shape,
     freshAge: minute,
     agedAnswers: [
       { spentOver: 0.7, age: 2 * minute },
@@ -46,12 +47,31 @@ export function relaySettings(vars: { PRIM_DAILY_CAP?: string }): RelaySettings 
   };
 }
 
-function dailyCap(value: string | undefined): number {
+function dailyCap(value: string | undefined, shape: readonly number[]): number {
   const cap = Number(value);
   if (!/^\d+$/.test(value ?? "") || cap < 1 || cap > primQuota) {
     throw new Error(
       `PRIM_DAILY_CAP must be a whole number from 1 to ${String(primQuota)}, the PRIM quota of a day.`,
     );
+  }
+  const night = nightCalls(cap, shape);
+  if (cap + night > primQuota) {
+    throw new Error(
+      `PRIM_DAILY_CAP ${String(cap)} and the ${String(night)} calls from 00:00 to 02:00 of the next Paris day could make ${String(cap + night)} calls in a PRIM day that starts at 00:00 UTC: give a cap of ${String(largestCap(shape))} or less.`,
+    );
+  }
+  return cap;
+}
+
+function nightCalls(cap: number, shape: readonly number[]): number {
+  const nightShare = nightHours.reduce((total, parisHour) => total + (shape[parisHour] ?? 0), 0);
+  return Math.floor(cap * nightShare + 1e-9);
+}
+
+function largestCap(shape: readonly number[]): number {
+  let cap = primQuota;
+  while (cap + nightCalls(cap, shape) > primQuota) {
+    cap -= 1;
   }
   return cap;
 }

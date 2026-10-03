@@ -33,8 +33,12 @@ describe("relaySettings", () => {
     }
   });
 
-  it("accepts a cap from 1 to 1,000", () => {
+  it("accepts a cap from 1 to 990, and refuses a cap that the calls from 00:00 to 02:00 of the next Paris day could take above the PRIM quota of a day that starts at 00:00 UTC", () => {
     expect(relaySettings({ PRIM_DAILY_CAP: "1" }).dailyCap).toBe(1);
-    expect(relaySettings({ PRIM_DAILY_CAP: "1000" }).dailyCap).toBe(1000);
+    expect(relaySettings({ PRIM_DAILY_CAP: "990" }).dailyCap).toBe(990);
+    expect(() => relaySettings({ PRIM_DAILY_CAP: "991" })).toThrow(
+      "PRIM_DAILY_CAP 991 and the 10 calls from 00:00 to 02:00 of the next Paris day could make 1001 calls in a PRIM day that starts at 00:00 UTC: give a cap of 990 or less.",
+    );
+    expect(() => relaySettings({ PRIM_DAILY_CAP: "1000" })).toThrow("give a cap of 990 or less");
   });
 });
