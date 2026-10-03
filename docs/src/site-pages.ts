@@ -1,8 +1,8 @@
 // Rules on the pages of the site, which the test of this folder checks on every page.
 
-// The sections of the site that are in English only, because their readers build or run the app.
+// The sections of the site that are in English only, because their readers build, run or release the app.
 // Every other page is for riders, so it has a French page and an English page at the same path.
-export const englishOnlyFolders = ['build/'];
+export const englishOnlyFolders = ['build/', 'maintain/'];
 
 const languages = ['fr', 'en'];
 

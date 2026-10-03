@@ -55,6 +55,7 @@ The sidebar has one section for each reader, set in `astro.config.mjs`:
 
 - **Utiliser TROME** (**Use TROME** in English) lists the riders' pages one by one, so add a new riders' page to its list.
 - **Build it yourself** shows each page of `en/build/`.
+- **Maintain** shows each page of `en/maintain/`: the pages for the maintainer, who releases the app.
 
 Write a link to another page of the site with the base path and the language, for example `[Aide](/trome/fr/support/)`: Astro does not add them.
 
@@ -73,7 +74,9 @@ sidebar:
 A page for riders has a French page and an English page at the same path, with the same facts, and both come in the same change.
 The language menu of each page then opens the same page in the other language.
 `make docs-check` fails when a riders' page exists in one language only.
-The pages for builders are in English only, in `en/build/`, and the French home links to them: [`src/site-pages.ts`](src/site-pages.ts) lists these English-only folders.
+The pages for builders are in English only, in `en/build/`, and the French home links to them.
+The pages for the maintainer are in English only too, in `en/maintain/`, and no home links to them.
+[`src/site-pages.ts`](src/site-pages.ts) lists these English-only folders.
 A page in English only shows no language menu ([`src/components/LanguageSelect.astro`](src/components/LanguageSelect.astro)), because its French page does not exist.
 On a phone, Starlight puts the language menu inside the menu of the sidebar, so a page with no sidebar, such as the home, shows it in the header instead ([`src/components/Header.astro`](src/components/Header.astro)).
 

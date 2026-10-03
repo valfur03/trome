@@ -16,6 +16,7 @@ describe('isInBothLanguages', () => {
 
   it('refuses a page of a section in English only, and a page outside the language folders', () => {
     assert.equal(isInBothLanguages('en/build/install-on-your-iphone'), false);
+    assert.equal(isInBothLanguages('en/maintain/release-on-the-app-store'), false);
     assert.equal(isInBothLanguages('404'), false);
   });
 });
@@ -32,6 +33,7 @@ describe('pagesWithoutTwin', () => {
 
   it('accepts an English page of a section in English only', () => {
     assert.deepEqual(pagesWithoutTwin(['en/build/install-on-your-iphone.mdx']), []);
+    assert.deepEqual(pagesWithoutTwin(['en/maintain/release-on-the-app-store.mdx']), []);
   });
 });
 

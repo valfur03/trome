@@ -45,6 +45,11 @@ export default defineConfig({
           label: 'Build it yourself',
           items: [{ autogenerate: { directory: 'build' } }],
         },
+        {
+          // In English only, like the section above, for the maintainer who releases the app; the homes do not link to it.
+          label: 'Maintain',
+          items: [{ autogenerate: { directory: 'maintain' } }],
+        },
       ],
     }),
     searchIndex(),
