@@ -7,7 +7,7 @@ struct ShownLiveActivityControls: View {
 
     var body: some View {
         if let shownStation = autoLiveActivity.shownStation {
-            Text("On the lock screen: \(shownStation.name)")
+            Text(verbatim: "On the lock screen: \(shownStation.name)")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
