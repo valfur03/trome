@@ -41,6 +41,6 @@ body:
   - type: input
     id: build
     attributes:
-      label: If you built it, your Xcode version, the commit and your Apple ID
-      description: Run `git log -1 --oneline` in the folder of TROME to see the commit, and say whether your Apple ID is free or paid.
+      label: "If you built it: your Xcode version, the commit, and a free or paid Apple ID"
+      description: Run `git log -1 --oneline` in the folder of TROME to see the commit. Do not write your Apple ID itself, because everyone can read an issue.
       placeholder: Xcode 27.0, a1b2c3d, free Apple ID

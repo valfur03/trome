@@ -8,13 +8,10 @@ Not sure that it is a security problem? Report it privately anyway.
 ## Send your report on GitHub
 
 Open [Report a vulnerability](https://github.com/valfur03/trome/security/advisories/new), which is also in the **Security** tab of the repo.
-You need a GitHub account, and only you and the maintainer see the report.
+You need a GitHub account, which is free, and only you and the maintainer see the report.
 
 In the report, say what the problem is and where it is: the file, the screen, or the request to the server.
 Then give the steps that show it, and what someone could do with it.
-
-No GitHub account?
-Open an issue that asks for a private way to reach us, and leave every detail of the problem out of it.
 
 ## What happens next
 
@@ -37,3 +34,11 @@ Never run a load test or a scanner against the server that riders use: they all 
 A problem that shows only on that server is still worth a report: say what you saw.
 
 A problem of iOS, GitHub, Cloudflare or PRIM, the train data service of Île-de-France Mobilités, goes to them: we do not run them.
+
+## What we already know: the app token
+
+Every copy of the app holds the same token, which it sends to the server, so anyone who has the app can pull the token out.
+We know this, so a report that shows only this is not needed.
+With the token, someone could use up the server's train data calls, and riders would then get no times until the server may call again: the next hour, or the next day at worst.
+The token does not give the PRIM key, and the server never makes more train data calls than its daily cap.
+A way past that cap, or to the PRIM key, is worth a report.
