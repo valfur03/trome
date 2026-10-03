@@ -450,7 +450,7 @@ touch "$state/session-may-end"
 wait "$other_open"
 touch "$state/session-kept"
 tries=0
-until grep -q "Waiting for the Simulator lock" "$state/background.log" || [ -e "$state/after-session" ] || [ "$tries" -ge 20 ]; do
+until logged "the open Simulator of $state/other" || [ -e "$state/after-session" ] || [ "$tries" -ge 20 ]; do
     sleep 1
     tries=$((tries + 1))
 done
