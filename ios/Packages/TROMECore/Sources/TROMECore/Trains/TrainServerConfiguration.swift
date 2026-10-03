@@ -1,11 +1,11 @@
 import Foundation
 
 public struct TrainServerConfiguration: Equatable, Sendable {
-    public static let hostKey = "TrainServerHost"
-    public static let appTokenKey = "TrainServerAppToken"
+    static let hostKey = "TrainServerHost"
+    static let appTokenKey = "TrainServerAppToken"
 
-    public let baseURL: URL
-    public let appToken: String
+    let baseURL: URL
+    let appToken: String
 
     public init?(infoDictionary: [String: Any]?) {
         guard let host = Self.setting(Self.hostKey, in: infoDictionary),
