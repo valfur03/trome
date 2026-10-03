@@ -345,7 +345,7 @@ expect "a job runs at once when the widget host has emptied its queue" "$(wait_f
 chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.trome.dev::com.example.trome.dev.widget>.84AB4E5B; pendingTasks.count = 0" > "$state/chronod-log.$default.next"
 expect "a job waits while the widget host has tasks queued, then runs" "$(wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host"
 chronod_line "Would pop task, but all extensions are busy, namely [com.example.trome.dev::com.example.trome.dev.widget]" > "$state/chronod-log.$default"
-expect "a job goes on when the widget host keeps tasks queued after the limit" "$(RATP_WIDGET_HOST_WAIT_SECONDS=1 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
+expect "a job says that it waits for the widget host before it goes on at the limit, also when the limit is reached at the first check" "$(RATP_WIDGET_HOST_WAIT_SECONDS=0 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
 
 language_at_restart() {
     cat "$state/language-at-springboard-restart.$default" 2> /dev/null || echo "no restart"
