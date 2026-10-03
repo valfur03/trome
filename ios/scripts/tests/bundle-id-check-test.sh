@@ -30,8 +30,8 @@ for argument in "$@"; do
     esac
 done
 guard() {
-    lower=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-    if [ "${FAKE_GUARD:-yes}" = yes ] && { [ "$lower" = io.github.valfur03.trome ] || [ "$lower" = io.github.valfur03.trome.widget ]; }; then
+    key=$(echo "$1" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9\n' '_')
+    if [ "${FAKE_GUARD:-yes}" = yes ] && { [ "$key" = io_github_valfur03_trome ] || [ "$key" = io_github_valfur03_trome_widget ]; }; then
         echo SHIPPING_ID_REFUSED
     else
         echo "$1"
@@ -106,5 +106,20 @@ expect "an extension ID that is not under the app ID in the local file is refuse
     "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.Other.Widget)" fails
 expect "an extension ID that only starts with the letters of the app ID is refused" \
     "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.RATPActivityWidget)" fails
+expect "an ID that the project reads as the shipping ID is refused" \
+    "$(check_local io-github-valfur03-trome '')" fails
+expect "the refusal of an ID that the project reads as the shipping ID says why" \
+    "$(grep -c 'is too close to a shipping ID, so the project refuses it' "$state/out")" 1
+expect "the IDs are not printed without --show" \
+    "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.RATPActivity.Widget > /dev/null; grep -c 'Debug bundle IDs' "$state/out")" 0
+FAKE_LOCAL_APP=io.github.valfur03.RATPActivity FAKE_LOCAL_WIDGET=io.github.valfur03.RATPActivity.Widget \
+    FAKE_DEBUG_APP=%s.trome.dev FAKE_DEBUG_WIDGET=%s.widget XCODEBUILD="$state/xcodebuild" \
+    "$scripts/bundle-id-check.sh" --local --show > "$state/out" 2>&1 || true
+expect "--show prints the Debug IDs that a build will use, so a mistyped setting name is seen before a Run" \
+    "$(cat "$state/out")" "Debug bundle IDs: app io.github.valfur03.RATPActivity, Live Activity io.github.valfur03.RATPActivity.Widget"
+FAKE_DEBUG_APP=%s.trome.dev FAKE_DEBUG_WIDGET=%s.widget XCODEBUILD="$state/xcodebuild" \
+    "$scripts/bundle-id-check.sh" --local --show > "$state/out" 2>&1 || true
+expect "--show prints the default Debug IDs when no Debug ID is set" \
+    "$(cat "$state/out")" "Debug bundle IDs: app com.example.trome.dev, Live Activity com.example.trome.dev.widget"
 
 [ "$failures" -eq 0 ]

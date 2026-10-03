@@ -11,8 +11,13 @@ widget_override=RATP_DEBUG_WIDGET_BUNDLE_ID
 sample_app=io.github.valfur03.RATPActivity
 sample_widget=$sample_app.Widget
 mode=all
+show=no
 if [ "${1:-}" = --local ]; then
     mode=local
+    shift
+fi
+if [ "$mode" = local ] && [ "${1:-}" = --show ]; then
+    show=yes
     shift
 fi
 project=${1:-RATPActivity.xcodeproj}
@@ -62,6 +67,11 @@ check_local() {
     [ "$failed" -eq 0 ] || return 0
     app=$(echo "$configured" | awk '$1 == "APP_BUNDLE_ID" { print $2 }')
     widget=$(echo "$configured" | awk '$1 == "WIDGET_BUNDLE_ID" { print $2 }')
+    case "$app $widget" in
+        *SHIPPING_ID_REFUSED*)
+            fail "a Debug ID in ios/Config/Local.xcconfig is too close to a shipping ID, so the project refuses it (app $app, extension $widget): use another ID"
+            return 0 ;;
+    esac
     case $widget in
         "$app".*) ;;
         *) fail "the Debug ID of the extension ($widget) does not start with the Debug ID of the app ($app) and a dot: iOS installs an extension only under the ID of its app (set $widget_override in ios/Config/Local.xcconfig to $app.<name>, or remove it)" ;;
@@ -129,6 +139,7 @@ check_release() {
 check_local
 if [ "$mode" = local ]; then
     [ "$failed" -eq 0 ] || exit 1
+    [ "$show" = no ] || echo "Debug bundle IDs: app $app, Live Activity $widget"
     exit 0
 fi
 

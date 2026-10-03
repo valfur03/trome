@@ -19,6 +19,6 @@ RATP_BUNDLE_ID_PREFIX = com.example
 // Only Debug builds read them: Release builds keep the App Store IDs.
 // Never put the App Store IDs here (io.github.valfur03.trome or io.github.valfur03.trome.widget, in any capitals): a free Apple ID that signs them takes them for good.
 // make generate refuses them, and a Run in Xcode gets an ID that starts with SHIPPING_ID_REFUSED, so Apple cannot register it.
-// After a change, run make generate.
+// After a change, run make generate: it prints the two IDs that Xcode will use, so check them before you click Run.
 // RATP_DEBUG_APP_BUNDLE_ID = io.github.your-github-name.oldapp
 // RATP_DEBUG_WIDGET_BUNDLE_ID = io.github.your-github-name.oldapp.widget

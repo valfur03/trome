@@ -114,7 +114,7 @@ setup:
 
 generate:
 	xcodegen generate --quiet --cache-path $(XCODEGEN_CACHE)
-	@./scripts/bundle-id-check.sh --local $(PROJECT)
+	@./scripts/bundle-id-check.sh --local --show $(PROJECT)
 
 project:
 	@xcodegen generate --use-cache --quiet --cache-path $(XCODEGEN_CACHE)
