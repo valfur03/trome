@@ -70,22 +70,24 @@ The licence and the date above are the ones that the dataset page showed on 2026
 
 TROME adapts the data, so the numbers of the day shape are ours, not numbers of the dataset.
 For each hour, TROME takes the mean of the shares of all rail stops (each stop counts the same), over a week of 5 weekdays out of the school holidays, 1 Saturday and 1 Sunday, and rounds it to 0.1%.
-Then it gives each hour at least 0.5%, takes the extra share from the other hours in proportion, and keeps the hours from 00:00 to 02:00 at 5% of the day at most.
+Then it raises each hour below 0.5% to 0.5%, takes the extra share from the other hours in proportion, and fixes the last digits so that the 24 hours add up to 100%.
 
 The day shape is a setting, and it will change: after two weeks of real use, the share of each hour in the calls of TROME's own riders will replace it.
 From then on, the day shape no longer comes from this dataset.
 
-The Licence Ouverte lets anyone reuse the data and a work made from it, also for a commercial use, if they credit the source and give the date of the data.
-The day shape is such a work, and it is in the code: a copy of `relay-settings.ts` shares it too.
+The Licence Ouverte lets anyone reuse the data and a work made from it, also for a commercial use.
+It asks for two things in return: name the source, and give the date of the last update of the data.
+The day shape is a work made from the data, and it is in the code: a copy of `relay-settings.ts` shares it too.
 When you share the day shape, or a work made from it, in public:
 
-- Say that the data comes from Île-de-France Mobilités and was adapted by TROME.
+- Say that the data comes from Île-de-France Mobilités and was adapted by TROME, so that no one takes our numbers for theirs.
+- Give the date of the last update of the data: 2026-09-22.
 - Name the Licence Ouverte v2.0, and link to it.
-- Give the date of the data: 2026-09-22.
+  The licence does not ask for this, but it tells the next person what they may do with the data.
 
 For example:
 
-> Day shape adapted by TROME from the Île-de-France Mobilités dataset “Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)”, data of 2026-09-22, under the Licence Ouverte v2.0.
+> Day shape adapted by TROME from the Île-de-France Mobilités dataset “Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)”, last updated 2026-09-22, under the Licence Ouverte v2.0.
 
 ## Names and marks
 

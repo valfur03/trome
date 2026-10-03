@@ -924,7 +924,7 @@ What the server does:
   With the staging cap of 60, the hours before 03:00 in Paris have no call, and the hours before 06:00 have 2 calls in total: test the staging Worker later in the day.
   The shape is `dayShapePercents` in `server/src/core/config/relay-settings.ts`, and the ages below are in the same file.
   Its source: the open data of Île-de-France Mobilités, dataset "Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)" (`validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre`, Licence Ouverte v2.0).
-  [NOTICE.md](NOTICE.md) gives the date of its data, and says what you must do when you share the shape.
+  [NOTICE.md](NOTICE.md) gives the date of its last update, and says what you must do when you share the shape.
   It is the mean of the hourly percents of every rail stop (each stop counts the same), for a week of 5 weekdays out of the school holidays (`JOHV`), 1 Saturday (`SAHV`) and 1 Sunday (`DIJFP`), rounded to 0.1%.
   It counts every rider of the network, and our riders may start more at the peaks: after two weeks of real use, replace it with the share of each hour in the app calls of `make server-counts` (not its PRIM calls, which follow the shape itself), read on days with few out answers, since an app that gets an out answer asks again.
   When you change the shape, change its section in NOTICE.md in the same commit.
