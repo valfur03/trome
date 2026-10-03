@@ -816,7 +816,8 @@ A free Apple ID registers at most 10 bundle IDs in 7 days, and each one expires 
 When Xcode says "Your maximum App ID limit has been reached" or "No profiles for ... were found", wait, or reuse two bundle IDs that Xcode already registered on your Mac: the tutorial shows the command that lists them, with the date when each one expires.
 To reuse them, set `RATP_DEBUG_APP_BUNDLE_ID` and `RATP_DEBUG_WIDGET_BUNDLE_ID` in `ios/Config/Local.xcconfig` (see `ios/Config/Local.example.xcconfig`), then run `make generate`.
 They are the full bundle IDs of your Debug builds, written as is, and the ID of the Live Activity must start with the ID of the app and a dot; with only the first one set, the Live Activity gets the app ID followed by `.widget`.
-`make generate`, `make bundle-id-check` and the git hooks refuse the App Store IDs there, in any capitals, and a Run in Xcode with no `make` command gets an ID that starts with `SHIPPING_ID_REFUSED` instead.
+`make generate` and `make bundle-id-check` refuse the App Store IDs there, in any capitals, and the git hooks print the same refusal.
+A Run in Xcode with no `make` command gets an ID that starts with `SHIPPING_ID_REFUSED` instead, which is not a valid bundle ID.
 A build from before the app was called TROME has another bundle ID, so iOS keeps it as a second app: delete it, so that its notifications and its Live Activities stop.
 
 On a device, the Run button of Xcode uses the PRIM key of `ios/Config/Secrets.xcconfig` in the folder that you open. There is no `make` command for a device build.

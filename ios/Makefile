@@ -73,7 +73,7 @@ STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
-	@echo "make generate            Create the Xcode project again (after a change in project.yml or ios/Config), and refuse a shipping ID in the Debug IDs of ios/Config"
+	@echo "make generate            Create the Xcode project again (after a change in project.yml or ios/Config), and refuse the App Store IDs in the Debug IDs of ios/Config"
 	@echo "make git-hooks           Turn on the git hooks: after a git pull or a checkout in the main folder, the Xcode project is created again"
 	@echo "make git-hooks-off       Turn off the git hooks"
 	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"

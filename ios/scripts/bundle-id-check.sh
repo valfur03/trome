@@ -43,8 +43,8 @@ style_of() {
 }
 
 is_shipping() {
-    id=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-    [ "$id" = "$shipping_app" ] || [ "$id" = "$shipping_widget" ]
+    lowered=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    [ "$lowered" = "$shipping_app" ] || [ "$lowered" = "$shipping_widget" ]
 }
 
 check_local() {
