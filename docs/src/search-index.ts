@@ -10,6 +10,31 @@ export function htmlForSearchIndex(html: string): string {
   return html.replace(frenchElision, "$1'").replace(/<br\s*\/?>/gi, ' $&');
 }
 
+interface PagefindEntry {
+  version: string;
+  languages: Record<string, { page_count: number }>;
+}
+
+export function differencesFromStarlightIndex(starlight: PagefindEntry, ours: PagefindEntry): string[] {
+  const differences: string[] = [];
+  if (starlight.version !== ours.version) {
+    differences.push(`Pagefind ${ours.version} built this index, but Starlight uses Pagefind ${starlight.version}`);
+  }
+  const languages = new Set([...Object.keys(starlight.languages), ...Object.keys(ours.languages)]);
+  for (const language of [...languages].sort()) {
+    const starlightCount = starlight.languages[language]?.page_count ?? 0;
+    const ourCount = ours.languages[language]?.page_count ?? 0;
+    if (starlightCount !== ourCount) {
+      differences.push(`${ourCount} pages in "${language}", but ${starlightCount} in the index of Starlight`);
+    }
+  }
+  return differences;
+}
+
+async function readEntry(indexFolder: string): Promise<PagefindEntry> {
+  return JSON.parse(await readFile(join(indexFolder, 'pagefind-entry.json'), 'utf8')) as PagefindEntry;
+}
+
 function assertNoErrors<T extends { errors: string[] }>(response: T): T {
   if (response.errors.length > 0) {
     throw new Error(`Pagefind failed: ${response.errors.join('; ')}`);
@@ -27,6 +52,12 @@ export function searchIndex(): AstroIntegration {
         const htmlFiles = (await readdir(siteFolder, { recursive: true, encoding: 'utf8' })).filter((path) =>
           path.endsWith('.html'),
         );
+        const starlightEntry = await readEntry(indexFolder).catch((cause: unknown) => {
+          throw new Error(
+            'Found no search index of Starlight: put searchIndex() after starlight() in astro.config.mjs, and keep the search of Starlight on.',
+            { cause },
+          );
+        });
         try {
           const { index } = assertNoErrors(await pagefind.createIndex());
           if (!index) {
@@ -38,6 +69,10 @@ export function searchIndex(): AstroIntegration {
           }
           await rm(indexFolder, { recursive: true, force: true });
           assertNoErrors(await index.writeFiles({ outputPath: indexFolder }));
+          const differences = differencesFromStarlightIndex(starlightEntry, await readEntry(indexFolder));
+          if (differences.length > 0) {
+            throw new Error(`The search index is not in step with the one of Starlight: ${differences.join('; ')}.`);
+          }
           logger.info(`Indexed ${htmlFiles.length} HTML files again, so that a search finds a word after l’, d’ or qu’, and the words around a line break.`);
         } finally {
           await pagefind.close();

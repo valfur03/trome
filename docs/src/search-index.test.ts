@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { htmlForSearchIndex } from './search-index.ts';
+import { differencesFromStarlightIndex, htmlForSearchIndex } from './search-index.ts';
 
 describe('htmlForSearchIndex', () => {
   it('gives Pagefind a straight apostrophe after a French elision, so it also indexes the word after it', () => {
@@ -24,5 +24,24 @@ describe('htmlForSearchIndex', () => {
   it('puts a space before a line break, so the words on both sides stay apart', () => {
     assert.equal(htmlForSearchIndex('<h1>Votre prochain métro,<br />sur l’écran</h1>'), "<h1>Votre prochain métro, <br />sur l'écran</h1>");
     assert.equal(htmlForSearchIndex('a<br>b<BR/>c'), 'a <br>b <BR/>c');
+  });
+});
+
+describe('differencesFromStarlightIndex', () => {
+  const starlight = { version: '1.5.2', languages: { en: { page_count: 5 }, fr: { page_count: 4 } } };
+
+  it('finds no difference when the version and the pages of each language are the same', () => {
+    assert.deepEqual(differencesFromStarlightIndex(starlight, structuredClone(starlight)), []);
+  });
+
+  it('names a different version of Pagefind, a language with other pages, and a missing language', () => {
+    assert.deepEqual(
+      differencesFromStarlightIndex(starlight, { version: '1.6.0', languages: { fr: { page_count: 3 } } }),
+      [
+        'Pagefind 1.6.0 built this index, but Starlight uses Pagefind 1.5.2',
+        '0 pages in "en", but 5 in the index of Starlight',
+        '3 pages in "fr", but 4 in the index of Starlight',
+      ],
+    );
   });
 });

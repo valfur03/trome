@@ -40,6 +40,7 @@ The search is [Pagefind](https://pagefind.app), which Starlight runs at the end 
 Pagefind splits a word only at a straight apostrophe, so it would index “l’écran” as one word, and a search for “écran” would find nothing.
 So [`src/search-index.ts`](src/search-index.ts) indexes the site again, with a straight apostrophe after l’, d’, qu’ and the other French elisions, and a space before each line break.
 The pages keep their apostrophes, but the texts of the search results show the straight ones.
+The build fails when this index and the one of Starlight do not have the same version of Pagefind or the same pages in each language, for example after an update of Starlight: then make `pagefind` in `package.json` the version that Starlight uses.
 
 ## Add a page
 
