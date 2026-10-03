@@ -3,6 +3,27 @@ import Testing
 @testable import TROMECore
 
 extension AutoLiveActivityModelTests {
+    @Test func asksForNoTrainsWhileNoLiveActivityShows() async {
+        let model = makeModel()
+        await activate(model)
+        gps.report(Places.fourHundredMetersFromA)
+        try? await Task.sleep(for: .milliseconds(50))
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+
+        model.setAppPhase(.background)
+        try? await Task.sleep(for: .milliseconds(50))
+        clock.letTimersFire(upTo: 2 * BackgroundTrainsRefresh.maximumDelay)
+        let relaunched = makeModel()
+        relaunched.setAppPhase(.background)
+        try? await Task.sleep(for: .milliseconds(50))
+        clock.letTimersFire(upTo: 3 * BackgroundTrainsRefresh.maximumDelay)
+        try? await Task.sleep(for: .milliseconds(50))
+
+        #expect(!client.isShowing)
+        #expect(provider.callCount == 0)
+        withExtendedLifetime((model, relaunched)) {}
+    }
+
     @Test func feedsTheLiveActivityAgainWhenRelaunchedWhileItShows() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
