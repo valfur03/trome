@@ -433,6 +433,7 @@ While the app is in the background, it sends new train times a few seconds after
 When you lock the phone (or leave the app) while the Live Activity still says "Loading the next trains...", for example right after you tap the arrival notification, the app asks for the train times again at once in the background: the first trains do not wait for the next background refresh.
 Between two calls, it draws the Live Activity again at each moment when a train on it changes (see above).
 It stops asking PRIM when PRIM rejects the key or says the daily quota is used up.
+A Release build (TestFlight or the App Store) asks the server of the app instead of PRIM (see [The train data key (PRIM)](#the-train-data-key-prim)), at the same moments.
 This works while iOS keeps the app running in the background (see the limit below).
 When the first shown train has left and no new times came, the Live Activity hides its waiting times and says "Open the app for new times" (iOS does it by itself, also when the app is closed).
 The strips stay, with their ends of line, and their boxes are empty.
@@ -777,6 +778,14 @@ A free Apple ID has no push notifications, so no server can send new times to th
 
 The app gets train times from the PRIM API of Île-de-France Mobilités. PRIM needs a free key.
 
+This section is about the Debug builds (`make run`, the Run button of Xcode): only they ask PRIM with your key.
+A Release build (an archive for TestFlight or the App Store) never holds the PRIM key, even with `LIVE=1`: the Release settings of `ios/project.yml` leave the key out of the app, and the code of a Release build does not read it.
+It asks the server of the app for the trains (see [The server](#the-server)), with its host and its app token, which go in `ios/Config/Server.xcconfig` (a copy of `ios/Config/Server.example.xcconfig`, ignored by git).
+Only the Release builds read this file.
+The server gives the PRIM answer as PRIM gave it, and the time when PRIM gave it: the app counts the age of the times from that moment, not from the moment when it got them, and it never shows a train that left in the meantime.
+When the server does not answer, gives an error or has no times for now, the refresh fails, and the Live Activity keeps the last times as for any failed refresh (see [Show the next trains on the lock screen (Live Activity)](#show-the-next-trains-on-the-lock-screen-live-activity)).
+The app sends the server only the stop and the app token: no position, no identifier of the device or of an account, and no push token.
+
 The app builds and runs without the key. "Testing tools" > "Next trains of a station" says "Train data key: not set".
 
 To add the key:
@@ -806,7 +815,8 @@ Xcode keeps a copy of the build settings (the build description, in `ios/.build/
 So `make build LIVE=1` also passes `PRIM_SECRETS_STAMP`: the time, the file number and the size of the key file (never its content).
 A change of the key file changes the stamp, so Xcode reads the file again.
 
-The build output never shows the key. `make live-key-check` proves it with fake keys: it builds with a first key, changes the key file, builds again, and checks that the app has the new key and not the old one. Then it builds without `LIVE=1` and checks that the app has no key. `make check` runs it.
+The build output never shows the key. `make live-key-check` proves it with fake keys: it builds with a first key, changes the key file, builds again, and checks that the app has the new key and not the old one. Then it builds without `LIVE=1` and checks that the app has no key.
+Then it makes a Release build with a fake key and a fake app token, given the way `LIVE=1` gives the key, and checks that no file of the Release build holds the key, that the app holds the app token and the Live Activity does not, and that no build output or log shows the key or the token. `make check` runs it.
 
 ## Install on your iPhone (free Apple ID)
 
@@ -980,7 +990,7 @@ The secrets:
   | Secret | Its value |
   |---|---|
   | `PRIM_API_KEY` | Your PRIM key (see [The train data key (PRIM)](#the-train-data-key-prim)). |
-  | `APP_TOKEN` | The token that the app sends, so that only the app can ask the server. Make a new one for each Worker with `openssl rand -base64 32`, and keep it in your password manager: a later task puts it in a build setting of the app that git ignores. |
+  | `APP_TOKEN` | The token that the app sends, so that only the app can ask the server. Make a new one for each Worker with `openssl rand -hex 32`, and keep it in your password manager. It also goes in `ios/Config/Server.xcconfig` for the Release builds of the app (see [The train data key (PRIM)](#the-train-data-key-prim)); in that file, `//` starts a comment, so a token made with `-base64` could be cut. |
   | `OWNER_TOKEN` | The token with which you read the counts of the server (`make server-counts`, below). The app never holds it. Make a new one for each Worker with `openssl rand -base64 32`, and keep it in your password manager. |
 
 - On your Mac, `make server-dev` reads fake values from `server/.dev.vars`.

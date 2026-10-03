@@ -436,7 +436,8 @@ To go back to the usual bundle IDs, remove the two lines and run `make generate`
 The app gets the train times from PRIM, the open data service of Île-de-France Mobilités. PRIM needs a free key. The key is a secret: it is yours only.
 
 <Aside type="caution" title="Keep your key secret">
-  Never send your key to anyone. Never put it in a screenshot, a message or a git commit. Git ignores the file `ios/Config/Secrets.xcconfig`, so a commit does not take it. The key goes inside the app that you build. This is fine for your own iPhone. Do not give this app to other people.
+  Never send your key to anyone. Never put it in a screenshot, a message or a git commit. Git ignores the file `ios/Config/Secrets.xcconfig`, so a commit does not take it. The key goes inside the app that you build with the **Run** button (a Debug build). This is fine for your own iPhone. Do not give this app to other people.
+  A Release build (an archive for TestFlight or the App Store) never holds the key: it asks the server of the app for the times instead.
 </Aside>
 
 ### Put the key on your Mac (one time)
