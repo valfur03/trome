@@ -28,6 +28,7 @@ export default defineConfig({
       customCss: ['./src/styles/custom.css'],
       plugins: [starlightLinksValidator()],
       routeMiddleware: './src/route-data.ts',
+      disable404Route: true,
       components: {
         Header: './src/components/Header.astro',
         LanguageSelect: './src/components/LanguageSelect.astro',

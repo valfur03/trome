@@ -1,0 +1,23 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Page introuvable · Page not found',
+    template: 'splash',
+    editUrl: false,
+    pagefind: false,
+    hero: {
+      title: '404',
+      tagline:
+        'Cette page n’existe pas. Vérifiez l’adresse, ou revenez à l’accueil.<br /><span lang="en">This page does not exist. Check the address, or go back to the home page.</span>',
+      actions: [
+        { text: 'Accueil', link: `${base}/fr/`, icon: 'right-arrow' },
+        { text: 'Home in English', link: `${base}/en/`, variant: 'minimal', attrs: { lang: 'en' } },
+      ],
+    },
+  }}
+/>

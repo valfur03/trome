@@ -839,10 +839,10 @@ Install it one time with [nvm](https://github.com/nvm-sh/nvm): run `nvm install`
 
 | Command | What it does |
 |---|---|
-| `make docs` | Builds the site and serves it at http://localhost:4321/trome/. The search works only here. `make docs PORT=4400` uses port 4400. |
+| `make docs` | Builds the site and serves it at http://localhost:4321/trome/, but stops when the build prints a new warning. The search works only here. `make docs PORT=4400` uses port 4400. |
 | `make docs-dev` | Serves the site with live reload while you change a page. No search. It also accepts `PORT=<n>`. |
 | `make docs-stop` | Stops the docs server of this folder. Use it when the server runs in the background (for agents, Astro starts it in the background). In a terminal, press Ctrl + C. |
-| `make docs-check` | The docs quality gate: installs the packages if needed, runs the unit tests and `astro check`, builds the site, and fails on a broken internal link. It needs no Simulator. |
+| `make docs-check` | The docs quality gate: installs the packages if needed, runs the unit tests and `astro check`, builds the site, and fails on a broken internal link or a build warning (see [Run the site](docs/README.md#run-the-site)). It needs no Simulator. |
 | `make docs-screenshots` | Takes the app screenshots of the docs on the shared Simulator, and saves them in `docs/src/assets/screenshots/`. |
 
 The first docs command installs the packages in `docs/node_modules` (about 300 MB).

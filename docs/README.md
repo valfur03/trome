@@ -24,17 +24,22 @@ Run the docs commands from the root of the repo:
 | `make docs-dev` | Serves the site at http://localhost:4321/trome/, and reloads the page each time you save a file. The search box does not work here. |
 | `make docs` | Builds the site as it is published, and serves it at http://localhost:4321/trome/, with the search. |
 | `make docs-stop` | Stops the server when it runs in the background, which Astro does when the command does not run in a terminal. In a terminal, press Ctrl + C instead. |
-| `make docs-check` | Runs the tests of the components, checks the pages, builds the site, and fails on a broken internal link. |
+| `make docs-check` | Runs the tests of the components, checks the pages, builds the site, and fails on a broken internal link or a warning. |
 
 To use another port, add `PORT=<n>`, for example `make docs-dev PORT=4400`.
 The first docs command installs the packages in `docs/node_modules`, about 300 MB.
 `make check`, the quality gate of the repo, runs `make docs-check` when your branch changes a file in `docs/`.
+
+The build must print no warning, so `make docs` and `make docs-check` stop on one: fix its cause, and never hide it.
+The only exception is a bug of a tool that no version fixes yet: [`scripts/known-build-warnings.ts`](scripts/known-build-warnings.ts) lists each one, with its reason and the link of its upstream issue.
+When a new version fixes it, the build no longer prints it, and `make docs-check` asks you to remove it from the list.
 
 ## Add a page
 
 Each page is an `.mdx` file in [`src/content/docs/`](src/content/docs/), in the folder of its language: `fr/` or `en/`.
 Its address is its path after the base path of the site, `/trome/`, so `fr/support.mdx` is at `/trome/fr/support/`.
 The site lives at https://valfur03.github.io/trome/, and [`astro.config.mjs`](astro.config.mjs) sets this address in one place.
+An address with no page shows [`src/pages/404.astro`](src/pages/404.astro), one page in French and English, because the site cannot know the language of a mistyped address.
 
 The sidebar has one section for each reader, set in `astro.config.mjs`:
 

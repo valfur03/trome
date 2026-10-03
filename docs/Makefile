@@ -4,10 +4,10 @@ PORT ?= 4321
 .PHONY: help node-check docs-install docs docs-dev docs-stop docs-check docs-check-if-changed
 
 help:
-	@echo "make docs                Build the docs site and serve it at http://localhost:4321/trome/ (PORT=<n> for another port)"
+	@echo "make docs                Build the docs site (stops on a new warning) and serve it at http://localhost:4321/trome/ (PORT=<n> for another port)"
 	@echo "make docs-dev            Serve the docs with live reload, no search (PORT=<n> for another port)"
 	@echo "make docs-stop           Stop the docs server of this folder (when it runs in the background)"
-	@echo "make docs-check          Docs quality gate: unit tests + astro check + build + internal link check"
+	@echo "make docs-check          Docs quality gate: unit tests + astro check + build + internal link check, and no warning"
 
 node-check:
 	@./scripts/node-check.sh
@@ -18,7 +18,7 @@ docs-install: node-check
 	fi
 
 docs: docs-install
-	npm run build && npm run preview -- --port $(PORT)
+	node scripts/build-check.ts && npm run preview -- --port $(PORT)
 
 docs-dev: docs-install
 	npm run dev -- --port $(PORT)
@@ -29,7 +29,7 @@ docs-stop: node-check
 	fi
 
 docs-check: docs-install
-	npm test && npm run check && npm run build
+	npm test && npm run check && node scripts/build-check.ts
 
 docs-check-if-changed:
 	@if ./scripts/docs-changed.sh $(DOCS_BASE); then \
