@@ -1,0 +1,20 @@
+---
+// A part of the page that states something the team could not check yet, such as a feature that is not built.
+// Put it once, at the top of that part, and say what is left to check.
+// A page that uses it must also show the DraftNotice: a test checks it.
+const french = Astro.locals.starlightRoute.lang.startsWith('fr');
+---
+
+<p class="unverified">
+  <strong>{french ? 'À vérifier avant la mise en ligne :' : 'To check before this page goes online:'}</strong>{' '}
+  <slot />
+</p>
+
+<style>
+  .unverified {
+    padding: 0.4em 0.6em;
+    border-inline-start: 0.25em solid var(--sl-color-orange);
+    background-color: var(--sl-color-orange-low);
+    color: var(--sl-color-orange-high);
+  }
+</style>

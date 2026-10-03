@@ -7,29 +7,33 @@ sidebar:
 
 import DraftNotice from '../../../components/DraftNotice.astro';
 import Placeholder from '../../../components/Placeholder.astro';
+import Unverified from '../../../components/Unverified.astro';
 
 <DraftNotice />
 
-Cette page vous aide quand TROME ne fait pas ce que vous attendez : chaque titre est un problème, suivi de ce qui le règle.
+Voici les problèmes les plus courants avec TROME, et comment les régler.
 Si rien ne marche, [écrivez-nous](#nous-écrire).
 
 ## L’activité en direct ne s’affiche pas
 
 - **Vérifiez que les activités en direct sont autorisées.**
   Ouvrez **Réglages > Apps > TROME**, et activez **Activités en direct**.
+- **Vérifiez que TROME peut utiliser votre position.**
+  Sans elle, TROME ne sait pas de quelle station vous êtes proche.
+  Ouvrez **Réglages > Apps > TROME > Position**, et choisissez **Toujours** ou **Lorsque l’app est active**.
 - **Approchez-vous d’une station.**
   L’activité en direct démarre à environ 150 mètres d’une station de métro ou de RER.
   Elle s’arrête quand vous vous éloignez de plus de 250 mètres, ou 45 minutes après son début.
 - **Vérifiez que le mode automatique est activé.**
   Ouvrez TROME : si **Mode automatique** est désactivé, activez-le.
-  S’il est **En pause**, touchez **Annuler la pause**, ou attendez l’heure de fin indiquée.
+  S’il est **En pause**, touchez **Annuler la pause**, ou attendez l’heure de reprise affichée.
 
 L’activité en direct s’affiche sur l’écran verrouillé et dans le Centre de notifications, et dans la Dynamic Island sur les iPhone qui en ont une.
 
-## Elle ne démarre pas toute seule près d’une station
+## L’activité en direct ne démarre pas toute seule
 
 Quand TROME est ouvert, l’activité en direct démarre dès que vous arrivez près d’une station.
-Quand TROME est fermé, l’iPhone vous envoie une notification, par exemple **« Châtelet : prochains passages »** : touchez-la pour afficher l’activité en direct.
+Quand TROME est fermé, vous recevez une notification, par exemple **« Châtelet : prochains passages »** : touchez-la pour afficher l’activité en direct.
 
 Pour recevoir cette notification, TROME a besoin de deux autorisations, dans **Réglages > Apps > TROME** :
 
@@ -50,16 +54,18 @@ Si rien ne change, vérifiez que l’iPhone est connecté à internet.
 
 ## « Horaires indisponibles pour le moment »
 
+<Unverified>ce message et ce qui suit décrivent une fonction de l’app qui n’est pas encore faite.</Unverified>
+
 TROME peut demander les horaires un nombre limité de fois par jour, et tous ses utilisateurs partagent cette limite.
 Quand beaucoup de monde l’utilise en même temps, la limite peut être atteinte : l’activité en direct affiche alors ce message.
 
-Les horaires déjà affichés continuent de défiler jusqu’au départ du premier train.
+Les minutes déjà affichées continuent de baisser jusqu’au départ du premier train.
 Vous n’avez rien à faire : TROME redemande les horaires tout seul, à l’heure indiquée dans l’app.
 En attendant, fiez-vous à l’écran du quai.
 
 ## Les minutes diffèrent de l’écran du quai
 
-TROME affiche l’attente en minutes entières, et la décompte à partir des derniers horaires reçus.
+TROME affiche l’attente en minutes entières, calculée à partir des derniers horaires reçus.
 Entre deux mises à jour, un train peut prendre de l’avance ou du retard, et aux heures chargées les horaires reçus peuvent dater de quelques minutes.
 Un écart d’une ou deux minutes avec l’écran du quai est donc normal : en cas de doute, fiez-vous à l’écran du quai.
 
@@ -75,6 +81,8 @@ Un bug ou une idée ?
 Vous pouvez aussi les signaler sur [GitHub](https://github.com/valfur03/trome/issues).
 
 ## Source des données
+
+<Unverified>la phrase sur la liste des stations doit être la même que dans l’app, et le fichier NOTICE.md doit exister.</Unverified>
 
 Contient des informations de la base « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), présentement mises à disposition aux conditions de la « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) ».
 

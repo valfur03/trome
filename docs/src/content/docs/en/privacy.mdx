@@ -8,18 +8,19 @@ sidebar:
 
 import DraftNotice from '../../../components/DraftNotice.astro';
 import Placeholder from '../../../components/Placeholder.astro';
+import Unverified from '../../../components/Unverified.astro';
 
 <DraftNotice />
 
 Updated: <Placeholder>date</Placeholder>.
 
-This page says which data the TROME iPhone app uses, where it goes, and what is kept.
+This page explains which data the TROME iPhone app uses, where it goes, and what is kept.
 
 ## In short
 
 - TROME has no account, shows no ads, and does not measure what you do in the app.
-- Your position stays on your iPhone.
-- To show the train times, the app sends our server the identifier of the stop, and nothing else.
+- Your exact position stays on your iPhone.
+- To show the train times, the app sends our server the identifier of the stop, but not your position, and no identifier of you.
 - Our server keeps no data that could identify you.
 
 ## Your position
@@ -33,6 +34,8 @@ Without your position, TROME cannot find the nearest station.
 
 ## What the app sends to our server
 
+<Unverified>this part describes the version of the app that asks our server for the times, and that version is not built yet. The technical details of the request were not seen on an iPhone.</Unverified>
+
 To show the next trains, the app asks our server for the times.
 It sends the identifier of the stop (for example the one of Châtelet station) and a code that every copy of the app shares, which says nothing about you.
 It sends neither your position, nor an identifier of your iPhone, nor an identifier of you.
@@ -40,6 +43,7 @@ It sends neither your position, nor an identifier of your iPhone, nor an identif
 Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and of iOS.
 Our server does not read them and does not keep them.
 
+The stop that the app asks for shows which station you are near at that moment.
 Our server keeps:
 
 - the latest times of each stop, to give them to everyone who asks;
@@ -51,6 +55,8 @@ None of this data says who made the request.
 Our server asks Île-de-France Mobilités (PRIM) for the times with the identifier of the stop only: PRIM gets nothing that comes from you.
 
 ## Our host
+
+<Unverified>that the request logs are really turned off on the Cloudflare account of the live server.</Unverified>
 
 Our server runs on Cloudflare.
 Cloudflare gets each request before our server does, so it sees your IP address and the technical details of the request, to deliver it.
@@ -70,8 +76,8 @@ We send no notification from a server, and the app asks for no notification iden
 
 ## What Apple gives us
 
-If you share analytics with app developers (**Settings > Privacy & Security > Analytics & Improvements > Share With App Developers**), Apple gives us crash reports and usage statistics, which do not say who you are.
-Apple explains it in [Device Analytics & Privacy](https://www.apple.com/legal/privacy/data/en/device-analytics/).
+If you share analytics with app developers (**Settings > Privacy & Security > Analytics & Improvements > Share With App Developers**), Apple gives us crash reports and usage statistics, with nothing that says who you are.
+Apple explains it in [Share analytics, diagnostics, and usage information with Apple](https://support.apple.com/en-us/108971).
 
 If you test TROME with TestFlight, Apple gives us your crash reports, usage data, and the feedback that you send.
 If you were invited by email, they come with your name and email address, but not if you joined the test through a public link.

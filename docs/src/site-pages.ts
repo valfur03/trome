@@ -19,9 +19,12 @@ export function pagesWithoutTwin(paths: string[]): string[] {
   });
 }
 
-// The pages that show a placeholder but no draft notice, so that nobody puts them online by mistake.
+// The components that mark a page as not ready: a fact still to fill in, or a part still to check.
+const draftMarks = ['<Placeholder', '<Unverified'];
+
+// The pages that show a draft mark but no draft notice, so that nobody puts them online by mistake.
 export function draftsWithoutNotice(pages: { path: string; text: string }[]): string[] {
   return pages
-    .filter(({ text }) => text.includes('<Placeholder') && !text.includes('<DraftNotice'))
+    .filter(({ text }) => draftMarks.some((mark) => text.includes(mark)) && !text.includes('<DraftNotice'))
     .map(({ path }) => path);
 }

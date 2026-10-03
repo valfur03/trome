@@ -8,18 +8,19 @@ sidebar:
 
 import DraftNotice from '../../../components/DraftNotice.astro';
 import Placeholder from '../../../components/Placeholder.astro';
+import Unverified from '../../../components/Unverified.astro';
 
 <DraftNotice />
 
 Mise à jour : <Placeholder>date</Placeholder>.
 
-Cette page dit quelles données l’app TROME pour iPhone utilise, où elles vont, et ce qui est gardé.
+Cette page indique quelles données l’app TROME pour iPhone utilise, où elles vont, et ce qui est gardé.
 
 ## En bref
 
 - TROME n’a pas de compte, n’affiche pas de publicité et ne mesure pas ce que vous faites dans l’app.
-- Votre position reste sur votre iPhone.
-- Pour afficher les horaires, l’app envoie à notre serveur l’identifiant de l’arrêt, et rien d’autre.
+- Votre position exacte reste sur votre iPhone.
+- Pour afficher les horaires, l’app envoie à notre serveur l’identifiant de l’arrêt, mais ni votre position, ni un identifiant de vous.
 - Notre serveur ne garde aucune donnée qui permette de vous reconnaître.
 
 ## Votre position
@@ -33,6 +34,8 @@ Sans votre position, TROME ne peut pas trouver la station la plus proche.
 
 ## Ce que l’app envoie à notre serveur
 
+<Unverified>cette partie décrit la version de l’app qui demande les horaires à notre serveur, et cette version n’est pas encore faite. Les informations techniques de la demande n’ont pas été vues sur un iPhone.</Unverified>
+
 Pour afficher les prochains passages, l’app demande les horaires à notre serveur.
 Elle lui envoie l’identifiant de l’arrêt (par exemple celui de la station Châtelet) et un code commun à toutes les copies de l’app, qui ne dit rien de vous.
 Elle n’envoie ni votre position, ni un identifiant de votre iPhone, ni un identifiant de vous.
@@ -40,6 +43,7 @@ Elle n’envoie ni votre position, ni un identifiant de votre iPhone, ni un iden
 Comme toute connexion à internet, la demande arrive avec l’adresse IP de votre iPhone et des informations techniques, comme les versions de l’app et d’iOS.
 Notre serveur ne les lit pas et ne les garde pas.
 
+L’arrêt demandé montre près de quelle station vous êtes à ce moment-là.
 Notre serveur garde :
 
 - les derniers horaires de chaque arrêt, pour les donner à tous ceux qui les demandent ;
@@ -51,6 +55,8 @@ Aucune de ces données ne dit qui a fait la demande.
 Notre serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de l’arrêt : PRIM ne reçoit rien qui vienne de vous.
 
 ## Notre hébergeur
+
+<Unverified>que l’enregistrement des demandes est bien désactivé sur le compte Cloudflare du serveur en ligne.</Unverified>
 
 Notre serveur fonctionne chez Cloudflare.
 Cloudflare reçoit chaque demande avant notre serveur : il voit donc votre adresse IP et les informations techniques de la demande, pour la livrer.
@@ -70,8 +76,8 @@ Nous n’envoyons aucune notification depuis un serveur, et l’app ne demande p
 
 ## Ce qu’Apple nous transmet
 
-Si vous partagez les analyses avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple nous transmet des rapports de plantage et des statistiques d’usage, qui ne disent pas qui vous êtes.
-Apple l’explique dans [Analyse de l’appareil et confidentialité](https://www.apple.com/legal/privacy/data/fr/device-analytics/).
+Si vous partagez les analyses avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple nous transmet des rapports de plantage et des statistiques d’usage, sans rien qui dise qui vous êtes.
+Apple l’explique dans [Partager des informations relatives à l’analyse, au diagnostic et à l’utilisation avec Apple](https://support.apple.com/fr-fr/108971).
 
 Si vous testez TROME avec TestFlight, Apple nous transmet vos rapports de plantage, des données d’usage et les commentaires que vous envoyez.
 Si vous avez été invité par e-mail, ils arrivent avec votre nom et votre adresse e-mail, mais pas si vous avez rejoint le test par un lien public.

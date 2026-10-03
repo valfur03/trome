@@ -9,12 +9,12 @@ const french = Astro.locals.starlightRoute.lang.startsWith('fr');
 {
   french ? (
     <Aside type="caution" title="Brouillon">
-      Cette page n’est pas encore validée, et les passages surlignés restent à compléter.
+      Cette page n’est pas encore validée, et les passages surlignés restent à compléter ou à vérifier.
       Elle ne doit pas être mise en ligne dans cet état.
     </Aside>
   ) : (
     <Aside type="caution" title="Draft">
-      This page is not signed off yet, and the highlighted parts are still to fill in.
+      This page is not signed off yet, and the highlighted parts are still to fill in or to check.
       It must not go online like this.
     </Aside>
   )

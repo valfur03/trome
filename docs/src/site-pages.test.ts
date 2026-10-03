@@ -32,6 +32,14 @@ describe('draftsWithoutNotice', () => {
     ];
     assert.deepEqual(draftsWithoutNotice(pages), ['fr/privacy.mdx']);
   });
+
+  it('finds a page with a part to check and no draft notice', () => {
+    const pages = [
+      { path: 'fr/support.mdx', text: '<Unverified>Le message n’existe pas encore.</Unverified>' },
+      { path: 'en/support.mdx', text: '<DraftNotice />\n<Unverified>The message does not exist yet.</Unverified>' },
+    ];
+    assert.deepEqual(draftsWithoutNotice(pages), ['fr/support.mdx']);
+  });
 });
 
 describe('the pages of the site', () => {
@@ -39,7 +47,7 @@ describe('the pages of the site', () => {
     assert.deepEqual(pagesWithoutTwin(sitePages), [], 'Write the page in the other language too, at the same path.');
   });
 
-  it('shows the draft notice on each page that has a placeholder', () => {
+  it('shows the draft notice on each page that has a placeholder or a part to check', () => {
     const pages = sitePages.map((path) => ({ path, text: readFileSync(new URL(path, contentFolder), 'utf8') }));
     assert.deepEqual(draftsWithoutNotice(pages), [], 'Add <DraftNotice /> at the top of the page.');
   });
