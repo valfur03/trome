@@ -90,7 +90,7 @@ help:
 	@echo "make public-text-check   Fail when a file of the repo has a backlog id, a word of the team's own process, a personal email address, a local path or the old name of the app"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
-	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key and that a new key replaces the old one (uses fake keys)"
+	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key, that a new key replaces the old one, and that a Release build holds the app token of the server but never the PRIM key (uses fake values)"
 	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID (also with the Debug IDs of Local.xcconfig set), or when a Release build is signed automatically"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
