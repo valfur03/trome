@@ -141,6 +141,16 @@
         }
       }
     },
+    "Looking for your position" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche de votre position"
+          }
+        }
+      }
+    },
     "Next trains at %@" : {
       "localizations" : {
         "fr" : {

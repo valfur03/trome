@@ -34,14 +34,20 @@ struct AutomaticModeSection: View {
             }
             if automaticMode.mode != .turnedOff, let paused = autoLiveActivity.pausedStation {
                 PauseState(paused: paused)
-                Button("Cancel the pause at \(paused.station.name)", systemImage: "arrow.uturn.backward") {
+                Button {
+                    guard !isCancellingThePause else { return }
                     isCancellingThePause = true
                     Task {
                         await autoLiveActivity.cancelPause()
                         isCancellingThePause = false
                     }
+                } label: {
+                    Label {
+                        Text("Cancel the pause at \(paused.station.name)")
+                    } icon: {
+                        PositionWaitIcon(systemImage: "arrow.uturn.backward", isWaiting: isCancellingThePause)
+                    }
                 }
-                .disabled(isCancellingThePause)
                 .accessibilityIdentifier("cancelStationPause")
             } else if automaticMode.mode != .turnedOff, autoLiveActivity.cannotFindPosition {
                 Label("Can’t find your position for now", systemImage: "location.slash")
