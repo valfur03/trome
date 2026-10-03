@@ -1,40 +1,51 @@
 ---
 title: Your next metro, on your lock screen
-description: Walk up to a metro or RER station in Paris, and TROME shows its next trains on the lock screen of your iPhone. No account, no ads.
+description: Walk up to a metro or RER station in the Paris region, and TROME shows its next trains on the lock screen of your iPhone. No account, no ads.
 template: splash
 hero:
   # The line break keeps “on your lock screen” together on a phone.
   title: Your next metro,<br />on your lock screen
   tagline: Near a metro or RER station in the Paris region, TROME shows its next trains on your iPhone, both directions of every line.
   actions:
+    - text: Install it with a Mac
+      link: /trome/en/build/install-on-your-iphone/
+      icon: right-arrow
     - text: Help
       link: /trome/en/support/
-      icon: right-arrow
-    - text: Privacy
-      link: /trome/en/privacy/
       variant: minimal
+heroScreenshot:
+  file: ../../../assets/screenshots/live-activity-metro-en.png
+  alt: "The TROME Live Activity on the lock screen, at Saint-Paul (Le Marais), metro line 1: the next trains to La Défense in 3 and 7 minutes, and to Château de Vincennes in 4 and 8 minutes, above the Snooze buttons 30 min, 1 h and Today."
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import Screenshot from '../../../components/Screenshot.astro';
 import Screenshots from '../../../components/Screenshots.astro';
-import liveActivityMetro from '../../../assets/screenshots/live-activity-metro-en.png';
 import liveActivityFork from '../../../assets/screenshots/live-activity-fork-en.png';
 import liveActivityRer from '../../../assets/screenshots/live-activity-rer-en.png';
 
-You walk up to Châtelet, and your iPhone tells you: **“Next trains at Châtelet”**.
+You walk up to Saint-Paul, and your iPhone tells you: **“Next trains at Saint-Paul (Le Marais)”**.
 Tap the notification.
-The wait for the next trains shows on the lock screen, and it stays there while you go down to the platform.
+The waiting time of the next trains shows on the lock screen, and it stays there while you go down to the platform.
 When you walk away from the station, it goes away.
 
 Nothing to look up in the app, and no account to create.
 
-## What you will see on your lock screen
+## A line with two branches, or the RER: you know where each train goes
 
 <Screenshots>
-  <Screenshot src={liveActivityMetro} caption="A line with one end in each direction" alt="The lock screen with the TROME Live Activity of Saint-Paul (Le Marais), metro line 1: the next trains to La Défense in 3 and 7 minutes, and to Château de Vincennes in 4 and 8 minutes, above the Snooze buttons 30 min, 1 h and Today." />
-  <Screenshot src={liveActivityFork} caption="A line with a branch" alt="The lock screen with the TROME Live Activity of Pont Neuf, metro line 7: the next trains to La Courneuve - 8 Mai 1945 in 3 and 7 minutes; the other way, one row for each branch: Mairie d'Ivry in 4 and 12 minutes, Villejuif - Louis Aragon in 8 and 16 minutes." />
-  <Screenshot src={liveActivityRer} caption="An RER line" alt="The lock screen with the TROME Live Activity of Luxembourg, RER B: the next trains to Aéroport Charles de Gaulle 2 TGV in 3 minutes and Mitry - Claye in 7 minutes; the other way, to Robinson in 4 minutes and Saint-Rémy-lès-Chevreuse in 8 minutes." />
+  <Screenshot
+    src={liveActivityFork}
+    crop="live-activity"
+    caption="Line 7 at Pont Neuf: one row for each branch"
+    alt="The TROME Live Activity on the lock screen, at Pont Neuf, metro line 7: the next trains to La Courneuve - 8 Mai 1945 in 3 and 7 minutes; the other way, one row for each branch: Mairie d'Ivry in 4 and 12 minutes, Villejuif - Louis Aragon in 8 and 16 minutes."
+  />
+  <Screenshot
+    src={liveActivityRer}
+    crop="live-activity"
+    caption="RER B at Luxembourg: the next two trains each way"
+    alt="The TROME Live Activity on the lock screen, at Luxembourg, RER B: the next trains to Aéroport Charles de Gaulle 2 TGV in 3 minutes and Mitry - Claye in 7 minutes; the other way, to Robinson in 4 minutes and Saint-Rémy-lès-Chevreuse in 8 minutes."
+  />
 </Screenshots>
 
 TROME is not on the App Store yet.

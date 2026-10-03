@@ -96,6 +96,9 @@ On a phone, Starlight puts the language menu inside the menu of the sidebar, so 
 Give each `Checklist` its own `id`: the browser saves the ticks of the reader under it.
 Show a picture of the app only with `Screenshot`, never with a Markdown image or the `Image` component of Astro.
 `Screenshot` shows the picture 300 pixels wide, with the rounded corners of an iPhone screen, and the browser downloads a small file that fits its screen.
+On a lock screen picture, `crop="live-activity"` shows only the Live Activity and a little of the wallpaper around it, as wide as the page allows, so that a reader on a phone can read its rows: on the home, a whole lock screen is mostly wallpaper and clock.
+The file stays the whole screen, and no pixel changes: the browser hides the rest.
+A home shows its first picture beside the headline with `heroScreenshot` in its frontmatter (`file` and `alt`), next to `hero`, and `Screenshot` draws it with the same close-up.
 Import the components after the title.
 The paths start from the folder of the page, here a page in `en/build/`:
 
@@ -127,6 +130,7 @@ The pictures follow three rules:
 
 - **Full screen, on one iPhone model,** so that pictures side by side have the same size.
   A picture of the Live Activity shows the whole Notification Center, not a crop.
+  A page may show a close-up of the Live Activity with `crop="live-activity"`, but the file stays whole.
   The script fails when two pictures do not have the same size.
 - **900 pixels wide.** The page shows a picture 300 pixels wide, and the 3x screen of an iPhone needs three times as many pixels.
   The script resizes each picture to this width.

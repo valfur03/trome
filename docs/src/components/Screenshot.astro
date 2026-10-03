@@ -6,13 +6,32 @@ interface Props {
   src: ImageMetadata;
   alt: string;
   caption?: string;
+  /**
+   * `live-activity` shows only the band of a lock screen picture where iOS draws the Live Activity, wider than a whole screen, so that its rows read at about their real size on a phone.
+   * The file stays the whole screen, and no pixel changes: the browser hides the rest.
+   */
+  crop?: 'live-activity';
 }
 
-const { src, alt, caption } = Astro.props;
+const { src, alt, caption, crop } = Astro.props;
+const closeUp = crop === 'live-activity';
 ---
 
-<figure class="screenshot not-content">
-  <Picture src={src} alt={alt} width={300} densities={[1, 2, 3]} formats={['avif']} fallbackFormat="webp" />
+<figure class:list={['screenshot', 'not-content', { 'live-activity': closeUp }]}>
+  {
+    closeUp ? (
+      <Picture
+        src={src}
+        alt={alt}
+        widths={[450, 900]}
+        sizes="(min-width: 50rem) 28rem, calc(100vw - 2rem)"
+        formats={['avif']}
+        fallbackFormat="webp"
+      />
+    ) : (
+      <Picture src={src} alt={alt} width={300} densities={[1, 2, 3]} formats={['avif']} fallbackFormat="webp" />
+    )
+  }
   {caption && <figcaption>{caption}</figcaption>}
 </figure>
 
@@ -33,6 +52,22 @@ const { src, alt, caption } = Astro.props;
     box-shadow:
       0 0 0 1px var(--sl-color-gray-5),
       0 0.5rem 1.5rem rgb(0 0 0 / 0.15);
+  }
+
+  /*
+   * In every lock screen picture (900 x 1956), the Live Activity sits between y = 1324 and y = 1668: iOS anchors it above the bottom of the screen, and a taller one grows upwards.
+   * The band from y = 1290 to y = 1710 (420 pixels) keeps a little of the wallpaper around it, so that the reader still sees a lock screen.
+   * object-position puts the top of the band at the top of the frame: 1290 / (1956 - 420) = 84%.
+   */
+  .screenshot.live-activity {
+    width: 28rem;
+  }
+
+  .screenshot.live-activity :global(img) {
+    aspect-ratio: 900 / 420;
+    object-fit: cover;
+    object-position: 50% 84%;
+    border-radius: 1rem;
   }
 
   .screenshot figcaption {

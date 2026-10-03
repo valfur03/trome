@@ -1,0 +1,47 @@
+---
+import Default from '@astrojs/starlight/components/Hero.astro';
+import Screenshot from './Screenshot.astro';
+
+// A home shows the Live Activity at work beside its headline on a computer, and under its buttons on a phone.
+// A page with no `heroScreenshot`, such as the 404 page, keeps Starlight's hero as it is.
+const { heroScreenshot } = Astro.locals.starlightRoute.entry.data;
+---
+
+{
+  heroScreenshot ? (
+    <div class="hero-with-screenshot">
+      <Default />
+      <Screenshot src={heroScreenshot.file} alt={heroScreenshot.alt} crop="live-activity" />
+    </div>
+  ) : (
+    <Default />
+  )
+}
+
+<style>
+  .hero-with-screenshot {
+    padding-bottom: 1rem;
+  }
+
+  .hero-with-screenshot > :global(.screenshot) {
+    margin-inline: auto;
+  }
+
+  @media (min-width: 50rem) {
+    .hero-with-screenshot {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    /* Starlight keeps a column for its own hero image: the text takes the whole width of its cell. */
+    .hero-with-screenshot > :global(.hero) {
+      grid-template-columns: 100%;
+    }
+
+    .hero-with-screenshot > :global(.screenshot) {
+      margin: 0;
+    }
+  }
+</style>

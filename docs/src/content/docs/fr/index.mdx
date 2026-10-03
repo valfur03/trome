@@ -1,40 +1,51 @@
 ---
 title: Votre prochain métro, sur l’écran verrouillé
-description: Approchez d’une station de métro ou de RER, et TROME affiche ses prochains passages sur l’écran verrouillé de votre iPhone. Sans compte, sans publicité.
+description: Approchez d’une station de métro ou de RER en Île-de-France, et TROME affiche ses prochains passages sur l’écran verrouillé de votre iPhone. Sans compte, sans publicité.
 template: splash
 hero:
   # The line break keeps “sur l’écran verrouillé” together on a phone.
   title: Votre prochain métro,<br />sur l’écran verrouillé
-  tagline: Près d’une station de métro ou de RER, TROME affiche ses prochains passages sur votre iPhone, dans les deux directions de chaque ligne.
+  tagline: Près d’une station de métro ou de RER en Île-de-France, TROME affiche ses prochains passages sur votre iPhone, dans les deux directions de chaque ligne.
   actions:
+    - text: L’installer avec un Mac
+      link: /trome/en/build/install-on-your-iphone/
+      icon: right-arrow
     - text: Aide
       link: /trome/fr/support/
-      icon: right-arrow
-    - text: Confidentialité
-      link: /trome/fr/privacy/
       variant: minimal
+heroScreenshot:
+  file: ../../../assets/screenshots/live-activity-metro-fr.png
+  alt: "L’activité en direct de TROME sur l’écran verrouillé, à Saint-Paul (Le Marais), ligne 1 du métro : prochains trains vers La Défense dans 3 et 7 minutes, et vers Château de Vincennes dans 4 et 8 minutes, au-dessus des boutons Pause 30 min, 1 h et Aujourd’hui."
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import Screenshot from '../../../components/Screenshot.astro';
 import Screenshots from '../../../components/Screenshots.astro';
-import liveActivityMetro from '../../../assets/screenshots/live-activity-metro-fr.png';
 import liveActivityFork from '../../../assets/screenshots/live-activity-fork-fr.png';
 import liveActivityRer from '../../../assets/screenshots/live-activity-rer-fr.png';
 
-Vous arrivez à Châtelet, et votre iPhone vous prévient : **« Châtelet : prochains passages »**.
+Vous arrivez à Saint-Paul, et votre iPhone vous prévient : **« Saint-Paul (Le Marais) : prochains passages »**.
 Touchez la notification.
-L’attente des prochains trains s’affiche sur l’écran verrouillé, et elle y reste pendant que vous descendez sur le quai.
-Quand vous vous éloignez de la station, elle disparaît.
+Le temps d’attente des prochains trains s’affiche sur l’écran verrouillé, et il y reste pendant que vous descendez sur le quai.
+Quand vous vous éloignez de la station, il disparaît.
 
 Rien à chercher dans l’app, et pas de compte à créer.
 
-## Ce que vous verrez sur l’écran verrouillé
+## Ligne à deux branches ou RER : vous savez où va chaque train
 
 <Screenshots>
-  <Screenshot src={liveActivityMetro} caption="Une ligne avec un terminus dans chaque sens" alt="L’écran verrouillé avec l’activité en direct de TROME à Saint-Paul (Le Marais), ligne 1 du métro : prochains trains vers La Défense dans 3 et 7 minutes, et vers Château de Vincennes dans 4 et 8 minutes, au-dessus des boutons Pause 30 min, 1 h et Aujourd’hui." />
-  <Screenshot src={liveActivityFork} caption="Une ligne avec deux branches" alt="L’écran verrouillé avec l’activité en direct de TROME à Pont Neuf, ligne 7 du métro : prochains trains vers La Courneuve - 8 Mai 1945 dans 3 et 7 minutes ; dans l’autre sens, une rangée par branche : Mairie d’Ivry dans 4 et 12 minutes, Villejuif - Louis Aragon dans 8 et 16 minutes." />
-  <Screenshot src={liveActivityRer} caption="Une ligne de RER" alt="L’écran verrouillé avec l’activité en direct de TROME à Luxembourg, RER B : prochains trains vers Aéroport Charles de Gaulle 2 TGV dans 3 minutes et Mitry - Claye dans 7 minutes ; dans l’autre sens, vers Robinson dans 4 minutes et Saint-Rémy-lès-Chevreuse dans 8 minutes." />
+  <Screenshot
+    src={liveActivityFork}
+    crop="live-activity"
+    caption="Ligne 7 à Pont Neuf : une rangée pour chaque branche"
+    alt="L’activité en direct de TROME sur l’écran verrouillé, à Pont Neuf, ligne 7 du métro : prochains trains vers La Courneuve - 8 Mai 1945 dans 3 et 7 minutes ; dans l’autre sens, une rangée par branche : Mairie d’Ivry dans 4 et 12 minutes, Villejuif - Louis Aragon dans 8 et 16 minutes."
+  />
+  <Screenshot
+    src={liveActivityRer}
+    crop="live-activity"
+    caption="RER B à Luxembourg : les deux prochains trains de chaque sens"
+    alt="L’activité en direct de TROME sur l’écran verrouillé, à Luxembourg, RER B : prochains trains vers Aéroport Charles de Gaulle 2 TGV dans 3 minutes et Mitry - Claye dans 7 minutes ; dans l’autre sens, vers Robinson dans 4 minutes et Saint-Rémy-lès-Chevreuse dans 8 minutes."
+  />
 </Screenshots>
 
 TROME n’est pas encore sur l’App Store.

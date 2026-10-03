@@ -32,6 +32,7 @@ export default defineConfig({
       disable404Route: true,
       components: {
         Header: './src/components/Header.astro',
+        Hero: './src/components/Hero.astro',
         LanguageSelect: './src/components/LanguageSelect.astro',
       },
       sidebar: [
