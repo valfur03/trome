@@ -812,6 +812,11 @@ Why: when a free Apple ID signs a build, Apple registers its bundle ID to that A
 Only the Release builds (for the App Store) carry `io.github.valfur03.trome` and `io.github.valfur03.trome.widget`, and Xcode never signs them automatically.
 So Xcode can show an error for Release in Signing & Capabilities: leave it, and never turn on "Automatically manage signing" for Release, or Xcode registers the App Store ID to your Apple ID.
 `make bundle-id-check` (part of `make check`) checks both.
+A free Apple ID registers at most 10 bundle IDs in 7 days, and each one expires after 7 days.
+When Xcode says "Your maximum App ID limit has been reached" or "No profiles for ... were found", wait, or reuse two bundle IDs that Xcode already registered on your Mac: the tutorial shows the command that lists them, with the date when each one expires.
+To reuse them, set `RATP_DEBUG_APP_BUNDLE_ID` and `RATP_DEBUG_WIDGET_BUNDLE_ID` in `ios/Config/Local.xcconfig` (see `ios/Config/Local.example.xcconfig`), then run `make generate`.
+They are the full bundle IDs of your Debug builds, written as is, and the ID of the Live Activity must start with the ID of the app and a dot; with only the first one set, the Live Activity gets the app ID followed by `.widget`.
+`make generate`, `make bundle-id-check` and the git hooks refuse the App Store IDs there, in any capitals, and a Run in Xcode with no `make` command gets an ID that starts with `SHIPPING_ID_REFUSED` instead.
 A build from before the app was called TROME has another bundle ID, so iOS keeps it as a second app: delete it, so that its notifications and its Live Activities stop.
 
 On a device, the Run button of Xcode uses the PRIM key of `ios/Config/Secrets.xcconfig` in the folder that you open. There is no `make` command for a device build.

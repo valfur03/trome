@@ -341,8 +341,79 @@ If the iPhone says **Untrusted Developer** again, do steps 27 to 29 of [Install 
 Other limits of a free Apple ID ([Apple's list](https://developer.apple.com/help/account/reference/supported-capabilities-ios)):
 
 - You can have at most 3 of your own apps on one iPhone at the same time.
-- Xcode can create at most 10 bundle IDs in 7 days. This app uses 2 (the app and its lock screen part). So do not change your bundle ID prefix often.
+- Xcode can create at most 10 bundle IDs in 7 days. This app uses 2 (the app and its lock screen part). So do not change your bundle ID prefix often. If you reach the limit, see [The limit of 10 bundle IDs](#the-limit-of-10-bundle-ids).
 - No push notifications from a server. The app still shows its own notifications and its Live Activity.
+
+## The limit of 10 bundle IDs
+
+Xcode can say "Your maximum App ID limit has been reached" or "No profiles for '…' were found".
+A free Apple ID can register at most 10 bundle IDs in 7 days (Apple calls them "App IDs").
+Each bundle ID expires 7 days after Xcode registered it, and then frees its place.
+Xcode registers a bundle ID the first time it signs it, for example after you change your prefix.
+A bundle ID that is already registered costs nothing more.
+
+So you have two ways out:
+
+- **Wait** until a place is free. The list below shows the date when each bundle ID expires.
+- **Use two bundle IDs that you already have**, with the steps below.
+
+<Checklist id="iphone-reuse-bundle-ids">
+  <Steps>
+
+  1. In Terminal, list the bundle IDs that Xcode registered on this Mac, with the date (UTC) when each one expires:
+
+     ```sh
+     for f in ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision; do
+       security cms -D -i "$f" | plutil -extract ExpirationDate raw -o - - | tr '\n' ' '
+       security cms -D -i "$f" | plutil -extract Entitlements.application-identifier raw -o - - | sed 's/^[A-Z0-9]*\.//'
+     done | sort
+     ```
+
+     It shows lines like `2026-10-04T08:27:57Z io.github.janedoe.oldapp`. It does not show your Team ID.
+     Older versions of Xcode keep these files in `~/Library/MobileDevice/Provisioning Profiles/`: if the command shows an error, put this folder in its first line.
+
+  2. Choose two bundle IDs of the list: one for the app, and one for its lock screen part (the Live Activity).
+     The ID of the lock screen part must start with the ID of the app and a dot, for example `io.github.janedoe.oldapp` and `io.github.janedoe.oldapp.widget`.
+     Why: iOS installs the lock screen part only inside an app whose ID starts its own ID.
+
+  3. Open your settings file in TextEdit:
+
+     ```sh
+     open -e ios/Config/Local.xcconfig
+     ```
+
+  4. Add these two lines with your two bundle IDs, then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file:
+
+     ```ini
+     RATP_DEBUG_APP_BUNDLE_ID = io.github.janedoe.oldapp
+     RATP_DEBUG_WIDGET_BUNDLE_ID = io.github.janedoe.oldapp.widget
+     ```
+
+     Write each ID exactly as the list shows it, with the same capitals.
+     If you add only the first line, the lock screen part gets the ID of the app followed by `.widget`.
+
+  5. In Terminal, create the Xcode project again:
+
+     ```sh
+     make generate
+     ```
+
+     If it says that the ID of the lock screen part does not start with the ID of the app, fix the second line and run it again.
+
+  6. Open the project in Xcode and click **Run**, as in [the 7-day steps](#the-app-stops-after-7-days).
+     If your iPhone has an older app with the same bundle ID, the new app replaces it.
+
+  </Steps>
+</Checklist>
+
+If a bundle ID of your two lines has expired when you click **Run**, Xcode registers it again: this takes a place again.
+To go back to the usual bundle IDs, remove the two lines and run `make generate` again.
+
+<Aside type="danger" title="Never the App Store ID">
+  Never put `io.github.valfur03.trome` or `io.github.valfur03.trome.widget` in these lines, in any capitals.
+  They are the bundle IDs of TROME on the App Store: a free Apple ID that signs them takes them for good, and TROME could then never use them.
+  `make generate` refuses them. If you click **Run** without `make generate`, Xcode shows a bundle ID that starts with `SHIPPING_ID_REFUSED`, and Apple does not register it: remove the line.
+</Aside>
 
 ## Add the train data key (PRIM)
 
@@ -459,7 +530,7 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
 - **Xcode says that the app identifier "cannot be registered to your development team because it is not available".** Someone else uses your bundle ID prefix. Choose another one in `ios/Config/Local.xcconfig` (step 13). Quit Xcode, run `make generate`, and open the project again.
 - **Signing & Capabilities shows an error for Release, for example a missing provisioning profile.** This is on purpose: leave it as it is. Release builds are only for the App Store, and Xcode never signs them for you. The Run button builds Debug, so the app still goes on your iPhone.
   Never turn on **Automatically manage signing** for Release: Xcode would then give the App Store ID of TROME to your free Apple ID for good.
-- **Xcode says that you have reached the maximum number of App IDs.** A free Apple ID can create 10 bundle IDs in 7 days. Put back the prefix that you used before, or wait some days.
+- **Xcode says "Your maximum App ID limit has been reached" or "No profiles for '…' were found".** A free Apple ID can create 10 bundle IDs in 7 days. Wait some days, or use bundle IDs that you already have: see [The limit of 10 bundle IDs](#the-limit-of-10-bundle-ids).
 
 ### Part 3: iPhone and Developer Mode
 

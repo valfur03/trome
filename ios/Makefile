@@ -73,7 +73,7 @@ STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
-	@echo "make generate            Create the Xcode project again (after a change in project.yml)"
+	@echo "make generate            Create the Xcode project again (after a change in project.yml or ios/Config), and refuse a shipping ID in the Debug IDs of ios/Config"
 	@echo "make git-hooks           Turn on the git hooks: after a git pull or a checkout in the main folder, the Xcode project is created again"
 	@echo "make git-hooks-off       Turn off the git hooks"
 	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
@@ -89,7 +89,7 @@ help:
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key and that a new key replaces the old one (uses fake keys)"
-	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID, or when a Release build is signed automatically"
+	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID (also with the Debug IDs of Local.xcconfig set), or when a Release build is signed automatically"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
@@ -114,9 +114,11 @@ setup:
 
 generate:
 	xcodegen generate --quiet --cache-path $(XCODEGEN_CACHE)
+	@./scripts/bundle-id-check.sh --local $(PROJECT)
 
 project:
 	@xcodegen generate --use-cache --quiet --cache-path $(XCODEGEN_CACHE)
+	@./scripts/bundle-id-check.sh --local $(PROJECT)
 
 git-hooks:
 	@./scripts/git-hooks.sh on

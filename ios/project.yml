@@ -22,11 +22,17 @@ settings:
     STRING_CATALOG_GENERATE_SYMBOLS: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
+    RATP_REFUSED_ID_io_github_valfur03_trome: SHIPPING_ID_REFUSED-run-make-generate
+    RATP_REFUSED_ID_io_github_valfur03_trome_widget: SHIPPING_ID_REFUSED-run-make-generate
   configs:
     Debug:
-      APP_BUNDLE_ID: $(RATP_BUNDLE_ID_PREFIX).trome.dev
+      RATP_WANTED_APP_ID: $(RATP_DEBUG_APP_BUNDLE_ID:default=$(RATP_BUNDLE_ID_PREFIX).trome.dev)
+      APP_BUNDLE_ID: $(RATP_REFUSED_ID_$(RATP_WANTED_APP_ID:lower:identifier):default=$(RATP_WANTED_APP_ID))
+      RATP_WANTED_WIDGET_ID: $(RATP_DEBUG_WIDGET_BUNDLE_ID:default=$(APP_BUNDLE_ID).widget)
+      WIDGET_BUNDLE_ID: $(RATP_REFUSED_ID_$(RATP_WANTED_WIDGET_ID:lower:identifier):default=$(RATP_WANTED_WIDGET_ID))
     Release:
       APP_BUNDLE_ID: io.github.valfur03.trome
+      WIDGET_BUNDLE_ID: io.github.valfur03.trome.widget
       CODE_SIGN_STYLE: Manual
 
 packages:
@@ -86,7 +92,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: $(APP_NAME)Widget
-        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).widget
+        PRODUCT_BUNDLE_IDENTIFIER: $(WIDGET_BUNDLE_ID)
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
 

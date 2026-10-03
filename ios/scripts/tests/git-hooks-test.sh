@@ -21,6 +21,14 @@ mkdir -p RATPActivity.xcodeproj
 ls App > RATPActivity.xcodeproj/project.pbxproj
 EOF
 chmod +x "$state/bin/xcodegen"
+cat > "$state/bin/xcodebuild" << 'EOF'
+#!/bin/sh
+app=${FAKE_LOCAL_APP:-com.example.trome.dev}
+printf 'Build settings for action build and target RATPActivity:\n'
+[ -z "${FAKE_LOCAL_APP:-}" ] || printf '    RATP_DEBUG_APP_BUNDLE_ID = %s\n' "$app"
+printf '    APP_BUNDLE_ID = %s\n    WIDGET_BUNDLE_ID = %s.widget\n' "$app" "$app"
+EOF
+chmod +x "$state/bin/xcodebuild"
 
 expect() {
     if [ "$2" = "$3" ]; then
@@ -52,7 +60,7 @@ clean() {
 git init -q -b main "$repo"
 mkdir -p "$repo/ios/scripts/git-hooks" "$repo/ios/App"
 cp "$ios/Makefile" "$repo/ios/"
-cp "$ios/scripts/xcode-project-hook.sh" "$ios/scripts/git-hooks.sh" "$repo/ios/scripts/"
+cp "$ios/scripts/xcode-project-hook.sh" "$ios/scripts/git-hooks.sh" "$ios/scripts/bundle-id-check.sh" "$repo/ios/scripts/"
 cp "$ios/scripts/git-hooks/"* "$repo/ios/scripts/git-hooks/"
 cp "$ios/../.gitignore" "$repo/"
 echo "name: RATPActivity" > "$repo/ios/project.yml"
@@ -115,6 +123,12 @@ expect "a failing xcodegen prints what to do" "$(grep -c "Run 'make generate' be
 git -C "$repo" checkout -q feature
 LIVE=1 SMALL=1 git -C "$repo" checkout -q main 2> "$state/live.err"
 expect "LIVE=1 or SMALL=1 in the shell does not stop the hook" "$(cat "$state/live.err")" ""
+
+git -C "$repo" checkout -q feature
+status=0
+FAKE_LOCAL_APP=io.github.valfur03.trome git -C "$repo" checkout -q main 2> "$state/shipping.err" || status=$?
+expect "a shipping ID in the local file does not fail the checkout" "$status" "0"
+expect "a shipping ID in the local file is refused by the hook" "$(grep -c "RATP_DEBUG_APP_BUNDLE_ID in ios/Config/Local.xcconfig is io.github.valfur03.trome, a shipping ID" "$state/shipping.err")" "1"
 
 before=$(runs)
 make -C "$repo/ios" --no-print-directory git-hooks-off > "$state/off.out"
