@@ -67,7 +67,7 @@ make merge stopped the rebase (git rebase --abort): '$branch' is as it was befor
 
 is_app_code() {
     case "$1" in
-        ios/Packages/RATPCore/Tests/*) return 1 ;;
+        ios/Packages/TROMECore/Tests/*) return 1 ;;
         ios/App/* | ios/Widget/* | ios/UITests/* | ios/DocsScreenshots/* | ios/RenderCheck/* | ios/Packages/*) return 0 ;;
         docs/* | server/* | contracts/* | .claude/* | *.md | *.mdx | LICENSE) return 1 ;;
     esac

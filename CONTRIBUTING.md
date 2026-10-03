@@ -42,7 +42,7 @@ With no train data key, the app shows no live times: [The train data key](README
 ### Find where the code goes
 
 The iPhone app is in `ios/` and the server is in `server/`: [Project layout](README.md#project-layout) maps the folders.
-In the app, the rules and the state live in the `RATPCore` package, with their unit tests, and the screens and the Live Activity only show them.
+In the app, the rules and the state live in the `TROMECore` package, with their unit tests, and the screens and the Live Activity only show them.
 Where each file goes, and which part may use which, is in CLAUDE.md, for [the app](CLAUDE.md#code-structure-of-the-ios-app) and for [the server](CLAUDE.md#code-structure-of-the-server).
 These rules hold for every change, and the review checks them.
 

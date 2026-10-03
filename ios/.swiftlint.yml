@@ -4,10 +4,10 @@ included:
   - UITests
   - DocsScreenshots
   - RenderCheck
-  - Packages/RATPCore/Sources
-  - Packages/RATPCore/Tests
-  - Packages/RATPCore/Package.swift
+  - Packages/TROMECore/Sources
+  - Packages/TROMECore/Tests
+  - Packages/TROMECore/Package.swift
 
 excluded:
   - .build
-  - Packages/RATPCore/.build
+  - Packages/TROMECore/.build

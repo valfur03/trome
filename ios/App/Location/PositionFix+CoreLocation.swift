@@ -1,5 +1,5 @@
 import CoreLocation
-import RATPCore
+import TROMECore
 
 extension PositionFix {
     init?(_ location: CLLocation) {

@@ -84,7 +84,7 @@ describe("the Worker", () => {
     const rider = {
       ip: "203.0.113.42",
       forwarded: "198.51.100.7",
-      userAgent: "RATPActivity/1.4 (iPhone15,2; iOS 26.0) rider-agent",
+      userAgent: "TROME/1.4 (iPhone15,2; iOS 26.0) rider-agent",
       device: "6F1C2A90-DEVICE-ID",
       account: "rider@example.test",
       pushToken: "a1b2c3d4e5f6push",

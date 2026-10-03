@@ -1,10 +1,10 @@
 #if DEBUG
 import Foundation
 import os
-import RATPCore
+import TROMECore
 
 extension ActivityKitStationLiveActivityClient {
-    nonisolated private static let contentLogger = Logger(subsystem: "RATPActivity", category: "LiveActivityContent")
+    nonisolated private static let contentLogger = Logger(category: "LiveActivityContent")
     nonisolated private static let timeStyle = Date.ISO8601FormatStyle(timeZone: .current)
         .time(includingFractionalSeconds: false)
 

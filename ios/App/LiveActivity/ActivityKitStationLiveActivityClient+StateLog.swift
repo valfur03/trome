@@ -1,10 +1,10 @@
 #if DEBUG
 import ActivityKit
 import os
-import RATPCore
+import TROMECore
 
 extension ActivityKitStationLiveActivityClient {
-    nonisolated private static let stateLogger = Logger(subsystem: "RATPActivity", category: "LiveActivity")
+    nonisolated private static let stateLogger = Logger(category: "LiveActivity")
 
     static func logLaunch(_ found: [Activity<StationActivityAttributes>]) {
         let listed = list(found)

@@ -23,7 +23,7 @@ checked_version=$(sed -n -E 's/^  xcodeVersion: "?([0-9.]+)"?$/\1/p' "$project_y
 if [ "$(version_number "$xcode_version")" -gt "$(version_number "$checked_version")" ]; then
     echo "recommended-settings-check: FAILED: Xcode $xcode_version may recommend new project settings." >&2
     echo "The project was last checked with Xcode $checked_version (options.xcodeVersion in ios/project.yml)." >&2
-    echo "Open ios/RATPActivity.xcodeproj in Xcode and click the warning \"Update to recommended settings\"." >&2
+    echo "Open ios/TROME.xcodeproj in Xcode and click the warning \"Update to recommended settings\"." >&2
     echo "Add each setting that Xcode proposes to ios/project.yml (do not click \"Perform Changes\": make generate would undo it)." >&2
     echo "Then set options.xcodeVersion to \"$xcode_version\" and run make generate." >&2
     exit 1

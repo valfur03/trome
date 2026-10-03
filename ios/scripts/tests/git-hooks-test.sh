@@ -17,14 +17,14 @@ cat > "$state/bin/xcodegen" << 'EOF'
 #!/bin/sh
 echo "$(pwd) $*" >> "$FAKE_XCODEGEN_LOG"
 [ -z "${FAKE_XCODEGEN_FAIL:-}" ] || { echo "fake xcodegen failed" >&2; exit 1; }
-mkdir -p RATPActivity.xcodeproj
-ls App > RATPActivity.xcodeproj/project.pbxproj
+mkdir -p TROME.xcodeproj
+ls App > TROME.xcodeproj/project.pbxproj
 EOF
 chmod +x "$state/bin/xcodegen"
 cat > "$state/bin/xcodebuild" << 'EOF'
 #!/bin/sh
 app=${FAKE_LOCAL_APP:-com.example.trome.dev}
-printf 'Build settings for action build and target RATPActivity:\n'
+printf 'Build settings for action build and target TROME:\n'
 [ -z "${FAKE_LOCAL_APP:-}" ] || printf '    RATP_DEBUG_APP_BUNDLE_ID = %s\n' "$app"
 printf '    APP_BUNDLE_ID = %s\n    WIDGET_BUNDLE_ID = %s.widget\n' "$app" "$app"
 EOF
@@ -50,7 +50,7 @@ runs() {
 }
 
 lists() {
-    grep -qx "$2" "$1/ios/RATPActivity.xcodeproj/project.pbxproj" 2> /dev/null && echo yes || echo no
+    grep -qx "$2" "$1/ios/TROME.xcodeproj/project.pbxproj" 2> /dev/null && echo yes || echo no
 }
 
 clean() {
@@ -63,7 +63,7 @@ cp "$ios/Makefile" "$repo/ios/"
 cp "$ios/scripts/xcode-project-hook.sh" "$ios/scripts/git-hooks.sh" "$ios/scripts/bundle-id-check.sh" "$repo/ios/scripts/"
 cp "$ios/scripts/git-hooks/"* "$repo/ios/scripts/git-hooks/"
 cp "$ios/../.gitignore" "$repo/"
-echo "name: RATPActivity" > "$repo/ios/project.yml"
+echo "name: TROME" > "$repo/ios/project.yml"
 echo one > "$repo/ios/App/One.swift"
 git -C "$repo" add -A
 git -C "$repo" commit -q -m first
@@ -98,9 +98,13 @@ expect "a merge run from a subfolder (like make merge) creates the project again
 
 git clone -q "$repo" "$clone"
 git -C "$clone" config core.hooksPath ios/scripts/git-hooks
+old_project=$(sed -n 's/^OLD_PROJECT := //p' "$ios/Makefile")
+expect "the Makefile names the Xcode project of the old name" "${old_project##*.}" "xcodeproj"
+mkdir -p "$clone/ios/$old_project/project.xcworkspace/xcuserdata"
 commit "$repo" Three.swift three
 git -C "$clone" pull -q --ff-only
 expect "a git pull creates the project again" "$(lists "$clone" Three.swift)" "yes"
+expect "a git pull removes the Xcode project of the old name" "$(test -e "$clone/ios/$old_project" && echo kept || echo removed)" "removed"
 expect "the clone stays clean" "$(clean "$clone")" "yes"
 
 commit "$repo" Four.swift four

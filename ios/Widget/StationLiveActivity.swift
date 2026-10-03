@@ -1,5 +1,5 @@
 import ActivityKit
-import RATPCore
+import TROMECore
 import SwiftUI
 import WidgetKit
 

@@ -199,10 +199,11 @@ printf '%s\n' com.example.trome.dev.render-check-host com.example.trome.dev.uite
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job removes the host app of the render check, and keeps the test runners and the other apps" \
     "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.trome.dev.uitests.xctrunner com.other.App "
-printf '%s\n' com.example.RATPActivity com.example.RATPActivityRenderCheckHost com.example.RATPActivityUITests.xctrunner > "$state/apps.$default"
+printf '%s\n' com.example.RATPActivity com.example.RATPActivityRenderCheckHost com.example.RATPActivityUITests.xctrunner \
+    com.example.RATPActivityDocsScreenshots.xctrunner com.example.trome.dev.docs-screenshots.xctrunner > "$state/apps.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
-expect "a job removes the app and the render check host of a build with the old bundle IDs" \
-    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.RATPActivityUITests.xctrunner "
+expect "a job removes the app, the render check host and the test runners of a build with the old bundle IDs" \
+    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.trome.dev.docs-screenshots.xctrunner "
 
 echo "RATP-Shared Booted" > "$state/device.$default"
 echo "RATP-Shared-Small Booted" > "$state/device.$small"

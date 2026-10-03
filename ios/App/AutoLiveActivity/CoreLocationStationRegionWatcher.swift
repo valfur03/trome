@@ -1,10 +1,11 @@
 import CoreLocation
 import os
-import RATPCore
+import TROMECore
 
 @MainActor
 final class CoreLocationStationRegionWatcher: StationRegionWatcher {
-    private static let monitorName = "RATPStationRegions"
+    private static let monitorName = "TROMEStationRegions"
+    private static let monitorNamesOfOlderBuilds = ["RATPStationRegions"]
 
     var onWake: (@MainActor (_ enteredRegionId: String?, _ lastKnownFix: PositionFix?) async -> Void)?
 
@@ -48,11 +49,25 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         guard manager.authorizationStatus == .authorizedAlways else { return nil }
         Self.logAvailability()
         session = CLServiceSession(authorization: .always)
-        let task = Task { await CLMonitor(Self.monitorName) }
+        let task = Task {
+            await Self.removeConditionsOfOlderBuilds()
+            return await CLMonitor(Self.monitorName)
+        }
         monitorTask = task
         let monitor = await task.value
         listen(to: monitor)
         return monitor
+    }
+
+    private static func removeConditionsOfOlderBuilds() async {
+        for name in monitorNamesOfOlderBuilds {
+            let monitor = await CLMonitor(name)
+            let identifiers = await monitor.identifiers
+            for id in identifiers {
+                await monitor.remove(id)
+            }
+            logRemoved(identifiers.count, of: name)
+        }
     }
 
     private func listen(to monitor: CLMonitor) {
@@ -75,12 +90,22 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
 }
 
 extension CoreLocationStationRegionWatcher {
-    nonisolated private static let logger = Logger(subsystem: "RATPActivity", category: "StationRegions")
+    nonisolated private static let logger = Logger(category: "StationRegions")
 
     nonisolated private static func logAvailability() {
         #if DEBUG
         let available = CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self)
         logger.notice("region monitoring available: \(available, privacy: .public)")
+        #endif
+    }
+
+    nonisolated private static func logRemoved(_ count: Int, of monitorName: String) {
+        #if DEBUG
+        guard count > 0 else { return }
+        logger.notice("""
+            removed \(count, privacy: .public) regions of the monitor \(monitorName, privacy: .public) \
+            of an older build
+            """)
         #endif
     }
 

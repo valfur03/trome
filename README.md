@@ -16,9 +16,10 @@ Open Terminal in the main folder of the repo (the root). Run every `make` comman
 make setup
 ```
 
-This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `ios/RATPActivity.xcodeproj`.
+This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `ios/TROME.xcodeproj`.
 
 The Xcode project is not in git.
+`make generate` also deletes the Xcode project of the older name of the app, when your folder still has one, so that you do not open it by mistake.
 The file `ios/project.yml` describes it.
 The `make` commands update the project by themselves, but the Run button of Xcode does not.
 An old project lists files that no longer exist, and misses the new ones: the build fails with "Build input file cannot be found" or "Cannot find ... in scope".
@@ -212,11 +213,11 @@ The app keeps your choice when you close it. While a fake position is on, the ma
 
 This works in the Simulator and on your iPhone, also when the iPhone is not connected to the Mac.
 
-For developers: all code must read the position from `LocationService` (in `RATPCore`), never from Core Location directly. Then the fake position works for every feature.
+For developers: all code must read the position from `LocationService` (in `TROMECore`), never from Core Location directly. Then the fake position works for every feature.
 
 ## The station list
 
-The app finds the nearest station without the network. It reads the file `ios/Packages/RATPCore/Sources/RATPCore/Resources/stations.json`.
+The app finds the nearest station without the network. It reads the file `ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json`.
 
 This file lists every metro station (lines 1 to 14, 3bis and 7bis) and every RER station (lines A to E). It has no bus, tram or Transilien stop. The data comes from the open data of Île-de-France Mobilités (dataset `arrets-lignes`, no key needed).
 In all, the list is made from four datasets of Île-de-France Mobilités under two licences, the ODbL and the Licence Ouverte v2.0: [NOTICE.md](NOTICE.md) names them, and says what you must do when you reuse the list.
@@ -267,7 +268,7 @@ The screen tells you when:
 - the app cannot reach the train data service (for example, no internet),
 - the service refuses the key, gets too many requests, or does not work.
 
-For developers: the code is in `ios/Packages/RATPCore/Sources/RATPCore/Trains`.
+For developers: the code is in `ios/Packages/TROMECore/Sources/TROMECore/Trains`.
 `PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop area of the station, and of the other stations of its place (see [The station list](#the-station-list)).
 So Châtelet costs 2 calls: the metro stop area of Châtelet (its 10 metro quays) and the RER stop of Châtelet - Les Halles.
 Saint-Lazare costs 5 calls.
@@ -366,7 +367,7 @@ The app shows the next trains of a station on the lock screen, as a Live Activit
    An end that PRIM does not list, while the other end has trains, shows a grey dash "–" (the one of the Dynamic Island) in "1er", and "2e" stays empty: the app has no time for this end now, which does not mean that no train comes.
    An end whose next train is more than 60 minutes away says "In over 1 hour", or "> 1 h" when the words do not fit, across both columns.
    "No trains" shows in both rows only when PRIM lists no train at all for the direction, not even beyond the hour (the night); when only one end has a train beyond the hour, the other end shows the dash.
-   The rule is `LineDirection.branchEndRows` (in `RATPCore`), tested on three recorded PRIM answers of Liège.
+   The rule is `LineDirection.branchEndRows` (in `TROMECore`), tested on three recorded PRIM answers of Liège.
    When the times are old, the rows keep their names with empty boxes, as high as their text.
    The other direction is a plain strip.
    A station after the fork names only the end of its branch, so its page has plain strips.
@@ -449,7 +450,7 @@ It says the same when a refresh fails after an answer with no train at all ("No 
 
 If the app says that Live Activities are turned off, turn them on in Settings > TROME > Live Activities.
 
-For developers: `StationActivityAttributes` (in `RATPCore`) holds the data of the Live Activity.
+For developers: `StationActivityAttributes` (in `TROMECore`) holds the data of the Live Activity.
 `LineDirections` splits the trains of the line into its two directions.
 For a metro station, PRIM has one stop (quay) for each direction, so the direction of a train is its quay.
 The app asks for the stop area of the station, and PRIM tells the quay of each train (`MonitoringRef` of the train).
@@ -472,14 +473,14 @@ A train whose direction stays unknown shows in a row with its destination (at mo
 On a metro line, PRIM sometimes lists one train twice, with two times less than a minute apart.
 No metro train leaves a platform less than a minute after the train before it, so a direction keeps only the first of two trains that leave less than a minute apart (`LineDirections.minimumMetroHeadway`), and it never shows the same train twice.
 An RER direction keeps them: two RER trains of one direction can leave in the same minute from two tracks.
-`LinesPage` (in `RATPCore`) decides which lines the Live Activity shows: from the first asked line, one metro line alone, or as many RER lines as fit in 4 rows (at least one line, and never a metro line with an RER line).
+`LinesPage` (in `TROMECore`) decides which lines the Live Activity shows: from the first asked line, one metro line alone, or as many RER lines as fit in 4 rows (at least one line, and never a metro line with an RER line).
 With more than 2 rows, it keeps only the next train of each row, so the Live Activity stays under the 160 points of the lock screen.
 It also keeps the soonest train of all the lines, for the Dynamic Island (`SoonestTrain`: its line and the train with its state), and, when no line has a train in the next 60 minutes, the line of the first later train.
-`ContentState.dynamicIslandWait(isStale:)` (in `RATPCore`, `DynamicIslandWait`) decides what the compact and minimal views show: the line and the wait (minutes, approaching, at the platform, over an hour, no train, stale, loading or no data), and what the minimal view shows instead (`minimalWait`: the minutes, "0" or a dash).
+`ContentState.dynamicIslandWait(isStale:)` (in `TROMECore`, `DynamicIslandWait`) decides what the compact and minimal views show: the line and the wait (minutes, approaching, at the platform, over an hour, no train, stale, loading or no data), and what the minimal view shows instead (`minimalWait`: the minutes, "0" or a dash).
 The views are `IslandLineBadge` (`MetroLineBadge`, or the `RERSquareBadge` of the RER pages), `CompactIslandWait`, `MinimalIslandWait` and `IslandNumber`, in `ios/Widget/`.
 The number (20 points) and the words (11 points) have fixed sizes: the compact island of iOS draws every text style at about the same size (title3 at about 14 points, caption2 at about 13), so with text styles the number was smaller and the words bigger than in the picked drawing (TASK-37 review).
 When you touch and hold the Dynamic Island, the view tries the page as it is, then the page with only the next train of each row (`ContentState.keepingOnlyTheNextTrains`), then the same with a smaller text, and shows the first one that fits (`ViewThatFits`).
-`PlatformStatus` (in `RATPCore`) says when a train is approaching or at the platform, from the arrival time, the departure time and `VehicleAtStop` of PRIM.
+`PlatformStatus` (in `TROMECore`) says when a train is approaching or at the platform, from the arrival time, the departure time and `VehicleAtStop` of PRIM.
 `LineDirection.trainsByDestination` gives the rows of a direction: one row, or one row for each branch.
 `LineDirection.Train.roundedUpCountdownEnd` rounds the live waiting time up: the lock screen counts the minutes by itself between two updates, and it must never say "0 minutes" before the train leaves.
 iOS does not draw a Live Activity again by itself when a train comes, so in the background `AutoLiveActivityModel` wakes at `LinesPage.nextRedrawDate(after:)` (a metro train starts approaching, arrives or leaves; an RER train leaves;
@@ -495,7 +496,7 @@ So `PanamMinutes` draws two layers, and each one is one text with the same timer
 The layer of two digits is aligned to the right: when the timer loses a digit, the second timer is shorter, and the first timer goes to the right, out of the box.
 The layer of one digit is aligned to the left, with a clear digit between the two timers: while the timer has two digits, the box shows only that clear digit; when the timer loses a digit, the second timer comes one digit to the left, into the box.
 Page 95 of Lamarck - Caulaincourt in the render check draws this case.
-`LinesPage.panamStripsLine` (in `RATPCore`) decides if a page gets the strips:
+`LinesPage.panamStripsLine` (in `TROMECore`) decides if a page gets the strips:
 one metro line (also a line of another station of the place, whose name `PanamStripsHeader` shows with the walking icon), at most two directions (a train whose direction stays unknown adds a third one, which would push the snooze row out), a page made by an app that knows the ends at the station (`LineTrains.hasADirectionWithTwoEnds` is set;
 a Live Activity of an app older than TASK-140 has rows until the app updates it), and no direction whose shown trains go to two places, except a direction with two ends at this station.
 `LineDirections` gives that direction its two ends in the order of the line (`LineDirection.branchEnds`, from `TransitLine+Ends.swift`, so the order never depends on the trains), and the next two trains of each end (`LineDirection.trainsOfEachEnd`, one `BranchEndTrains` for each end, in the same order, with its own "over 1 hour" state).
@@ -641,11 +642,11 @@ The rules come from decision-32 in the backlog.
   When the app was not running, iOS starts it in the background right after the swipe, but it does not tell the app why, and the app cannot tell this start from another one (for example a region wake hours later).
   So the app sets no pause then, and it works as before decision-32: the Live Activity does not come back at this station until you leave it (more than 250 meters away, with no station within 150 meters) and come back.
 
-For developers: `AutoLiveActivityRules.outcome(of:shown:now:)` (in `RATPCore`) decides whether a removal is a swipe: the app did not end it (`LiveActivityRemoval.endedByTheApp`), it still had a shown Live Activity in its saved state, Live Activities are on (`ActivityAuthorizationInfo().areActivitiesEnabled`), and it started less than 8 hours ago.
+For developers: `AutoLiveActivityRules.outcome(of:shown:now:)` (in `TROMECore`) decides whether a removal is a swipe: the app did not end it (`LiveActivityRemoval.endedByTheApp`), it still had a shown Live Activity in its saved state, Live Activities are on (`ActivityAuthorizationInfo().areActivitiesEnabled`), and it started less than 8 hours ago.
 `AutoLiveActivityModel` applies it and saves the pause (`StationPause`) with its state, so the pause survives a relaunch.
 `ActivityKitStationLiveActivityClient` (in `ios/App/LiveActivity/`) follows each Live Activity of the app (`activityStateUpdates`) and reports its first `ended` or `dismissed` state, with whether the app ended it itself (it remembers the Live Activities that it ends).
 At launch, when the saved state says that a Live Activity shows and iOS lists none, the app forgets it with no pause (the limit above).
-The cancel is a resume, and it follows the resume rule of decision-55, `ResumePositionRules` (in `RATPCore`), called through `AutoLiveActivityModel.positionForAResume()`, then `resume(at:)`, which evaluates that position with the arrival rules or shows the line when there is none.
+The cancel is a resume, and it follows the resume rule of decision-55, `ResumePositionRules` (in `TROMECore`), called through `AutoLiveActivityModel.positionForAResume()`, then `resume(at:)`, which evaluates that position with the arrival rules or shows the line when there is none.
 iOS sends no new position while the phone stands still (`CLLocationUpdate.liveUpdates` pauses), so the rule uses the last position only when it is precise and at most 15 seconds old.
 Otherwise it asks iOS for one with `CLLocationManager.requestLocation()` (`LocationProvider.currentFix()`, in `CoreLocationProvider`) and waits at most 5 seconds; with no answer, it uses the last position when it is precise and at most 2 minutes old.
 A position that comes later goes through the usual arrival rules.
@@ -672,7 +673,7 @@ To get the notification while the app is closed, the app needs the location "Alw
 iOS first asks for "While Using the App".
 Right after your answer, the app asks iOS for "Always", and iOS asks you if the app can also use your location when you do not use it.
 The app asks for notifications only after this second answer.
-For developers: `LocationQuestionsRules` (in `RATPCore`) decides when to ask, and `CoreLocationPermission` (in `ios/App/Location/`) applies it.
+For developers: `LocationQuestionsRules` (in `TROMECore`) decides when to ask, and `CoreLocationPermission` (in `ios/App/Location/`) applies it.
 iOS does not tell the app when you tap "Keep Only While Using", so the app waits until it becomes active again after the question.
 When iOS does not show the second question (after "Allow Once", iOS ignores it), the app waits at most 20 seconds, then asks for notifications.
 If you keep "While Using the App", the Live Activity starts by itself only while the app is open.
@@ -698,7 +699,7 @@ The "Permissions" part of the main screen then says so, with a button to open Se
   Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
 - **Fake trains.** A build with no train data key shows no trains.
   In debug builds, launch the app with `--fake-trains` to get fake next trains instead, with no PRIM call: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains`.
-  The app saves this choice (`FakeTrainsStore`, in `RATPCore`), so the rule is:
+  The app saves this choice (`FakeTrainsStore`, in `TROMECore`), so the rule is:
   - A launch with launch arguments comes from you or from a test (`xcrun simctl launch` with arguments, XCUITest, the Run button of Xcode when the scheme has arguments).
     It turns the fake trains on with `--fake-trains`, and off without it.
     For example, a launch with only `-liveActivityMaximumDuration 60` has no fake trains.
@@ -712,7 +713,7 @@ The "Permissions" part of the main screen then says so, with a button to open Se
   - `make run` installs the app again, with no saved data, so it starts with no fake trains. `make switch-language` keeps the data of the app, so it keeps the fake trains.
 - **Ask the fake trains for a state.** Live trains show some states only by luck: PRIM shows a train at the platform for 20 to 30 seconds, and the app updates the Live Activity only every 2 minutes in the background.
   So, in debug builds, add the name of a state after `--fake-trains`, for example `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains at-platform`.
-  The times start at this launch, the same for each line and each direction of the station (the second direction is one minute later), and the app follows its real rules with them (`FakeTrainsScenario`, in `RATPCore`).
+  The times start at this launch, the same for each line and each direction of the station (the second direction is one minute later), and the app follows its real rules with them (`FakeTrainsScenario`, in `TROMECore`).
   Then start the Live Activity at once (a fake position, or "Show the Live Activity now"), and put the app in the background to look at the lock screen and the Notification Center.
   - `at-platform`: the first box of each strip shows "À quai" for 5 minutes. Then the train leaves, and trains come every 4 minutes, each one 30 seconds at the platform, like real trains.
   - `at-platform-second`: the second box shows "À quai", next to a train that leaves first, for about 3 minutes. Then the first train comes ("0", then "À quai": both boxes), leaves, and the second one leaves 2 minutes later.
@@ -729,12 +730,12 @@ The "Permissions" part of the main screen then says so, with a button to open Se
     On 2026-10-02 (TASK-170), the first launch after `make run` lost its arguments both times, and one or two more launches fixed it.
   - To start the state again, launch the app again with the same arguments. A launch by iOS (no argument) keeps the state and its start time. A name that the app does not know gives no fake trains, so the Live Activity says "No data available".
 
-For developers: the rules are in `AutoLiveActivityRules` (in `RATPCore`), and `AutoLiveActivityModel` applies them.
+For developers: the rules are in `AutoLiveActivityRules` (in `TROMECore`), and `AutoLiveActivityModel` applies them.
 `AutomaticModeModel` holds the automatic mode (on, snoozed until a date, or off) and saves it.
 While the mode is not on, the rules still follow the arrivals, but they do not notify or start.
-The buttons of the Live Activity run `SnoozeLiveActivityIntent` (a `LiveActivityIntent`, in `RATPCore` because the app and the widget share it).
+The buttons of the Live Activity run `SnoozeLiveActivityIntent` (a `LiveActivityIntent`, in `TROMECore` because the app and the widget share it).
 iOS runs it in the app, and opens the app in the background if needed.
-The intent gets `AutoLiveActivityModel` from `AppDependencyManager` (the app adds it in `RATPActivityApp`).
+The intent gets `AutoLiveActivityModel` from `AppDependencyManager` (the app adds it in `TROMEApp`).
 It reads the position from `LocationService`, so the fake position works too.
 When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `ios/App/AutoLiveActivity/CoreLocationStationRegions.swift`).
 iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you.
@@ -746,8 +747,9 @@ They also log each content that the app sends to the Live Activity (category `Li
 and each PRIM answer (category `PRIM`: one line per train of the answer, with its destination, its times, its quay, its journey, and whether the app keeps it or drops it, and why).
 The PRIM key is never in the log.
 So, with live data, you can tell whether a change on the Live Activity comes from PRIM, from the rules of the app (for example the 60 s rule of a metro direction), or from iOS (TASK-169).
-To read the log in the Simulator: `xcrun simctl spawn "$(make -s simulator)" log show --last 5m --predicate 'subsystem == "RATPActivity"'`.
-On your iPhone, open the Console app on the Mac, choose the iPhone, and search for `subsystem:RATPActivity`.
+To read the log in the Simulator: `xcrun simctl spawn "$(make -s simulator)" log show --last 5m --predicate 'subsystem == "TROME"'`.
+On your iPhone, open the Console app on the Mac, choose the iPhone, and search for `subsystem:TROME`.
+The name `TROME` of the log is written once, in `Logger.subsystem` (`ios/Packages/TROMECore/Sources/TROMECore/Logging/Logger+Subsystem.swift`).
 While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity.
 It also keeps the app running in the background, even when the phone does not move: `CoreLocationBackgroundLocationKeeper` (in `ios/App/AutoLiveActivity/`) runs standard location updates that never pause (`pausesLocationUpdatesAutomatically = false`, `allowsBackgroundLocationUpdates = true`).
 Apple's documentation says that Core Location then keeps the app running.
@@ -807,8 +809,7 @@ The build output never shows the key. `make live-key-check` proves it with fake 
 The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open http://localhost:4321/trome/en/build/install-on-your-iphone/. The page is `docs/src/content/docs/en/build/install-on-your-iphone.mdx`.
 
 In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git).
-Run `make generate`, open the project `ios/RATPActivity.xcodeproj` in Xcode, choose your iPhone, and click Run.
-The Xcode project, its targets and its schemes keep the older name `RATPActivity`: the app on the iPhone is called TROME.
+Run `make generate`, open the project `ios/TROME.xcodeproj` in Xcode, choose the scheme `TROME` and your iPhone, and click Run.
 With a free Apple ID, the app stops after 7 days: run `make generate` again, then click Run again to renew it.
 
 Your build gets the bundle ID `<prefix>.trome.dev`, and its Live Activity gets `<prefix>.trome.dev.widget`.
@@ -1033,7 +1034,7 @@ Almost every user of the app is French. The app shows each text in French when t
   The name on the home screen, the file name of the app, the permission texts that iOS shows and the texts of the app that name it read it from there (a text of the code gets it as `%@`).
   To change the name, change that line and run `make strings-sync`: it puts the new name in the French permission texts of `ios/App/InfoPlist.xcstrings` too.
   `make strings-check` fails when one of these French texts does not say the name, for example after a build in Xcode wrote the new English texts: then write the name in it by hand.
-  `make public-text-check` fails when the older name of the app comes back in a file of the repo.
+  `make public-text-check` fails when an older name of the app, of its Xcode project or of its module comes back in a file of the repo.
 - The name of the app (`CFBundleDisplayName` and `CFBundleName`, in `ios/App/InfoPlist.xcstrings`) is the same in French: it is marked "Don't translate" (`"shouldTranslate" : false`).
 - A new text on a screen needs its French text in the catalog, in the same task. Write a text that a Paris rider knows: "Prochains passages", "écran verrouillé", "activité en direct", "Réglages", "Toujours", as iOS and the RATP say them.
 - **A build in Xcode updates the catalogs.** When you build in Xcode, Xcode reads the texts of the code and of the Info.plist, and writes the catalogs again: it adds a new text, marks a text that is no longer in the code as "stale", marks a French text "needs review" when its English text changed, and leaves out the texts inside `#if DEBUG`.
@@ -1069,14 +1070,14 @@ Inside `ios/`:
 |---|---|
 | `App/` | The iPhone app (SwiftUI): the entry point, the views, and the adapters to the iOS frameworks. One folder per feature. |
 | `Widget/` | The widget extension. It shows the Live Activity. |
-| `Packages/RATPCore/` | The rules, the state and the data of the app, shared by the app and the widget, with its unit tests. One folder per feature. |
+| `Packages/TROMECore/` | The rules, the state and the data of the app, shared by the app and the widget, with its unit tests. One folder per feature. |
 | `UITests/` | The end-to-end tests (XCUITest). |
 | `DocsScreenshots/` | The XCUITest suite that takes the app screenshots of the docs. |
 | `RenderCheck/` | The render check of the Live Activity views (`make live-activity-render`): a unit test bundle, and in `Host/` the small app that runs it with the texts of the widget. |
 | `Config/` | Build settings. Your key and Team ID go in the local files here. |
 | `scripts/` | Helper scripts for the `make` commands of the app. |
 
-The feature folders have the same names in `ios/App/`, in the sources of `RATPCore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`.
+The feature folders have the same names in `ios/App/`, in the sources of `TROMECore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`.
 `ios/App/` also has `Permissions` and `TestingTools` (debug builds only).
 The rules for the code (where each file goes, which module depends on which) are in the CLAUDE.md, section "Code structure of the iOS app".
 
@@ -1090,7 +1091,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
   Why: git merges by line, so two changes to two sentences of one long line conflict.
   `make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters, in every Markdown and MDX file of the repo ([CLAUDE.md](CLAUDE.md#the-docs-site-docs), section "The docs site").
   Tables and code blocks may have long lines.
-- Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `RATPCore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
+- Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `TROMECore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
 - Build output goes to `ios/.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder. All worktrees share one Simulator, and Simulator jobs wait for each other (see above).
 - The shared build cache: all folders (and all git worktrees) share the compiled modules of the iOS SDK (for example SwiftUI and UIKit), in `~/Library/Caches/RATPActivity/`.
   So the first build of a new worktree does not compile them again.
@@ -1111,7 +1112,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
   The tests move the phone with the Simulator position (`moveThePhone(to:)`, which sets `XCUIDevice.location`), so the app reads it through Core Location, with our real code.
   They never go through the Testing tools: the fake position for testers has no E2E test, and QA checks it when a task changes it.
   Each test uses its own stations, so no test depends on the arrival that another test left behind.
-  A check of a rule (formatting, sorting, search, parsing, state) is a unit test in `RATPCore`.
+  A check of a rule (formatting, sorting, search, parsing, state) is a unit test in `TROMECore`.
   A new step goes in the test of its seam.
 - End-to-end tests: to wait for an element, use `waitFor(_:)` from `E2ETestCase` (`waitForNo(_:)` to wait until it goes, `waitForFirst(of:)` for the first of many).
   Tap with `tap(_:)`: it waits for the element first, so a tap after typing or navigation never fails at once on a busy Mac.
@@ -1126,7 +1127,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
   The app then keeps a background location session, so iOS does not suspend it before the new position reaches it.
 - End-to-end tests: the E2E builds have no train data key, so the Live Activity says "No data available".
   A test that checks the trains on the Live Activity adds the launch argument `--fake-trains` (debug builds only).
-  The app then gets fake next trains from `FakeDeparturesProvider` in `RATPCore`, with times from now (or from the launch, when a state follows the argument), and makes no PRIM call.
+  The app then gets fake next trains from `FakeDeparturesProvider` in `TROMECore`, with times from now (or from the launch, when a state follows the argument), and makes no PRIM call.
   Each line of the station gets trains toward both ends, and a side with branches sends its trains to each branch in turn.
   Every E2E launch has launch arguments (`makeApp()` adds `--reset-location-source`), so a test without `--fake-trains` never keeps the fake trains of an earlier test.
   When iOS starts the app by itself (no launch argument), it keeps them (see [Test it with a fake position](#test-it-with-a-fake-position), "Fake trains").
@@ -1197,12 +1198,12 @@ The CLAUDE.md gives the details (section "Merge a task into main").
 The project has no warning, and the quality gate keeps it so:
 
 - **Build warnings.** The command line builds (`make build`, `make e2e`, `make docs-screenshots`) treat each compiler warning as an error.
-  `make test` does the same for `RATPCore`.
+  `make test` does the same for `TROMECore`.
   After `make build`, `ios/scripts/build-warnings.py` reads the result of the build (`ios/.build/build.xcresult`) and fails on any other warning that Xcode reports (for example the linker or the asset catalog).
   The Run button in Xcode does not treat warnings as errors, so you can try code that is not finished yet.
 - **Recommended settings.** A new version of Xcode can recommend new project settings: Xcode then shows the warning "Update to recommended settings".
   `options.xcodeVersion` in `ios/project.yml` says which Xcode version last checked the settings.
   `make recommended-settings-check` (part of `make check`) fails when your Xcode is newer (a bug fix release, for example 27.0.1, does not count).
-  Then open `ios/RATPActivity.xcodeproj` in Xcode, click the warning, and add each setting that Xcode proposes to `ios/project.yml`.
+  Then open `ios/TROME.xcodeproj` in Xcode, click the warning, and add each setting that Xcode proposes to `ios/project.yml`.
   Do not click "Perform Changes": the Xcode project is not in git, and `make generate` would undo it.
   Then set `options.xcodeVersion` to your Xcode version, and run `make generate`.

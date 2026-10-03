@@ -1,5 +1,5 @@
 #if DEBUG
-import RATPCore
+import TROMECore
 import SwiftUI
 
 struct StationSearchView: View {

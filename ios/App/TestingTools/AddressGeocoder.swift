@@ -1,6 +1,6 @@
 #if DEBUG
 import MapKit
-import RATPCore
+import TROMECore
 
 struct AddressGeocoder {
     struct NotFound: Error {}

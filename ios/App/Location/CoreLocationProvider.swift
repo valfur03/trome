@@ -1,5 +1,5 @@
 import CoreLocation
-import RATPCore
+import TROMECore
 
 struct CoreLocationProvider: LocationProvider {
     func events() -> AsyncStream<LocationEvent> {

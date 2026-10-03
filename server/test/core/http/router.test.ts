@@ -142,7 +142,7 @@ describe("route: departures", () => {
 
     await send(
       new Request(`${departuresUrl}?latitude=48.884&device=abc`, {
-        headers: { authorization: `Bearer ${appToken}`, "user-agent": "RATPActivity/1.0 iOS/26.0", "x-device-id": "abc" },
+        headers: { authorization: `Bearer ${appToken}`, "user-agent": "TROME/1.0 iOS/26.0", "x-device-id": "abc" },
       }),
     );
 

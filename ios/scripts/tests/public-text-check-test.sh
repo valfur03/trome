@@ -45,10 +45,11 @@ file ios/package.json "\"micromark-factory-space\": \"^2.0.0\", \"package-manage
 file ios/scripts/tests/git-test.sh "export GIT_AUTHOR_EMAIL=test@example.com OTHER=jane@mail.example ALSO=ci@build.test"
 file ios/scripts/tests/cache-test.sh "[ -f \"\$cache/users/\$build\" ]"
 file ios/App/Bundle.swift "let id = \"io.github.trome\"; let task = Task { }; let decision = \"doc\""
-file ios/project.yml "name: RATPActivity; packages: RATPCore; git clone https://github.com/owner/ratp-activity-ios"
+file ios/project.yml "name: TROME; packages: TROMECore; RATP_DEBUG_APP_BUNDLE_ID; RATP_SIM_SLOT; /tmp/ratp-sim.lock; the RATP network; RATP-Shared; git clone https://github.com/owner/ratp-activity-ios"
+file README.md "The shared build cache is in ~/Library/Caches/RATPActivity/."
 file ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json "{ \"filename\" : \"AppIcon@2x.png\" }, { \"filename\" : \"AppIcon@3x.png\" } git clone git@github.com:owner/trome.git"
 expect "a public text with no internal word, no personal data and no local path passes" "$(check)" "passes"
-expect "it says how many files it checked" "$(grep -c "OK (9 files" "$state/out")" "1"
+expect "it says how many files it checked" "$(grep -c "OK (10 files" "$state/out")" "1"
 
 reset_repo
 file docs/page.mdx "Wait: the factory agents use the Simulator (TASK-140, decision-15, doc-3)."
@@ -95,7 +96,23 @@ expect "the old name of the app fails in every file, the README too" "$(check)" 
 expect "it finds the old name in the README" "$(hit 'README.md:1: the old name of the app: "RATP Activit"')" "1"
 expect "it finds the old name with a no-break space" "$(hit 'docs/page.mdx:1: the old name of the app: "RATP&nbsp;Activit"')" "1"
 expect "it finds the old name in any case and spacing" "$(hit 'ios/App/InfoPlist.xcstrings:1: the old name of the app: "Ratp  activit"')" "1"
-expect "it says the new name" "$(grep -c "not the old name of the app (it is TROME)" "$state/out")" "1"
+expect "it says the new name" "$(grep -c "not the old names of the app, of the Xcode project or of its module (it is TROME)" "$state/out")" "1"
+
+reset_repo
+file README.md "Open ios/RATPActivity.xcodeproj."
+file CLAUDE.md "The composition root is ratpactivityApp.swift."
+file ios/scripts/merge.sh "scheme=RATPActivityE2E"
+file ios/App/Model.swift "import RATPCore"
+file ios/scripts/simulator.sh "pattern='RATPActivity(RenderCheckHost)?'"
+file ios/scripts/tests/sim-lock-test.sh "printf '%s\\n' com.example.RATPActivity"
+file ios/Makefile "OLD_PROJECT := RATPActivity.xcodeproj"
+expect "the old names of the project and of its module fail in every file, except where a leftover of the old name is removed" "$(check)" "fails"
+expect "it finds the old project name in the README" "$(hit 'README.md:1: an old name of the project or of its module: "RATPActivity"')" "1"
+expect "it finds the old project name in any case, in CLAUDE.md too" "$(hit 'CLAUDE.md:1: an old name of the project or of its module: "ratpactivity"')" "1"
+expect "it finds the old project name inside a longer name" "$(hit 'ios/scripts/merge.sh:1: an old name of the project or of its module: "RATPActivity"')" "1"
+expect "it finds the old name of the module" "$(hit 'ios/App/Model.swift:1: an old name of the project or of its module: "RATPCore"')" "1"
+expect "it lets the Simulator script, its test and the Makefile name the old project, to remove its leftovers" \
+    "$(grep -c "simulator.sh\|sim-lock-test.sh\|Makefile" "$state/out")" "0"
 
 reset_repo
 file ios/scripts/public-text-check.py "INTERNAL_RULES = [\"prompter\", \"/Users/\"]"
@@ -108,7 +125,7 @@ expect "it says which files it skips, and why" "$(grep -c "skips ios/scripts/pub
 
 mkdir "$state/allowing"
 cp "$scripts/public-text-check.py" "$scripts/repo_files.py" "$state/allowing/"
-sed -i '' 's|^ALLOWED_TEXTS: list\[Allowed\] = \[\]$|ALLOWED_TEXTS: list[Allowed] = [Allowed("ios/App/Factory.swift", "factory", "the name of a type")]|' \
+sed -i '' 's|^ALLOWED_TEXTS: list\[Allowed\] = \[$|ALLOWED_TEXTS: list[Allowed] = [Allowed("ios/App/Factory.swift", "factory", "the name of a type"),|' \
     "$state/allowing/public-text-check.py"
 reset_repo
 file ios/App/Factory.swift "let factory = StationFactory()"

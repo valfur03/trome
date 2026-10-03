@@ -1,5 +1,5 @@
 import Foundation
-import RATPCore
+import TROMECore
 
 extension LocationService {
     static func makeForThisBuild() -> LocationService {

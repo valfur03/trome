@@ -1,9 +1,9 @@
 #if DEBUG
 import os
-import RATPCore
+import TROMECore
 
 extension PRIMDeparturesProvider {
-    nonisolated private static let answerLogger = Logger(subsystem: "RATPActivity", category: "PRIM")
+    nonisolated private static let answerLogger = Logger(category: "PRIM")
 
     static func loggingEachAnswer(apiKey: String) -> PRIMDeparturesProvider {
         PRIMDeparturesProvider(apiKey: apiKey) { line in

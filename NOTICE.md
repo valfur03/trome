@@ -10,7 +10,7 @@ The data below is not: it keeps its own licence, whatever the licence of the cod
 
 ## The station list
 
-The file [`stations.json`](ios/Packages/RATPCore/Sources/RATPCore/Resources/stations.json) lists the metro and RER stations, their lines, the colours of the lines, their stops, and the stations that share one place.
+The file [`stations.json`](ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json) lists the metro and RER stations, their lines, the colours of the lines, their stops, and the stations that share one place.
 The script [`update-stations.py`](ios/scripts/update-stations.py) builds it from four datasets that Île-de-France Mobilités publishes on its open data portal, [data.iledefrance-mobilites.fr](https://data.iledefrance-mobilites.fr):
 
 | Dataset | Identifier | What `stations.json` takes from it | Licence |

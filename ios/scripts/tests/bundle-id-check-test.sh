@@ -50,13 +50,13 @@ else
     widget=$app.widget
     style=$FAKE_RELEASE_STYLE
 fi
-printf 'Build settings for action build and target RATPActivity:\n'
+printf 'Build settings for action build and target TROME:\n'
 [ -z "$app_override" ] || printf '    RATP_DEBUG_APP_BUNDLE_ID = %s\n' "$app_override"
 [ -z "$widget_override" ] || printf '    RATP_DEBUG_WIDGET_BUNDLE_ID = %s\n' "$widget_override"
 printf '    APP_BUNDLE_ID = %s\n    WIDGET_BUNDLE_ID = %s\n' "$app" "$widget"
 printf '    CODE_SIGN_STYLE = %s\n    PRODUCT_BUNDLE_IDENTIFIER = %s\n' "$style" "$app"
-printf 'Build settings for action build and target RATPActivityWidget:\n    CODE_SIGN_STYLE = %s\n    PRODUCT_BUNDLE_IDENTIFIER = %s\n' "$style" "$widget"
-printf 'Build settings for action build and target RATPActivityUITests:\n    CODE_SIGN_STYLE = %s\n    PRODUCT_BUNDLE_IDENTIFIER = %s.trome.dev.uitests\n' "$style" "$prefix"
+printf 'Build settings for action build and target TROMEWidget:\n    CODE_SIGN_STYLE = %s\n    PRODUCT_BUNDLE_IDENTIFIER = %s\n' "$style" "$widget"
+printf 'Build settings for action build and target TROMEUITests:\n    CODE_SIGN_STYLE = %s\n    PRODUCT_BUNDLE_IDENTIFIER = %s.trome.dev.uitests\n' "$style" "$prefix"
 EOF
 chmod +x "$state/xcodebuild"
 
@@ -80,7 +80,7 @@ expect "a Debug ID equal to the shipping ID fails" \
 expect "a Debug extension ID that does not start with the app ID fails" \
     "$(check %s.trome.dev com.other.widget io.github.valfur03.trome Manual)" fails
 expect "a Release ID that is not the shipping ID fails" \
-    "$(check %s.trome.dev %s.widget io.github.valfur03.RATPActivity Manual)" fails
+    "$(check %s.trome.dev %s.widget io.github.jane.OldApp Manual)" fails
 expect "a Release build signed automatically fails" \
     "$(check %s.trome.dev %s.widget io.github.valfur03.trome Automatic)" fails
 expect "a project that lets a Debug ID override carry the shipping ID fails" \
@@ -90,8 +90,8 @@ expect "a project that does not read the extension ID override fails" \
 
 expect "no Debug ID set in the local file passes" "$(check_local '' '')" passes
 expect "the legacy pair set in the local file passes, as written" \
-    "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.RATPActivity.Widget)" passes
-expect "only an app ID set in the local file passes" "$(check_local io.github.valfur03.RATPActivity '')" passes
+    "$(check_local io.github.jane.OldApp io.github.jane.OldApp.Widget)" passes
+expect "only an app ID set in the local file passes" "$(check_local io.github.jane.OldApp '')" passes
 expect "the shipping app ID as the app ID in the local file is refused" \
     "$(check_local io.github.valfur03.trome '')" fails
 expect "the refusal says why in one sentence" \
@@ -101,22 +101,22 @@ expect "the shipping extension ID as the extension ID in the local file is refus
 expect "the shipping ID in capitals in the local file is refused" \
     "$(check_local IO.GITHUB.VALFUR03.TROME '')" fails
 expect "the shipping app ID as the extension ID in the local file is refused" \
-    "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.trome)" fails
+    "$(check_local io.github.jane.OldApp io.github.valfur03.trome)" fails
 expect "an extension ID that is not under the app ID in the local file is refused" \
-    "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.Other.Widget)" fails
+    "$(check_local io.github.jane.OldApp io.github.valfur03.Other.Widget)" fails
 expect "an extension ID that only starts with the letters of the app ID is refused" \
-    "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.RATPActivityWidget)" fails
+    "$(check_local io.github.jane.OldApp io.github.jane.OldAppWidget)" fails
 expect "an ID that the project reads as the shipping ID is refused" \
     "$(check_local io-github-valfur03-trome '')" fails
 expect "the refusal of an ID that the project reads as the shipping ID says why" \
     "$(grep -c 'is too close to a shipping ID, so the project refuses it' "$state/out")" 1
 expect "the IDs are not printed without --show" \
-    "$(check_local io.github.valfur03.RATPActivity io.github.valfur03.RATPActivity.Widget > /dev/null; grep -c 'Debug bundle IDs' "$state/out")" 0
-FAKE_LOCAL_APP=io.github.valfur03.RATPActivity FAKE_LOCAL_WIDGET=io.github.valfur03.RATPActivity.Widget \
+    "$(check_local io.github.jane.OldApp io.github.jane.OldApp.Widget > /dev/null; grep -c 'Debug bundle IDs' "$state/out")" 0
+FAKE_LOCAL_APP=io.github.jane.OldApp FAKE_LOCAL_WIDGET=io.github.jane.OldApp.Widget \
     FAKE_DEBUG_APP=%s.trome.dev FAKE_DEBUG_WIDGET=%s.widget XCODEBUILD="$state/xcodebuild" \
     "$scripts/bundle-id-check.sh" --local --show > "$state/out" 2>&1 || true
 expect "--show prints the Debug IDs that a build will use, so a mistyped setting name is seen before a Run" \
-    "$(cat "$state/out")" "Debug bundle IDs: app io.github.valfur03.RATPActivity, Live Activity io.github.valfur03.RATPActivity.Widget"
+    "$(cat "$state/out")" "Debug bundle IDs: app io.github.jane.OldApp, Live Activity io.github.jane.OldApp.Widget"
 FAKE_DEBUG_APP=%s.trome.dev FAKE_DEBUG_WIDGET=%s.widget XCODEBUILD="$state/xcodebuild" \
     "$scripts/bundle-id-check.sh" --local --show > "$state/out" 2>&1 || true
 expect "--show prints the default Debug IDs when no Debug ID is set" \

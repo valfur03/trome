@@ -1,22 +1,23 @@
-PROJECT := RATPActivity.xcodeproj
-APP_SCHEME := RATPActivity
-E2E_SCHEME := RATPActivityE2E
+PROJECT := TROME.xcodeproj
+OLD_PROJECT := RATPActivity.xcodeproj
+APP_SCHEME := TROME
+E2E_SCHEME := TROMEUITests
 BUILD_DIR := .build
 DERIVED_DATA := $(BUILD_DIR)/DerivedData
 APP_NAME := $(shell sed -n -E 's/^APP_NAME = (.+)$$/\1/p' Config/Base.xcconfig)
 APP_PATH := $(DERIVED_DATA)/Build/Products/Debug-iphonesimulator/$(APP_NAME).app
 E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
 XCODEGEN_CACHE := $(BUILD_DIR)/xcodegen-cache
-E2E_TARGET := RATPActivityUITests
+E2E_TARGET := TROMEUITests
 E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
-DOCS_SCHEME := RATPActivityDocsScreenshots
+DOCS_SCHEME := TROMEDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
-RENDER_SCHEME := RATPActivityRenderCheck
+RENDER_SCHEME := TROMERenderCheck
 RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
-CORE_PACKAGE := Packages/RATPCore
+CORE_PACKAGE := Packages/TROMECore
 NO_KEY := -xcconfig Config/NoKey.xcconfig
 MAIN_FOLDER = $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')
 OLD_PRIM_SECRETS = $(MAIN_FOLDER)/Config/Secrets.xcconfig
@@ -68,6 +69,7 @@ BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=
 EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALLOWED=NO \
 	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
+REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
 .PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
 
@@ -113,10 +115,12 @@ setup:
 	@$(MAKE) generate
 
 generate:
+	@$(REMOVE_OLD_PROJECT)
 	xcodegen generate --quiet --cache-path $(XCODEGEN_CACHE)
 	@./scripts/bundle-id-check.sh --local --show $(PROJECT)
 
 project:
+	@$(REMOVE_OLD_PROJECT)
 	@xcodegen generate --use-cache --quiet --cache-path $(XCODEGEN_CACHE)
 	@./scripts/bundle-id-check.sh --local $(PROJECT)
 
@@ -161,7 +165,7 @@ public-text-check:
 	@./scripts/public-text-check.py
 
 test:
-	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/RATPCore -Xswiftc -warnings-as-errors
+	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
 
 test-scripts:
 	@mkdir -p $(BUILD_DIR)
@@ -219,7 +223,7 @@ simulator-delete-old:
 	@$(SIM_LOCK) job $(SIMULATOR) delete-old
 
 clean:
-	rm -rf $(BUILD_DIR) $(PROJECT)
+	rm -rf $(BUILD_DIR) $(PROJECT) $(OLD_PROJECT)
 
 clean-shared-cache:
 	@./scripts/shared-cache.sh clear "$(RATP_SHARED_CACHE)"

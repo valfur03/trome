@@ -1,5 +1,5 @@
 import Foundation
-import RATPCore
+import TROMECore
 
 extension LiveActivityRenderCheck {
     static let stripStatesStation = "Lamarck - Caulaincourt"

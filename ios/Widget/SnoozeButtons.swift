@@ -1,5 +1,5 @@
 import AppIntents
-import RATPCore
+import TROMECore
 import SwiftUI
 
 struct SnoozeButtons: View {

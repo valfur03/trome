@@ -1,6 +1,6 @@
 import CoreLocation
 import os
-import RATPCore
+import TROMECore
 
 @MainActor
 final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKeeper {
@@ -50,7 +50,7 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
 }
 
 extension CoreLocationBackgroundLocationKeeper {
-    nonisolated private static let logger = Logger(subsystem: "RATPActivity", category: "BackgroundLocation")
+    nonisolated private static let logger = Logger(category: "BackgroundLocation")
 
     nonisolated private static func log(_ event: String) {
         #if DEBUG

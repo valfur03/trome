@@ -1,5 +1,5 @@
 import Foundation
-import RATPCore
+import TROMECore
 
 extension LiveActivityRenderCheck {
     typealias StationState = (station: Station, state: StationActivityAttributes.ContentState)

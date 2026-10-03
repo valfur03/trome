@@ -16,6 +16,7 @@ PERSONAL_RULES = [
     ("an email address", re.compile(r"[\w.%+-]+@[\w-]+(?:\.[\w-]+)*\.[A-Za-z]{2,}\b")),
     ("a local path", re.compile(r"/Users/")),
     ("the old name of the app", re.compile(r"RATP(?:\s|&nbsp;)+Activit", re.IGNORECASE)),
+    ("an old name of the project or of its module", re.compile(r"(?<!Caches/)RATP(?:Activity|Core)", re.IGNORECASE)),
 ]
 INTERNAL_RULES = [
     ("a backlog id", re.compile(r"\b(?:task|decision|doc)-\d+\b", re.IGNORECASE)),
@@ -38,7 +39,13 @@ SKIPPED_FILES = {
     "ios/scripts/tests/public-text-check-test.sh": "it holds the examples that this check must find",
     "server/worker-configuration.d.ts": "wrangler types generates it from the runtime types of Cloudflare, so its words are Cloudflare's",
 }
-ALLOWED_TEXTS: list[Allowed] = []
+OLD_PROJECT_NAME_REASON = ("a build or a project of the old name can still be on a Mac or on the shared Simulator, "
+                           "so this file must name it to remove it")
+ALLOWED_TEXTS: list[Allowed] = [
+    Allowed("ios/Makefile", "RATPActivity", OLD_PROJECT_NAME_REASON),
+    Allowed("ios/scripts/simulator.sh", "RATPActivity", OLD_PROJECT_NAME_REASON),
+    Allowed("ios/scripts/tests/sim-lock-test.sh", "RATPActivity", "it checks that the Simulator script removes the apps of the old name"),
+]
 
 USAGE = "Usage: public-text-check.py (it checks every file of the repo)"
 
@@ -91,7 +98,7 @@ def main(arguments):
         print(
             "public-text-check: FAILED. The files of this repo are public: write the rule and its reason instead.\n"
             "No backlog id and no word of the team's own process (the backlog is private, and a stranger cannot read it),\n"
-            "no email address other than an example one, no local path, and not the old name of the app (it is TROME).\n"
+            "no email address other than an example one, no local path, and not the old names of the app, of the Xcode project or of its module (it is TROME).\n"
             "CLAUDE.md and .claude/ may cite the backlog.\n"
             "When a hit is a normal word in its place, add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py,\n"
             "with its reason (CLAUDE.md, section \"The docs site\", rule \"Public text\").",
@@ -99,7 +106,7 @@ def main(arguments):
         )
         sys.exit(1)
     print(f"public-text-check: OK ({len(checked)} files: no backlog id, no word of the team's own process, "
-          "no personal email address, no local path, no old name of the app)")
+          "no personal email address, no local path, no old name of the app, of the project or of its module)")
 
 
 main(sys.argv[1:])

@@ -20,7 +20,7 @@ build_warnings() {
 }
 
 settings_check() {
-    printf 'name: RATPActivity\n\noptions:\n  xcodeVersion: "%s"\n' "$1" > "$state/project.yml"
+    printf 'name: TROME\n\noptions:\n  xcodeVersion: "%s"\n' "$1" > "$state/project.yml"
     "$scripts/recommended-settings-check.sh" "$state/project.yml" "Xcode $2" > /dev/null 2>&1 && echo "passes" || echo "fails"
 }
 
@@ -29,8 +29,8 @@ expect "a build with a warning fails" "$(build_warnings '{"warnings": [{"issueTy
 expect "a build with an analyzer warning fails" "$(build_warnings '{"warnings": [], "analyzerWarnings": [{"issueType": "Analyzer", "message": "leak"}]}')" "fails"
 expect "unreadable build results fail" "$(build_warnings '')" "fails"
 expect "the warning shows its file and line" \
-    "$(echo '{"warnings": [{"issueType": "Swift Compiler Warning", "message": "unused", "targetName": "RATPActivity", "sourceURL": "file:///repo/App/ContentView.swift#EndingLineNumber=11&StartingLineNumber=11"}]}' | "$scripts/build-warnings.py" 2> /dev/null || true)" \
-    "warning: [RATPActivity] ContentView.swift:12: unused"
+    "$(echo '{"warnings": [{"issueType": "Swift Compiler Warning", "message": "unused", "targetName": "TROME", "sourceURL": "file:///repo/App/ContentView.swift#EndingLineNumber=11&StartingLineNumber=11"}]}' | "$scripts/build-warnings.py" 2> /dev/null || true)" \
+    "warning: [TROME] ContentView.swift:12: unused"
 
 expect "the settings check passes with the Xcode that checked the settings" "$(settings_check 27.0 27.0)" "passes"
 expect "the settings check passes with a bug fix release of that Xcode" "$(settings_check 27.0 27.0.1)" "passes"
@@ -39,7 +39,7 @@ expect "the settings check fails with a newer minor Xcode" "$(settings_check 27.
 expect "the settings check fails with a newer major Xcode" "$(settings_check 27.0 28.0)" "fails"
 expect "the settings check passes with an older Xcode that has a two-digit minor" "$(settings_check 28.0 27.11)" "passes"
 expect "the settings check fails when the Xcode version is unknown" "$(settings_check 27.0 '')" "fails"
-printf 'name: RATPActivity\n' > "$state/project.yml"
+printf 'name: TROME\n' > "$state/project.yml"
 expect "the settings check fails when project.yml has no xcodeVersion" \
     "$("$scripts/recommended-settings-check.sh" "$state/project.yml" "Xcode 27.0" > /dev/null 2>&1 && echo "passes" || echo "fails")" "fails"
 

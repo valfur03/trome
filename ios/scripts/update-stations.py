@@ -24,7 +24,7 @@ LINE_COLORS_URL = (
 STOP_AREA_PREFIX = "IDFM:monomodalStopPlace:"
 OUTPUT = (
     Path(__file__).resolve().parent.parent
-    / "Packages/RATPCore/Sources/RATPCore/Resources/stations.json"
+    / "Packages/TROMECore/Sources/TROMECore/Resources/stations.json"
 )
 MODES = {"Metro": "metro", "RapidTransit": "rer"}
 METRO_LINES = {str(number) for number in range(1, 15)} | {"3B", "7B"}

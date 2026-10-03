@@ -1,4 +1,4 @@
-name: RATPActivity
+name: TROME
 
 options:
   xcodeVersion: "27.0"
@@ -36,18 +36,18 @@ settings:
       CODE_SIGN_STYLE: Manual
 
 packages:
-  RATPCore:
-    path: Packages/RATPCore
+  TROMECore:
+    path: Packages/TROMECore
 
 targets:
-  RATPActivity:
+  TROME:
     type: application
     platform: iOS
     sources:
       - App
     dependencies:
-      - package: RATPCore
-      - target: RATPActivityWidget
+      - package: TROMECore
+      - target: TROMEWidget
     info:
       path: App/Info.plist
       properties:
@@ -71,13 +71,13 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
 
-  RATPActivityWidget:
+  TROMEWidget:
     type: app-extension
     platform: iOS
     sources:
       - Widget
     dependencies:
-      - package: RATPCore
+      - package: TROMECore
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
     info:
@@ -96,34 +96,34 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
 
-  RATPActivityUITests:
+  TROMEUITests:
     type: bundle.ui-testing
     platform: iOS
     sources:
       - UITests
     dependencies:
-      - target: RATPActivity
+      - target: TROME
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).trome.dev.uitests
         GENERATE_INFOPLIST_FILE: YES
-        TEST_TARGET_NAME: RATPActivity
+        TEST_TARGET_NAME: TROME
 
-  RATPActivityDocsScreenshots:
+  TROMEDocsScreenshots:
     type: bundle.ui-testing
     platform: iOS
     sources:
       - DocsScreenshots
       - UITests/SimulatorNotificationService.swift
     dependencies:
-      - target: RATPActivity
+      - target: TROME
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).trome.dev.docs-screenshots
         GENERATE_INFOPLIST_FILE: YES
-        TEST_TARGET_NAME: RATPActivity
+        TEST_TARGET_NAME: TROME
 
-  RATPActivityRenderCheckHost:
+  TROMERenderCheckHost:
     type: application
     platform: iOS
     sources:
@@ -136,7 +136,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
 
-  RATPActivityRenderCheck:
+  TROMERenderCheck:
     type: bundle.unit-test
     platform: iOS
     sources:
@@ -145,51 +145,51 @@ targets:
           - Host
       - path: Widget
         excludes:
-          - RATPActivityWidgetBundle.swift
+          - TROMEWidgetBundle.swift
           - Localizable.xcstrings
     dependencies:
-      - package: RATPCore
-      - target: RATPActivityRenderCheckHost
+      - package: TROMECore
+      - target: TROMERenderCheckHost
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(RATP_BUNDLE_ID_PREFIX).trome.dev.render-check
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
-  RATPActivity:
+  TROME:
     build:
       targets:
-        RATPActivity: all
+        TROME: all
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - package: RATPCore/RATPCoreTests
+        - package: TROMECore/TROMECoreTests
 
-  RATPActivityE2E:
+  TROMEUITests:
     build:
       targets:
-        RATPActivity: all
+        TROME: all
     test:
       config: Debug
       targets:
-        - RATPActivityUITests
+        - TROMEUITests
 
-  RATPActivityDocsScreenshots:
+  TROMEDocsScreenshots:
     build:
       targets:
-        RATPActivity: all
+        TROME: all
     test:
       config: Debug
       targets:
-        - RATPActivityDocsScreenshots
+        - TROMEDocsScreenshots
 
-  RATPActivityRenderCheck:
+  TROMERenderCheck:
     build:
       targets:
-        RATPActivityRenderCheck: all
+        TROMERenderCheck: all
     test:
       config: Debug
       targets:
-        - RATPActivityRenderCheck
+        - TROMERenderCheck

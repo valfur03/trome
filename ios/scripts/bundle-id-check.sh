@@ -4,11 +4,11 @@ set -eu
 shipping_app=io.github.valfur03.trome
 shipping_widget=$shipping_app.widget
 shipping_prefix=io.github.valfur03
-app_target=RATPActivity
-widget_target=RATPActivityWidget
+app_target=TROME
+widget_target=TROMEWidget
 app_override=RATP_DEBUG_APP_BUNDLE_ID
 widget_override=RATP_DEBUG_WIDGET_BUNDLE_ID
-sample_app=io.github.valfur03.RATPActivity
+sample_app=com.example.SampleApp
 sample_widget=$sample_app.Widget
 mode=all
 show=no
@@ -20,7 +20,7 @@ if [ "$mode" = local ] && [ "${1:-}" = --show ]; then
     show=yes
     shift
 fi
-project=${1:-RATPActivity.xcodeproj}
+project=${1:-TROME.xcodeproj}
 xcodebuild=${XCODEBUILD:-xcodebuild}
 failed=0
 

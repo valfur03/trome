@@ -1,5 +1,5 @@
 import CoreGraphics
-import RATPCore
+import TROMECore
 
 struct ExpectedText: Encodable {
     enum Kind: String, Encodable {

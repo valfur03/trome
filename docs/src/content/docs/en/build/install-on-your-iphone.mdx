@@ -104,12 +104,10 @@ The project reads your settings from a file that only you have: `ios/Config/Loca
 7. In Terminal, in the project folder, create the Xcode project and open it:
 
    ```sh
-   make generate && open ios/RATPActivity.xcodeproj
+   make generate && open ios/TROME.xcodeproj
    ```
 
-8. In Xcode, in the left column, click the blue icon **RATPActivity** at the top. In the middle, under **TARGETS**, click **RATPActivity**. Click the tab **Signing & Capabilities**.
-
-   The Xcode project, its target and its scheme keep the older name **RATPActivity**: the app on your iPhone is called TROME.
+8. In Xcode, in the left column, click the blue icon **TROME** at the top. In the middle, under **TARGETS**, click **TROME**. Click the tab **Signing & Capabilities**.
 
    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
@@ -122,7 +120,7 @@ The project reads your settings from a file that only you have: `ios/Config/Loca
 11. In Terminal, find your Team ID:
 
     ```sh
-    grep -m 1 DEVELOPMENT_TEAM ios/RATPActivity.xcodeproj/project.pbxproj
+    grep -m 1 DEVELOPMENT_TEAM ios/TROME.xcodeproj/project.pbxproj
     ```
 
     It shows a line like `DEVELOPMENT_TEAM = AB12CD34EF;`. Your Team ID is the 10 letters and digits (here `AB12CD34EF`).
@@ -165,7 +163,7 @@ Apple's help: [Pair devices using a cable](https://developer.apple.com/documenta
 17. In Terminal, open the project:
 
     ```sh
-    open ios/RATPActivity.xcodeproj
+    open ios/TROME.xcodeproj
     ```
 
 18. At the top of the Xcode window, open the **run destination** menu (it shows a device name, for example "iPhone 17"). Choose **Manage Devices…**. The **Device Hub** window opens.
@@ -200,7 +198,7 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 <Steps>
 
-23. At the top of the Xcode window, open the **scheme** menu (at the left of the run destination). Choose **RATPActivity**. Then open the run destination menu and choose your iPhone.
+23. At the top of the Xcode window, open the **scheme** menu (at the left of the run destination). Choose **TROME**. Then open the run destination menu and choose your iPhone.
 
     _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
@@ -317,12 +315,12 @@ These steps take about 5 minutes. You do not need to trust the developer or turn
   2. In Terminal, in the project folder, create the Xcode project again and open it:
 
      ```sh
-     make generate && open ios/RATPActivity.xcodeproj
+     make generate && open ios/TROME.xcodeproj
      ```
 
      Do it each time, also when the file exists: the code may have changed since the last time, and the old project does not build any more.
 
-  3. At the top of the Xcode window, choose the scheme **RATPActivity** and your iPhone.
+  3. At the top of the Xcode window, choose the scheme **TROME** and your iPhone.
 
      _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
 
@@ -411,10 +409,10 @@ So you have two ways out:
      If one of them ends with `.trome.dev` or `.trome.dev.widget`, the name of its line is wrong. If not, your two IDs do not go together (step 2).
      Fix the file, save it, and run `make generate` again.
 
-  6. Open the project, choose the scheme **RATPActivity** and your iPhone, and click **Run**, as in steps 3 and 4 of [the 7-day steps](#the-app-stops-after-7-days):
+  6. Open the project, choose the scheme **TROME** and your iPhone, and click **Run**, as in steps 3 and 4 of [the 7-day steps](#the-app-stops-after-7-days):
 
      ```sh
-     open ios/RATPActivity.xcodeproj
+     open ios/TROME.xcodeproj
      ```
 
      If your iPhone has an older app with the same bundle ID, the new app replaces it.
