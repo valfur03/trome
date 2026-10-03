@@ -1,0 +1,43 @@
+---
+import Default from '@astrojs/starlight/components/Header.astro';
+import LanguageSelect from './LanguageSelect.astro';
+
+const { hasSidebar } = Astro.locals.starlightRoute;
+---
+
+{
+  hasSidebar ? (
+    <Default />
+  ) : (
+    <div class="header-without-menu">
+      <Default />
+      <div class="phone-language-select print:hidden">
+        <LanguageSelect />
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .header-without-menu {
+    display: flex;
+    gap: var(--sl-nav-gap);
+    align-items: center;
+    height: 100%;
+  }
+
+  .header-without-menu > :global(:first-child) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .phone-language-select {
+    display: flex;
+  }
+
+  @media (min-width: 50rem) {
+    .phone-language-select {
+      display: none;
+    }
+  }
+</style>

@@ -28,7 +28,10 @@ export default defineConfig({
       customCss: ['./src/styles/custom.css'],
       plugins: [starlightLinksValidator()],
       routeMiddleware: './src/route-data.ts',
-      components: { LanguageSelect: './src/components/LanguageSelect.astro' },
+      components: {
+        Header: './src/components/Header.astro',
+        LanguageSelect: './src/components/LanguageSelect.astro',
+      },
       sidebar: [
         {
           label: 'Utiliser TROME',

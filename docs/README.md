@@ -60,6 +60,7 @@ The language menu of each page then opens the same page in the other language.
 `make docs-check` fails when a riders' page exists in one language only.
 The pages for builders are in English only, in `en/build/`, and the French home links to them: [`src/site-pages.ts`](src/site-pages.ts) lists these English-only folders.
 A page in English only shows no language menu ([`src/components/LanguageSelect.astro`](src/components/LanguageSelect.astro)), because its French page does not exist.
+On a phone, Starlight puts the language menu inside the menu of the sidebar, so a page with no sidebar, such as the home, shows it in the header instead ([`src/components/Header.astro`](src/components/Header.astro)).
 
 ### The components
 
@@ -296,4 +297,6 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
 7. **Pictures.** They show the current app, and each alt text says what the picture shows, in the language of the page.
 8. **One home for each fact.** A fact is on one page, and the other pages link to it.
 9. **French.** A riders' page reads as French that a Paris rider would write, and the French and English pages say the same facts.
-10. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.
+10. **On a phone first.** Most riders read the site on an iPhone, so read each riders' page at phone width (390 pixels) before you read it on a computer.
+    Check that its language menu, its menu and its tables work there.
+11. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.
