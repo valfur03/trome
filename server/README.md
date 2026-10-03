@@ -5,7 +5,8 @@ The paths on this page start from the root of the repo, where you run the `make`
 The folder `server/` holds the server of the app.
 It holds the PRIM key, so that no build of the app that goes to another person holds it, and it counts and caps the PRIM calls of all riders in one place (decision-38 and decision-40 in the backlog).
 It runs on Cloudflare Workers, on the Free plan, with one Durable Object (a small object with its own SQLite storage) that holds the answers and the counts.
-No build of the app calls it yet.
+A Release build of the app (TestFlight or the App Store) asks it for the trains.
+A Debug build calls PRIM directly, with your own key (see [The train data key (PRIM)](../ios/README.md#the-train-data-key-prim)).
 
 What the server does:
 
