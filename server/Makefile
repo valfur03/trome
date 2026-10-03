@@ -11,7 +11,7 @@ help:
 	@echo "make server-check        Server quality gate: no local secrets file in git + generated types up to date + type check + lint + unit tests + script tests"
 	@echo "make server-dev          Run the server on this folder's own port ($(PORT); PORT=<n> for another one), with the fake secrets of server/.dev.vars"
 	@echo "make server-stop         Stop the server of this folder (make server-dev)"
-	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret)"
+	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret); it opens the default browser (LINK=1: it shows a link to open in another browser; CODE=1: a code to type on a Cloudflare page)"
 	@echo "make server-secrets      Set each secret of the production Worker in turn (STAGING=1: of the staging Worker), before its first deploy; it asks for each value"
 	@echo "make server-secret NAME=<name>  Change one secret of the production Worker (STAGING=1: of the staging Worker); it asks for the value"
 	@echo "make server-counts URL=<address>  Read the counts of the server at this address (today and the last 30 days); it asks for the owner token"
@@ -52,7 +52,7 @@ server-stop:
 	@./scripts/stop.sh
 
 server-login: server-setup
-	./node_modules/.bin/wrangler login
+	@./scripts/login.sh "$(LINK)" "$(CODE)"
 
 server-secrets: server-setup
 	@./scripts/put-secrets.sh $(if $(STAGING),staging,production)

@@ -952,7 +952,7 @@ If the active Node is too old, the server commands stop and tell you to run `nvm
 | `make server-check` | The server quality gate: no local secrets file in git, the generated types up to date, the type check, the lint, the unit tests and the tests of the server scripts. It needs no Simulator and no Cloudflare account. |
 | `make server-dev` | Runs the server on your Mac at `http://127.0.0.1:8787` (`/health` answers with no key). Only the main folder uses 8787. Each git worktree uses its own port: 8787 plus the number at the end of its folder name, or a port from 9800 to 9899 when its name ends with no number. `PORT=<n>` uses another port. Press Ctrl + C to stop it. |
 | `make server-stop` | Stops the server of this folder, when it runs in the background. |
-| `make server-login` | Logs in to your Cloudflare account, once on this Mac. It opens the browser. |
+| `make server-login` | Logs in to your Cloudflare account, once on this Mac. It opens your default browser at once. Add `LINK=1` to log in with another browser: it opens no browser, and shows a link to open in the browser of your choice on this Mac. Add `CODE=1` instead to type a code on a Cloudflare page, in any browser, also on another device. |
 | `make server-secrets` | Sets each secret of the production Worker, one after the other (see the table of the secrets below). Run it before the first deploy. It asks for each value, so no value is in your shell history or in a file. Add `STAGING=1` for the staging Worker. |
 | `make server-secret NAME=<name>` | Changes one secret of the production Worker (for example a new app token). It asks for the value. Add `STAGING=1` for the staging Worker. |
 | `make server-counts URL=<address>` | Shows the counts of the server at this address: today and the last 30 days. It asks for the owner token, so the token is not in your shell history. |
@@ -986,6 +986,11 @@ Wrangler refuses the first deploy of a Worker whose secrets are not set yet, so 
 
 1. Create a free Cloudflare account at https://dash.cloudflare.com/sign-up (no card).
 2. In the main folder, run `nvm use`, then `make server-login`, and allow the access in the browser.
+   It opens your default browser at once, and the login fails when you copy that page into another browser.
+   To log in with another browser, run `make server-login LINK=1` instead: it opens no browser, and it shows a link.
+   Copy the whole link into the browser of your choice on this Mac, log in to Cloudflare, and allow the access.
+   Keep the terminal open until it says that you are logged in.
+   If the login with the link fails, run `make server-login CODE=1`: open the address that it shows in any browser, log in, and type the code that it shows.
 3. Run `make server-secrets STAGING=1`.
    For each secret of the table above, wrangler asks "Enter a secret value:": paste the value and press Return (the value does not show).
    After the first value, wrangler asks "There doesn't seem to be a Worker called "ratp-activity-server-staging". Do you want to create a new Worker with that name and add secrets to it?": answer `y` (yes).
