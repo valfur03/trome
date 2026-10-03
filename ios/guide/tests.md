@@ -133,7 +133,7 @@ Run it before and after a change to these views, and compare what it lists: it r
 
 ## Script tests
 
-Each script of `ios/scripts/` that a `make` command runs has a test, `ios/scripts/tests/<name>-test.sh`:
+The tests of the scripts of `ios/scripts/` are in `ios/scripts/tests/`, one file for a script or for a check, named `<name>-test.sh`:
 
 ```sh
 make test-scripts
