@@ -35,9 +35,9 @@ When you share `stations.json`, an extract of it, or a work made from it, in pub
 
 - Say that the data comes from Île-de-France Mobilités and was adapted by TROME, name the two licences, and link to them.
 - Give the date of the last update of the data, as the Licence Ouverte asks: 2026-09-27.
-  It is the date of our copy, the day the script downloaded the four datasets, so `stations.json` holds what the datasets held that day.
+  It is the date of our copy, the day the script downloaded the four datasets: `stations.json` is built from what the datasets held that day.
   The dataset pages may show a later date, because Île-de-France Mobilités updates these datasets almost every day.
-  That date is for newer data than `stations.json` holds: do not give it for `stations.json`.
+  That later date is the date of newer data than `stations.json` holds, so do not give it.
 - If you make a new database from it, keep that database under the ODbL, and offer a copy of it to the people who use it or a work made from it, as the ODbL asks.
 
 A work that only shows the data, such as an app screen or a picture, may have any licence, but it still needs the first two points.
