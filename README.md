@@ -230,7 +230,7 @@ To see the list in the app, open "Testing tools" and tap "All stations". Each st
 
 To download the list again, run `make stations`. It needs Python 3. Commit the new `stations.json`.
 The script writes the day of the download in the `date` field of `stations.json`: the app shows it in the notice of the station list.
-Write the same date in [NOTICE.md](NOTICE.md), in the same commit: once as the script prints it (2026-09-27), and once in the quote of the app's English sentence (September 27, 2026).
+Write the same date in [NOTICE.md](NOTICE.md), in the same commit: twice as the script prints it (2026-09-27), in the sentence on the date of the data and in the list of what to give when you share the list, and once in the quote of the app's English sentence (September 27, 2026).
 `make test` fails when a date differs.
 Then open the four dataset pages that NOTICE.md links, check that they still show the same licences, and write the day of this check in NOTICE.md.
 

@@ -32,6 +32,7 @@ struct StationCatalogDataDateTests {
         let notice = try String(contentsOf: Self.noticeFile(), encoding: .utf8)
 
         #expect(notice.contains("The data of `stations.json` dates from \(isoDate),"))
+        #expect(notice.contains("the date of the last update of the data, as the Licence Ouverte asks: \(isoDate)."))
         #expect(notice.contains("Île-de-France Mobilités data of \(appDate), under"))
     }
 
