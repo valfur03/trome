@@ -150,6 +150,22 @@ The first lines of the page say what it gives, and to whom, so that the reader k
 - Not: "This page explains the PRIM integration."
 - But: "To show live train times, the app that you build needs a free key from PRIM, and this page shows how to get one and add it."
 
+### Write the lines a stranger reads first
+
+A stranger reads the headline or the title of a page, its tagline and its first sentence before anything else, and often instead of anything else.
+From those lines, they decide in a few seconds whether to read on.
+So write them from the reader's side, and say what the reader gets, in their own words.
+Name things that the reader knows, not the kind of product:
+
+- Not: "A weather app with forecasts by the minute."
+- But: "Know if rain will catch you on the walk home."
+
+Write at least three candidates from different angles, for example the moment when the reader needs the product, what they see, or what they no longer have to do.
+Pick one, and say why in the description of your change, so that the reviewer can judge the choice.
+What is true comes first: a line that promises more than the product does is a defect, however well it reads.
+Leave out hype, jokes and claims that the reader cannot check, such as "seamless" or "powerful": a fact that they can check persuades more.
+Then test the lines as the first point of [Review a page](#review-a-page) says.
+
 ### Pick one kind of page
 
 Each page is one of four kinds ([Diátaxis](https://diataxis.fr/)).
@@ -292,26 +308,32 @@ Write each sentence of a Markdown or MDX file on its own line, and never reflow 
 
 ## Review a page
 
-Read the page as its reader would, then go through these points.
+Start with the first screen of the page, then read the whole page as its reader would, and go through the other points.
 They help your judgement; they are not boxes to tick.
 A finding names the reader who would stumble, the place, and why.
 For example: "A builder who has never used Terminal stops at step 7: it does not say in which folder to run the command."
 
-1. **Reader and job.** The page serves one main reader, and its first lines say what it gives.
+1. **The first screen.** Before the rest, read only what the first screen shows, on the device of the page's reader: a phone, 390 pixels wide, for a riders' page.
+   Then write three answers in the review: what the page is for, whether it is for you as its reader, and where you go next.
+   A wrong or missing answer is a finding that names the reader and the line that lost them.
+2. **Reader and job.** The page serves one main reader, and its first lines say what it gives.
    A second reader gets a link, or a page of their own.
-2. **Kind and shape.** The page is one kind.
+3. **Kind and shape.** The page is one kind.
    A tutorial works from a clean start; a how-to has its goal, what you need, the steps and the result; a reference is complete and easy to scan; an explanation has no steps.
    Each step list, section, table and callout is used as [Choose the right shape](#choose-the-right-shape) says.
-3. **Each section earns its place.** For each section, ask what this reader would lose without it.
+4. **Headings and the first picture.** Each heading says what the reader finds or does there, so that the headings alone tell the page.
+   On a front page or a home, the first picture shows the product at work, close to the headline, with an alt text that says what it shows: never an empty screen.
+5. **Each section earns its place.** For each section, ask what this reader would lose without it.
    If the answer is nothing, the section goes.
-4. **Nothing for another reader.** No inner workings of the team, no history, no measurements, no task numbers, and a reason only when the reader needs it.
-5. **Voice.** A person would say each sentence aloud.
+   No page has a fixed length: it is as long as its reader's job needs, and this point and the first screen decide, not a count of lines.
+6. **Nothing for another reader.** No inner workings of the team, no history, no measurements, no task numbers, and a reason only when the reader needs it.
+7. **Voice.** A person would say each sentence aloud.
    The page is plain, direct and warm, with no filler, and its terms match the app and iOS.
-6. **True.** Each command was run, each link was opened, and the steps were followed as the reader follows them.
+8. **True.** Each command was run, each link was opened, and the steps were followed as the reader follows them.
    What could not be checked is said once.
-7. **Pictures.** They show the current app, and each alt text says what the picture shows, in the language of the page.
-8. **One home for each fact.** A fact is on one page, and the other pages link to it.
-9. **French.** A riders' page reads as French that a Paris rider would write, and the French and English pages say the same facts.
-10. **On a phone first.** Most riders read the site on an iPhone, so read each riders' page at phone width (390 pixels) before you read it on a computer.
+9. **Pictures.** They show the current app, and each alt text says what the picture shows, in the language of the page.
+10. **One home for each fact.** A fact is on one page, and the other pages link to it.
+11. **French.** A riders' page reads as French that a Paris rider would write, and the French and English pages say the same facts.
+12. **On a phone first.** Most riders read the site on an iPhone, so read each riders' page at phone width (390 pixels) before you read it on a computer.
     Check that its language menu, its menu and its tables work there.
-11. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.
+13. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.

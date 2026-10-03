@@ -1,8 +1,7 @@
 # Contributing to TROME
 
-TROME is an iPhone app that shows the next metro and RER trains of the nearest Paris station on the lock screen.
-This page is for you if you want to report a bug, ask a question, or change the code or the docs.
-It says what to do first, how to set up, and what happens to your change.
+Thanks for helping TROME, the iPhone app that shows the next metro and RER trains of the nearest Paris station on the lock screen.
+Whether you want to report a bug, ask a question, or change the code or the docs, this page shows your first step and what happens next.
 
 ## Report a bug or ask a question
 
