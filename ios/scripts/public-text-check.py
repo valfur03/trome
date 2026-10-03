@@ -17,6 +17,11 @@ PERSONAL_RULES = [
     ("a local path", re.compile(r"/Users/")),
     ("the old name of the app", re.compile(r"RATP(?:\s|&nbsp;)+Activit", re.IGNORECASE)),
     ("an old name of the project or of its module", re.compile(r"(?<!Caches/)RATP(?:Activity|Core)", re.IGNORECASE)),
+    ("an old name of a build setting or of a variable of the tools", re.compile(
+        r"RATP_(?:BUNDLE_ID_PREFIX|DEBUG_APP_BUNDLE_ID|DEBUG_WIDGET_BUNDLE_ID|WANTED_|REFUSED_ID|SHARED_CACHE"
+        r"|WIDGET_HOST_WAIT_SECONDS|SPRINGBOARD_WAIT_SECONDS|MERGE_CHECK|MERGE_E2E)", re.IGNORECASE)),
+    ("the old folder of the shared build cache", re.compile(r"Caches/RATPActivity", re.IGNORECASE)),
+    ("an old key of the docs site", re.compile(r"ratp-docs-checklist", re.IGNORECASE)),
 ]
 INTERNAL_RULES = [
     ("a backlog id", re.compile(r"\b(?:task|decision|doc)-\d+\b", re.IGNORECASE)),
@@ -43,11 +48,22 @@ SKIPPED_FILES = {
 }
 OLD_PROJECT_NAME_REASON = ("a build or a project of the old name can still be on a Mac or on the shared Simulator, "
                            "so this file must name it to remove it")
+OLD_SETTING_NAMES = ("RATP_BUNDLE_ID_PREFIX", "RATP_DEBUG_APP_BUNDLE_ID", "RATP_DEBUG_WIDGET_BUNDLE_ID")
+OLD_SETTING_NAMES_TEST_REASON = "it checks that an old setting name in Local.xcconfig stops the build with its sentence"
+OLD_SETTING_NAMES_REFUSAL = {
+    "ios/scripts/old-setting-names.sh": "a Local.xcconfig made before the settings were called TROME_ can still set an old name: "
+                                        "this script refuses it in make, the git hooks and Xcode, and says the new name",
+    "ios/project.yml": "it reads the old setting names to refuse every Debug ID when one is set, also in a build from Xcode",
+    "ios/scripts/tests/old-setting-names-test.sh": OLD_SETTING_NAMES_TEST_REASON,
+    "ios/scripts/tests/bundle-id-check-test.sh": OLD_SETTING_NAMES_TEST_REASON,
+    "ios/scripts/tests/git-hooks-test.sh": OLD_SETTING_NAMES_TEST_REASON,
+}
 ALLOWED_TEXTS: list[Allowed] = [
     Allowed("ios/Makefile", "RATPActivity", OLD_PROJECT_NAME_REASON),
     Allowed("ios/scripts/simulator.sh", "RATPActivity", OLD_PROJECT_NAME_REASON),
     Allowed("ios/scripts/tests/sim-lock-test.sh", "RATPActivity", "it checks that the Simulator script removes the apps of the old name"),
     Allowed("ios/scripts/tests/claude-rules-test.sh", "Agent", "the name of the tool of Claude Code that starts a subagent"),
+    *(Allowed(path, name, reason) for path, reason in OLD_SETTING_NAMES_REFUSAL.items() for name in OLD_SETTING_NAMES),
 ]
 
 USAGE = "Usage: public-text-check.py (it checks every file of the repo)"
@@ -101,7 +117,8 @@ def main(arguments):
         print(
             "public-text-check: FAILED. The files of this repo are public: write the rule and its reason instead.\n"
             "No backlog id and no word of the team's own process (the backlog is private, and a stranger cannot read it),\n"
-            "no email address other than an example one, no local path, and not the old names of the app, of the Xcode project or of its module (it is TROME).\n"
+            "no email address other than an example one, no local path, and not the old names of the app, of the Xcode project or of its module (it is TROME),\n"
+            "nor the old RATP_ names of the build settings and of the variables of the tools, the old build cache folder or the old key of the docs site (they use TROME now).\n"
             "CLAUDE.md and .claude/ may cite the backlog.\n"
             "When a hit is a normal word in its place, add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py,\n"
             "with its reason (CLAUDE.md, rule \"Public text\").",
@@ -109,7 +126,7 @@ def main(arguments):
         )
         sys.exit(1)
     print(f"public-text-check: OK ({len(checked)} files: no backlog id, no word of the team's own process, "
-          "no personal email address, no local path, no old name of the app, of the project or of its module)")
+          "no personal email address, no local path, no old name of the app, of the project, of its module, of a setting or of a tool)")
 
 
 main(sys.argv[1:])

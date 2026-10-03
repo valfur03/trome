@@ -82,7 +82,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 - **No deploy and no account.** Only the prompter runs `make server-login`, `make server-secrets`, `make server-secret`, `make server-deploy-staging`, `make server-deploy` and `make server-counts` on a deployed server, with his Cloudflare account and his owner token.
   An agent never runs them, never logs in to Cloudflare, and never reads the real secrets.
 - **The shared build cache.** Only the prompter runs `make clean-shared-cache`.
-  Never delete `~/Library/Caches/RATPActivity/` by hand: a build that runs at that moment fails.
+  Never delete `~/Library/Caches/TROME/` by hand: a build that runs at that moment fails.
 - **The prompter's main folder.** No agent commits, stashes or discards the changes of the prompter's main folder without the prompter.
 
 ## Flaky tests

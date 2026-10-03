@@ -79,7 +79,7 @@ app_plist="$build/DerivedData/Build/Products/Debug-iphonesimulator/$app_name.app
 fake_prefix="LEAKCHECK$(date +%s)$$"
 old_fake="${fake_prefix}A"
 fake="${fake_prefix}B"
-shared_cache="${RATP_SHARED_CACHE:?}"
+shared_cache="${TROME_SHARED_CACHE:?}"
 
 fail() {
     echo "live-key-check: FAILED: $1" >&2

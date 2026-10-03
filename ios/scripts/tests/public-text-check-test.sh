@@ -45,8 +45,8 @@ file ios/package.json "\"micromark-factory-space\": \"^2.0.0\", \"package-manage
 file ios/scripts/tests/git-test.sh "export GIT_AUTHOR_EMAIL=test@example.com OTHER=jane@mail.example ALSO=ci@build.test"
 file ios/scripts/tests/cache-test.sh "[ -f \"\$cache/users/\$build\" ]"
 file ios/App/Bundle.swift "let id = \"io.github.trome\"; let task = Task { }; let decision = \"doc\""
-file ios/project.yml "name: TROME; packages: TROMECore; RATP_DEBUG_APP_BUNDLE_ID; RATP_SIM_SLOT; /tmp/ratp-sim.lock; the RATP network; RATP-Shared; git clone https://github.com/owner/ratp-activity-ios"
-file README.md "The shared build cache is in ~/Library/Caches/RATPActivity/."
+file ios/project.yml "name: TROME; packages: TROMECore; TROME_DEBUG_APP_BUNDLE_ID; RATP_SIM_SLOT; RATP_MERGE_LOCK; /tmp/ratp-sim.lock; the RATP network; RATP-Shared; git clone https://github.com/owner/ratp-activity-ios"
+file README.md "The shared build cache is in ~/Library/Caches/TROME/. The trains of RATP-SIV and RATP.OCTAVE."
 file ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json "{ \"filename\" : \"AppIcon@2x.png\" }, { \"filename\" : \"AppIcon@3x.png\" } git clone git@github.com:owner/trome.git"
 expect "a public text with no internal word, no personal data and no local path passes" "$(check)" "passes"
 expect "it says how many files it checked" "$(grep -c "OK (10 files" "$state/out")" "1"
@@ -124,6 +124,24 @@ expect "it finds the old project name inside a longer name" "$(hit 'ios/scripts/
 expect "it finds the old name of the module" "$(hit 'ios/App/Model.swift:1: an old name of the project or of its module: "RATPCore"')" "1"
 expect "it lets the Simulator script, its test and the Makefile name the old project, to remove its leftovers" \
     "$(grep -c "simulator.sh\|sim-lock-test.sh\|Makefile" "$state/out")" "0"
+
+reset_repo
+file README.md "Set RATP_BUNDLE_ID_PREFIX, then RATP_SHARED_CACHE=/tmp/cache make build."
+file CLAUDE.md "The build cache is in ~/Library/Caches/RATPActivity/."
+file docs/src/components/Checklist.astro "const key = \`ratp-docs-checklist:\${id}\`;"
+file ios/project.yml "RATP_WANTED_APP_ID: \$(RATP_REFUSED_ID_x)"
+file ios/scripts/merge.sh "check=\${RATP_MERGE_CHECK:-make check} e2e=\${RATP_MERGE_E2E:-make e2e}"
+file ios/scripts/simulator.sh "\${RATP_SPRINGBOARD_WAIT_SECONDS:-60} \${RATP_WIDGET_HOST_WAIT_SECONDS:-240}"
+file ios/scripts/old-setting-names.sh "old_names=\"RATP_BUNDLE_ID_PREFIX RATP_DEBUG_APP_BUNDLE_ID RATP_DEBUG_WIDGET_BUNDLE_ID\""
+file ios/scripts/tests/git-hooks-test.sh "printf 'RATP_DEBUG_APP_BUNDLE_ID = x'"
+expect "the old names of the settings, of the tool variables, of the cache folder and of the docs key fail, except in the refusal and its tests" "$(check)" "fails"
+expect "it finds an old setting name in the README" "$(hit 'README.md:1: an old name of a build setting or of a variable of the tools: "RATP_BUNDLE_ID_PREFIX"')" "1"
+expect "it finds an old variable of the tools" "$(hit 'README.md:1: an old name of a build setting or of a variable of the tools: "RATP_SHARED_CACHE"')" "1"
+expect "it finds the old cache folder, once" "$(grep -c "CLAUDE.md:1:" "$state/out") $(hit 'CLAUDE.md:1: the old folder of the shared build cache: "Caches/RATPActivity"')" "1 1"
+expect "it finds the old key of the docs site" "$(hit 'docs/src/components/Checklist.astro:1: an old key of the docs site: "ratp-docs-checklist"')" "1"
+expect "it finds the old helper settings of the project, outside the refusal" "$(grep -c "^public-text-check: ios/project.yml:1:" "$state/out")" "2"
+expect "it finds the old variables of merge and of the Simulator script" "$(grep -c "merge.sh:1:\|simulator.sh:1:" "$state/out")" "4"
+expect "it lets the refusal and its tests name the old setting names" "$(grep -c "old-setting-names.sh\|git-hooks-test.sh" "$state/out")" "0"
 
 reset_repo
 file ios/scripts/public-text-check.py "INTERNAL_RULES = [\"prompter\", \"/Users/\"]"

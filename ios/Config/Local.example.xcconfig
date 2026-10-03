@@ -8,7 +8,7 @@ DEVELOPMENT_TEAM =
 // The app gets the bundle ID <prefix>.trome.dev, and its Live Activity <prefix>.trome.dev.widget.
 // They end with .dev, so they are never the App Store ID of the app (io.github.valfur03.trome), whatever your prefix.
 // So your free Apple ID can never register the App Store ID: Apple would then never give it to the paid account of the app.
-RATP_BUNDLE_ID_PREFIX = com.example
+TROME_BUNDLE_ID_PREFIX = com.example
 
 // Optional: the full bundle IDs of your Debug builds, instead of <prefix>.trome.dev and <prefix>.trome.dev.widget.
 // Use them to reuse two bundle IDs that your free Apple ID already registered: a free Apple ID can register only 10 in 7 days.
@@ -20,5 +20,5 @@ RATP_BUNDLE_ID_PREFIX = com.example
 // Never put the App Store IDs here (io.github.valfur03.trome or io.github.valfur03.trome.widget, in any capitals): a free Apple ID that signs them takes them for good.
 // make generate refuses them, and a Run in Xcode gets an ID that starts with SHIPPING_ID_REFUSED, so Apple cannot register it.
 // After a change, run make generate: it prints the two IDs that Xcode will use, so check them before you click Run.
-// RATP_DEBUG_APP_BUNDLE_ID = io.github.your-github-name.oldapp
-// RATP_DEBUG_WIDGET_BUNDLE_ID = io.github.your-github-name.oldapp.widget
+// TROME_DEBUG_APP_BUNDLE_ID = io.github.your-github-name.oldapp
+// TROME_DEBUG_WIDGET_BUNDLE_ID = io.github.your-github-name.oldapp.widget

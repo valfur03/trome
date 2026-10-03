@@ -2,8 +2,8 @@
 set -eu
 
 shared_name_pattern='RATP-Shared(-Small)?(-[0-9]+)?'
-springboard_wait_seconds=${RATP_SPRINGBOARD_WAIT_SECONDS:-60}
-widget_host_wait_seconds=${RATP_WIDGET_HOST_WAIT_SECONDS:-240}
+springboard_wait_seconds=${TROME_SPRINGBOARD_WAIT_SECONDS:-60}
+widget_host_wait_seconds=${TROME_WIDGET_HOST_WAIT_SECONDS:-240}
 widget_host_log_seconds=60
 slot=${RATP_SIM_SLOT:-1}
 

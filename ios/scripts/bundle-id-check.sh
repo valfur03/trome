@@ -6,8 +6,8 @@ shipping_widget=$shipping_app.widget
 shipping_prefix=io.github.valfur03
 app_target=TROME
 widget_target=TROMEWidget
-app_override=RATP_DEBUG_APP_BUNDLE_ID
-widget_override=RATP_DEBUG_WIDGET_BUNDLE_ID
+app_override=TROME_DEBUG_APP_BUNDLE_ID
+widget_override=TROME_DEBUG_WIDGET_BUNDLE_ID
 sample_app=com.example.SampleApp
 sample_widget=$sample_app.Widget
 mode=all
@@ -22,6 +22,7 @@ if [ "$mode" = local ] && [ "${1:-}" = --show ]; then
 fi
 project=${1:-TROME.xcodeproj}
 xcodebuild=${XCODEBUILD:-xcodebuild}
+old_setting_names="$(dirname "$0")/old-setting-names.sh"
 failed=0
 
 fail() {
@@ -53,11 +54,16 @@ is_shipping() {
 }
 
 check_local() {
-    configured=$("$xcodebuild" -showBuildSettings -project "$project" -target "$app_target" -configuration Debug 2> /dev/null \
-        | awk -v app="$app_override" -v widget="$widget_override" '
-            $1 == app || $1 == widget || $1 == "APP_BUNDLE_ID" || $1 == "WIDGET_BUNDLE_ID" { print $1, $3 }
-        ')
+    all_settings=$("$xcodebuild" -showBuildSettings -project "$project" -target "$app_target" -configuration Debug 2> /dev/null || true)
+    configured=$(printf '%s\n' "$all_settings" | awk -v app="$app_override" -v widget="$widget_override" '
+        $1 == app || $1 == widget || $1 == "APP_BUNDLE_ID" || $1 == "WIDGET_BUNDLE_ID" { print $1, $3 }
+    ')
     [ -n "$configured" ] || { fail "could not read the Debug build settings of $app_target"; return; }
+    refusals=$(printf '%s\n' "$all_settings" | "$old_setting_names" settings) || {
+        printf '%s\n' "$refusals" | sed 's/^/bundle-id-check: FAILED: /' >&2
+        failed=1
+        return 0
+    }
     for setting in "$app_override" "$widget_override"; do
         value=$(echo "$configured" | awk -v name="$setting" '$1 == name { print $2 }')
         if [ -n "$value" ] && is_shipping "$value"; then
@@ -108,6 +114,18 @@ check_override_refused() {
     done
 }
 
+check_old_name_refused() {
+    name=$1
+    debug=$(settings -configuration Debug "$name=$sample_app")
+    [ -n "$debug" ] || { fail "could not read the Debug build settings (the old name $name set)"; return; }
+    for target_and_id in $(echo "$debug" | awk '{ print $1 "=" $2 }'); do
+        case ${target_and_id#*=} in
+            OLD_SETTING_NAME_REFUSED*) ;;
+            *) fail "a Debug build with the old name $name set has the ID ${target_and_id#*=} for ${target_and_id%%=*}: the project must refuse every Debug ID, also when Xcode builds with no make command" ;;
+        esac
+    done
+}
+
 check_override_used() {
     label=$1
     expected_app=$2
@@ -146,11 +164,14 @@ fi
 upper_app=$(echo "$shipping_app" | tr '[:lower:]' '[:upper:]')
 upper_widget=$(echo "$shipping_widget" | tr '[:lower:]' '[:upper:]')
 check_debug "the IDs set in ios/Config"
-check_debug "the prefix $shipping_prefix" RATP_BUNDLE_ID_PREFIX="$shipping_prefix"
+check_debug "the prefix $shipping_prefix" TROME_BUNDLE_ID_PREFIX="$shipping_prefix"
 check_override_refused "the shipping app ID as the app ID" "$app_override=$shipping_app"
 check_override_refused "the shipping extension ID as the extension ID" "$widget_override=$shipping_widget"
 check_override_refused "the shipping IDs in capitals" "$app_override=$upper_app" "$widget_override=$upper_widget"
 check_override_refused "the shipping IDs swapped" "$app_override=$shipping_widget" "$widget_override=$shipping_app"
+for old_name in $("$old_setting_names" names); do
+    check_old_name_refused "$old_name"
+done
 check_override_used "only an app ID set" "$sample_app" "$sample_app.widget" "$app_override=$sample_app"
 check_override_used "both IDs set" "$sample_app" "$sample_widget" "$app_override=$sample_app" "$widget_override=$sample_widget"
 check_release "the IDs set in ios/Config"

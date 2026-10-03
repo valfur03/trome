@@ -3,8 +3,8 @@ set -eu
 
 scripts=$(cd "$(dirname "$0")" && pwd)
 target=main
-check_command=${RATP_MERGE_CHECK:-make check}
-e2e_command=${RATP_MERGE_E2E:-make e2e}
+check_command=${TROME_MERGE_CHECK:-make check}
+e2e_command=${TROME_MERGE_E2E:-make e2e}
 merge_lock=${RATP_MERGE_LOCK:-/tmp/ratp-merge.lock}
 owner_changes="These changes belong to the owner of that folder. Ask the owner to commit, stash or drop them, and run 'make merge' again when the owner says that the folder is clear. Do not touch them yourself."
 

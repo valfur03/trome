@@ -222,7 +222,7 @@ That change can only be made after step 1, and it is ready before you start this
    It has 10 letters and digits.
 
 3. Open `ios/Config/Local.xcconfig`, your own settings file, which git ignores, and replace the value of `DEVELOPMENT_TEAM` with the Team ID of the paid team.
-   If the file still sets `RATP_DEBUG_APP_BUNDLE_ID` or `RATP_DEBUG_WIDGET_BUNDLE_ID`, the IDs of your old Debug builds, delete those lines.
+   If the file still sets `TROME_DEBUG_APP_BUNDLE_ID` or `TROME_DEBUG_WIDGET_BUNDLE_ID`, the IDs of your old Debug builds, delete those lines.
    Save the file.
 
 4. Get the latest `main`, which has the change of the repo that signs the release build with your paid team, then make the Xcode project again:
@@ -237,7 +237,7 @@ That change can only be made after step 1, and it is ready before you start this
 
 5. Click **Run** in Xcode once, with your iPhone connected, to check that the Debug build still installs.
    If Xcode says that a Debug ID is not available, your free team still holds it.
-   Set `RATP_BUNDLE_ID_PREFIX` in `ios/Config/Local.xcconfig` to a prefix that your free team never used, then run `make generate` and **Run** again.
+   Set `TROME_BUNDLE_ID_PREFIX` in `ios/Config/Local.xcconfig` to a prefix that your free team never used, then run `make generate` and **Run** again.
    Or wait about a week after your last build with the free team, [as for the App Store ID](#2-create-the-app-in-app-store-connect), and try again.
 
 </Steps>

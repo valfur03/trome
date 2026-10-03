@@ -584,7 +584,7 @@ So Xcode can show an error for Release in Signing & Capabilities: leave it, and 
 `make bundle-id-check` (part of `make check`) checks both.
 A free Apple ID registers at most 10 bundle IDs in 7 days, and each one expires after 7 days.
 When Xcode says "Your maximum App ID limit has been reached" or "No profiles for ... were found", wait, or reuse two bundle IDs that Xcode already registered on your Mac: the tutorial shows the command that lists them, with the date when each one expires.
-To reuse them, set `RATP_DEBUG_APP_BUNDLE_ID` and `RATP_DEBUG_WIDGET_BUNDLE_ID` in `ios/Config/Local.xcconfig` (see `ios/Config/Local.example.xcconfig`), then run `make generate`.
+To reuse them, set `TROME_DEBUG_APP_BUNDLE_ID` and `TROME_DEBUG_WIDGET_BUNDLE_ID` in `ios/Config/Local.xcconfig` (see `ios/Config/Local.example.xcconfig`), then run `make generate`.
 `make generate` then prints the two bundle IDs that Xcode will use: check them before you click Run, because a mistyped setting name is ignored.
 They are the full bundle IDs of your Debug builds, written as is, and the ID of the Live Activity must start with the ID of the app and a dot; with only the first one set, the Live Activity gets the app ID followed by `.widget`.
 `make generate` and `make bundle-id-check` refuse the App Store IDs there, in any capitals, and the git hooks print the same refusal.

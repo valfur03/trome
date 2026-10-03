@@ -103,7 +103,7 @@ chmod +x "$repo/.git/hooks/reference-transaction"
 
 passing_check="$(step_recorder check)"
 passing_e2e="$(step_recorder e2e) && \"\$SCRIPTS/sim-lock.sh\" job sh -c 'echo nested-job >> \"\$FAKE_SIM_STATE/steps\"'"
-export RATP_MERGE_CHECK="$passing_check" RATP_MERGE_E2E="$passing_e2e"
+export TROME_MERGE_CHECK="$passing_check" TROME_MERGE_E2E="$passing_e2e"
 
 new_task ok
 commit "$state/ok" ok ok
@@ -172,9 +172,9 @@ git -C "$repo" checkout -q -- base
 new_task late
 commit "$state/late" late "from the task"
 before=$(rev main)
-RATP_MERGE_CHECK="$passing_check && echo 'not committed' > '$repo/late'"
+TROME_MERGE_CHECK="$passing_check && echo 'not committed' > '$repo/late'"
 merge late
-RATP_MERGE_CHECK=$passing_check
+TROME_MERGE_CHECK=$passing_check
 rm "$repo/late"
 expect "make merge fails when the folder of main gets changes on the files of the task during the run" "$status" "1"
 expect "make merge leaves main unchanged when it cannot update the folder of main" "$(rev main)" "$before"
@@ -246,9 +246,9 @@ expect "make merge runs the E2E suite when the task moves app code into docs" "$
 new_task gate
 commit "$state/gate" gate gate
 before=$(rev main)
-RATP_MERGE_CHECK="$passing_check && exit 1"
+TROME_MERGE_CHECK="$passing_check && exit 1"
 merge gate
-RATP_MERGE_CHECK=$passing_check
+TROME_MERGE_CHECK=$passing_check
 expect "make merge fails when the quality gate fails" "$status" "1"
 expect "make merge does not run the E2E suite after a failed gate" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
 expect "make merge leaves main unchanged when the gate fails" "$(rev main)" "$before"
@@ -257,9 +257,9 @@ expect "make merge frees the Simulator lock when the gate fails" "$(lock_state)"
 
 new_task e2e
 commit "$state/e2e" e2e e2e
-RATP_MERGE_E2E="$passing_e2e && exit 1"
+TROME_MERGE_E2E="$passing_e2e && exit 1"
 merge e2e
-RATP_MERGE_E2E=$passing_e2e
+TROME_MERGE_E2E=$passing_e2e
 expect "make merge fails when the E2E suite fails" "$status" "1"
 expect "make merge leaves main unchanged when the E2E suite fails" "$(rev main)" "$before"
 expect "make merge says that the E2E suite failed" "$(contains "$state/e2e.log" "the step 'full E2E suite' failed")" "yes"
@@ -310,7 +310,7 @@ commit "$state/first" first first
 commit "$state/second" second second
 before=$(rev main)
 : > "$state/steps"
-RATP_MERGE_CHECK="sleep 2 && $passing_check"
+TROME_MERGE_CHECK="sleep 2 && $passing_check"
 start_merge first
 sleep 1
 start_merge second

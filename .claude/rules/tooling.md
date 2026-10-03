@@ -10,7 +10,7 @@ These rules are for a change to the scripts or the `Makefile` files of the app.
 
 ## The shared build cache
 
-All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RATPActivity/`.
+All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/TROME/`.
 It holds no code of the app, so two tasks never mix their build products.
 
 - `make clean` does not touch it.

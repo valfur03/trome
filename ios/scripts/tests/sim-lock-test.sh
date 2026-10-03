@@ -319,7 +319,7 @@ echo "Allow TROME to also use your location even when you are not using the app?
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job closes a system popup that an earlier job left on the Simulator" "$(test -e "$state/popup.$default" && echo shown || true)" ""
 expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default" 2> /dev/null || echo "no restart")" ""
-expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 RATP_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
+expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 TROME_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
 chronod_line() {
     echo "2026-10-01 15:31:19.389 Df chronod[28175:eb6459] [com.apple.chrono:taskservice] $1"
@@ -347,7 +347,7 @@ expect "a job runs at once when the widget host has emptied its queue" "$(wait_f
 chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.trome.dev::com.example.trome.dev.widget>.84AB4E5B; pendingTasks.count = 0" > "$state/chronod-log.$default.next"
 expect "a job waits while the widget host has tasks queued, then runs" "$(wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host"
 chronod_line "Would pop task, but all extensions are busy, namely [com.example.trome.dev::com.example.trome.dev.widget]" > "$state/chronod-log.$default"
-expect "a job says that it waits for the widget host before it goes on at the limit, also when the limit is reached at the first check" "$(RATP_WIDGET_HOST_WAIT_SECONDS=0 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
+expect "a job says that it waits for the widget host before it goes on at the limit, also when the limit is reached at the first check" "$(TROME_WIDGET_HOST_WAIT_SECONDS=0 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
 
 language_at_restart() {
     cat "$state/language-at-springboard-restart.$default" 2> /dev/null || echo "no restart"

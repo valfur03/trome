@@ -22,7 +22,7 @@ NO_KEY := -xcconfig Config/NoKey.xcconfig
 MAIN_FOLDER = $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')
 OLD_PRIM_SECRETS = $(MAIN_FOLDER)/Config/Secrets.xcconfig
 PRIM_SECRETS ?= $(firstword $(wildcard $(MAIN_FOLDER)/ios/Config/Secrets.xcconfig $(OLD_PRIM_SECRETS)) $(MAIN_FOLDER)/ios/Config/Secrets.xcconfig)
-RATP_SHARED_CACHE ?= $(HOME)/Library/Caches/RATPActivity
+TROME_SHARED_CACHE ?= $(HOME)/Library/Caches/TROME
 HOST_ARCH := $(shell uname -m)
 
 ifeq ($(SMALL),1)
@@ -55,8 +55,8 @@ endif
 USE_SHARED_CACHE :=
 SHARED_SDK_MODULES :=
 else
-USE_SHARED_CACHE := ./scripts/shared-cache.sh use "$(RATP_SHARED_CACHE)"
-SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH="$(RATP_SHARED_CACHE)/SDKExplicitPrecompiledModules"
+USE_SHARED_CACHE := ./scripts/shared-cache.sh use "$(TROME_SHARED_CACHE)"
+SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH="$(TROME_SHARED_CACHE)/SDKExplicitPrecompiledModules"
 endif
 
 XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
@@ -186,7 +186,7 @@ recommended-settings-check:
 	@./scripts/recommended-settings-check.sh project.yml "$$(xcodebuild -version | head -1)"
 
 live-key-check: project
-	@RATP_SHARED_CACHE="$(RATP_SHARED_CACHE)" ./scripts/live-key-check.sh
+	@TROME_SHARED_CACHE="$(TROME_SHARED_CACHE)" ./scripts/live-key-check.sh
 
 run: build
 	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
@@ -231,7 +231,7 @@ clean:
 	rm -rf $(BUILD_DIR) $(PROJECT) $(OLD_PROJECT)
 
 clean-shared-cache:
-	@./scripts/shared-cache.sh clear "$(RATP_SHARED_CACHE)"
+	@./scripts/shared-cache.sh clear "$(TROME_SHARED_CACHE)"
 
 merge:
 	@./scripts/merge.sh

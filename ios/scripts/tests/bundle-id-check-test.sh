@@ -21,14 +21,17 @@ prefix=com.example
 app_override=${FAKE_LOCAL_APP:-}
 widget_override=${FAKE_LOCAL_WIDGET:-}
 config=
+old_setting=${FAKE_LOCAL_OLD_SETTING:-}
 for argument in "$@"; do
     case $argument in
-        RATP_BUNDLE_ID_PREFIX=*) prefix=${argument#*=} ;;
-        RATP_DEBUG_APP_BUNDLE_ID=*) app_override=${argument#*=} ;;
-        RATP_DEBUG_WIDGET_BUNDLE_ID=*) widget_override=${argument#*=} ;;
+        TROME_BUNDLE_ID_PREFIX=*) prefix=${argument#*=} ;;
+        TROME_DEBUG_APP_BUNDLE_ID=*) app_override=${argument#*=} ;;
+        TROME_DEBUG_WIDGET_BUNDLE_ID=*) widget_override=${argument#*=} ;;
+        RATP_*=*) old_setting="${argument%%=*} = ${argument#*=}" ;;
         Debug | Release) config=$argument ;;
     esac
 done
+[ -z "$old_setting" ] || [ "${FAKE_OLD_GUARD:-yes}" = no ] || prefix=OLD_SETTING_NAME_REFUSED-run-make-generate
 guard() {
     key=$(echo "$1" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9\n' '_')
     if [ "${FAKE_GUARD:-yes}" = yes ] && { [ "$key" = io_github_valfur03_trome ] || [ "$key" = io_github_valfur03_trome_widget ]; }; then
@@ -37,7 +40,11 @@ guard() {
         echo "$1"
     fi
 }
-if [ "$config" = Debug ]; then
+if [ "$config" = Debug ] && [ "$prefix" = OLD_SETTING_NAME_REFUSED-run-make-generate ]; then
+    app=$prefix.trome.dev
+    widget=$app.widget
+    style=Automatic
+elif [ "$config" = Debug ]; then
     app=$(guard "${app_override:-$(printf "$FAKE_DEBUG_APP" "$prefix")}")
     if [ -n "$widget_override" ] && [ "${FAKE_READS_WIDGET:-yes}" = yes ]; then
         widget=$(guard "$widget_override")
@@ -51,8 +58,9 @@ else
     style=$FAKE_RELEASE_STYLE
 fi
 printf 'Build settings for action build and target TROME:\n'
-[ -z "$app_override" ] || printf '    RATP_DEBUG_APP_BUNDLE_ID = %s\n' "$app_override"
-[ -z "$widget_override" ] || printf '    RATP_DEBUG_WIDGET_BUNDLE_ID = %s\n' "$widget_override"
+[ -z "$app_override" ] || printf '    TROME_DEBUG_APP_BUNDLE_ID = %s\n' "$app_override"
+[ -z "$widget_override" ] || printf '    TROME_DEBUG_WIDGET_BUNDLE_ID = %s\n' "$widget_override"
+[ -z "$old_setting" ] || printf '    %s\n' "$old_setting"
 printf '    APP_BUNDLE_ID = %s\n    WIDGET_BUNDLE_ID = %s\n' "$app" "$widget"
 printf '    CODE_SIGN_STYLE = %s\n    PRODUCT_BUNDLE_IDENTIFIER = %s\n' "$style" "$app"
 printf 'Build settings for action build and target TROMEWidget:\n    CODE_SIGN_STYLE = %s\n    PRODUCT_BUNDLE_IDENTIFIER = %s\n' "$style" "$widget"
@@ -95,7 +103,7 @@ expect "only an app ID set in the local file passes" "$(check_local io.github.ja
 expect "the shipping app ID as the app ID in the local file is refused" \
     "$(check_local io.github.valfur03.trome '')" fails
 expect "the refusal says why in one sentence" \
-    "$(grep -c 'RATP_DEBUG_APP_BUNDLE_ID in ios/Config/Local.xcconfig is io.github.valfur03.trome, a shipping ID: a free Apple account that signs it registers it for good' "$state/out")" 1
+    "$(grep -c 'TROME_DEBUG_APP_BUNDLE_ID in ios/Config/Local.xcconfig is io.github.valfur03.trome, a shipping ID: a free Apple account that signs it registers it for good' "$state/out")" 1
 expect "the shipping extension ID as the extension ID in the local file is refused" \
     "$(check_local '' io.github.valfur03.trome.widget)" fails
 expect "the shipping ID in capitals in the local file is refused" \
@@ -110,6 +118,18 @@ expect "an ID that the project reads as the shipping ID is refused" \
     "$(check_local io-github-valfur03-trome '')" fails
 expect "the refusal of an ID that the project reads as the shipping ID says why" \
     "$(grep -c 'is too close to a shipping ID, so the project refuses it' "$state/out")" 1
+for name in $("$scripts/old-setting-names.sh" names); do
+    expect "the old name $name in the local file is refused" \
+        "$(FAKE_LOCAL_OLD_SETTING="$name = io.github.jane.OldApp" check_local '' '')" fails
+    expect "the refusal of $name says the new name in one sentence" \
+        "$(grep -c "^bundle-id-check: FAILED: ios/Config/Local.xcconfig sets $name, an old name: change the name only, to TROME_${name#RATP_}, and keep the value.$" "$state/out")" 1
+done
+expect "an old name with a quoted value in the local file is refused" \
+    "$(FAKE_LOCAL_OLD_SETTING='RATP_DEBUG_APP_BUNDLE_ID = "io.github.jane.OldApp"' check_local '' '')" fails
+expect "an old name next to the new names in the local file is refused" \
+    "$(FAKE_LOCAL_OLD_SETTING='RATP_DEBUG_WIDGET_BUNDLE_ID = io.github.jane.OldApp.Widget' check_local io.github.jane.OldApp io.github.jane.OldApp.Widget)" fails
+expect "a project that lets an old setting name give a Debug ID fails" \
+    "$(FAKE_OLD_GUARD=no check %s.trome.dev %s.widget io.github.valfur03.trome Manual)" fails
 expect "the IDs are not printed without --show" \
     "$(check_local io.github.jane.OldApp io.github.jane.OldApp.Widget > /dev/null; grep -c 'Debug bundle IDs' "$state/out")" 0
 FAKE_LOCAL_APP=io.github.jane.OldApp FAKE_LOCAL_WIDGET=io.github.jane.OldApp.Widget \

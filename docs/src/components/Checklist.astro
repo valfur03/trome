@@ -17,7 +17,7 @@ const { id, kind = 'steps' } = Astro.props;
 <script>
   import { parseTicks, progressLabel, serializeTicks, type ChecklistKind } from './checklist.ts';
 
-  const storageKey = (id: string) => `ratp-docs-checklist:${id}`;
+  const storageKey = (id: string) => `trome-docs-checklist:${id}`;
 
   function readSaved(key: string): string | null {
     try {

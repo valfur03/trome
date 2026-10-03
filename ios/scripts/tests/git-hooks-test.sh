@@ -25,7 +25,8 @@ cat > "$state/bin/xcodebuild" << 'EOF'
 #!/bin/sh
 app=${FAKE_LOCAL_APP:-com.example.trome.dev}
 printf 'Build settings for action build and target TROME:\n'
-[ -z "${FAKE_LOCAL_APP:-}" ] || printf '    RATP_DEBUG_APP_BUNDLE_ID = %s\n' "$app"
+[ -z "${FAKE_LOCAL_APP:-}" ] || printf '    TROME_DEBUG_APP_BUNDLE_ID = %s\n' "$app"
+[ -z "${FAKE_LOCAL_OLD_SETTING:-}" ] || printf '    %s\n' "$FAKE_LOCAL_OLD_SETTING"
 printf '    APP_BUNDLE_ID = %s\n    WIDGET_BUNDLE_ID = %s.widget\n' "$app" "$app"
 EOF
 chmod +x "$state/bin/xcodebuild"
@@ -60,7 +61,7 @@ clean() {
 git init -q -b main "$repo"
 mkdir -p "$repo/ios/scripts/git-hooks" "$repo/ios/App"
 cp "$ios/Makefile" "$repo/ios/"
-cp "$ios/scripts/xcode-project-hook.sh" "$ios/scripts/git-hooks.sh" "$ios/scripts/bundle-id-check.sh" "$repo/ios/scripts/"
+cp "$ios/scripts/xcode-project-hook.sh" "$ios/scripts/git-hooks.sh" "$ios/scripts/bundle-id-check.sh" "$ios/scripts/old-setting-names.sh" "$repo/ios/scripts/"
 cp "$ios/scripts/git-hooks/"* "$repo/ios/scripts/git-hooks/"
 cp "$ios/../.gitignore" "$repo/"
 echo "name: TROME" > "$repo/ios/project.yml"
@@ -132,7 +133,14 @@ git -C "$repo" checkout -q feature
 status=0
 FAKE_LOCAL_APP=io.github.valfur03.trome git -C "$repo" checkout -q main 2> "$state/shipping.err" || status=$?
 expect "a shipping ID in the local file does not fail the checkout" "$status" "0"
-expect "a shipping ID in the local file is refused by the hook" "$(grep -c "RATP_DEBUG_APP_BUNDLE_ID in ios/Config/Local.xcconfig is io.github.valfur03.trome, a shipping ID" "$state/shipping.err")" "1"
+expect "a shipping ID in the local file is refused by the hook" "$(grep -c "TROME_DEBUG_APP_BUNDLE_ID in ios/Config/Local.xcconfig is io.github.valfur03.trome, a shipping ID" "$state/shipping.err")" "1"
+
+git -C "$repo" checkout -q feature
+status=0
+FAKE_LOCAL_OLD_SETTING="RATP_DEBUG_APP_BUNDLE_ID = io.github.jane.OldApp" git -C "$repo" checkout -q main 2> "$state/old-name.err" || status=$?
+expect "an old setting name in the local file does not fail the checkout" "$status" "0"
+expect "an old setting name in the local file is refused by the hook, with the sentence of make" \
+    "$(grep -c "^bundle-id-check: FAILED: ios/Config/Local.xcconfig sets RATP_DEBUG_APP_BUNDLE_ID, an old name: change the name only, to TROME_DEBUG_APP_BUNDLE_ID, and keep the value.$" "$state/old-name.err")" "1"
 
 before=$(runs)
 make -C "$repo/ios" --no-print-directory git-hooks-off > "$state/off.out"
