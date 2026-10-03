@@ -220,6 +220,26 @@ extension AutoLiveActivityModelTests {
         #expect(notifier.notified.count == 1)
     }
 
+    @Test func aPositionThatStartsTheLiveActivityDuringTheWaitForIOSLeavesNoNoPositionLine() async {
+        let model = makeModel()
+        await notifiedInTheBackground(in: model)
+        gps.holdsTheCurrentFixRequest = true
+        clock.advance(by: 121)
+        model.setAppPhase(.active)
+
+        let opening = Task { await model.appDidBecomeActive() }
+        await waitUntil { gps.currentFixRequestCount == 1 }
+        gps.report(Places.fiftyMetersFromA)
+        await waitUntil { client.isShowing }
+        gps.givesACurrentFix = false
+        gps.answerTheHeldRequests()
+        await opening.value
+
+        #expect(model.shownStation == Places.stationA)
+        #expect(client.started.count == 1)
+        #expect(model.cannotFindPosition == false)
+    }
+
     @Test func openingTheAppWithNoOpenArrivalAsksIOSForNothing() async {
         let model = makeModel()
         gps.report(Places.twoHundredMetersFromA)

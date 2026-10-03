@@ -31,11 +31,15 @@ extension AutoLiveActivityModel {
     }
 
     func resumeOpenArrival() async {
-        let now = configuration.now()
-        guard configuration.rules.waitsForAResume(state: state, now: now, onArrival: arrivalResponse),
-              let stationId = state.openArrivalStationId else { return }
+        guard waitsForAResume, let stationId = state.openArrivalStationId else { return }
         Self.logPause("resume: the app is open after an arrival at \(stationId) that was only notified")
-        await resume(at: await positionForAResume())
+        let position = await positionForAResume()
+        guard waitsForAResume else { return }
+        await resume(at: position)
+    }
+
+    private var waitsForAResume: Bool {
+        configuration.rules.waitsForAResume(state: state, now: configuration.now(), onArrival: arrivalResponse)
     }
 
     func resume(at position: PositionFix?) async {
