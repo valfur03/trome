@@ -22,7 +22,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         let app = makeApp()
         app.launchArguments.append("--keep-running-in-background")
         launch(app)
-        stopLiveActivityIfShowing(in: app)
+        waitUntilTheLaunchEndedTheLiveActivity(in: app)
 
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
@@ -35,14 +35,10 @@ final class ArrivalNotificationTests: E2ETestCase {
         notification.tap()
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: UITestTimeout.element))
-        XCTAssertTrue(waitFor(app.buttons["stopLiveActivity"]))
+        XCTAssertTrue(waitFor(shownStation(in: app)))
         openNotificationCenter(over: app)
         XCTAssertTrue(waitFor(liveActivityStation("Abbesses")))
         closeNotificationCenter()
-
-        app.activate()
-        tap(app.buttons["stopLiveActivity"])
-        XCTAssertTrue(waitFor(app.buttons["showNearestStationLiveActivity"]))
     }
 
     @MainActor
@@ -50,7 +46,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         let app = makeApp()
         app.launchArguments.append("--keep-running-in-background")
         launch(app)
-        stopLiveActivityIfShowing(in: app)
+        waitUntilTheLaunchEndedTheLiveActivity(in: app)
 
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
@@ -84,7 +80,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         let app = makeApp()
         app.launchArguments.append("--keep-running-in-background")
         launch(app)
-        stopLiveActivityIfShowing(in: app)
+        waitUntilTheLaunchEndedTheLiveActivity(in: app)
 
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
@@ -103,9 +99,5 @@ final class ArrivalNotificationTests: E2ETestCase {
         XCTAssertTrue(waitFor(liveActivityStation("Jules Joffrin")))
         XCTAssertTrue(waitForNo(notification), "The arrival notification stayed after the Live Activity started")
         closeNotificationCenter()
-
-        app.activate()
-        tap(app.buttons["stopLiveActivity"])
-        XCTAssertTrue(waitFor(app.buttons["showNearestStationLiveActivity"]))
     }
 }

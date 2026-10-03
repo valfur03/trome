@@ -1,3 +1,4 @@
+#if DEBUG
 import SwiftUI
 
 struct ButtonLabel: View {
@@ -47,3 +48,4 @@ struct ButtonLabel: View {
             .imageScale(.medium)
     }
 }
+#endif

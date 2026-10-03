@@ -101,16 +101,6 @@
         }
       }
     },
-    "Finding the nearest station…" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recherche de la station la plus proche…"
-          }
-        }
-      }
-    },
     "For the rest of today" : {
       "localizations" : {
         "fr" : {
@@ -161,32 +151,22 @@
         }
       }
     },
-    "No metro or RER station was found within %@ of you." : {
+    "No notification and no automatic Live Activity until the snooze ends." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucune station de métro ou de RER à moins de %@ de vous."
+            "value" : "Aucune notification et aucune activité en direct automatique jusqu’à la fin de la pause."
           }
         }
       }
     },
-    "No notification and no automatic Live Activity until the snooze ends. You can still show the Live Activity by hand." : {
+    "No notification and no automatic Live Activity." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucune notification et aucune activité en direct automatique jusqu’à la fin de la pause. Vous pouvez toujours afficher l’activité en direct vous-même."
-          }
-        }
-      }
-    },
-    "No notification and no automatic Live Activity. You can still show the Live Activity by hand." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucune notification et aucune activité en direct automatique. Vous pouvez toujours afficher l’activité en direct vous-même."
+            "value" : "Aucune notification et aucune activité en direct automatique."
           }
         }
       }
@@ -297,16 +277,6 @@
         }
       }
     },
-    "Show the Live Activity now" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afficher l’activité en direct"
-          }
-        }
-      }
-    },
     "Snooze" : {
       "localizations" : {
         "fr" : {
@@ -343,16 +313,6 @@
         }
       }
     },
-    "Stop showing on the lock screen" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retirer de l’écran verrouillé"
-          }
-        }
-      }
-    },
     "Tap to show them on your lock screen." : {
       "localizations" : {
         "fr" : {
@@ -383,16 +343,6 @@
         }
       }
     },
-    "The app cannot find the nearest station without your location. Turn on Location in Settings." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sans votre position, l’app ne peut pas trouver la station la plus proche. Activez la localisation dans Réglages."
-          }
-        }
-      }
-    },
     "The app cannot tell you that you are near a station while it is closed. Turn on Notifications for %@ in Settings." : {
       "localizations" : {
         "fr" : {
@@ -409,16 +359,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’app a besoin de votre position pour trouver la station de métro ou de RER la plus proche."
-          }
-        }
-      }
-    },
-    "The app needs your location to find the nearest station. Allow location below, then try again." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’app a besoin de votre position pour trouver la station la plus proche. Autorisez la localisation plus bas, puis réessayez."
           }
         }
       }
@@ -453,12 +393,12 @@
         }
       }
     },
-    "The lock screen display could not start. Try again." : {
+    "The lock screen display could not start." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’affichage sur l’écran verrouillé n’a pas pu démarrer. Réessayez."
+            "value" : "L’affichage sur l’écran verrouillé n’a pas pu démarrer."
           }
         }
       }
@@ -479,16 +419,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lorsque l’app est active"
-          }
-        }
-      }
-    },
-    "Your position is not available right now. Try again in a moment." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre position n’est pas disponible pour le moment. Réessayez dans un instant."
           }
         }
       }

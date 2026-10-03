@@ -4,6 +4,8 @@ import SwiftUI
 struct AutomaticModeSection: View {
     @Environment(AutomaticModeModel.self) private var automaticMode
     @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
+    @State private var isTurningOn = false
+    @State private var isCancellingTheSnooze = false
     @State private var isCancellingThePause = false
 
     private var isOn: Binding<Bool> {
@@ -11,13 +13,23 @@ struct AutomaticModeSection: View {
             automaticMode.mode != .turnedOff
         } set: { isOn in
             automaticMode.setOn(isOn)
+            guard isOn, !isTurningOn else { return }
+            isTurningOn = true
+            Task {
+                await autoLiveActivity.automaticModeTurnedOn()
+                isTurningOn = false
+            }
         }
     }
 
     var body: some View {
         Section {
             Toggle(isOn: isOn) {
-                Label("Automatic mode", systemImage: "location.circle")
+                Label {
+                    Text("Automatic mode")
+                } icon: {
+                    PositionWaitIcon(systemImage: "location.circle", isWaiting: isTurningOn)
+                }
             }
             .accessibilityIdentifier("automaticModeToggle")
             switch automaticMode.mode {
@@ -25,8 +37,19 @@ struct AutomaticModeSection: View {
                 snoozeMenu
             case .snoozed(let end):
                 SnoozeState(end: end)
-                Button("Cancel the snooze", systemImage: "bell") {
-                    automaticMode.cancelSnooze()
+                Button {
+                    guard !isCancellingTheSnooze else { return }
+                    isCancellingTheSnooze = true
+                    Task {
+                        await autoLiveActivity.cancelSnooze()
+                        isCancellingTheSnooze = false
+                    }
+                } label: {
+                    Label {
+                        Text("Cancel the snooze")
+                    } icon: {
+                        PositionWaitIcon(systemImage: "bell", isWaiting: isCancellingTheSnooze)
+                    }
                 }
                 .accessibilityIdentifier("cancelSnooze")
             case .turnedOff:
@@ -82,12 +105,9 @@ struct AutomaticModeSection: View {
             and stops when you leave. Snooze it to stop it for a while.
             """
         case .snoozed:
-            """
-            No notification and no automatic Live Activity until the snooze ends. \
-            You can still show the Live Activity by hand.
-            """
+            "No notification and no automatic Live Activity until the snooze ends."
         case .turnedOff:
-            "No notification and no automatic Live Activity. You can still show the Live Activity by hand."
+            "No notification and no automatic Live Activity."
         }
     }
 

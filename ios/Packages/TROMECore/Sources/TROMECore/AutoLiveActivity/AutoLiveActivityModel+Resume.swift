@@ -1,6 +1,46 @@
 import Foundation
 
 extension AutoLiveActivityModel {
+    public func cancelPause() async {
+        guard let pause = state.pause else { return }
+        let endThePause = { self.endPause(at: pause.stationId, reason: "cancelled by the rider") }
+        guard inputs.automaticMode.allowsAutomaticStart else {
+            endThePause()
+            return
+        }
+        await resume(asked: "the pause is cancelled", after: endThePause)
+    }
+
+    public func cancelSnooze() async {
+        guard case .snoozed = inputs.automaticMode.mode else { return }
+        await resume(asked: "the snooze is cancelled") {
+            inputs.automaticMode.cancelSnooze()
+        }
+    }
+
+    public func automaticModeTurnedOn() async {
+        guard inputs.automaticMode.mode == .turnedOn else { return }
+        await resume(asked: "the automatic mode is on") {}
+    }
+
+    private func resume(asked reason: String, after act: () -> Void) async {
+        syncWithSystem()
+        guard appIsActive, state.shown == nil else {
+            act()
+            return
+        }
+        Self.logPause("resume: \(reason)")
+        let position = await positionForAResume()
+        act()
+        guard configuration.rules.takesAResume(state: state, onArrival: arrivalResponse) else { return }
+        cannotFindPosition = position == nil
+        if let position {
+            await handle(position.coordinate, asAResume: true)
+        } else {
+            await evaluate(position: nil, asAResume: true)
+        }
+    }
+
     func positionForAResume() async -> PositionFix? {
         let held = inputs.locationService.fix
         guard inputs.locationService.source == .realGPS else {

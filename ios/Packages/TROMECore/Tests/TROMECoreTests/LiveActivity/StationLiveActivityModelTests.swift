@@ -7,6 +7,7 @@ final class StubStationLiveActivityClient: StationLiveActivityClient {
     var isShowing = false
     var shownContent: StationActivityAttributes.ContentState?
     var startError: (any Error)?
+    var areActivitiesEnabled = true
     var holdsNextUpdate = false
     private var heldUpdate: CheckedContinuation<Void, Never>?
     private(set) var started: [StationActivityAttributes.ContentState] = []
@@ -153,6 +154,30 @@ struct StationLiveActivityModelTests {
         await model.start(station: abbesses, trains: .loading)
 
         #expect(model.startError == nil)
+    }
+
+    @Test func keepsTheTurnedOffProblemWhileLiveActivitiesStayOffThenForgetsItOnceTheyAreOn() async {
+        client.startError = StationLiveActivityError.turnedOff
+        client.areActivitiesEnabled = false
+        let model = makeModel()
+        await model.start(station: abbesses, trains: .loading)
+
+        model.syncWithSystem()
+        #expect(model.startError == .turnedOff)
+
+        client.areActivitiesEnabled = true
+        model.syncWithSystem()
+        #expect(model.startError == nil)
+    }
+
+    @Test func keepsTheFailedProblemWhenLiveActivitiesAreOn() async {
+        client.startError = StationLiveActivityError.failed
+        let model = makeModel()
+        await model.start(station: abbesses, trains: .loading)
+
+        model.syncWithSystem()
+
+        #expect(model.startError == .failed)
     }
 
     @Test func updatesTheShownLiveActivityWithNewTrainsAndStation() async {

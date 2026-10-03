@@ -21,10 +21,10 @@ final class SwipeAwayTests: E2ETestCase {
     func testASwipeOfTheLiveActivityPausesItsStationButNotTheOtherStations() {
         let app = makeApp()
         launch(app)
-        stopLiveActivityIfShowing(in: app)
+        waitUntilTheLaunchEndedTheLiveActivity(in: app)
         cancelThePauseIfAny(in: app)
         moveThePhone(to: Self.liege)
-        XCTAssertTrue(waitFor(app.buttons["stopLiveActivity"]))
+        XCTAssertTrue(waitFor(shownStation(in: app)))
 
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
@@ -34,9 +34,9 @@ final class SwipeAwayTests: E2ETestCase {
         closeNotificationCenter()
 
         app.activate()
-        XCTAssertTrue(waitFor(app.buttons["showNearestStationLiveActivity"]))
+        XCTAssertTrue(waitForNo(shownStation(in: app)))
         moveThePhone(to: Self.cadet)
-        XCTAssertTrue(waitFor(app.buttons["stopLiveActivity"]))
+        XCTAssertTrue(waitFor(shownStation(in: app)))
         openNotificationCenter(over: app)
         XCTAssertTrue(waitFor(liveActivityStation("Cadet")))
 
@@ -56,9 +56,6 @@ final class SwipeAwayTests: E2ETestCase {
             "The Live Activity did not come back at Liège after the cancel of the pause"
         )
         closeNotificationCenter()
-
-        app.activate()
-        stopLiveActivityIfShowing(in: app)
     }
 
     @MainActor

@@ -34,8 +34,12 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         Self.runningActivities.first?.content.state
     }
 
+    var areActivitiesEnabled: Bool {
+        ActivityAuthorizationInfo().areActivitiesEnabled
+    }
+
     func start(_ content: StationActivityAttributes.ContentState) throws {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+        guard areActivitiesEnabled else {
             throw StationLiveActivityError.turnedOff
         }
         _ = try Activity.request(

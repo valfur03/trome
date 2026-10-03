@@ -19,9 +19,9 @@ final class SnoozeTests: E2ETestCase {
         app.launchArguments += ["--fake-trains", "at-platform"]
         launch(app)
         turnOnTheAutomaticMode(in: app)
-        stopLiveActivityIfShowing(in: app)
+        waitUntilTheLaunchEndedTheLiveActivity(in: app)
         moveThePhone(to: Self.lamarckCaulaincourt)
-        XCTAssertTrue(waitFor(app.buttons["stopLiveActivity"]))
+        XCTAssertTrue(waitFor(shownStation(in: app)))
 
         openNotificationCenter(over: app)
         XCTAssertTrue(waitFor(liveActivityStation("Lamarck - Caulaincourt")))
@@ -52,7 +52,7 @@ final class SnoozeTests: E2ETestCase {
         closeNotificationCenter()
 
         app.activate()
-        XCTAssertTrue(waitFor(app.buttons["showNearestStationLiveActivity"]))
+        XCTAssertTrue(waitForNo(shownStation(in: app)))
         let snoozeState = app.descendants(matching: .any)["snoozeState"]
         XCTAssertTrue(waitFor(snoozeState))
         XCTAssertTrue(snoozeState.label.contains("Snoozed"))

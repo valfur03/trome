@@ -15,10 +15,10 @@ final class AutoLiveActivityTests: E2ETestCase {
     func testLiveActivityStartsSwitchesAndStopsByItselfNearStations() {
         let app = makeApp()
         launch(app)
-        stopLiveActivityIfShowing(in: app)
+        waitUntilTheLaunchEndedTheLiveActivity(in: app)
 
         moveThePhone(to: Self.pigalle)
-        XCTAssertTrue(waitFor(app.buttons["stopLiveActivity"]))
+        XCTAssertTrue(waitFor(shownStation(in: app)))
         openNotificationCenter(over: app)
         XCTAssertTrue(waitFor(liveActivityStation("Pigalle")))
 

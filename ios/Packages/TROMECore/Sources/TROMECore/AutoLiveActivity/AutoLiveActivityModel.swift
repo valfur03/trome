@@ -123,16 +123,6 @@ public final class AutoLiveActivityModel {
         await refreshRegions(around: inputs.locationService.position)
     }
 
-    public func cancelPause() async {
-        guard let pause = state.pause else { return }
-        let position = await positionForAResume()
-        endPause(at: pause.stationId, reason: "cancelled by the rider")
-        if state.arrivalStationId == pause.stationId {
-            state.arrivalStationId = nil
-        }
-        await resume(at: position)
-    }
-
     public func stopByHand() async {
         state.shown = nil
         await endLiveActivity()
@@ -199,16 +189,13 @@ public final class AutoLiveActivityModel {
         }
     }
 
-    private func evaluate(position: Coordinate?) async {
+    func evaluate(position: Coordinate?, asAResume: Bool = false) async {
         syncWithSystem()
         endPauseIfOver()
-        let decision = configuration.rules.decide(
-            state: state,
-            position: position,
-            now: configuration.now(),
-            onArrival: arrivalResponse,
-            catalog: catalog
-        )
+        let decide = asAResume
+            ? configuration.rules.resume(state:position:now:onArrival:catalog:)
+            : configuration.rules.decide(state:position:now:onArrival:catalog:)
+        let decision = decide(state, position, configuration.now(), arrivalResponse, catalog)
         state = decision.state
         for action in decision.actions {
             await perform(action)
@@ -257,8 +244,8 @@ public final class AutoLiveActivityModel {
         restartFeed(fetchNow: false)
     }
 
-    func handle(_ position: Coordinate) async {
-        await evaluate(position: position)
+    func handle(_ position: Coordinate, asAResume: Bool = false) async {
+        await evaluate(position: position, asAResume: asAResume)
         await refreshRegions(around: position)
     }
 

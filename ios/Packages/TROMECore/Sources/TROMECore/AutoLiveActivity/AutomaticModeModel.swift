@@ -63,7 +63,7 @@ public final class AutomaticModeModel {
         mode = isOn ? .turnedOn : .turnedOff
     }
 
-    public func cancelSnooze() {
+    func cancelSnooze() {
         guard case .snoozed = mode else { return }
         mode = .turnedOn
     }

@@ -32,7 +32,7 @@ class E2ETestCase: XCTestCase {
     func makeApp() -> XCUIApplication {
         moveThePhone(to: Self.farFromAnyStation)
         let app = XCUIApplication()
-        app.launchArguments.append("--reset-location-source")
+        app.launchArguments += ["--reset-location-source", "--end-live-activity"]
         terminateWithItsRelaunches(app)
         return app
     }
@@ -170,23 +170,16 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
-    func stopLiveActivityIfShowing(in app: XCUIApplication) {
-        let stopButton = app.buttons["stopLiveActivity"]
-        let showButton = app.buttons["showNearestStationLiveActivity"]
-        let deadline = Date().addingTimeInterval(UITestTimeout.element)
-        while Date() < deadline, waitForFirst(of: [stopButton, showButton]) === stopButton {
-            tapWhereItIs(stopButton, in: app)
-            _ = showButton.waitForExistence(timeout: 2)
-        }
-        XCTAssertTrue(waitFor(showButton))
+    func shownStation(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts["liveActivityStationName"]
     }
 
     @MainActor
-    private func tapWhereItIs(_ element: XCUIElement, in app: XCUIApplication) {
-        guard let frame = try? element.snapshot().frame else { return }
-        app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: frame.midX, dy: frame.midY))
-            .tap()
+    func waitUntilTheLaunchEndedTheLiveActivity(in app: XCUIApplication) {
+        XCTAssertTrue(
+            waitForNo(shownStation(in: app)),
+            "The Live Activity of the last test still shows after a launch with --end-live-activity"
+        )
     }
 
     @MainActor

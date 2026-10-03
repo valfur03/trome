@@ -10,6 +10,7 @@ public enum StationLiveActivityError: Error, Equatable, Sendable {
 public protocol StationLiveActivityClient: AnyObject {
     var isShowing: Bool { get }
     var shownContent: StationActivityAttributes.ContentState? { get }
+    var areActivitiesEnabled: Bool { get }
     func start(_ content: StationActivityAttributes.ContentState) throws
     func update(_ content: StationActivityAttributes.ContentState) async
     func end() async
@@ -115,6 +116,9 @@ public final class StationLiveActivityModel {
 
     public func syncWithSystem() {
         isShowing = client.isShowing
+        if startError == .turnedOff, client.areActivitiesEnabled {
+            startError = nil
+        }
         if !isShowing {
             forgetShownContent()
         }

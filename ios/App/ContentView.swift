@@ -21,7 +21,7 @@ struct ContentView: View {
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
                 }
-                NearestStationLiveActivitySection(nearestStationModel: nearestStationModel)
+                LiveActivityStateSection()
                 AutomaticModeSection()
                 PermissionsSection(permissions: permissions, nearestStationModel: nearestStationModel)
                 #if DEBUG

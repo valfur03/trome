@@ -1,3 +1,4 @@
+#if DEBUG
 import TROMECore
 import SwiftUI
 
@@ -32,8 +33,10 @@ struct NearestStationLiveActivitySection: View {
             }
             .frame(maxWidth: .infinity)
             .onChange(of: liveActivity.isShowing) { problem = nil }
+        } header: {
+            Text("Live Activity")
         } footer: {
-            Text("The Live Activity shows the next trains of the station nearest to you on your lock screen.")
+            Text("Shows or stops the Live Activity of the station nearest to you, up to \(walkingDistance) away.")
         }
     }
 
@@ -67,10 +70,10 @@ struct NearestStationLiveActivitySection: View {
         }
     }
 
-    private func message(for problem: NearestStationProblem) -> LocalizedStringKey {
+    private func message(for problem: NearestStationProblem) -> String {
         switch problem {
         case .permissionUndecided:
-            "The app needs your location to find the nearest station. Allow location below, then try again."
+            "The app needs your location to find the nearest station. Allow it on the main screen, then try again."
         case .permissionDenied:
             "The app cannot find the nearest station without your location. Turn on Location in Settings."
         case .noStationNearby:
@@ -80,3 +83,4 @@ struct NearestStationLiveActivitySection: View {
         }
     }
 }
+#endif

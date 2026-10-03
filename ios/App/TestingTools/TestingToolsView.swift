@@ -15,6 +15,7 @@ struct TestingToolsView: View {
 
     var body: some View {
         Form {
+            NearestStationLiveActivitySection(nearestStationModel: nearestStationModel)
             currentPositionSection
             Section("Fake position") {
                 NavigationLink("Pick a station") {

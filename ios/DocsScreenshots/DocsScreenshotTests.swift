@@ -32,6 +32,7 @@ final class DocsScreenshotTests: XCTestCase {
         )
     ]
 
+    private static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
     private static let allowLiveActivitiesAnswers = ["Always Allow", "Toujours autoriser", "Allow", "Autoriser"]
 
     private let timeout: TimeInterval = 30
@@ -77,7 +78,7 @@ final class DocsScreenshotTests: XCTestCase {
             location.exists && location.label == "Location, Always"
                 && notifications.exists && notifications.label == "Notifications, On"
         }
-        XCTAssertTrue(app.buttons["showNearestStationLiveActivity"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.switches["automaticModeToggle"].waitForExistence(timeout: timeout))
         saveScreenshot(named: "app-main-screen")
 
         app.buttons["testingTools"].tap()
@@ -89,13 +90,13 @@ final class DocsScreenshotTests: XCTestCase {
     @MainActor
     private func takeTheScreenshotsOfTheLiveActivity() {
         let app = XCUIApplication()
-        app.launchArguments += ["--reset-location-source", "--fake-trains"]
+        app.launchArguments += ["--reset-location-source", "--fake-trains", "--end-live-activity"]
+        XCUIDevice.shared.location = XCUILocation(location: Self.farFromAnyStation)
         app.launch()
-        turnOffTheAutomaticMode(in: app)
+        turnOnTheAutomaticMode(in: app)
 
         for screenshot in Self.liveActivityScreenshots {
-            XCUIDevice.shared.location = XCUILocation(location: screenshot.position)
-            showTheLiveActivity(in: app)
+            showTheLiveActivity(of: screenshot, in: app)
             XCUIDevice.shared.press(.home)
             openNotificationCenter()
             waitForTheLiveActivity(of: screenshot)
@@ -115,29 +116,42 @@ final class DocsScreenshotTests: XCTestCase {
     }
 
     @MainActor
-    private func turnOffTheAutomaticMode(in app: XCUIApplication) {
+    private func turnOnTheAutomaticMode(in app: XCUIApplication) {
         let toggle = app.switches["automaticModeToggle"]
         XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
-        if toggle.value as? String == "1" {
+        if toggle.value as? String == "0" {
             toggle.switches.firstMatch.tap()
         }
-        XCTAssertTrue(waitUntil { toggle.value as? String == "0" }, "The automatic mode did not turn off")
+        let cancelSnooze = app.buttons["cancelSnooze"]
+        if cancelSnooze.exists {
+            cancelSnooze.tap()
+        }
+        XCTAssertTrue(app.buttons["snoozeMenu"].waitForExistence(timeout: timeout), "The automatic mode is not on")
+        XCTAssertTrue(shownStation(in: app).waitForNonExistence(timeout: timeout), "A Live Activity still shows")
     }
 
     @MainActor
-    private func showTheLiveActivity(in app: XCUIApplication) {
-        let showButton = app.buttons["showNearestStationLiveActivity"]
-        XCTAssertTrue(showButton.waitForExistence(timeout: timeout))
-        showButton.tap()
-        XCTAssertTrue(app.buttons["stopLiveActivity"].waitForExistence(timeout: timeout))
+    private func shownStation(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts["liveActivityStationName"]
+    }
+
+    @MainActor
+    private func showTheLiveActivity(of screenshot: LiveActivityScreenshot, in app: XCUIApplication) {
+        XCUIDevice.shared.location = XCUILocation(location: screenshot.position)
+        let station = shownStation(in: app)
+        XCTAssertTrue(
+            waitUntil { station.exists && station.label.contains(screenshot.station) },
+            "The Live Activity of \(screenshot.station) did not start with the app open at the station"
+        )
     }
 
     @MainActor
     private func stopTheLiveActivity(in app: XCUIApplication) {
-        let stopButton = app.buttons["stopLiveActivity"]
-        XCTAssertTrue(stopButton.waitForExistence(timeout: timeout))
-        stopButton.tap()
-        XCTAssertTrue(app.buttons["showNearestStationLiveActivity"].waitForExistence(timeout: timeout))
+        XCUIDevice.shared.location = XCUILocation(location: Self.farFromAnyStation)
+        XCTAssertTrue(
+            shownStation(in: app).waitForNonExistence(timeout: timeout),
+            "The Live Activity did not end when the phone left the station"
+        )
     }
 
     @MainActor
