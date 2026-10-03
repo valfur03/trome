@@ -372,11 +372,11 @@ So you have two ways out:
      It shows lines like `2026-10-04T08:27:57Z io.github.janedoe.oldapp`. It does not show your Team ID.
      Older versions of Xcode keep these files in `~/Library/MobileDevice/Provisioning Profiles/`: if the command shows an error, put this folder in its first line.
 
-  2. Choose two bundle IDs of the list: one for the app, and one for its lock screen part (the Live Activity).
-     The ID of the lock screen part must start with the ID of the app and a dot, for example `io.github.janedoe.oldapp` and `io.github.janedoe.oldapp.widget`.
+  2. Choose two bundle IDs of the list whose date has not passed yet: one for the app, and one for its lock screen part (the Live Activity).
+     The ID of the lock screen part must start with the ID of the app and a dot, for example `io.github.janedoe.oldapp` and `io.github.janedoe.oldapp.Widget`.
      Why: iOS installs the lock screen part only inside an app whose ID starts its own ID.
 
-  3. Open your settings file in TextEdit:
+  3. Quit Xcode (<kbd>Cmd</kbd> + <kbd>Q</kbd>). In Terminal, in the project folder, open your settings file in TextEdit:
 
      ```sh
      open -e ios/Config/Local.xcconfig
@@ -386,24 +386,40 @@ So you have two ways out:
 
      ```ini
      RATP_DEBUG_APP_BUNDLE_ID = io.github.janedoe.oldapp
-     RATP_DEBUG_WIDGET_BUNDLE_ID = io.github.janedoe.oldapp.widget
+     RATP_DEBUG_WIDGET_BUNDLE_ID = io.github.janedoe.oldapp.Widget
      ```
 
      Write each ID exactly as the list shows it, with the same capitals.
      If you add only the first line, the lock screen part gets the ID of the app followed by `.widget`.
 
-  5. In Terminal, create the Xcode project again:
+  5. Create the Xcode project again:
 
      ```sh
      make generate
      ```
 
-     It shows the two bundle IDs that Xcode will use, for example `Debug bundle IDs: app io.github.janedoe.oldapp, Live Activity io.github.janedoe.oldapp.widget`.
-     Check that they are your two IDs: if it shows IDs that end with `.trome.dev`, a name in your lines is wrong.
-     If it says that the ID of the lock screen part does not start with the ID of the app, fix the second line and run it again.
+     Its last line shows the two bundle IDs that Xcode will use:
 
-  6. Open the project in Xcode and click **Run**, as in [the 7-day steps](#the-app-stops-after-7-days).
+     ```text
+     Debug bundle IDs: app io.github.janedoe.oldapp, Live Activity io.github.janedoe.oldapp.Widget
+     ```
+
+     Do not click **Run** before this line shows your two IDs exactly, capitals included.
+     If an ID is not the one that you wrote, check its line, and first the name at its start: Xcode ignores a line with a wrong name, with no error.
+     For example, a wrong name in the second line gives `io.github.janedoe.oldapp.widget` instead of `io.github.janedoe.oldapp.Widget`, and Xcode would then register a new ID.
+     If it says `FAILED: the Debug ID of the extension (…) does not start with the Debug ID of the app (…)`, look at the two IDs in the message.
+     If one of them ends with `.trome.dev` or `.trome.dev.widget`, the name of its line is wrong. If not, your two IDs do not go together (step 2).
+     Fix the file, save it, and run `make generate` again.
+
+  6. Open the project, choose the scheme **RATPActivity** and your iPhone, and click **Run**, as in steps 3 and 4 of [the 7-day steps](#the-app-stops-after-7-days):
+
+     ```sh
+     open ios/RATPActivity.xcodeproj
+     ```
+
      If your iPhone has an older app with the same bundle ID, the new app replaces it.
+
+  7. Run the command of step 1 again. The latest date shown for the bundle ID of the app is the day when the app stops opening.
 
   </Steps>
 </Checklist>
@@ -414,7 +430,7 @@ To go back to the usual bundle IDs, remove the two lines and run `make generate`
 <Aside type="danger" title="Never the App Store ID">
   Never put `io.github.valfur03.trome` or `io.github.valfur03.trome.widget` in these lines, in any capitals.
   They are the bundle IDs of TROME on the App Store: a free Apple ID that signs them takes them for good, and TROME could then never use them.
-  `make generate` refuses them. If you click **Run** without `make generate`, Xcode shows a bundle ID that starts with `SHIPPING_ID_REFUSED`, and Apple does not register it: remove the line.
+  `make generate` refuses them. If you click **Run** without `make generate`, Xcode shows a bundle ID that starts with `SHIPPING_ID_REFUSED`, and Apple does not register it: remove that line and run `make generate`.
 </Aside>
 
 ## Add the train data key (PRIM)
