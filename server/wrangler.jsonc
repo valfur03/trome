@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "ratp-activity-server",
+  "name": "trome-server",
   "main": "src/cloudflare/worker.ts",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
@@ -15,7 +15,7 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RelayObject"] }],
   "env": {
     "staging": {
-      "name": "ratp-activity-server-staging",
+      "name": "trome-server-staging",
       "observability": { "enabled": false },
       "vars": { "PRIM_DAILY_CAP": "60" },
       "secrets": {

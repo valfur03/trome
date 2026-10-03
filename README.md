@@ -960,8 +960,8 @@ If the active Node is too old, the server commands stop and tell you to run `nvm
 | `make server-secrets` | Sets each secret of the production Worker, one after the other (see the table of the secrets below). Run it before the first deploy. It asks for each value, so no value is in your shell history or in a file. Add `STAGING=1` for the staging Worker. |
 | `make server-secret NAME=<name>` | Changes one secret of the production Worker (for example a new app token). It asks for the value. Add `STAGING=1` for the staging Worker. |
 | `make server-counts URL=<address>` | Shows the counts of the server at this address: today and the last 30 days. It asks for the owner token, so the token is not in your shell history. |
-| `make server-deploy-staging` | Runs `make server-check`, then deploys this folder to the staging Worker `ratp-activity-server-staging`. It needs your Cloudflare account, and it refuses when a secret of the staging Worker is not set yet. |
-| `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker `ratp-activity-server`. It needs your Cloudflare account, and it refuses another branch, changes that are not committed, or a secret that is not set yet. |
+| `make server-deploy-staging` | Runs `make server-check`, then deploys this folder to the staging Worker `trome-server-staging`. It needs your Cloudflare account, and it refuses when a secret of the staging Worker is not set yet. |
+| `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker `trome-server`. It needs your Cloudflare account, and it refuses another branch, changes that are not committed, or a secret that is not set yet. |
 
 `make check` runs `make server-check` only when your branch changes files in `server/` or `contracts/` (compared with `main`).
 So a change of the app only does not install the packages of the server.
@@ -998,18 +998,18 @@ Wrangler refuses the first deploy of a Worker whose secrets are not set yet, so 
    If the login with the link fails, run `make server-login CODE=1`: open the address that it shows in any browser, log in, and type the code that it shows.
 3. Run `make server-secrets STAGING=1`.
    For each secret of the table above, wrangler asks "Enter a secret value:": paste the value and press Return (the value does not show).
-   After the first value, wrangler asks "There doesn't seem to be a Worker called "ratp-activity-server-staging". Do you want to create a new Worker with that name and add secrets to it?": answer `y` (yes).
+   After the first value, wrangler asks "There doesn't seem to be a Worker called "trome-server-staging". Do you want to create a new Worker with that name and add secrets to it?": answer `y` (yes).
    It creates an empty Worker that holds the secrets until the first deploy.
-4. Run `make server-deploy-staging`. Wrangler shows the address of the staging Worker: `https://ratp-activity-server-staging.<your subdomain>.workers.dev`. If your account has no `workers.dev` subdomain yet, the first deploy asks you to choose one.
-5. Open `https://ratp-activity-server-staging.<your subdomain>.workers.dev/health`. It shows `{"status":"ok"}`.
-6. For production, in the main folder on `main`: run `make server-secrets` (with other tokens), answer `y` to the same question for "ratp-activity-server", then run `make server-deploy`, and open its `/health` address.
+4. Run `make server-deploy-staging`. Wrangler shows the address of the staging Worker: `https://trome-server-staging.<your subdomain>.workers.dev`. If your account has no `workers.dev` subdomain yet, the first deploy asks you to choose one.
+5. Open `https://trome-server-staging.<your subdomain>.workers.dev/health`. It shows `{"status":"ok"}`.
+6. For production, in the main folder on `main`: run `make server-secrets` (with other tokens), answer `y` to the same question for "trome-server", then run `make server-deploy`, and open its `/health` address.
 
 When a new secret is added to the table later, run `make server-secret NAME=<its name>` for each Worker that already exists (add `STAGING=1` for the staging Worker), before you deploy the change.
 `make server-deploy-staging` and `make server-deploy` check the secrets before they deploy: when one is missing, they stop, name it, and say which command sets it.
 
 The counts, for you:
 
-- Run `make server-counts URL=https://ratp-activity-server.<your subdomain>.workers.dev` and paste the owner token.
+- Run `make server-counts URL=https://trome-server.<your subdomain>.workers.dev` and paste the owner token.
   It shows the counts as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, newest first.
   Each day has its app calls, cache hits (an answer shared with no PRIM call), held answers (an older answer given while the server could not ask PRIM), out answers, PRIM calls and errors, then the same for each hour (`parisHour`), and the PRIM calls of each stop.
   `errorLines` lists the failed PRIM calls of the last 7 days: the time, the stop, the kind and the HTTP status, with no IP.

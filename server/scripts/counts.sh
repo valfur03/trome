@@ -3,7 +3,7 @@ set -eu
 
 url=${1:-}
 if [ -z "$url" ]; then
-    echo "Give the address of the server: make server-counts URL=https://ratp-activity-server.<your subdomain>.workers.dev" >&2
+    echo "Give the address of the server: make server-counts URL=https://trome-server.<your subdomain>.workers.dev" >&2
     exit 1
 fi
 

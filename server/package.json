@@ -1,5 +1,5 @@
 {
-  "name": "ratp-activity-server",
+  "name": "trome-server",
   "private": true,
   "type": "module",
   "engines": {
