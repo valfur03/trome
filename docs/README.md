@@ -129,8 +129,8 @@ A change of text alone needs no new pictures.
 The pictures follow three rules:
 
 - **Full screen, on one iPhone model,** so that pictures side by side have the same size.
-  A picture of the Live Activity shows the whole Notification Center, not a crop.
-  A page may show a close-up of the Live Activity with `crop="live-activity"`, but the file stays whole.
+  The file of a Live Activity picture holds the whole Notification Center, never a crop.
+  A page may still show only the Live Activity, with `crop="live-activity"`.
   The script fails when two pictures do not have the same size.
 - **900 pixels wide.** The page shows a picture 300 pixels wide, and the 3x screen of an iPhone needs three times as many pixels.
   The script resizes each picture to this width.
