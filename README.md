@@ -169,6 +169,7 @@ make run LANGUAGE=fr
 - `make e2e` and `make docs-screenshots` always put the Simulator back in English: the tests are in English, and the docs screenshots of the app screens too.
   `make docs-screenshots` also takes the Live Activity pictures in French, then puts the Simulator back in English.
 - Every Simulator job shows distances in metres, and the clock of its language (12-hour in English, 24-hour in French), whatever an earlier job or a person set in the Simulator.
+  One exception: the French pictures of `make docs-screenshots` use a 12-hour clock, because the lock screen shows the real time instead of the fixed 9:41 with a 24-hour clock.
 - `LANGUAGE=` works only with `make run` and `make switch-language`.
 
 Before the shared Simulator, each folder had its own Simulator, named `RATP-<folder>-<hash>`. To delete these old Simulators, run `make simulator-delete-old`.

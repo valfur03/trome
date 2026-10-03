@@ -45,21 +45,15 @@ result_of() {
     fi
 }
 
-shown_time() {
-    case "$1" in
-        fr) echo 09:41 ;;
-        *) echo 9:41 ;;
-    esac
-}
-
 override_status_bar() {
-    xcrun simctl status_bar "$udid" override --time "$(shown_time "$shown_language")" --operatorName '' --batteryState charged --batteryLevel 100 \
+    xcrun simctl status_bar "$udid" override --time 9:41 --operatorName '' --batteryState charged --batteryLevel 100 \
         --cellularMode active --cellularBars 4 --wifiBars 3
 }
 
 show_language() {
     xcrun simctl status_bar "$udid" clear
-    RATP_SIM_LANGUAGE=$1 "$scripts/simulator.sh" language
+    # A 12-hour clock: with the 24-hour clock of French, the lock screen shows the real time, not 9:41.
+    RATP_SIM_CLOCK=12 RATP_SIM_LANGUAGE=$1 "$scripts/simulator.sh" language
     shown_language=$1
     override_status_bar
 }
@@ -89,7 +83,10 @@ for language in $languages; do
     xcrun xcresulttool export attachments --path "$language_result" --output-path "$exported/$language" \
         --filter "*.png" > /dev/null
 done
-[ "$shown_language" = en ] || show_language en
+if [ "$shown_language" != en ]; then
+    RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" language
+    shown_language=en
+fi
 
 mkdir -p "$screenshots"
 python3 - "$exported" "$screenshots" $names <<'PYTHON'

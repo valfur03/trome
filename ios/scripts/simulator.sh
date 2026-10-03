@@ -185,6 +185,11 @@ set_language() {
     for clock_override in AppleICUForce24HourTime AppleICUForce12HourTime; do
         xcrun simctl spawn "$1" defaults delete -g "$clock_override" 2> /dev/null || true
     done
+    # The lock screen draws the time of 'simctl status_bar override' only with a 12-hour clock:
+    # with a 24-hour clock (French), it shows the real time, so a picture would change at each run.
+    if [ "${RATP_SIM_CLOCK:-}" = 12 ]; then
+        xcrun simctl spawn "$1" defaults write -g AppleICUForce12HourTime -bool true
+    fi
 }
 
 restart_springboard_in_language() {
@@ -338,6 +343,7 @@ case "$command" in
         echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch', 'language' and 'switch-language'); the default is English (en)" >&2
+        echo "RATP_SIM_CLOCK=12 forces a 12-hour clock (with 'language'), so that the lock screen shows the time of the status bar override; every other command sets the clock of the language" >&2
         echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
         exit 1
         ;;
