@@ -11,9 +11,10 @@ interface Props {
    * The file stays the whole screen, and no pixel changes: the browser hides the rest.
    */
   crop?: 'live-activity';
+  loading?: 'eager' | 'lazy';
 }
 
-const { src, alt, caption, crop } = Astro.props;
+const { src, alt, caption, crop, loading = 'lazy' } = Astro.props;
 const closeUp = crop === 'live-activity';
 ---
 
@@ -23,13 +24,23 @@ const closeUp = crop === 'live-activity';
       <Picture
         src={src}
         alt={alt}
+        width={300}
         widths={[450, 900]}
         sizes="(min-width: 50rem) 28rem, calc(100vw - 2rem)"
         formats={['avif']}
         fallbackFormat="webp"
+        loading={loading}
       />
     ) : (
-      <Picture src={src} alt={alt} width={300} densities={[1, 2, 3]} formats={['avif']} fallbackFormat="webp" />
+      <Picture
+        src={src}
+        alt={alt}
+        width={300}
+        densities={[1, 2, 3]}
+        formats={['avif']}
+        fallbackFormat="webp"
+        loading={loading}
+      />
     )
   }
   {caption && <figcaption>{caption}</figcaption>}
