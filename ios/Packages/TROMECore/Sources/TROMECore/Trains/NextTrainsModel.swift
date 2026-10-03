@@ -77,9 +77,9 @@ public final class NextTrainsModel {
             state = .loading
         }
         let stations = catalog?.hubStations(of: station) ?? [station]
-        let result: Result<[Departure], NextTrainsError>
+        let result: Result<DeparturesAnswer, NextTrainsError>
         do {
-            result = .success(try await provider.departures(at: stations))
+            result = .success(try await provider.departuresAnswer(at: stations))
         } catch let error as NextTrainsError {
             result = .failure(error)
         } catch {
@@ -87,10 +87,11 @@ public final class NextTrainsModel {
         }
         guard !Task.isCancelled, shownStationId == station.id else { return }
         switch result {
-        case .success(let departures):
+        case .success(let answer):
             let currentTime = now()
-            let board = DepartureBoard(departures: departures, stations: stations, now: currentTime)
-            state = board.isEmpty ? .noLiveData : .departures(board, updatedAt: currentTime)
+            let answeredAt = min(answer.answeredAt ?? currentTime, currentTime)
+            let board = DepartureBoard(departures: answer.departures, stations: stations, now: answeredAt)
+            state = board.isEmpty ? .noLiveData : .departures(board, updatedAt: answeredAt)
         case .failure(let error):
             state = .failed(error)
         }

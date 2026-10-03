@@ -7,9 +7,11 @@ final class StubHTTPClient: HTTPClient {
     typealias Answer = @Sendable (URLRequest) throws -> (Data, Int)
 
     private let answer: Answer
+    private let headerFields: [String: String]
     private let recorded = Mutex<[URLRequest]>([])
 
-    init(answer: @escaping Answer) {
+    init(headerFields: [String: String] = [:], answer: @escaping Answer) {
+        self.headerFields = headerFields
         self.answer = answer
     }
 
@@ -20,7 +22,12 @@ final class StubHTTPClient: HTTPClient {
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         recorded.withLock { $0.append(request) }
         let (data, statusCode) = try answer(request)
-        let response = HTTPURLResponse(url: request.url!, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: statusCode,
+            httpVersion: nil,
+            headerFields: headerFields
+        )!
         return (data, response)
     }
 }

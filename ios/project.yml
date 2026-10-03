@@ -30,10 +30,16 @@ settings:
       APP_BUNDLE_ID: $(RATP_REFUSED_ID_$(RATP_WANTED_APP_ID:lower:identifier):default=$(RATP_WANTED_APP_ID))
       RATP_WANTED_WIDGET_ID: $(RATP_DEBUG_WIDGET_BUNDLE_ID:default=$(APP_BUNDLE_ID).widget)
       WIDGET_BUNDLE_ID: $(RATP_REFUSED_ID_$(RATP_WANTED_WIDGET_ID:lower:identifier):default=$(RATP_WANTED_WIDGET_ID))
+      RATP_APP_PRIM_API_KEY: $(PRIM_API_KEY)
+      RATP_APP_TRAIN_SERVER_HOST: ""
+      RATP_APP_TRAIN_SERVER_APP_TOKEN: ""
     Release:
       APP_BUNDLE_ID: io.github.valfur03.trome
       WIDGET_BUNDLE_ID: io.github.valfur03.trome.widget
       CODE_SIGN_STYLE: Manual
+      RATP_APP_PRIM_API_KEY: ""
+      RATP_APP_TRAIN_SERVER_HOST: $(TRAIN_SERVER_HOST)
+      RATP_APP_TRAIN_SERVER_APP_TOKEN: $(TRAIN_SERVER_APP_TOKEN)
 
 packages:
   TROMECore:
@@ -63,7 +69,9 @@ targets:
         NSLocationAlwaysAndWhenInUseUsageDescription: $(APP_NAME) uses your location to tell you when you reach a metro or RER station, also when the app is closed.
         UIBackgroundModes:
           - location
-        PRIMAPIKey: $(PRIM_API_KEY)
+        PRIMAPIKey: $(RATP_APP_PRIM_API_KEY)
+        TrainServerHost: $(RATP_APP_TRAIN_SERVER_HOST)
+        TrainServerAppToken: $(RATP_APP_TRAIN_SERVER_APP_TOKEN)
     settings:
       base:
         PRODUCT_NAME: $(APP_NAME)

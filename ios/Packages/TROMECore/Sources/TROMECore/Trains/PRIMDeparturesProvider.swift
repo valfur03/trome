@@ -1,32 +1,29 @@
 import Foundation
 
-public enum NextTrainsError: Error, Equatable, Sendable {
-    case unreachable
-    case keyRejected
-    case quotaExceeded
-    case serviceFailure
-}
-
-public protocol DeparturesProvider: Sendable {
-    func departures(at stations: [Station]) async throws -> [Departure]
-}
-
 public struct PRIMDeparturesProvider: DeparturesProvider {
     public static let endpoint = URL(string: "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring")!
     static let timeout: TimeInterval = 15
 
-    private let apiKey: String
+    private let source: TrainDataSource
     private let httpClient: any HTTPClient
     private let log: (@Sendable (String) -> Void)?
+
+    public init(
+        source: TrainDataSource,
+        httpClient: any HTTPClient = URLSession.shared,
+        log: (@Sendable (String) -> Void)? = nil
+    ) {
+        self.source = source
+        self.httpClient = httpClient
+        self.log = log
+    }
 
     public init(
         apiKey: String,
         httpClient: any HTTPClient = URLSession.shared,
         log: (@Sendable (String) -> Void)? = nil
     ) {
-        self.apiKey = apiKey
-        self.httpClient = httpClient
-        self.log = log
+        self.init(source: .prim(apiKey: apiKey), httpClient: httpClient, log: log)
     }
 
     struct StopRequest: Equatable {
@@ -37,6 +34,12 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
     struct Answer {
         let stopRequest: StopRequest
         let visits: Result<[MonitoredVisit], any Error>
+        var answeredAt: Date?
+    }
+
+    struct StopAnswer {
+        let visits: [MonitoredVisit]
+        let answeredAt: Date?
     }
 
     enum VisitOutcome: Equatable {
@@ -45,13 +48,21 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
     }
 
     public func departures(at stations: [Station]) async throws -> [Departure] {
+        try await departuresAnswer(at: stations).departures
+    }
+
+    public func departuresAnswer(at stations: [Station]) async throws -> DeparturesAnswer {
         let stopRequests = Self.stopRequests(for: stations)
         let answers = await withTaskGroup(of: Answer.self) { group in
             for stopRequest in stopRequests {
                 group.addTask {
                     do {
-                        let visits = try await visits(at: stopRequest.monitoringRef)
-                        return Answer(stopRequest: stopRequest, visits: .success(visits))
+                        let stopAnswer = try await stopAnswer(at: stopRequest.monitoringRef)
+                        return Answer(
+                            stopRequest: stopRequest,
+                            visits: .success(stopAnswer.visits),
+                            answeredAt: stopAnswer.answeredAt
+                        )
                     } catch {
                         return Answer(stopRequest: stopRequest, visits: .failure(error))
                     }
@@ -74,7 +85,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         if departures.isEmpty, let firstError {
             throw firstError
         }
-        return departures
+        return DeparturesAnswer(departures: departures, answeredAt: answers.compactMap(\.answeredAt).min())
     }
 
     static func stopRequests(for stations: [Station]) -> [StopRequest] {
@@ -155,15 +166,30 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
     }
 
     func request(for monitoringRef: String) -> URLRequest {
-        var components = URLComponents(url: Self.endpoint, resolvingAgainstBaseURL: false)!
-        components.queryItems = [URLQueryItem(name: "MonitoringRef", value: monitoringRef)]
-        var request = URLRequest(url: components.url!, timeoutInterval: Self.timeout)
-        request.setValue(apiKey, forHTTPHeaderField: "apikey")
+        var request: URLRequest
+        switch source {
+        case .prim(let apiKey):
+            var components = URLComponents(url: Self.endpoint, resolvingAgainstBaseURL: false)!
+            components.queryItems = [URLQueryItem(name: "MonitoringRef", value: monitoringRef)]
+            request = URLRequest(url: components.url!, timeoutInterval: Self.timeout)
+            request.setValue(apiKey, forHTTPHeaderField: "apikey")
+        case .server(let server):
+            request = URLRequest(url: Self.serverURL(of: server, for: monitoringRef), timeoutInterval: Self.timeout)
+            request.setValue("Bearer \(server.appToken)", forHTTPHeaderField: "Authorization")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         return request
     }
 
-    private func visits(at monitoringRef: String) async throws -> [MonitoredVisit] {
+    static func serverURL(of server: TrainServerConfiguration, for monitoringRef: String) -> URL {
+        server.baseURL
+            .appending(path: "v1")
+            .appending(path: "stops")
+            .appending(path: monitoringRef)
+            .appending(path: "departures")
+    }
+
+    private func stopAnswer(at monitoringRef: String) async throws -> StopAnswer {
         let data: Data
         let response: URLResponse
         do {
@@ -176,21 +202,38 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
             throw NextTrainsError.unreachable
         }
 
-        switch (response as? HTTPURLResponse)?.statusCode {
-        case .some(200..<300):
-            break
-        case .some(401), .some(403):
-            throw NextTrainsError.keyRejected
-        case .some(429):
-            throw NextTrainsError.quotaExceeded
-        default:
-            throw NextTrainsError.serviceFailure
+        let httpResponse = response as? HTTPURLResponse
+        if let error = Self.error(ofStatus: httpResponse?.statusCode, from: source) {
+            throw error
+        }
+        let answeredAt: Date?
+        switch source {
+        case .prim:
+            answeredAt = nil
+        case .server:
+            guard let lastModified = httpResponse.flatMap(HTTPDate.lastModified) else {
+                throw NextTrainsError.serviceFailure
+            }
+            answeredAt = lastModified
         }
 
         do {
-            return try StopMonitoringResponse.visits(from: data)
+            return StopAnswer(visits: try StopMonitoringResponse.visits(from: data), answeredAt: answeredAt)
         } catch {
             throw NextTrainsError.serviceFailure
+        }
+    }
+
+    static func error(ofStatus statusCode: Int?, from source: TrainDataSource) -> NextTrainsError? {
+        switch (statusCode, source) {
+        case (.some(200..<300), _):
+            nil
+        case (.some(401), _), (.some(403), _):
+            .keyRejected
+        case (.some(429), .prim):
+            .quotaExceeded
+        default:
+            .serviceFailure
         }
     }
 }

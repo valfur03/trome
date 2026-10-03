@@ -112,6 +112,39 @@ grep -qF "$fake" "$app_plist" || fail "after a change of the key file, the LIVE=
 build_app normal LIVE= PRIM_SECRETS="$work/Secrets.xcconfig"
 ! grep -qF "$fake_prefix" "$app_plist" || fail "the build without LIVE=1 kept the key in the app"
 
+release_key="${fake_prefix}RELEASEKEY"
+release_token="${fake_prefix}TOKEN"
+release_settings="$work/release-$(date +%s)-$$.xcconfig"
+release_products="$build/DerivedData/Build/Products/Release-iphonesimulator"
+release_app="$release_products/$app_name.app"
+printf 'PRIM_API_KEY = %s\nTRAIN_SERVER_HOST = live-key-check.invalid\nTRAIN_SERVER_APP_TOKEN = %s\n' \
+    "$release_key" "$release_token" > "$release_settings"
+rm -rf "$release_products"
+(cd "$root" && xcodebuild -quiet \
+    -project TROME.xcodeproj -scheme TROME -configuration Release \
+    -destination 'generic/platform=iOS Simulator' ARCHS="$(uname -m)" \
+    -derivedDataPath "$build/DerivedData" -clonedSourcePackagesDirPath "$build/SourcePackages" \
+    COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO \
+    -xcconfig "$release_settings" build) > "$work/release.log" 2>&1 || {
+    cat "$work/release.log" >&2
+    fail "the Release build failed"
+}
+! grep -qF "$fake_prefix" "$work/release.log" || fail "the output of the Release build shows the key or the app token"
+[ -f "$release_app/Info.plist" ] || fail "the Release build made no app at $release_app"
+if release_leaks=$(grep -rlF -- "$release_key" "$release_products"); then
+    fail "the Release build put the PRIM key in: $release_leaks"
+elif [ $? -gt 1 ]; then
+    fail "could not search the whole Release build in $release_products"
+fi
+grep -qF "$release_token" "$release_app/Info.plist" || fail "the Release build did not put the app token of the server in the app"
+grep -qF "live-key-check.invalid" "$release_app/Info.plist" || fail "the Release build did not put the server host in the app"
+if widget_leaks=$(grep -rlF -- "$release_token" "$release_app/PlugIns"); then
+    fail "the Release build put the app token in the Live Activity: $widget_leaks"
+elif [ $? -gt 1 ]; then
+    fail "could not search the Live Activity of the Release build"
+fi
+! grep -qF "$release_token" "$app_plist" || fail "a Debug build holds the app token of the server"
+
 cache_leaks=$(files_with_key "$shared_cache" "$work/start" "$fake_prefix") || fail "could not search the whole shared build cache $shared_cache"
 [ -z "$cache_leaks" ] || fail "the shared build cache $shared_cache holds the key in: $cache_leaks"
 
@@ -119,7 +152,8 @@ leaks=$(logs_with_key "$build" "$work/start" "$fake_prefix") || fail "could not 
 [ -z "$leaks" ] || fail "these build logs or result bundles show the key: $leaks"
 
 git -C "$root" check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore ios/Config/Secrets.xcconfig"
+git -C "$root" check-ignore -q Config/Server.xcconfig || fail "git does not ignore ios/Config/Server.xcconfig"
 git -C "$root/.." check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore the old path Config/Secrets.xcconfig"
 
 rm -rf "$work"
-echo "live-key-check: OK (a LIVE=1 build puts the key in the app only, a new key replaces the old one, and a build without LIVE=1 removes it)"
+echo "live-key-check: OK (a LIVE=1 build puts the key in the app only, a new key replaces the old one, a build without LIVE=1 removes it, a Release build holds the app token and never the key, and no build output or log shows the key or the token)"

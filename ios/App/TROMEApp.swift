@@ -16,7 +16,7 @@ struct TROMEApp: App {
     private let stationCatalog: StationCatalog
     private let regionWatcher: CoreLocationStationRegionWatcher
     private let notificationResponseHandler: ArrivalNotificationResponseHandler
-    private let primConfiguration = PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
+    private let primConfiguration = Self.primConfigurationOfThisBuild()
     private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? ""
     #if DEBUG
     private let uiTestLocationKeeper: CoreLocationBackgroundLocationKeeper?
@@ -30,7 +30,7 @@ struct TROMEApp: App {
             catalog: stationCatalog,
             store: CurrentStationStore(storage: UserDefaults.standard)
         )
-        let departuresProvider = Self.departuresProvider(primConfiguration)
+        let departuresProvider = Self.departuresProvider(primConfiguration: primConfiguration)
         let nextTrainsModel = NextTrainsModel(provider: departuresProvider, catalog: stationCatalog)
         let liveActivityClient = ActivityKitStationLiveActivityClient()
         let liveActivityModel = Self.makeLiveActivityModel(client: liveActivityClient)
@@ -155,15 +155,25 @@ struct TROMEApp: App {
         return notificationResponseHandler
     }
 
-    private static func departuresProvider(_ configuration: PRIMConfiguration?) -> (any DeparturesProvider)? {
+    private static func primConfigurationOfThisBuild() -> PRIMConfiguration? {
+        #if DEBUG
+        PRIMConfiguration(infoDictionary: Bundle.main.infoDictionary)
+        #else
+        nil
+        #endif
+    }
+
+    private static func departuresProvider(primConfiguration: PRIMConfiguration?) -> (any DeparturesProvider)? {
         #if DEBUG
         let fakeTrainsStore = FakeTrainsStore(storage: UserDefaults.standard)
         if let fakeProvider = fakeTrainsStore.provider(forLaunchWith: ProcessInfo.processInfo.arguments) {
             return fakeProvider
         }
-        return configuration.map { PRIMDeparturesProvider.loggingEachAnswer(apiKey: $0.apiKey) }
+        return primConfiguration.map { PRIMDeparturesProvider.loggingEachAnswer(apiKey: $0.apiKey) }
         #else
-        return configuration.map { PRIMDeparturesProvider(apiKey: $0.apiKey) }
+        return TrainServerConfiguration(infoDictionary: Bundle.main.infoDictionary).map { server in
+            PRIMDeparturesProvider(source: .server(server), httpClient: URLSession(configuration: .ephemeral))
+        }
         #endif
     }
 

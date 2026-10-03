@@ -9,6 +9,7 @@ ios/Widget/Info.plist
 
 ios/Config/Local.xcconfig
 ios/Config/Secrets.xcconfig
+ios/Config/Server.xcconfig
 
 Config/Local.xcconfig
 Config/Secrets.xcconfig
