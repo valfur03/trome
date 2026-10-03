@@ -31,8 +31,7 @@ We do not accept a large change that you cannot explain, or that you did not run
 
 ## Set up
 
-Follow [What you need](ios/README.md#what-you-need) and [First setup](ios/README.md#first-setup) in the README of the app.
-Then run `make run` from the root of the repo: it builds the app and opens it in the iPhone Simulator.
+[Build, run and test the iPhone app](ios/README.md) takes you from a clone to the app in the iPhone Simulator, in three commands.
 With no train data key, the app shows no live times: [The train data key](ios/README.md#the-train-data-key-prim) shows how to add your own free key.
 `make help` lists every command.
 
@@ -67,7 +66,7 @@ It fails on any build warning.
 When a check fails, its message says what is wrong and where the rule is.
 When your change touches `docs/`, `make check` builds the site too, which needs Node 24 (see [Run the site](docs/README.md#run-the-site)).
 
-`make test` runs only the unit tests, on the Mac with no Simulator, and `make e2e` runs the end-to-end tests in the Simulator.
+`make test` runs only the unit tests, on the Mac with no Simulator, and `make e2e` runs the end-to-end tests in the Simulator: [Test a change to the iPhone app](ios/guide/tests.md) shows which test your change needs.
 
 ### Write the commit title
 

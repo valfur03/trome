@@ -77,10 +77,15 @@ reset_repo
 file CLAUDE.md "Read decision-9 (TASK-44). The prompter decides; the agents wait for the manager."
 file .claude/rules/merge.md "The factory merges one task at a time (TASK-159)."
 file ios/README.md "See TASK-173 and decision-15."
-file server/README.md "The prompter decides (decision-40)."
-expect "CLAUDE.md, .claude/ and, for now, ios/README.md and server/README.md may cite the backlog and its words" "$(check)" "passes"
+expect "CLAUDE.md, .claude/ and, for now, ios/README.md may cite the backlog and its words" "$(check)" "passes"
 expect "it says which files it checks only for personal data, and why" \
-    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "4"
+    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
+
+file server/README.md "The prompter decides (decision-40)."
+expect "server/README.md, rewritten for developers, may not cite the backlog" "$(check)" "fails"
+expect "it finds the backlog id of server/README.md" "$(hit 'server/README.md:1: a backlog id: "decision-40"')" "1"
+rm "$repo/server/README.md"
+git -C "$repo" rm -q --cached server/README.md
 
 file README.md "See TASK-173: the factory decides."
 expect "the front page README.md may not cite the backlog" "$(check)" "fails"

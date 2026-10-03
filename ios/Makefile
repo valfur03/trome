@@ -190,6 +190,7 @@ run: build
 switch-language:
 	@$(SIM_LOCK) reopen $(SIMULATOR) switch-language "$(APP_PATH)"
 
+# The E2E tests collect no Simulator diagnostics on a failure: they took about 10 minutes, and kept the Simulator.
 e2e: project
 	@for test in $(ONLY); do \
 		class=$${test%%/*}; \

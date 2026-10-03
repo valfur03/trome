@@ -1,141 +1,119 @@
-# The iPhone app
+# Build, run and test the iPhone app
 
-This page is for developers: it shows how to build, run and test the iPhone app of TROME, and how its features work.
-The front page of the repo is [README.md](../README.md).
-The paths on this page start from the root of the repo, where you run the `make` commands.
+This page takes you from a clone of TROME to the app running in the iPhone Simulator, and then to a change that passes the checks.
+It is for a developer who wants to fix or change the app: [CONTRIBUTING.md](../CONTRIBUTING.md) says how to propose a change, and the front page, [README.md](../README.md), says what TROME is.
+Run every `make` command from the root of the repo; the paths on this page start there too.
 
 ## What you need
 
-- A Mac with Xcode 27.
-- Homebrew (https://brew.sh).
-- For your iPhone only: a free Apple ID and a USB cable.
+- A Mac with Xcode 27, the version that the project is built and tested with, and its iOS Simulator.
+  If you have several versions of Xcode, select this one with `sudo xcode-select --switch /Applications/Xcode.app` (the path of your Xcode 27).
+- [Homebrew](https://brew.sh), which installs the other tools.
+- Node 24, only to work on the [docs site](../docs/README.md) or the [server](../server/README.md).
 
-## First setup
+You need no Apple ID for the Simulator.
+To put the app on your own iPhone, you also need a free Apple ID and a USB cable: see [Install on your iPhone](#install-on-your-iphone-free-apple-id).
 
-Open Terminal in the main folder of the repo (the root). Run every `make` command there. Run:
+The app runs on iOS 18 or later, and its code uses the Swift 6 language mode.
+
+## From a clone to the app in the Simulator
+
+1. Fork the repo on GitHub, clone your fork, and open Terminal in its folder.
+2. Install the tools and create the Xcode project:
+
+   ```sh
+   make setup
+   ```
+
+   It installs XcodeGen, SwiftLint and pngquant with Homebrew when they are missing, then creates the Xcode project, `ios/TROME.xcodeproj`.
+3. Build the app and open it in the Simulator:
+
+   ```sh
+   make run
+   ```
+
+   The first build can take several minutes, because it also compiles the modules of the iOS SDK, once for your Mac ([Where the builds go](#where-the-builds-go)).
+   The first run also creates an iPhone 17 Simulator named `RATP-Shared`, which every clone of the repo on your Mac shares.
+   If Xcode has no iOS Simulator yet, `make run` stops and tells you to install one with `xcodebuild -downloadPlatform iOS`.
+
+The app opens in the Simulator and asks for your location.
+It shows no train times, because a build of `make run` has no train data key: to see live trains, get a free key from PRIM, the train data service of Île-de-France Mobilités, as [The train data key (PRIM)](#the-train-data-key-prim) shows.
+To try the app at a station without going there, tap **Testing tools** at the top right of the app, which only debug builds such as this one have, and pick a fake position ([Fake your position](#fake-your-position-testing-tools)).
+
+You can also open `ios/TROME.xcodeproj` in Xcode and click **Run**, on a Simulator of your choice other than the shared ones, which the `make` commands shut down when no job uses them.
+So that only one Simulator runs at a time, first free the shared one and shut it down, and quit yours before your next `make` job:
 
 ```sh
-make setup
+make simulator-shutdown
+xcrun simctl shutdown "$(make -s simulator)"
 ```
 
-This installs three tools with Homebrew (XcodeGen, SwiftLint and pngquant). Then it creates the Xcode project `ios/TROME.xcodeproj`.
+Change the settings of the project in `ios/project.yml`, not in Xcode, because `make` creates the project again from that file ([Keep the Xcode project up to date](#keep-the-xcode-project-up-to-date)).
+When your change is ready, run `make check` before you commit it ([When make check fails](#when-make-check-fails)), and the tests that it needs ([Test your change](#test-your-change)).
 
-The Xcode project is not in git.
-`make generate` also deletes the Xcode project of the older name of the app, when your folder still has one, so that you do not open it by mistake.
-The file `ios/project.yml` describes it.
-The `make` commands update the project by themselves, but the Run button of Xcode does not.
-An old project lists files that no longer exist, and misses the new ones: the build fails with "Build input file cannot be found" or "Cannot find ... in scope".
-To update the project by hand, run `make generate`.
-Do it also after you change `ios/project.yml`.
-
-### Update the Xcode project after each git pull
-
-Run this one time in the main folder:
-
-```sh
-make git-hooks
-```
-
-It turns on the git hooks of the repo (`ios/scripts/git-hooks/`): it sets `core.hooksPath` in the git config of your clone.
-After that, each `git pull`, `git checkout`, `git switch`, `git merge` or `git rebase` in the main folder creates the Xcode project again (`make project`).
-So `make merge` updates it too, when it moves `main` in the main folder.
-XcodeGen writes the project only when the code or `ios/project.yml` changed (its cache is in `ios/.build/`).
-When Xcode is open, it loads the new project by itself.
-
-- The hooks change only the Xcode project and the cache in `ios/.build/`. Git ignores both, so the main folder stays clean.
-- The hooks do nothing in the other folders of the repo (the worktrees of the agents). Their `make` commands create the project before each build.
-- A hook never stops the git command. When XcodeGen fails, the hook prints a warning: run `make generate` before you build in Xcode.
-- `make git-hooks` refuses to start when your clone already uses other git hooks (in `.git/hooks/` or another `core.hooksPath`): git runs only one hooks folder.
-- `git reset --hard` runs no hook. After it, run `make generate`.
-
-To turn the hooks off, run `make git-hooks-off`. Then run `make generate` after each `git pull`, before you build in Xcode.
-
-## Everyday commands
+## The commands you use every day
 
 | Command | What it does |
 |---|---|
-| `make run` | Builds the app and opens it in the Simulator, without the train data key. |
-| `make run LIVE=1` | The same, with your train data key (see below). |
-| `make run SMALL=1` | The same, on the smallest supported iPhone (see [The smallest iPhone](#the-smallest-iphone)). |
-| `make run LANGUAGE=fr` | The same, with the Simulator in French (see [The language of the Simulator](#the-language-of-the-simulator)). |
-| `make switch-language LANGUAGE=en` | After `make run`: puts the Simulator in English (or `fr`) and opens the app again, with its data. |
-| `make check` | The quality gate: lint, Markdown line check (see [Notes for developers](#notes-for-developers)), public text check (see [CLAUDE.md](../CLAUDE.md#the-docs-site-docs), section "The docs site"), bundle ID check (see [Install on your iPhone](#install-on-your-iphone-free-apple-id)), recommended settings check, key leak check, build, strings check (see [Languages](#languages)), unit tests, and the tests of the scripts. It fails on any warning (see [No warnings](#no-warnings)). Run it before each commit. |
-| `make e2e` | The end-to-end tests. They open the app in the Simulator. |
-| `make e2e ONLY=AutoLiveActivityTests` | Only one class of end-to-end tests. Separate many classes with spaces, in quotes. `ONLY=AutoLiveActivityTests/testLiveActivityStartsSwitchesAndStopsByItselfNearStations` runs one test. The class names are the file names in `ios/UITests/`. |
-| `make live-activity-render` | Draws the Live Activity views for every station and page, in French, and lists the too tall ones, the cut texts and the breaches of decision-15. `ENGLISH=1` draws them in English too. On demand, not in the gate (see [Check how the Live Activity draws](#check-how-the-live-activity-draws)). |
-| `make merge` | Merges the branch of this folder into `main`, with the Simulator lock from start to end: rebase onto `main`, `make check`, the full `make e2e`, then a fast-forward of `main`. The manager runs it, after QA passed the task (see [Merge a task into main](#merge-a-task-into-main)). |
-| `make lint-fix` | Fixes the lint problems that SwiftLint can fix alone. |
-| `make strings-sync` | Updates the String Catalogs as a build in Xcode does (see [Languages](#languages)). |
-| `make stations` | Downloads the metro and RER station list again (see below). |
-| `make clean` | Deletes the build folder and the Xcode project. |
-| `make clean-shared-cache` | Deletes the build cache that all folders share (see [Notes for developers](#notes-for-developers)). |
-| `make docs` | Builds the docs site and serves it at http://localhost:4321/trome/ (see [Write the docs](../docs/README.md)). |
-| `make help` | Shows all the commands. |
+| `make run` | Builds the app and opens it in the Simulator. |
+| `make test` | Runs the unit tests on your Mac, with no Simulator. |
+| `make e2e ONLY=<class>` | Runs one class of end-to-end tests in the Simulator; with no `ONLY`, it runs them all. |
+| `make strings-sync` | Adds the texts of the code to the String Catalogs, where you write their French text ([Languages](#languages)). |
+| `make check` | Runs every check of a change that needs no Simulator: run it before each commit ([When make check fails](#when-make-check-fails)). The end-to-end tests are apart: [which ones to run](guide/tests.md#pick-the-cheapest-test-that-can-catch-the-bug). |
+| `make simulator-shutdown` | Removes the app from the Simulator, and lets the other folders of the repo use it. |
 
-## Run on the Simulator
+`make help` lists every command of the repo, each with one line: it is the one full list.
+
+## Work in the Simulator
+
+### One Simulator job at a time
+
+`make run`, `make e2e`, `make docs-screenshots` and `make live-activity-render` all use one shared Simulator, and only one of them runs at a time on your Mac, whichever clone or git worktree of the repo it runs in.
+With a single clone, you see this only when you start a job while another one runs.
+A second job waits, and prints `Waiting for the Simulator lock`, with the folder that holds it: let it wait, and do not delete the lock.
+The wait ends when the first job ends; after a `make run`, it ends when its folder runs `make simulator-shutdown` or is deleted.
+Two Simulators at once would take the whole processor of a laptop, so the commands never boot a second one.
+For the same reason, do not boot a shared Simulator by hand or from Xcode while a job runs: the job shuts it down within about 10 seconds.
+
+After `make run`, the Simulator stays with your folder, so that you can check the app by hand or run `make e2e` from the same folder.
+When you are done, free it for the other folders:
 
 ```sh
-make run
+make simulator-shutdown
 ```
 
-`make run` does not use your train data key. The app shows no trains, and "Testing tools" > "Next trains of a station" says "Train data key: not set". To see live trains, run `make run LIVE=1` (see [The train data key](#the-train-data-key-prim)).
+Despite its name, it only removes the app: the Simulator shuts down by itself after 5 minutes with no job.
+`make e2e` and the other jobs free the Simulator by themselves when they end.
 
-The app opens in the Simulator. You need no Apple ID for this.
+In your own `xcrun simctl` commands, use the ID that `make simulator` prints, for example `xcrun simctl ui "$(make -s simulator)" appearance dark`.
+To delete the shared Simulators, run `make simulator-delete`: it waits until no job runs, and the next job creates them again.
 
-All copies of the repo (all folders) use one shared Simulator, named `RATP-Shared`. To see its ID, run `make simulator`.
+### What each job resets
 
-- `make run` and `make e2e` remove the app and its data from the Simulator (and the host app of the render check, see [Check how the Live Activity draws](#check-how-the-live-activity-draws)), then install the app of this folder.
-  They also delete the saved settings of the app that the Simulator keeps outside the app data (a removed app can leave some there, and the next install reads them).
-  So a folder never sees the data or the saved settings of another folder.
-  They also reset the permissions, set the text size and the appearance back to the iOS default (Large text, Light mode), restart the home screen (SpringBoard) and the location service of the Simulator, and clear its fake position.
-  Why the text size and the appearance: a check of large text or of dark mode changes them for the whole Simulator, and the next job keeps them.
-  With a very large text size, the main screen scrolls over 5 pages, and every E2E test fails because it does not find its buttons.
-  The home screen restart adds about 6 seconds to each job.
-  Why the home screen restart: a system popup of the removed app stays on screen after the removal ("Change to Always Allow", "Would Like to Send You Notifications", the first location question).
-  It covers the new app, so the tests and your checks wait on a popup that they did not cause.
-  Why the location service restart: when a job removes the app while iOS shows its "Change to Always Allow" popup, the location service keeps that popup "in flight" and then ignores every new location request of the app, so the next job never sees the location popup.
-  Then `make e2e` gives the app the location permission "While Using the App", so the tests see no location popup.
-- To check dark mode or another text size after `make run`, change the setting of the Simulator: `xcrun simctl ui "$(make -s simulator)" appearance dark`, or `xcrun simctl ui "$(make -s simulator)" content_size accessibility-extra-extra-extra-large` (`xcrun simctl ui --help` lists the sizes).
-  The next job (`make run`, `make e2e`, `make docs-screenshots`) sets them back to Large text and Light mode, so run the command again after each `make run`.
-- After a cold boot, the notification service of the Simulator can stay silent for some minutes (3 minutes on 2026-09-27, when the Mac was busy).
-  During that time, the app shows no notification question and no "Notifications" row.
-  Why: the home screen (SpringBoard) serves the notification settings only after the background task service of iOS (`dasd`) accepts its tasks, and at boot `dasd` first handles the tasks of all the other services.
-  So the end-to-end tests and the docs screenshots first ask the notification service for its settings, and wait for its answer (at most 4 minutes) before they open the app.
-  `make run` does not wait: after a cold boot, the notification question can come some minutes late.
-- After some cold boots, the widget host of the Simulator (`chronod`, the iOS service that draws widgets and Live Activities) first works through a queue of tasks for all the system widgets (up to 40 tasks, for almost 3 minutes on 2026-10-01, when the Mac was busy).
-  During that time, a Live Activity that the app starts shows nowhere: `chronod` must first read the widget of the new install, and that task waits at the end of the queue.
-  So `make run`, `make e2e` and `make docs-screenshots` wait until the queue of `chronod` is empty (at most 4 minutes, `RATP_WIDGET_HOST_WAIT_SECONDS`), and print `Waiting for the widget host of the Simulator` when they wait.
-  They read the queue in the log of `chronod`.
-  When the queue is empty, they do not wait.
-  Why: on 2026-10-01, the first E2E test of a full run (`ArrivalNotificationTests`, the first Live Activity after the install) found no Live Activity in the Notification Center for 30 seconds, because `chronod` read the widget of the app only 51 seconds after the first launch (TASK-162).
-  A newer iOS may change these log messages.
-  Then the jobs do not wait any more, and this failure can come back.
-- The Simulator stays booted between jobs, so the next job starts faster.
-  It shuts down by itself after 5 minutes with no job.
-  Only one of the two shared Simulators (`RATP-Shared` and the small one, see below) is booted at a time: a job shuts down the other one before it boots its own.
-  While a job runs, when the other shared Simulator is booted (for example, the Simulator panel of the Claude app boots it), it shuts down within about 10 seconds.
-- To delete the shared Simulators (`RATP-Shared`, the small one, and the ones of the second slot if an old trial made them), run `make simulator-delete`. It waits until no other Simulator job runs. The next job creates them again.
+Before it installs the app of your folder, each job resets the Simulator, so that it never sees what another folder or an earlier check left behind:
 
-Only one Simulator job (`make run`, `make e2e`) runs at a time on the Mac.
-The others wait and say so.
-After `make run`, run `make simulator-shutdown` as soon as you are done with your check, so the others can go on.
-This removes the app from the Simulator and frees the lock.
-It does not shut down the Simulator at once.
+- it removes the app, its data and the settings it saved, and the small app of the render check;
+- it resets the permissions, so that the app asks for them again;
+- it sets the text size back to Large and the appearance back to Light, the iOS defaults;
+- it restarts the home screen and the location service, and clears the fake position of the Simulator;
+- it sets the language (English, unless you ask for French), distances in metres, and the clock of the language: 12-hour in English, 24-hour in French.
 
-Why one job, and no second Simulator: a second Simulator takes the whole CPU of the Mac.
-On 2026-09-28, the prompter decided that no design may boot or keep a second Simulator running on this Mac, for any reason: a faster job, a Simulator for QA, a Simulator for `make run`, or a second job slot.
-This is a closed decision, not a trial on pause.
-Only the prompter can open it again, and only with a new reason (for example, a different Mac).
-The measurements behind it (8-core Mac, 16 GB):
+`make e2e` then allows the location **While Using the App** before the tests start ([how the tests answer the popups](guide/tests.md#write-one)).
 
-- 2026-09-27, a second Simulator job next to the first one: load average 257 to 286, and the second job ran about 3 times slower than alone (TASK-62).
-- 2026-09-27, a QA Simulator that booted during a `make e2e`: load average 326 (TASK-84). So QA uses the shared Simulator and its lock too.
-- 2026-09-28, the boot of a second Simulator next to the booted `RATP-Shared`, with no job: load average 333 for the first boot of a new Simulator (the Mac did not answer for about 1 minute), and 234 for a cold boot of the existing small Simulator (TASK-106).
-  A boot with no other Simulator booted measured lower: about 125 to 157 (TASK-84, TASK-92).
+To check dark mode or another text size after `make run`, change the setting of the Simulator, for example `xcrun simctl ui "$(make -s simulator)" content_size accessibility-extra-extra-extra-large` (`xcrun simctl ui --help` lists the sizes).
+The next job sets it back, so run the command again after each `make run`.
 
-The code of a second job slot is still in `ios/scripts/sim-lock.sh`, but it is off, and it stays off. Do not turn it on. The CLAUDE.md (section "Budget for this repo") explains the numbers and the decision. `make run SMALL=1` follows the same rule: one shared Simulator at a time (see below).
+### The first job after the Simulator starts waits longer
 
-### The smallest iPhone
+After the Simulator boots, iOS first does its own start-up work, which can take a few minutes on a busy Mac:
+
+- Until the widget host of iOS has done the work it queued at boot, a Live Activity shows nowhere.
+  So `make run`, `make e2e` and `make docs-screenshots` wait for it, at most 4 minutes, then go on; while they wait, they print `Waiting for the widget host of the Simulator`.
+  `RATP_WIDGET_HOST_WAIT_SECONDS` changes this limit.
+- Until the notification service answers, the app shows no notification question.
+  The end-to-end tests and the docs pictures wait for it, at most 4 minutes, but `make run` does not, so after a cold start the question can come a few minutes late.
+
+### Check the smallest iPhone
 
 To check a screen on the smallest iPhone that the app supports, run:
 
@@ -143,46 +121,128 @@ To check a screen on the smallest iPhone that the app supports, run:
 make run SMALL=1
 ```
 
-It opens the app in a second shared Simulator, named `RATP-Shared-Small`. It is an iPhone SE (3rd generation): 375 x 667 points, the narrowest and the shortest screen. `RATP-Shared` is an iPhone 17 (402 x 874 points).
+It opens the app on a second shared Simulator, `RATP-Shared-Small`: an iPhone SE (3rd generation), 375 x 667 points, the narrowest and the shortest screen.
+`RATP-Shared` is an iPhone 17, 402 x 874 points.
+Only one of the two is booted at a time, so each change of size waits for the other Simulator to start.
+`LIVE=1` works with `SMALL=1`, but `SMALL=1` works only with `make run`: the tests and the docs pictures always use `RATP-Shared`.
 
-- It takes the Simulator lock and keeps it, like `make run`. `LIVE=1` works with it too.
-- It shuts down `RATP-Shared` before it boots `RATP-Shared-Small`, and a job on `RATP-Shared` shuts down `RATP-Shared-Small` first.
-  Only one shared Simulator is booted at a time.
-  So each size switch waits for a cold boot of the other size.
-  This cost is accepted: on 2026-09-28, the prompter decided that no design may keep a second Simulator running for speed (TASK-119).
-- `make simulator-shutdown` removes the app from `RATP-Shared-Small`, and keeps it booted for the next `make run SMALL=1` (until a job on `RATP-Shared` shuts it down). Like `RATP-Shared`, it shuts down by itself after 5 minutes with no job.
-- `SMALL=1` works only with `make run`. The end-to-end tests and the docs screenshots always use `RATP-Shared`.
+### See the app in French
 
-### The language of the Simulator
-
-The app is in French and in English. It follows the language of the phone (see [Languages](#languages)). To see it in French, run:
+The app follows the language of the phone: French when the phone is in French, English otherwise ([Languages](#languages)).
+`make run` puts the whole Simulator in English: the app, the Live Activity, the notifications and the permission popups.
+To see it all in French (language French, region France), run:
 
 ```sh
 make run LANGUAGE=fr
 ```
 
-- `make run` puts the Simulator in English, as before. `LANGUAGE=fr` puts it in French (language French, region France). The whole Simulator changes: the app, the Live Activity, the Dynamic Island, the notifications and the permission popups.
-- To switch the language of the open app, run `make switch-language LANGUAGE=en` (or `LANGUAGE=fr`) after `make run`.
-  It changes the language of the Simulator, restarts the home screen (SpringBoard), and opens the app again.
-  It keeps the app, its data and its permissions, so you do not set up the app again.
-  The Live Activity shows in the new language.
-  A notification that the app sent before the switch keeps its old language.
-  It works only while this folder keeps the Simulator after `make run`, and it uses the same Simulator (also after `make run SMALL=1`).
-- `make e2e` and `make docs-screenshots` always put the Simulator back in English: the tests are in English, and the docs screenshots of the app screens too.
-  `make docs-screenshots` also takes the Live Activity pictures in French, then puts the Simulator back in English.
-- Every Simulator job shows distances in metres, and the clock of its language (12-hour in English, 24-hour in French), whatever an earlier job or a person set in the Simulator.
-  One exception: the French pictures of `make docs-screenshots` use a 12-hour clock, because the lock screen shows the real time instead of the fixed 9:41 with a 24-hour clock.
-- `LANGUAGE=` works only with `make run` and `make switch-language`.
+To switch the language of the open app, run `make switch-language LANGUAGE=en` (or `LANGUAGE=fr`) after `make run`, also after `make run SMALL=1`.
+It restarts the home screen and opens the app again, with its data and its permissions, so you do not set it up again.
+A notification that the app sent before the switch keeps its old language.
+`make e2e` and `make docs-screenshots` always put the Simulator back in English, because the tests and the pictures of the app screens are in English.
 
-Before the shared Simulator, each folder had its own Simulator, named `RATP-<folder>-<hash>`. To delete these old Simulators, run `make simulator-delete-old`.
+## Keep the Xcode project up to date
 
-To fake your position in the Simulator:
+The Xcode project is not in git: XcodeGen makes it from `ios/project.yml`.
+The `make` commands update it before they build, but the **Run** button of Xcode does not.
+With an old project, a build in Xcode fails with "Build input file cannot be found" or "Cannot find ... in scope", because the project still lists files that are gone, and misses the new ones.
+So, before you build in Xcode, run this after each `git pull` or change of branch, and after a change to `ios/project.yml` or `ios/Config/`:
 
 ```sh
-xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
+make generate
 ```
 
-## The main screen
+When Xcode is open, it loads the new project by itself.
+
+### Let git update the project for you
+
+Run this once in your clone:
+
+```sh
+make git-hooks
+```
+
+It turns on the git hooks of the repo, in `ios/scripts/git-hooks/`, by setting `core.hooksPath` in the git config of your clone.
+After that, each `git pull`, `git checkout`, `git switch`, `git merge` or `git rebase` in the main folder of your clone creates the Xcode project again, when the code or `ios/project.yml` changed.
+
+- The hooks change only the Xcode project and its cache in `ios/.build/`, which git ignores, so your folder stays clean.
+- They do nothing in the other git worktrees of your clone, where the `make` commands update the project before each build.
+- A hook never stops the git command: when XcodeGen fails, it prints a warning, and you run `make generate` before you build in Xcode.
+- `make git-hooks` refuses to start when your clone already uses other git hooks, because git runs only one hooks folder.
+- `git reset --hard` runs no hook, so run `make generate` after it.
+
+To turn the hooks off, run `make git-hooks-off`, then run `make generate` again after each `git pull`.
+
+## Where the builds go
+
+Each folder of the repo, a clone or a git worktree, builds into its own `ios/.build/`, so several folders can build and run their unit tests at the same time.
+`make build` builds only for the processor of your Mac and makes no code index, which makes it faster; Xcode makes its own index when you open the project.
+
+All the folders share the compiled modules of the iOS SDK, such as SwiftUI and UIKit, in `~/Library/Caches/RATPActivity/`, so the first build of a new worktree does not compile them again.
+This cache holds no code of the app, and it grows only when the SDK or the compiler flags change, for example after an update of Xcode.
+`make build LIVE=1` does not use it, so a build with your key stays in its own folder.
+To use another folder for the cache, add `RATP_SHARED_CACHE=<folder>` to the `make` command.
+
+- `make clean` deletes `ios/.build/` and the Xcode project of your folder.
+- `make clean-shared-cache` deletes the shared cache: it waits for the builds that use it, and new builds wait until it is done, so it never breaks a build of another folder.
+
+## When make check fails
+
+`make check` runs the checks of a change in this order, and stops at the first one that fails, with a message that says what is wrong:
+
+| Check | It fails when | More |
+|---|---|---|
+| `make lint` | SwiftLint finds a problem; `make lint-fix` fixes the ones that it can | |
+| `make prose-check` | a line of text in a Markdown or MDX file is longer than 400 characters | [one sentence per line](../docs/README.md#write-one-sentence-per-line) |
+| `make public-text-check` | a file names the private task list of the maintainer, a personal email address, a path of your Mac, or the old name of the app | the message names the file and the line |
+| `make bundle-id-check` | a Debug build could carry the App Store bundle ID, or a Release build is signed automatically | [Install on your iPhone](#install-on-your-iphone-free-apple-id) |
+| `make recommended-settings-check` | your Xcode is newer than the one that last checked the project settings | [Xcode recommends new settings](#xcode-recommends-new-settings) |
+| `make live-key-check` | a build with `LIVE=1` shows the train data key in its output or keeps an old key, or a Release build holds the key; it uses fake keys, so it needs none of yours | [The train data key (PRIM)](#the-train-data-key-prim) |
+| `make build` | the build of the app has a warning | [Fix every warning](#fix-every-warning) |
+| `make strings-check` | a text has no French text or is no longer in the code, or a build in Xcode would change a String Catalog; run `make strings-sync`, then write the missing French texts | [Languages](#languages) |
+| `make test` | a unit test fails | [the tests](guide/tests.md#unit-tests) |
+| `make test-scripts` | a test of a script fails | [the tests](guide/tests.md#script-tests) |
+
+When your branch changes `docs/` (compared with your `main` branch), `make check` also builds the docs site ([Write the docs](../docs/README.md)), and when it changes `server/` or `contracts/`, it also runs the checks of the server ([server/README.md](../server/README.md)).
+Both need Node 24.
+To run one check alone, run its command, for example `make strings-check`.
+
+### Fix every warning
+
+The build allows no warning, so fix its cause, and never silence it.
+The command line builds (`make build`, `make e2e`, `make docs-screenshots`) and `make test` treat each compiler warning as an error.
+After the build, `ios/scripts/build-warnings.py` fails on any other warning that Xcode reports, for example from the linker or the asset catalog.
+The **Run** button of Xcode does not treat warnings as errors, so you can try code that is not finished yet.
+
+### Xcode recommends new settings
+
+A new version of Xcode can recommend new project settings, and shows the warning "Update to recommended settings".
+`options.xcodeVersion` in `ios/project.yml` names the Xcode version that last checked them, and `make recommended-settings-check` fails when your Xcode is newer, except for a bug-fix release such as 27.0.1.
+To fix it:
+
+1. Open `ios/TROME.xcodeproj` in Xcode, and click the warning.
+2. Add each setting that Xcode proposes to `ios/project.yml`.
+   Do not click **Perform Changes**: the Xcode project is not in git, and `make generate` would undo it.
+3. Set `options.xcodeVersion` to your Xcode version, and run `make generate`.
+
+Put this change in a commit of its own, so that the review can read it apart from your fix.
+
+## Test your change
+
+Pick the cheapest test that can catch a bug in your change: a unit test for a rule, an end-to-end test where the app meets iOS.
+[Test a change to the iPhone app](guide/tests.md) shows which one, how to run it, and how to write one.
+
+## The guides
+
+Each guide in `ios/guide/` explains one part of the app for a developer who changes it:
+
+- [tests.md](guide/tests.md): the unit tests, the end-to-end tests and what each one guards, the script tests, and what to do about a test that fails only sometimes.
+
+## How each feature works
+
+These sections explain each feature of the app, and how to try it in the Simulator.
+
+### The main screen
 
 The app is the Live Activity. The main screen shows only:
 
@@ -201,7 +261,7 @@ The app is the Live Activity. The main screen shows only:
 
 The station picker and the next trains list are only for testers, in "Testing tools" (debug builds).
 
-## Fake your position (testing tools)
+### Fake your position (testing tools)
 
 Debug builds have a "Testing tools" screen. `make run` and the Run button in Xcode make debug builds. Release builds do not have this screen.
 
@@ -220,7 +280,13 @@ This works in the Simulator and on your iPhone, also when the iPhone is not conn
 
 For developers: all code must read the position from `LocationService` (in `TROMECore`), never from Core Location directly. Then the fake position works for every feature.
 
-## The station list
+To fake your position in the Simulator:
+
+```sh
+xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
+```
+
+### The station list
 
 The app finds the nearest station without the network. It reads the file `ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json`.
 
@@ -252,7 +318,7 @@ For example, the quays 22059 and 463116 of Abbesses are in the stop area 42155.
 
 Some names in the open data are wrong or spelled in two ways. The script fixes them with the table `STATION_NAMES` in `ios/scripts/update-stations.py`. If a unit test says that two stations "look like the same station", add the bad name to this table.
 
-## Next trains of a station
+### Next trains of a station
 
 Debug builds can show the next trains of a station that you pick by hand. This needs no location permission. Release builds do not have this screen.
 
@@ -284,7 +350,7 @@ The app keeps only the trains of the lines that it asked this stop area for.
 `CurrentStationModel` holds the station that the tester picked.
 `NextTrainsModel.updatingStationId` says which station the screen keeps up to date, so the Live Activity does not ask PRIM for the same station twice.
 
-## Show the next trains on the lock screen (Live Activity)
+### Show the next trains on the lock screen (Live Activity)
 
 The app shows the next trains of a station on the lock screen, as a Live Activity. On an iPhone with a Dynamic Island, it also shows there.
 
@@ -521,7 +587,7 @@ The Live Activity shows the first lines again when it starts or switches to anot
 `StationLiveActivityModel` starts, updates and stops it.
 The view is in `ios/Widget/StationLiveActivity.swift`.
 
-### Check how the Live Activity draws
+#### Check how the Live Activity draws
 
 `make live-activity-render` draws the Live Activity views for every station of the list and every page of its lines, and saves the results in `ios/.build/live-activity-render/`.
 Run it before and during a task that changes these views (for example TASK-36, TASK-65, TASK-37), and give its output to the reviewer and QA.
@@ -599,7 +665,7 @@ It is not part of `make check` or `make e2e`: it saves images and lists for a pe
   A page could fail a limit that its real drawing passes, or pass a limit that it fails.
   The build before it and the text recognition after it (about 1 minute for each language, and about 30 s more for the breaches since the images of the hubs: 28 s on the branch of TASK-112) use no Simulator.
 
-## The Live Activity starts and stops by itself near a station
+### The Live Activity starts and stops by itself near a station
 
 The app watches the metro and RER stations around you. The rules come from decision-3 in the backlog.
 
@@ -626,7 +692,7 @@ The app watches the metro and RER stations around you. The rules come from decis
 
 The main screen says which station shows on the lock screen ("On the lock screen: <station>").
 
-### Swipe the Live Activity away
+#### Swipe the Live Activity away
 
 The rules come from decision-32 in the backlog.
 
@@ -661,7 +727,7 @@ Otherwise it asks iOS for one with `CLLocationManager.requestLocation()` (`Locat
 A position that comes later goes through the usual arrival rules.
 The automatic arrival keeps its own 15 seconds.
 
-### Snooze or turn off the automatic mode
+#### Snooze or turn off the automatic mode
 
 The rules come from decision-3 in the backlog.
 
@@ -692,7 +758,7 @@ When iOS does not show the second question (after "Allow Once", iOS ignores it),
 If you keep "While Using the App", the Live Activity starts by itself only while the app is open.
 The "Permissions" part of the main screen then says so, with a button to open Settings.
 
-### Test it with a fake position
+#### Test it with a fake position
 
 - **App open (the Live Activity starts at once).** Open "Testing tools", pick a station (for example Abbesses), and go back. The Live Activity starts. Pick a station near it (for example Pigalle): the Live Activity switches. Tap "Far from any station": the Live Activity ends.
 - **App in the background (the notification).** The in-app fake position cannot change while the app is in the background. Use the Simulator location instead:
@@ -914,129 +980,3 @@ The feature folders have the same names in `ios/App/`, in the sources of `TROMEC
 The rules for the code (where each file goes, which module depends on which) are in the CLAUDE.md, section "Code structure of the iOS app".
 
 You can also run the commands of one part in its folder: `make -C ios check` runs only the checks of the app.
-
-## Notes for developers
-
-- **The README: one sentence per line.** Write each sentence of this README on its own line.
-  When one sentence is longer than 400 characters, break the line after a comma, a colon or a semicolon.
-  When a change makes a sentence false, edit only that sentence, and never reflow a paragraph.
-  Why: git merges by line, so two changes to two sentences of one long line conflict.
-  `make prose-check` (part of `make check`) fails on a line of prose longer than 400 characters, in every Markdown and MDX file of the repo ([CLAUDE.md](../CLAUDE.md#the-docs-site-docs), section "The docs site").
-  Tables and code blocks may have long lines.
-- Unit tests use Swift Testing. `make test` runs them on the Mac with `swift test`, so they need no Simulator. Keep `TROMECore` buildable on macOS: put iOS-only code (for example ActivityKit) inside `#if os(iOS)`.
-- Build output goes to `ios/.build/` inside the folder. Many git worktrees can build and run unit tests at the same time. Each worktree has its own build folder. All worktrees share one Simulator, and Simulator jobs wait for each other (see above).
-- The shared build cache: all folders (and all git worktrees) share the compiled modules of the iOS SDK (for example SwiftUI and UIKit), in `~/Library/Caches/RATPActivity/`.
-  So the first build of a new worktree does not compile them again.
-  This cache holds no code of the app, only modules of the SDK: the build products of a worktree stay in its own `ios/.build/`.
-  Xcode keys each module by a hash of the SDK and the compiler flags, and it writes each file in one step, so many builds can use the cache at the same time.
-  The cache grows only when the SDK or the flags change (for example after an Xcode update).
-  `make build LIVE=1` does not use this cache: a build with the key stays in its folder.
-  `make live-key-check` fails if the cache holds the key.
-  To clear the cache, run `make clean-shared-cache`.
-  It waits for the builds that use the cache to end, and new builds wait for it, so clearing never breaks a build of another folder.
-  Then it deletes the modules, and the next build makes them again.
-  To use another folder, add `RATP_SHARED_CACHE=<folder>` to the `make` command.
-- `make build` builds the app for the processor of your Mac only (Apple silicon: arm64), and the command line builds make no code index (Xcode makes its own index when you open the project). Both make the build faster.
-- End-to-end tests are slow: all folders share one Simulator, one job at a time.
-  So each test guards one seam where our code meets iOS, and nothing else (CLAUDE.md, section "Test levels", and decision-9 in the backlog): the real location popups, then a Live Activity that starts with the app open at a station and that "Snooze" ends (`LiveActivityTests`), the automatic start, switch and end of the Live Activity from the position that iOS gives (`AutoLiveActivityTests`),
-  the arrival notification of an app in the background, the tap on it, its "Not for 1 h" action, and the app opened at the station with no tap (`ArrivalNotificationTests`), a real swipe of the Live Activity that pauses its station but not the next one (`SwipeAwayTests`), and the trains on the real Live Activity with its two buttons (`SnoozeTests`).
-  Each test looks at the real Live Activity in the Notification Center (`openNotificationCenter(over:)` from `E2ETestCase` pulls it down over the app, and `liveActivity` is the Live Activity there), not at the app label "On the lock screen: <station>": at most, this label is a point to wait for.
-  The tests move the phone with the Simulator position (`moveThePhone(to:)`, which sets `XCUIDevice.location`), so the app reads it through Core Location, with our real code.
-  They never go through the Testing tools: the fake position for testers has no E2E test, and QA checks it when a task changes it.
-  Each test uses its own stations, so no test depends on the arrival that another test left behind.
-  A check of a rule (formatting, sorting, search, parsing, state) is a unit test in `TROMECore`.
-  A new step goes in the test of its seam.
-- End-to-end tests: to wait for an element, use `waitFor(_:)` from `E2ETestCase` (`waitForNo(_:)` to wait until it goes, `waitForFirst(of:)` for the first of many).
-  Tap with `tap(_:)`: it waits for the element first, so a tap after typing or navigation never fails at once on a busy Mac.
-  They wait up to `UITestTimeout.element` (30 seconds): the Mac can be busy, so short waits fail for no real reason.
-  They return at once when the element is already there (`waitForExistence` alone costs at least 1 second, even then).
-  Wait for a condition that the app shows, never for a fixed time.
-  Each test class inherits from `E2ETestCase`.
-  It sets `continueAfterFailure = false`: a test stops at its first failure.
-- End-to-end tests: when a test changes the Simulator position, wait for what the new position changes before the next step (the position reaches the app some time later): the Live Activity in the Notification Center, or the app label "On the lock screen: <station>" before the test leaves the app.
-  While a Live Activity shows, the app keeps getting positions in the background (the path of a phone in a pocket), so `AutoLiveActivityTests` and `SnoozeTests` move the phone while the Notification Center is open.
-  A test that needs the app awake in the background with no Live Activity (`ArrivalNotificationTests`) adds the launch argument `--keep-running-in-background` (debug builds only).
-  `makeApp()` adds `--end-live-activity` (debug builds only): at launch, the app ends the Live Activity that the last test left, so each test starts with none, and no test taps a button of the app to end it.
-  The app then keeps a background location session, so iOS does not suspend it before the new position reaches it.
-- End-to-end tests: the E2E builds have no train data key, so the Live Activity says "No data available".
-  A test that checks the trains on the Live Activity adds the launch argument `--fake-trains` (debug builds only).
-  The app then gets fake next trains from `FakeDeparturesProvider` in `TROMECore`, with times from now (or from the launch, when a state follows the argument), and makes no PRIM call.
-  Each line of the station gets trains toward both ends, and a side with branches sends its trains to each branch in turn.
-  Every E2E launch has launch arguments (`makeApp()` adds `--reset-location-source`), so a test without `--fake-trains` never keeps the fake trains of an earlier test.
-  When iOS starts the app by itself (no launch argument), it keeps them (see [Test it with a fake position](#test-it-with-a-fake-position), "Fake trains").
-  Only `SnoozeTests` uses it (`--fake-trains at-platform`, see [Test it with a fake position](#test-it-with-a-fake-position), "Ask the fake trains for a state"), to check the station name, both directions, a train at the platform, a branch, the header button that shows the next line, and one row for each end of the fork of line 7 on the next page, on the real Live Activity (Notification Center).
-  It does not replace the real trains: QA still checks them with `make run LIVE=1`.
-- End-to-end tests: open the app with `launch(app)` from `E2ETestCase`, not with `app.launch()`.
-  On the first launch of a run, it answers the notification popup at once.
-  If the location is "Off" (for example, you run a test from Xcode after a run that refused it), it resets the location permission and answers the location popup.
-  It also answers "Keep Only While Using" at once when iOS asks to use the location "Always".
-  After it answers the first location popup, it waits for this "Always" popup too, because the app asks for it right away.
-  Before each test, `makeApp()` stops the app of the last test, and stops it again if iOS starts it again in the background (iOS does it for an app that can use the location in the background).
-  `launch(app)` does the same before it resets a refused location permission.
-  Only `LiveActivityTests` goes through the real location popups, with `answerPermissionPrompts(in:)`.
-  It waits until it has answered both, and checks that the "Always" popup came right after the first one.
-- `make e2e` builds the tests before it takes the Simulator lock, so other jobs do not wait for the build. It runs the tests on the Simulator of its job (`ios/scripts/simulator.sh with-destination` adds its `-destination`).
-- `make e2e` does not collect Simulator diagnostics when a test fails (they took 10 minutes and kept the Simulator lock).
-  It stops a test that runs longer than 5 minutes.
-  When a test fails, it prints the file, the line, and the message of each failure.
-  When the Mac went to sleep during the tests (for example, the lid was closed on battery, which `caffeinate` cannot stop), it also says when, from the power log of macOS (`pmset -g log`): the Simulator stops while the Mac sleeps, but the waits of the tests count on the clock, so a test can fail with no bug in the code.
-  Run the command again before you look for a bug.
-  Why: on 2026-09-30, the Mac slept for 96 seconds during the full suite of `make merge`, a test failed, and a task that had passed QA went back to its Software Engineer for a night (TASK-154).
-  The full results are in `ios/.build/e2e.xcresult` (open it in Xcode).
-- Swift 6 language mode. Minimum iOS version: 18.0.
-
-### Merge a task into main
-
-`main` is always green. It holds only the tasks that passed review and QA. There is no other long-lived branch.
-
-1. A Software Engineer implements a task on its branch `task/<id>`, and another Software Engineer reviews it.
-2. The implementer runs `make check` on the last commit of the branch, plus the E2E test classes of the flows that the change touches.
-   The reviewer hands the task over to QA.
-   Before that, it makes sure that `make check` passed on the last commit of the branch.
-   A reviewer who changed no code runs nothing again.
-   A reviewer who changed code runs `make check`, plus the E2E test classes of the flows that its change touches when it changed app code.
-   No Software Engineer rebases the branch or merges.
-3. The manager rebases the branch onto `main` right before QA, so QA tests the branch on the latest `main`.
-4. QA tests the branch.
-5. When QA passed the task, the manager runs `make merge` in the worktree of the task.
-   It takes the Simulator lock, rebases the branch onto the tip of `main` again, runs `make check`, runs the full `make e2e` (skipped when the task changes only docs, Markdown files outside the sources of the app, `LICENSE`, `.claude/`, unit tests, `server/` or `contracts/`), then fast-forwards `main` to the rebased branch.
-   When `main` is checked out in a folder, it updates that folder too, with `git merge --ff-only`.
-   When a step fails, `main` stays as it was.
-
-When a rebase has a conflict (before QA or in `make merge`), or the gate or the E2E suite fails, the task goes back to its Software Engineer, who fixes the cause on the branch.
-One exception: when the E2E suite fails and `make merge` says that the Mac slept during the tests, the task does not go back.
-The manager runs `make merge` again, once.
-After a rebase conflict, the rebase is stopped (`git rebase --abort`: the manager does it before QA, and `make merge` does it by itself), so the Software Engineer starts the rebase again (`git -C <worktree> rebase main`) and solves the conflict.
-
-The folder of `main` is the prompter's folder.
-When it has changes that are not committed on the files of the task, `make merge` refuses at once, before it waits for a lock, and names the files.
-The task does not go back to its Software Engineer for this.
-The manager tells the prompter the folder and the files, and the prompter decides: commit, stash or drop the changes.
-The manager runs `make merge` again when the prompter says that the folder is clear.
-The same holds when the fast-forward fails because such changes appeared during the run.
-No agent commits, stashes or discards the changes of the prompter's main folder without the prompter.
-
-Why:
-
-- **Merges queue one at a time.** A second `make merge` waits for the first one (a merge lock, `/tmp/ratp-merge.lock`), then for the Simulator lock.
-  When its turn comes, `main` already has the first merge, so it rebases onto it.
-  Its fast-forward is never refused because another merge landed during its run.
-- **A full E2E run is never repeated.** The full suite runs once for each task, on the exact commit that `main` gets. No other merge can land between the end of the run and the fast-forward.
-- **History stays linear.** `main` moves only by fast-forward. A merge is always a rebase, then a fast-forward: never a merge commit.
-
-The CLAUDE.md gives the details (section "Merge a task into main").
-
-### No warnings
-
-The project has no warning, and the quality gate keeps it so:
-
-- **Build warnings.** The command line builds (`make build`, `make e2e`, `make docs-screenshots`) treat each compiler warning as an error.
-  `make test` does the same for `TROMECore`.
-  After `make build`, `ios/scripts/build-warnings.py` reads the result of the build (`ios/.build/build.xcresult`) and fails on any other warning that Xcode reports (for example the linker or the asset catalog).
-  The Run button in Xcode does not treat warnings as errors, so you can try code that is not finished yet.
-- **Recommended settings.** A new version of Xcode can recommend new project settings: Xcode then shows the warning "Update to recommended settings".
-  `options.xcodeVersion` in `ios/project.yml` says which Xcode version last checked the settings.
-  `make recommended-settings-check` (part of `make check`) fails when your Xcode is newer (a bug fix release, for example 27.0.1, does not count).
-  Then open `ios/TROME.xcodeproj` in Xcode, click the warning, and add each setting that Xcode proposes to `ios/project.yml`.
-  Do not click "Perform Changes": the Xcode project is not in git, and `make generate` would undo it.
-  Then set `options.xcodeVersion` to your Xcode version, and run `make generate`.

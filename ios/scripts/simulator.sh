@@ -161,6 +161,11 @@ widget_host_state() {
         '
 }
 
+# After some cold boots, the widget host of the Simulator (chronod, the iOS service that draws widgets and
+# Live Activities) first works through a queue of tasks for all the system widgets, for minutes on a busy Mac.
+# Until it reads the widget of the new install, at the end of that queue, a Live Activity that the app starts
+# shows nowhere, and the first test of a run that looks for one fails. So the jobs wait until its log says that
+# the queue is empty. A newer iOS may change these log messages: then the jobs no longer wait.
 wait_for_widget_host() {
     deadline=$(($(date +%s) + widget_host_wait_seconds))
     waited=
@@ -204,6 +209,14 @@ reset_display() {
     xcrun simctl ui "$1" appearance light
 }
 
+# Each job starts from the same Simulator, whatever an earlier job or a person left in it:
+# - A removed app can leave its saved settings outside its data, and the next install reads them.
+# - A check of large text or dark mode changes them for the whole Simulator. With a very large text,
+#   the main screen scrolls over several pages, and the E2E tests no longer find their buttons.
+# - A system popup of the removed app ("Change to Always Allow", the notification question) stays on screen
+#   and covers the new app, until SpringBoard restarts.
+# - When the app is removed while iOS shows its "Change to Always Allow" popup, the location service keeps
+#   that popup in flight and ignores every new location request of the app, until it restarts.
 reset_device() {
     uninstall_apps "$1"
     xcrun simctl privacy "$1" reset all

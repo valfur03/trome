@@ -3,6 +3,8 @@ set -eu
 
 base_lock=${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}
 watcher="$base_lock.slots-watcher"
+# One Simulator job at a time: a second Simulator next to the first one takes the whole CPU of the Mac,
+# and each job then runs several times slower. The code of a second slot stays, but off.
 slots=${RATP_SIM_SLOTS:-1}
 min_idle_percent=${RATP_SIM_MIN_IDLE_PERCENT:-25}
 idle_minutes=${RATP_SIM_IDLE_MINUTES:-5}

@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+# Xcode keys each SDK module of the cache by a hash of the SDK and the compiler flags, and writes each file
+# in one step, so many builds can use the cache at once. Only a clear must wait for the builds that use it.
 poll_seconds=1
 
 usage() {
