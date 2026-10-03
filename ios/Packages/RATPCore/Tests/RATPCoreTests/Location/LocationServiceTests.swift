@@ -8,7 +8,9 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     private(set) var isReporting = false
     private(set) var currentFixRequestCount = 0
     private var lastCoordinate: Coordinate?
+    private var heldRequests: [CheckedContinuation<PositionFix?, Never>] = []
     var givesACurrentFix = true
+    var holdsTheCurrentFixRequest = false
 
     init(now: @escaping @Sendable () -> Date = { Date() }) {
         self.now = now
@@ -35,6 +37,19 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
 
     func currentFix() async -> PositionFix? {
         currentFixRequestCount += 1
+        guard !holdsTheCurrentFixRequest else {
+            return await withCheckedContinuation { heldRequests.append($0) }
+        }
+        return freshFix()
+    }
+
+    func answerTheHeldRequests() {
+        let fix = freshFix()
+        heldRequests.forEach { $0.resume(returning: fix) }
+        heldRequests = []
+    }
+
+    private func freshFix() -> PositionFix? {
         guard givesACurrentFix, let lastCoordinate else { return nil }
         return PositionFix(coordinate: lastCoordinate, accuracyMeters: 0, timestamp: now())
     }

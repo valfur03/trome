@@ -11,6 +11,7 @@ public final class AutoLiveActivityModel {
 
     public private(set) var shownStation: Station?
     public private(set) var pausedStation: PausedStation?
+    public internal(set) var cannotFindPosition = false
     public private(set) var hasAskedNotificationQuestion = false
 
     private let catalog: StationCatalog
@@ -67,6 +68,9 @@ public final class AutoLiveActivityModel {
     public func setAppPhase(_ phase: AppPhase) {
         let wasActive = appIsActive
         appPhase = phase
+        if phase != .active {
+            cannotFindPosition = false
+        }
         feedAfterActivityChange(wasActive: wasActive)
         if phase == .background, state.pendingArrivalStationId != nil {
             Task { await evaluate(position: nil) }
@@ -120,13 +124,13 @@ public final class AutoLiveActivityModel {
 
     public func cancelPause() async {
         guard let pause = state.pause else { return }
-        let fix = await positionForTheCancel(of: pause)
+        cannotFindPosition = false
+        let position = await positionForAResume()
         endPause(at: pause.stationId, reason: "cancelled by the rider")
         if state.arrivalStationId == pause.stationId {
             state.arrivalStationId = nil
         }
-        guard let fix else { return }
-        await handle(fix)
+        await resume(at: position)
     }
 
     public func stopByHand() async {
@@ -256,6 +260,11 @@ public final class AutoLiveActivityModel {
         restartFeed(fetchNow: false)
     }
 
+    func handle(_ position: Coordinate) async {
+        await evaluate(position: position)
+        await refreshRegions(around: position)
+    }
+
     private func openTappedStation() async {
         guard appIsActive, let stationId = pendingTappedStationId else { return }
         pendingTappedStationId = nil
@@ -326,27 +335,13 @@ private extension AutoLiveActivityModel {
         return AutoLiveActivityRules.trusts(fix, now: configuration.now(), maximumAge: maximumAge)
     }
 
-    func positionForTheCancel(of pause: StationPause) async -> PositionFix? {
-        if let fix = inputs.locationService.fix, trusts(fix) {
-            return fix
-        }
-        let fresh = await inputs.locationService.requestCurrentFix()
-        let answer = fresh.map { "accuracy \(Int($0.accuracyMeters)) m" } ?? "no position"
-        Self.logPause("cancel of the pause at \(pause.stationId): the last position is old, iOS gave \(answer)")
-        return fresh ?? inputs.locationService.fix
-    }
-
     func handle(_ fix: PositionFix, maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge) async {
         guard trusts(fix, maximumAge: maximumAge) else {
             await refreshRegions(around: fix.coordinate)
             return
         }
+        cannotFindPosition = false
         await handle(fix.coordinate)
-    }
-
-    func handle(_ position: Coordinate) async {
-        await evaluate(position: position)
-        await refreshRegions(around: position)
     }
 
     func askForNotificationsIfAllowed() {

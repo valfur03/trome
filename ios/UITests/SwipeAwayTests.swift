@@ -1,9 +1,10 @@
 // Seam: the rider swipes the real Live Activity away in the Notification Center (the same view as the
 // lock screen), with the app in the background, and iOS tells the app (ActivityKit `activityStateUpdates`).
 // The app then pauses that station: the rider sees the Live Activity start at another station, and not come
-// back at the swiped station after leaving it and coming back. Then the rider, standing still at that station
-// for longer than the app trusts a position, cancels the pause: the app asks iOS for a fresh position (Core
-// Location sends none while the phone does not move), and the Live Activity of that station comes back.
+// back at the swiped station after leaving it and coming back. Then the rider stands still at that station for
+// longer than the app trusts a position, opens the app and cancels the pause: by the resume rule, the app asks iOS
+// for a fresh position (Core Location sends none while the phone does not move), and the Live Activity of that
+// station comes back.
 // Why not cheaper: unit tests check the pause rules with a fake removal and a fake position; only iOS removes
 // a Live Activity on a swipe and tells the app, and only Core Location says whether a fresh position comes
 // while the phone stands still.
@@ -14,7 +15,7 @@ final class SwipeAwayTests: E2ETestCase {
     private static let liege = CLLocation(latitude: 48.879648, longitude: 2.327028)
     private static let cadet = CLLocation(latitude: 48.876018, longitude: 2.344616)
     private static let clearButtonLabels = ["Clear", "Dismiss", "Close", "Remove"]
-    private static let longerThanThePositionTrust: TimeInterval = 20
+    private static let longerThanThePositionTrust: TimeInterval = 25
 
     @MainActor
     func testASwipeOfTheLiveActivityPausesItsStationButNotTheOtherStations() {
@@ -46,8 +47,8 @@ final class SwipeAwayTests: E2ETestCase {
         )
         closeNotificationCenter()
 
-        app.activate()
         standStillLongerThanTheAppTrustsAPosition()
+        app.activate()
         tap(app.buttons["cancelStationPause"])
         openNotificationCenter(over: app)
         XCTAssertTrue(

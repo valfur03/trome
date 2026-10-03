@@ -61,6 +61,16 @@
         }
       }
     },
+    "Can’t find your position for now" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position introuvable pour l’instant"
+          }
+        }
+      }
+    },
     "Cancel the pause at %@" : {
       "localizations" : {
         "fr" : {

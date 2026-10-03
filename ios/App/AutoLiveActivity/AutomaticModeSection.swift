@@ -43,6 +43,9 @@ struct AutomaticModeSection: View {
                 }
                 .disabled(isCancellingThePause)
                 .accessibilityIdentifier("cancelStationPause")
+            } else if automaticMode.mode != .turnedOff, autoLiveActivity.cannotFindPosition {
+                Label("Can’t find your position for now", systemImage: "location.slash")
+                    .accessibilityIdentifier("positionNotFound")
             }
         } footer: {
             Text(footer)
