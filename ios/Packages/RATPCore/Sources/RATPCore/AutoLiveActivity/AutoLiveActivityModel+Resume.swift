@@ -22,10 +22,8 @@ extension AutoLiveActivityModel {
     }
 
     func resume(at position: PositionFix?) async {
-        guard let position else {
-            cannotFindPosition = true
-            return
-        }
+        cannotFindPosition = position == nil
+        guard let position else { return }
         await handle(position.coordinate)
     }
 

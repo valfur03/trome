@@ -640,7 +640,7 @@ For developers: `AutoLiveActivityRules.outcome(of:shown:now:)` (in `RATPCore`) d
 `AutoLiveActivityModel` applies it and saves the pause (`StationPause`) with its state, so the pause survives a relaunch.
 `ActivityKitStationLiveActivityClient` (in `ios/App/LiveActivity/`) follows each Live Activity of the app (`activityStateUpdates`) and reports its first `ended` or `dismissed` state, with whether the app ended it itself (it remembers the Live Activities that it ends).
 At launch, when the saved state says that a Live Activity shows and iOS lists none, the app forgets it with no pause (the limit above).
-The cancel is a resume, and it follows the resume rule of decision-55, `ResumePositionRules` (in `RATPCore`), called through `AutoLiveActivityModel.positionForAResume()`.
+The cancel is a resume, and it follows the resume rule of decision-55, `ResumePositionRules` (in `RATPCore`), called through `AutoLiveActivityModel.positionForAResume()`, then `resume(at:)`, which evaluates that position with the arrival rules or shows the line when there is none.
 iOS sends no new position while the phone stands still (`CLLocationUpdate.liveUpdates` pauses), so the rule uses the last position only when it is precise and at most 15 seconds old.
 Otherwise it asks iOS for one with `CLLocationManager.requestLocation()` (`LocationProvider.currentFix()`, in `CoreLocationProvider`) and waits at most 5 seconds; with no answer, it uses the last position when it is precise and at most 2 minutes old.
 A position that comes later goes through the usual arrival rules.

@@ -124,7 +124,6 @@ public final class AutoLiveActivityModel {
 
     public func cancelPause() async {
         guard let pause = state.pause else { return }
-        cannotFindPosition = false
         let position = await positionForAResume()
         endPause(at: pause.stationId, reason: "cancelled by the rider")
         if state.arrivalStationId == pause.stationId {

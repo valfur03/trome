@@ -121,6 +121,21 @@ extension AutoLiveActivityModelTests {
         #expect(model.cannotFindPosition == false)
     }
 
+    @Test func aLaterResumeOnAHeldPositionRemovesTheNoPositionLine() async {
+        let model = makeModel()
+        await pausedAtAWithTheAppOpen(model, heldPositionAge: 121)
+        gps.givesACurrentFix = false
+        await model.cancelPause()
+
+        let heldFor100Seconds = PositionFix(
+            coordinate: Places.fiftyMetersFromA, accuracyMeters: 10, timestamp: clock.now - 100
+        )
+        await model.resume(at: heldFor100Seconds)
+
+        #expect(model.shownStation == Places.stationA)
+        #expect(model.cannotFindPosition == false)
+    }
+
     @Test func theNoPositionLineGoesWhenTheAppLeavesTheFront() async {
         let model = makeModel()
         await pausedAtAWithTheAppOpen(model, heldPositionAge: 121)
