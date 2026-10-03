@@ -6,6 +6,7 @@ export const englishOnlyFolders = ['build/'];
 
 const languages = ['fr', 'en'];
 
+// Whether a page has a twin in the other language, for a route id such as "fr/support" or a path such as "fr/support.mdx".
 export function isInBothLanguages(path: string): boolean {
   const [language, ...rest] = path.split('/');
   const page = rest.join('/');
