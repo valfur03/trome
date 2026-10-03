@@ -55,6 +55,38 @@ As this licence asks, the app shows this notice on its main screen, with a link 
 The tests of the app and of the server read recorded PRIM answers: the files in [`contracts/prim/`](contracts/prim/), and the PRIM answers inside the examples of [`contracts/api/`](contracts/api/).
 They come from the same database, so they are under the Licence Mobilités too.
 
+## The server's day shape
+
+The server shares its daily budget of PRIM calls among the 24 hours of the day, so that the morning peak cannot spend the calls of the evening.
+The share of each hour, the day shape, is `dayShapePercents` in [`relay-settings.ts`](server/src/core/config/relay-settings.ts).
+It is made from one dataset that Île-de-France Mobilités publishes on its open data portal:
+
+| Dataset | Identifier | What the day shape takes from it | Licence |
+|---|---|---|---|
+| [Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)](https://data.iledefrance-mobilites.fr/explore/dataset/validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre/) | `validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre` | the share of rail validations in each hour, for each stop and each type of day | [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0) |
+
+The dataset covers the 2nd quarter of 2026, and its page gives 2026-09-22 as the date of its last update.
+The licence and the date above are the ones that the dataset page showed on 2026-10-03.
+
+TROME adapts the data, so the numbers of the day shape are ours, not numbers of the dataset.
+For each hour, TROME takes the mean of the shares of all rail stops (each stop counts the same), over a week of 5 weekdays out of the school holidays, 1 Saturday and 1 Sunday, and rounds it to 0.1%.
+Then it gives each hour at least 0.5%, takes the extra share from the other hours in proportion, and keeps the hours from 00:00 to 02:00 at 5% of the day at most.
+
+The day shape is a setting, and it will change: after two weeks of real use, the share of each hour in the calls of TROME's own riders will replace it.
+From then on, the day shape no longer comes from this dataset.
+
+The Licence Ouverte lets anyone reuse the data and a work made from it, also for a commercial use, if they credit the source and give the date of the data.
+The day shape is such a work, and it is in the code: a copy of `relay-settings.ts` shares it too.
+When you share the day shape, or a work made from it, in public:
+
+- Say that the data comes from Île-de-France Mobilités and was adapted by TROME.
+- Name the Licence Ouverte v2.0, and link to it.
+- Give the date of the data: 2026-09-22.
+
+For example:
+
+> Day shape adapted by TROME from the Île-de-France Mobilités dataset “Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)”, data of 2026-09-22, under the Licence Ouverte v2.0.
+
 ## Names and marks
 
 TROME is not an app of RATP or of Île-de-France Mobilités, and neither of them endorses it.

@@ -923,9 +923,11 @@ What the server does:
   The 1,000 calls are those of your PRIM key, and the staging Worker and an app built with the key (`make run LIVE=1`) use the same key: keep the two caps together well under 1,000 (800 and 60 today), not one of them at 990.
   With the staging cap of 60, the hours before 03:00 in Paris have no call, and the hours before 06:00 have 2 calls in total: test the staging Worker later in the day.
   The shape is `dayShapePercents` in `server/src/core/config/relay-settings.ts`, and the ages below are in the same file.
-  Its source: the open data of Île-de-France Mobilités, dataset "Validations sur le réseau ferré : Profils horaires par jour type" (2nd quarter of 2026, `validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre`, Licence Ouverte v2.0 (Etalab)).
+  Its source: the open data of Île-de-France Mobilités, dataset "Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)" (`validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre`, Licence Ouverte v2.0).
+  [NOTICE.md](NOTICE.md) gives the date of its data, and says what you must do when you share the shape.
   It is the mean of the hourly percents of every rail stop (each stop counts the same), for a week of 5 weekdays out of the school holidays (`JOHV`), 1 Saturday (`SAHV`) and 1 Sunday (`DIJFP`), rounded to 0.1%.
   It counts every rider of the network, and our riders may start more at the peaks: after two weeks of real use, replace it with the share of each hour in the app calls of `make server-counts` (not its PRIM calls, which follow the shape itself), read on days with few out answers, since an app that gets an out answer asks again.
+  When you change the shape, change its section in NOTICE.md in the same commit.
   With this shape, the cap of 800 serves about 60 riders (two Live Activities of about 10 minutes each a day) with fewer than 5 in 100 Live Activities left with no times at all on an average day, and about 50 riders if they start at the peaks as much as the first guess of the shape said (47% of the day from 07:00 to 10:00).
   These are means over 16 model days: with 60 riders, about 1 day in 3 passes 5 in 100, and the worst day leaves about 9 in 100 with no times.
 - When the budget runs low, the shared answer gets older before the server asks PRIM again, so the times that a rider sees can come from a PRIM answer that is up to 2 or 5 minutes old.
