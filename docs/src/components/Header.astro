@@ -1,20 +1,22 @@
 ---
 import Default from '@astrojs/starlight/components/Header.astro';
 import LanguageSelect from './LanguageSelect.astro';
+import { isInBothLanguages } from '../site-pages.ts';
 
-const { hasSidebar } = Astro.locals.starlightRoute;
+const { hasSidebar, id } = Astro.locals.starlightRoute;
+const needsPhoneLanguageSelect = !hasSidebar && isInBothLanguages(id);
 ---
 
 {
-  hasSidebar ? (
-    <Default />
-  ) : (
+  needsPhoneLanguageSelect ? (
     <div class="header-without-menu">
       <Default />
       <div class="phone-language-select print:hidden">
         <LanguageSelect />
       </div>
     </div>
+  ) : (
+    <Default />
   )
 }
 
