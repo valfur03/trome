@@ -180,7 +180,7 @@ Each folder of the repo, a clone or a git worktree, builds into its own `ios/.bu
 
 All the folders share the compiled modules of the iOS SDK, such as SwiftUI and UIKit, in `~/Library/Caches/RATPActivity/`, so the first build of a new worktree does not compile them again.
 This cache holds no code of the app, and it grows only when the SDK or the compiler flags change, for example after an update of Xcode.
-`make build LIVE=1` does not use it, so a build with your key stays in its own folder.
+`make build LIVE=1` does not use it, so a build with your key stays in its own folder, and `make live-key-check` fails if the cache ever holds a key.
 To use another folder for the cache, add `RATP_SHARED_CACHE=<folder>` to the `make` command.
 
 - `make clean` deletes `ios/.build/` and the Xcode project of your folder.
