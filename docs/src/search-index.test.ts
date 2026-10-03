@@ -38,7 +38,7 @@ describe('differencesFromStarlightIndex', () => {
     assert.deepEqual(
       differencesFromStarlightIndex(starlight, { version: '1.6.0', languages: { fr: { page_count: 3 } } }),
       [
-        'Pagefind 1.6.0 built this index, but Starlight uses Pagefind 1.5.2',
+        'Pagefind 1.6.0 built this index, but Starlight uses Pagefind 1.5.2: run npm install --save-exact pagefind@1.5.2 in docs/',
         '0 pages in "en", but 5 in the index of Starlight',
         '3 pages in "fr", but 4 in the index of Starlight',
       ],

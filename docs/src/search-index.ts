@@ -18,7 +18,9 @@ interface PagefindEntry {
 export function differencesFromStarlightIndex(starlight: PagefindEntry, ours: PagefindEntry): string[] {
   const differences: string[] = [];
   if (starlight.version !== ours.version) {
-    differences.push(`Pagefind ${ours.version} built this index, but Starlight uses Pagefind ${starlight.version}`);
+    differences.push(
+      `Pagefind ${ours.version} built this index, but Starlight uses Pagefind ${starlight.version}: run npm install --save-exact pagefind@${starlight.version} in docs/`,
+    );
   }
   const languages = new Set([...Object.keys(starlight.languages), ...Object.keys(ours.languages)]);
   for (const language of [...languages].sort()) {
@@ -71,7 +73,9 @@ export function searchIndex(): AstroIntegration {
           assertNoErrors(await index.writeFiles({ outputPath: indexFolder }));
           const differences = differencesFromStarlightIndex(starlightEntry, await readEntry(indexFolder));
           if (differences.length > 0) {
-            throw new Error(`The search index is not in step with the one of Starlight: ${differences.join('; ')}.`);
+            throw new Error(
+              `The search index is not in step with the one of Starlight: ${differences.join('; ')}. See the search part of docs/README.md.`,
+            );
           }
           logger.info(`Indexed ${htmlFiles.length} HTML files again, so that a search finds a word after l’, d’ or qu’, and the words around a line break.`);
         } finally {
