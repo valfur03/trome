@@ -33,6 +33,8 @@ The first docs command installs the packages in `docs/node_modules`, about 300 M
 The build must print no warning, so `make docs` and `make docs-check` stop on one: fix its cause, and never hide it.
 The only exception is a bug of a tool that no version fixes yet: [`scripts/known-build-warnings.ts`](scripts/known-build-warnings.ts) lists each one, with its reason and the link of its upstream issue.
 When a new version fixes it, the build no longer prints it, and `make docs-check` asks you to remove it from the list.
+The install also says that npm found vulnerabilities, and that `npm audit fix --force` fixes them: do not run it, because it replaces Astro with a version from 2023 and breaks the site.
+The vulnerabilities come from one package of Astro, `http-cache-semantics`, that has [no fixed version yet](https://github.com/advisories/GHSA-ch52-4w7c-c8xp), and the site does not use the part of it that is affected.
 
 ## Add a page
 
