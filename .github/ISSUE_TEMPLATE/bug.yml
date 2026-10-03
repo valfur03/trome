@@ -1,0 +1,46 @@
+name: Report a bug
+description: "The app, a build step or a page of the docs does not work as it should. TROME does not show your trains? Read Help, below, first (en français : Aide)."
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **TROME does not show your trains?**
+        Most cases take a few taps to fix: read [the Help page](https://valfur03.github.io/trome/en/support/) first, or [la page d’aide](https://valfur03.github.io/trome/fr/support/) in French.
+        **Built TROME with Xcode?** [If it does not work](https://valfur03.github.io/trome/en/build/install-on-your-iphone/#if-it-does-not-work) covers the usual problems, the PRIM train data key included.
+        Anyone can report a bug, in French or in English.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Say what you did, what you saw, and what you expected. A screenshot helps a lot, so drop it here, and paste an error or a log as text. Never paste your PRIM key or another secret, because everyone can read an issue.
+      placeholder: |
+        I walked up to Bastille with TROME closed, and no notification came.
+        I expected the next trains of line 1 on my lock screen.
+    validations:
+      required: true
+  - type: input
+    id: station
+    attributes:
+      label: Station
+      description: The station where it happened, if it happened at one.
+      placeholder: Bastille
+  - type: input
+    id: iphone
+    attributes:
+      label: iPhone and iOS version
+      description: Find both in **Settings > General > About**.
+      placeholder: iPhone 16, iOS 27.0
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install TROME?
+      options:
+        - From the App Store or TestFlight
+        - I built it with Xcode
+  - type: input
+    id: build
+    attributes:
+      label: If you built it, your Xcode version, the commit and your Apple ID
+      description: Run `git log -1 --oneline` in the folder of TROME to see the commit, and say whether your Apple ID is free or paid.
+      placeholder: Xcode 27.0, a1b2c3d, free Apple ID

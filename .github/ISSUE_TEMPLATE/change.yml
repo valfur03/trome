@@ -1,0 +1,36 @@
+name: Propose a change
+description: Suggest an idea, or agree on a change before you write a pull request.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TROME does one thing on purpose: it shows when the next trains come, on the lock screen.
+        So agree on a change here before you write code: [Ask before you change something](https://github.com/valfur03/trome/blob/main/CONTRIBUTING.md#ask-before-you-change-something) says why, and what TROME leaves out.
+        Search the [open and closed issues](https://github.com/valfur03/trome/issues?q=is%3Aissue) first: your idea may be there already.
+        The maintainer answers in this issue, and you start your pull request once they say yes.
+        You can write in French or in English.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve?
+      description: Who meets this problem, and when? Start from a moment in a rider's day.
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: What do you want to change?
+      description: What would the rider see or do after the change? A sketch or a screenshot helps.
+    validations:
+      required: true
+  - type: dropdown
+    id: who-builds-it
+    attributes:
+      label: Do you want to make the change yourself?
+      description: To build TROME, you need a Mac with Xcode, and [Set up](https://github.com/valfur03/trome/blob/main/CONTRIBUTING.md#set-up) shows the rest.
+      options:
+        - Yes, I want to send a pull request
+        - No, I suggest it for someone else to build
+    validations:
+      required: true

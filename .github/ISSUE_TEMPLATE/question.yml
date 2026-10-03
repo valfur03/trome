@@ -1,0 +1,17 @@
+name: Ask a question
+description: How to build TROME, how its code or its docs work, or anything else that is not a bug.
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **A question about the app on your iPhone?**
+        [The Help page](https://valfur03.github.io/trome/en/support/) answers the common ones, and [la page d’aide](https://valfur03.github.io/trome/fr/support/) in French.
+        You can write in French or in English.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: Say what you tried and where you are stuck, with the page or the command if there is one.
+    validations:
+      required: true
