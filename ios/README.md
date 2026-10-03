@@ -433,6 +433,7 @@ The waiting times count down by themselves, in whole minutes (a bare "3" in a me
 The app sends new train times every 30 seconds while the app is open.
 While the app is in the background, it sends new train times a few seconds after the first shown train leaves (at most every 30 seconds, and at least every 2 minutes).
 When you lock the phone (or leave the app) while the Live Activity still says "Loading the next trains...", for example right after you tap the arrival notification, the app asks for the train times again at once in the background: the first trains do not wait for the next background refresh.
+The same holds when you lock the phone right after the app opened again while a Live Activity shows, before the app sent its first times: the app does not know when the times on the Live Activity came, so it asks for them at once.
 Between two calls, it draws the Live Activity again at each moment when a train on it changes (see above).
 It stops asking PRIM when PRIM rejects the key or says the daily quota is used up.
 A Release build (TestFlight or the App Store) asks the server of the app instead of PRIM (see [The train data key (PRIM)](#the-train-data-key-prim)), at the same moments.
