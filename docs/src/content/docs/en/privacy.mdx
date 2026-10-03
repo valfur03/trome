@@ -14,13 +14,14 @@ import Unverified from '../../../components/Unverified.astro';
 
 Updated: <Placeholder>date</Placeholder>.
 
-This page explains which data the TROME iPhone app uses, where it goes, and what is kept.
+TROME needs to know which station you are near, not who you are.
+Here is the data that the TROME iPhone app uses, where it goes, and what is kept.
 
 ## In short
 
 - TROME has no account, shows no ads, and does not measure what you do in the app.
 - Your exact position stays on your iPhone.
-- To show the train times, the app sends our server the identifier of the stop, but not your position, and no identifier of you.
+- To show the train times, the app sends our server the identifier of the stop, but not your position, and nothing that identifies you.
 - Our server keeps no data that could identify you.
 
 ## Your position
@@ -38,7 +39,7 @@ Without your position, TROME cannot find the nearest station.
 
 To show the next trains, the app asks our server for the times.
 It sends the identifier of the stop (for example the one of Châtelet station) and a code that every copy of the app shares, which says nothing about you.
-It sends neither your position, nor an identifier of your iPhone, nor an identifier of you.
+It sends neither your position, nor an identifier of your iPhone, nor anything that identifies you.
 
 Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and of iOS.
 Our server does not read them and does not keep them.
@@ -54,7 +55,7 @@ None of this data says who made the request.
 
 Our server asks Île-de-France Mobilités (PRIM) for the times with the identifier of the stop only: PRIM gets nothing that comes from you.
 
-## Our host
+## What our host sees
 
 <Unverified>that the request logs are really turned off on the Cloudflare account of the live server.</Unverified>
 
@@ -69,7 +70,7 @@ TROME keeps your settings (the automatic mode and the snooze), the last station 
 The app sends them nowhere, but they are part of the backups of your iPhone, like the data of every app.
 Deleting the app deletes them.
 
-## Notifications
+## Where the notifications come from
 
 TROME makes its notifications on your iPhone, when you come near a station.
 We send no notification from a server, and the app asks for no notification identifier.
@@ -98,6 +99,6 @@ You can also complain to the [CNIL](https://www.cnil.fr/en), the French data pro
 TROME is made by <Placeholder>legal name</Placeholder>, <Placeholder>city</Placeholder>, France.
 Contact: <Placeholder>contact address</Placeholder>.
 
-## Changes
+## When this page changes
 
 When this page changes, we change its date, at the top of the page.

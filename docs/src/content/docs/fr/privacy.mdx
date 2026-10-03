@@ -14,13 +14,14 @@ import Unverified from '../../../components/Unverified.astro';
 
 Mise à jour : <Placeholder>date</Placeholder>.
 
-Cette page indique quelles données l’app TROME pour iPhone utilise, où elles vont, et ce qui est gardé.
+TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
+Voici les données que l’app TROME pour iPhone utilise, où elles vont, et ce qui est gardé.
 
 ## En bref
 
 - TROME n’a pas de compte, n’affiche pas de publicité et ne mesure pas ce que vous faites dans l’app.
 - Votre position exacte reste sur votre iPhone.
-- Pour afficher les horaires, l’app envoie à notre serveur l’identifiant de l’arrêt, mais ni votre position, ni un identifiant de vous.
+- Pour afficher les horaires, l’app envoie à notre serveur l’identifiant de l’arrêt, mais ni votre position, ni rien qui vous identifie.
 - Notre serveur ne garde aucune donnée qui permette de vous reconnaître.
 
 ## Votre position
@@ -38,7 +39,7 @@ Sans votre position, TROME ne peut pas trouver la station la plus proche.
 
 Pour afficher les prochains passages, l’app demande les horaires à notre serveur.
 Elle lui envoie l’identifiant de l’arrêt (par exemple celui de la station Châtelet) et un code commun à toutes les copies de l’app, qui ne dit rien de vous.
-Elle n’envoie ni votre position, ni un identifiant de votre iPhone, ni un identifiant de vous.
+Elle n’envoie ni votre position, ni un identifiant de votre iPhone, ni rien qui vous identifie.
 
 Comme toute connexion à internet, la demande arrive avec l’adresse IP de votre iPhone et des informations techniques, comme les versions de l’app et d’iOS.
 Notre serveur ne les lit pas et ne les garde pas.
@@ -54,7 +55,7 @@ Aucune de ces données ne dit qui a fait la demande.
 
 Notre serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de l’arrêt : PRIM ne reçoit rien qui vienne de vous.
 
-## Notre hébergeur
+## Ce que voit notre hébergeur
 
 <Unverified>que l’enregistrement des demandes est bien désactivé sur le compte Cloudflare du serveur en ligne.</Unverified>
 
@@ -69,7 +70,7 @@ TROME garde sur votre iPhone vos réglages (le mode automatique et la pause), la
 L’app ne les envoie nulle part, mais ils font partie des sauvegardes de votre iPhone, comme les données de toutes les apps.
 Supprimer l’app les supprime.
 
-## Notifications
+## D’où viennent les notifications
 
 Les notifications de TROME sont créées sur votre iPhone, quand vous arrivez près d’une station.
 Nous n’envoyons aucune notification depuis un serveur, et l’app ne demande pas d’identifiant de notification.
@@ -98,6 +99,6 @@ Vous pouvez aussi adresser une réclamation à la [CNIL](https://www.cnil.fr/fr/
 TROME est fait par <Placeholder>nom légal</Placeholder>, <Placeholder>ville</Placeholder>, France.
 Contact : <Placeholder>adresse de contact</Placeholder>.
 
-## Changements
+## Quand cette page change
 
 Quand cette page change, nous changeons sa date, en haut de la page.

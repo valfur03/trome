@@ -1,9 +1,11 @@
 ---
-title: TROME
-description: TROME montre les prochains métros et RER de la station la plus proche sur l’écran verrouillé de l’iPhone, en activité en direct.
+title: Votre prochain métro, sur l’écran verrouillé
+description: Approchez d’une station de métro ou de RER, et TROME affiche ses prochains passages sur l’écran verrouillé de votre iPhone. Sans compte, sans publicité.
 template: splash
 hero:
-  tagline: Les prochains métros et RER de la station la plus proche, sur l’écran verrouillé de votre iPhone.
+  # The line break keeps “sur l’écran verrouillé” together on a phone.
+  title: Votre prochain métro,<br />sur l’écran verrouillé
+  tagline: Près d’une station de métro ou de RER, TROME affiche ses prochains passages sur votre iPhone, dans les deux directions de chaque ligne.
   actions:
     - text: Aide
       link: /trome/fr/support/
@@ -14,20 +16,20 @@ hero:
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
-import liveActivity from '../../../assets/screenshots/live-activity-notification-center.png';
-import Screenshot from '../../../components/Screenshot.astro';
 
-Quand vous arrivez près d’une station de métro ou de RER d’Île-de-France, TROME affiche ses prochains passages sur l’écran verrouillé, dans une activité en direct : les deux directions de chaque ligne, et l’attente des prochains trains.
-Il n’y a rien à chercher dans l’app, ni compte à créer.
+Vous arrivez à Châtelet, et votre iPhone vous prévient : **« Châtelet : prochains passages »**.
+Touchez la notification.
+L’attente des prochains trains s’affiche sur l’écran verrouillé, et elle y reste pendant que vous descendez sur le quai.
+Quand vous vous éloignez de la station, elle disparaît.
 
-<Screenshot src={liveActivity} alt="L’écran verrouillé d’un iPhone, avec en bas l’activité en direct de TROME pour la station Champ de Mars Tour Eiffel, en anglais et encore sans horaires, et ses boutons de pause : 30 min, 1 h et Today." />
+Rien à chercher dans l’app, et pas de compte à créer.
 
 TROME n’est pas encore sur l’App Store.
 En attendant, vous pouvez l’installer vous-même avec un Mac.
 
 <CardGrid>
-  <LinkCard title="Aide" description="L’activité en direct ne s’affiche pas, ou ne se met plus à jour ? Les solutions, et comment nous écrire." href="/trome/fr/support/" />
-  <LinkCard title="Confidentialité" description="Votre position exacte reste sur votre iPhone. Ce que l’app envoie, et ce qui est gardé." href="/trome/fr/privacy/" />
-  <LinkCard title="Nouveautés" description="Ce qui change dans chaque version de TROME." href="/trome/fr/whats-new/" />
-  <LinkCard title="L’installer vous-même" description="Installez TROME sur votre iPhone avec Xcode et un identifiant Apple gratuit. Guide en anglais." href="/trome/en/build/install-on-your-iphone/" />
+  <LinkCard title="Aide" description="L’activité en direct ne s’affiche pas, ou ses minutes ne bougent plus ? Trouvez votre cas et sa solution." href="/trome/fr/support/" />
+  <LinkCard title="Confidentialité" description="Votre position exacte ne quitte pas votre iPhone. Ce que l’app envoie, et ce que nous gardons." href="/trome/fr/privacy/" />
+  <LinkCard title="Nouveautés" description="Ce que chaque version de TROME change pour vous." href="/trome/fr/whats-new/" />
+  <LinkCard title="L’installer vous-même" description="Pas envie d’attendre l’App Store ? Installez TROME avec un Mac, Xcode et un identifiant Apple gratuit. Guide en anglais." href="/trome/en/build/install-on-your-iphone/" />
 </CardGrid>
