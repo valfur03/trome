@@ -4,13 +4,16 @@ public struct StationCatalog: Sendable {
     public static let walkingDistanceMeters = 2_000.0
 
     public let stations: [Station]
+    public let dataDate: Date?
 
-    public init(stations: [Station]) {
+    public init(stations: [Station], dataDate: Date? = nil) {
         self.stations = stations
+        self.dataDate = dataDate
     }
 
     public init(jsonData: Data) throws {
-        self.init(stations: try JSONDecoder().decode([Station].self, from: jsonData))
+        let file = try JSONDecoder().decode(StationFile.self, from: jsonData)
+        self.init(stations: file.stations, dataDate: try Self.dataDate(from: file.date))
     }
 
     public static func bundled() throws -> StationCatalog {
@@ -48,4 +51,9 @@ public struct StationCatalog: Sendable {
             .filter { !$0.isEmpty }
             .joined(separator: " ")
     }
+}
+
+private struct StationFile: Decodable {
+    let date: String
+    let stations: [Station]
 }

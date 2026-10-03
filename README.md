@@ -228,6 +228,8 @@ The Live Activity uses only these colors for the lines.
 To see the list in the app, open "Testing tools" and tap "All stations". Each station shows its lines. Type part of a name in the search field to find a station. The search ignores case, accents and hyphens: `chatelet` finds "Châtelet".
 
 To download the list again, run `make stations`. It needs Python 3. Commit the new `stations.json`.
+The script writes the day of the download in the `date` field of `stations.json`: the app shows it in the notice of the station list.
+Write the same date in [NOTICE.md](NOTICE.md), in the same commit: a unit test fails when the two dates differ.
 
 The script also gives a `hubId` to the stations of one place with different names (for example Châtelet and Châtelet - Les Halles).
 It comes from the "pôles d'échange" of Île-de-France Mobilités (dataset `relations`, field `pdeid`).

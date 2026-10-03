@@ -1,4 +1,4 @@
-[
+{"date": "2026-09-27", "stations": [
 {"id": "IDFM:22059", "name": "Abbesses", "latitude": 48.884388, "longitude": 2.338381, "lines": [{"mode": "metro", "name": "12", "stopIds": ["IDFM:22059", "IDFM:463116"], "stopAreaIds": ["IDFM:monomodalStopPlace:42155"], "color": {"background": "00643c", "text": "ffffff"}}]},
 {"id": "IDFM:monomodalStopPlace:46387", "name": "Ablon", "latitude": 48.725781, "longitude": 2.419867, "lines": [{"mode": "rer", "name": "C", "stopIds": ["IDFM:monomodalStopPlace:46387"], "color": {"background": "ffcc30", "text": "000000"}}]},
 {"id": "IDFM:monomodalStopPlace:47915", "name": "Achères Grand Cormier", "latitude": 48.955411, "longitude": 2.093653, "lines": [{"mode": "rer", "name": "A", "stopIds": ["IDFM:monomodalStopPlace:47915"], "color": {"background": "eb2132", "text": "ffffff"}}]},
@@ -550,4 +550,4 @@
 {"id": "IDFM:monomodalStopPlace:43081", "name": "Étréchy", "latitude": 48.493877, "longitude": 2.194769, "lines": [{"mode": "rer", "name": "C", "stopIds": ["IDFM:monomodalStopPlace:43081"], "color": {"background": "ffcc30", "text": "000000"}}]},
 {"id": "IDFM:monomodalStopPlace:47906", "name": "Évry - Courcouronnes", "latitude": 48.625888, "longitude": 2.430033, "lines": [{"mode": "rer", "name": "D", "stopIds": ["IDFM:monomodalStopPlace:47906"], "color": {"background": "008b5b", "text": "ffffff"}}]},
 {"id": "IDFM:monomodalStopPlace:45745", "name": "Évry - Val de Seine", "latitude": 48.634393, "longitude": 2.452309, "lines": [{"mode": "rer", "name": "D", "stopIds": ["IDFM:monomodalStopPlace:45745"], "color": {"background": "008b5b", "text": "ffffff"}}]}
-]
+]}

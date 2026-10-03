@@ -33,9 +33,10 @@ struct StationCatalogTests {
 
     @Test func decodesStationsFromJSON() throws {
         let json = """
-        [{"id": "IDFM:1", "name": "Nation", "latitude": 48.848, "longitude": 2.396,
-          "lines": [{"mode": "metro", "name": "1", "stopIds": ["IDFM:22080"]},
-                    {"mode": "rer", "name": "A", "stopIds": ["IDFM:473875"]}]}]
+        {"date": "2026-09-27", "stations": [
+          {"id": "IDFM:1", "name": "Nation", "latitude": 48.848, "longitude": 2.396,
+           "lines": [{"mode": "metro", "name": "1", "stopIds": ["IDFM:22080"]},
+                     {"mode": "rer", "name": "A", "stopIds": ["IDFM:473875"]}]}]}
         """
 
         let catalog = try StationCatalog(jsonData: Data(json.utf8))
@@ -46,8 +47,9 @@ struct StationCatalogTests {
 
     @Test func rejectsModesOtherThanMetroAndRER() {
         let json = """
-        [{"id": "IDFM:2", "name": "Jean Rostand", "latitude": 48.9, "longitude": 2.45,
-          "lines": [{"mode": "tram", "name": "T1", "stopIds": []}]}]
+        {"date": "2026-09-27", "stations": [
+          {"id": "IDFM:2", "name": "Jean Rostand", "latitude": 48.9, "longitude": 2.45,
+           "lines": [{"mode": "tram", "name": "T1", "stopIds": []}]}]}
         """
 
         #expect(throws: DecodingError.self) { try StationCatalog(jsonData: Data(json.utf8)) }

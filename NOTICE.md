@@ -25,6 +25,7 @@ The script [`update-stations.py`](ios/scripts/update-stations.py) builds it from
 - **Licence Ouverte v2.0** is the [Licence Ouverte / Open Licence 2.0 of Etalab](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0).
 
 The data of `stations.json` dates from 2026-09-27, the last time the script downloaded the four datasets.
+The file gives this date in its `date` field, and the app shows it.
 The licences above are the ones that the dataset pages showed on 2026-10-02.
 
 TROME adapts the data: it keeps only the metro and RER lines, joins the four datasets, groups the stops of each station, and fixes a few station names.
@@ -33,13 +34,13 @@ So `stations.json` is a database made from these datasets, and `stations.json` a
 When you share `stations.json`, an extract of it, or a work made from it, in public:
 
 - Say that the data comes from Île-de-France Mobilités and was adapted by TROME, name the two licences, and link to them.
-- Give the date of the data, 2026-09-27, as the Licence Ouverte asks.
+- Give the date of the data, as the Licence Ouverte asks.
 - Keep any database that you make from it under the ODbL, and let people get it, as the ODbL asks.
   A work that only shows the data, such as a screen or a picture, needs only the notice above.
 
-The app shows this notice for the station list on its main screen, with links to the two licences:
+The app shows this notice for the station list on its main screen, with links to the two licences and the date in the language of the phone:
 
-> Station list adapted by TROME from Île-de-France Mobilités data, under the ODbL and the Licence Ouverte v2.0.
+> Station list adapted by TROME from Île-de-France Mobilités data of September 27, 2026, under the ODbL and the Licence Ouverte v2.0.
 
 ## The train times
 

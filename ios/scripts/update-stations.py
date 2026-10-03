@@ -3,7 +3,9 @@ import json
 import math
 import sys
 import urllib.request
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 DATASETS_URL = "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/"
 SOURCE_URL = DATASETS_URL + "arrets-lignes/exports/json"
@@ -200,15 +202,17 @@ def main():
     add_stop_area_ids(stations, stop_area_ids_by_quay_id(download(METRO_STOP_AREAS_URL)))
     add_line_colors(stations, colors_by_line(wanted_rows, download(LINE_COLORS_URL)))
 
+    date = datetime.now(ZoneInfo("Europe/Paris")).date().isoformat()
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT.open("w", encoding="utf-8") as output:
-        output.write("[\n")
+        output.write(f'{{"date": "{date}", "stations": [\n')
         output.write(
             ",\n".join(json.dumps(station, ensure_ascii=False) for station in stations)
         )
-        output.write("\n]\n")
+        output.write("\n]}\n")
 
-    print(f"Wrote {len(stations)} stations to {OUTPUT}", file=sys.stderr)
+    print(f"Wrote {len(stations)} stations of {date} to {OUTPUT}", file=sys.stderr)
+    print(f"Write the date {date} in NOTICE.md: a unit test checks it.", file=sys.stderr)
 
 
 if __name__ == "__main__":
