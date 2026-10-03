@@ -1,6 +1,7 @@
 # Test a change to the iPhone app
 
-The app has three kinds of automatic tests, and each one catches bugs that the others cannot see.
+The app has three kinds of automatic tests: unit tests, end-to-end tests and the render check of the Live Activity.
+Each one catches bugs that the others cannot see.
 This page helps you pick the test that your change needs, run it, and write a new one when no test covers your change.
 Run the commands from the root of the repo; the paths on this page start there too.
 

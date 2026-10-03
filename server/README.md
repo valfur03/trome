@@ -13,7 +13,9 @@ A Debug build, such as the one of `make run`, calls PRIM directly with your own 
 
 The server runs on Cloudflare Workers, on the Free plan.
 One Durable Object, a small object with its own SQLite storage, holds the PRIM answers and the counts.
-For each stop, one PRIM answer serves every rider: a stop that riders ask for again within 60 seconds, or longer when the calls of the hour run low ([How the server shares the PRIM quota](#how-the-server-shares-the-prim-quota)), costs no new PRIM call, and the requests that come while a PRIM call is in flight wait for that one call.
+For each stop, one PRIM answer serves every rider.
+While that answer is less than 60 seconds old, the server gives it to each rider who asks, with no new PRIM call; when the calls of the hour run low, it keeps the answer longer ([How the server shares the PRIM quota](#how-the-server-shares-the-prim-quota)).
+The requests that come while a PRIM call is in flight wait for that one call.
 
 It keeps nothing about riders.
 A request holds only a stop and the app token, and the server reads nothing else of it: no position, no identifier of a device or an account, no push token, no IP address, no user agent, no body.
@@ -55,7 +57,7 @@ So check the answers for trains in the unit tests, which fake PRIM.
 
 The logic is plain TypeScript in `server/src/core/`, and only `server/src/cloudflare/` uses the Cloudflare API: the entry of the Worker (`worker.ts`), the Durable Object, and the adapters.
 So `core/` runs on Node, and the server can move to another host without a rewrite.
-[CLAUDE.md](../CLAUDE.md#code-structure-of-the-server), the manual of the coding assistant that builds TROME, gives the rules of this structure, and they hold for every change.
+The rules of this structure hold for every change: see [Code structure of the server](../CLAUDE.md#code-structure-of-the-server) in CLAUDE.md.
 
 - `server/test/core/<feature>/` holds the tests of the logic, which run on Node with a fake clock and a real SQLite database.
   The feature folders have the same names as in `server/src/core/`: `auth`, `budget`, `config`, `http`, `logging`, `relay`, `storage`, `time` and `usage`.

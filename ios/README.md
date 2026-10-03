@@ -40,14 +40,7 @@ The app opens in the Simulator and asks for your location.
 It shows no train times, because a build of `make run` has no train data key: to see live trains, get a free key from PRIM, the train data service of Île-de-France Mobilités, as [The train data key (PRIM)](#the-train-data-key-prim) shows.
 To try the app at a station without going there, tap **Testing tools** at the top right of the app, which only debug builds such as this one have, and pick a fake position ([Fake your position](#fake-your-position-testing-tools)).
 
-You can also open `ios/TROME.xcodeproj` in Xcode and click **Run**, on a Simulator of your choice other than the shared ones, which the `make` commands shut down when no job uses them.
-So that only one Simulator runs at a time, first free the shared one and shut it down, and quit yours before your next `make` job:
-
-```sh
-make simulator-shutdown
-xcrun simctl shutdown "$(make -s simulator)"
-```
-
+You can also build and run from Xcode: see [Run the app from Xcode](#run-the-app-from-xcode).
 Change the settings of the project in `ios/project.yml`, not in Xcode, because `make` creates the project again from that file ([Keep the Xcode project up to date](#keep-the-xcode-project-up-to-date)).
 When your change is ready, run `make check` before you commit it ([When make check fails](#when-make-check-fails)), and the tests that it needs ([Test your change](#test-your-change)).
 
@@ -126,6 +119,21 @@ It opens the app on a second shared Simulator, `RATP-Shared-Small`: an iPhone SE
 Only one of the two is booted at a time, so each change of size waits for the other Simulator to start.
 `LIVE=1` works with `SMALL=1`, but `SMALL=1` works only with `make run`: the tests and the docs pictures always use `RATP-Shared`.
 
+### Run the app from Xcode
+
+You can also open `ios/TROME.xcodeproj` in Xcode and click **Run**.
+Pick a Simulator of your own, not `RATP-Shared` or `RATP-Shared-Small`: the `make` commands shut those down when no job uses them, even with your app open.
+Keep one Simulator running at a time, as the `make` commands do.
+So, before you click **Run**, free the shared Simulator and shut it down:
+
+```sh
+make simulator-shutdown
+xcrun simctl shutdown "$(make -s simulator)"
+```
+
+When the shared Simulator is already shut down, the second command prints an error: you can ignore it.
+Quit your own Simulator before your next `make` job.
+
 ### See the app in French
 
 The app follows the language of the phone: French when the phone is in French, English otherwise ([Languages](#languages)).
@@ -194,7 +202,7 @@ To use another folder for the cache, add `RATP_SHARED_CACHE=<folder>` to the `ma
 |---|---|---|
 | `make lint` | SwiftLint finds a problem; `make lint-fix` fixes the ones that it can | |
 | `make prose-check` | a line of text in a Markdown or MDX file is longer than 400 characters | [one sentence per line](../docs/README.md#write-one-sentence-per-line) |
-| `make public-text-check` | a file names the private task list of the maintainer, a personal email address, a path of your Mac, or the old name of the app | the message names the file and the line |
+| `make public-text-check` | a file names a task of the maintainer's private task list, uses a word of the maintainer's own way of working, or has a personal email address, a path of your Mac, or the old name of the app | the message names the file and the line |
 | `make bundle-id-check` | a Debug build could carry the App Store bundle ID, or a Release build is signed automatically | [Install on your iPhone](#install-on-your-iphone-free-apple-id) |
 | `make recommended-settings-check` | your Xcode is newer than the one that last checked the project settings | [Xcode recommends new settings](#xcode-recommends-new-settings) |
 | `make live-key-check` | a build with `LIVE=1` shows the train data key in its output or keeps an old key, or a Release build holds the key; it uses fake keys, so it needs none of yours | [The train data key (PRIM)](#the-train-data-key-prim) |
