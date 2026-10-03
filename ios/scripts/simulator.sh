@@ -180,6 +180,18 @@ wait_for_widget_host() {
 set_language() {
     xcrun simctl spawn "$1" defaults write -g AppleLanguages -array "$language"
     xcrun simctl spawn "$1" defaults write -g AppleLocale -string "$locale"
+    xcrun simctl spawn "$1" defaults write -g AppleMetricUnits -bool true
+    xcrun simctl spawn "$1" defaults write -g AppleMeasurementUnits -string Centimeters
+    for clock_override in AppleICUForce24HourTime AppleICUForce12HourTime; do
+        xcrun simctl spawn "$1" defaults delete -g "$clock_override" 2> /dev/null || true
+    done
+}
+
+restart_springboard_in_language() {
+    set_language "$1"
+    xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.SpringBoard
+    wait_for_springboard "$1"
+    wait_for_widget_host "$1"
 }
 
 reset_display() {
@@ -277,6 +289,9 @@ case "$command" in
         xcrun simctl install "$udid" "$app"
         xcrun simctl launch "$udid" "$bundle_id"
         ;;
+    language)
+        restart_springboard_in_language "$(boot_device)"
+        ;;
     switch-language)
         app=${1:?Usage: $0 switch-language <app path>}
         udid=$(boot_device)
@@ -320,9 +335,9 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
-        echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch' and 'switch-language'); the default is English (en)" >&2
+        echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch', 'language' and 'switch-language'); the default is English (en)" >&2
         echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
         exit 1
         ;;

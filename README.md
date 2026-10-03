@@ -166,7 +166,9 @@ make run LANGUAGE=fr
   The Live Activity shows in the new language.
   A notification that the app sent before the switch keeps its old language.
   It works only while this folder keeps the Simulator after `make run`, and it uses the same Simulator (also after `make run SMALL=1`).
-- `make e2e` and `make docs-screenshots` always put the Simulator back in English: the tests and the docs screenshots are in English.
+- `make e2e` and `make docs-screenshots` always put the Simulator back in English: the tests are in English, and the docs screenshots of the app screens too.
+  `make docs-screenshots` also takes the Live Activity pictures in French, then puts the Simulator back in English.
+- Every Simulator job shows distances in metres, and the clock of its language (12-hour in English, 24-hour in French), whatever an earlier job or a person set in the Simulator.
 - `LANGUAGE=` works only with `make run` and `make switch-language`.
 
 Before the shared Simulator, each folder had its own Simulator, named `RATP-<folder>-<hash>`. To delete these old Simulators, run `make simulator-delete-old`.
@@ -875,7 +877,11 @@ To write a page:
 
 `make docs-screenshots` runs the XCUITest suite of `ios/DocsScreenshots/` with the key-less build and a fixed fake position (near Champ de Mars Tour Eiffel).
 It saves one PNG file for each screenshot, with a fixed name: `app-location-permission.png` (the location question at the first launch), `app-always-permission.png` (the location "Always" question, right after it), `app-notification-permission.png` (the notifications question at the first launch), `app-main-screen.png` (the main app screen),
-`live-activity-notification-center.png` (the Live Activity in the Notification Center) and `app-testing-tools.png` (the Testing tools screen).
+and `app-testing-tools.png` (the Testing tools screen), in English.
+Then it opens the app with the fake trains (`--fake-trains`, no key) and takes the Live Activity in the Notification Center at three stations, in English, then again in French:
+`live-activity-metro-<language>.png` (Saint-Paul (Le Marais), metro 1: one end in each direction), `live-activity-fork-<language>.png` (Pont Neuf, metro 7: the direction with two branch ends), `live-activity-rer-<language>.png` (Luxembourg, RER B), and `live-activity-island-<language>.png` (the home screen with the compact Dynamic Island of Saint-Paul (Le Marais)).
+`<language>` is `en` or `fr`.
+The job sets the language, the clock (9:41), the units (metres) and the appearance itself, so two runs give the same pictures whatever the Simulator held before.
 The PNG files are in git.
 To add a screenshot, add a `saveScreenshot(named:)` call to the test and its name to `names` in `ios/scripts/docs-screenshots.sh`.
 

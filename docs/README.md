@@ -114,7 +114,10 @@ When a change alters a screen that a page shows, make the pictures again, and co
 make docs-screenshots
 ```
 
-It builds the app with no train data key, gives the Simulator a fixed position (near Champ de Mars Tour Eiffel) and a fixed clock, and saves each picture in [`src/assets/screenshots/`](src/assets/screenshots/), under a fixed name.
+It builds the app with no train data key, gives the Simulator a fixed position (near Champ de Mars Tour Eiffel), a fixed clock and metres, and saves each picture in [`src/assets/screenshots/`](src/assets/screenshots/), under a fixed name.
+The pictures of the app screens are in English.
+The pictures of the Live Activity use the fake trains of the app, at three stations (a metro line with one end in each direction, a metro line with a branch, and an RER line), and exist in English and in French: `live-activity-<case>-en.png` and `live-activity-<case>-fr.png`.
+A French page shows the French picture, and an English page the English one.
 A change of text alone needs no new pictures.
 
 The pictures follow three rules:

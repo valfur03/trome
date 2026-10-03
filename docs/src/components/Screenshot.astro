@@ -5,13 +5,15 @@ import { Picture } from 'astro:assets';
 interface Props {
   src: ImageMetadata;
   alt: string;
+  caption?: string;
 }
 
-const { src, alt } = Astro.props;
+const { src, alt, caption } = Astro.props;
 ---
 
 <figure class="screenshot not-content">
   <Picture src={src} alt={alt} width={300} densities={[1, 2, 3]} formats={['avif']} fallbackFormat="webp" />
+  {caption && <figcaption>{caption}</figcaption>}
 </figure>
 
 <style>
@@ -31,5 +33,12 @@ const { src, alt } = Astro.props;
     box-shadow:
       0 0 0 1px var(--sl-color-gray-5),
       0 0.5rem 1.5rem rgb(0 0 0 / 0.15);
+  }
+
+  .screenshot figcaption {
+    margin-top: 0.75rem;
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-sm);
+    text-align: center;
   }
 </style>

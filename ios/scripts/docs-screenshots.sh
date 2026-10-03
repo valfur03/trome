@@ -20,30 +20,77 @@ shift
 scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/.." && pwd)
 screenshots="$root/../docs/src/assets/screenshots"
-names="app-location-permission app-always-permission app-notification-permission app-main-screen live-activity-notification-center app-testing-tools"
+languages="en fr"
+app_names="app-location-permission app-always-permission app-notification-permission app-main-screen app-testing-tools"
+live_activity_names="live-activity-metro live-activity-fork live-activity-rer live-activity-island"
+names=$app_names
+for language in $languages; do
+    for live_activity_name in $live_activity_names; do
+        names="$names $live_activity_name-$language"
+    done
+done
 fake_position=48.8584,2.2945
 screenshot_width=900
 pngquant_quality=85-100
 budget_kb=500
 udid=$("$scripts/simulator.sh" boot)
 exported="$root/.build/docs-screenshots"
+shown_language=en
+
+result_of() {
+    if [ "$1" = en ]; then
+        echo "$result"
+    else
+        echo "${result%.xcresult}-$1.xcresult"
+    fi
+}
+
+shown_time() {
+    case "$1" in
+        fr) echo 09:41 ;;
+        *) echo 9:41 ;;
+    esac
+}
+
+override_status_bar() {
+    xcrun simctl status_bar "$udid" override --time "$(shown_time "$shown_language")" --operatorName '' --batteryState charged --batteryLevel 100 \
+        --cellularMode active --cellularBars 4 --wifiBars 3
+}
+
+show_language() {
+    xcrun simctl status_bar "$udid" clear
+    RATP_SIM_LANGUAGE=$1 "$scripts/simulator.sh" language
+    shown_language=$1
+    override_status_bar
+}
 
 cleanup() {
+    if [ "$shown_language" != en ]; then
+        RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" language > /dev/null 2>&1 || true
+    fi
     xcrun simctl status_bar "$udid" clear 2> /dev/null || true
     xcrun simctl location "$udid" clear 2> /dev/null || true
     rm -rf "$exported"
 }
 trap cleanup EXIT INT TERM
 
-rm -rf "$result" "$exported"
+rm -rf "$exported"
+for language in $languages; do
+    rm -rf "$(result_of "$language")"
+done
 xcrun simctl location "$udid" set "$fake_position"
-xcrun simctl status_bar "$udid" override --time 9:41 --operatorName '' --batteryState charged --batteryLevel 100 \
-    --cellularMode active --cellularBars 4 --wifiBars 3
-"$@" -resultBundlePath "$result" test-without-building \
-    || { status=$?; "$scripts/e2e-failures.py" "$result"; exit $status; }
+override_status_bar
+for language in $languages; do
+    [ "$language" = "$shown_language" ] || show_language "$language"
+    language_result=$(result_of "$language")
+    TEST_RUNNER_DOCS_LANGUAGE=$language "$@" -resultBundlePath "$language_result" test-without-building \
+        || { status=$?; "$scripts/e2e-failures.py" "$language_result"; exit $status; }
+    mkdir -p "$exported/$language"
+    xcrun xcresulttool export attachments --path "$language_result" --output-path "$exported/$language" \
+        --filter "*.png" > /dev/null
+done
+[ "$shown_language" = en ] || show_language en
 
-mkdir -p "$exported"
-xcrun xcresulttool export attachments --path "$result" --output-path "$exported" --filter "*.png" > /dev/null
 mkdir -p "$screenshots"
 python3 - "$exported" "$screenshots" $names <<'PYTHON'
 import json
@@ -53,19 +100,21 @@ from pathlib import Path
 
 exported, screenshots, names = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3:]
 attachments = [
-    attachment
-    for test in json.loads((exported / "manifest.json").read_text())
+    (folder, attachment)
+    for folder in sorted(exported.iterdir())
+    for test in json.loads((folder / "manifest.json").read_text())
     for attachment in test["attachments"]
 ]
 for name in names:
     matches = [
-        attachment
-        for attachment in attachments
+        (folder, attachment)
+        for folder, attachment in attachments
         if attachment["suggestedHumanReadableName"].startswith((f"{name}_", f"{name}."))
     ]
     if not matches:
         sys.exit(f"The tests saved no screenshot named {name}")
-    shutil.copyfile(exported / matches[-1]["exportedFileName"], screenshots / f"{name}.png")
+    folder, attachment = matches[-1]
+    shutil.copyfile(folder / attachment["exportedFileName"], screenshots / f"{name}.png")
 PYTHON
 
 for name in $names; do

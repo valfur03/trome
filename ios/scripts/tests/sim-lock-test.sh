@@ -363,6 +363,15 @@ expect "switch-language fails when the app is not in the Simulator" "$(RATP_SIM_
 echo com.example.trome.dev > "$state/apps.$default"
 RATP_SIM_LANGUAGE=fr "$scripts/simulator.sh" switch-language "$state/TROME.app" > /dev/null
 expect "switch-language keeps the app, sets the language and opens the app again" "$(cat "$state/apps.$default") $(language_at_restart) $(cat "$state/launched.$default")" "com.example.trome.dev fr fr_FR com.example.trome.dev"
+rm -f "$state/launched.$default"
+RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" language > /dev/null
+expect "language keeps the app and restarts SpringBoard in the language, with no app opened" "$(cat "$state/apps.$default") $(language_at_restart) $(cat "$state/launched.$default" 2> /dev/null || echo "not opened")" "com.example.trome.dev en en_US not opened"
+echo 1 > "$state/global.$default.AppleICUForce24HourTime"
+echo 1 > "$state/global.$default.AppleICUForce12HourTime"
+echo false > "$state/global.$default.AppleMetricUnits"
+echo Inches > "$state/global.$default.AppleMeasurementUnits"
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "a job sets metres and the clock of its language, whatever an earlier job left" "$(cat "$state/global.$default.AppleMetricUnits" "$state/global.$default.AppleMeasurementUnits" | paste -s -d ' ' -) $(ls "$state" | grep -c "^global\.$default\.AppleICUForce" || true)" "true Centimeters 0"
 echo accessibility-extra-extra-extra-large > "$state/ui.$default.content_size"
 echo dark > "$state/ui.$default.appearance"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null

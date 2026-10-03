@@ -1,11 +1,48 @@
+import CoreLocation
 import XCTest
 
 final class DocsScreenshotTests: XCTestCase {
+    private struct LiveActivityScreenshot {
+        let name: String
+        let station: String
+        let position: CLLocation
+        let destinations: [String]
+        var savesTheIsland = false
+    }
+
+    private static let liveActivityScreenshots = [
+        LiveActivityScreenshot(
+            name: "live-activity-metro",
+            station: "Saint-Paul (Le Marais)",
+            position: CLLocation(latitude: 48.855237, longitude: 2.360878),
+            destinations: ["La Défense", "Château de Vincennes"],
+            savesTheIsland: true
+        ),
+        LiveActivityScreenshot(
+            name: "live-activity-fork",
+            station: "Pont Neuf",
+            position: CLLocation(latitude: 48.858501, longitude: 2.341743),
+            destinations: ["La Courneuve - 8 Mai 1945", "Mairie d'Ivry", "Villejuif - Louis Aragon"]
+        ),
+        LiveActivityScreenshot(
+            name: "live-activity-rer",
+            station: "Luxembourg",
+            position: CLLocation(latitude: 48.845432, longitude: 2.339809),
+            destinations: ["Aéroport Charles de Gaulle 2 TGV", "Mitry - Claye", "Robinson", "Saint-Rémy-lès-Chevreuse"]
+        )
+    ]
+
+    private static let allowLiveActivitiesAnswers = ["Always Allow", "Toujours autoriser", "Allow", "Autoriser"]
+
     private let timeout: TimeInterval = 30
 
     @MainActor
     private var springboard: XCUIApplication {
         XCUIApplication(bundleIdentifier: "com.apple.springboard")
+    }
+
+    private var language: String {
+        ProcessInfo.processInfo.environment["DOCS_LANGUAGE"] ?? "en"
     }
 
     override static func setUp() {
@@ -22,37 +59,113 @@ final class DocsScreenshotTests: XCTestCase {
 
     @MainActor
     func testTakeTheScreenshotsOfTheDocs() {
+        if language == "en" {
+            takeTheScreenshotsOfTheApp()
+        }
+        takeTheScreenshotsOfTheLiveActivity()
+    }
+
+    @MainActor
+    private func takeTheScreenshotsOfTheApp() {
         let app = XCUIApplication()
         app.launchArguments.append("--reset-location-source")
         app.launch()
 
-        let stopButton = app.buttons["stopLiveActivity"]
-        let showButton = app.buttons["showNearestStationLiveActivity"]
         let location = app.descendants(matching: .any)["locationPermissionStatus"]
         let notifications = app.descendants(matching: .any)["notificationsPermissionStatus"]
         answerPermissionQuestions {
             location.exists && location.label == "Location, Always"
                 && notifications.exists && notifications.label == "Notifications, On"
         }
-        XCTAssertTrue(showButton.waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.buttons["showNearestStationLiveActivity"].waitForExistence(timeout: timeout))
         saveScreenshot(named: "app-main-screen")
-
-        showButton.tap()
-        XCTAssertTrue(stopButton.waitForExistence(timeout: timeout))
-
-        XCUIDevice.shared.press(.home)
-        openNotificationCenter()
-        saveScreenshot(named: "live-activity-notification-center")
-
-        XCUIDevice.shared.press(.home)
-        app.activate()
-        XCTAssertTrue(stopButton.waitForExistence(timeout: timeout))
-        stopButton.tap()
-        XCTAssertTrue(showButton.waitForExistence(timeout: timeout))
 
         app.buttons["testingTools"].tap()
         XCTAssertTrue(app.buttons["useRealGPS"].waitForExistence(timeout: timeout))
         saveScreenshot(named: "app-testing-tools")
+        app.terminate()
+    }
+
+    @MainActor
+    private func takeTheScreenshotsOfTheLiveActivity() {
+        let app = XCUIApplication()
+        app.launchArguments += ["--reset-location-source", "--fake-trains"]
+        app.launch()
+        turnOffTheAutomaticMode(in: app)
+
+        for screenshot in Self.liveActivityScreenshots {
+            XCUIDevice.shared.location = XCUILocation(location: screenshot.position)
+            showTheLiveActivity(in: app)
+            XCUIDevice.shared.press(.home)
+            openNotificationCenter()
+            waitForTheLiveActivity(of: screenshot)
+            saveStillScreenshot(named: "\(screenshot.name)-\(language)")
+            XCUIDevice.shared.press(.home)
+            if screenshot.savesTheIsland {
+                let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
+                settings.activate()
+                XCTAssertTrue(settings.wait(for: .runningForeground, timeout: timeout))
+                sleep(2)
+                saveStillScreenshot(named: "live-activity-island-\(language)")
+                settings.terminate()
+            }
+            app.activate()
+            stopTheLiveActivity(in: app)
+        }
+    }
+
+    @MainActor
+    private func turnOffTheAutomaticMode(in app: XCUIApplication) {
+        let toggle = app.switches["automaticModeToggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
+        if toggle.value as? String == "1" {
+            toggle.switches.firstMatch.tap()
+        }
+        XCTAssertTrue(waitUntil { toggle.value as? String == "0" }, "The automatic mode did not turn off")
+    }
+
+    @MainActor
+    private func showTheLiveActivity(in app: XCUIApplication) {
+        let showButton = app.buttons["showNearestStationLiveActivity"]
+        XCTAssertTrue(showButton.waitForExistence(timeout: timeout))
+        showButton.tap()
+        XCTAssertTrue(app.buttons["stopLiveActivity"].waitForExistence(timeout: timeout))
+    }
+
+    @MainActor
+    private func stopTheLiveActivity(in app: XCUIApplication) {
+        let stopButton = app.buttons["stopLiveActivity"]
+        XCTAssertTrue(stopButton.waitForExistence(timeout: timeout))
+        stopButton.tap()
+        XCTAssertTrue(app.buttons["showNearestStationLiveActivity"].waitForExistence(timeout: timeout))
+    }
+
+    @MainActor
+    private func waitForTheLiveActivity(of screenshot: LiveActivityScreenshot) {
+        let liveActivity = springboard.otherElements["activity-content-view"]
+        XCTAssertTrue(
+            liveActivity.waitForExistence(timeout: timeout),
+            "No Live Activity showed in the Notification Center"
+        )
+        let allowLiveActivities = springboard.buttons
+            .matching(NSPredicate(format: "label IN %@", Self.allowLiveActivitiesAnswers))
+            .firstMatch
+        if allowLiveActivities.waitForExistence(timeout: 3) {
+            allowLiveActivities.tap()
+            XCTAssertTrue(
+                allowLiveActivities.waitForNonExistence(timeout: timeout),
+                "The question to allow Live Activities stayed on the lock screen"
+            )
+        }
+        for text in [screenshot.station] + screenshot.destinations {
+            let element = liveActivity.descendants(matching: .any)
+                .matching(NSPredicate(format: "label CONTAINS %@", text))
+                .firstMatch
+            XCTAssertTrue(
+                element.waitForExistence(timeout: timeout),
+                "The Live Activity of \(screenshot.station) does not show \(text)"
+            )
+        }
     }
 
     @MainActor
@@ -60,11 +173,19 @@ final class DocsScreenshotTests: XCTestCase {
         let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.001))
         let middle = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.7))
         top.press(forDuration: 0.1, thenDragTo: middle)
-        let allowLiveActivities = springboard.buttons["Allow"]
-        if allowLiveActivities.waitForExistence(timeout: 5) {
-            allowLiveActivities.tap()
+        XCTAssertTrue(springboard.otherElements["lockscreen-date-view"].waitForExistence(timeout: timeout))
+    }
+
+    @MainActor
+    private func waitUntil(_ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        sleep(2)
+        return condition()
     }
 
     @MainActor
