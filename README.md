@@ -989,6 +989,7 @@ Wrangler refuses the first deploy of a Worker whose secrets are not set yet, so 
    It opens your default browser at once, and the login fails when you copy that page into another browser.
    To log in with another browser, run `make server-login LINK=1` instead: it opens no browser, and it shows a link.
    Copy the whole link into the browser of your choice on this Mac, log in to Cloudflare, and allow the access.
+   You have 2 minutes: if it says "Timed out", log in to Cloudflare in that browser first, then run `make server-login LINK=1` again.
    Keep the terminal open until it says that you are logged in.
    If the login with the link fails, run `make server-login CODE=1`: open the address that it shows in any browser, log in, and type the code that it shows.
 3. Run `make server-secrets STAGING=1`.

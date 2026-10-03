@@ -20,6 +20,7 @@ fi
 if [ -n "$link" ]; then
     echo "This command opens no browser. Wrangler shows a link."
     echo "Copy the whole link into the browser of your choice on this Mac, log in to Cloudflare, and allow the access."
+    echo "You have 2 minutes: if wrangler says 'Timed out', log in to Cloudflare in that browser first, then run this command again."
     echo "Keep this terminal open: it says when you are logged in."
     exec ./node_modules/.bin/wrangler login --browser=false
 fi

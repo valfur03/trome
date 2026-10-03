@@ -61,6 +61,7 @@ expect "LINK=1: it runs" "$(login 1 "")" "runs"
 expect "LINK=1: wrangler shows the link and opens no browser" "$(wrangler_args)" "login --browser=false"
 expect "LINK=1: the script opens no browser itself" "$(browser_opened)" "no browser"
 expect "LINK=1: it says to copy the link into the browser of your choice on this Mac" "$(contains "$state/out" "Copy the whole link into the browser of your choice on this Mac")" "yes"
+expect "LINK=1: it says that the link works for 2 minutes" "$(contains "$state/out" "You have 2 minutes")" "yes"
 
 expect "CODE=1: it runs" "$(login "" 1)" "runs"
 expect "CODE=1: wrangler uses a code, and opens no browser for its page either" "$(wrangler_args)" "login --device --browser=false"
