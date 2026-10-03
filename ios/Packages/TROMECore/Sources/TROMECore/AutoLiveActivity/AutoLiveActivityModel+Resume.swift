@@ -21,8 +21,23 @@ extension AutoLiveActivityModel {
         return position
     }
 
+    var arrivalResponse: AutoLiveActivityRules.ArrivalResponse {
+        AutoLiveActivityRules.ArrivalResponse(
+            appPhase: appPhase,
+            allowsAutomaticStart: inputs.automaticMode.allowsAutomaticStart
+        )
+    }
+
+    func resumeOpenArrival() async {
+        let now = configuration.now()
+        guard configuration.rules.waitsForAResume(state: state, now: now, onArrival: arrivalResponse),
+              let stationId = state.openArrivalStationId else { return }
+        Self.logPause("resume: the app is open after an arrival at \(stationId) that was only notified")
+        await resume(at: await positionForAResume())
+    }
+
     func resume(at position: PositionFix?) async {
-        cannotFindPosition = position == nil
+        cannotFindPosition = position == nil && appIsActive
         guard let position else { return }
         await handle(position.coordinate)
     }

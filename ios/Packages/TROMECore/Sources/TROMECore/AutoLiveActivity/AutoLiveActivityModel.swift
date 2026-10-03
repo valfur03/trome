@@ -22,7 +22,7 @@ public final class AutoLiveActivityModel {
     var state: AutoLiveActivityState {
         didSet { stateDidChange(from: oldValue) }
     }
-    private var appPhase = AppPhase.background
+    private(set) var appPhase = AppPhase.background
     var appIsActive: Bool { appPhase == .active }
     private var hasAskedForNotifications = false
     private var pendingTappedStationId: String?
@@ -89,6 +89,7 @@ public final class AutoLiveActivityModel {
         plannedRegions = nil
         await refreshRegions(around: inputs.locationService.position)
         restartFeed(fetchNow: false)
+        await resumeOpenArrival()
     }
 
     public func notificationTapped(stationId: String) async {
@@ -139,6 +140,7 @@ public final class AutoLiveActivityModel {
     }
 
     public func snooze(for duration: SnoozeDuration) async {
+        state.openArrivalStationId = nil
         inputs.automaticMode.snooze(for: duration)
         await stopByHand()
     }
@@ -200,15 +202,11 @@ public final class AutoLiveActivityModel {
     private func evaluate(position: Coordinate?) async {
         syncWithSystem()
         endPauseIfOver()
-        let response = AutoLiveActivityRules.ArrivalResponse(
-            appPhase: appPhase,
-            allowsAutomaticStart: inputs.automaticMode.allowsAutomaticStart
-        )
         let decision = configuration.rules.decide(
             state: state,
             position: position,
             now: configuration.now(),
-            onArrival: response,
+            onArrival: arrivalResponse,
             catalog: catalog
         )
         state = decision.state

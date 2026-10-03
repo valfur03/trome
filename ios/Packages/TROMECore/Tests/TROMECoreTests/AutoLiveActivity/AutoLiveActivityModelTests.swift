@@ -8,12 +8,14 @@ final class StubArrivalNotifier: ArrivalNotifier {
     private(set) var authorizationRequestCount = 0
     private(set) var notified: [Station] = []
     private(set) var withdrawCount = 0
+    var isRefusedByTheRider = false
 
     func requestAuthorization() async {
         authorizationRequestCount += 1
     }
 
     func notify(_ station: Station) async {
+        guard !isRefusedByTheRider else { return }
         notified.append(station)
     }
 

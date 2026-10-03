@@ -17,12 +17,20 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
         case arrivalStationId
         case shown
         case pause
+        case openArrivalStationId
     }
 
     public var arrivalStationId: String?
-    public var shown: Shown?
+    public var shown: Shown? {
+        didSet {
+            if shown != nil {
+                openArrivalStationId = nil
+            }
+        }
+    }
     public var pendingArrivalStationId: String?
     public var pause: StationPause?
+    var openArrivalStationId: String?
 
     public init(
         arrivalStationId: String? = nil,
@@ -119,6 +127,11 @@ public struct AutoLiveActivityRules: Sendable {
         return .pause(StationPause(stationId: shown.stationId, end: now.addingTimeInterval(StationPause.duration)))
     }
 
+    func waitsForAResume(state: AutoLiveActivityState, now: Date, onArrival response: ArrivalResponse) -> Bool {
+        guard response == .start, state.shown == nil, let stationId = state.openArrivalStationId else { return false }
+        return state.pause?.pauses(stationId, at: now) != true
+    }
+
     public func decide(
         state: AutoLiveActivityState,
         position: Coordinate?,
@@ -133,6 +146,9 @@ public struct AutoLiveActivityRules: Sendable {
         if let position {
             decision.detectArrival(at: position, now: now, response: response, catalog: catalog)
             decision.checkDistanceToShownStation(from: position, catalog: catalog)
+            if waitsForAResume(state: decision.state, now: now, onArrival: response) {
+                decision.answerOpenArrival(at: position, now: now, catalog: catalog)
+            }
         }
         decision.answerPendingArrival(now: now, response: response, catalog: catalog)
         return decision
@@ -155,12 +171,14 @@ private extension AutoLiveActivityRules.Decision {
         if let nearest, nearest.id != state.arrivalStationId {
             state.arrivalStationId = nearest.id
             state.pendingArrivalStationId = nil
+            state.openArrivalStationId = nil
             arrive(at: nearest, now: now, response: response)
         } else if nearest == nil, let arrivalId = state.arrivalStationId,
                   let arrival = catalog.station(withId: arrivalId),
                   position.distance(to: arrival.coordinate) > AutoLiveActivityRules.stopRadiusMeters {
             state.arrivalStationId = nil
             state.pendingArrivalStationId = nil
+            state.openArrivalStationId = nil
             actions.append(.withdrawNotification)
         }
     }
@@ -178,12 +196,21 @@ private extension AutoLiveActivityRules.Decision {
             state.shown = .init(stationId: station.id, startedAt: now, hasBeenNear: true)
             actions.append(.start(station))
         case .notify:
+            state.openArrivalStationId = station.id
             actions.append(.notify(station))
         case .later:
             state.pendingArrivalStationId = station.id
         case .none:
             break
         }
+    }
+
+    mutating func answerOpenArrival(at position: Coordinate, now: Date, catalog: StationCatalog) {
+        guard let stationId = state.openArrivalStationId, let station = catalog.station(withId: stationId),
+              position.distance(to: station.coordinate) <= AutoLiveActivityRules.arrivalRadiusMeters else { return }
+        state.shown = .init(stationId: station.id, startedAt: now, hasBeenNear: true)
+        actions.append(.start(station))
+        actions.append(.withdrawNotification)
     }
 
     mutating func answerPendingArrival(

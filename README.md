@@ -605,9 +605,10 @@ The app watches the metro and RER stations around you. The rules come from decis
     Touch and hold it (or pull it down) to see two actions: "Not for 1 h" and "Not today" (in French "Pas pendant 1 h" and "Pas aujourd’hui").
     Each one snoozes the automatic mode (see below) without opening the app.
     They also work while the phone is locked.
+    If you open the app at the station without tapping the notification (also with notifications turned off), the Live Activity of this station starts too, and the notification goes away.
 - **One station at a time.** If a Live Activity already shows and you come within 150 meters of another station, the Live Activity switches to the new station. There is no second Live Activity and no second notification.
 - **Stop.** The Live Activity ends by itself when you move more than about 250 meters away from its station, or 45 minutes after it started.
-- **No repeat.** You get one notification or one automatic start for each arrival. After you stop the Live Activity by hand, it does not start again until you leave the station (more than 250 meters) and come back.
+- **No repeat.** You get at most one notification and one automatic start for each arrival. After you stop the Live Activity by hand, it does not start again until you leave the station (more than 250 meters) and come back.
 - **By hand.** "Show the Live Activity now", "Show on the lock screen" (testing tools) and "Stop showing on the lock screen" still work.
   A Live Activity that you start by hand for a station far from you does not stop because of the distance.
   It stops at 250 meters only after you came near its station.
@@ -1107,7 +1108,7 @@ You can also run the commands of one part in its folder: `make -C ios check` run
 - `make build` builds the app for the processor of your Mac only (Apple silicon: arm64), and the command line builds make no code index (Xcode makes its own index when you open the project). Both make the build faster.
 - End-to-end tests are slow: all folders share one Simulator, one job at a time.
   So each test guards one seam where our code meets iOS, and nothing else (CLAUDE.md, section "Test levels", and decision-9 in the backlog): the real location popups, then a Live Activity that the app starts and stops by hand (`LiveActivityTests`), the automatic start, switch and end of the Live Activity from the position that iOS gives (`AutoLiveActivityTests`),
-  the arrival notification of an app in the background, the tap on it and its "Not for 1 h" action (`ArrivalNotificationTests`), a real swipe of the Live Activity that pauses its station but not the next one (`SwipeAwayTests`), and the trains on the real Live Activity with its two buttons (`SnoozeTests`).
+  the arrival notification of an app in the background, the tap on it, its "Not for 1 h" action, and the app opened at the station with no tap (`ArrivalNotificationTests`), a real swipe of the Live Activity that pauses its station but not the next one (`SwipeAwayTests`), and the trains on the real Live Activity with its two buttons (`SnoozeTests`).
   Each test looks at the real Live Activity in the Notification Center (`openNotificationCenter(over:)` from `E2ETestCase` pulls it down over the app, and `liveActivity` is the Live Activity there), not at the app label "On the lock screen: <station>": at most, this label is a point to wait for.
   The tests move the phone with the Simulator position (`moveThePhone(to:)`, which sets `XCUIDevice.location`), so the app reads it through Core Location, with our real code.
   They never go through the Testing tools: the fake position for testers has no E2E test, and QA checks it when a task changes it.

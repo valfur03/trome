@@ -13,11 +13,11 @@ enum AutoTestPlaces {
 }
 
 struct AutoLiveActivityRulesTests {
-    private typealias Places = AutoTestPlaces
-    private let rules = AutoLiveActivityRules()
-    private let now = Date(timeIntervalSince1970: 1_000_000)
+    typealias Places = AutoTestPlaces
+    let rules = AutoLiveActivityRules()
+    let now = Date(timeIntervalSince1970: 1_000_000)
 
-    private func decide(
+    func decide(
         _ state: AutoLiveActivityState = AutoLiveActivityState(),
         at position: Coordinate?,
         appPhase: AppPhase = .background,
@@ -33,7 +33,7 @@ struct AutoLiveActivityRulesTests {
         )
     }
 
-    private func showing(_ station: Station, hasBeenNear: Bool = true) -> AutoLiveActivityState {
+    func showing(_ station: Station, hasBeenNear: Bool = true) -> AutoLiveActivityState {
         AutoLiveActivityState(
             arrivalStationId: hasBeenNear ? station.id : nil,
             shown: .init(stationId: station.id, startedAt: now, hasBeenNear: hasBeenNear)
@@ -44,7 +44,7 @@ struct AutoLiveActivityRulesTests {
         let decision = decide(at: Places.fiftyMetersFromA)
 
         #expect(decision.actions == [.notify(Places.stationA)])
-        #expect(decision.state == AutoLiveActivityState(arrivalStationId: "a"))
+        #expect(decision.state == notified(at: Places.stationA))
     }
 
     @Test func startsAtOnceWhenTheAppIsOnScreen() {
@@ -108,7 +108,7 @@ struct AutoLiveActivityRulesTests {
         let background = decide(covered.state, at: nil, appPhase: .background)
 
         #expect(background.actions == [.notify(Places.stationA)])
-        #expect(background.state == AutoLiveActivityState(arrivalStationId: "a"))
+        #expect(background.state == notified(at: Places.stationA))
     }
 
     @Test func forgetsAWaitingArrivalWhenThePhoneLeavesTheStationArea() {
