@@ -33,7 +33,7 @@ never_a_file="Never use a secrets file ('wrangler deploy --secrets-file', which 
 missing=$( (./node_modules/.bin/wrangler secret list --format json "$env_flag" 2> /dev/null || true) | node scripts/secrets.ts missing "$target")
 if [ -n "$missing" ]; then
     echo "The $target Worker does not have these secrets yet (or it does not exist yet): $(echo $missing)." >&2
-    echo "Set the secrets first with '$secrets_command', then run this command again (README, section \"The server\")." >&2
+    echo "Set the secrets first with '$secrets_command', then run this command again (server/README.md)." >&2
     echo "If you are not logged in to Cloudflare, run 'make server-login' first." >&2
     echo "$never_a_file" >&2
     exit 1

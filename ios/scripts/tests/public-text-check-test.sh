@@ -76,10 +76,16 @@ expect "it says how to allow a word" "$(grep -c "add it to ALLOWED_TEXTS in ios/
 reset_repo
 file CLAUDE.md "Read decision-9 (TASK-44). The prompter decides; the agents wait for the manager."
 file .claude/rules/merge.md "The factory merges one task at a time (TASK-159)."
-file README.md "See TASK-173 and decision-15."
-expect "CLAUDE.md, .claude/ and, for now, README.md may cite the backlog and its words" "$(check)" "passes"
+file ios/README.md "See TASK-173 and decision-15."
+file server/README.md "The prompter decides (decision-40)."
+expect "CLAUDE.md, .claude/ and, for now, ios/README.md and server/README.md may cite the backlog and its words" "$(check)" "passes"
 expect "it says which files it checks only for personal data, and why" \
-    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
+    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "4"
+
+file README.md "See TASK-173: the factory decides."
+expect "the front page README.md may not cite the backlog" "$(check)" "fails"
+expect "it finds the backlog id of the front page" "$(hit 'README.md:1: a backlog id: "TASK-173"')" "1"
+expect "it finds the word of the team in the front page" "$(hit "README.md:1: a word of the team's own process: \"factory\"")" "1"
 
 file CLAUDE.md "Ask jane.doe@company.fr, or look in /Users/jane/repo."
 file .claude/rules/merge.md "Logs go to /Users/jane/logs."

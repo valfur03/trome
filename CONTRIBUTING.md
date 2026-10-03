@@ -31,16 +31,16 @@ We do not accept a large change that you cannot explain, or that you did not run
 
 ## Set up
 
-Follow [What you need](README.md#what-you-need) and [First setup](README.md#first-setup) in the README.
+Follow [What you need](ios/README.md#what-you-need) and [First setup](ios/README.md#first-setup) in the README of the app.
 Then run `make run` from the root of the repo: it builds the app and opens it in the iPhone Simulator.
-With no train data key, the app shows no live times: [The train data key](README.md#the-train-data-key-prim) shows how to add your own free key.
+With no train data key, the app shows no live times: [The train data key](ios/README.md#the-train-data-key-prim) shows how to add your own free key.
 `make help` lists every command.
 
 ## Make your change
 
 ### Find where the code goes
 
-The iPhone app is in `ios/` and the server is in `server/`: [Project layout](README.md#project-layout) maps the folders.
+The iPhone app is in `ios/` and the server is in `server/`: [Project layout](ios/README.md#project-layout) maps the folders.
 In the app, the rules and the state live in the `TROMECore` package, with their unit tests, and the screens and the Live Activity only show them.
 Where each file goes, and which part may use which, is in CLAUDE.md, for [the app](CLAUDE.md#code-structure-of-the-ios-app) and for [the server](CLAUDE.md#code-structure-of-the-server).
 These rules hold for every change, and the review checks them.
@@ -52,7 +52,7 @@ Write the text in English in the code, then run `make strings-sync`: it adds the
 Write it the way a Paris rider would say it, with the words of the RATP signs and of iOS ("Prochains passages", "Réglages").
 Commit the catalog with your change.
 A missing French text is the most common reason why a first change fails `make check`.
-[Languages](README.md#languages) in the README explains the catalogs.
+[Languages](ios/README.md#languages) in the README of the app explains the catalogs.
 
 ### Update the docs in the same change
 
