@@ -434,6 +434,7 @@ When you lock the phone (or leave the app) while the Live Activity still says "L
 Between two calls, it draws the Live Activity again at each moment when a train on it changes (see above).
 It stops asking PRIM when PRIM rejects the key or says the daily quota is used up.
 A Release build (TestFlight or the App Store) asks the server of the app instead of PRIM (see [The train data key (PRIM)](#the-train-data-key-prim)), at the same moments.
+It stops asking only when the server rejects its app token: when the server has no times for now, the refresh fails, and the app asks again at the next moment.
 This works while iOS keeps the app running in the background (see the limit below).
 When the first shown train has left and no new times came, the Live Activity hides its waiting times and says "Open the app for new times" (iOS does it by itself, also when the app is closed).
 The strips stay, with their ends of line, and their boxes are empty.
