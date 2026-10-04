@@ -63,10 +63,23 @@ def print_sleeps(summary):
         print("Run the same command again (make e2e, make merge or make docs-screenshots) before you look for a bug.")
 
 
+def print_counts(summary):
+    if "totalTestCount" not in summary:
+        return
+    counts = f"{summary.get('passedTests', 0)} passed, {summary.get('failedTests', 0)} failed, {summary.get('skippedTests', 0)} skipped"
+    start, end = summary.get("startTime"), summary.get("finishTime")
+    time_taken = f" in {round(end - start)} s" if start is not None and end is not None else ""
+    print(f"E2E tests: {counts} (of {summary['totalTestCount']}){time_taken}")
+
+
 def main():
     bundle = Path(sys.argv[1])
     if not bundle.exists():
         return
+    summary = output_of(["xcrun", "xcresulttool", "get", "test-results", "summary", "--path", str(bundle)])
+    summary = json.loads(summary) if summary is not None else None
+    if summary is not None:
+        print_counts(summary)
     tests = output_of(["xcrun", "xcresulttool", "get", "test-results", "tests", "--path", str(bundle)])
     if tests is not None:
         for root in json.loads(tests).get("testNodes", []):
@@ -75,9 +88,8 @@ def main():
                 if location:
                     where = f"{Path(location['filePath']).name}:{location['lineNumber']}: "
                 print(f"{where}{test}: {message}")
-    summary = output_of(["xcrun", "xcresulttool", "get", "test-results", "summary", "--path", str(bundle)])
-    if summary is not None:
-        print_sleeps(json.loads(summary))
+    if summary is not None and summary.get("result") != "Passed":
+        print_sleeps(summary)
 
 
 if __name__ == "__main__":

@@ -78,11 +78,14 @@ file CLAUDE.md "Read decision-9 (TASK-44). The prompter decides; the agents wait
 file .claude/rules/merge.md "The factory merges one task at a time (TASK-159)."
 file ios/README.md "See TASK-173 and decision-15."
 expect "CLAUDE.md, .claude/ and, for now, ios/README.md may cite the backlog and its words" "$(check)" "passes"
-expect "it says which files it checks only for personal data, and why" \
-    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
+expect "a pass prints only its OK line, with no notice of the files that it checks only in part" "$(wc -l < "$state/out" | tr -d ' ') $(grep -c "^public-text-check: OK" "$state/out")" "1 1"
+expect "with VERBOSE=1, it says which files it checks only for personal data, and why" \
+    "$(VERBOSE=1 check > /dev/null; grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
 
 file server/README.md "The prompter decides (decision-40)."
 expect "server/README.md, rewritten for developers, may not cite the backlog" "$(check)" "fails"
+expect "a failure says which files it checks only for personal data" \
+    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
 expect "it finds the backlog id of server/README.md" "$(hit 'server/README.md:1: a backlog id: "decision-40"')" "1"
 rm "$repo/server/README.md"
 git -C "$repo" rm -q --cached server/README.md
@@ -150,7 +153,7 @@ printf 'The factory, /Users/jane.\n' > "$repo/docs/draft.md"
 printf 'TASK-1\0binary\n' > "$repo/docs/image.png"
 git -C "$repo" add docs/image.png
 expect "it skips its own word list and examples, the files that git does not track, and binary files" "$(check)" "passes"
-expect "it says which files it skips, and why" "$(grep -c "skips ios/scripts/public-text-check.py: it holds the word list" "$state/out")" "1"
+expect "with VERBOSE=1, it says which files it skips, and why" "$(VERBOSE=1 check > /dev/null; grep -c "skips ios/scripts/public-text-check.py: it holds the word list" "$state/out")" "1"
 
 mkdir "$state/allowing"
 cp "$scripts/public-text-check.py" "$scripts/repo_files.py" "$state/allowing/"

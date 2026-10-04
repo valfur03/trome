@@ -17,6 +17,8 @@ RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
+QUIET := ./scripts/quiet.sh
+LOGS := $(BUILD_DIR)/logs
 CORE_PACKAGE := Packages/TROMECore
 NO_KEY := -xcconfig Config/NoKey.xcconfig
 MAIN_FOLDER = $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')
@@ -132,7 +134,7 @@ git-hooks-off:
 	@./scripts/git-hooks.sh off
 
 lint:
-	swiftlint lint --strict --quiet
+	@$(QUIET) $(LOGS)/lint.log '' swiftlint lint --strict --quiet
 
 lint-fix:
 	swiftlint --fix --quiet
@@ -149,7 +151,7 @@ ifeq ($(LIVE),1)
 	@$(BUILD_APP) -xcconfig "$(PRIM_SECRETS)" PRIM_SECRETS_STAMP="$$(stat -f '%Fm-%i-%z' "$(PRIM_SECRETS)")"
 else
 	@rm -rf $(BUILD_RESULT)
-	$(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)
+	@$(QUIET) $(LOGS)/build.log '' $(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)
 	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 endif
 
@@ -169,13 +171,16 @@ public-text-check:
 	@./scripts/public-text-check.py
 
 test:
-	swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
+	@$(QUIET) $(LOGS)/unit-tests.log 'Test run with|Executed [1-9]' swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
 
 test-scripts:
-	@mkdir -p $(BUILD_DIR)
-	@for test in ./scripts/tests/*-test.sh; do \
-		$$test > $(BUILD_DIR)/test-scripts.log 2>&1 || { cat $(BUILD_DIR)/test-scripts.log; exit 1; }; \
-	done
+	@mkdir -p $(LOGS)
+	@count=0; for test in ./scripts/tests/*-test.sh; do \
+		$$test > $(LOGS)/test-scripts.log 2>&1 \
+			|| { cat $(LOGS)/test-scripts.log; echo "test-scripts: FAILED: $$test (its whole output is above, and in ios/$(LOGS)/test-scripts.log)"; exit 1; }; \
+		count=$$((count + 1)); \
+	done; \
+	echo "test-scripts: OK ($$count script tests)"
 
 check: lint prose-check public-text-check bundle-id-check recommended-settings-check live-key-check build strings-check test test-scripts
 
@@ -204,13 +209,14 @@ e2e: project
 			|| { echo "No E2E test named $${test#*/} in $$class" >&2; exit 1; };; esac; \
 	done
 	@rm -rf $(E2E_RESULT)
-	$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
-		$(SIMULATOR) with-destination $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
+	@$(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
+		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E tests: ' \
+		sh -c '"$$@"; status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); exit $$status' e2e \
+		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
-		$(E2E_ONLY) -resultBundlePath $(E2E_RESULT) test-without-building \
-		|| { status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); exit $$status; }
+		$(E2E_ONLY) -resultBundlePath $(E2E_RESULT) test-without-building
 
 stations:
 	python3 scripts/update-stations.py
@@ -237,16 +243,16 @@ merge:
 	@./scripts/merge.sh
 
 live-activity-render: project
-	$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \
-		./scripts/live-activity-render.sh render $(RENDER_OUT) \
+	@$(QUIET) $(LOGS)/live-activity-render-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \
+		$(QUIET) $(LOGS)/live-activity-render.log '^Simulator time' ./scripts/live-activity-render.sh render $(RENDER_OUT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -collect-test-diagnostics never test-without-building
-	./scripts/live-activity-render.sh report $(RENDER_OUT)
+	@./scripts/live-activity-render.sh report $(RENDER_OUT)
 
 docs-screenshots: project
-	$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
-		./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) \
+	@$(QUIET) $(LOGS)/docs-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
+		$(QUIET) $(LOGS)/docs-screenshots.log '^Saved ' ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300

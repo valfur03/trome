@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import re
 import sys
 from typing import NamedTuple
@@ -107,9 +108,10 @@ def main(arguments):
     if arguments:
         sys.exit(USAGE)
     root, paths = repo_files("public-text-check")
-    describe_exceptions(paths)
     checked = [path for path in paths if not matching(path, SKIPPED_FILES)]
     failures = [(path, number, reason, text) for path in checked for number, reason, text in hits(root, path)]
+    if failures or os.environ.get("VERBOSE") == "1":
+        describe_exceptions(paths)
     sys.stdout.flush()
     for path, number, reason, text in failures:
         print(f"public-text-check: {path}:{number}: {reason}: \"{text}\"", file=sys.stderr)

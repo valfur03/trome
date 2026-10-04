@@ -1,5 +1,7 @@
 DOCS_BASE ?= main
 PORT ?= 4321
+QUIET := ../ios/scripts/quiet.sh
+LOGS := .build/logs
 
 .PHONY: help node-check docs-install docs docs-dev docs-stop docs-check docs-check-if-changed
 
@@ -14,7 +16,7 @@ node-check:
 
 docs-install: node-check
 	@if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then \
-		npm ci; \
+		$(QUIET) $(LOGS)/docs-install.log 'added [0-9]+ packages' npm ci; \
 	fi
 
 docs: docs-install
@@ -29,7 +31,9 @@ docs-stop: node-check
 	fi
 
 docs-check: docs-install
-	npm test && npm run check && node scripts/build-check.ts
+	@$(QUIET) $(LOGS)/docs-unit-tests.log '^ℹ (tests|fail) ' npm test
+	@$(QUIET) $(LOGS)/astro-check.log '^- [0-9]+ (errors|warnings)' npm run check
+	@$(QUIET) $(LOGS)/docs-build.log '\[build\] [0-9]+ page|^The docs build printed' node scripts/build-check.ts
 
 docs-check-if-changed:
 	@if ./scripts/docs-changed.sh $(DOCS_BASE); then \

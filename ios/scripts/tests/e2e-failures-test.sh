@@ -119,6 +119,19 @@ expect "the explanation succeeds when the power log cannot be read" "$(explain)"
 unset FAKE_PMSET_FAILS
 expect "it then prints only the failing tests" "$(cat "$state/out")" "SnoozeTests.swift:42: SnoozeTests/testSnooze(): The next lines did not show."
 
+printf '{"result": "Failed", "totalTestCount": 7, "passedTests": 6, "failedTests": 1, "skippedTests": 0, "startTime": %s.807, "finishTime": %s.703}\n' \
+    "$(epoch "2026-09-30 22:24:40 +0200")" "$(epoch "2026-09-30 22:28:30 +0200")" > "$state/summary.json"
+echo "$real_night" > "$state/power.log"
+explain > /dev/null
+expect "it first counts the tests of a real run, with its time" "$(head -1 "$state/out")" "E2E tests: 6 passed, 1 failed, 0 skipped (of 7) in 230 s"
+expect "then the failing tests, then the sleep" "$(sed -n 2p "$state/out" | cut -c1-17) $(sed -n 3p "$state/out" | cut -c1-14)" "SnoozeTests.swift The Mac slept "
+
+printf '{"result": "Passed", "totalTestCount": 7, "passedTests": 7, "failedTests": 0, "skippedTests": 0, "startTime": %s.807, "finishTime": %s.703}\n' \
+    "$(epoch "2026-09-30 22:24:40 +0200")" "$(epoch "2026-09-30 22:28:30 +0200")" > "$state/summary.json"
+echo '{"testNodes": []}' > "$state/tests.json"
+explain > /dev/null
+expect "a passing run prints only its counts, with no sleep note" "$(cat "$state/out")" "E2E tests: 7 passed, 0 failed, 0 skipped (of 7) in 230 s"
+
 rm -r "$state/e2e.xcresult"
 expect "the explanation prints nothing when the run left no results" "$(explain) $(wc -c < "$state/out" | tr -d ' ')" "exit 0 0"
 
