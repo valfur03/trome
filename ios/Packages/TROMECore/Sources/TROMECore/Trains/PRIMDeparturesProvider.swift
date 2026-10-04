@@ -102,8 +102,8 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         let errors = answers.compactMap { answer -> (any Error)? in
             if case .failure(let error) = answer.visits { error } else { nil }
         }
-        let soonestRetry = errors.compactMap { ($0 as? NextTrainsError)?.serverRetryAt }.min()
-        return soonestRetry.map { NextTrainsError.serverOut(retryAt: $0) } ?? errors.first
+        let latestRetry = errors.compactMap { ($0 as? NextTrainsError)?.serverRetryAt }.max()
+        return latestRetry.map { NextTrainsError.serverOut(retryAt: $0) } ?? errors.first
     }
 
     static func stopRequests(for stations: [Station]) -> [StopRequest] {

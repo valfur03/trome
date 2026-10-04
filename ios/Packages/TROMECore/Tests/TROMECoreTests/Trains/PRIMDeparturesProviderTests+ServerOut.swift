@@ -124,16 +124,35 @@ extension PRIMDeparturesProviderTests {
         }
     }
 
-    @Test func givesTheSoonestRetryTimeWhenEveryStopOfTheStationIsOut() async {
+    @Test func givesTheLatestRetryTimeWhenEveryStopOfTheStationIsOut() async {
         let clock = TestClock()
         let (provider, _) = serverProvider(clock: clock) { request in
             let later = request.url?.absoluteString.contains("Q:22059:") == true
-            return Self.outReply(retryAfter: later ? "3644" : "1840")
+            return Self.outReply(retryAfter: later ? "1880" : "1840")
         }
 
-        await #expect(throws: NextTrainsError.serverOut(retryAt: clock.now.addingTimeInterval(1_840))) {
+        await #expect(throws: NextTrainsError.serverOut(retryAt: clock.now.addingTimeInterval(1_880))) {
             try await provider.departures(at: [abbessesByQuay])
         }
+    }
+
+    @Test func asksEveryStopOfTheStationAgainAtTheRetryTimeItGives() async throws {
+        let clock = TestClock()
+        let firstAnswerAt = clock.now
+        let (provider, client) = serverProvider(clock: clock) { request in
+            let later = request.url?.absoluteString.contains("Q:22059:") == true
+            guard clock.now == firstAnswerAt else { return try Self.timesReply() }
+            return Self.outReply(retryAfter: later ? "1880" : "1840")
+        }
+        let firstError = await #expect(throws: NextTrainsError.self) {
+            try await provider.departures(at: [abbessesByQuay])
+        }
+
+        clock.advance(by: try #require(firstError?.serverRetryAt).timeIntervalSince(clock.now))
+        let departures = try await provider.departures(at: [abbessesByQuay])
+
+        #expect(!departures.isEmpty)
+        #expect(client.requests.count == 4)
     }
 
     @Test func keepsAskingForTheOtherStopsWhileOneStopIsOut() async throws {
