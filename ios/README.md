@@ -73,6 +73,7 @@ When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks
 - [languages.md](guide/languages.md): add or change a text in English and French.
 - [live-activity.md](guide/live-activity.md): what the lock screen and the Dynamic Island show for each state of a train, and when they change.
 - [auto-live-activity.md](guide/auto-live-activity.md): when the Live Activity starts and stops by itself, the snooze and the pause, and the permission questions.
+- [example.md](guide/example.md): what "See an example" shows, when it ends, and how to make it shorter.
 - [render-check.md](guide/render-check.md): `make live-activity-render`, which finds a Live Activity that is too tall or cut.
 
 ## The train data key (PRIM)

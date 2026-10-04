@@ -127,6 +127,8 @@ The app is the Live Activity, so the main screen shows its state and its control
 | The screen shows | When |
 |---|---|
 | "On the lock screen: <station>" ("Sur l’écran verrouillé : <station>") | A Live Activity shows; otherwise a line that says what the Live Activity does |
+| "On the lock screen: Châtelet (example)" ("Sur l’écran verrouillé : Châtelet (exemple)") | The example of **See an example** shows |
+| **See an example**, with one line that says what it shows: a tap puts Châtelet on the lock screen, with sample times, for 10 minutes ([See an example](example.md)) | Always; while the real trains of a station show, it starts nothing and its line says which station shows |
 | The switch **Automatic mode** | Always |
 | **Snooze**, with 30 minutes, 1 hour and the rest of today | The automatic mode is on |
 | **Snoozed**, the time of return, and **Cancel the snooze** | A snooze is on |
