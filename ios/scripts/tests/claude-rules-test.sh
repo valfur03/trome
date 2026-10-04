@@ -17,7 +17,7 @@ expect() {
 }
 
 project="$state/main"
-worktree="$state/task-1"
+worktree="$state/worktree-1"
 mkdir -p "$project/.git" "$project/ios/App" "$worktree/.git" "$worktree/ios/App" "$worktree/docs" "$worktree/server/src"
 cp -R "$root/.claude" "$project/.claude"
 echo "let x = 1" > "$project/ios/App/X.swift"
@@ -52,7 +52,7 @@ expect "a read of an app file of another worktree brings the rules of its paths,
     "$(run "$(read_event "$worktree/ios/App/X.swift")" | delivered)" "context ios-code tests"
 expect "the same rules do not come twice in one session" \
     "$(run "$(read_event "$worktree/ios/App/X.swift")" | delivered)" "none"
-expect "another agent of the same session gets them again" \
+expect "another subagent of the same session gets them again" \
     "$(run "$(read_event "$worktree/ios/App/X.swift" ',"agent_id":"a2"')" | delivered)" "context ios-code tests"
 expect "a read in the folder of the session is left to Claude Code, which loads its paths rules itself" \
     "$(run "$(read_event "$project/ios/App/X.swift" '' s2)" | delivered)" "none"
@@ -84,10 +84,10 @@ expect "a diff in the output of a command brings the rules of its files" "$(run 
 post="{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -n 1,5p $worktree/docs/page.mdx\"},\"tool_response\":{\"stdout\":\"A page.\"},\"cwd\":\"$project\"}"
 expect "a command that reads a file brings the rules of that file" "$(run "$(event "$post" s12)" | delivered)" "context docs-site writing"
 
-agent=$(event '{"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"subagent_type":"factory-qa-tester","prompt":"QA of a task"}}' s13)
-expect "the start of a QA agent is stopped once, with the live data rules" "$(run "$agent" | delivered)" "deny live-data"
-expect "the start of another agent brings nothing" \
-    "$(run "$(event '{"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"subagent_type":"factory-software-engineer"}}' s13)" | delivered)" "none"
+qa_subagent=$(event '{"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"subagent_type":"qa-tester","prompt":"QA of a task"}}' s13)
+expect "the start of a QA subagent is stopped once, with the live data rules" "$(run "$qa_subagent" | delivered)" "deny live-data"
+expect "the start of another subagent brings nothing" \
+    "$(run "$(event '{"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"subagent_type":"software-engineer"}}' s13)" | delivered)" "none"
 
 run "$(bash_event 'make e2e' '' s14)" > /dev/null
 run "$(event '{"hook_event_name":"SessionStart","source":"compact"}' s14)" > /dev/null

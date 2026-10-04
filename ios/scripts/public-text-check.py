@@ -47,6 +47,7 @@ ALLOWED_TEXTS: list[Allowed] = [
     Allowed("ios/Makefile", "RATPActivity", OLD_PROJECT_NAME_REASON),
     Allowed("ios/scripts/simulator.sh", "RATPActivity", OLD_PROJECT_NAME_REASON),
     Allowed("ios/scripts/tests/sim-lock-test.sh", "RATPActivity", "it checks that the Simulator script removes the apps of the old name"),
+    Allowed("ios/scripts/tests/claude-rules-test.sh", "Agent", "the name of the tool of Claude Code that starts a subagent"),
 ]
 
 USAGE = "Usage: public-text-check.py (it checks every file of the repo)"
