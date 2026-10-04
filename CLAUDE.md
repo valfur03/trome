@@ -48,7 +48,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 | `qa.md` | QA: French first | run `make run` or `make switch-language` |
 | `live-data.md` | Live train data: who uses `LIVE=1`, the PRIM budget of a QA run | run a `make` command with `LIVE=1`; start a QA agent; touch `ios/Config/`, `ios/scripts/live-key-check.sh` |
 | `render-check.md` | The Live Activity render check | run `make live-activity-render`; touch `ios/Widget/`, `ios/RenderCheck/`, the Live Activity code of `TROMECore`, the render scripts |
-| `merge.md` | Merge a task into `main` | run `make merge`, `git rebase`, `git merge`; touch `ios/scripts/merge.sh` |
+| `merge.md` | Merge a task into `main` | run `make merge`, `git rebase`, `git merge`, `git pull`; touch `ios/scripts/merge.sh` |
 | `tooling.md` | The shared build cache, the git hooks | touch `ios/scripts/`, the `Makefile` files |
 | `server.md` | Code structure of the server, the server and its commands | touch `server/`, `contracts/`; run `make server-...` |
 | `docs-site.md` | The docs site: Node 24, port, screenshots | touch `docs/`; run `make docs...` |

@@ -8,8 +8,20 @@ import tempfile
 
 EDIT_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 AGENT_TOOLS = {"Agent", "Task"}
-COMMAND_PREFIXES = {"command", "exec", "nohup", "time", "env"}
+WRAPPERS = {
+    "command": set(),
+    "exec": set(),
+    "nohup": set(),
+    "time": set(),
+    "env": {"-u", "--unset", "-C", "--chdir"},
+    "caffeinate": {"-t", "-w"},
+    "nice": {"-n", "--adjustment"},
+    "timeout": {"-s", "--signal", "-k", "--kill-after"},
+}
+SHELLS = {"sh", "bash", "zsh"}
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+DURATION = re.compile(r"^\d+(\.\d+)?[smhd]?$")
+SCRIPT_OPTION = re.compile(r"^-[a-z]*c[a-z]*$")
 DIFF_PATH = re.compile(r"^(?:diff --git a/\S+ b/|\+\+\+ b/|--- a/)(\S+)", re.MULTILINE)
 
 
@@ -134,16 +146,42 @@ def simple_commands(command):
 
 
 def command_words(words):
-    while words and (ASSIGNMENT.match(words[0]) or words[0] in COMMAND_PREFIXES):
-        words = words[1:]
-    return words
+    assignments = []
+    i = 0
+    while i < len(words):
+        if ASSIGNMENT.match(words[i]):
+            assignments.append(words[i])
+            i += 1
+        elif words[i] in WRAPPERS:
+            takes_value = WRAPPERS[words[i]]
+            i += 1
+            while i < len(words) and (words[i].startswith("-") or DURATION.match(words[i])):
+                i += 2 if words[i] in takes_value else 1
+        else:
+            break
+    return words[i:] + assignments
+
+
+def shell_script(words):
+    if not words or os.path.basename(words[0]) not in SHELLS:
+        return None
+    for i, word in enumerate(words[1:-1], 1):
+        if SCRIPT_OPTION.match(word):
+            return words[i + 1]
+        if not word.startswith("-"):
+            return None
+    return None
 
 
 def rules_for_command(rules, command):
     found = set()
     for words in simple_commands(command):
-        line = " ".join(command_words(words))
+        words = command_words(words)
+        line = " ".join(words)
         found |= {name for name, rule in rules.items() if any(c.search(line) for c in rule["commands"])}
+        script = shell_script(words)
+        if script is not None:
+            found |= rules_for_command(rules, script)
     return found
 
 
@@ -212,7 +250,7 @@ def respond(event_name, context=None, deny=None):
 
 
 def stop(rules, names, what, again):
-    respond("PreToolUse", deny="This repo has rules for %s, and you have not read them yet in this session. "
+    respond("PreToolUse", deny="This is not a refusal. This repo has rules for %s, and you have not read them yet in this session. "
             "Read them now, then %s: it will not be stopped twice.\n\n%s" % (what, again, text_of(rules, names)))
 
 

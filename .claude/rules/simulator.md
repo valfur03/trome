@@ -7,7 +7,7 @@ commands:
   - '^(\S*/)?make\b.*\s(run|e2e|docs-screenshots|live-activity-render|switch-language|merge|simulator-delete|simulator-delete-old)(\s|$)'
   - '^\S*sim-lock\.sh(\s|$)'
   - '^\S*simulator\.sh(\s|$)'
-  - '^xcrun\s+simctl\b'
+  - '^xcrun\b.*\ssimctl\b'
   - '^xcodebuild\b.*(\stest(-without-building)?(\s|$)|-destination)'
   - '^open\b.*Simulator'
 ---

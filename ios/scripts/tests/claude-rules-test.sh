@@ -77,6 +77,22 @@ expect "a command through the Simulator lock brings the Simulator rules" \
     "$(run "$(bash_event 'ios/scripts/sim-lock.sh job ios/scripts/simulator.sh reset xcrun simctl list' '' s9)" | delivered)" "deny simulator"
 expect "a server command brings the server rules" \
     "$(run "$(bash_event 'make server-dev' '' s10)" | delivered)" "deny server"
+expect "a variable before make, that make reads from the environment, brings its rules" \
+    "$(run "$(bash_event 'LIVE=1 make run' '' s15)" | delivered)" "deny live-data qa simulator"
+expect "make merge behind caffeinate and its options brings its rules" \
+    "$(run "$(bash_event 'caffeinate -i make merge' '' s16)" | delivered)" "deny merge simulator"
+expect "make e2e behind timeout and its duration brings its rules" \
+    "$(run "$(bash_event 'timeout 900 make e2e' '' s17)" | delivered)" "deny simulator tests"
+expect "make e2e behind nice brings its rules" \
+    "$(run "$(bash_event 'nice make e2e' '' s18)" | delivered)" "deny simulator tests"
+expect "make e2e in the script of bash -c brings its rules" \
+    "$(run "$(bash_event "bash -c 'make e2e'" '' s19)" | delivered)" "deny simulator tests"
+expect "xcrun with an option before simctl brings the Simulator rules" \
+    "$(run "$(bash_event 'xcrun --sdk iphonesimulator simctl list' '' s20)" | delivered)" "deny simulator"
+expect "git pull --rebase brings the merge rules" \
+    "$(run "$(bash_event 'git pull --rebase' '' s21)" | delivered)" "deny merge"
+expect "a stop says first that it is not a refusal" \
+    "$(run "$(bash_event 'make e2e' '' s22)" | python3 -c 'import json, sys; print(json.load(sys.stdin)["hookSpecificOutput"]["permissionDecisionReason"].startswith("This is not a refusal."))')" "True"
 
 diff_output=$(python3 -c 'import json; print(json.dumps({"stdout": "diff --git a/server/src/core/x.ts b/server/src/core/x.ts\n+++ b/server/src/core/x.ts\n", "stderr": ""}))')
 post="{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git diff main\"},\"tool_response\":$diff_output,\"cwd\":\"$worktree\"}"

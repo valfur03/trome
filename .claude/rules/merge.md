@@ -4,7 +4,7 @@ paths:
   - "ios/scripts/tests/merge-test.sh"
 commands:
   - '^(\S*/)?make\b.*\smerge(\s|$)'
-  - '^git(\s+-[Cc]\s+\S+|\s+--?\S+)*\s+(rebase|merge)(\s|$)'
+  - '^git(\s+-[Cc]\s+\S+|\s+--?\S+)*\s+(rebase|merge|pull)(\s|$)'
 ---
 # Merge a task into main
 
