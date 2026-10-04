@@ -24,7 +24,7 @@ struct ExampleRow: View {
                     Text("See an example")
                     explanation
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.secondary)
                         .accessibilityIdentifier("exampleExplanation")
                 }
             } icon: {
