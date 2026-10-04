@@ -22,6 +22,8 @@ public struct CurrentStationStore {
     }
 }
 
+/// The station that the tester picked by hand in the next trains screen of the Testing tools,
+/// kept when the app closes.
 @MainActor
 @Observable
 public final class CurrentStationModel {

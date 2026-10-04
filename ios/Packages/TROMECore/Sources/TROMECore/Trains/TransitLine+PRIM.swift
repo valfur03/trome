@@ -30,6 +30,10 @@ extension TransitLine {
     }
 }
 
+/// Turns the stop ids of the station list into the `MonitoringRef` that PRIM asks for.
+///
+/// A stop area `IDFM:monomodalStopPlace:<n>` (the `stopAreaIds` of a metro line, the `stopIds` of an RER line)
+/// becomes `STIF:StopArea:SP:<n>:`, and a quay `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`.
 enum PRIMStopReference {
     private static let stopAreaPrefix = "IDFM:monomodalStopPlace:"
     private static let stopPointPrefix = "IDFM:"

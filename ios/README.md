@@ -19,8 +19,8 @@ make run
 `make run` builds the app and opens it in the Simulator.
 The first build takes several minutes: it compiles the modules of the iOS SDK once, into a cache that all your clones share.
 
-The app shows no real train times until you add your own free key ([The train data key (PRIM)](#the-train-data-key-prim)), but it can show [fake trains](#test-it-with-a-fake-position).
-To try it at a station without going there, tap **Testing tools** at the top right, and pick a fake position.
+The app shows no real train times until you add your own free key ([The train data key (PRIM)](#the-train-data-key-prim)), but it can show [fake trains](guide/testing-tools.md#get-fake-trains-with-no-key).
+To try it at a station without going there, tap **Testing tools** at the top right, and pick a fake position ([Try the app at any station, without going there](guide/testing-tools.md)).
 To put the app on your own iPhone, see [Install on your iPhone](#install-on-your-iphone-free-apple-id).
 
 ## The commands you use every day
@@ -30,7 +30,7 @@ To put the app on your own iPhone, see [Install on your iPhone](#install-on-your
 | `make run` | Builds the app and opens it in the Simulator. Add `SMALL=1` for the smallest iPhone (an iPhone SE), or `LANGUAGE=fr` for a Simulator in French. |
 | `make test` | Runs the unit tests on your Mac, with no Simulator. |
 | `make e2e ONLY=<class>` | Runs one class of end-to-end tests in the Simulator; with no `ONLY`, all of them. |
-| `make strings-sync` | Adds the new texts of the code to the String Catalogs, where you write their French text ([Languages](#languages)). |
+| `make strings-sync` | Adds the new texts of the code to the String Catalogs, where you write their French text ([Add or change a text in English and French](guide/languages.md)). |
 | `make check` | Runs the checks of a change that need no Simulator: run it before each commit. |
 | `make simulator-shutdown` | Removes the app from the Simulator, and frees it for your other clones. |
 
@@ -67,6 +67,10 @@ When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks
 ## The guides
 
 - [tests.md](guide/tests.md): which test a change needs, how to run it and how to write one.
+- [testing-tools.md](guide/testing-tools.md): fake the position and the trains of a debug build, to try the app at any station.
+- [stations.md](guide/stations.md): where the station list comes from, and how to update it.
+- [trains.md](guide/trains.md): where the train times come from, and when they refresh.
+- [languages.md](guide/languages.md): add or change a text in English and French.
 
 ## How each feature works
 
@@ -90,95 +94,6 @@ The app is the Live Activity. The main screen shows only:
 - **The permissions.** The state of the location and of the notifications. When one is missing or refused, the screen says what does not work, with a button to fix it ("Open Settings", or "Allow location").
 
 The station picker and the next trains list are only for testers, in "Testing tools" (debug builds).
-
-### Fake your position (testing tools)
-
-Debug builds have a "Testing tools" screen. `make run` and the Run button in Xcode make debug builds. Release builds do not have this screen.
-
-1. Open the app. Tap "Testing tools" at the top right of the screen.
-2. Choose a fake position:
-   - "Pick a station": choose a metro or RER station from a list.
-   - "Far from any station": a point in the Fontainebleau forest, far from any metro or RER station.
-   - "Coordinates": type the latitude, then the longitude, for example `48.8584, 2.2945`. Tap "Use these coordinates".
-   - "Address": type an address, for example `10 rue de Rivoli, Paris`. Tap "Find this address". This needs the network.
-3. The section "Position used by the app" shows the position that every feature uses, and the nearest station.
-4. To stop faking, tap "Use the real GPS".
-
-The app keeps your choice when you close it. While a fake position is on, the main screen shows "Fake position" in orange.
-
-This works in the Simulator and on your iPhone, also when the iPhone is not connected to the Mac.
-
-For developers: all code must read the position from `LocationService` (in `TROMECore`), never from Core Location directly. Then the fake position works for every feature.
-
-To fake your position in the Simulator:
-
-```sh
-xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
-```
-
-### The station list
-
-The app finds the nearest station without the network. It reads the file `ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json`.
-
-This file lists every metro station (lines 1 to 14, 3bis and 7bis) and every RER station (lines A to E). It has no bus, tram or Transilien stop. The data comes from the open data of Île-de-France Mobilités (dataset `arrets-lignes`, no key needed).
-In all, the list is made from four datasets of Île-de-France Mobilités under two licences, the ODbL and the Licence Ouverte v2.0: [NOTICE.md](../NOTICE.md) names them, and says what you must do when you reuse the list.
-
-Each line of a station also has its official color (`color`: the color of the line, and the color of the text on it).
-It comes from the dataset `referentiel-des-lignes` of Île-de-France Mobilités (fields `colourweb_hexa` and `textcolourweb_hexa`, made for web and phone screens).
-The Live Activity uses only these colors for the lines.
-
-To see the list in the app, open "Testing tools" and tap "All stations". Each station shows its lines. Type part of a name in the search field to find a station. The search ignores case, accents and hyphens: `chatelet` finds "Châtelet".
-
-To download the list again, run `make stations`. It needs Python 3. Commit the new `stations.json`.
-The script writes the day of the download in the `date` field of `stations.json`: the app shows it in the notice of the station list.
-Write the same date in [NOTICE.md](../NOTICE.md), in the same commit: twice as the script prints it (2026-09-27), in the sentence on the date of the data and in the list of what to give when you share the list, and once in the quote of the app's English sentence (September 27, 2026).
-`make test` fails when a date differs.
-Then open the four dataset pages that NOTICE.md links, check that they still show the same licences, and write the day of this check in NOTICE.md.
-
-The script also gives a `hubId` to the stations of one place with different names (for example Châtelet and Châtelet - Les Halles).
-It comes from the "pôles d'échange" of Île-de-France Mobilités (dataset `relations`, field `pdeid`).
-`StationCatalog.hubStations(of:)` gives the stations whose lines show for a station: the station itself, then the other stations of its place, nearest first, each with only the lines that the stations before it do not have.
-For a station with no `hubId`, it gives only the station.
-
-The script also gives the stop area (`stopAreaIds`) of each metro line of a station.
-A metro line has one stop (quay) for each direction, in `stopIds`.
-All the quays of one metro station are in one stop area.
-It comes from the dataset `arrets` of Île-de-France Mobilités (field `zdaid`).
-For example, the quays 22059 and 463116 of Abbesses are in the stop area 42155.
-
-Some names in the open data are wrong or spelled in two ways. The script fixes them with the table `STATION_NAMES` in `ios/scripts/update-stations.py`. If a unit test says that two stations "look like the same station", add the bad name to this table.
-
-### Next trains of a station
-
-Debug builds can show the next trains of a station that you pick by hand. This needs no location permission. Release builds do not have this screen.
-
-1. Open "Testing tools", then tap "Next trains of a station" at the bottom.
-2. Tap "Pick a station". Type part of a name to find a station, then tap it.
-3. The screen shows the next trains of each line and destination, in minutes.
-   It shows only the trains of the next 60 minutes: PRIM sometimes gives a time much later (for example 154 min), and it is not a real prediction.
-   When PRIM gives a destination only times more than 60 minutes away, the screen still shows its row, with "Next train in over 1 hour" instead of the times.
-   The app asks for new times every 30 seconds while this screen is open.
-4. Tap "Change station" to pick another station.
-
-The app remembers the picked station when you close it.
-
-The screen tells you when:
-
-- the train data key is not set (see below),
-- the station has no live data right now,
-- the app cannot reach the train data service (for example, no internet),
-- the service refuses the key, gets too many requests, or does not work.
-
-For developers: the code is in `ios/Packages/TROMECore/Sources/TROMECore/Trains`.
-`PRIMDeparturesProvider` calls the PRIM API "stop-monitoring" once for each stop area of the station, and of the other stations of its place (see [The station list](#the-station-list)).
-So Châtelet costs 2 calls: the metro stop area of Châtelet (its 10 metro quays) and the RER stop of Châtelet - Les Halles.
-Saint-Lazare costs 5 calls.
-A stop area id `IDFM:monomodalStopPlace:<n>` (the `stopAreaIds` of a metro line, the `stopIds` of an RER line) becomes `STIF:StopArea:SP:<n>:`.
-A metro line with no stop area asks for each quay: its stop id `IDFM:<n>` becomes `STIF:StopPoint:Q:<n>:`.
-The answer for a stop area can have trains of lines that the app gives to another station of the place.
-The app keeps only the trains of the lines that it asked this stop area for.
-`CurrentStationModel` holds the station that the tester picked.
-`NextTrainsModel.updatingStationId` says which station the screen keeps up to date, so the Live Activity does not ask PRIM for the same station twice.
 
 ### Show the next trains on the lock screen (Live Activity)
 
@@ -326,15 +241,7 @@ The Live Activity can also start and stop by itself near a station (see below).
 The first time, iOS asks on the lock screen if it can show Live Activities from TROME. Tap "Allow".
 
 The waiting times count down by themselves, in whole minutes (a bare "3" in a metro strip or an RER row, or "3 minutes" in a metro row, see above).
-The app sends new train times every 30 seconds while the app is open.
-While the app is in the background, it sends new train times a few seconds after the first shown train leaves (at most every 30 seconds, and at least every 2 minutes).
-When you lock the phone (or leave the app) while the Live Activity still says "Loading the next trains...", for example right after you tap the arrival notification, the app asks for the train times again at once in the background: the first trains do not wait for the next background refresh.
-The same holds when you lock the phone right after the app opened again while a Live Activity shows, before the app sent its first times: the app does not know when the times on the Live Activity came, so it asks for them at once.
-Between two calls, it draws the Live Activity again at each moment when a train on it changes (see above).
-It stops asking PRIM when PRIM rejects the key or says the daily quota is used up.
-A Release build (TestFlight or the App Store) asks the server of the app instead of PRIM (see [The train data key (PRIM)](#the-train-data-key-prim)), at the same moments.
-It stops asking only when the server rejects its app token: when the server has no times for now, the refresh fails, and the app asks again at the next moment.
-This works while iOS keeps the app running in the background (see the limit below).
+The app asks for new train times every 30 seconds while it is open, and less often in the background, while iOS keeps it running ([when the app asks again](guide/trains.md#when-the-app-asks-again)).
 When the first shown train has left and no new times came, the Live Activity hides its waiting times and says "Open the app for new times" (iOS does it by itself, also when the app is closed).
 The strips stay, with their ends of line, and their boxes are empty.
 It says the same if the train times take too long to load (its stale date is 1 minute after the "Loading" content, so 2 minutes with the rule below).
@@ -345,12 +252,7 @@ While the app runs, this does not matter: the app sends a new content when the t
 When the app does not run (closed, or killed by iOS) and its last content came more than 2 minutes before the train left, iOS hides the times 1 to 3 seconds after the train left.
 When that content came less than 2 minutes before the train left, it stays until 2 minutes after it came: a "0" in a strip ("0 minutes" in a row) for up to about 1 minute after the train left, and "0" (approaching) or "At the platform" for up to about 2 minutes.
 When no direction has a train in the next 60 minutes, the same happens when the first train comes within 60 minutes and no new times came: the Live Activity hides "In over 1 hour" and "> 1 h".
-When a refresh fails (no network, a time out, a PRIM error, a rejected key or a used-up quota) while the Live Activity shows train times of its station, the Live Activity keeps the last times.
-They keep counting down, and the rule above applies: once the first shown train has left and no new times came, the Live Activity hides them and says "Open the app for new times".
-Until that moment, the app still draws them again when a train on them changes, but not after it.
-The next refresh that works shows its times at once.
-If the app has no train times for the station (no key, or the first load fails, also after a switch to another station), the Live Activity says "No data available".
-It says the same when a refresh fails after an answer with no train at all ("No trains"), because "No trains" never goes stale.
+[What a failed call does to the Live Activity](guide/trains.md#what-a-failed-call-does-to-the-live-activity) says what the Live Activity shows when a refresh fails.
 
 If the app says that Live Activities are turned off, turn them on in Settings > TROME > Live Activities.
 
@@ -588,57 +490,6 @@ When iOS does not show the second question (after "Allow Once", iOS ignores it),
 If you keep "While Using the App", the Live Activity starts by itself only while the app is open.
 The "Permissions" part of the main screen then says so, with a button to open Settings.
 
-#### Test it with a fake position
-
-- **App open (the Live Activity starts at once).** Open "Testing tools", pick a station (for example Abbesses), and go back. The Live Activity starts. Pick a station near it (for example Pigalle): the Live Activity switches. Tap "Far from any station": the Live Activity ends.
-- **App in the background (the notification).** The in-app fake position cannot change while the app is in the background. Use the Simulator location instead:
-  1. In "Testing tools", tap "Use the real GPS". In iOS Settings, set the location of TROME to "Always".
-  2. Set a position far from any station: `xcrun simctl location "$(make -s simulator)" set 48.42,2.63`.
-  3. Go to the home screen or lock the Simulator.
-  4. Set a position at a station, for example Abbesses: `xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838`. The notification shows. iOS can take a few seconds to a few minutes to notice the move.
-  5. Tap the notification. Or touch and hold it, then tap "Not for 1 h" or "Not today": the app does not open, and its main screen shows the snooze.
-
-  In the Simulator, this works only while iOS keeps the app running in the background (about 10 to 25 seconds after you leave it, or while a Live Activity shows).
-  The Simulator cannot watch regions: in the iOS 27 Simulator, `CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self)` is false (checked on the two shared Simulators, an iPhone 17 and an iPhone SE).
-  So when iOS suspends or closes the app, no region event wakes it, and no notification shows.
-  Check the arrival of a suspended or closed app on your iPhone.
-
-  On your iPhone connected to the Mac, use Xcode > Debug > Simulate Location in the same way.
-- **The 45 minute limit.** In debug builds, you can make it shorter.
-  Launch the app with `-liveActivityMaximumDuration <seconds>`, for example: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev -liveActivityMaximumDuration 60` (replace `com.example` with your bundle ID prefix if you changed it).
-- **Fake trains.** A build with no train data key shows no trains.
-  In debug builds, launch the app with `--fake-trains` to get fake next trains instead, with no PRIM call: `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains`.
-  The app saves this choice (`FakeTrainsStore`, in `TROMECore`), so the rule is:
-  - A launch with launch arguments comes from you or from a test (`xcrun simctl launch` with arguments, XCUITest, the Run button of Xcode when the scheme has arguments).
-    It turns the fake trains on with `--fake-trains`, and off without it.
-    For example, a launch with only `-liveActivityMaximumDuration 60` has no fake trains.
-  - The Run button of Xcode passes no argument with the default scheme, so it keeps the last choice, as a launch by iOS does.
-    This matters on your iPhone, where the fake trains then replace the real trains of your key.
-    To drop them, run the app once with any other argument in the scheme (Product > Scheme > Edit Scheme > Run > Arguments), or delete the app.
-  - A launch with no launch argument comes from iOS itself: the tap on a button of the Live Activity after iOS closed the app, a region wake, a relaunch in the background.
-    iOS passes no argument, so the app keeps the last choice.
-    So you can close the app (`xcrun simctl terminate "$(make -s simulator)" com.example.trome.dev`), tap the Live Activity, and still see the fake trains.
-    While a Live Activity shows, iOS starts the app again in the background a moment after you close it (it keeps getting the position in the background), so the tap often reaches an app that iOS started, not a closed one.
-  - `make run` installs the app again, with no saved data, so it starts with no fake trains. `make switch-language` keeps the data of the app, so it keeps the fake trains.
-- **Ask the fake trains for a state.** Live trains show some states only by luck: PRIM shows a train at the platform for 20 to 30 seconds, and the app updates the Live Activity only every 2 minutes in the background.
-  So, in debug builds, add the name of a state after `--fake-trains`, for example `xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains at-platform`.
-  The times start at this launch, the same for each line and each direction of the station (the second direction is one minute later), and the app follows its real rules with them (`FakeTrainsScenario`, in `TROMECore`).
-  Then start the Live Activity at once (a fake position, or "Show the Live Activity now" in "Testing tools"), and put the app in the background to look at the lock screen and the Notification Center.
-  - `at-platform`: the first box of each strip shows "À quai" for 5 minutes. Then the train leaves, and trains come every 4 minutes, each one 30 seconds at the platform, like real trains.
-  - `at-platform-second`: the second box shows "À quai", next to a train that leaves first, for about 3 minutes. Then the first train comes ("0", then "À quai": both boxes), leaves, and the second one leaves 2 minutes later.
-  - `at-platform-both`: both boxes show "À quai" for 5 minutes. Then the first train leaves, and the second one 2 minutes later.
-  - `ten-to-nine`: trains every 6 minutes. The second box shows 10 or more, and counts down to 9 by itself about 3 to 4 minutes after the launch, then every 6 minutes. Look while the app is in the background, before the next update (at most 2 minutes).
-  - A fork with both ends: at a station of lines 7 or 13 before the fork (for example Liège or Poissonnière), the trains go to each end in turn, so each row of the fork group shows two trains of its end, with or without a state.
-  - `fork-end-one-train`: at such a station, the second end gets one train only (it leaves 8 minutes after the launch, then that end shows the grey dash), and the first end gets all the others.
-  - `fork-end-no-train`: the second end gets no train at all, so its row shows the grey dash "–" in "1er" (the first end has trains).
-  - `fork-end-over-an-hour`: the second end gets no train in the hour, and one train 70 minutes after the launch, so it says "> 1 h" for about 10 minutes, then counts down from 60.
-  - On a line with no fork, these three states give the trains of the default fake trains, every 4 minutes.
-  - The RER lines get the same times. Their rows show "À quai" only when the RER look draws it.
-  - Check that the app got the arguments: `ps -axww -o args | grep "TROME.app/TROME"` shows `--fake-trains` and the name.
-    When the line ends with `TROME` alone, iOS had already started the app again in the background (it does so while a Live Activity shows), and the launch only brought that app to the front: launch it again.
-    On 2026-10-02 (TASK-170), the first launch after `make run` lost its arguments both times, and one or two more launches fixed it.
-  - To start the state again, launch the app again with the same arguments. A launch by iOS (no argument) keeps the state and its start time. A name that the app does not know gives no fake trains, so the Live Activity says "No data available".
-
 For developers: the rules are in `AutoLiveActivityRules` (in `TROMECore`), and `AutoLiveActivityModel` applies them.
 `AutomaticModeModel` holds the automatic mode (on, snoozed until a date, or off) and saves it.
 While the mode is not on, the rules still follow the arrivals, but they do not notify or start.
@@ -649,16 +500,7 @@ It reads the position from `LocationService`, so the fake position works too.
 When the app is closed, iOS wakes it with region monitoring (`CLMonitor`, in `ios/App/AutoLiveActivity/CoreLocationStationRegions.swift`).
 iOS watches at most 20 regions for each app, so the app watches the 18 nearest stations (150 m), the stop area of the shown station (250 m), and one larger area around you.
 When you leave this larger area, the app picks the nearest stations again.
-Debug builds log the region monitoring: whether iOS can watch regions, and each region event with its state and its diagnostics (for example `conditionUnsupported`).
-They also log the Live Activity: at each launch, the Live Activities that iOS still lists with their state; each state change that iOS sends (`active`, `stale`, `ended`, `dismissed`); each end that the app asks for itself; when the background location starts and stops; and when a pause of a station starts, ends or is cancelled, with the reason (or why a removal set no pause).
-So you can see when iOS tells the app that you swiped the Live Activity away (TASK-146, TASK-166).
-They also log each content that the app sends to the Live Activity (category `LiveActivityContent`: each shown train with its time, its destination and its state, and at a fork the trains of each end row, after "rows:"),
-and each PRIM answer (category `PRIM`: one line per train of the answer, with its destination, its times, its quay, its journey, and whether the app keeps it or drops it, and why).
-The PRIM key is never in the log.
-So, with live data, you can tell whether a change on the Live Activity comes from PRIM, from the rules of the app (for example the 60 s rule of a metro direction), or from iOS (TASK-169).
-To read the log in the Simulator: `xcrun simctl spawn "$(make -s simulator)" log show --last 5m --predicate 'subsystem == "TROME"'`.
-On your iPhone, open the Console app on the Mac, choose the iPhone, and search for `subsystem:TROME`.
-The name `TROME` of the log is written once, in `Logger.subsystem` (`ios/Packages/TROMECore/Sources/TROMECore/Logging/Logger+Subsystem.swift`).
+Debug builds log the region monitoring, the Live Activity and the pauses: see [Read the logs](#read-the-logs).
 While a Live Activity shows, the app keeps getting your position in the background, so it can switch or stop the Live Activity.
 It also keeps the app running in the background, even when the phone does not move: `CoreLocationBackgroundLocationKeeper` (in `ios/App/AutoLiveActivity/`) runs standard location updates that never pause (`pausesLocationUpdatesAutomatically = false`, `allowsBackgroundLocationUpdates = true`).
 Apple's documentation says that Core Location then keeps the app running.
@@ -666,12 +508,9 @@ Without it, iOS pauses the new location updates (`CLLocationUpdate.liveUpdates`)
 With the location access "Always", the app hides the blue location indicator of iOS (the blue status bar, or the blue bubble in the Dynamic Island): `showsBackgroundLocationIndicator = false`, and no `CLBackgroundActivitySession`, because this session always shows the indicator.
 With "While Using the App", the app needs a `CLBackgroundActivitySession` to get positions in the background, and iOS always shows the indicator while the Live Activity shows.
 This costs battery, for at most 45 minutes (the limit of the Live Activity).
-In the background, the app gets new train times when the Live Activity starts or switches station, and when the app leaves the screen while the Live Activity still waits for its first trains (the load that ran on screen stops when the app leaves it, so `keepFeedingInBackground` asks PRIM again at once, instead of at the next background refresh),
-then again a few seconds after the first shown train leaves (`BackgroundTrainsRefresh`: at most every 30 seconds, at least every 2 minutes; it stops when PRIM rejects the key or the quota is used up).
 Before each refresh, the app checks that the Live Activity still shows.
 When you swipe it away, iOS tells the app within about 1 second, and the app stops the background location at once and pauses the station (see [Swipe the Live Activity away](#swipe-the-live-activity-away)).
-Each time it gets new train times, it asks PRIM once for each stop area of the station and of the other stations of its place (Châtelet: 2 calls, Saint-Lazare: 5 calls).
-While the app is open, the app gets the train times of the Live Activity every 30 seconds, unless the next trains screen of the testing tools already gets them for the same station.
+[Where the train times come from](guide/trains.md) says when the app asks for new train times, and how many calls each station costs.
 
 Limit: the app gets new train times in the background only while it runs.
 It stops running when you close it from the app switcher, when the location is not allowed, or when iOS ends it (for example to free memory).
@@ -680,50 +519,54 @@ A free Apple ID has no push notifications, so no server can send new times to th
 
 ## The train data key (PRIM)
 
-The app gets train times from the PRIM API of Île-de-France Mobilités. PRIM needs a free key.
+A build of `make run` shows no live train times, because it has no key.
+To see live trains in a debug build, use your own free key of PRIM, the train data service of Île-de-France Mobilités.
+Release builds never use it: they ask the server of TROME ([where the train times come from](guide/trains.md)).
 
-This section is about the Debug builds (`make run`, the Run button of Xcode): only they ask PRIM with your key.
-A Release build (an archive for TestFlight or the App Store) never holds the PRIM key, even with `LIVE=1`: the Release settings of `ios/project.yml` leave the key out of the app, and the code of a Release build does not read it.
-It asks the server of the app for the trains (see [The server](../server/README.md)), with its host and its app token, which go in `ios/Config/Server.xcconfig` (a copy of `ios/Config/Server.example.xcconfig`, ignored by git).
-Only the Release builds read this file.
-A Release build or an archive fails when this file has no host, a host with more than the host name (for example `https://` or a path), or no app token, and its error names the file and its example: so no build can ship with no train source.
-`make live-key-check` proves it with fake values.
-**Product > Profile** in Xcode makes a Release build too, so it needs this file as well.
-The server gives the PRIM answer as PRIM gave it, and the time when PRIM gave it: the app counts the age of the times from that moment, not from the moment when it got them, and it never shows a train that left in the meantime.
-When the server does not answer, gives an error or has no times for now, the refresh fails, and the Live Activity keeps the last times as for any failed refresh (see [Show the next trains on the lock screen (Live Activity)](#show-the-next-trains-on-the-lock-screen-live-activity)).
-The app sends the server only the stop and the app token: no position, no identifier of the device or of an account, and no push token.
+1. Create a free account on [PRIM](https://prim.iledefrance-mobilites.fr), then an API key for the API **Prochains passages - requête unitaire**.
+   These steps were not followed with a new account: if a screen of PRIM differs, open an issue.
+2. Copy the example key file, and open the copy:
 
-The app builds and runs without the key. "Testing tools" > "Next trains of a station" says "Train data key: not set".
+   ```sh
+   cp ios/Config/Secrets.example.xcconfig ios/Config/Secrets.xcconfig
+   open -e ios/Config/Secrets.xcconfig
+   ```
 
-To add the key:
+3. Put your key after the `=`, with no quotes, such as `PRIM_API_KEY = 0123abcd`, and save.
+4. Run `make run LIVE=1`.
+   In **Testing tools** > **Next trains of a station**, the screen now says **Train data key: set**, and shows live trains.
 
-1. Create a free account on https://prim.iledefrance-mobilites.fr.
-2. In your account page, create an API key.
-3. In the main folder of the repo, copy `ios/Config/Secrets.example.xcconfig` to `ios/Config/Secrets.xcconfig`.
-4. Put your key after `PRIM_API_KEY =`.
-5. Run `make run LIVE=1`. "Testing tools" > "Next trains of a station" now says "Train data key: set", and it shows live trains.
+Add `LIVE=1` each time you want live trains: `make run` alone, `make check` and `make e2e` build with no key, so the tests never spend your daily quota of calls ([what each screen costs](guide/trains.md#one-call-for-each-stop-area)).
+The **Run** button of Xcode uses the key file of the folder that you open.
+In a git worktree, `make run LIVE=1` reads the key file of the main folder of your clone.
 
-Always add `LIVE=1` when you want live trains. A plain `make run` does not use your key, also in the main folder.
+Git ignores the key file, the build output never shows the key, and a Release build never holds it.
+`make live-key-check`, part of `make check`, proves it with a fake key.
 
-Git ignores `ios/Config/Secrets.xcconfig`. Never commit your key.
+## Read the logs
 
-Only the main folder needs `ios/Config/Secrets.xcconfig`. In a git worktree, `make run LIVE=1` finds the key in the main folder with git. It does not copy the file. If the main folder has no key file, `make run LIVE=1` stops and says so.
+Debug builds write what the app does in the log of the phone, under the name `TROME`.
+With it, you can tell whether a change on the Live Activity comes from PRIM, from the rules of the app, or from iOS.
+Release builds write none of these lines.
 
-Before TASK-43, the key file was `Config/Secrets.xcconfig` (at the root).
-`make run LIVE=1` still finds it there, and git still ignores it, but it prints a note.
-Once your main folder has the `ios/` folder, move the file there, in the main folder: `mv Config/Secrets.xcconfig ios/Config/ && rmdir Config`.
-The Xcode Run button reads only `ios/Config/Secrets.xcconfig`.
+| Category | One line for |
+|---|---|
+| `PRIM` | Each train of each PRIM answer, and whether the app keeps it, and why |
+| `LiveActivityContent` | Each content that the app sends to the Live Activity, train by train |
+| `LiveActivity` | Each state that iOS sends for a Live Activity, each end that the app asks for, and each pause of a station |
+| `StationRegions` | Whether iOS can watch regions, and each region event |
+| `BackgroundLocation` | When the app starts and stops getting the position in the background |
 
-The other `make` commands (`make run` without `LIVE=1`, `make check`, `make e2e`) never use the key: they build with `ios/Config/NoKey.xcconfig`. Then the tests do not use your PRIM quota. The Run button in Xcode uses the key of the folder that you open.
+In the Simulator, read the last 5 minutes, or put `log stream` in place of `log show --last 5m` to follow the lines as they come:
 
-When you change your key, the next `make run LIVE=1` puts the new key in the app.
-Why this needs care: `make build LIVE=1` gives the key file to Xcode with `-xcconfig`.
-Xcode keeps a copy of the build settings (the build description, in `ios/.build/DerivedData/Build/Intermediates.noindex/XCBuildData/`), and it makes a new one only when the path of that file changes, not its content.
-So `make build LIVE=1` also passes `PRIM_SECRETS_STAMP`: the time, the file number and the size of the key file (never its content).
-A change of the key file changes the stamp, so Xcode reads the file again.
+```sh
+xcrun simctl spawn "$(make -s simulator)" log show --last 5m --predicate 'subsystem == "TROME"'
+```
 
-The build output never shows the key. `make live-key-check` proves it with fake keys: it builds with a first key, changes the key file, builds again, and checks that the app has the new key and not the old one. Then it builds without `LIVE=1` and checks that the app has no key.
-Then it makes a Release build with a fake key and a fake app token, given the way `LIVE=1` gives the key, and checks that no file of the Release build holds the key, that the app holds the app token and the Live Activity does not, and that no build output or log shows the key or the token. `make check` runs it.
+To keep some categories, add them to the filter, such as `AND (category == "PRIM" OR category == "LiveActivityContent")`.
+On your iPhone, open the **Console** app on your Mac, choose the iPhone, click **Start**, and search for `subsystem:TROME` (not checked on a device yet).
+
+To write a new line, make its logger with `Logger(category:)` from `TROMECore`, keep the line inside `#if DEBUG`, and mark each value `privacy: .public`, or the log shows `<private>`.
 
 ## Install on your iPhone (free Apple ID)
 
@@ -752,32 +595,8 @@ On a device, the Run button of Xcode uses the PRIM key of `ios/Config/Secrets.xc
 
 ## Languages
 
-Almost every user of the app is French. The app shows each text in French when the language of the iPhone is French, and in English for any other language (Settings > General > Language & Region). English is the language of the code: each text is written in English in the Swift code.
-
-- The French texts are in String Catalogs: `ios/App/Localizable.xcstrings` (the main screen and the notifications), `ios/App/InfoPlist.xcstrings` (the texts that iOS shows when it asks for the location) and `ios/Widget/Localizable.xcstrings` (the Live Activity and the Dynamic Island).
-  Xcode shows them as tables.
-  You can also edit the JSON by hand.
-- The "Testing tools" screen (debug builds only) stays in English. Its texts are inside `#if DEBUG`, so Xcode keeps them out of the catalog.
-- The name of the app, TROME, is written once: `APP_NAME` in `ios/Config/Base.xcconfig`.
-  The name on the home screen, the file name of the app, the permission texts that iOS shows and the texts of the app that name it read it from there (a text of the code gets it as `%@`).
-  To change the name, change that line and run `make strings-sync`: it puts the new name in the French permission texts of `ios/App/InfoPlist.xcstrings` too.
-  `make strings-check` fails when one of these French texts does not say the name, for example after a build in Xcode wrote the new English texts: then write the name in it by hand.
-  `make public-text-check` fails when an older name of the app, of its Xcode project or of its module comes back in a file of the repo.
-- The name of the app (`CFBundleDisplayName` and `CFBundleName`, in `ios/App/InfoPlist.xcstrings`) is the same in French: it is marked "Don't translate" (`"shouldTranslate" : false`).
-- A new text on a screen needs its French text in the catalog, in the same task. Write a text that a Paris rider knows: "Prochains passages", "écran verrouillé", "activité en direct", "Réglages", "Toujours", as iOS and the RATP say them.
-- **A build in Xcode updates the catalogs.** When you build in Xcode, Xcode reads the texts of the code and of the Info.plist, and writes the catalogs again: it adds a new text, marks a text that is no longer in the code as "stale", marks a French text "needs review" when its English text changed, and leaves out the texts inside `#if DEBUG`.
-  The command line builds (`make build`, `make run`, `make check`, `make e2e`) never change the catalogs.
-- **The catalogs in git are always the ones that Xcode writes.** So a build in Xcode, or a `make` command, in the main folder on `main` leaves `git status` clean. You have nothing to set up for this. `make strings-check` makes sure of it on each task.
-- `make strings-sync` updates the catalogs as a build in Xcode does (with `xcodebuild -exportLocalizations`).
-  Run it after you add, change or remove a text in the code, or a permission text in `ios/project.yml`.
-  Then add the French texts, check the change with `git diff`, and commit the catalogs.
-  You can also edit the JSON by hand: then run `make strings-sync` too.
-- `make strings-check` (part of `make check`) fails when a build in Xcode would change a catalog (it shows the change, then puts the catalogs back as they were: run `make strings-sync`).
-  It also fails when a text has no French text (state "translated"), or is no longer in the code ("stale": remove it).
-  A text marked "Don't translate" needs no French text.
-- For a text in the code, use a text that SwiftUI translates (`Text("...")`, `Button("...")`, a `LocalizedStringKey`), or `String(localized: "...")` for a `String` (for example a notification).
-  A plain `String` given to `Text` is not translated.
-  Use `Text(verbatim:)` for a text that never changes (a name).
+Every text that a rider sees needs its French text, in the same change, or `make check` fails.
+[Add or change a text in English and French](guide/languages.md) shows how, and what to do when `make strings-check` fails.
 
 ## Project layout
 

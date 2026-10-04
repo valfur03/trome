@@ -1,5 +1,14 @@
 import Foundation
 
+/// Gets the next trains of a station from the PRIM "stop-monitoring" API, or from the server of the app,
+/// which gives the PRIM answer as PRIM gave it (`TrainDataSource`).
+///
+/// It asks once for each stop area of the given stations, which are the station and the other stations
+/// of its place (`StationCatalog.hubStations(of:)`): 2 calls for Châtelet, 5 for Saint-Lazare.
+/// A metro line with no stop area asks for each of its quays (`PRIMStopReference`).
+/// The answer for a stop area can hold trains of lines that the app gives to another station of the place,
+/// so it keeps only the trains of the lines that it asked this stop area for.
+/// It throws the error of a failed call only when no train is left from the other calls.
 public struct PRIMDeparturesProvider: DeparturesProvider {
     public static let endpoint = URL(string: "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring")!
     static let timeout: TimeInterval = 15

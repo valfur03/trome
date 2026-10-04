@@ -10,6 +10,11 @@ public enum NextTrainsState: Equatable, Sendable {
     case failed(NextTrainsError)
 }
 
+/// The next trains of one station, as the last call gave them; `keepUpdated(for:)` asks again every 30 seconds.
+///
+/// The app makes two of them: one for the next trains screen of the Testing tools, one for the Live Activity.
+/// `updatingStationId` says which station the screen keeps up to date, so that the Live Activity
+/// takes the trains of the screen and does not ask PRIM for the same station twice.
 @MainActor
 @Observable
 public final class NextTrainsModel {

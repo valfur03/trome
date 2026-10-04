@@ -41,7 +41,7 @@ The rule on the key itself (never read, print, copy or commit it, and where it i
 How to count: the app calls PRIM once for each stop area of the station when it opens the next trains, then again every 30 seconds while the app screen is open.
 Calls = stop areas × (1 + seconds on screen / 30).
 All the metro lines of a station share one stop area, and an RER stop is one stop area.
-The stop areas of a station include the stop areas of the other stations of its place (its hub, see `ios/README.md`, section "The station list").
+The stop areas of a station include the stop areas of the other stations of its place (its hub, see `ios/guide/stations.md`).
 Today Châtelet has 2 stop areas (the metro stop area of Châtelet, and the RER stop of Châtelet - Les Halles): 4 calls per minute.
 Saint-Lazare has 5: 10 calls per minute.
 A metro station with no hub has 1 stop area: 2 calls per minute.

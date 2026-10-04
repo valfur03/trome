@@ -1,5 +1,10 @@
 import Observation
 
+/// The one source of the phone's position for every feature of the app.
+///
+/// Read the position here, never from Core Location: then the fake position of the Testing tools
+/// (a `LocationSource.fake`, saved by `LocationSourceStore`) reaches every feature, also the ones added later.
+/// Release builds give no `LocationSourceStore`, so they always use the real position.
 @MainActor
 @Observable
 public final class LocationService {

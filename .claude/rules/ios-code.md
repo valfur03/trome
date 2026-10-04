@@ -37,7 +37,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
 - **Testing tools are for debug builds only.** Each file in `ios/App/TestingTools/` is inside `#if DEBUG`.
 - **The widget is a pure view.** `ios/Widget/` uses only `StationActivityAttributes` and its value types from `TROMECore`, and `SnoozeLiveActivityIntent` for its buttons (iOS runs the intent in the app, not in the widget).
   No model, no provider, no network.
-- **Texts in French and English.** Each text that a user sees is written in English in the code, and has its French text in the String Catalog of its target, in the same task (`ios/README.md`, section "Languages").
+- **Texts in French and English.** Each text that a user sees is written in English in the code, and has its French text in the String Catalog of its target, in the same task (`ios/guide/languages.md`).
   `make check` fails on a text with no French text (`make strings-check`).
   Use a text that SwiftUI translates (`Text("...")`, a `LocalizedStringKey`) or `String(localized:)`, never a plain `String` given to `Text`.
   The texts of `ios/App/TestingTools/` stay in English: they are inside `#if DEBUG`, so Xcode keeps them out of the catalog.

@@ -57,7 +57,7 @@ def main():
         print(problem)
     if problems:
         print(
-            "Each text that a user sees needs its French text in the String Catalog (ios/README.md, section \"Languages\").",
+            "Each text that a user sees needs its French text in the String Catalog (ios/guide/languages.md).",
             file=sys.stderr,
         )
         sys.exit(1)
