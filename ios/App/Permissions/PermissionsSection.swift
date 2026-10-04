@@ -9,16 +9,19 @@ struct PermissionsSection: View {
     @Environment(\.appName) private var appName
 
     var body: some View {
-        Section("Permissions") {
-            locationRow
-            if let notifications = permissions.notifications {
-                notificationsRow(notifications)
+        let rows = [locationRow] + (permissions.notifications.map { [notificationsRow($0)] } ?? [])
+        NightCard(isProblem: rows.contains { !$0.isGranted }) {
+            Overline(title: "Permissions")
+            ForEach(rows.indices, id: \.self) { index in
+                if index > 0 {
+                    NightDivider()
+                }
+                rows[index]
             }
         }
     }
 
-    @ViewBuilder
-    private var locationRow: some View {
+    private var locationRow: PermissionRow {
         switch permissions.location {
         case .always:
             PermissionRow(
@@ -74,8 +77,7 @@ struct PermissionsSection: View {
         }
     }
 
-    @ViewBuilder
-    private func notificationsRow(_ notifications: NotificationAccess) -> some View {
+    private func notificationsRow(_ notifications: NotificationAccess) -> PermissionRow {
         switch notifications {
         case .allowed:
             PermissionRow(title: "Notifications", state: "On", isGranted: true, kind: .notifications)
@@ -125,35 +127,25 @@ private struct PermissionRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            StateRow(state: state) {
-                Label {
-                    Text(title)
-                } icon: {
-                    Image(systemName: isGranted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(isGranted ? .green : .orange)
-                }
+            StateRow(state: state, kind: isGranted ? .fine : .problem) {
+                Text(title)
+                    .font(.headline)
             }
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("\(kind.rawValue)PermissionStatus")
             if let hint {
                 Text(hint)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(NightLook.secondaryText)
                     .accessibilityIdentifier("\(kind.rawValue)PermissionHint")
             }
             fixButton
+                .buttonStyle(.problem)
         }
     }
 
     @ViewBuilder
     private var fixButton: some View {
-        fixButtonContent
-            .buttonStyle(.bordered)
-            .adaptiveButtonBorderShape()
-    }
-
-    @ViewBuilder
-    private var fixButtonContent: some View {
         switch fix {
         case .openSettings:
             Button("Open Settings") {

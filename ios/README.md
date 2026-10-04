@@ -184,7 +184,7 @@ Inside `ios/`:
 | `scripts/` | Helper scripts for the `make` commands of the app. |
 
 The feature folders have the same names in `ios/App/`, in the sources of `TROMECore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`.
-`ios/App/` also has `Permissions` and `TestingTools` (debug builds only).
+`ios/App/` also has `Permissions`, `About`, `NightLook` (the look of the main screen) and `TestingTools` (debug builds only).
 The rules for the code (where each file goes, which module depends on which) are in [`.claude/rules/ios-code.md`](../.claude/rules/ios-code.md).
 
 You can also run the commands of one part in its folder: `make -C ios check` runs only the checks of the app.

@@ -23,15 +23,23 @@ struct AutomaticModeSection: View {
     }
 
     var body: some View {
-        Section {
+        NightCard {
             Toggle(isOn: isOn) {
                 Label {
                     Text("Automatic mode")
+                        .font(.headline)
                 } icon: {
-                    PositionWaitIcon(systemImage: "location.circle", isWaiting: isTurningOn)
+                    IconChip {
+                        PositionWaitIcon(systemImage: "location.fill", isWaiting: isTurningOn)
+                    }
                 }
+                .labelStyle(.rowTitle)
             }
+            .tint(NightLook.fine)
             .accessibilityIdentifier("automaticModeToggle")
+            if automaticMode.mode != .turnedOff {
+                NightDivider()
+            }
             switch automaticMode.mode {
             case .turnedOn:
                 snoozeMenu
@@ -45,12 +53,11 @@ struct AutomaticModeSection: View {
                         isCancellingTheSnooze = false
                     }
                 } label: {
-                    Label {
-                        Text("Cancel the snooze")
-                    } icon: {
+                    ChipLabel(title: Text("Cancel the snooze")) {
                         PositionWaitIcon(systemImage: "bell", isWaiting: isCancellingTheSnooze)
                     }
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("cancelSnooze")
             case .turnedOff:
                 EmptyView()
@@ -65,19 +72,20 @@ struct AutomaticModeSection: View {
                         isCancellingThePause = false
                     }
                 } label: {
-                    Label {
-                        Text("Cancel the pause at \(paused.station.name)")
-                    } icon: {
+                    ChipLabel(title: Text("Cancel the pause at \(paused.station.name)")) {
                         PositionWaitIcon(systemImage: "arrow.uturn.backward", isWaiting: isCancellingThePause)
                     }
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("cancelStationPause")
             } else if automaticMode.mode != .turnedOff, autoLiveActivity.cannotFindPosition {
                 Label("Can’t find your position for now", systemImage: "location.slash")
+                    .font(.subheadline)
                     .accessibilityIdentifier("positionNotFound")
             }
-        } footer: {
             Text(footer)
+                .font(.footnote)
+                .foregroundStyle(NightLook.secondaryText)
         }
     }
 
@@ -90,9 +98,7 @@ struct AutomaticModeSection: View {
                 .accessibilityIdentifier("snooze-\(duration.rawValue)")
             }
         } label: {
-            Label("Snooze", systemImage: "bell.slash")
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(.rect)
+            ChipLabel("Snooze", systemImage: "bell.slash")
         }
         .accessibilityIdentifier("snoozeMenu")
     }
@@ -124,12 +130,13 @@ private struct SnoozeState: View {
     let end: Date
 
     var body: some View {
-        StateRow(state: "Snoozed") {
+        StateRow(state: "Snoozed", kind: .choice(systemImage: "bell.slash.fill")) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Back on at \(end, style: .time)")
+                    .font(.headline)
                 Text(.currentDate, format: .reference(to: end, allowedFields: [.hour, .minute]))
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(NightLook.secondaryText)
             }
         }
         .accessibilityElement(children: .combine)
@@ -143,9 +150,10 @@ private struct PauseState: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Paused at \(paused.station.name) until \(paused.end, style: .time)")
+                .font(.headline)
             Text(.currentDate, format: .reference(to: paused.end, allowedFields: [.hour, .minute]))
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(NightLook.secondaryText)
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("stationPauseState")

@@ -2,27 +2,24 @@ import SwiftUI
 
 struct StateRow<Title: View>: View {
     let state: LocalizedStringKey
+    let kind: StatePill.Kind
     @ViewBuilder let title: Title
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     var body: some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 4) {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 8) {
                 title
-                stateText
+                Spacer(minLength: 0)
+                pill
             }
-        } else {
-            HStack {
+            VStack(alignment: .leading, spacing: 6) {
                 title
-                Spacer()
-                stateText
+                pill
             }
         }
     }
 
-    private var stateText: some View {
-        Text(state)
-            .foregroundStyle(.secondary)
+    private var pill: some View {
+        StatePill(state: state, kind: kind)
     }
 }

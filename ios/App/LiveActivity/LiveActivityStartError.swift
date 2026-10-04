@@ -9,15 +9,21 @@ struct LiveActivityStartError: View {
 
     var body: some View {
         if let error = autoLiveActivity.liveActivityProblem {
-            Text(message(for: error))
-                .font(.footnote)
-                .foregroundStyle(.red)
-                .accessibilityIdentifier("liveActivityError")
+            Label {
+                Text(message(for: error))
+                    .font(.subheadline.weight(.semibold))
+                    .accessibilityIdentifier("liveActivityError")
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.white, NightLook.problem)
+                    .accessibilityHidden(true)
+            }
             if error == .turnedOff {
                 Button("Open Settings") {
                     guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
                     openURL(url)
                 }
+                .buttonStyle(.problem)
                 .accessibilityIdentifier("liveActivitySettingsButton")
             }
         }

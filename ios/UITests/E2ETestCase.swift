@@ -70,7 +70,7 @@ class E2ETestCase: XCTestCase {
     ) {
         let location = locationStatus(in: app)
         let notifications = notificationsStatus(in: app)
-        let screen = app.collectionViews.firstMatch
+        let screen = app.scrollViews.firstMatch
         var mayResetLocation = resettingRefusedLocation
         var answers: [String] = []
         let deadline = Date().addingTimeInterval(UITestTimeout.element)

@@ -60,6 +60,10 @@ targets:
     platform: iOS
     sources:
       - App
+      - Widget/MetroLineBadge.swift
+      - Widget/RERSquareBadge.swift
+      - Widget/TransitLine+BadgeColor.swift
+      - Widget/TransitLine+LocalizedName.swift
     dependencies:
       - package: TROMECore
       - target: TROMEWidget
@@ -85,6 +89,7 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
+        UIUserInterfaceStyle: Dark
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         NSSupportsLiveActivities: true

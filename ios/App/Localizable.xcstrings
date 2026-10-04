@@ -21,6 +21,16 @@
         }
       }
     },
+    "About" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos"
+          }
+        }
+      }
+    },
     "Allow location" : {
       "localizations" : {
         "fr" : {
@@ -111,6 +121,16 @@
         }
       }
     },
+    "Help and feedback" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aide et commentaires"
+          }
+        }
+      }
+    },
     "Live Activities are turned off for this app. Turn them on in Settings > %@." : {
       "localizations" : {
         "fr" : {
@@ -157,6 +177,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent demain."
+          }
+        }
+      }
+    },
+    "Metro %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Métro %@"
           }
         }
       }
@@ -293,6 +323,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autorisations"
+          }
+        }
+      }
+    },
+    "Privacy policy" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Politique de confidentialité"
+          }
+        }
+      }
+    },
+    "RER %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RER %@"
           }
         }
       }

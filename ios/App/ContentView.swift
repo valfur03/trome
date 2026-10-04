@@ -13,37 +13,41 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
+            ScrollView {
+                VStack(alignment: .leading, spacing: NightLook.cardSpacing) {
                     Text(verbatim: appName)
                         .font(.largeTitle.bold())
+                        .foregroundStyle(NightLook.text)
+                        .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("appTitle")
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
-                }
-                ServerOutSection()
-                LiveActivityStateSection()
-                AutomaticModeSection()
-                PermissionsSection(permissions: permissions, nearestStationModel: nearestStationModel)
-                #if DEBUG
-                if case .fake(let fakePosition) = locationService.source {
-                    Label("Fake position: \(fakePosition.name)", systemImage: "location.slash.fill")
-                        .font(.footnote.bold())
-                        .foregroundStyle(.orange)
-                        .accessibilityIdentifier("fakePositionBanner")
-                        .listRowBackground(Color.clear)
-                }
-                #endif
-                Section {
+                        .padding(.horizontal, 4)
+                    ServerOutSection()
+                    LiveActivityStateSection()
+                    AutomaticModeSection()
+                    PermissionsSection(permissions: permissions, nearestStationModel: nearestStationModel)
+                    #if DEBUG
+                    if case .fake(let fakePosition) = locationService.source {
+                        Label("Fake position: \(fakePosition.name)", systemImage: "location.slash.fill")
+                            .font(.footnote.bold())
+                            .foregroundStyle(.orange)
+                            .accessibilityIdentifier("fakePositionBanner")
+                            .padding(.horizontal, 4)
+                    }
+                    #endif
+                    AboutSection()
                     VStack(alignment: .leading, spacing: 8) {
                         TrainDataSourceNotice()
                         StationDataSourceNotice()
                     }
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .listRowBackground(Color.clear)
+                    .foregroundStyle(NightLook.secondaryText)
+                    .tint(NightLook.link)
+                    .padding(.horizontal, 4)
                 }
+                .padding(.horizontal, NightLook.pageMargin)
+                .padding(.bottom, NightLook.pageMargin)
             }
+            .background(NightLook.page.ignoresSafeArea())
             #if DEBUG
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

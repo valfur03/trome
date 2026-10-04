@@ -133,6 +133,14 @@ The app is the Live Activity, so the main screen shows its state and its control
 | "Paused at <station> until <time>" and **Cancel the pause at <station>** | After a swipe, also while a snooze is on, but not while the switch is off |
 | "Many riders are using the app right now. Live times come back around 9:00." ("Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent vers 09:00.") | A Live Activity shows, and the server of the app has no PRIM calls left for its station. The time is when the app asks the server again, in the time format and time zone of the phone. When it is on another day, the line ends with "Live times come back tomorrow." |
 | **Permissions** | Always; it says what a missing or refused permission breaks |
+| **About**: **Privacy policy** and **Help and feedback**, which open their web pages in Safari | Always |
+| The source of the train data and of the station list, with their links, at the foot | Always |
+
+The two addresses of **About** are in `ios/App/About/AboutLinks.swift`; for now they are placeholders, because the pages are not online yet.
+
+The screen has one look, a night page, in the light and the dark mode of the phone, as the Live Activity is dark on the lock screen.
+Each state is a filled pill: green when it is fine, orange with an "Open Settings" button when you must act.
+The colours, the type and the shapes of this look are in `ios/App/NightLook/NightLook.swift`, so that a change of colour is a change in one place.
 
 The server line states a fact and never a fault of the rider, and it never says "soon": the next hour can be out too.
 

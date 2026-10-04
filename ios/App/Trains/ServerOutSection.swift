@@ -6,7 +6,7 @@ struct ServerOutSection: View {
 
     var body: some View {
         if let retryAt = liveActivity.serverRetryAt {
-            Section {
+            NightCard {
                 message(LiveTimesComeBack(retryAt: retryAt, now: Date()))
                     .accessibilityIdentifier("serverOutNotice")
             }

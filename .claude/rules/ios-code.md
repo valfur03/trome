@@ -29,7 +29,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
 - **One composition root.** `ios/App/TROMEApp.swift` makes the models and the adapters and gives them to the views.
   No singletons of our own, no global state.
 - **Folders by feature, with the same names everywhere.** `ios/App/`, `ios/Packages/TROMECore/Sources/TROMECore/` and `ios/Packages/TROMECore/Tests/TROMECoreTests/` use the same feature folders: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`.
-  The app also has `AppName`, `Permissions` and `TestingTools`, and the package has `Logging` (the one name of the log, `Logger.subsystem`).
+  The app also has `AppName`, `Permissions`, `About`, `NightLook` (the look of the main screen: its palette, its cards, pills and buttons) and `TestingTools`, and the package has `Logging` (the one name of the log, `Logger.subsystem`).
   New code goes in the folder of its feature.
   A new feature gets a new folder in each module where it has code.
   No layer folders (`Views/`, `Models/`, `Services/`, `Helpers/`), and no loose files at the top of a module.
@@ -38,6 +38,8 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
 - **Testing tools are for debug builds only.** Each file in `ios/App/TestingTools/` is inside `#if DEBUG`.
 - **The widget is a pure view.** `ios/Widget/` uses only `StationActivityAttributes` and its value types from `TROMECore`, and `SnoozeLiveActivityIntent` for its buttons (iOS runs the intent in the app, not in the widget).
   No model, no provider, no network.
+  The app also compiles the line badges of the widget (`MetroLineBadge`, `RERSquareBadge`, and the colours and names of a line), listed one by one in the sources of the app in `ios/project.yml`, so that the main screen and the Live Activity draw the same badges.
+  Such a shared file stays a pure view, with the texts of both String Catalogs.
 - **Texts in French and English.** Each text that a user sees is written in English in the code, and has its French text in the String Catalog of its target, in the same task (`ios/guide/languages.md`).
   `make check` fails on a text with no French text (`make strings-check`).
   Use a text that SwiftUI translates (`Text("...")`, a `LocalizedStringKey`) or `String(localized:)`, never a plain `String` given to `Text`.
