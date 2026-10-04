@@ -33,7 +33,7 @@ After `budget` or `prim-limit`, it adds 0 to 59 seconds to `retryAt`, from the s
 
 A PRIM key has a quota of 1,000 calls a day, from 00:00 UTC.
 The server caps its calls lower, with `PRIM_DAILY_CAP` in `server/wrangler.jsonc`: 800 each Paris day for `trome-server`, and 60 for `trome-server-staging`, so that a test there cannot spend the calls of the riders.
-Keep each cap within its share of [the day of the PRIM key](#the-day-of-the-prim-key), not one of them at 990.
+The 1,000 calls are those of your PRIM key, and the staging Worker and an app built with the key (`make run LIVE=1`) use the same key: keep the caps within their shares of [the day of the PRIM key](#the-day-of-the-prim-key), not one of them at 990.
 The server counts each call before it makes it, failed calls too, in its storage, so a restart does not reset it.
 For each stop, one PRIM answer serves every rider, and the requests that come while a PRIM call is in flight wait for that one call.
 
@@ -62,9 +62,9 @@ The day shape counts every rider of the rail network: after two weeks of real us
 
 ## The day of the PRIM key
 
-The key has 1,000 calls a day, and PRIM counts its day in UTC.
+The day of the PRIM key: the key has 1,000 calls a day, and PRIM counts its day in UTC.
 Each user of the key has a share, and the shares add up to 990 at most.
-When the key reaches 1,000 calls, PRIM answers `429`, and the production server makes no PRIM call for 1 hour, so no rider gets new times.
+When the key reaches 1,000 calls, PRIM answers 429, and the production server makes no PRIM call for 1 hour: every rider reads "Times unavailable for now".
 
 | Who calls PRIM with the key | Calls a day | Who counts them |
 |---|---|---|
