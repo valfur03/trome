@@ -159,6 +159,12 @@ def rules_for_command_files(rules, command, cwd):
     return found
 
 
+def command_output(response):
+    if isinstance(response, dict):
+        return "%s\n%s" % (response.get("stdout") or "", response.get("stderr") or "")
+    return response if isinstance(response, str) else json.dumps(response)
+
+
 def store(event):
     folder = os.path.join(tempfile.gettempdir(), "claude-rules-%d" % os.getuid(), event.get("session_id", "none"))
     return folder, os.path.join(folder, event.get("agent_id") or "main")
@@ -205,54 +211,72 @@ def respond(event_name, context=None, deny=None):
     print(json.dumps({"hookSpecificOutput": output}))
 
 
-def handle(event, project_dir):
-    name = event.get("hook_event_name")
-    rules = load_rules(project_dir)
-    if name == "SessionStart":
-        folder = store(event)[0]
-        if os.path.isdir(folder):
-            for entry in os.listdir(folder):
-                os.remove(os.path.join(folder, entry))
-        return
-    tool = event.get("tool_name")
-    tool_input = event.get("tool_input") or {}
-    if name == "PreToolUse" and tool == "Bash":
-        names = deliver(event, rules, rules_for_command(rules, tool_input.get("command", "")))
-        if names:
-            respond(name, deny="This repo has rules for this command, and you have not read them yet in this session. "
-                    "Read them now, then run the same command again: it will not be stopped twice.\n\n"
-                    + text_of(rules, names))
-        return
-    if name == "PreToolUse" and tool in AGENT_TOOLS:
-        kind = tool_input.get("subagent_type") or ""
-        found = {n for n, rule in rules.items() if any(a.search(kind) for a in rule["agents"])}
-        names = deliver(event, rules, found)
-        if names:
-            respond(name, deny="This repo has rules for the agent that you start, and you have not read them yet in this session. "
-                    "Read them now, then start the agent again: it will not be stopped twice.\n\n" + text_of(rules, names))
-        return
-    if name == "PostToolUse" and tool == "Bash":
-        response = event.get("tool_response")
-        output = json.dumps(response) if not isinstance(response, str) else response
-        if isinstance(response, dict):
-            output = "%s\n%s" % (response.get("stdout", ""), response.get("stderr", ""))
-        found = {n for match in DIFF_PATH.findall(output) for n in rules_for_path(rules, match)}
-        found |= rules_for_command_files(rules, tool_input.get("command", ""), event.get("cwd") or project_dir)
-        names = deliver(event, rules, found)
-        if names:
-            respond(name, context="The files of this command have rules in this repo. Follow them:\n\n" + text_of(rules, names))
-        return
-    path = tool_input.get("file_path") or tool_input.get("notebook_path")
-    if name != "PreToolUse" or not path or is_in_project(path, project_dir):
+def stop(rules, names, what, again):
+    respond("PreToolUse", deny="This repo has rules for %s, and you have not read them yet in this session. "
+            "Read them now, then %s: it will not be stopped twice.\n\n%s" % (what, again, text_of(rules, names)))
+
+
+def add(rules, names, what):
+    event_name = "PostToolUse" if what == "command" else "PreToolUse"
+    respond(event_name, context="The files of this %s have rules in this repo. Follow them:\n\n%s" % (what, text_of(rules, names)))
+
+
+def on_session_start(event):
+    folder = store(event)[0]
+    if os.path.isdir(folder):
+        for entry in os.listdir(folder):
+            os.remove(os.path.join(folder, entry))
+
+
+def on_command(event, rules, command):
+    names = deliver(event, rules, rules_for_command(rules, command))
+    if names:
+        stop(rules, names, "this command", "run the same command again")
+
+
+def on_agent(event, rules, kind):
+    names = deliver(event, rules, {n for n, rule in rules.items() if any(a.search(kind) for a in rule["agents"])})
+    if names:
+        stop(rules, names, "the agent that you start", "start the agent again")
+
+
+def on_command_output(event, rules, command, project_dir):
+    found = {n for path in DIFF_PATH.findall(command_output(event.get("tool_response"))) for n in rules_for_path(rules, path)}
+    found |= rules_for_command_files(rules, command, event.get("cwd") or project_dir)
+    names = deliver(event, rules, found)
+    if names:
+        add(rules, names, "command")
+
+
+def on_file(event, rules, tool, path, project_dir):
+    if is_in_project(path, project_dir):
         return
     names = deliver(event, rules, rules_for_file(rules, path))
-    if not names:
+    if names and tool in EDIT_TOOLS:
+        stop(rules, names, "this file", "make the same change again")
+    elif names:
+        add(rules, names, "file")
+
+
+def handle(event, project_dir):
+    name = event.get("hook_event_name")
+    if name == "SessionStart":
+        on_session_start(event)
         return
-    if tool in EDIT_TOOLS:
-        respond(name, deny="This file has rules in this repo, and you have not read them yet in this session. "
-                "Read them now, then make the same change again: it will not be stopped twice.\n\n" + text_of(rules, names))
-    else:
-        respond(name, context="This file has rules in this repo. Follow them:\n\n" + text_of(rules, names))
+    rules = load_rules(project_dir)
+    tool = event.get("tool_name")
+    tool_input = event.get("tool_input") or {}
+    path = tool_input.get("file_path") or tool_input.get("notebook_path")
+    if name == "PostToolUse" and tool == "Bash":
+        on_command_output(event, rules, tool_input.get("command", ""), project_dir)
+    elif name != "PreToolUse":
+        return
+    elif tool == "Bash":
+        on_command(event, rules, tool_input.get("command", ""))
+    elif tool in AGENT_TOOLS:
+        on_agent(event, rules, tool_input.get("subagent_type") or "")
+    elif path:
+        on_file(event, rules, tool, path, project_dir)
 
 
 def main():

@@ -42,7 +42,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 | Rule file | What it holds | It loads when you |
 |---|---|---|
 | `ios-code.md` | Code structure of the iOS app, the texts in French and English, no warnings | touch `ios/App/`, `ios/Widget/`, `ios/Packages/`, `ios/UITests/`, `ios/RenderCheck/`, `ios/DocsScreenshots/`, `ios/project.yml`, `ios/Config/` |
-| `tests.md` | Test levels, which E2E tests to run, flaky tests | touch the same app files or the tests; run `make e2e` |
+| `tests.md` | Test levels, which E2E tests to run | touch the same app files or the tests; run `make e2e` |
 | `simulator.md` | The shared Simulator, the lock, hold it only while you use it, when your job ends | run `make run`, `make e2e`, `make docs-screenshots`, `make live-activity-render`, `make switch-language`, `make merge`, `sim-lock.sh`, `simulator.sh`, `xcrun simctl`, `xcodebuild test`; touch the lock scripts |
 | `simulator-history.md` | The measurements behind the Simulator rules, and the code of the second slot | touch the lock scripts or `ios/scripts/timing/` |
 | `qa.md` | QA: French first | run `make run` or `make switch-language` |
@@ -84,6 +84,14 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 - **The shared build cache.** Only the prompter runs `make clean-shared-cache`.
   Never delete `~/Library/Caches/RATPActivity/` by hand: a build that runs at that moment fails.
 - **The prompter's main folder.** No agent commits, stashes or discards the changes of the prompter's main folder without the prompter.
+
+## Flaky tests
+
+A flaky test (it fails, then passes with no change) is a bug.
+Rerun a failing test at most once, to know if it is flaky.
+Then fix the cause in your task if the test covers your code.
+Otherwise, create a `bug` task with the test name, how often it failed, and the error.
+Never fix it with retries or longer timeouts alone: find the cause (a race, a shared state, a missing wait for a condition).
 
 ## Repo layout
 

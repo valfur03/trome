@@ -73,11 +73,3 @@ A task that makes the app read a file of `contracts/` at run time, or makes the 
   It explores the app like a real user.
 
 These rules do not change the rule on flaky tests (below): a failing test may be rerun once, to know if it is flaky.
-
-## Flaky tests
-
-A flaky test (it fails, then passes with no change) is a bug.
-Rerun a failing test at most once, to know if it is flaky.
-Then fix the cause in your task if the test covers your code.
-Otherwise, create a `bug` task with the test name, how often it failed, and the error.
-Never fix it with retries or longer timeouts alone: find the cause (a race, a shared state, a missing wait for a condition).
