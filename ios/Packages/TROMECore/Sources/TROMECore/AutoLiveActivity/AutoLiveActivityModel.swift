@@ -47,7 +47,10 @@ public final class AutoLiveActivityModel {
         self.configuration = configuration
         var state = configuration.store.load()
         if !liveActivity.isShowing {
-            state.shown = nil
+            state = configuration.rules.liveActivityIsGone(
+                from: state,
+                activitiesAreEnabled: liveActivity.areActivitiesEnabled
+            )
         }
         self.state = state
         stateDidChange(from: AutoLiveActivityState())
@@ -185,6 +188,9 @@ public final class AutoLiveActivityModel {
                 if !self.inputs.automaticMode.allowsAutomaticStart {
                     self.services.notifier.withdraw()
                 }
+                if self.inputs.automaticMode.mode == .turnedOff {
+                    await self.automaticModeTurnedOff()
+                }
             }
         }
     }
@@ -202,7 +208,7 @@ public final class AutoLiveActivityModel {
         }
     }
 
-    private func perform(_ action: AutoLiveActivityRules.Action) async {
+    func perform(_ action: AutoLiveActivityRules.Action) async {
         switch action {
         case .notify(let station):
             await services.notifier.notify(station)
@@ -221,7 +227,7 @@ public final class AutoLiveActivityModel {
     private func show(_ station: Station) async {
         await liveActivity.start(station: station, trains: trains(for: station))
         guard liveActivity.isShowing else {
-            state.shown = nil
+            forgetShownLiveActivity()
             return
         }
         removedOutsideTheApp = nil
@@ -239,7 +245,7 @@ public final class AutoLiveActivityModel {
         liveActivity.syncWithSystem()
         guard !liveActivity.isShowing, let shown = state.shown else { return }
         removedOutsideTheApp = shown
-        state.shown = nil
+        forgetShownLiveActivity()
         services.locationKeeper.end()
         restartFeed(fetchNow: false)
     }
@@ -344,7 +350,9 @@ private extension AutoLiveActivityModel {
         }
         return inputs.liveActivityTrains.state(for: station)
     }
+}
 
+extension AutoLiveActivityModel {
     func refreshRegions(around position: Coordinate?) async {
         guard inputs.locationService.source == .realGPS else {
             guard plannedRegions != nil || !hasClearedRegions else { return }

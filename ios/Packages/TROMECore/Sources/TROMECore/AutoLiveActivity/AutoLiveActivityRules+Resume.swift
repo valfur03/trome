@@ -2,7 +2,7 @@ import Foundation
 
 extension AutoLiveActivityRules {
     func takesAResume(state: AutoLiveActivityState, onArrival response: ArrivalResponse) -> Bool {
-        response == .start && state.shown == nil
+        [.start, .keepOpen].contains(response) && state.shown == nil
     }
 
     func resume(

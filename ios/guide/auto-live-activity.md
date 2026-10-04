@@ -66,18 +66,18 @@ Each one snoozes the automatic mode with no app opened, also when the phone is l
 | | Snooze | Turn off | Swipe away |
 |---|---|---|---|
 | How | **30 min**, **1 h** or **Today** on the Live Activity; **Not for 1 h** or **Not today** on the notification; **Snooze** on the main screen | The switch **Automatic mode** on the main screen | The rider swipes the Live Activity away, on the lock screen or in the Notification Center |
-| What stops | Every station: the Live Activity ends at once, and no notification or automatic start comes | Every station: no new notification or automatic start | The station of the Live Activity only, for 1 hour, with the app open, in the background or closed |
+| What stops | Every station: the Live Activity ends at once, and no notification or automatic start comes | Every station: the Live Activity ends at once, with no pause, and no new notification or automatic start comes | The station of the Live Activity only, for 1 hour, with the app open, in the background or closed |
 | It ends | After 30 minutes, 1 hour, or at midnight for **Today**; the main screen shows **Snoozed**, the time of return and the time left | When the rider turns the switch on; the app keeps the choice | After the hour, or when the rider cancels it |
 | Cancel it | **Cancel the snooze** on the main screen | | **Cancel the pause at <station>** ("Réactiver <station>"); the screen says "Paused at <station> until <time>" ("<station> : en sourdine jusqu’à <time>") |
 
 - **After a snooze**, the app still follows the stations that the rider passes.
   A snooze that ends at a station reached during the snooze does not start the Live Activity: it starts at the next station.
-- **Turning the switch off** does not end a Live Activity that already shows.
+- **Turning the switch off** ends the Live Activity that shows at once, with no pause.
 - **One pause at a time.**
   A swipe at another station replaces the pause.
   A tap on the arrival notification of the station, or **Show the Live Activity now** in the Testing tools, ends it.
   A snooze does not change it.
-- **What is not a swipe**, so sets no pause: the app ends the Live Activity itself (the snooze buttons, the stop of the Testing tools, the 250 meters, the 45 minutes), the rider turns Live Activities off for the app, and iOS ends a Live Activity after 8 hours.
+- **What is not a swipe**, so sets no pause: the app ends the Live Activity itself (the snooze buttons, the switch **Automatic mode** turned off, the stop of the Testing tools, the 250 meters, the 45 minutes), the rider turns Live Activities off for the app (in **Settings**, or "Don't Allow" when iOS asks), and iOS ends a Live Activity after 8 hours.
 - **The limit of the pause.**
   The app sets the pause only when it runs at the swipe, which is normal while a Live Activity shows, because the app keeps getting the position in the background.
   When the app was not running, iOS starts it in the background right after the swipe, but does not say why, and the app cannot tell this start from a later region wake.
@@ -86,6 +86,7 @@ Each one snoozes the automatic mode with no app opened, also when the phone is l
 ### Back on at a station
 
 **Cancel the snooze**, **Cancel the pause**, and turning the switch on are a resume.
+So is coming back to the app at a station after turning Live Activities on again in **Settings**: the arrival at this station stayed open while they were off.
 When the app is open within 150 meters of a station, the Live Activity of this station starts at once, with no notification.
 A station that is still paused stays paused, and away from every station nothing starts.
 While a snooze is on, **Cancel the pause** only ends the pause.
@@ -100,9 +101,9 @@ The resume needs a position, in this order:
 
 ## When iOS refuses to start it
 
-If Live Activities are off for the app, in **Settings**, the Live Activity does not start.
-The main screen says "Live Activities are turned off for this app. Turn them on in Settings > TROME.", with an **Open Settings** button.
-The message goes when they are on again and the rider comes back to the app.
+If Live Activities are off for the app (in **Settings**, or "Don't Allow" when iOS asks), the Live Activity does not start.
+While they are off and the switch **Automatic mode** is on, the main screen says, as soon as the rider opens the app, at a station or not, "Live Activities are turned off for this app. Turn them on in Settings > TROME.", with an **Open Settings** button.
+The message goes when they are on again and the rider comes back to the app; at a station, the Live Activity then starts at once (see [Back on at a station](#back-on-at-a-station)).
 Any other failure of ActivityKit says "The lock screen display could not start."
 
 ## The questions iOS asks, in order

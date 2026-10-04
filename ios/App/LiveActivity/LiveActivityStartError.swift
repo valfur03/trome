@@ -3,12 +3,12 @@ import SwiftUI
 import UIKit
 
 struct LiveActivityStartError: View {
-    @Environment(StationLiveActivityModel.self) private var liveActivity
+    @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
     @Environment(\.appName) private var appName
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        if let error = liveActivity.startError {
+        if let error = autoLiveActivity.liveActivityProblem {
             Text(message(for: error))
                 .font(.footnote)
                 .foregroundStyle(.red)

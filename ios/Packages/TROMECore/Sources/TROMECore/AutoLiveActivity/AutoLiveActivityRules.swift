@@ -56,17 +56,18 @@ public struct AutoLiveActivityRules: Sendable {
 
     public enum ArrivalResponse: Equatable, Sendable {
         case start
+        case keepOpen
         case notify
         case later
         case none
 
-        public init(appPhase: AppPhase, allowsAutomaticStart: Bool) {
+        public init(appPhase: AppPhase, allowsAutomaticStart: Bool, activitiesAreEnabled: Bool = true) {
             guard allowsAutomaticStart else {
                 self = .none
                 return
             }
             switch appPhase {
-            case .active: self = .start
+            case .active: self = activitiesAreEnabled ? .start : .keepOpen
             case .inactive: self = .later
             case .background: self = .notify
             }
@@ -195,6 +196,8 @@ private extension AutoLiveActivityRules.Decision {
         case .start:
             state.shown = .init(stationId: station.id, startedAt: now, hasBeenNear: true)
             actions.append(.start(station))
+        case .keepOpen:
+            state.openArrivalStationId = station.id
         case .notify:
             state.openArrivalStationId = station.id
             actions.append(.notify(station))

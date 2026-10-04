@@ -21,6 +21,7 @@ public protocol StationLiveActivityClient: AnyObject {
 public final class StationLiveActivityModel {
     public private(set) var isShowing: Bool
     public private(set) var startError: StationLiveActivityError?
+    public private(set) var areActivitiesEnabled: Bool
     public private(set) var content: StationActivityAttributes.ContentState?
 
     private let client: any StationLiveActivityClient
@@ -40,6 +41,7 @@ public final class StationLiveActivityModel {
         self.store = store
         self.now = now
         self.isShowing = client.isShowing
+        self.areActivitiesEnabled = client.areActivitiesEnabled
         let shown = client.shownContent
         self.firstLineIndex = shown?.trains.linesPage?.firstIndex ?? 0
         if client.isShowing, let shown, shown.trains.linesPage != nil,
@@ -66,6 +68,7 @@ public final class StationLiveActivityModel {
                 try client.start(content)
             } catch let error as StationLiveActivityError {
                 startError = error
+                areActivitiesEnabled = client.areActivitiesEnabled
                 return
             } catch {
                 startError = .failed
@@ -116,7 +119,8 @@ public final class StationLiveActivityModel {
 
     public func syncWithSystem() {
         isShowing = client.isShowing
-        if startError == .turnedOff, client.areActivitiesEnabled {
+        areActivitiesEnabled = client.areActivitiesEnabled
+        if startError == .turnedOff, areActivitiesEnabled {
             startError = nil
         }
         if !isShowing {

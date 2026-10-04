@@ -66,7 +66,8 @@ extension AutoLiveActivityModel {
     var arrivalResponse: AutoLiveActivityRules.ArrivalResponse {
         AutoLiveActivityRules.ArrivalResponse(
             appPhase: appPhase,
-            allowsAutomaticStart: inputs.automaticMode.allowsAutomaticStart
+            allowsAutomaticStart: inputs.automaticMode.allowsAutomaticStart,
+            activitiesAreEnabled: liveActivity.areActivitiesEnabled
         )
     }
 
