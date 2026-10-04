@@ -1,10 +1,19 @@
-## Merge a task into main
+---
+paths:
+  - "ios/scripts/merge.sh"
+  - "ios/scripts/tests/merge-test.sh"
+commands:
+  - '^(\S*/)?make\b.*\smerge(\s|$)'
+  - '^git(\s+-[Cc]\s+\S+|\s+--?\S+)*\s+(rebase|merge)(\s|$)'
+---
+# Merge a task into main
 
+These rules are for the manager, who rebases a branch before QA and runs `make merge`, and for the Software Engineer who solves a rebase conflict.
 A task reaches `main` only after QA passed it.
 The order is:
 
 1. The Software Engineer implements the task on its branch `task/<id>`, and another Software Engineer reviews it.
-2. The implementer runs the quality gate (`make check`) on the last commit of the branch, plus the E2E test classes of the flows that the change touches (see "Which E2E tests to run").
+2. The implementer runs the quality gate (`make check`) on the last commit of the branch, plus the E2E test classes of the flows that the change touches (see "Which E2E tests to run" in `.claude/rules/tests.md`).
    The reviewer hands the task over to QA.
    Before that, it makes sure that the gate passed on the last commit of the branch.
    A reviewer who changed no code runs nothing again: the run of the implementer covers that commit.
@@ -27,7 +36,7 @@ Each step runs only when the step before it passed:
 
 1. It rebases the branch of the worktree onto the tip of `main`.
 2. It runs the quality gate (`make check`).
-3. It runs the full E2E suite (`make e2e`), unless the branch changes no app code (see "Which E2E tests to run").
+3. It runs the full E2E suite (`make e2e`), unless the branch changes no app code (see "Which E2E tests to run" in `.claude/rules/tests.md`).
 4. It fast-forwards `main` to the rebased branch.
    When `main` is checked out in a folder (the main folder of the repo), it updates that folder too, with `git merge --ff-only`: a fast-forward, never a merge commit.
 

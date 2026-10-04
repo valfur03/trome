@@ -1,5 +1,17 @@
-## Code structure of the iOS app
+---
+paths:
+  - "ios/App/**"
+  - "ios/Widget/**"
+  - "ios/Packages/**"
+  - "ios/UITests/**"
+  - "ios/RenderCheck/**"
+  - "ios/DocsScreenshots/**"
+  - "ios/project.yml"
+  - "ios/Config/**"
+---
+# Code structure of the iOS app
 
+These rules are for every change and every review of the iPhone app, its widget, its package and their tests.
 decision-6 (section 10) explains these rules and their sources.
 Follow them in every task.
 The reviewer checks them: a file in the wrong place or a wrong dependency direction is a medium finding.
@@ -42,7 +54,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
 - **Tests.** Unit tests: `ios/Packages/TROMECore/Tests/TROMECoreTests/<Feature>/<Type>Tests.swift`.
   The recorded PRIM answers are in `contracts/prim/`, shared with the server tests (`Fixture.data(_:)` reads them).
-  E2E tests: `ios/UITests/`, one file per seam with iOS (see "Test levels").
+  E2E tests: `ios/UITests/`, one file per seam with iOS (see `.claude/rules/tests.md`).
   Tests of the scripts: `ios/scripts/tests/<name>-test.sh` (`make test-scripts`, with a fake `xcrun` for the Simulator scripts).
   Docs screenshots: `ios/DocsScreenshots/`.
   The render check of the Live Activity views: `ios/RenderCheck/`.

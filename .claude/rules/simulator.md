@@ -1,3 +1,27 @@
+---
+paths:
+  - "ios/scripts/sim-lock.sh"
+  - "ios/scripts/simulator.sh"
+  - "ios/scripts/tests/sim-lock-test.sh"
+commands:
+  - '^(\S*/)?make\b.*\s(run|e2e|docs-screenshots|live-activity-render|switch-language|merge|simulator-delete|simulator-delete-old)(\s|$)'
+  - '^\S*sim-lock\.sh(\s|$)'
+  - '^\S*simulator\.sh(\s|$)'
+  - '^xcrun\s+simctl\b'
+  - '^xcodebuild\b.*(\stest(-without-building)?(\s|$)|-destination)'
+  - '^open\b.*Simulator'
+---
+# The shared Simulator and its lock
+
+These rules are for every job that boots or uses a Simulator: `make run`, `make e2e`, `make docs-screenshots`, `make live-activity-render`, `make merge`, and any command through `ios/scripts/sim-lock.sh`.
+The two rules above them, never a second Simulator and at most one Simulator job, are in `CLAUDE.md`.
+
+**The code of the second slot (decided against on this Mac):** `ios/scripts/sim-lock.sh` keeps the code of a second slot, but off (`slots=${RATP_SIM_SLOTS:-1}`).
+It is not a trial that an agent or a task can run.
+Never change this line, and never add `RATP_SIM_SLOTS=2` to a command.
+Only the prompter, in person, can decide to turn it on again, and only with a new reason (for example, a different Mac).
+How that code works, and the measurements behind these rules, are in `.claude/rules/simulator-history.md`.
+
 ## The shared Simulator
 
 All worktrees use one shared Simulator, named `RATP-Shared`.
@@ -64,9 +88,9 @@ The wait can be long, so run these commands in the background.
   Never name the Simulator (`name=RATP-Shared`), so the command still works when the second slot is on.
 
 `make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
-So is `make live-activity-render` (the render check of the Live Activity views, see "The Live Activity render check").
+So is `make live-activity-render` (the render check of the Live Activity views, see `.claude/rules/render-check.md`).
 
-`make merge` takes the lock before the rebase and frees it after the fast-forward, success or failure (see "Merge a task into main").
+`make merge` takes the lock before the rebase and frees it after the fast-forward, success or failure (see `.claude/rules/merge.md`).
 Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots.
 A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock.
 It does not free the lock when it ends: the outer job does.

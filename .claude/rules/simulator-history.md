@@ -1,18 +1,19 @@
-## Budget for this repo
+---
+paths:
+  - "ios/scripts/sim-lock.sh"
+  - "ios/scripts/simulator.sh"
+  - "ios/scripts/tests/sim-lock-test.sh"
+  - "ios/scripts/timing/**"
+---
+# The Simulator rules: their measurements, and the code of the second slot
 
-- The factory runs **at most 3 Software Engineers** in parallel for this repo.
-- **At most one Simulator job** runs at a time on the machine.
-  A lock enforces it (see below).
-- **Never a second Simulator on this Mac.** On 2026-09-28, the prompter decided that no design may boot or keep a second Simulator running on this Mac, for any reason: a faster job, a Simulator for QA, a Simulator for `make run`, or the second job slot (doc-3, "no second Simulator on this Mac"; doc-1, section "Testing").
-  Why: the boot of a second Simulator next to a booted one, even with no job running, already takes the Mac to an unsafe load (234 to 333, TASK-106, see below).
-  A boot with no other Simulator booted measured lower (about 125 to 157, TASK-84 and the QA of TASK-92).
-  This is a closed decision, not a trial on pause.
-  Only the prompter, in person, can open it again, and only with a new reason (for example, a different Mac).
-  Never propose, build or measure a new design with a second Simulator.
-  This also covers the two iPhone sizes: every job and every `make run`, `make run SMALL=1` included, uses one shared Simulator at a time (TASK-119, see "The shared Simulator").
+This file holds the history behind the Simulator rules of `CLAUDE.md` ("Never a second Simulator on this Mac", "At most one Simulator job") and of `.claude/rules/simulator.md`, for an engineer who changes the lock scripts.
+The rules themselves, each with its reason in one sentence, are in those two files.
 
-Why one Simulator job: on 2026-09-26, each worktree booted its own iOS Simulator, and seven Simulators ran at once on the 8-core Mac.
-The load average went above 600, and the prompter could not work.
+## Why one Simulator job, and never a second Simulator
+
+The boot of a second Simulator next to a booted one, even with no job running, takes the Mac to an unsafe load (234 to 333, TASK-106, below).
+A boot with no other Simulator booted measured lower (about 125 to 157, TASK-84 and the QA of TASK-92).
 
 Why not two Simulator jobs: TASK-62 added a second Simulator slot, for a second job next to the first one, only when at least 25% of the CPU is idle.
 It was measured on 2026-09-27 on the real Simulators.
@@ -26,15 +27,12 @@ On 2026-09-28, after TASK-106 (below), the prompter decided against the second s
 TASK-63 records how long the jobs wait and run.
 Its numbers are not a reason to try two jobs again on this Mac.
 
-**The code of the second slot (decided against on this Mac):** `ios/scripts/sim-lock.sh` keeps the code of a second slot, but off (`slots=${RATP_SIM_SLOTS:-1}`).
-It is not a trial that an agent or a task can run.
-Never change this line, and never add `RATP_SIM_SLOTS=2` to a command.
-Only the prompter, in person, can decide to turn it on again, and only with a new reason (for example, a different Mac).
+**How the code of the second slot works.** The rule on it (it stays off, and only the prompter can turn it on again) is in `.claude/rules/simulator.md`.
 For that case only, this is how the code works.
 With `slots=${RATP_SIM_SLOTS:-2}`, a job takes a free slot (slot 1 first).
 It runs next to another job only when at least 25% of the CPU is idle (`min_idle_percent` in the same file, or `RATP_SIM_MIN_IDLE_PERCENT` for one command).
 Slot 2 uses its own Simulators (`RATP-Shared-2`, `RATP-Shared-Small-2`) and its own lock (`/tmp/ratp-sim.lock.2`), so two jobs never see the data of each other.
-A change to two slots must also change this section, "The shared Simulator" and `ios/README.md`.
+A change to two slots must also change this section, the rules of `CLAUDE.md` and `.claude/rules/simulator.md`, and `ios/README.md`.
 To go back to one job, change the line back, then run `make simulator-delete` once, to delete the Simulators of slot 2.
 
 Why QA has no Simulator of its own: a QA session keeps the lock while QA explores the app (12 to 19 minutes each on 2026-09-27), and the other jobs wait for it.
@@ -51,7 +49,7 @@ So the QA Simulator was not shipped: QA uses the shared Simulator and its lock, 
 Limits of the measurement: one run, only the cold case (the QA Simulator boots during the job), and no CPU per process.
 The warm case (the QA Simulator booted before the job) was not run, so as not to freeze the Mac again.
 The script of the measurement is `ios/scripts/timing/qa-load-check.sh`.
-It boots a second Simulator outside the lock, so it never runs on this Mac (see "Never a second Simulator on this Mac").
+It boots a second Simulator outside the lock, so it never runs on this Mac (see "Never a second Simulator on this Mac" in `CLAUDE.md`).
 It stays only to measure on another Mac, when the prompter asks for it.
 It deletes `RATP-Shared-QA` when it ends.
 
@@ -64,8 +62,3 @@ During the first boot, the Mac used 5.5 to 5.7 GB of swap (6.4 of its 7 GB on th
 A boot with no other Simulator booted measured lower: about 125 (TASK-84) to 157 (the QA of TASK-92).
 So the boot of a second Simulator next to a booted one, even with no job (234 to 333), reaches the levels of TASK-62 (257 to 286, two jobs at once) and TASK-84 (326, a QA Simulator next to a job), and it is close to the freeze of 2026-09-26.
 For this reason, the prompter decided against every design with a second Simulator on this Mac, and TASK-106 was closed.
-
-Why 3 Software Engineers: the cap was 2 after that day.
-Two checks now protect the Mac, so the prompter set it back to 3 (2026-09-26).
-The factory starts a new agent only when at least 25% of the CPU is idle.
-The Simulator lock and the shared Simulator keep the Simulator jobs to one at a time.

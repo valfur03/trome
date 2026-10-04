@@ -1,4 +1,12 @@
-## QA: French first
+---
+paths:
+  - ".claude/rules/qa.md"
+commands:
+  - '^(\S*/)?make\b.*\s(run|switch-language)(\s|$)'
+---
+# QA: French first
+
+These rules are for QA, and for any check of the app by hand in the Simulator.
 
 Almost every user of the app is French.
 So French is the main language of QA.
@@ -13,7 +21,7 @@ So French is the main language of QA.
   QA looks only at the screens, the Live Activity views, the notifications and the messages that the task changed: a text that is not translated, a text in the wrong language, or a layout problem with the English text (English and French texts do not have the same length).
   Keep this look short: it must not make the QA run longer.
   When the task changes no text and no screen, skip it.
-  With `LIVE=1`, the app keeps calling PRIM in English too: these calls count in the budget of the QA run (section "Live train data").
+  With `LIVE=1`, the app keeps calling PRIM in English too: these calls count in the budget of the QA run (`.claude/rules/live-data.md`).
   Then QA runs `make simulator-shutdown` at once.
   `make switch-language LANGUAGE=fr` goes back to French.
 - **What is a bug.** A screen or a message that mixes French and English.
@@ -22,3 +30,4 @@ So French is the main language of QA.
 - The system popups (for example "Autoriser une fois") come from iOS in the language of the Simulator.
   Only their explanation text comes from the app.
 - `make e2e` and `make docs-screenshots` put the Simulator back in English by themselves.
+- **Screenshots.** Look at each screenshot once, write what it shows in your QA notes, and do not read the same picture again unless the screen changed: each picture that you read stays in the context of every later call.

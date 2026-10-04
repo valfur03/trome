@@ -103,7 +103,7 @@ def main(arguments):
             "no email address other than an example one, no local path, and not the old names of the app, of the Xcode project or of its module (it is TROME).\n"
             "CLAUDE.md and .claude/ may cite the backlog.\n"
             "When a hit is a normal word in its place, add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py,\n"
-            "with its reason (CLAUDE.md, section \"The docs site\", rule \"Public text\").",
+            "with its reason (CLAUDE.md, rule \"Public text\").",
             file=sys.stderr,
         )
         sys.exit(1)

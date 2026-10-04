@@ -786,6 +786,7 @@ Each part of the repo has its own folder. The root holds only the files of the w
 | Folder or file | What it holds |
 |---|---|
 | `README.md`, `CLAUDE.md`, `.gitignore`, `.nvmrc` | Files for the whole repo. `.nvmrc` pins the Node version of the Node parts (`docs/` and `server/`). |
+| `.claude/` | The rules of Claude Code by topic (`rules/`), and the hook that brings each rule to the work that needs it (`hooks/`). |
 | `Makefile` | Runs each `make` command in the folder of its part. It has no build logic. `make check` runs the checks of all parts. |
 | `ios/` | The iPhone app, with its own `Makefile`, `project.yml`, `.swiftlint.yml`, build settings and scripts. Its build output goes to `ios/.build/`. |
 | `docs/` | The docs site (Starlight), with its own `Makefile` and scripts. |
@@ -807,6 +808,6 @@ Inside `ios/`:
 
 The feature folders have the same names in `ios/App/`, in the sources of `TROMECore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`.
 `ios/App/` also has `Permissions` and `TestingTools` (debug builds only).
-The rules for the code (where each file goes, which module depends on which) are in the CLAUDE.md, section "Code structure of the iOS app".
+The rules for the code (where each file goes, which module depends on which) are in [`.claude/rules/ios-code.md`](../.claude/rules/ios-code.md).
 
 You can also run the commands of one part in its folder: `make -C ios check` runs only the checks of the app.

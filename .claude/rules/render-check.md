@@ -1,9 +1,22 @@
-## The Live Activity render check
+---
+paths:
+  - "ios/Widget/**"
+  - "ios/RenderCheck/**"
+  - "ios/Packages/TROMECore/Sources/TROMECore/LiveActivity/**"
+  - "ios/scripts/live-activity-render*"
+  - "ios/scripts/tests/live-activity-render-test.sh"
+commands:
+  - '^(\S*/)?make\b.*\slive-activity-render(\s|$)'
+---
+# The Live Activity render check
+
+These rules are for a change to the Live Activity views or their data, and for every run of the render check.
 
 `make live-activity-render` draws the Live Activity views (the lock screen and the bottom region of the expanded Dynamic Island) for every station and page, at both phone widths and at the Large and XXXL text sizes.
 It lists the drawings that are too tall, the cut texts and the breaches of decision-15, and saves images for a person to read (`ios/README.md`, section "Check how the Live Activity draws").
 
 - **When to run it.** In any task that changes the Live Activity views or their data (`ios/Widget/`, `LinesPage`, `ContentState`), for example TASK-36, TASK-65 and TASK-37: once before the change and once after it.
+  Look at each image once, write what it shows in the task notes, and do not read the same image again unless it changed: each image that you read stays in the context of every later call.
   Write in the task notes, before and after the change, the number of too tall drawings and the counts of each kind of breach of decision-15 (the summary prints them for each phone, surface and text size), and the cut texts that changed, and put the images that matter in the notes for the reviewer and QA.
   Do not write a temporary UI test for this any more.
 - **The breaches of decision-15.** decision-15 is the product rule of what may be cut in a row of the Live Activity.

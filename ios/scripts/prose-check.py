@@ -7,10 +7,6 @@ from repo_files import repo_files
 MAX_LENGTH = 400
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 PATTERNS = ["*.md", "*.mdx"]
-SKIPPED = {
-    "CLAUDE.md": "it is split into short files by topic next, and that move writes it one sentence per line;"
-                 " a reflow now would conflict with every change that edits it in the meantime",
-}
 
 USAGE = "Usage: prose-check.py [Markdown file...] (no file: every Markdown and MDX file of the repo)"
 
@@ -42,10 +38,7 @@ def files_to_check(arguments):
     if arguments:
         return [(path, path) for path in arguments]
     root, paths = repo_files("prose-check", PATTERNS)
-    for path, reason in SKIPPED.items():
-        if path in paths:
-            print(f"prose-check: skips {path}: {reason}", flush=True)
-    return [(path, root / path) for path in paths if path not in SKIPPED]
+    return [(path, root / path) for path in paths]
 
 
 def main(arguments):
@@ -61,7 +54,7 @@ def main(arguments):
             "When one sentence is still too long, break the line after a comma, a colon or a semicolon.\n"
             "Edit only the sentences that your change makes false, and never reflow a paragraph. Tables and code blocks may have long lines.\n"
             "Why: git merges by line. Two changes to two sentences of one long line conflict "
-            "(CLAUDE.md, section \"The docs site\", rule \"One sentence per line\").",
+            "(CLAUDE.md, rule \"One sentence per line\").",
             file=sys.stderr,
         )
         sys.exit(1)

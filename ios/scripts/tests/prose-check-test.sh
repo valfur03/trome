@@ -75,12 +75,11 @@ check_repo() {
 
 in_repo README.md "One sentence."
 in_repo docs/page.mdx "One sentence."
-in_repo CLAUDE.md "$long"
+in_repo CLAUDE.md "One sentence."
 in_repo notes.txt "$long"
 printf '%s\n' "$long" > "$repo/untracked.md"
 expect "with no file, it checks the Markdown and MDX files of the repo, from any folder of it" "$(check_repo)" "passes"
-expect "it says that it skips CLAUDE.md, and why" "$(grep -c "skips CLAUDE.md: it is split into short files" "$state/out")" "1"
-expect "it counts the files that it checked" "$(grep -c "OK (2 files" "$state/out")" "1"
+expect "it counts the files that it checked" "$(grep -c "OK (3 files" "$state/out")" "1"
 
 in_repo docs/page.mdx "$long"
 expect "a long line of an MDX file of the repo fails" "$(check_repo)" "fails"
@@ -91,8 +90,9 @@ in_repo docs/page.mdx "One sentence."
 in_repo docs/guide.md "$long"
 expect "a long line of a Markdown file in a folder fails" "$(check_repo)" "fails"
 
-"$scripts/prose-check.py" "$repo/CLAUDE.md" > /dev/null 2>&1 && result="passes" || result="fails"
-expect "a skipped file that is named on the command line is checked" "$result" "fails"
+in_repo docs/guide.md "One sentence."
+in_repo CLAUDE.md "$long"
+expect "CLAUDE.md is checked like every Markdown file" "$(check_repo)" "fails"
 
 (cd "$state" && "$scripts/prose-check.py") > /dev/null 2>&1 && result="passes" || result="fails"
 expect "with no file, outside a git repo, it fails" "$result" "fails"

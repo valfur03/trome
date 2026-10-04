@@ -120,7 +120,7 @@ merge() {
         step "3/4 full E2E suite ($e2e_command)"
         sh -c "$e2e_command" || step_failed "full E2E suite"
     else
-        step "3/4 full E2E suite: skipped, $branch changes no app code (only docs, Markdown, LICENSE, .claude/, unit tests, the server or the contracts, see CLAUDE.md)"
+        step "3/4 full E2E suite: skipped, $branch changes no app code (only docs, Markdown, LICENSE, .claude/, unit tests, the server or the contracts, see .claude/rules/tests.md)"
     fi
     step "4/4 fast-forward $target to $(git rev-parse --short "$tested")"
     [ "$(git rev-parse HEAD)" = "$tested" ] || step_failed fast-forward "HEAD moved during the merge."

@@ -1,4 +1,19 @@
-## Test levels
+---
+paths:
+  - "ios/App/**"
+  - "ios/Widget/**"
+  - "ios/Packages/**"
+  - "ios/UITests/**"
+  - "ios/RenderCheck/**"
+  - "ios/DocsScreenshots/**"
+  - "ios/project.yml"
+  - "ios/scripts/tests/**"
+commands:
+  - '^(\S*/)?make\b.*\se2e(\s|$)'
+---
+# Test levels
+
+These rules are for every job that adds, changes, runs or judges a test of the iPhone app.
 
 The test strategy of this repo is decision-9 in the backlog (`backlog/decisions/decision-9 - What-each-test-level-is-for-and-how-deep-a-change-is-tested.md`).
 Read it before you add or change a test: it gives the reasons, the worked examples, and how the QA depth is chosen.
@@ -50,7 +65,7 @@ A task that makes the app read a file of `contracts/` at run time, or makes the 
 - **A reviewer** runs no E2E test, unless it changes app code.
   For example, a review with no change, or a change to the docs (Markdown files included), the unit tests or the backlog files only, runs none.
   A reviewer who changes app code runs only the E2E test classes of the flows that its change touches.
-- **The manager** runs `make merge` after QA passed the task (see "Merge a task into main").
+- **The manager** runs `make merge` after QA passed the task (see `.claude/rules/merge.md`).
   It runs the full `make e2e` once, after the rebase onto `main`, on the commit that it fast-forwards `main` to.
   A task that changes only docs (Markdown and MDX files, `LICENSE`, `.claude/`), unit tests, `server/` or `contracts/` (no app code) skips the full run: `main` was green, and the task adds no app code.
   `make merge` sees this by itself.

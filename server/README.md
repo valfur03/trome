@@ -25,7 +25,7 @@ So it never gets real trains: PRIM refuses its fake key, and you check the answe
 
 ## Find your way in the code
 
-- `server/src/core/` holds the logic, in plain TypeScript that runs on Node; `server/src/cloudflare/` holds the entry of the Worker, the Durable Object and the adapters to Cloudflare ([the rules of this structure](../CLAUDE.md#code-structure-of-the-server)).
+- `server/src/core/` holds the logic, in plain TypeScript that runs on Node; `server/src/cloudflare/` holds the entry of the Worker, the Durable Object and the adapters to Cloudflare ([the rules of this structure](../.claude/rules/server.md)).
 - `server/test/core/<feature>/` tests the logic on Node, `server/test/cloudflare/` tests the Worker in the Cloudflare runtime, and `server/scripts/tests/` tests the scripts.
   To run one folder while you work: `cd server && npx vitest run test/core/relay`.
 - `contracts/prim/` holds recorded PRIM answers, which the tests of the app read too, and `contracts/api/` holds an example of each answer of the server, which a test checks.

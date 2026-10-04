@@ -1,10 +1,18 @@
-## Live train data (the real PRIM key)
+---
+paths:
+  - "ios/Config/**"
+  - "ios/scripts/live-key-check.sh"
+  - "ios/scripts/tests/live-key-check-test.sh"
+commands:
+  - '^(\S*/)?make\b.*\sLIVE=1(\s|$)'
+agents:
+  - 'qa'
+---
+# Live train data (the real PRIM key)
 
-The real PRIM key is in the main repo folder only, in `ios/Config/Secrets.xcconfig` (or at its old place, `Config/Secrets.xcconfig`, until the prompter moves it).
-Worktrees do not have it.
+These rules are for QA when it uses live train data, for the manager who gives QA its budget of PRIM calls, and for a change to the build of the key.
+The rule on the key itself (never read, print, copy or commit it, and where it is) is in `CLAUDE.md`.
 
-- **Never read, print, copy or commit the key.** Do not open `ios/Config/Secrets.xcconfig` or `Config/Secrets.xcconfig`.
-  Do not copy it into a worktree.
 - `make build`, `make run`, `make check` and `make e2e` never use the key.
   They build with `ios/Config/NoKey.xcconfig`, so the app says "Train data key: not set".
   Unit tests use recorded PRIM answers (fixtures).
@@ -18,7 +26,7 @@ Worktrees do not have it.
   It builds with `LIVE=1` and a fake key, and fails if a build log shows the key.
   If you change the build (the `Makefile` files, `ios/Config/`, `ios/project.yml`, `ios/scripts/`), this check must still pass.
 
-### Who uses live data, and when
+## Who uses live data, and when
 
 - **Only QA** uses `make run LIVE=1`.
   Software Engineers and the quality gate never do.
