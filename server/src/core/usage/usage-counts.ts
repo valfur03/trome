@@ -10,7 +10,6 @@ export type Tallies = Record<Tally, number>;
 
 export interface ErrorLine {
   at: number;
-  stopRef: string;
   kind: string;
   status: number | null;
 }
@@ -23,7 +22,6 @@ export interface HourCounts extends Tallies {
 export interface DayCounts extends Tallies {
   day: string;
   hours: HourCounts[];
-  stops: { stopRef: string; primCalls: number }[];
 }
 
 export interface UsageReport {
@@ -60,11 +58,9 @@ export class UsageCounts {
         .join(", ")})`,
     );
     database.run(
-      "CREATE TABLE IF NOT EXISTS usage_stops (paris_day TEXT NOT NULL, stop_ref TEXT NOT NULL, prim_calls INTEGER NOT NULL, PRIMARY KEY (paris_day, stop_ref)) WITHOUT ROWID",
+      "CREATE TABLE IF NOT EXISTS error_lines (id INTEGER PRIMARY KEY, at INTEGER NOT NULL, kind TEXT NOT NULL, status INTEGER)",
     );
-    database.run(
-      "CREATE TABLE IF NOT EXISTS error_lines (id INTEGER PRIMARY KEY, at INTEGER NOT NULL, stop_ref TEXT NOT NULL, kind TEXT NOT NULL, status INTEGER)",
-    );
+    forgetTheStopsOfOlderVersions(database);
   }
 
   count(tally: Tally, at: number): void {
@@ -78,21 +74,15 @@ export class UsageCounts {
     }
   }
 
-  countPrimCall(stopRef: string, at: number): void {
-    this.database.run(
-      "INSERT INTO usage_stops (paris_day, stop_ref, prim_calls) VALUES (?, ?, 1) ON CONFLICT (paris_day, stop_ref) DO UPDATE SET prim_calls = prim_calls + 1",
-      parisDay(at),
-      stopRef,
-    );
+  countPrimCall(at: number): void {
     this.count("primCalls", at);
     this.flush();
   }
 
   recordError(line: ErrorLine): void {
     this.database.run(
-      "INSERT INTO error_lines (at, stop_ref, kind, status) VALUES (?, ?, ?, ?)",
+      "INSERT INTO error_lines (at, kind, status) VALUES (?, ?, ?)",
       line.at,
-      line.stopRef,
       line.kind,
       line.status,
     );
@@ -123,7 +113,6 @@ export class UsageCounts {
 
   forgetOldCounts(now: number): void {
     this.database.run("DELETE FROM usage_hours WHERE hour_start < ?", now - countsKeptFor);
-    this.database.run("DELETE FROM usage_stops WHERE paris_day < ?", parisDay(now - countsKeptFor));
     this.database.run("DELETE FROM error_lines WHERE at < ?", now - errorLinesKeptFor);
   }
 
@@ -134,27 +123,29 @@ export class UsageCounts {
         `SELECT hour_start, paris_day, ${tallies.map((tally) => columns[tally]).join(", ")} FROM usage_hours ORDER BY hour_start DESC`,
       )
       .map(hourCounts);
-    const stops = this.database.all<{ paris_day: string; stop_ref: string; prim_calls: number }>(
-      "SELECT paris_day, stop_ref, prim_calls FROM usage_stops ORDER BY paris_day DESC, prim_calls DESC, stop_ref",
-    );
     const days = new Map<string, DayCounts>();
     for (const { day: parisDayOfHour, counts } of hours) {
-      const dayCounts = days.get(parisDayOfHour) ?? { day: parisDayOfHour, ...emptyTallies(), hours: [], stops: [] };
+      const dayCounts = days.get(parisDayOfHour) ?? { day: parisDayOfHour, ...emptyTallies(), hours: [] };
       for (const tally of tallies) {
         dayCounts[tally] += counts[tally];
       }
       dayCounts.hours.push(counts);
       days.set(parisDayOfHour, dayCounts);
     }
-    for (const row of stops) {
-      days.get(row.paris_day)?.stops.push({ stopRef: row.stop_ref, primCalls: row.prim_calls });
-    }
     const errorLines = this.database
-      .all<{ at: number; stop_ref: string; kind: string; status: number | null }>(
-        "SELECT at, stop_ref, kind, status FROM error_lines ORDER BY at DESC, id DESC",
+      .all<{ at: number; kind: string; status: number | null }>(
+        "SELECT at, kind, status FROM error_lines ORDER BY at DESC, id DESC",
       )
-      .map((row) => ({ at: new Date(row.at).toISOString(), stopRef: row.stop_ref, kind: row.kind, status: row.status }));
+      .map((row) => ({ at: new Date(row.at).toISOString(), kind: row.kind, status: row.status }));
     return { days: [...days.values()], errorLines };
+  }
+}
+
+function forgetTheStopsOfOlderVersions(database: SqlDatabase): void {
+  database.run("DROP TABLE IF EXISTS usage_stops");
+  const stopColumn = database.all("SELECT name FROM pragma_table_info('error_lines') WHERE name = 'stop_ref'");
+  if (stopColumn.length > 0) {
+    database.run("ALTER TABLE error_lines DROP COLUMN stop_ref");
   }
 }
 

@@ -6,30 +6,25 @@ export interface StoredAnswer {
 }
 
 export class AnswerStore {
+  private readonly answers = new Map<string, StoredAnswer>();
+
   constructor(private readonly database: SqlDatabase) {
-    database.run(
-      "CREATE TABLE IF NOT EXISTS answers (stop_ref TEXT PRIMARY KEY, body TEXT NOT NULL, prim_answered_at INTEGER NOT NULL) WITHOUT ROWID",
-    );
+    database.run("DROP TABLE IF EXISTS answers");
     database.run(
       "CREATE TABLE IF NOT EXISTS relay_pauses (name TEXT PRIMARY KEY, until INTEGER NOT NULL) WITHOUT ROWID",
     );
   }
 
   answer(stopRef: string): StoredAnswer | undefined {
-    const [row] = this.database.all<{ body: string; prim_answered_at: number }>(
-      "SELECT body, prim_answered_at FROM answers WHERE stop_ref = ?",
-      stopRef,
-    );
-    return row && { body: row.body, primAnsweredAt: row.prim_answered_at };
+    return this.answers.get(stopRef);
   }
 
   keep(stopRef: string, answer: StoredAnswer): void {
-    this.database.run(
-      "INSERT INTO answers (stop_ref, body, prim_answered_at) VALUES (?, ?, ?) ON CONFLICT (stop_ref) DO UPDATE SET body = excluded.body, prim_answered_at = excluded.prim_answered_at",
-      stopRef,
-      answer.body,
-      answer.primAnsweredAt,
-    );
+    this.answers.set(stopRef, answer);
+  }
+
+  stopsHeld(): string[] {
+    return [...this.answers.keys()];
   }
 
   limitPauseUntil(): number {
@@ -46,7 +41,11 @@ export class AnswerStore {
     );
   }
 
-  forgetAnswersBefore(at: number): void {
-    this.database.run("DELETE FROM answers WHERE prim_answered_at < ?", at);
+  forgetAnswersGivenBy(at: number): void {
+    for (const [stopRef, answer] of this.answers) {
+      if (answer.primAnsweredAt <= at) {
+        this.answers.delete(stopRef);
+      }
+    }
   }
 }

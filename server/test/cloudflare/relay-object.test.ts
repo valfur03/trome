@@ -2,6 +2,7 @@ import { env, exports } from "cloudflare:workers";
 import { abortAllDurableObjects, evictDurableObject, listDurableObjectIds, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
+import { everyStoredRow } from "./every-stored-row";
 import { fakePrim, recordedAnswer } from "./fake-prim";
 
 const abbesses = "STIF:StopArea:SP:42155:";
@@ -111,8 +112,51 @@ describe("RelayObject", () => {
     expect(await response.json()).toMatchObject({
       dailyCap: 800,
       primCallsToday: 1,
-      days: [{ appCalls: 1, primCalls: 1, stops: [{ stopRef: abbesses, primCalls: 1 }] }],
+      days: [{ appCalls: 1, primCalls: 1 }],
     });
+  });
+
+  it("keeps no stop in storage after an answer, a failed PRIM call and its alarm", async () => {
+    let calls = 0;
+    fakePrim(() => {
+      calls += 1;
+      return calls === 1 ? new Response(recordedAnswer("stop-monitoring-abbesses-stop-area.json")) : new Response("Server error", { status: 500 });
+    });
+    await departures(abbesses);
+    expect((await departures(stop(1))).status).toBe(503);
+    await runDurableObjectAlarm(relayObject(env));
+
+    const stored = await everyStoredRow();
+    expect(stored).toContain('"kind":"prim-http-error"');
+    expect(stored).not.toContain("42155");
+    expect(stored).not.toContain(stop(1));
+  });
+
+  it("deletes, when the new version starts, the answers, the PRIM calls of each stop and the stop of each error line that an older version stored", async () => {
+    await runInDurableObject(relayObject(env), (_object, state) => {
+      const sql = state.storage.sql;
+      sql.exec("DROP TABLE IF EXISTS error_lines");
+      sql.exec("CREATE TABLE answers (stop_ref TEXT PRIMARY KEY, body TEXT NOT NULL, prim_answered_at INTEGER NOT NULL) WITHOUT ROWID");
+      sql.exec("INSERT INTO answers VALUES (?, '{}', 1)", abbesses);
+      sql.exec("CREATE TABLE usage_stops (paris_day TEXT NOT NULL, stop_ref TEXT NOT NULL, prim_calls INTEGER NOT NULL, PRIMARY KEY (paris_day, stop_ref)) WITHOUT ROWID");
+      sql.exec("INSERT INTO usage_stops VALUES ('2026-10-02', ?, 3)", abbesses);
+      sql.exec("CREATE TABLE error_lines (id INTEGER PRIMARY KEY, at INTEGER NOT NULL, stop_ref TEXT NOT NULL, kind TEXT NOT NULL, status INTEGER)");
+      sql.exec("INSERT INTO error_lines (at, stop_ref, kind, status) VALUES (1790929860000, ?, 'prim-http-error', 500)", abbesses);
+    });
+    expect(await everyStoredRow()).toContain("42155");
+
+    await evictDurableObject(relayObject(env));
+    const response = await exports.default.fetch("https://server.test/v1/owner/counts", {
+      headers: { authorization: `Bearer ${env.OWNER_TOKEN}` },
+    });
+
+    expect(await response.json()).toMatchObject({
+      errorLines: [{ at: "2026-10-02T08:31:00.000Z", kind: "prim-http-error", status: 500 }],
+    });
+    const stored = await everyStoredRow();
+    expect(stored).not.toContain("42155");
+    expect(stored).not.toContain('"answers"');
+    expect(stored).not.toContain('"usage_stops"');
   });
 
   it("uses SQLite storage", async () => {
@@ -122,7 +166,7 @@ describe("RelayObject", () => {
     );
 
     expect(tables.map(({ name }) => name)).toEqual(
-      expect.arrayContaining(["answers", "relay_pauses", "prim_budget", "prim_budget_hours", "usage_hours", "usage_stops", "error_lines"]),
+      expect.arrayContaining(["relay_pauses", "prim_budget", "prim_budget_hours", "usage_hours", "error_lines"]),
     );
   });
 });

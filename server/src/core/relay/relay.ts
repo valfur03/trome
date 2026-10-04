@@ -1,7 +1,7 @@
 import type { PrimBudget } from "../budget/prim-budget";
 import type { RelaySettings } from "../config/relay-settings";
 import type { Logger } from "../logging/logger";
-import { day, type Clock } from "../time/clock";
+import type { Clock } from "../time/clock";
 import { parisDay } from "../time/paris-time";
 import type { UsageCounts, UsageReport } from "../usage/usage-counts";
 import type { AnswerStore, StoredAnswer } from "./answer-store";
@@ -48,6 +48,7 @@ export class Relay {
     const { answers, budget, usage, clock, settings } = this.dependencies;
     const now = clock.now();
     usage.count("appCalls", now);
+    this.forgetStopsPastUse(now);
 
     const held = answers.answer(stopRef);
     const age = held ? now - held.primAnsweredAt : Number.POSITIVE_INFINITY;
@@ -94,6 +95,21 @@ export class Relay {
     };
   }
 
+  stopsInMemory(): string[] {
+    const { answers } = this.dependencies;
+    return [...new Set([...answers.stopsHeld(), ...this.lastFailureAt.keys(), ...this.inFlight.keys()])];
+  }
+
+  private forgetStopsPastUse(now: number): void {
+    const { answers, settings } = this.dependencies;
+    answers.forgetAnswersGivenBy(now - settings.startAge);
+    for (const [stopRef, failedAt] of this.lastFailureAt) {
+      if (failedAt + settings.pauseAfterFailure <= now) {
+        this.lastFailureAt.delete(stopRef);
+      }
+    }
+  }
+
   private pause(stopRef: string, now: number): Pause | undefined {
     const { answers, budget, settings } = this.dependencies;
     const pauses: Pause[] = [];
@@ -131,7 +147,7 @@ export class Relay {
   private async callPrim(stopRef: string, startedAt: number): Promise<RelayAnswer> {
     const { answers, usage, prim, clock, settings } = this.dependencies;
     this.tidy(startedAt);
-    usage.countPrimCall(stopRef, startedAt);
+    usage.countPrimCall(startedAt);
 
     const reply = await prim.stopMonitoring(stopRef).catch(
       (error: unknown): PrimReply => ({ kind: "unreachable", reason: error instanceof Error ? error.name : "unknown" }),
@@ -147,18 +163,18 @@ export class Relay {
 
     if (reply.kind === "answer" && reply.status === 429) {
       answers.pauseForLimitUntil(at + settings.pauseAfterLimit);
-      this.recordError(stopRef, at, "prim-limit", reply.status);
+      this.recordError(at, "prim-limit", reply.status);
       return this.answerWhilePaused(stopRef, this.pause(stopRef, at) ?? this.budgetPause(stopRef, at), at);
     }
 
     this.lastFailureAt.set(stopRef, at);
-    this.recordError(stopRef, at, failureKind(reply), reply.kind === "answer" ? reply.status : null);
+    this.recordError(at, failureKind(reply), reply.kind === "answer" ? reply.status : null);
     return this.answerWhilePaused(stopRef, this.pause(stopRef, at) ?? this.budgetPause(stopRef, at), at);
   }
 
-  private recordError(stopRef: string, at: number, kind: string, status: number | null): void {
-    this.dependencies.usage.recordError({ at, stopRef, kind, status });
-    this.dependencies.logger.error("prim-call-failed", { stopRef, kind, status });
+  private recordError(at: number, kind: string, status: number | null): void {
+    this.dependencies.usage.recordError({ at, kind, status });
+    this.dependencies.logger.error("prim-call-failed", { kind, status });
   }
 
   private tidy(now: number): void {
@@ -167,15 +183,9 @@ export class Relay {
       return;
     }
     this.lastTidyDay = today;
-    const { answers, budget, usage, settings } = this.dependencies;
+    const { budget, usage } = this.dependencies;
     usage.forgetOldCounts(now);
     budget.forgetDaysBefore(today);
-    answers.forgetAnswersBefore(now - day);
-    for (const [stopRef, failedAt] of this.lastFailureAt) {
-      if (failedAt + settings.pauseAfterFailure <= now) {
-        this.lastFailureAt.delete(stopRef);
-      }
-    }
   }
 }
 

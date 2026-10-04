@@ -68,8 +68,8 @@ make server-counts URL=https://trome-server.<your subdomain>.workers.dev
 ```
 
 Paste the owner token when it asks.
-It shows, as JSON, the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls and errors, hour by hour (`parisHour`) and stop by stop.
-`errorLines` lists the failed PRIM calls of the last 7 days, with no IP address.
+It shows, as JSON, the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls and errors, hour by hour (`parisHour`), with no stop.
+`errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
 The counts of app calls and cache hits are written at most every 30 seconds, to stay far below the writes that the Free plan allows each day.
 
 Cloudflare keeps no request log of the server: Workers Logs are off in `server/wrangler.jsonc` (`"observability": { "enabled": false }`).

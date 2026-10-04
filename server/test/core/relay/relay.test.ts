@@ -6,6 +6,7 @@ import { answer } from "./fake-prim-client";
 import { primFixture } from "./prim-fixtures";
 import { relayHarness as relayHarnessOf } from "./relay-harness";
 import { retrySpread } from "../../../src/core/relay/retry-spread";
+import { everyStoredRow } from "../storage/every-stored-row";
 
 const abbesses = "STIF:StopArea:SP:42155:";
 const chatelet = "STIF:StopArea:SP:417675:";
@@ -427,7 +428,7 @@ describe("Relay: a failed PRIM call is never kept as times", () => {
 });
 
 describe("Relay: what it counts", () => {
-  it("counts the app calls, cache hits, held answers, out answers, PRIM calls and errors of the hour, and the PRIM calls of each stop", async () => {
+  it("counts the app calls, cache hits, held answers, out answers, PRIM calls and errors of the hour, with no stop", async () => {
     const { relay, prim, clock } = relayHarness();
     await relay.departures(abbesses);
     await relay.departures(abbesses);
@@ -463,15 +464,11 @@ describe("Relay: what it counts", () => {
             errors: 2,
           },
         ],
-        stops: [
-          { stopRef: abbesses, primCalls: 2 },
-          { stopRef: chatelet, primCalls: 1 },
-        ],
       },
     ]);
     expect(report.errorLines).toEqual([
-      { at: "2026-10-02T08:31:00.000Z", stopRef: chatelet, kind: "prim-http-error", status: 500 },
-      { at: "2026-10-02T08:31:00.000Z", stopRef: abbesses, kind: "prim-http-error", status: 500 },
+      { at: "2026-10-02T08:31:00.000Z", kind: "prim-http-error", status: 500 },
+      { at: "2026-10-02T08:31:00.000Z", kind: "prim-http-error", status: 500 },
     ]);
   });
 
@@ -483,14 +480,81 @@ describe("Relay: what it counts", () => {
     expect(relay.counts().limitPauseUntil).toBe("2026-10-02T09:30:00.000Z");
   });
 
-  it("logs a failed PRIM call with the stop, the kind and the status only", async () => {
+  it("logs a failed PRIM call with the kind and the status only, with no stop", async () => {
     const { relay, prim, logLines } = relayHarness();
     prim.answerWith(() => ({ kind: "unreachable", reason: "TimeoutError" }));
 
     await relay.departures(abbesses);
 
     expect(logLines.map((line) => JSON.parse(line) as unknown)).toEqual([
-      { level: "error", event: "prim-call-failed", stopRef: abbesses, kind: "prim-timeout", status: null },
+      { level: "error", event: "prim-call-failed", kind: "prim-timeout", status: null },
     ]);
+  });
+});
+
+describe("Relay: what it keeps of a stop after a request", () => {
+  it("writes no stop to storage and no stop to the logs, after an answer, a failure, a 429 and an out answer", async () => {
+    const { relay, prim, clock, database, logLines } = relayHarness();
+    await relay.departures(abbesses);
+    prim.answerWith(() => answer(500, ""));
+    await relay.departures(chatelet);
+    prim.answerWith(() => ({ kind: "unreachable", reason: "TimeoutError" }));
+    await relay.departures(stop(1));
+    clock.advance(hour);
+    prim.answerWith(() => answer(429, ""));
+    await relay.departures(stop(2));
+    expect((await relay.departures(stop(3))).kind).toBe("out");
+
+    expect(prim.calls).toEqual([abbesses, chatelet, stop(1), stop(2)]);
+    const stored = JSON.stringify(everyStoredRow(database));
+    expect(stored).toContain('"kind":"prim-limit"');
+    expect(logLines).toHaveLength(3);
+    for (const stopRef of [abbesses, chatelet, stop(1), stop(2), stop(3)]) {
+      expect(stored, stopRef).not.toContain(stopRef);
+      for (const line of logLines) {
+        expect(line, stopRef).not.toContain(stopRef);
+      }
+    }
+    expect(JSON.stringify(relay.counts())).not.toContain("StopArea");
+  });
+
+  it("holds a stop in memory during its PRIM call, then holds its answer 10 minutes, and drops it at the next request after that", async () => {
+    const { relay, prim, clock } = relayHarness();
+    prim.answerWith(() => "wait");
+    const asked = relay.departures(abbesses);
+    expect(relay.stopsInMemory()).toEqual([abbesses]);
+    prim.release();
+    await asked;
+    expect(relay.stopsInMemory()).toEqual([abbesses]);
+
+    prim.answerWith(() => answer(200, chateletAnswer));
+    clock.advance(10 * minute - 1);
+    await relay.departures(chatelet);
+    expect(relay.stopsInMemory()).toEqual([abbesses, chatelet]);
+
+    clock.advance(1);
+    await relay.departures(chatelet);
+    expect(relay.stopsInMemory()).toEqual([chatelet]);
+  });
+
+  it("holds a stop whose PRIM call failed for its 1 minute pause, and drops it at the next request after that", async () => {
+    const { relay, prim, clock } = relayHarness();
+    prim.answerWith((stopRef) => (stopRef === abbesses ? answer(500, "") : answer(200, chateletAnswer)));
+    await relay.departures(abbesses);
+    expect(relay.stopsInMemory()).toEqual([abbesses]);
+
+    clock.advance(minute);
+    await relay.departures(chatelet);
+    expect(relay.stopsInMemory()).toEqual([chatelet]);
+  });
+
+  it("holds no stop after a restart: the answers live in memory only", async () => {
+    const harness = relayHarness();
+    await harness.relay.departures(abbesses);
+    harness.prim.answerWith(() => answer(500, ""));
+    await harness.relay.departures(chatelet);
+    expect(harness.relay.stopsInMemory()).toEqual([abbesses, chatelet]);
+
+    expect(harness.restart().relay.stopsInMemory()).toEqual([]);
   });
 });

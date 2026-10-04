@@ -23,7 +23,7 @@ const countsPath = "/v1/owner/counts";
 export async function route(request: Request, dependencies: RouterDependencies): Promise<Response> {
   const { pathname } = new URL(request.url);
   const response = await answer(request, pathname, dependencies);
-  dependencies.logger.info("request", { method: request.method, path: pathname, status: response.status });
+  dependencies.logger.info("request", { method: request.method, route: routeName(pathname), status: response.status });
   return response;
 }
 
@@ -55,6 +55,13 @@ async function answer(request: Request, pathname: string, dependencies: RouterDe
   }
 
   return errorResponse(404, "not found");
+}
+
+function routeName(pathname: string): string {
+  if (pathname === "/health" || pathname === countsPath) {
+    return pathname;
+  }
+  return departuresPath.test(pathname) ? "/v1/stops/{stop}/departures" : "unknown";
 }
 
 function onlyGet(request: Request): Response | undefined {

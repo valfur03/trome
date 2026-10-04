@@ -137,7 +137,7 @@ describe("route: departures", () => {
     expect(asked).toEqual([]);
   });
 
-  it("logs the method, the path and the status, and not the query or the headers", async () => {
+  it("logs the method, the route and the status, and not the stop, the query or the headers", async () => {
     const { send, lines } = server();
 
     await send(
@@ -147,8 +147,18 @@ describe("route: departures", () => {
     );
 
     expect(lines.map((line) => JSON.parse(line) as unknown)).toEqual([
-      { level: "info", event: "request", method: "GET", path: `/v1/stops/${stopRef}/departures`, status: 200 },
+      { level: "info", event: "request", method: "GET", route: "/v1/stops/{stop}/departures", status: 200 },
     ]);
+  });
+
+  it("logs any other address as an unknown route", async () => {
+    const { send, lines } = server();
+
+    await send(withToken(`https://server.test/v1/stops/${stopRef}/departures/`, appToken));
+    await send(new Request("https://server.test/health"));
+    await send(withToken("https://server.test/v1/owner/counts", ownerToken));
+
+    expect(lines.map((line) => (JSON.parse(line) as { route: string }).route)).toEqual(["unknown", "/health", "/v1/owner/counts"]);
   });
 });
 

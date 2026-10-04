@@ -14,7 +14,7 @@ help:
 	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret); it opens the default browser (LINK=1: it shows a link to open in another browser; CODE=1: a code to type on a Cloudflare page)"
 	@echo "make server-secrets      Set each secret of the production Worker in turn (STAGING=1: of the staging Worker), before its first deploy; it asks for each value"
 	@echo "make server-secret NAME=<name>  Change one secret of the production Worker (STAGING=1: of the staging Worker); it asks for the value"
-	@echo "make server-counts URL=<address>  Read the counts of the server at this address (today and the last 30 days); it asks for the owner token"
+	@echo "make server-counts URL=<address>  Read the totals of the server at this address (each hour of today and the last 30 days, and the errors of 7 days, with no stop); it asks for the owner token"
 	@echo "make server-deploy-staging  Deploy this folder to the staging Worker (needs the Cloudflare account, and make server-secrets STAGING=1 first)"
 	@echo "make server-deploy       Deploy main to the production Worker (needs the Cloudflare account and make server-secrets first; main folder, on main, committed)"
 

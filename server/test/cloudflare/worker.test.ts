@@ -2,6 +2,7 @@ import { env, exports } from "cloudflare:workers";
 import { abortAllDurableObjects, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
+import { everyStoredRow } from "./every-stored-row";
 import { secretNames } from "../../src/core/config/secrets";
 import { fakePrim } from "./fake-prim";
 
@@ -19,17 +20,6 @@ function captureLogLines(): string[] {
     lines.push(parts.map(String).join(" "));
   });
   return lines;
-}
-
-async function everyStoredRow(): Promise<string> {
-  return runInDurableObject(relayObject(env), (_object, state) => {
-    const tables = state.storage.sql
-      .exec<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE '\\_%' ESCAPE '\\'")
-      .toArray();
-    return JSON.stringify(
-      Object.fromEntries(tables.map(({ name }) => [name, state.storage.sql.exec(`SELECT * FROM "${name}"`).toArray()])),
-    );
-  });
 }
 
 describe("the Worker", () => {
@@ -78,7 +68,7 @@ describe("the Worker", () => {
     expect(await everyStoredRow()).not.toContain("42155");
   });
 
-  it("stores and logs nothing of a rider: no position, device, account, push token, IP, user agent or body", async () => {
+  it("stores and logs nothing of a rider: no stop, position, device, account, push token, IP, user agent or body", async () => {
     const prim = fakePrim();
     const lines = captureLogLines();
     const rider = {
@@ -114,8 +104,8 @@ describe("the Worker", () => {
     expect(prim.calls).toHaveLength(1);
     expect([...(prim.calls[0]?.searchParams.keys() ?? [])]).toEqual(["MonitoringRef"]);
     const stored = await everyStoredRow();
-    expect(stored).toContain("STIF:StopArea:SP:42155:");
-    for (const value of [...Object.values(rider), env.APP_TOKEN]) {
+    expect(stored).toContain('"app_calls":1');
+    for (const value of [...Object.values(rider), env.APP_TOKEN, "42155"]) {
       expect(stored, value).not.toContain(value);
       for (const line of lines) {
         expect(line, value).not.toContain(value);
