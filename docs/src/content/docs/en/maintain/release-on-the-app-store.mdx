@@ -270,7 +270,8 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
    make check
    ```
 
-   Among other checks, it fails with a message when the build misses its version, its privacy manifest or its answer on encryption.
+   Among other checks, it builds the Release app and fails with a message when the app has no privacy manifest, no answer on encryption, or a version that is not three numbers such as 1.0.0.
+   It also fails when the code of the app or of its Live Activity calls an API of Apple's list of APIs that need a reason, and the privacy manifest gives no reason for it.
 
 2. Run `make generate`, then open `ios/TROME.xcodeproj` in Xcode.
 
