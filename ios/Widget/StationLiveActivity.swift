@@ -166,6 +166,7 @@ private struct TrainsSummary: View {
             case .noData:
                 Text(noDataOf: state)
                     .font(.subheadline.bold())
+                    .minimumScaleFactor(0.8)
                 if !state.serverIsOut {
                     Text("No train times for this station right now.")
                         .font(.caption)
