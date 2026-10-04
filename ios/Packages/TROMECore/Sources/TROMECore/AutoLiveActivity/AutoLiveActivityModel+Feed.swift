@@ -27,6 +27,12 @@ extension AutoLiveActivityModel {
     func restartFeed(fetchNow: Bool) {
         feedTask?.cancel()
         feedTask = nil
+        if showsExample {
+            feedTask = Task { [weak self] in
+                await self?.keepShowingTheExample()
+            }
+            return
+        }
         guard let station = shownStation, liveActivity.isShowing else { return }
         if appIsActive {
             guard inputs.screenTrains.updatingStationId != station.id else { return }

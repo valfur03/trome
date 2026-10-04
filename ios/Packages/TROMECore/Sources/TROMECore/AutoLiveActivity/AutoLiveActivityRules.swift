@@ -18,6 +18,7 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
         case shown
         case pause
         case openArrivalStationId
+        case exampleStartedAt
     }
 
     public var arrivalStationId: String?
@@ -25,12 +26,14 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
         didSet {
             if shown != nil {
                 openArrivalStationId = nil
+                exampleStartedAt = nil
             }
         }
     }
     public var pendingArrivalStationId: String?
     public var pause: StationPause?
     var openArrivalStationId: String?
+    public var exampleStartedAt: Date?
 
     public init(
         arrivalStationId: String? = nil,
@@ -88,9 +91,14 @@ public struct AutoLiveActivityRules: Sendable {
     }
 
     public let maximumDuration: TimeInterval
+    public let exampleDuration: TimeInterval
 
-    public init(maximumDuration: TimeInterval = Self.defaultMaximumDuration) {
+    public init(
+        maximumDuration: TimeInterval = Self.defaultMaximumDuration,
+        exampleDuration: TimeInterval = Self.defaultExampleDuration
+    ) {
         self.maximumDuration = maximumDuration
+        self.exampleDuration = exampleDuration
     }
 
     static func trusts(

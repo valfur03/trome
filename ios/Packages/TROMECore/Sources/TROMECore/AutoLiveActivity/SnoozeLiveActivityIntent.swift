@@ -18,7 +18,7 @@ public struct SnoozeLiveActivityIntent: LiveActivityIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult {
-        await autoLiveActivity.snooze(for: duration)
+        await autoLiveActivity.snoozeTappedOnTheLockScreen(for: duration)
         return .result()
     }
 }

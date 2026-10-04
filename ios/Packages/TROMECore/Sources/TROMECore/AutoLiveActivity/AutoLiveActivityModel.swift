@@ -14,7 +14,7 @@ public final class AutoLiveActivityModel {
     public internal(set) var cannotFindPosition = false
     public private(set) var hasAskedNotificationQuestion = false
 
-    private let catalog: StationCatalog
+    let catalog: StationCatalog
     let liveActivity: StationLiveActivityModel
     let inputs: Inputs
     let services: Services
@@ -51,6 +51,7 @@ public final class AutoLiveActivityModel {
                 from: state,
                 activitiesAreEnabled: liveActivity.areActivitiesEnabled
             )
+            state.exampleStartedAt = nil
         }
         self.state = state
         stateDidChange(from: AutoLiveActivityState())
@@ -60,6 +61,9 @@ public final class AutoLiveActivityModel {
         observeScreenStation()
         observeAutomaticMode()
         followPositionIfShowing()
+        if showsExample {
+            restartFeed(fetchNow: false)
+        }
     }
 
     deinit {
@@ -83,7 +87,7 @@ public final class AutoLiveActivityModel {
     public func appDidBecomeActive() async {
         guard appIsActive else { return }
         syncWithSystem()
-        if liveActivity.isShowing {
+        if liveActivity.isShowing, !showsExample {
             services.locationKeeper.begin()
         }
         askForNotificationsIfAllowed()
@@ -243,6 +247,7 @@ public final class AutoLiveActivityModel {
 
     func syncWithSystem() {
         liveActivity.syncWithSystem()
+        forgetTheExampleIfRemoved()
         guard !liveActivity.isShowing, let shown = state.shown else { return }
         removedOutsideTheApp = shown
         forgetShownLiveActivity()

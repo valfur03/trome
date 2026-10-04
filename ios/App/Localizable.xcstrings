@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ on the lock screen, with sample times, for %lld minutes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ on the lock screen, with sample times, for %2$lld minutes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur l’écran verrouillé, avec des passages fictifs, pendant %2$lld minutes."
+          }
+        }
+      }
+    },
     "1 hour" : {
       "localizations" : {
         "fr" : {
@@ -291,6 +307,16 @@
         }
       }
     },
+    "On the lock screen: %@ (example)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur l’écran verrouillé : %@ (exemple)"
+          }
+        }
+      }
+    },
     "Open Settings" : {
       "localizations" : {
         "fr" : {
@@ -343,6 +369,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "RER %@"
+          }
+        }
+      }
+    },
+    "See an example" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir un exemple"
           }
         }
       }
@@ -469,6 +505,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’affichage sur l’écran verrouillé n’a pas pu démarrer."
+          }
+        }
+      }
+    },
+    "The real trains of %@ are already on the lock screen." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les vrais passages de %@ sont déjà sur l’écran verrouillé."
           }
         }
       }

@@ -111,7 +111,7 @@ struct AutoLiveActivityModelTests {
     let removals = StubLiveActivityRemovals()
     let permission = StubLocationPermission()
     let provider = StubDeparturesProvider()
-    private let storage = InMemoryKeyValueStore()
+    let storage = InMemoryKeyValueStore()
     let clock = TestClock()
     let locationService: LocationService
     let screenTrains: NextTrainsModel

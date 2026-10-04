@@ -20,6 +20,10 @@ struct LiveActivityStateSection: View {
                 Text("On the lock screen: \(station.name)")
                     .font(.title2.bold())
                     .accessibilityIdentifier("liveActivityStationName")
+            } else if liveActivity.isShowing, autoLiveActivity.showsExample,
+                      let station = autoLiveActivity.exampleStation {
+                Text("On the lock screen: \(station.name) (example)")
+                    .accessibilityIdentifier("liveActivityStationName")
             } else {
                 Label {
                     Text("The Live Activity shows the next trains of the station nearest to you on your lock screen.")
@@ -31,6 +35,7 @@ struct LiveActivityStateSection: View {
                         .font(.title3.weight(.semibold))
                 }
             }
+            ExampleRow()
             LiveActivityStartError()
         }
     }

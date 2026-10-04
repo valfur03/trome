@@ -127,7 +127,10 @@ struct TROMEApp: App {
             ),
             configuration: .init(
                 store: AutoLiveActivityStore(storage: UserDefaults.standard),
-                rules: AutoLiveActivityRules(maximumDuration: liveActivityMaximumDuration())
+                rules: AutoLiveActivityRules(
+                    maximumDuration: liveActivityMaximumDuration(),
+                    exampleDuration: exampleDuration()
+                )
             )
         )
     }
@@ -186,5 +189,15 @@ struct TROMEApp: App {
         }
         #endif
         return AutoLiveActivityRules.defaultMaximumDuration
+    }
+
+    private static func exampleDuration() -> TimeInterval {
+        #if DEBUG
+        let override = UserDefaults.standard.double(forKey: "exampleDuration")
+        if override > 0 {
+            return override
+        }
+        #endif
+        return AutoLiveActivityRules.defaultExampleDuration
     }
 }
