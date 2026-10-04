@@ -54,11 +54,11 @@ When the key reaches 1,000 calls, PRIM answers 429, and the production server ma
 |---|---|---|
 | The production Worker | 800 | The production Worker (`PRIM_DAILY_CAP`; `make server-counts`) |
 | The staging Worker | 60 | The staging Worker (its own `PRIM_DAILY_CAP`) |
-| The Debug builds that hold the key (`make run LIVE=1`, your own tests on the Simulator and on your iPhone) | about 130, together | Nothing in the repo: they call PRIM directly. Only your account on the PRIM site shows the calls of the key for the day. |
-| Margin | 10 | The calls of production from 00:00 to 02:00 in Paris that PRIM counts in its day before (8 at most with this shape) |
-| Total | 990 at most | |
+| The Debug builds that hold the key (`make run LIVE=1`, your own tests on the Simulator and on your iPhone) | about 130, together | Nothing in the repo: they call PRIM directly. Only your account on the PRIM site shows the calls of the day, and it shows the calls of all the rows together. |
+| Total of the shares | 990 at most | |
+| Margin, up to the 1,000 calls of the key | 10 | The production Worker: its calls from 00:00 to 02:00 in Paris fall in the PRIM day before, and its day shape keeps them at 8 at most |
 
-When you change a cap, change this table in the same commit, and keep its total at 990 or less.
+When you change a cap, change this table in the same commit, and keep the total of the shares at 990 or less.
 
 What the server keeps about riders: nothing.
 A request holds only a stop reference and the app token.
