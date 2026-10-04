@@ -24,7 +24,7 @@ What the server does:
   What an hour does not spend goes to the next hour.
   The hours from 00:00 to 02:00 in Paris may spend at most 5% of the cap together (8 calls with this shape), so that a PRIM day that starts at 00:00 UTC still holds less than 1,000 calls: `make server-check` fails on a shape that gives them more.
   For the same reason, the server refuses a cap that these hours of the next Paris day could take above 1,000 calls in one PRIM day (above 990 with this shape), and `make server-check` fails on such a cap in `server/wrangler.jsonc`.
-  The 1,000 calls are those of your PRIM key, and the staging Worker and an app built with the key (`make run LIVE=1`) use the same key: keep the two caps together well under 1,000 (800 and 60 today), not one of them at 990.
+  The 1,000 calls are those of your PRIM key, and the staging Worker and an app built with the key (`make run LIVE=1`) use the same key: keep the caps within their shares of [the day of the PRIM key](#the-day-of-the-prim-key), not one of them at 990.
   With the staging cap of 60, the hours before 03:00 in Paris have no call, and the hours before 06:00 have 2 calls in total: test the staging Worker later in the day.
   The shape is `dayShapePercents` in `server/src/core/config/relay-settings.ts`, and the ages below are in the same file.
   Its source: the open data of Île-de-France Mobilités, dataset "Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)" (`validations-sur-le-reseau-ferre-profils-horaires-par-jour-type-2eme-trimestre`, Licence Ouverte v2.0).
@@ -44,6 +44,21 @@ What the server does:
   After the share of the hour or a 429, this time is the same for every stop, so the server adds 0 to 59 seconds that depend on the stop and on that time: the apps of different stops do not all ask at the same second, the same stops do not ask last every hour, and the riders of one stop still ask together and share one call.
   It never gives an answer older than 5 minutes as times, and never keeps a failed answer or a PRIM error body as times.
 - `GET /health` answers `{"status":"ok"}`, with no token.
+
+<a id="the-day-of-the-prim-key"></a>
+The day of the PRIM key: the key has 1,000 calls a day, and PRIM counts its day in UTC.
+Each user of the key has a share, and the shares add up to 990 at most.
+When the key reaches 1,000 calls, PRIM answers 429, and the production server makes no PRIM call for 1 hour: every rider reads "Times unavailable for now".
+
+| Who calls PRIM with the key | Calls a day | Who counts them |
+|---|---|---|
+| The production Worker | 800 | The production Worker (`PRIM_DAILY_CAP`; `make server-counts`) |
+| The staging Worker | 60 | The staging Worker (its own `PRIM_DAILY_CAP`) |
+| The Debug builds that hold the key (`make run LIVE=1`, your own tests on the Simulator and on your iPhone) | about 130, together | Nothing in the repo: they call PRIM directly. Only your account on the PRIM site shows the calls of the key for the day. |
+| Margin | 10 | The calls of production from 00:00 to 02:00 in Paris that PRIM counts in its day before (8 at most with this shape) |
+| Total | 990 at most | |
+
+When you change a cap, change this table in the same commit, and keep its total at 990 or less.
 
 What the server keeps about riders: nothing.
 A request holds only a stop reference and the app token.
