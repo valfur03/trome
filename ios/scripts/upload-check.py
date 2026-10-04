@@ -175,8 +175,8 @@ def used_categories(executable):
     return used
 
 
-def check_required_reasons(bundle, declared, has_manifest):
-    executable_name = read_plist(bundle / "Info.plist").get("CFBundleExecutable", "")
+def check_required_reasons(bundle, info, declared, has_manifest):
+    executable_name = info.get("CFBundleExecutable", "")
     executable = bundle / executable_name
     if not executable_name or not executable.is_file():
         return [f"{bundle.name}: the executable {executable_name!r} is missing"]
@@ -217,7 +217,7 @@ def check_bundle(bundle, app_version, is_app):
             f"{bundle.name}: the app has no privacy manifest ({MANIFEST} at the top of the app); "
             "Apple refuses an upload without it"
         )
-    problems += check_required_reasons(bundle, declared, manifest_path.is_file())
+    problems += check_required_reasons(bundle, info, declared, manifest_path.is_file())
     return problems
 
 
