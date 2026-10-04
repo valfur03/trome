@@ -26,7 +26,7 @@ decision-6 (section 10) explains these rules and their sources. Follow them in e
 - **Access control.** In `TROMECore`, only what the app or the widget uses is `public`. The rest stays `internal`. Tests use `@testable import TROMECore`.
 - **Files.** A file holds one main type and has its name. Small types that exist only for it (its state, its error, the protocol of its dependency) may stay in the same file. An extension that adds a topic goes in `Type+Topic.swift`. Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
 - **Tests.** Unit tests: `ios/Packages/TROMECore/Tests/TROMECoreTests/<Feature>/<Type>Tests.swift`. The recorded PRIM answers are in `contracts/prim/`, shared with the server tests (`Fixture.data(_:)` reads them). E2E tests: `ios/UITests/`, one file per seam with iOS (see "Test levels"). Tests of the scripts: `ios/scripts/tests/<name>-test.sh` (`make test-scripts`, with a fake `xcrun` for the Simulator scripts). Docs screenshots: `ios/DocsScreenshots/`. The render check of the Live Activity views: `ios/RenderCheck/`. Code that needs a unit test goes in `TROMECore`.
-- **No warnings.** `make check` fails on any build warning and when a newer Xcode may recommend new project settings (`ios/README.md`, section "Fix every warning"). Fix the cause. Never silence a warning, and never raise `options.xcodeVersion` in `ios/project.yml` without adding the settings that Xcode proposes. An agent cannot open that Xcode dialog: when `make recommended-settings-check` fails, ask the prompter (label `needs-prompter`).
+- **No warnings.** `make check` fails on any build warning and when a newer Xcode may recommend new project settings (`ios/README.md`, section "Before you commit"; `make recommended-settings-check` prints the steps for new settings). Fix the cause. Never silence a warning, and never raise `options.xcodeVersion` in `ios/project.yml` without adding the settings that Xcode proposes. An agent cannot open that Xcode dialog: when `make recommended-settings-check` fails, ask the prompter (label `needs-prompter`).
 - **New module.** Add a target in `ios/Packages/` only when it solves a real problem (code that must not see the rest, code shared with a new target, build time). Deeper changes that these rules call for are `tech` tasks.
 
 ## Budget for this repo
@@ -191,7 +191,7 @@ All worktrees share the compiled modules of the iOS SDK, in `~/Library/Caches/RA
 
 ## The git hooks
 
-`ios/scripts/git-hooks/` creates the Xcode project again after a `git pull`, a checkout, a merge or a rebase in the main folder (`ios/README.md`, section "Let git update the project for you"). The prompter turns them on with `make git-hooks`.
+`ios/scripts/git-hooks/` creates the Xcode project again after a `git pull`, a checkout, a merge or a rebase in the main folder (`ios/README.md`, section "Keep the Xcode project up to date"). The prompter turns them on with `make git-hooks`.
 
 - **Never run `make git-hooks` or `make git-hooks-off`.** They change `core.hooksPath` in the git config, and all the worktrees share it with the prompter's main folder. Only the prompter turns the hooks on or off. In a test, use a repo of your own (as `ios/scripts/tests/git-hooks-test.sh` does).
 - The hooks do nothing in a worktree of an agent. The `make` commands create the project there.
@@ -221,7 +221,7 @@ decision-6 (sections 2, 3 and 6) and decision-40 explain these rules. The review
 
 ## The server (`server/`)
 
-`server/README.md` explains the server and its commands.
+`server/README.md` explains the server and its commands; `server/guide/how-it-works.md` its API and its quota, and `server/guide/deploy.md` the deploy and the secrets.
 
 - **Node 24.** Run the server commands like this: `. "$HOME/.nvm/nvm.sh" && nvm use && make server-check`. The same goes for `make check` when your task changes `server/` or `contracts/`: `make check` runs `make server-check` only then, so the app tasks never install `server/node_modules` (about 300 MB).
 - **Use your own port.** `make server-dev` uses 8787 in the main folder only (the prompter's), 8787 plus the number at the end of the folder name in a worktree (8974 in `task-187`), and a port from 9800 to 9899 in a worktree whose name ends with no number (for example `qa`). Run it in the background, and stop it with `make server-stop` as soon as your check is done, and before your job ends.

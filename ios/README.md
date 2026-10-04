@@ -1,250 +1,69 @@
 # Build, run and test the iPhone app
 
-This page takes you from a clone of TROME to the app running in the iPhone Simulator, and then to a change that passes the checks.
-It is for a developer who wants to fix or change the app: [CONTRIBUTING.md](../CONTRIBUTING.md) says how to propose a change, and the front page, [README.md](../README.md), says what TROME is.
-Run every `make` command from the root of the repo; the paths on this page start there too.
+This folder holds the iPhone app of TROME, its Live Activity, and their tests.
+This page gets you from a clone to the app in the Simulator, and to a change that passes the checks; [CONTRIBUTING.md](../CONTRIBUTING.md) says how to propose one.
+Run every `make` command from the root of the repo.
 
-## What you need
+## Set up and run the app
 
-- A Mac with Xcode 27, the version that the project is built and tested with, and its iOS Simulator.
-  If you have several versions of Xcode, select this one with `sudo xcode-select --switch /Applications/Xcode.app` (the path of your Xcode 27).
-- [Homebrew](https://brew.sh), which installs the other tools.
-- Node 24, only to work on the [docs site](../docs/README.md) or the [server](../server/README.md).
+You need a Mac with Xcode 27 and its iOS Simulator (select it with `xcode-select` if you have several versions), and [Homebrew](https://brew.sh).
+Then, in your clone:
 
-You need no Apple ID for the Simulator.
-To put the app on your own iPhone, you also need a free Apple ID and a USB cable: see [Install on your iPhone](#install-on-your-iphone-free-apple-id).
+```sh
+make setup
+make run
+```
 
-The app runs on iOS 18 or later, and its code uses the Swift 6 language mode.
+`make setup` installs XcodeGen, SwiftLint and pngquant, and creates the Xcode project, `ios/TROME.xcodeproj`.
+`make run` builds the app and opens it in the Simulator.
+The first build takes several minutes: it compiles the modules of the iOS SDK once, into a cache that all your clones share.
 
-## From a clone to the app in the Simulator
-
-1. Fork the repo on GitHub, clone your fork, and open Terminal in its folder.
-2. Install the tools and create the Xcode project:
-
-   ```sh
-   make setup
-   ```
-
-   It installs XcodeGen, SwiftLint and pngquant with Homebrew when they are missing, then creates the Xcode project, `ios/TROME.xcodeproj`.
-3. Build the app and open it in the Simulator:
-
-   ```sh
-   make run
-   ```
-
-   The first build can take several minutes, because it also compiles the modules of the iOS SDK, once for your Mac ([Where the builds go](#where-the-builds-go)).
-   The first run also creates an iPhone 17 Simulator named `RATP-Shared`, which every clone of the repo on your Mac shares.
-   If Xcode has no iOS Simulator yet, `make run` stops and tells you to install one with `xcodebuild -downloadPlatform iOS`.
-
-The app opens in the Simulator and asks for your location.
-It shows no train times, because a build of `make run` has no train data key: to see live trains, get a free key from PRIM, the train data service of Île-de-France Mobilités, as [The train data key (PRIM)](#the-train-data-key-prim) shows.
-To try the app at a station without going there, tap **Testing tools** at the top right of the app, which only debug builds such as this one have, and pick a fake position ([Fake your position](#fake-your-position-testing-tools)).
-
-You can also build and run from Xcode: see [Run the app from Xcode](#run-the-app-from-xcode).
-Change the settings of the project in `ios/project.yml`, not in Xcode, because `make` creates the project again from that file ([Keep the Xcode project up to date](#keep-the-xcode-project-up-to-date)).
-When your change is ready, run `make check` before you commit it ([When make check fails](#when-make-check-fails)), and the tests that it needs ([Test your change](#test-your-change)).
+The app shows no real train times until you add your own free key ([The train data key (PRIM)](#the-train-data-key-prim)), but it can show [fake trains](#test-it-with-a-fake-position).
+To try it at a station without going there, tap **Testing tools** at the top right, and pick a fake position.
+To put the app on your own iPhone, see [Install on your iPhone](#install-on-your-iphone-free-apple-id).
 
 ## The commands you use every day
 
 | Command | What it does |
 |---|---|
-| `make run` | Builds the app and opens it in the Simulator. |
+| `make run` | Builds the app and opens it in the Simulator. Add `SMALL=1` for the smallest iPhone (an iPhone SE), or `LANGUAGE=fr` for a Simulator in French. |
 | `make test` | Runs the unit tests on your Mac, with no Simulator. |
-| `make e2e ONLY=<class>` | Runs one class of end-to-end tests in the Simulator; with no `ONLY`, it runs them all. |
-| `make strings-sync` | Adds the texts of the code to the String Catalogs, where you write their French text ([Languages](#languages)). |
-| `make check` | Runs every check of a change that needs no Simulator: run it before each commit ([When make check fails](#when-make-check-fails)). The end-to-end tests are apart: [which ones to run](guide/tests.md#pick-the-cheapest-test-that-can-catch-the-bug). |
-| `make simulator-shutdown` | Removes the app from the Simulator, and lets the other folders of the repo use it. |
+| `make e2e ONLY=<class>` | Runs one class of end-to-end tests in the Simulator; with no `ONLY`, all of them. |
+| `make strings-sync` | Adds the new texts of the code to the String Catalogs, where you write their French text ([Languages](#languages)). |
+| `make check` | Runs the checks of a change that need no Simulator: run it before each commit. |
+| `make simulator-shutdown` | Removes the app from the Simulator, and frees it for your other clones. |
 
-`make help` lists every command of the repo, each with one line: it is the one full list.
+`make help` lists every command.
 
-## Work in the Simulator
+## One Simulator for all your clones
 
-### One Simulator job at a time
+The `make` commands run the app on one shared Simulator, `RATP-Shared`, and only one of them uses it at a time, in any clone or git worktree of the repo.
+A second command waits, and prints `Waiting for the Simulator lock`: let it wait.
+After `make run`, the Simulator stays with your folder until you run `make simulator-shutdown`.
+Before it installs the app, each command removes the app and its data, and resets the permissions, the text size, the appearance and the language of the Simulator.
+In your own `xcrun simctl` commands, use the ID that `make -s simulator` prints.
 
-`make run`, `make e2e`, `make docs-screenshots` and `make live-activity-render` all use one shared Simulator, and only one of them runs at a time on your Mac, whichever clone or git worktree of the repo it runs in.
-With a single clone, you see this only when you start a job while another one runs.
-A second job waits, and prints `Waiting for the Simulator lock`, with the folder that holds it: let it wait, and do not delete the lock.
-The wait ends when the first job ends; after a `make run`, it ends when its folder runs `make simulator-shutdown` or is deleted.
-Two Simulators at once would take the whole processor of a laptop, so the commands never boot a second one.
-For the same reason, do not boot a shared Simulator by hand or from Xcode while a job runs: the job shuts it down within about 10 seconds.
-
-After `make run`, the Simulator stays with your folder, so that you can check the app by hand or run `make e2e` from the same folder.
-When you are done, free it for the other folders:
-
-```sh
-make simulator-shutdown
-```
-
-Despite its name, it only removes the app: the Simulator shuts down by itself after 5 minutes with no job.
-`make e2e` and the other jobs free the Simulator by themselves when they end.
-
-In your own `xcrun simctl` commands, use the ID that `make simulator` prints, for example `xcrun simctl ui "$(make -s simulator)" appearance dark`.
-To delete the shared Simulators, run `make simulator-delete`: it waits until no job runs, and the next job creates them again.
-
-### What each job resets
-
-Before it installs the app of your folder, each job resets the Simulator, so that it never sees what another folder or an earlier check left behind:
-
-- it removes the app, its data and the settings it saved, and the small app of the render check;
-- it resets the permissions, so that the app asks for them again;
-- it sets the text size back to Large and the appearance back to Light, the iOS defaults;
-- it restarts the home screen and the location service, and clears the fake position of the Simulator;
-- it sets the language (English, unless you ask for French), distances in metres, and the clock of the language: 12-hour in English, 24-hour in French.
-
-`make e2e` then allows the location **While Using the App** before the tests start ([how the tests answer the popups](guide/tests.md#write-one)).
-
-To check dark mode or another text size after `make run`, change the setting of the Simulator, for example `xcrun simctl ui "$(make -s simulator)" content_size accessibility-extra-extra-extra-large` (`xcrun simctl ui --help` lists the sizes).
-The next job sets it back, so run the command again after each `make run`.
-
-### The first job after the Simulator starts waits longer
-
-After the Simulator boots, iOS first does its own start-up work, which can take a few minutes on a busy Mac:
-
-- Until the widget host of iOS has done the work it queued at boot, a Live Activity shows nowhere.
-  So `make run`, `make e2e` and `make docs-screenshots` wait for it, at most 4 minutes, then go on; while they wait, they print `Waiting for the widget host of the Simulator`.
-  `RATP_WIDGET_HOST_WAIT_SECONDS` changes this limit.
-- Until the notification service answers, the app shows no notification question.
-  The end-to-end tests and the docs pictures wait for it, at most 4 minutes, but `make run` does not, so after a cold start the question can come a few minutes late.
-
-### Check the smallest iPhone
-
-To check a screen on the smallest iPhone that the app supports, run:
-
-```sh
-make run SMALL=1
-```
-
-It opens the app on a second shared Simulator, `RATP-Shared-Small`: an iPhone SE (3rd generation), 375 x 667 points, the narrowest and the shortest screen.
-`RATP-Shared` is an iPhone 17, 402 x 874 points.
-Only one of the two is booted at a time, so each change of size waits for the other Simulator to start.
-`LIVE=1` works with `SMALL=1`, but `SMALL=1` works only with `make run`: the tests and the docs pictures always use `RATP-Shared`.
-
-### Run the app from Xcode
-
-You can also open `ios/TROME.xcodeproj` in Xcode and click **Run**.
-Pick a Simulator of your own, not `RATP-Shared` or `RATP-Shared-Small`: the `make` commands shut those down when no job uses them, even with your app open.
-Keep one Simulator running at a time, as the `make` commands do.
-So, before you click **Run**, free the shared Simulator and shut it down:
-
-```sh
-make simulator-shutdown
-xcrun simctl shutdown "$(make -s simulator)"
-```
-
-When the shared Simulator is already shut down, the second command prints an error: you can ignore it.
-Quit your own Simulator before your next `make` job.
-
-### See the app in French
-
-The app follows the language of the phone: French when the phone is in French, English otherwise ([Languages](#languages)).
-`make run` puts the whole Simulator in English: the app, the Live Activity, the notifications and the permission popups.
-To see it all in French (language French, region France), run:
-
-```sh
-make run LANGUAGE=fr
-```
-
-To switch the language of the open app, run `make switch-language LANGUAGE=en` (or `LANGUAGE=fr`) after `make run`, also after `make run SMALL=1`.
-It restarts the home screen and opens the app again, with its data and its permissions, so you do not set it up again.
-A notification that the app sent before the switch keeps its old language.
-`make e2e` and `make docs-screenshots` always put the Simulator back in English, because the tests and the pictures of the app screens are in English.
+To run the app from Xcode instead, pick a Simulator of your own, because the `make` commands shut the shared ones down when no command uses them.
+Free and shut down the shared one first, so that only one Simulator runs: `make simulator-shutdown`, then `xcrun simctl shutdown "$(make -s simulator)"`.
 
 ## Keep the Xcode project up to date
 
-The Xcode project is not in git: XcodeGen makes it from `ios/project.yml`.
-The `make` commands update it before they build, but the **Run** button of Xcode does not.
-With an old project, a build in Xcode fails with "Build input file cannot be found" or "Cannot find ... in scope", because the project still lists files that are gone, and misses the new ones.
-So, before you build in Xcode, run this after each `git pull` or change of branch, and after a change to `ios/project.yml` or `ios/Config/`:
+The Xcode project is not in git: XcodeGen makes it from `ios/project.yml`, so change the settings there, not in Xcode.
+The `make` commands update the project before they build, but the **Run** button of Xcode does not, and an old project fails with "Build input file cannot be found".
+So run `make generate` after each `git pull` or change of branch, or run `make git-hooks` once, and git does it for you.
 
-```sh
-make generate
-```
+## Before you commit
 
-When Xcode is open, it loads the new project by itself.
+Run `make check`.
+It runs the lint, the checks of the texts, the build, the unit tests and the tests of the scripts, and stops at the first failure, with a message that says what to do.
+The build accepts no warning: fix its cause, and never silence it.
+When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks them too, with Node 24.
 
-### Let git update the project for you
-
-Run this once in your clone:
-
-```sh
-make git-hooks
-```
-
-It turns on the git hooks of the repo, in `ios/scripts/git-hooks/`, by setting `core.hooksPath` in the git config of your clone.
-After that, each `git pull`, `git checkout`, `git switch`, `git merge` or `git rebase` in the main folder of your clone creates the Xcode project again, when the code or `ios/project.yml` changed.
-
-- The hooks change only the Xcode project and its cache in `ios/.build/`, which git ignores, so your folder stays clean.
-- They do nothing in the other git worktrees of your clone, where the `make` commands update the project before each build.
-- A hook never stops the git command: when XcodeGen fails, it prints a warning, and you run `make generate` before you build in Xcode.
-- `make git-hooks` refuses to start when your clone already uses other git hooks, because git runs only one hooks folder.
-- `git reset --hard` runs no hook, so run `make generate` after it.
-
-To turn the hooks off, run `make git-hooks-off`, then run `make generate` again after each `git pull`.
-
-## Where the builds go
-
-Each folder of the repo, a clone or a git worktree, builds into its own `ios/.build/`, so several folders can build and run their unit tests at the same time.
-`make build` builds only for the processor of your Mac and makes no code index, which makes it faster; Xcode makes its own index when you open the project.
-
-All the folders share the compiled modules of the iOS SDK, such as SwiftUI and UIKit, in `~/Library/Caches/RATPActivity/`, so the first build of a new worktree does not compile them again.
-This cache holds no code of the app, and it grows only when the SDK or the compiler flags change, for example after an update of Xcode.
-`make build LIVE=1` does not use it, so a build with your key stays in its own folder, and `make live-key-check` fails if the cache ever holds a key.
-To use another folder for the cache, add `RATP_SHARED_CACHE=<folder>` to the `make` command.
-
-- `make clean` deletes `ios/.build/` and the Xcode project of your folder.
-- `make clean-shared-cache` deletes the shared cache: it waits for the builds that use it, and new builds wait until it is done, so it never breaks a build of another folder.
-
-## When make check fails
-
-`make check` runs the checks of a change in this order, and stops at the first one that fails, with a message that says what is wrong:
-
-| Check | It fails when | More |
-|---|---|---|
-| `make lint` | SwiftLint finds a problem; `make lint-fix` fixes the ones that it can | |
-| `make prose-check` | a line of text in a Markdown or MDX file is longer than 400 characters | [one sentence per line](../docs/README.md#write-one-sentence-per-line) |
-| `make public-text-check` | a file names a task of the maintainer's private task list, uses a word of the maintainer's own way of working, or has a personal email address, a path of your Mac, or the old name of the app | the message names the file and the line |
-| `make bundle-id-check` | a Debug build could carry the App Store bundle ID, or a Release build is signed automatically | [Install on your iPhone](#install-on-your-iphone-free-apple-id) |
-| `make recommended-settings-check` | your Xcode is newer than the one that last checked the project settings | [Xcode recommends new settings](#xcode-recommends-new-settings) |
-| `make live-key-check` | a build with `LIVE=1` shows the train data key in its output or keeps an old key, or a Release build holds the key; it uses fake keys, so it needs none of yours | [The train data key (PRIM)](#the-train-data-key-prim) |
-| `make build` | the build of the app has a warning | [Fix every warning](#fix-every-warning) |
-| `make strings-check` | a text has no French text or is no longer in the code, or a build in Xcode would change a String Catalog; run `make strings-sync`, then write the missing French texts | [Languages](#languages) |
-| `make test` | a unit test fails | [the tests](guide/tests.md#unit-tests) |
-| `make test-scripts` | a test of a script fails | [the tests](guide/tests.md#script-tests) |
-
-When your branch changes `docs/` (compared with your `main` branch), `make check` also builds the docs site ([Write the docs](../docs/README.md)), and when it changes `server/` or `contracts/`, it also runs the checks of the server ([server/README.md](../server/README.md)).
-Both need Node 24.
-To run one check alone, run its command, for example `make strings-check`.
-
-### Fix every warning
-
-The build allows no warning, so fix its cause, and never silence it.
-The command line builds (`make build`, `make e2e`, `make docs-screenshots`) and `make test` treat each compiler warning as an error.
-After the build, `ios/scripts/build-warnings.py` fails on any other warning that Xcode reports, for example from the linker or the asset catalog.
-The **Run** button of Xcode does not treat warnings as errors, so you can try code that is not finished yet.
-
-### Xcode recommends new settings
-
-A new version of Xcode can recommend new project settings, and shows the warning "Update to recommended settings".
-`options.xcodeVersion` in `ios/project.yml` names the Xcode version that last checked them, and `make recommended-settings-check` fails when your Xcode is newer, except for a bug-fix release such as 27.0.1.
-To fix it:
-
-1. Open `ios/TROME.xcodeproj` in Xcode, and click the warning.
-2. Add each setting that Xcode proposes to `ios/project.yml`.
-   Do not click **Perform Changes**: the Xcode project is not in git, and `make generate` would undo it.
-3. Set `options.xcodeVersion` to your Xcode version, and run `make generate`.
-
-Put this change in a commit of its own, so that the review can read it apart from your fix.
-
-## Test your change
-
-Pick the cheapest test that can catch a bug in your change: a unit test for a rule, an end-to-end test where the app meets iOS.
-[Test a change to the iPhone app](guide/tests.md) shows which one, how to run it, and how to write one.
+`make check` runs no end-to-end test: [Test a change to the iPhone app](guide/tests.md) says which tests your change needs, and how to write one.
 
 ## The guides
 
-Each guide in `ios/guide/` explains one part of the app for a developer who changes it:
-
-- [tests.md](guide/tests.md): the unit tests, the end-to-end tests and what each one guards, the script tests, and what to do about a test that fails only sometimes.
+- [tests.md](guide/tests.md): which test a change needs, how to run it and how to write one.
 
 ## How each feature works
 
