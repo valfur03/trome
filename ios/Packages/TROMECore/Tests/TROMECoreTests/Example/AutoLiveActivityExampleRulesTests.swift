@@ -49,7 +49,9 @@ struct AutoLiveActivityExampleRulesTests {
 
     @Test(arguments: [600.0, 3_600])
     func theExampleEndsByItselfAfterTenMinutes(startedSecondsAgo seconds: TimeInterval) {
-        let decision = rules.checkTheExample(state: showingTheExample(startedSecondsAgo: seconds), isShowing: true, now: now)
+        let state = showingTheExample(startedSecondsAgo: seconds)
+
+        let decision = rules.checkTheExample(state: state, isShowing: true, now: now)
 
         #expect(decision.actions == [.end])
         #expect(decision.state.exampleStartedAt == nil)
@@ -116,6 +118,8 @@ struct AutoLiveActivityExampleRulesTests {
         let state = showingTheExample()
         let data = try JSONEncoder().encode(state)
 
-        #expect(try JSONDecoder().decode(AutoLiveActivityState.self, from: data).exampleStartedAt == state.exampleStartedAt)
+        let decoded = try JSONDecoder().decode(AutoLiveActivityState.self, from: data)
+
+        #expect(decoded.exampleStartedAt == state.exampleStartedAt)
     }
 }

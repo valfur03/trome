@@ -41,7 +41,8 @@ struct ExampleRow: View {
         if let station = realTrainsStation {
             return Text("The real trains of \(station.name) are already on the lock screen.")
         }
+        let name = autoLiveActivity.exampleStation?.name ?? ""
         let minutes = Int(AutoLiveActivityRules.defaultExampleDuration / 60)
-        return Text("\(autoLiveActivity.exampleStation?.name ?? "") on the lock screen, with sample times, for \(minutes) minutes.")
+        return Text("\(name) on the lock screen, with sample times, for \(minutes) minutes.")
     }
 }

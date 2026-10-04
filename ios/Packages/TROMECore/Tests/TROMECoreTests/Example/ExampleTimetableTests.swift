@@ -14,7 +14,10 @@ struct ExampleTimetableTests {
         hub = catalog.hubStations(of: chatelet)
     }
 
-    private func content(after seconds: TimeInterval, firstLineIndex: Int = 0) -> StationActivityAttributes.ContentState {
+    private func content(
+        after seconds: TimeInterval,
+        firstLineIndex: Int = 0
+    ) -> StationActivityAttributes.ContentState {
         let now = start.addingTimeInterval(seconds)
         let trains = ExampleTimetable(start: start).trains(at: hub, now: now)
         return StationActivityAttributes.ContentState(

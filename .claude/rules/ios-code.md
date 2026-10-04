@@ -28,7 +28,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   Foundation types that run on the Mac (`URLSession`, `UserDefaults`) may conform inside `TROMECore`.
 - **One composition root.** `ios/App/TROMEApp.swift` makes the models and the adapters and gives them to the views.
   No singletons of our own, no global state.
-- **Folders by feature, with the same names everywhere.** `ios/App/`, `ios/Packages/TROMECore/Sources/TROMECore/` and `ios/Packages/TROMECore/Tests/TROMECoreTests/` use the same feature folders: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`.
+- **Folders by feature, with the same names everywhere.** `ios/App/`, `ios/Packages/TROMECore/Sources/TROMECore/` and `ios/Packages/TROMECore/Tests/TROMECoreTests/` use the same feature folders: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`, `Example`.
   The app also has `AppName`, `Permissions`, `About`, `NightLook` (the look of the main screen: its palette, its cards, pills and buttons) and `TestingTools`, and the package has `Logging` (the one name of the log, `Logger.subsystem`).
   New code goes in the folder of its feature.
   A new feature gets a new folder in each module where it has code.
