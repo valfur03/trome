@@ -39,7 +39,7 @@ if [ -n "$missing" ]; then
     exit 1
 fi
 
-if ! ./node_modules/.bin/wrangler deploy "$env_flag"; then
+if ! ./node_modules/.bin/wrangler deploy "$env_flag" --config wrangler.jsonc; then
     echo "The deploy failed. If wrangler says that required secrets have not been set, run '$secrets_command' first, then deploy again." >&2
     echo "$never_a_file" >&2
     exit 1

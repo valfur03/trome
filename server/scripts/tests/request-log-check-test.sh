@@ -44,6 +44,15 @@ for part in logs traces issues; do
     expect "the message names observability.$part" "$(grep -c "^  observability.$part.enabled must not be true" "$state/out")" "1"
 done
 
+for part in logs traces; do
+    config="{ \"observability\": { \"enabled\": false, \"$part\": { \"destinations\": [\"otel\"] } } }"
+    expect "observability.$part sent to a destination fails" "$(check "$config")" "fails"
+    expect "the message names observability.$part.destinations" "$(grep -c "^  observability.$part.destinations must be empty" "$state/out")" "1"
+done
+
+config='{ "observability": { "enabled": false, "logs": { "destinations": [] } } }'
+expect "an empty list of destinations passes" "$(check "$config")" "passes"
+
 config="{ $off, \"env\": { \"staging\": { $on } } }"
 expect "Workers Logs on in staging only fails" "$(check "$config")" "fails"
 expect "the message names staging" "$(grep -c '^  env.staging.observability.enabled must be false' "$state/out")" "1"

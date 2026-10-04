@@ -82,11 +82,11 @@ That log holds the request URL, so the stop (`/v1/stops/<stop>/departures`), and
 Turning off only that log (`"invocation_logs": false`) is not enough: Cloudflare still gives each line that the server writes the URL of its request.
 **If you turn Workers Logs on, the App Store label and the privacy policy are false for each day that Cloudflare keeps them, for every rider of those days: so never turn them on, not even to find a problem.**
 Never turn them on in the Cloudflare dashboard either, on the Observability page of a Worker.
-`make server-check`, and so both deploy commands, fails when `server/wrangler.jsonc` turns on Workers Logs, traces, Logpush or a Tail Worker, as each of them keeps or sends the request URL.
+`make server-check`, and so both deploy commands, fails when `server/wrangler.jsonc` turns on Workers Logs, traces, an export of them to another service, Logpush or a Tail Worker, as each of them keeps or sends the request URL.
 
 To find a problem, use these ways, which keep nothing at Cloudflare:
 
 - `make server-counts` and its `errorLines` ([Read the counts](#read-the-counts)): the failed PRIM calls of the last 7 days, with their time, kind and HTTP status.
-- `npx wrangler tail` in `server/`, after `make server-login`: it shows each request and the lines of the server live, and Cloudflare keeps none of it.
+- `npx wrangler tail` in `server/` (`npx wrangler tail --env staging` for the staging Worker), after `make server-login`: it shows each request and the lines of the server live, and Cloudflare keeps none of it.
   It shows the request URL, so the stop, on your screen: never save its output in a file, and stop it as soon as you have seen the problem.
 - A test that makes the failure again: the tests fake PRIM with recorded answers (`contracts/prim/`), so a new test can play the answer that failed, with no rider and no PRIM call ([server/README.md](../README.md)).

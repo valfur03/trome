@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 type Block = Record<string, unknown>;
 
-const configPath = process.argv[2] ?? new URL("../wrangler.jsonc", import.meta.url).pathname;
+const configPath = process.argv[2] ?? fileURLToPath(new URL("../wrangler.jsonc", import.meta.url));
 
 function isBlock(value: unknown): value is Block {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -13,9 +14,19 @@ function observabilityProblems(place: string, observability: unknown): string[] 
   if (!isBlock(observability) || observability.enabled !== false) {
     return [`${place}observability.enabled must be false: with true, or with no value, Cloudflare turns Workers Logs on.`];
   }
-  return Object.entries(observability)
-    .filter(([, part]) => isBlock(part) && part.enabled === true)
-    .map(([name]) => `${place}observability.${name}.enabled must not be true: it keeps each request at Cloudflare.`);
+  return Object.entries(observability).flatMap(([name, part]) => {
+    if (!isBlock(part)) {
+      return [];
+    }
+    const problems: string[] = [];
+    if (part.enabled === true) {
+      problems.push(`${place}observability.${name}.enabled must not be true: it keeps each request at Cloudflare.`);
+    }
+    if (Array.isArray(part.destinations) && part.destinations.length > 0) {
+      problems.push(`${place}observability.${name}.destinations must be empty: it sends each request, with its URL, to another service.`);
+    }
+    return problems;
+  });
 }
 
 function workerProblems(place: string, worker: Block): string[] {
