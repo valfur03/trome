@@ -29,7 +29,7 @@ export function pagesWithoutTwin(paths: string[]): string[] {
 // The components that mark a page as not ready: a fact still to fill in, or a part still to check.
 const draftMarks = ['<Placeholder', '<Unverified'];
 
-// The pages that show a draft mark but no draft notice, so that nobody puts them online by mistake.
+// The pages that show a draft mark but no draft notice, so that no reader takes a draft for a final page.
 export function draftsWithoutNotice(pages: { path: string; text: string }[]): string[] {
   return pages
     .filter(({ text }) => draftMarks.some((mark) => text.includes(mark)) && !text.includes('<DraftNotice'))

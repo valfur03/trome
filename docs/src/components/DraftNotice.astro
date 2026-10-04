@@ -1,21 +1,19 @@
 ---
 import { Aside } from '@astrojs/starlight/components';
 
-// Put this notice at the top of a page that is not signed off yet.
-// The publish step of the site must refuse a page that still has it.
+// Put this notice at the top of a page that is not final yet.
+// It tells the reader that the page is a draft and that its text can change.
 const french = Astro.locals.starlightRoute.lang.startsWith('fr');
 ---
 
 {
   french ? (
     <Aside type="caution" title="Brouillon">
-      Cette page n’est pas encore validée, et les passages surlignés restent à compléter ou à vérifier.
-      Elle ne doit pas être mise en ligne dans cet état.
+      Cette page est un brouillon. Les passages surlignés restent à compléter ou à vérifier, et le texte peut changer.
     </Aside>
   ) : (
     <Aside type="caution" title="Draft">
-      This page is not signed off yet, and the highlighted parts are still to fill in or to check.
-      It must not go online like this.
+      This page is a draft. The highlighted parts are still to fill in or to check, and the text can change.
     </Aside>
   )
 }

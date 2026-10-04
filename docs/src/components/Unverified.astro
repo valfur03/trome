@@ -6,7 +6,7 @@ const french = Astro.locals.starlightRoute.lang.startsWith('fr');
 ---
 
 <p class="unverified">
-  <strong>{french ? 'À vérifier avant la mise en ligne :' : 'To check before this page goes online:'}</strong>{' '}
+  <strong>{french ? 'À vérifier :' : 'To check:'}</strong>{' '}
   <slot />
 </p>
 

@@ -90,8 +90,8 @@ On a phone, Starlight puts the language menu inside the menu of the sidebar, so 
 | [`Screenshot`](src/components/Screenshot.astro) | one picture of the app |
 | [`Screenshots`](src/components/Screenshots.astro) | pictures side by side, each in its own `Screenshot` |
 | [`Placeholder`](src/components/Placeholder.astro) | a fact that the page still waits for, such as a contact address: `<Placeholder>contact address</Placeholder>` shows it highlighted, between brackets |
-| [`Unverified`](src/components/Unverified.astro) | at the top of a part that states something nobody could check yet, such as a feature that is not built: `<Unverified>what is left to check</Unverified>` shows it highlighted, with "To check before this page goes online" in the language of the page |
-| [`DraftNotice`](src/components/DraftNotice.astro) | at the top of a page that is not signed off yet: it says, in the language of the page, that the page must not go online; a page with a `Placeholder` or an `Unverified` must have it, and `make docs-check` fails when it does not |
+| [`Unverified`](src/components/Unverified.astro) | at the top of a part that states something nobody could check yet, such as a feature that is not built: `<Unverified>what is left to check</Unverified>` shows it highlighted, with "To check" in the language of the page |
+| [`DraftNotice`](src/components/DraftNotice.astro) | at the top of a page that is not final yet: it says, in the language of the page, that the page is a draft and that its text can change; a page with a `Placeholder` or an `Unverified` must have it, and `make docs-check` fails when it does not |
 
 Give each `Checklist` its own `id`: the browser saves the ticks of the reader under it.
 Show a picture of the app only with `Screenshot`, never with a Markdown image or the `Image` component of Astro.
