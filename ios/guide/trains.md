@@ -45,6 +45,12 @@ In the background, a Live Activity still costs its calls every 30 seconds to 2 m
 
 In the background, the app asks only while iOS keeps it running.
 It stops asking when PRIM refuses the key or says that the quota is used up, in a debug build, or when the server refuses the app token, in a release build.
+When the server cannot ask PRIM for a stop, it answers 503 with `"out"` and the time when it asks PRIM again.
+The app then makes no call for that stop before that time, also when you open the app or the Live Activity switches station, and asks once at that time.
+When the server is still out, the app waits for the new time; when times come back, it shows them at once.
+It counts that time from the `Retry-After` delay of the answer, not from the clock of the phone, and waits at least 30 seconds, so a phone with a wrong clock never asks again and again.
+A debug build calls PRIM directly and never gets this answer: only the fake trains `server-out` and `server-out-tomorrow` give it ([the states of the fake trains](testing-tools.md#ask-for-a-train-at-the-platform-or-another-state)).
+When the server is out because PRIM failed (`"prim-failure"`, a minute), the app waits the same way but keeps the usual words below: that cause is not the budget of the app.
 It asks again when the Live Activity switches station or the app comes back to the screen.
 Any other failure, such as no network or a time-out, fails this call only.
 
@@ -55,6 +61,7 @@ Any other failure, such as no network or a time-out, fails this call only.
 | Train times | The same times, still counting down; once the first train has left, iOS shows **Open the app for new times.** |
 | **No trains** | **No data available**, because **No trains** never gets old on its own |
 | No times yet | **No data available** |
+| Any of these, and the server is out because its budget of PRIM calls is used up (`"budget"`, or `"prim-limit"`: PRIM said "too many requests") | **Times unavailable for now**, in place of **Open the app for new times.** and **No data available**: opening the app would not help |
 
 The next call that works shows its times at once.
 To see what PRIM answered, train by train, [read the logs](../README.md#read-the-logs).

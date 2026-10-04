@@ -23,6 +23,7 @@ public final class StationLiveActivityModel {
     public private(set) var startError: StationLiveActivityError?
     public private(set) var areActivitiesEnabled: Bool
     public private(set) var content: StationActivityAttributes.ContentState?
+    public private(set) var serverRetryAt: Date?
 
     private let client: any StationLiveActivityClient
     private let store: StationLiveActivityInputsStore?
@@ -55,12 +56,13 @@ public final class StationLiveActivityModel {
         if client.isShowing, keepShownTimesIfFailed(trains, at: station) {
             startError = nil
             isShowing = true
+            await sayWhetherTheServerIsOut(trains)
             return
         }
         if !client.isShowing || switchesStation(to: station) {
             firstLineIndex = 0
         }
-        let content = makeContent(station: station, trains: trains)
+        let content = makeContent(station: station, trains: trains, serverIsOut: trains.serverRetryAt != nil)
         if client.isShowing {
             await send(content)
         } else {
@@ -78,13 +80,19 @@ public final class StationLiveActivityModel {
         startError = nil
         isShowing = true
         keptTimesStaleDate = nil
+        serverRetryAt = trains.serverRetryAt
         remember(StationLiveActivityInputs(station: station, trains: trains))
         self.content = content
     }
 
     public func update(station: Station, trains: NextTrainsState) async {
-        guard isShowing, !keepShownTimesIfFailed(trains, at: station) else { return }
+        guard isShowing else { return }
+        guard !keepShownTimesIfFailed(trains, at: station) else {
+            await sayWhetherTheServerIsOut(trains)
+            return
+        }
         keptTimesStaleDate = nil
+        serverRetryAt = trains.serverRetryAt
         await show(station: station, trains: trains)
     }
 
@@ -133,13 +141,22 @@ public final class StationLiveActivityModel {
         remember(nil)
         firstLineIndex = 0
         keptTimesStaleDate = nil
+        serverRetryAt = nil
+    }
+
+    private func sayWhetherTheServerIsOut(_ trains: NextTrainsState) async {
+        serverRetryAt = trains.serverRetryAt
+        guard var shown = content ?? client.shownContent, shown.serverIsOut != (serverRetryAt != nil) else { return }
+        shown.serverIsOut = serverRetryAt != nil
+        content = shown
+        await send(shown)
     }
 
     private func show(station: Station, trains: NextTrainsState) async {
         if switchesStation(to: station) {
             firstLineIndex = 0
         }
-        let content = makeContent(station: station, trains: trains)
+        let content = makeContent(station: station, trains: trains, serverIsOut: serverRetryAt != nil)
         remember(StationLiveActivityInputs(station: station, trains: trains))
         self.content = content
         await send(content)
@@ -188,12 +205,17 @@ public final class StationLiveActivityModel {
         inputs.map { $0.station.id != station.id } ?? false
     }
 
-    private func makeContent(station: Station, trains: NextTrainsState) -> StationActivityAttributes.ContentState {
+    private func makeContent(
+        station: Station,
+        trains: NextTrainsState,
+        serverIsOut: Bool
+    ) -> StationActivityAttributes.ContentState {
         StationActivityAttributes.ContentState(
             station: station,
             trains: trains,
             now: now(),
-            firstLineIndex: firstLineIndex
+            firstLineIndex: firstLineIndex,
+            serverIsOut: serverIsOut
         )
     }
 }

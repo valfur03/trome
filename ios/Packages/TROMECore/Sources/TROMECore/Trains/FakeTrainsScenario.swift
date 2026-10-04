@@ -9,9 +9,13 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
     case forkEndWithOneTrain = "fork-end-one-train"
     case forkEndWithNoTrain = "fork-end-no-train"
     case forkEndOverAnHour = "fork-end-over-an-hour"
+    case serverOut = "server-out"
+    case serverOutUntilTomorrow = "server-out-tomorrow"
 
     static let stopSeconds: TimeInterval = 30
     static let laterTrainMinutes: Double = 70
+    static let serverOutMinutes: ClosedRange<Double> = 1...8
+    static let serverRetrySecond: TimeInterval = 40
 
     struct Train: Equatable {
         var index: Int
@@ -31,6 +35,8 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
             [arriving(leavesAt: 6), arriving(leavesAt: 12)]
         case .forkEndWithOneTrain, .forkEndWithNoTrain, .forkEndOverAnHour:
             [arriving(leavesAt: 4), arriving(leavesAt: 8)]
+        case .serverOut, .serverOutUntilTomorrow:
+            [arriving(leavesAt: 3), arriving(leavesAt: 7)]
         }
     }
 
@@ -45,8 +51,26 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
             return train.index == 1 ? 1 : 0
         case .forkEndWithNoTrain, .forkEndOverAnHour:
             return 0
-        case .atPlatform, .atPlatformSecond, .atPlatformBoth, .tenToNine:
+        case .atPlatform, .atPlatformSecond, .atPlatformBoth, .tenToNine, .serverOut, .serverOutUntilTomorrow:
             return train.index % count
+        }
+    }
+
+    func serverRetryAt(from start: Date, now: Date, calendar: Calendar = .current) -> Date? {
+        switch self {
+        case .serverOut:
+            let minutes = now.timeIntervalSince(start) / 60
+            guard minutes >= Self.serverOutMinutes.lowerBound, minutes < Self.serverOutMinutes.upperBound else {
+                return nil
+            }
+            return start.addingTimeInterval(Self.serverOutMinutes.upperBound * 60)
+        case .serverOutUntilTomorrow:
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: start)) ?? start
+            let retryAt = tomorrow.addingTimeInterval(Self.serverRetrySecond)
+            return now < retryAt ? retryAt : nil
+        case .atPlatform, .atPlatformSecond, .atPlatformBoth, .tenToNine, .forkEndWithOneTrain, .forkEndWithNoTrain,
+             .forkEndOverAnHour:
+            return nil
         }
     }
 

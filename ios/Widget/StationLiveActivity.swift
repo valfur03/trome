@@ -164,11 +164,13 @@ private struct TrainsSummary: View {
                         .foregroundStyle(.secondary)
                 }
             case .noData:
-                Text("No data available")
+                Text(noDataOf: state)
                     .font(.subheadline.bold())
-                Text("No train times for this station right now.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if !state.serverIsOut {
+                    Text("No train times for this station right now.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             case .lines(let page) where page.showsSeveralLines:
                 ForEach(page.lines, id: \.self) { line in
                     LineTrainsView(line: line, isStale: isStale, isCompact: isCompact)
@@ -189,14 +191,18 @@ private struct TrainsSummary: View {
                     }
                 }
             }
-            if isStale {
-                Text("Open the app for new times.")
+            if isStale, !saysTimesAreUnavailable {
+                Text(staleTimesOf: state)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .invalidatableContent()
+    }
+
+    private var saysTimesAreUnavailable: Bool {
+        state.trains == .noData && state.serverIsOut
     }
 }
 

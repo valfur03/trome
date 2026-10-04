@@ -195,8 +195,10 @@ When no direction has a train within the hour, "In over 1 hour" and "> 1 h" go t
 | "Loading the next trains…" | The first call has not answered. After 2 minutes at most, iOS marks it stale |
 | "No data available", and "No train times for this station right now." | The app has no times for the station: no key, a first call that fails, or a switch to a station whose first call fails. Also after a failed call that follows "No trains", because that state never gets old |
 | "No trains" on each line | PRIM lists no train at all for the station |
+| "Times unavailable for now" ("Horaires indisponibles pour le moment"), in place of "Open the app for new times." and "No data available" | The server of the app is out because its budget of PRIM calls is used up (see [what a failed call does](trains.md#what-a-failed-call-does-to-the-live-activity)). The times already shown keep counting down until the first shown train has left, then they are hidden and these words show, with the strips and their ends of line. A Live Activity that starts while the server is out shows them too; with no times at all, it shows them alone, with no "No train times for this station right now." below, because both lines would be cut at the largest text sizes. The Dynamic Island says the same to VoiceOver and shows its dash. No icon, no colour, no alert, no notification and no sound |
 | The last times, still counting down, then "Open the app for new times." | A call fails while times of this station show: [what each failure does](trains.md#what-a-failed-call-does-to-the-live-activity) |
 
+The other causes keep their words: no network, or a closed app that iOS marks stale.
 The app has no timetable, so it cannot tell a line that stopped for the night from a line that is closed: it never says that the service ended.
 
 ## VoiceOver

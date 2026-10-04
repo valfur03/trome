@@ -347,6 +347,16 @@
         }
       }
     },
+    "Times unavailable for now" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Horaires indisponibles pour le moment"
+          }
+        }
+      }
+    },
     "Today" : {
       "localizations" : {
         "fr" : {

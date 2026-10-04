@@ -27,6 +27,9 @@ public struct FakeDeparturesProvider: DeparturesProvider {
 
     public func departures(at stations: [Station]) async throws -> [Departure] {
         let now = now()
+        if let retryAt = scenario?.serverRetryAt(from: start, now: now) {
+            throw NextTrainsError.serverOut(retryAt: retryAt)
+        }
         return stations.flatMap { station in
             station.lines.flatMap { line in
                 guard let scenario else { return Self.departures(of: line, at: station, from: now) }

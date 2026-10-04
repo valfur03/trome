@@ -12,6 +12,13 @@ public enum BackgroundTrainsRefresh {
         return min(max(untilDeparture, minimumDelay), maximumDelay)
     }
 
+    static func nextCall(after state: NextTrainsState, untilStale staleDate: Date?, now: Date) -> Date {
+        if let retryAt = state.serverRetryAt, retryAt > now {
+            return retryAt
+        }
+        return now.addingTimeInterval(delay(untilStale: staleDate, now: now))
+    }
+
     public static func shouldAskAgain(after state: NextTrainsState) -> Bool {
         switch state {
         case .missingKey, .failed(.keyRejected), .failed(.quotaExceeded):

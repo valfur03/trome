@@ -24,7 +24,7 @@ struct SielRowsView: View {
             }
             .invalidatableContent()
             if isStale {
-                Text("Open the app for new times.")
+                Text(staleTimesOf: state)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

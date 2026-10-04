@@ -10,7 +10,8 @@ extension ActivityKitStationLiveActivityClient {
 
     nonisolated static func log(_ content: StationActivityAttributes.ContentState, sentBy call: String) {
         let updatedAt = content.updatedAt.formatted(timeStyle)
-        let message = "\(call) \(content.stationName) at \(updatedAt): \(describe(content.trains))"
+        let serverOut = content.serverIsOut ? " (server out)" : ""
+        let message = "\(call) \(content.stationName) at \(updatedAt)\(serverOut): \(describe(content.trains))"
         contentLogger.notice("\(message, privacy: .public)")
     }
 

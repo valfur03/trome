@@ -5,6 +5,7 @@ public enum NextTrainsError: Error, Equatable, Sendable {
     case keyRejected
     case quotaExceeded
     case serviceFailure
+    case serverOut(retryAt: Date)
 }
 
 public struct DeparturesAnswer: Equatable, Sendable {

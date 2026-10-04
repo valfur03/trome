@@ -21,6 +21,7 @@ struct APIExample: Decodable {
 
 struct TrainServerContractTests {
     static let exampleNames = (try? Fixture.apiExampleNames()) ?? []
+    static let requestTime = Fixture.date("2026-10-02T08:30:00Z")
     private let abbesses = PRIMDeparturesProviderTests().abbesses
 
     private func example(_ name: String) throws -> APIExample {
@@ -33,13 +34,44 @@ struct TrainServerContractTests {
         return try #require(String(parts[2]).removingPercentEncoding)
     }
 
-    private func body(of example: APIExample) throws -> Data {
-        guard let primAnswer = example.response.bodyIsPrimAnswer else { return Data("{}".utf8) }
-        return try Fixture.data(String(primAnswer.dropLast(".json".count)))
+    private func body(of example: APIExample, named name: String) throws -> Data {
+        if let primAnswer = example.response.bodyIsPrimAnswer {
+            return try Fixture.data(String(primAnswer.dropLast(".json".count)))
+        }
+        let file = try JSONSerialization.jsonObject(with: Fixture.apiExample(name)) as? [String: Any]
+        let response = try #require(file?["response"] as? [String: Any])
+        return try JSONSerialization.data(withJSONObject: #require(response["body"]))
+    }
+
+    private func outBody(of example: APIExample, named name: String) throws -> (reason: String, retryAt: Date)? {
+        let body = try JSONSerialization.jsonObject(with: try body(of: example, named: name)) as? [String: Any]
+        guard body?["status"] as? String == "out" else { return nil }
+        let reason = try #require(body?["reason"] as? String)
+        let retryAtText = try #require(body?["retryAt"] as? String)
+        let retryAt = try #require(SIRIDate.parse(retryAtText))
+        return (reason, retryAt)
     }
 
     @Test func readsEveryExampleOfTheAppAPI() {
         #expect(Self.exampleNames.count >= 7)
+    }
+
+    @Test(arguments: ["departures-out-budget", "departures-out-prim-limit"])
+    func saysTheServerIsOutUntilTheRetryTimeOfTheExample(name: String) async throws {
+        let example = try example(name)
+        let out = try #require(try outBody(of: example, named: name))
+        let client = ServerStubHTTPClient { _ in
+            .init(
+                body: try body(of: example, named: name),
+                status: example.response.status,
+                headers: example.response.headers
+            )
+        }
+        let provider = PRIMDeparturesProvider(source: .server(.test), httpClient: client, now: { Self.requestTime })
+
+        await #expect(throws: NextTrainsError.serverOut(retryAt: out.retryAt)) {
+            try await provider.departures(at: [abbesses])
+        }
     }
 
     @Test(arguments: exampleNames)
@@ -61,12 +93,19 @@ struct TrainServerContractTests {
     @Test(arguments: exampleNames)
     func readsTheAnswerOfTheExample(name: String) async throws {
         let example = try example(name)
-        let body = try body(of: example)
+        let body = try body(of: example, named: name)
         let client = ServerStubHTTPClient { _ in
             .init(body: body, status: example.response.status, headers: example.response.headers)
         }
-        let provider = PRIMDeparturesProvider(source: .server(.test), httpClient: client)
+        let provider = PRIMDeparturesProvider(source: .server(.test), httpClient: client, now: { Self.requestTime })
 
+        if let out = try outBody(of: example, named: name) {
+            let error = ServerOutAnswer.reasonsOfAnEmptyBudget.contains(out.reason)
+                ? NextTrainsError.serverOut(retryAt: out.retryAt)
+                : .serviceFailure
+            await #expect(throws: error) { try await provider.departures(at: [abbesses]) }
+            return
+        }
         switch example.response.status {
         case 200:
             let answer = try await provider.departuresAnswer(at: [abbesses])

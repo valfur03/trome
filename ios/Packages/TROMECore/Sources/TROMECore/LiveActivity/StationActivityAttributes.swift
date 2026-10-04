@@ -5,11 +5,21 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
         public var stationName: String
         public var trains: Trains
         public var updatedAt: Date
+        public var serverIsOut: Bool
 
-        public init(stationName: String, trains: Trains, updatedAt: Date) {
+        public init(stationName: String, trains: Trains, updatedAt: Date, serverIsOut: Bool = false) {
             self.stationName = stationName
             self.trains = trains
             self.updatedAt = updatedAt
+            self.serverIsOut = serverIsOut
+        }
+
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: ContentStateKey.self)
+            stationName = try container.decode(String.self, forKey: .stationName)
+            trains = try container.decode(Trains.self, forKey: .trains)
+            updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+            serverIsOut = try container.decodeIfPresent(Bool.self, forKey: .serverIsOut) ?? false
         }
     }
 
@@ -22,14 +32,28 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
     public init() {}
 }
 
+private enum ContentStateKey: String, CodingKey {
+    case stationName
+    case trains
+    case updatedAt
+    case serverIsOut
+}
+
 extension StationActivityAttributes.ContentState {
     public static let loadingTimeout: TimeInterval = 60
 
-    public init(station: Station, trains: NextTrainsState, now: Date, firstLineIndex: Int = 0) {
+    public init(
+        station: Station,
+        trains: NextTrainsState,
+        now: Date,
+        firstLineIndex: Int = 0,
+        serverIsOut: Bool? = nil
+    ) {
         self.init(
             stationName: station.name,
             trains: .init(trains, at: station, now: now, firstLineIndex: firstLineIndex),
-            updatedAt: now
+            updatedAt: now,
+            serverIsOut: serverIsOut ?? (trains.serverRetryAt != nil)
         )
     }
 

@@ -63,7 +63,11 @@ struct FakeTrainsScenarioTests {
         #expect(directions.allSatisfy { $0.trains.first?.status == .atPlatform })
     }
 
-    @Test(arguments: FakeTrainsScenario.allCases)
+    static let scenariosWithTimes = FakeTrainsScenario.allCases.filter {
+        ![.serverOut, .serverOutUntilTomorrow].contains($0)
+    }
+
+    @Test(arguments: scenariosWithTimes)
     func letsEachTrainLeaveLikeARealTrainAndNeverBringsItBack(scenario: FakeTrainsScenario) async throws {
         var shownTrains: [[Date]] = []
         var lastStatus: [Date: Int] = [:]

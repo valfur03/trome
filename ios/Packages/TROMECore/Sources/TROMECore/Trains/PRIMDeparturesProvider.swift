@@ -16,15 +16,19 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
     private let source: TrainDataSource
     private let httpClient: any HTTPClient
     private let log: (@Sendable (String) -> Void)?
+    private let now: @Sendable () -> Date
+    private let retrySchedule = ServerRetrySchedule()
 
     public init(
         source: TrainDataSource,
         httpClient: any HTTPClient = URLSession.shared,
-        log: (@Sendable (String) -> Void)? = nil
+        log: (@Sendable (String) -> Void)? = nil,
+        now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.source = source
         self.httpClient = httpClient
         self.log = log
+        self.now = now
     }
 
     public init(
@@ -88,13 +92,18 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         if let log {
             PRIMAnswerLog.lines(of: answers, at: stations, now: Date()).forEach(log)
         }
-        let firstError = answers.lazy.compactMap { answer -> (any Error)? in
-            if case .failure(let error) = answer.visits { error } else { nil }
-        }.first
-        if departures.isEmpty, let firstError {
-            throw firstError
+        if departures.isEmpty, let error = Self.error(of: answers) {
+            throw error
         }
         return DeparturesAnswer(departures: departures, answeredAt: answers.compactMap(\.answeredAt).min())
+    }
+
+    static func error(of answers: [Answer]) -> (any Error)? {
+        let errors = answers.compactMap { answer -> (any Error)? in
+            if case .failure(let error) = answer.visits { error } else { nil }
+        }
+        let soonestRetry = errors.compactMap { ($0 as? NextTrainsError)?.serverRetryAt }.min()
+        return soonestRetry.map { NextTrainsError.serverOut(retryAt: $0) } ?? errors.first
     }
 
     static func stopRequests(for stations: [Station]) -> [StopRequest] {
@@ -199,19 +208,9 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
     }
 
     private func stopAnswer(at monitoringRef: String) async throws -> StopAnswer {
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try await httpClient.data(for: request(for: monitoringRef))
-        } catch let error as URLError where error.code == .cancelled {
-            throw CancellationError()
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch {
-            throw NextTrainsError.unreachable
-        }
-
-        let httpResponse = response as? HTTPURLResponse
+        try waitForTheRetryTime(of: monitoringRef)
+        let (data, httpResponse) = try await answer(at: monitoringRef)
+        try keepTheRetryTime(of: monitoringRef, from: httpResponse, body: data)
         if let error = Self.error(ofStatus: httpResponse?.statusCode, from: source) {
             throw error
         }
@@ -231,6 +230,36 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         } catch {
             throw NextTrainsError.serviceFailure
         }
+    }
+
+    private func answer(at monitoringRef: String) async throws -> (Data, HTTPURLResponse?) {
+        do {
+            let (data, response) = try await httpClient.data(for: request(for: monitoringRef))
+            return (data, response as? HTTPURLResponse)
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            throw NextTrainsError.unreachable
+        }
+    }
+
+    private func waitForTheRetryTime(of monitoringRef: String) throws {
+        guard case .server = source, let error = retrySchedule.error(waitingFor: monitoringRef, now: now()) else {
+            return
+        }
+        throw error
+    }
+
+    private func keepTheRetryTime(of monitoringRef: String, from response: HTTPURLResponse?, body: Data) throws {
+        guard case .server = source else { return }
+        guard let out = ServerOutAnswer(response: response, body: body, now: now()) else {
+            retrySchedule.forget(monitoringRef)
+            return
+        }
+        retrySchedule.wait(for: out, at: monitoringRef)
+        throw out.error
     }
 
     static func error(ofStatus statusCode: Int?, from source: TrainDataSource) -> NextTrainsError? {

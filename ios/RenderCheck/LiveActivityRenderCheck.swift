@@ -91,6 +91,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             rows += try drawEveryVariant(of: state, at: forkStation, page: pageNumber, into: outDir)
         }
         rows += try drawTheRERStates(of: catalog, into: outDir)
+        rows += try await drawTheServerOutStates(of: catalog, fake: fake, into: outDir)
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
         )
@@ -135,6 +136,24 @@ final class LiveActivityRenderCheck: XCTestCase {
         for (page, rer) in Self.rerStates(at: catalog, now: Date()).enumerated() {
             let pageNumber = Self.firstRERStatesPage + page
             rows += try drawEveryVariant(of: rer.state, at: rer.station, page: pageNumber, into: outDir)
+        }
+        return rows
+    }
+
+    private func drawTheServerOutStates(
+        of catalog: StationCatalog,
+        fake: FakeDeparturesProvider,
+        into outDir: URL
+    ) async throws -> [String] {
+        let now = Date()
+        let hubStation = try XCTUnwrap(catalog.stations.first { $0.name == Self.serverOutHubStation })
+        let hubDepartures = try await fake.departures(at: catalog.hubStations(of: hubStation))
+        let samples = Self.serverOutStates(at: catalog, hubDepartures: hubDepartures, now: now)
+        XCTAssertEqual(samples.count, 4, "Server out states that the render check could not build")
+        var rows: [String] = []
+        for (page, sample) in samples.enumerated() {
+            let pageNumber = Self.firstServerOutStatesPage + page
+            rows += try drawEveryVariant(of: sample.state, at: sample.station, page: pageNumber, into: outDir)
         }
         return rows
     }

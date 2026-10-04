@@ -4,7 +4,7 @@ import Testing
 @testable import TROMECore
 
 final class StubDeparturesProvider: DeparturesProvider {
-    private let results = Mutex<[String: Result<[Departure], NextTrainsError>]>([:])
+    private let results = Mutex<[String: @Sendable () -> Result<[Departure], NextTrainsError>]>([:])
     private let calls = Mutex(0)
     private let holdsAnswers = Mutex(false)
 
@@ -19,6 +19,10 @@ final class StubDeparturesProvider: DeparturesProvider {
     }
 
     func answer(_ result: Result<[Departure], NextTrainsError>, for station: Station) {
+        results.withLock { $0[station.id] = { result } }
+    }
+
+    func answer(for station: Station, with result: @escaping @Sendable () -> Result<[Departure], NextTrainsError>) {
         results.withLock { $0[station.id] = result }
     }
 
@@ -36,7 +40,8 @@ final class StubDeparturesProvider: DeparturesProvider {
         while holdsAnswers.withLock({ $0 }) {
             try await Task.sleep(for: .milliseconds(1))
         }
-        return try results.withLock { $0[stations[0].id] ?? .success([]) }.get()
+        let result = results.withLock { $0[stations[0].id] }
+        return try (result?() ?? .success([])).get()
     }
 }
 
@@ -118,7 +123,13 @@ struct NextTrainsModelTests {
         #expect(board.groups.map(\.nextTrainIsOverAnHourAway) == [true])
     }
 
-    @Test(arguments: [NextTrainsError.unreachable, .keyRejected, .quotaExceeded, .serviceFailure])
+    @Test(arguments: [
+        NextTrainsError.unreachable,
+        .keyRejected,
+        .quotaExceeded,
+        .serviceFailure,
+        .serverOut(retryAt: Date(timeIntervalSince1970: 1_000_000 + 1_840))
+    ])
     func reportsWhyTheTrainsCannotBeShown(error: NextTrainsError) async {
         provider.answer(.failure(error), for: abbesses)
         let model = makeModel()
@@ -166,6 +177,19 @@ struct NextTrainsModelTests {
         await model.keepUpdated(for: abbesses)
 
         #expect(waits.withLock { $0 } == [.seconds(30)])
+    }
+
+    @Test func waitsUntilTheRetryTimeOfTheServerBeforeTheNextUpdate() async {
+        provider.answer(.failure(.serverOut(retryAt: now.addingTimeInterval(1_839.2))), for: abbesses)
+        let waits = Mutex<[Duration]>([])
+        let model = makeModel(sleep: { duration in
+            waits.withLock { $0.append(duration) }
+            throw CancellationError()
+        })
+
+        await model.keepUpdated(for: abbesses)
+
+        #expect(waits.withLock { $0 } == [.seconds(1_840)])
     }
 
     @Test func saysWhichStationItKeepsUpdatedUntilItStops() async {

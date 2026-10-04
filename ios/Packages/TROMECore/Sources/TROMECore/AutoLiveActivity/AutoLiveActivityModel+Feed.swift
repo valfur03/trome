@@ -42,7 +42,9 @@ extension AutoLiveActivityModel {
 
     func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
         var asksPRIM = true
-        var nextCall = fetchNow || waitsForItsTrains ? configuration.now() : nextPRIMCall(asksPRIM: asksPRIM)
+        var nextCall = fetchNow || waitsForItsTrains
+            ? configuration.now()
+            : nextPRIMCall(for: station, asksPRIM: asksPRIM)
         while !Task.isCancelled {
             let now = configuration.now()
             let redrawDate = liveActivity.nextRedrawDate(after: now)
@@ -65,7 +67,7 @@ extension AutoLiveActivityModel {
                 await feed(station)
                 asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
             }
-            nextCall = nextPRIMCall(asksPRIM: asksPRIM)
+            nextCall = nextPRIMCall(for: station, asksPRIM: asksPRIM)
         }
     }
 
@@ -74,19 +76,24 @@ extension AutoLiveActivityModel {
         return content.trains == .loading
     }
 
-    private func nextPRIMCall(asksPRIM: Bool) -> Date {
+    private func nextPRIMCall(for station: Station, asksPRIM: Bool) -> Date {
         let now = configuration.now()
-        let delay = asksPRIM
-            ? BackgroundTrainsRefresh.delay(untilStale: liveActivity.content?.staleDate, now: now)
-            : BackgroundTrainsRefresh.maximumDelay
-        return now.addingTimeInterval(delay)
+        guard asksPRIM else { return now.addingTimeInterval(BackgroundTrainsRefresh.maximumDelay) }
+        return BackgroundTrainsRefresh.nextCall(
+            after: inputs.liveActivityTrains.state(for: station),
+            untilStale: liveActivity.content?.staleDate,
+            now: now
+        )
     }
 
     func keepFeeding(_ station: Station) async {
         while !Task.isCancelled {
             await feed(station)
+            let trains = inputs.liveActivityTrains.state(for: station)
             do {
-                try await configuration.sleep(NextTrainsModel.refreshInterval)
+                try await configuration.sleep(
+                    trains.refreshDelay(normally: NextTrainsModel.refreshInterval, now: configuration.now())
+                )
             } catch {
                 return
             }

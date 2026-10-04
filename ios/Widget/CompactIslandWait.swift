@@ -36,7 +36,7 @@ struct CompactIslandWait: View {
             word(Text("No trains"), color: .secondary, lines: 2)
                 .multilineTextAlignment(.center)
                 .frame(width: Self.noTrainsWidth)
-        case .stale, .loading, .noData:
+        case .stale, .loading, .noData, .timesUnavailable:
             IslandNumber(value: .dash, drawnAt: drawnAt)
         }
     }

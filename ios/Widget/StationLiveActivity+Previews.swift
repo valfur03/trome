@@ -88,6 +88,7 @@ import WidgetKit
             + ["A", "E"].map { TransitLine(mode: .rer, name: $0) }
     )
     StationActivityAttributes.ContentState(stationName: "Abbesses", trains: .noData, updatedAt: .now)
+    StationActivityAttributes.ContentState(stationName: "Abbesses", trains: .noData, updatedAt: .now, serverIsOut: true)
 }
 
 private extension TransitLine {

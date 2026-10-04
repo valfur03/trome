@@ -27,8 +27,35 @@ struct BackgroundTrainsRefreshTests {
         #expect(BackgroundTrainsRefresh.shouldAskAgain(after: state) == false)
     }
 
-    @Test(arguments: [NextTrainsState.noLiveData, .failed(.unreachable), .failed(.serviceFailure)])
+    @Test(arguments: [
+        NextTrainsState.noLiveData,
+        .failed(.unreachable),
+        .failed(.serviceFailure),
+        .failed(.serverOut(retryAt: Date(timeIntervalSince1970: 1_000_000 + 1_840)))
+    ])
     func asksAgainAfterAPassingProblem(state: NextTrainsState) {
         #expect(BackgroundTrainsRefresh.shouldAskAgain(after: state))
+    }
+
+    @Test func asksTheServerAgainOnlyAtTheRetryTimeItGave() {
+        let retryAt = now.addingTimeInterval(1_840)
+
+        let nextCall = BackgroundTrainsRefresh.nextCall(
+            after: .failed(.serverOut(retryAt: retryAt)),
+            untilStale: now.addingTimeInterval(60),
+            now: now
+        )
+
+        #expect(nextCall == retryAt)
+    }
+
+    @Test(arguments: [
+        NextTrainsState.failed(.serviceFailure),
+        .failed(.serverOut(retryAt: Date(timeIntervalSince1970: 1_000_000)))
+    ])
+    func asksAgainAfterTheUsualDelayWhenTheServerGaveNoRetryTimeAhead(state: NextTrainsState) {
+        let nextCall = BackgroundTrainsRefresh.nextCall(after: state, untilStale: now.addingTimeInterval(60), now: now)
+
+        #expect(nextCall == now.addingTimeInterval(60 + BackgroundTrainsRefresh.delayAfterDeparture))
     }
 }

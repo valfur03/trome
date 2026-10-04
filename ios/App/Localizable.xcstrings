@@ -141,6 +141,26 @@
         }
       }
     },
+    "Many riders are using the app right now. Live times come back around %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent vers %@."
+          }
+        }
+      }
+    },
+    "Many riders are using the app right now. Live times come back tomorrow." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent demain."
+          }
+        }
+      }
+    },
     "Next trains at %@" : {
       "localizations" : {
         "fr" : {

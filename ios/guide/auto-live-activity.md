@@ -131,7 +131,10 @@ The app is the Live Activity, so the main screen shows its state and its control
 | **Snooze**, with 30 minutes, 1 hour and the rest of today | The automatic mode is on |
 | **Snoozed**, the time of return, and **Cancel the snooze** | A snooze is on |
 | "Paused at <station> until <time>" and **Cancel the pause at <station>** | After a swipe, also while a snooze is on, but not while the switch is off |
+| "Many riders are using the app right now. Live times come back around 9:00." ("Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent vers 09:00.") | A Live Activity shows, and the server of the app has no PRIM calls left for its station. The time is when the app asks the server again, in the time format and time zone of the phone. When it is on another day, the line ends with "Live times come back tomorrow." |
 | **Permissions** | Always; it says what a missing or refused permission breaks |
+
+The server line states a fact and never a fault of the rider, and it never says "soon": the next hour can be out too.
 
 ## What keeps the app running in the background
 

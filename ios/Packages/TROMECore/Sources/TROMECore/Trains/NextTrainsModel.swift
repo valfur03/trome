@@ -8,6 +8,23 @@ public enum NextTrainsState: Equatable, Sendable {
     case departures(DepartureBoard, updatedAt: Date)
     case noLiveData
     case failed(NextTrainsError)
+
+    var serverRetryAt: Date? {
+        guard case .failed(let error) = self else { return nil }
+        return error.serverRetryAt
+    }
+
+    func refreshDelay(normally interval: Duration, now: Date) -> Duration {
+        guard let serverRetryAt, serverRetryAt > now else { return interval }
+        return .seconds(serverRetryAt.timeIntervalSince(now).rounded(.up))
+    }
+}
+
+extension NextTrainsError {
+    var serverRetryAt: Date? {
+        guard case .serverOut(let retryAt) = self else { return nil }
+        return retryAt
+    }
 }
 
 /// The next trains of one station, as the last call gave them; `keepUpdated(for:)` asks again every 30 seconds.
@@ -65,7 +82,7 @@ public final class NextTrainsModel {
         while !Task.isCancelled {
             await refresh(for: station)
             do {
-                try await sleep(refreshInterval)
+                try await sleep(state(for: station).refreshDelay(normally: refreshInterval, now: now()))
             } catch {
                 return
             }

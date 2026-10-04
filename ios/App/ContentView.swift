@@ -20,6 +20,7 @@ struct ContentView: View {
                         .accessibilityIdentifier("appTitle")
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
+                    ServerOutNotice()
                 }
                 LiveActivityStateSection()
                 AutomaticModeSection()

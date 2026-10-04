@@ -47,6 +47,12 @@ struct NextTrainsView: View {
                 "The train data service does not work right now. The app will try again.",
                 identifier: "serviceFailureMessage"
             )
+        case .serverOut(let retryAt):
+            message(
+                "The train server has no PRIM calls left. The app asks again at "
+                    + retryAt.formatted(date: .omitted, time: .standard) + ".",
+                identifier: "serverOutMessage"
+            )
         }
     }
 

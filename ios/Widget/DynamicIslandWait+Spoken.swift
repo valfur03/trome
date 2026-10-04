@@ -20,6 +20,8 @@ extension DynamicIslandWait {
             Text("Loading the next trains…")
         case .noData:
             Text("No data available")
+        case .timesUnavailable:
+            .timesUnavailable
         }
     }
 

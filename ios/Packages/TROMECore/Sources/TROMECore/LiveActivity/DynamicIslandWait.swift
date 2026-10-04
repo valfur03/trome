@@ -10,6 +10,7 @@ public struct DynamicIslandWait: Hashable, Sendable {
         case stale
         case loading
         case noData
+        case timesUnavailable
     }
 
     public enum MinimalWait: Hashable, Sendable {
@@ -30,13 +31,21 @@ public struct DynamicIslandWait: Hashable, Sendable {
         switch wait {
         case .minutes(let train): .minutes(train)
         case .approaching, .atPlatform: .zero
-        case .overAnHour, .noTrain, .stale, .loading, .noData: .dash
+        case .overAnHour, .noTrain, .stale, .loading, .noData, .timesUnavailable: .dash
         }
     }
 }
 
 extension StationActivityAttributes.ContentState {
     public func dynamicIslandWait(isStale: Bool) -> DynamicIslandWait {
+        var island = shownDynamicIslandWait(isStale: isStale)
+        if serverIsOut, island.wait == .stale || island.wait == .noData {
+            island.wait = .timesUnavailable
+        }
+        return island
+    }
+
+    private func shownDynamicIslandWait(isStale: Bool) -> DynamicIslandWait {
         switch trains {
         case .loading:
             DynamicIslandWait(line: nil, wait: isStale ? .stale : .loading)
