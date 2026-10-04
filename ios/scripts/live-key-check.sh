@@ -162,6 +162,7 @@ elif [ $? -gt 1 ]; then
     fail "could not search the Live Activity of the Release build"
 fi
 ! grep -qF "$release_token" "$app_plist" || fail "a Debug build holds the app token of the server"
+"$root/scripts/upload-check.py" "$release_app" || fail "the Release build would not pass the upload checks of App Store Connect (see above)"
 
 refused_release "server host" release-no-host "" "$release_token"
 refused_release "app token" release-no-token live-key-check.invalid ""
@@ -177,4 +178,4 @@ git -C "$root" check-ignore -q Config/Server.xcconfig || fail "git does not igno
 git -C "$root/.." check-ignore -q Config/Secrets.xcconfig || fail "git does not ignore the old path Config/Secrets.xcconfig"
 
 rm -rf "$work"
-echo "live-key-check: OK (a LIVE=1 build puts the key in the app only, a new key replaces the old one, a build without LIVE=1 removes it, a Release build holds the app token and never the key, a Release build with no server host or no app token fails, and no build output or log shows the key or the token)"
+echo "live-key-check: OK (a LIVE=1 build puts the key in the app only, a new key replaces the old one, a build without LIVE=1 removes it, a Release build holds the app token and never the key, a Release build with no server host or no app token fails, the Release build passes the upload checks of upload-check.py, and no build output or log shows the key or the token)"
