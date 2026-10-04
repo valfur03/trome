@@ -142,7 +142,7 @@ To add a picture, add a `saveScreenshot(named:)` call to [the test](../ios/DocsS
 
 ## Publish the site
 
-A GitHub Actions workflow, [`docs-site.yml`](../.github/workflows/docs-site.yml), publishes the site on GitHub Pages, at https://valfur03.github.io/trome/.
+A GitHub Actions workflow, [`docs-site.yml`](../.github/workflows/docs-site.yml), publishes the site on GitHub Pages, at the address that [`astro.config.mjs`](astro.config.mjs) sets.
 On each push to `main`, it runs `make docs-check` with the Node version of [`.nvmrc`](../.nvmrc), then publishes the site that this check built.
 When a check fails, it publishes nothing, and the site stays as it was.
 On a pull request, it runs the same check, but it never publishes.
@@ -151,8 +151,8 @@ A page with a draft notice is published with it, so the reader sees that the pag
 To see why a run failed, open the **Actions** tab of the repo on GitHub, then the **Docs site** workflow, then the run with a red cross: the step that failed shows its output.
 To publish `main` again with no new commit, click **Run workflow** on the same page.
 
-The workflow can publish only after one setting of the repo, made once by its owner: **Settings > Pages > Build and deployment > Source** set to **GitHub Actions**.
-On a free GitHub account, Pages works only on a public repo.
+On a free GitHub account, Pages works only on a public repo, so while the repo is private the workflow only runs the check and publishes nothing.
+After the repo becomes public, its owner sets **Settings > Pages > Build and deployment > Source** to **GitHub Actions** once, then clicks **Run workflow** to publish the site for the first time.
 
 ## Write a page
 
