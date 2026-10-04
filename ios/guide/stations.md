@@ -25,7 +25,7 @@ Here is Abbesses, on line 12:
 {"id": "IDFM:22059", "name": "Abbesses", "latitude": 48.884388, "longitude": 2.338381, "lines": [{"mode": "metro", "name": "12", "stopIds": ["IDFM:22059", "IDFM:463116"], "stopAreaIds": ["IDFM:monomodalStopPlace:42155"], "color": {"background": "00643c", "text": "ffffff"}}]}
 ```
 
-- `stopIds`: for a metro line, its two platforms, one for each direction; for an RER line, the stop of the station.
+- `stopIds`: for a metro line, its platforms, most often one for each direction, and one at a station that the line passes in one direction only; for an RER line, the stop of the station.
 - `stopAreaIds`: for a metro line, its stop area, the group of all the platforms of the station, which PRIM answers for in one call.
 - `color`: the colour of the line and of its text, the only colours that the Live Activity uses for lines.
 - `hubId`: only on a station that shares its place with another one (see below).

@@ -14,7 +14,7 @@ public enum NextTrainsState: Equatable, Sendable {
 ///
 /// The app makes two of them: one for the next trains screen of the Testing tools, one for the Live Activity.
 /// `updatingStationId` says which station the screen keeps up to date, so that the Live Activity
-/// takes the trains of the screen and does not ask PRIM for the same station twice.
+/// takes the trains of the screen and does not ask for the trains of the same station twice.
 @MainActor
 @Observable
 public final class NextTrainsModel {
