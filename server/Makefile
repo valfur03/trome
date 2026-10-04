@@ -8,7 +8,7 @@ export WRANGLER_SEND_METRICS := false
 
 help:
 	@echo "make server-setup        Install the packages of the server (server/node_modules), when they are missing or old"
-	@echo "make server-check        Server quality gate: no local secrets file in git + generated types up to date + type check + lint + unit tests + script tests"
+	@echo "make server-check        Server quality gate: no local secrets file in git + no request log at Cloudflare in wrangler.jsonc + generated types up to date + type check + lint + unit tests + script tests"
 	@echo "make server-dev          Run the server on this folder's own port ($(PORT); PORT=<n> for another one), with the fake secrets of server/.dev.vars"
 	@echo "make server-stop         Stop the server of this folder (make server-dev)"
 	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret); it opens the default browser (LINK=1: it shows a link to open in another browser; CODE=1: a code to type on a Cloudflare page)"
@@ -28,6 +28,7 @@ server-setup: node-check
 
 server-check: server-setup
 	@./scripts/dev-vars-check.sh
+	@node scripts/request-log-check.ts
 	npm run --silent types:check
 	npm run --silent typecheck
 	npm run --silent lint

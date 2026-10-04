@@ -1,7 +1,7 @@
 # Deploy the server
 
 This page is for the maintainer, who holds the Cloudflare account of the server and its secrets: a contributor needs none of it, and starts at [server/README.md](../README.md).
-It shows how to deploy the server, set its secrets, connect the app to it, and read its counts of requests and PRIM calls.
+It shows how to deploy the server, set its secrets, connect the app to it, read its counts of requests and PRIM calls, and find a problem without keeping the stops of riders.
 Run the commands from the root of the repo, after `nvm use` ([server/README.md](../README.md)).
 
 | Command | What it does |
@@ -61,7 +61,7 @@ The server takes one app token at a time, and every installed app holds the old 
 So a new token cuts off every installed app until its rider installs a version with the new token: change it only when the old one leaked.
 Then set the new one with `make server-secret NAME=APP_TOKEN`, put it in `ios/Config/Server.xcconfig`, and release a new version of the app.
 
-## Read the counts and the logs
+## Read the counts
 
 ```sh
 make server-counts URL=https://trome-server.<your subdomain>.workers.dev
@@ -72,6 +72,21 @@ It shows, as JSON, the cap and the PRIM calls of today, then each Paris day of t
 `errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
 The counts of app calls and cache hits are written at most every 30 seconds, to stay far below the writes that the Free plan allows each day.
 
-Cloudflare keeps no request log of the server: Workers Logs are off in `server/wrangler.jsonc` (`"observability": { "enabled": false }`).
-To find a problem, set `enabled` to `true` and deploy, for 3 days at most, which is how long the Free plan keeps them.
-To watch the log lines live, without keeping them, run `npx wrangler tail` in `server/`.
+## Find a problem
+
+The app promises that the server keeps no stop of a rider: its App Store privacy label says "Data Not Collected", and its privacy policy says the same.
+So Workers Logs, the logs that Cloudflare keeps for you, stay off on each Worker of the server: `server/wrangler.jsonc` sets `"observability": { "enabled": false }` for both.
+
+With Workers Logs on, Cloudflare keeps a log of each request for 3 days on the Free plan, 7 days on a paid plan.
+That log holds the request URL, so the stop (`/v1/stops/<stop>/departures`), and the metadata of the request, such as the country and the city that Cloudflare finds for it.
+Turning off only that log (`"invocation_logs": false`) is not enough: Cloudflare still gives each line that the server writes the URL of its request.
+**If you turn Workers Logs on, the App Store label and the privacy policy are false for each day that Cloudflare keeps them, for every rider of those days: so never turn them on, not even to find a problem.**
+Never turn them on in the Cloudflare dashboard either, on the Observability page of a Worker.
+`make server-check`, and so both deploy commands, fails when `server/wrangler.jsonc` turns on Workers Logs, traces, Logpush or a Tail Worker, as each of them keeps or sends the request URL.
+
+To find a problem, use these ways, which keep nothing at Cloudflare:
+
+- `make server-counts` and its `errorLines` ([Read the counts](#read-the-counts)): the failed PRIM calls of the last 7 days, with their time, kind and HTTP status.
+- `npx wrangler tail` in `server/`, after `make server-login`: it shows each request and the lines of the server live, and Cloudflare keeps none of it.
+  It shows the request URL, so the stop, on your screen: never save its output in a file, and stop it as soon as you have seen the problem.
+- A test that makes the failure again: the tests fake PRIM with recorded answers (`contracts/prim/`), so a new test can play the answer that failed, with no rider and no PRIM call ([server/README.md](../README.md)).

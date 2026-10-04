@@ -15,7 +15,7 @@ make server-check
 make server-dev
 ```
 
-`make server-check` installs the packages (about 300 MB, in `server/node_modules`), then runs the type check, the lint, the unit tests and the tests of the scripts.
+`make server-check` installs the packages (about 300 MB, in `server/node_modules`), checks that `server/wrangler.jsonc` keeps no request log at Cloudflare ([Find a problem](guide/deploy.md#find-a-problem)), then runs the type check, the lint, the unit tests and the tests of the scripts.
 `make server-dev` runs the server locally, at the address that it prints, where `/health` answers `{"status":"ok"}`; `make server-stop` stops it.
 Neither needs a Cloudflare account.
 

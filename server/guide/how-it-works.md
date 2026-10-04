@@ -11,7 +11,7 @@ Each address answers `GET` and `HEAD` only, and the tokens go in the header `Aut
 |---|---|---|
 | `GET /health` | none | `{"status":"ok"}` |
 | `GET /v1/stops/{stopRef}/departures` | the app token, which each copy of the app holds | The PRIM answer of that stop, as PRIM gave it, so that the app keeps its own PRIM parser; `Last-Modified` is the time when PRIM gave it. |
-| `GET /v1/owner/counts` | the owner token, which only the maintainer holds | The counts of the server ([Read the counts](deploy.md#read-the-counts-and-the-logs)). |
+| `GET /v1/owner/counts` | the owner token, which only the maintainer holds | The counts of the server ([Read the counts](deploy.md#read-the-counts)). |
 
 `{stopRef}` is `STIF:StopArea:SP:<number>:` or `STIF:StopPoint:Q:<number>:`.
 A wrong or missing token gets `401`, and another stop reference gets `400`.
