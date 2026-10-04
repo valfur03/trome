@@ -19,9 +19,8 @@ The rules for every file (keep the docs true, one sentence per line, public text
   Its word list is in `ios/scripts/public-text-check.py`.
   It also fails on the old names of the Xcode project and of its module (in the word list, in any case): only the files that remove what a build of the old name left on a Mac or on the Simulator may write the old project name, and `ALLOWED_TEXTS` lists them with the reason.
   When a hit is a normal word in its place (for example the name of a type), add it to `ALLOWED_TEXTS` in that file, with its path, its text and the reason.
-  For now, the check also lets `ios/README.md` cite the backlog, until the rewrites of its feature sections (TASK-203, TASK-204) move them to the files of the table below: the last one removes its line from `INTERNAL_FILES`.
-  `server/README.md` passes the whole check since TASK-202.
-  The front page, `README.md`, passes the whole check.
+  Only `CLAUDE.md` and `.claude/` may cite the backlog (`INTERNAL_FILES`).
+  Every other file passes the whole check, the front page `README.md`, `ios/README.md` and `server/README.md` included: the rewrites of TASK-202, TASK-203 and TASK-204 moved the feature text to `ios/guide/` and emptied the skip list.
 - **Where a change writes its text.** Each text lives in one file, chosen by its reader.
   Link to the file that holds a fact, and never copy the fact.
   A text in the wrong file is asked to move in the review, like a code file in the wrong folder.

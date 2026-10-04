@@ -38,9 +38,6 @@ NOT_AN_EMAIL = re.compile(r"^git@|@\d+x\.", re.IGNORECASE)
 INTERNAL_FILES = {
     "CLAUDE.md": "the manual of Claude Code may cite the private task list",
     ".claude/": "the manual of Claude Code may cite the private task list",
-    # The feature sections of the developer text that moved out of the front page still cite the backlog.
-    # The rewrite that moves the last of them to ios/guide/ removes this line.
-    "ios/README.md": "until its rewrite for developers: its feature sections still cite the backlog",
 }
 SKIPPED_FILES = {
     "ios/scripts/public-text-check.py": "it holds the word list of this check",

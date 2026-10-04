@@ -87,7 +87,7 @@ In debug builds, `--fake-trains` gives fake trains with no call to PRIM, and `--
 
 ## The render check of the Live Activity
 
-`make live-activity-render` draws the Live Activity views for every station, and lists the views that are too tall and the texts that are cut ([Check how the Live Activity draws](../README.md#check-how-the-live-activity-draws)).
+`make live-activity-render` draws the Live Activity views for every station, and lists the views that are too tall and the texts that are cut ([what it reports and what it cannot see](render-check.md)).
 Run it before and after a change to these views, and compare: it reports, and never fails on a cut text.
 
 ## Script tests

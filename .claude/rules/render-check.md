@@ -13,7 +13,7 @@ commands:
 These rules are for a change to the Live Activity views or their data, and for every run of the render check.
 
 `make live-activity-render` draws the Live Activity views (the lock screen and the bottom region of the expanded Dynamic Island) for every station and page, at both phone widths and at the Large and XXXL text sizes.
-It lists the drawings that are too tall, the cut texts and the breaches of decision-15, and saves images for a person to read (`ios/README.md`, section "Check how the Live Activity draws").
+It lists the drawings that are too tall, the cut texts and the breaches of decision-15, and saves images for a person to read (`ios/guide/render-check.md`).
 
 - **When to run it.** In any task that changes the Live Activity views or their data (`ios/Widget/`, `LinesPage`, `ContentState`), for example TASK-36, TASK-65 and TASK-37: once before the change and once after it.
   Look at each image once, write what it shows in the task notes, and do not read the same image again unless it changed: each image that you read stays in the context of every later call.

@@ -7,16 +7,16 @@ The front page, `README.md`, is for a stranger who lands on the repo: it holds n
 ## Where to start
 
 Read only the part of the docs that your job needs, never a whole long page: every file that you read stays in the context of each later call.
-`ios/README.md` is long (about 96 KB): read one of its sections only when your job needs it.
+The guides of `ios/guide/` are long (up to 15 KB): read one only when your job needs it.
 `make help` lists every `make` command, with one line each.
 
 | Job | Start with | Size |
 |---|---|---|
-| Change the iPhone app | `ios/README.md`, lines 1 to 70 (setup, everyday commands, the shared Simulator, before you commit); then only the subsection of the feature of the task (`grep -n '^#' ios/README.md`) | 4.4 KB, then 1 to 13 KB |
+| Change the iPhone app | `ios/README.md`, lines 1 to 70 (setup, everyday commands, the shared Simulator, before you commit); then only the guide of the feature of the task (the index "The guides" of `ios/README.md`, files in `ios/guide/`) | 4.9 KB, then 7 to 15 KB |
 | Add or change a test of the app | `ios/guide/tests.md` | 7.2 KB |
 | Change the server | `server/README.md`; `server/guide/how-it-works.md` when the API or the quota changes | 2.5 KB; 6.6 KB |
 | Review a change | the start file of the part that the diff touches, as above | as above |
-| QA | `ios/README.md`, lines 1 to 70; then the subsection of the feature of the task | 4.4 KB, then 1 to 13 KB |
+| QA | `ios/README.md`, lines 1 to 70; then the guide of the feature of the task | 4.9 KB, then 7 to 15 KB |
 | Write or review a docs page | `docs/README.md`, section "Write a page" (to write) or "Review a page" (to review) | 8.7 KB or 3.1 KB |
 | Product Owner, manager | nothing in the repo: this file, the backlog, and the rules that your commands bring | none |
 | An outside contributor's view | `CONTRIBUTING.md` | 5.2 KB |

@@ -76,11 +76,16 @@ expect "it says how to allow a word" "$(grep -c "add it to ALLOWED_TEXTS in ios/
 reset_repo
 file CLAUDE.md "Read decision-9 (TASK-44). The prompter decides; the agents wait for the manager."
 file .claude/rules/merge.md "The factory merges one task at a time (TASK-159)."
-file ios/README.md "See TASK-173 and decision-15."
-expect "CLAUDE.md, .claude/ and, for now, ios/README.md may cite the backlog and its words" "$(check)" "passes"
+expect "CLAUDE.md and .claude/ may cite the backlog and its words" "$(check)" "passes"
 expect "a pass prints only its OK line, with no notice of the files that it checks only in part" "$(wc -l < "$state/out" | tr -d ' ') $(grep -c "^public-text-check: OK" "$state/out")" "1 1"
 expect "with VERBOSE=1, it says which files it checks only for personal data, and why" \
-    "$(VERBOSE=1 check > /dev/null; grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
+    "$(VERBOSE=1 check > /dev/null; grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "2"
+
+file ios/README.md "See TASK-173 and decision-15."
+expect "ios/README.md, rewritten for developers, may not cite the backlog" "$(check)" "fails"
+expect "it finds the backlog id of ios/README.md" "$(hit 'ios/README.md:1: a backlog id: "TASK-173"')" "1"
+rm "$repo/ios/README.md"
+git -C "$repo" rm -q --cached ios/README.md
 
 file server/README.md "The prompter decides (decision-40)."
 expect "server/README.md, rewritten for developers, may not cite the backlog" "$(check)" "fails"
