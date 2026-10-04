@@ -76,6 +76,7 @@ Each class inherits from `E2ETestCase` ([`ios/UITests/E2ETestCase.swift`](../UIT
 | `waitFor(_:)`, `waitForNo(_:)`, `tap(_:)` | Wait up to 30 seconds for an element to show or to go, or before a tap. |
 | `moveThePhone(to:)` | Sets the position of the Simulator, which the app reads through its real Core Location code. |
 | `openNotificationCenter(over:)`, `liveActivityStation(_:)` | Open the Notification Center, where the Live Activity shows as on the lock screen, and find a station in it. |
+| `bringToFront(_:)` | Opens the app again, and waits until the Notification Center no longer covers it. Use it, not `app.activate()`: iOS drops a tap while the Notification Center still slides away. |
 | `tapOnTheLiveActivity(_:)` | Waits until a button of the Live Activity stops moving, then taps it. |
 
 In debug builds, `--fake-trains` gives fake trains with no call to PRIM, and `--fake-trains at-platform` a train at the platform at once ([the other states](../README.md#test-it-with-a-fake-position)).

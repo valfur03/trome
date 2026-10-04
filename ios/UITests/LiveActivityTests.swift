@@ -22,14 +22,14 @@ final class LiveActivityTests: E2ETestCase {
         XCTAssertTrue(waitFor(liveActivityStation(Self.station)))
         closeNotificationCenter()
 
-        app.activate()
+        bringToFront(app)
         tap(app.buttons["snoozeMenu"])
         tap(app.buttons["snooze-thirtyMinutes"])
         openNotificationCenter(over: app, expectingALiveActivity: false)
         XCTAssertTrue(waitForNo(liveActivity))
         closeNotificationCenter()
 
-        app.activate()
+        bringToFront(app)
         moveThePhone(to: Self.farFromAnyStation)
         tap(app.buttons["cancelSnooze"])
         XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))

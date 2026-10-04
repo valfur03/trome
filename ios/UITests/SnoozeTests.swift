@@ -51,7 +51,7 @@ final class SnoozeTests: E2ETestCase {
         XCTAssertTrue(waitForNo(liveActivity))
         closeNotificationCenter()
 
-        app.activate()
+        bringToFront(app)
         XCTAssertTrue(waitForNo(shownStation(in: app)))
         let snoozeState = app.descendants(matching: .any)["snoozeState"]
         XCTAssertTrue(waitFor(snoozeState))

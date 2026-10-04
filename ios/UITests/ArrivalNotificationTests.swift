@@ -66,7 +66,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         XCTAssertTrue(waitForNo(notification), "The notification stayed after the action")
         XCTAssertEqual(app.state, .runningBackground, "The action opened the app")
 
-        app.activate()
+        bringToFront(app)
         let snoozeState = app.descendants(matching: .any)["snoozeState"]
         XCTAssertTrue(waitFor(snoozeState))
         XCTAssertTrue(snoozeState.label.contains("Back on at"), snoozeState.label)
@@ -93,8 +93,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         let standsStill = XCTestExpectation(description: "the phone stands still at the station")
         _ = XCTWaiter.wait(for: [standsStill], timeout: Self.longerThanAHeldPositionIsTrusted)
 
-        app.activate()
-        XCTAssertTrue(app.wait(for: .runningForeground, timeout: UITestTimeout.element))
+        bringToFront(app)
         openNotificationCenter(over: app)
         XCTAssertTrue(waitFor(liveActivityStation("Jules Joffrin")))
         XCTAssertTrue(waitForNo(notification), "The arrival notification stayed after the Live Activity started")

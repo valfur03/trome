@@ -211,6 +211,18 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
+    func bringToFront(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        app.activate()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: UITestTimeout.element), file: file, line: line)
+        XCTAssertTrue(
+            waitForNo(springboard.otherElements[Self.notificationCenterIdentifier]),
+            "The Notification Center still covers the app, so iOS would drop a tap on it",
+            file: file,
+            line: line
+        )
+    }
+
+    @MainActor
     var liveActivity: XCUIElement {
         springboard.otherElements[Self.liveActivityIdentifier]
     }

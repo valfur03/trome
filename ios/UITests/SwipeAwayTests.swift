@@ -33,7 +33,7 @@ final class SwipeAwayTests: E2ETestCase {
         swipeTheLiveActivityAway()
         closeNotificationCenter()
 
-        app.activate()
+        bringToFront(app)
         XCTAssertTrue(waitForNo(shownStation(in: app)))
         moveThePhone(to: Self.cadet)
         XCTAssertTrue(waitFor(shownStation(in: app)))
@@ -48,7 +48,7 @@ final class SwipeAwayTests: E2ETestCase {
         closeNotificationCenter()
 
         standStillLongerThanTheAppTrustsAPosition()
-        app.activate()
+        bringToFront(app)
         tap(app.buttons["cancelStationPause"])
         openNotificationCenter(over: app)
         XCTAssertTrue(
