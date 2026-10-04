@@ -56,7 +56,7 @@ Write the text in English in the code, then run `make strings-sync`: it adds the
 Write it the way a Paris rider would say it, with the words of the RATP signs and of iOS ("Prochains passages", "Réglages").
 Commit the catalog with your change.
 A missing French text is the most common reason why a first change fails `make check`.
-[Languages](ios/README.md#languages) in the README of the app explains the catalogs.
+[Add or change a text in English and French](ios/guide/languages.md) explains the catalogs.
 
 ### Update the docs in the same change
 
