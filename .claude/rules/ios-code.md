@@ -33,7 +33,8 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   New code goes in the folder of its feature.
   A new feature gets a new folder in each module where it has code.
   No layer folders (`Views/`, `Models/`, `Services/`, `Helpers/`), and no loose files at the top of a module.
-  The only exceptions: `TROMEApp.swift` and `ContentView.swift` (the main screen) at the top of `ios/App/`, the String Catalogs (`Localizable.xcstrings`, `InfoPlist.xcstrings`) at the top of `ios/App/` and `ios/Widget/`, and `Resources/` in the package.
+  The only exceptions: `TROMEApp.swift` and `ContentView.swift` (the main screen) at the top of `ios/App/`, the String Catalogs (`Localizable.xcstrings`, `InfoPlist.xcstrings`) at the top of `ios/App/` and `ios/Widget/`,
+  the privacy manifest (`PrivacyInfo.xcprivacy`, the name that Apple requires) at the top of `ios/App/`, and of `ios/Widget/` once the code of the widget uses an API that needs a reason, and `Resources/` in the package.
 - **Testing tools are for debug builds only.** Each file in `ios/App/TestingTools/` is inside `#if DEBUG`.
 - **The widget is a pure view.** `ios/Widget/` uses only `StationActivityAttributes` and its value types from `TROMECore`, and `SnoozeLiveActivityIntent` for its buttons (iOS runs the intent in the app, not in the widget).
   No model, no provider, no network.
