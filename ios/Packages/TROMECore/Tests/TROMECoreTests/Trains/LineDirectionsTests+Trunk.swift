@@ -3,12 +3,12 @@ import Testing
 @testable import TROMECore
 
 extension LineDirectionsTests {
-    private struct ShownTrain: Equatable {
+    struct ShownTrain: Equatable {
         let destination: String
         let minutes: Int
     }
 
-    private struct ShownDirection: Equatable {
+    struct ShownDirection: Equatable {
         let label: String
         let trains: [ShownTrain]
     }
@@ -17,13 +17,10 @@ extension LineDirectionsTests {
         TransitLine(mode: .rer, name: "A", stopIds: ["IDFM:monomodalStopPlace:43224"])
     }
 
-    private func rerQuay(_ code: Int) -> String {
-        "STIF:StopPoint:Q:\(code):"
-    }
-
-    private func liveActivityRows(
+    func liveActivityRows(
         of fixture: String,
         at stationName: String,
+        rer lineName: String = "A",
         now: Date
     ) throws -> [ShownDirection] {
         let catalogStation = try #require(try StationCatalog.bundled().stations.first { $0.name == stationName })
@@ -31,7 +28,7 @@ extension LineDirectionsTests {
             id: catalogStation.id,
             name: catalogStation.name,
             coordinate: catalogStation.coordinate,
-            lines: catalogStation.lines.filter { $0.mode == .rer && $0.name == "A" }
+            lines: catalogStation.lines.filter { $0.mode == .rer && $0.name == lineName }
         )
         let visits = try StopMonitoringResponse.visits(from: Fixture.data(fixture))
         let departures = PRIMDeparturesProvider.departures(from: visits, at: [station])
@@ -123,7 +120,7 @@ extension LineDirectionsTests {
 
     @Test func neverMakesAThirdDirectionForATrainOfUnknownSideAtAnRERTrunkStation() {
         let result = directions(of: rerA, at: "Vincennes", [
-            train(rerA, to: "Nanterre Préfecture", inMinutes: 1, from: rerQuay(3)),
+            train(rerA, to: "Destination inconnue", inMinutes: 1, from: rerQuay(3)),
             train(rerA, to: "Saint-Germain-en-Laye", inMinutes: 2, from: rerQuay(1)),
             train(rerA, to: "Poissy", inMinutes: 6, from: rerQuay(1)),
             train(rerA, to: "Boissy-Saint-Léger", inMinutes: 5, from: rerQuay(2)),
@@ -177,8 +174,8 @@ extension LineDirectionsTests {
         #expect(shown == [
             [["Aéroport Charles de Gaulle 1", "Mitry - Claye"], ["Massy - Palaiseau", "Robinson"]],
             [["Versailles Chantiers", "Pontoise"], ["Juvisy", "Dourdan la Forêt"]],
-            [["Creil"], ["Corbeil-Essonnes", "Melun"]],
-            [["Nanterre-La-Folie"], ["Gagny", "Tournan"]]
+            [["Orry-la-Ville - Coye", "Creil"], ["Corbeil-Essonnes", "Melun"]],
+            [["Haussmann Saint-Lazare", "Nanterre-La-Folie"], ["Gagny", "Tournan"]]
         ])
     }
 }

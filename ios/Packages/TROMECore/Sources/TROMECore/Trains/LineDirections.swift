@@ -285,7 +285,10 @@ enum LineDirections {
             return side
         }
         guard isOnTheRERTrunk else { return nil }
-        return destinations.compactMap { sideOfTheBranches(naming: $0, in: sides, ends: ends) }.first
+        return destinations.compactMap { destination in
+            ends.trunkSide(of: destination, from: station.name).flatMap { sides.firstIndex(of: $0) }
+                ?? sideOfTheBranches(naming: destination, in: sides, ends: ends)
+        }.first
     }
 
     private static func side(of destination: String, in sides: [[String]], ends: LineEnds) -> Int? {
@@ -332,7 +335,7 @@ enum LineDirections {
             .first { isNamed(destination, $0) }
     }
 
-    private static func isNamed(_ destination: String, _ name: String) -> Bool {
+    static func isNamed(_ destination: String, _ name: String) -> Bool {
         let key = StationCatalog.searchKey(destination)
         let nameKey = StationCatalog.searchKey(name)
         return key == nameKey || key.hasPrefix(nameKey + " ")

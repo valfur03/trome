@@ -1,0 +1,327 @@
+{
+    "Siri": {
+        "ServiceDelivery": {
+            "ResponseTimestamp": "2026-10-02T06:12:00.000Z",
+            "ProducerRef": "IVTR_HET",
+            "StopMonitoringDelivery": [
+                {
+                    "ResponseTimestamp": "2026-10-02T06:12:00.000Z",
+                    "Version": "2.0",
+                    "Status": "true",
+                    "MonitoredStopVisit": [
+                        {
+                            "RecordedAtTime": "2026-10-02T06:12:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::43224-1:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:43224:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01742:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::vincennes-rer-a-0812-1:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:58759:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "La D\u00e9fense"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Vincennes"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "La D\u00e9fense"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:12:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411206:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411206:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:12:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::43224-2:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:43224:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01742:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::vincennes-rer-a-0812-2:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43216:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Cergy le Haut"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Vincennes"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Cergy le Haut"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:13:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411207:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411207:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:12:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::43224-3:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:43224:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01742:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::vincennes-rer-a-0812-3:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43094:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Boissy-Saint-L\u00e9ger"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Vincennes"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Boissy-Saint-L\u00e9ger"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:15:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411208:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411208:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:12:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::43224-4:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:43224:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01742:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::vincennes-rer-a-0812-4:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43180:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Saint-Germain-en-Laye"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Vincennes"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Saint-Germain-en-Laye"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:17:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411209:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411209:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:12:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::43224-5:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:43224:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01742:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::vincennes-rer-a-0812-5:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43192:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Marne-la-Vall\u00e9e - Chessy"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Vincennes"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Marne-la-Vall\u00e9e - Chessy"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:18:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411210:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:411210:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

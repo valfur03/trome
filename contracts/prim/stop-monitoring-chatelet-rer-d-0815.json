@@ -1,0 +1,327 @@
+{
+    "Siri": {
+        "ServiceDelivery": {
+            "ResponseTimestamp": "2026-10-02T06:15:00.000Z",
+            "ProducerRef": "IVTR_HET",
+            "StopMonitoringDelivery": [
+                {
+                    "ResponseTimestamp": "2026-10-02T06:15:00.000Z",
+                    "Version": "2.0",
+                    "Status": "true",
+                    "MonitoredStopVisit": [
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-1:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:45102:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-d-0815-1:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:47905:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Stade de France Saint-Denis"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Ch\u00e2telet - Les Halles"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Stade de France Saint-Denis"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:16:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473921:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473921:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-2:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:45102:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-d-0815-2:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43162:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Melun"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Ch\u00e2telet - Les Halles"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Melun"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:18:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473922:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473922:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-3:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:45102:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-d-0815-3:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:47895:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Villiers-le-Bel - Gonesse - Arnouville"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Ch\u00e2telet - Les Halles"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Villiers-le-Bel - Gonesse - Arnouville"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:23:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473923:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473923:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-4:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:45102:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-d-0815-4:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:47927:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Malesherbes"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Ch\u00e2telet - Les Halles"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Malesherbes"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:25:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473924:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473924:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::45102-5:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:45102:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::chatelet-rer-d-0815-5:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:47885:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Creil"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Ch\u00e2telet - Les Halles"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Creil"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:34:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473925:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:473925:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

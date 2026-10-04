@@ -1,0 +1,265 @@
+{
+    "Siri": {
+        "ServiceDelivery": {
+            "ResponseTimestamp": "2026-10-02T06:15:00.000Z",
+            "ProducerRef": "IVTR_HET",
+            "StopMonitoringDelivery": [
+                {
+                    "ResponseTimestamp": "2026-10-02T06:15:00.000Z",
+                    "Version": "2.0",
+                    "Status": "true",
+                    "MonitoredStopVisit": [
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::58572-1:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:58572:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01729:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::magenta-rer-e-0815-1:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:471934:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Haussmann Saint-Lazare"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Magenta"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Haussmann Saint-Lazare"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:16:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474151:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474151:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::58572-2:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:58572:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01729:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::magenta-rer-e-0815-2:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43166:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Chelles - Gournay"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Magenta"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Chelles - Gournay"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:17:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474152:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474152:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::58572-3:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:58572:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01729:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::magenta-rer-e-0815-3:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:482368:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Nanterre-La-Folie"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Magenta"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Nanterre-La-Folie"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:20:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474153:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474153:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::58572-4:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:58572:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01729:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::magenta-rer-e-0815-4:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43204:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Tournan"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Magenta"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Tournan"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:22:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474154:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:474154:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

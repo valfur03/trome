@@ -11,10 +11,6 @@ extension LineDirectionsTests {
         TransitLine(mode: .rer, name: "E", stopIds: ["IDFM:monomodalStopPlace:22"])
     }
 
-    private func rerQuay(_ code: Int) -> String {
-        "STIF:StopPoint:Q:\(code):"
-    }
-
     private func rerTrain(_ time: Double, to destination: String) -> LineDirection.Train {
         LineDirection.Train(time: self.time(inMinutes: time), destination: destination)
     }

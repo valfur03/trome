@@ -88,6 +88,16 @@ extension TransitLine {
                 "Bussy-Saint-Georges",
                 "Val d'Europe"
             ]
+        ],
+        trunkStations: [
+            "Nanterre - Préfecture",
+            "La Défense",
+            "Charles de Gaulle - Étoile",
+            "Auber",
+            "Châtelet - Les Halles",
+            "Gare de Lyon",
+            "Nation",
+            "Vincennes"
         ]
     )
 
@@ -218,6 +228,28 @@ extension TransitLine {
                 "Buno - Gironville",
                 "Boigneville"
             ]
+        ],
+        trunkStations: [
+            "Chantilly - Gouvieux",
+            "Orry-la-Ville - Coye",
+            "La Borne Blanche",
+            "Survilliers - Fosses",
+            "Louvres",
+            "Les Noues",
+            "Goussainville",
+            "Villiers-le-Bel - Gonesse - Arnouville",
+            "Garges - Sarcelles",
+            "Pierrefitte - Stains",
+            "Saint-Denis",
+            "Stade de France Saint-Denis",
+            "Gare du Nord",
+            "Châtelet - Les Halles",
+            "Gare de Lyon",
+            "Maisons-Alfort - Alfortville",
+            "Le Vert de Maisons",
+            "Créteil Pompadour",
+            "Villeneuve Triage",
+            "Villeneuve-Saint-Georges"
         ]
     )
 
@@ -239,6 +271,15 @@ extension TransitLine {
                 "Ozoir-la-Ferrière",
                 "Gretz-Armainvilliers"
             ]
+        ],
+        trunkStations: [
+            "La Défense",
+            "Neuilly - Porte Maillot",
+            "Haussmann Saint-Lazare",
+            "Magenta",
+            "Rosa Parks",
+            "Pantin",
+            "Noisy-le-Sec"
         ]
     )
 

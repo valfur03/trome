@@ -1,0 +1,327 @@
+{
+    "Siri": {
+        "ServiceDelivery": {
+            "ResponseTimestamp": "2026-10-02T06:15:00.000Z",
+            "ProducerRef": "IVTR_HET",
+            "StopMonitoringDelivery": [
+                {
+                    "ResponseTimestamp": "2026-10-02T06:15:00.000Z",
+                    "Version": "2.0",
+                    "Status": "true",
+                    "MonitoredStopVisit": [
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470195-1:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:470195:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::gare-de-lyon-rer-d-0815-1:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:47876:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Goussainville"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Gare de Lyon"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Goussainville"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:16:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470301:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470301:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470195-2:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:470195:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::gare-de-lyon-rer-d-0815-2:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43174:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Corbeil-Essonnes"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Gare de Lyon"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Corbeil-Essonnes"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:17:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470302:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470302:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470195-3:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:470195:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::gare-de-lyon-rer-d-0815-3:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:47901:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Orry-la-Ville - Coye"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Gare de Lyon"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Orry-la-Ville - Coye"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:19:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470303:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470303:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470195-4:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:470195:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::gare-de-lyon-rer-d-0815-4:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:43162:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Melun"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Gare de Lyon"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Melun"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:21:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470304:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470304:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        },
+                        {
+                            "RecordedAtTime": "2026-10-02T06:15:00.000Z",
+                            "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470195-5:",
+                            "MonitoringRef": {
+                                "value": "STIF:StopArea:SP:470195:"
+                            },
+                            "MonitoredVehicleJourney": {
+                                "LineRef": {
+                                    "value": "STIF:Line::C01728:"
+                                },
+                                "OperatorRef": {},
+                                "FramedVehicleJourneyRef": {
+                                    "DataFrameRef": {
+                                        "value": "any"
+                                    },
+                                    "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::gare-de-lyon-rer-d-0815-5:LOC"
+                                },
+                                "DirectionName": [],
+                                "DestinationRef": {
+                                    "value": "STIF:StopArea:SP:47885:"
+                                },
+                                "DestinationName": [
+                                    {
+                                        "value": "Creil"
+                                    }
+                                ],
+                                "JourneyNote": [
+                                    {
+                                        "value": "ZEUS"
+                                    }
+                                ],
+                                "MonitoredCall": {
+                                    "StopPointName": [
+                                        {
+                                            "value": "Gare de Lyon"
+                                        }
+                                    ],
+                                    "VehicleAtStop": false,
+                                    "DestinationDisplay": [
+                                        {
+                                            "value": "Creil"
+                                        }
+                                    ],
+                                    "ExpectedDepartureTime": "2026-10-02T06:25:30.000Z",
+                                    "DepartureStatus": "onTime",
+                                    "ArrivalStatus": "onTime",
+                                    "DepartureStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470305:"
+                                        }
+                                    },
+                                    "ArrivalStopAssignment": {
+                                        "ExpectedQuayRef": {
+                                            "value": "STIF:StopPoint:Q:470305:"
+                                        }
+                                    }
+                                },
+                                "DirectionRef": {
+                                    "value": "Aller"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

@@ -42,7 +42,7 @@ final class LiveActivityRenderCheck: XCTestCase {
         "Villejuif Paul Vaillant-Couturier", "Boulogne Jean Jaurès", "Pont de Levallois - Bécon", "Pelleport",
         "Botzaris", "Liège", "Tolbiac", "La Fourche", "Aubervilliers - Pantin - Quatre Chemins",
         "Pigalle", "Maison Blanche", "Bibliothèque François Mitterrand", "Palais Royal - Musée du Louvre",
-        "Invalides", "Gare de Lyon", "Auber"
+        "Invalides", "Gare de Lyon", "Auber", "Magenta"
     ]
     static let maxPages = 12
     static let scale: CGFloat = 3

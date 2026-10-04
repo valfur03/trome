@@ -13,6 +13,10 @@ struct LineDirectionsTests {
         Station(id: name, name: name, coordinate: Coordinate(48.85, 2.35), lines: lines)
     }
 
+    func rerQuay(_ code: Int) -> String {
+        "STIF:StopPoint:Q:\(code):"
+    }
+
     func time(inMinutes minutes: Double) -> Date {
         now.addingTimeInterval(minutes * 60)
     }

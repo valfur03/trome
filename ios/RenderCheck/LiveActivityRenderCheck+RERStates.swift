@@ -45,6 +45,39 @@ extension LiveActivityRenderCheck {
                     train(12, "Dourdan la Forêt")
                 ])
             ])
+        ].compactMap { $0 } + rerShortTripStates(at: catalog, now: now)
+    }
+
+    private static func rerShortTripStates(at catalog: StationCatalog, now: Date) -> [StationState] {
+        func train(_ minutes: Double, _ end: String) -> LineDirection.Train {
+            LineDirection.Train(time: now.addingTimeInterval(minutes * 60), destination: end)
+        }
+        func state(_ lineName: String, at stationName: String, _ directions: [LineDirection]) -> StationState? {
+            rerState(of: lineName, at: stationName, in: catalog, directions, now: now)
+        }
+        let dSouth = "Melun / Malesherbes"
+        return [
+            state("D", at: "Châtelet - Les Halles", [
+                LineDirection(label: "Creil", trains: [
+                    train(2, "Stade de France Saint-Denis"),
+                    train(9, "Villiers-le-Bel - Gonesse - Arnouville")
+                ]),
+                LineDirection(label: dSouth, trains: [train(4, "Melun"), train(11, "Malesherbes")])
+            ]),
+            state("D", at: "Gare de Lyon", [
+                LineDirection(label: "Creil", trains: [train(2, "Goussainville"), train(5, "Orry-la-Ville - Coye")]),
+                LineDirection(label: dSouth, trains: [train(3, "Corbeil-Essonnes"), train(7, "Melun")])
+            ]),
+            state("E", at: "Magenta", [
+                LineDirection(label: "Nanterre-La-Folie", trains: [
+                    train(2, "Haussmann Saint-Lazare"),
+                    train(6, "Nanterre-La-Folie")
+                ]),
+                LineDirection(label: "Chelles - Gournay / Tournan", trains: [
+                    train(3, "Chelles - Gournay"),
+                    train(8, "Tournan")
+                ])
+            ])
         ].compactMap { $0 }
     }
 

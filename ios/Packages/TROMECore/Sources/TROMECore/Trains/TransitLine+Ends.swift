@@ -4,17 +4,20 @@ public struct LineEnds: Hashable, Sendable {
     public let first: [String]
     public let second: [String]
     let branchStations: [String: [String]]
+    let trunkStations: [String]
     let otherNames: [String: [String]]
 
     public init(
         first: [String],
         second: [String],
         branchStations: [String: [String]] = [:],
+        trunkStations: [String] = [],
         otherNames: [String: [String]] = [:]
     ) {
         self.first = first
         self.second = second
         self.branchStations = branchStations
+        self.trunkStations = trunkStations
         self.otherNames = otherNames
     }
 
@@ -28,6 +31,15 @@ public struct LineEnds: Hashable, Sendable {
             branchStations[end, default: []].contains { StationCatalog.searchKey($0) == stationKey }
         }
         return branchEnds.isEmpty ? side : branchEnds
+    }
+
+    func trunkSide(of destination: String, from stationName: String) -> [String]? {
+        let stationKey = StationCatalog.searchKey(stationName)
+        guard let stationIndex = trunkStations.firstIndex(where: { StationCatalog.searchKey($0) == stationKey }),
+              let destinationIndex = trunkStations.firstIndex(where: { LineDirections.isNamed(destination, $0) }),
+              destinationIndex != stationIndex
+        else { return nil }
+        return destinationIndex < stationIndex ? first : second
     }
 
     func hasADirectionWithTwoEnds(from stationName: String) -> Bool {
