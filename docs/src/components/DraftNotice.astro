@@ -9,11 +9,11 @@ const french = Astro.locals.starlightRoute.lang.startsWith('fr');
 {
   french ? (
     <Aside type="caution" title="Brouillon">
-      Cette page est un brouillon. Les passages surlignés restent à compléter ou à vérifier, et le texte peut changer.
+      Cette page est un brouillon. Les passages surlignés restent à compléter ou ne sont pas encore définitifs, et le texte peut changer.
     </Aside>
   ) : (
     <Aside type="caution" title="Draft">
-      This page is a draft. The highlighted parts are still to fill in or to check, and the text can change.
+      This page is a draft. The highlighted parts are still to fill in or not final yet, and the text can change.
     </Aside>
   )
 }

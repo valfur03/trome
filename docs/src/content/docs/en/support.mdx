@@ -6,7 +6,6 @@ sidebar:
 ---
 
 import DraftNotice from '../../../components/DraftNotice.astro';
-import Placeholder from '../../../components/Placeholder.astro';
 import Unverified from '../../../components/Unverified.astro';
 
 <DraftNotice />
@@ -57,7 +56,7 @@ If nothing changes, check that the iPhone is connected to the internet.
 
 ## “Times unavailable for now”
 
-<Unverified>this message and what follows describe a feature of the app that is not built yet.</Unverified>
+<Unverified>this message and what follows describe the next version of the app, which is not out yet.</Unverified>
 
 TROME can ask for train times a limited number of times each day, and all its users share this limit.
 When many people use it at the same time, the limit can be reached, and the Live Activity then shows this message.
@@ -74,18 +73,24 @@ So a gap of a minute or two with the platform screen is normal: when in doubt, t
 
 ## Write to us
 
-Write to us at <Placeholder>contact address</Placeholder>.
-We usually answer within <Placeholder>answer delay</Placeholder>.
+To reach us, open an issue on GitHub, with a free account.
+The forms are in English, and you can also write to us in French.
+
+- [A problem with the app](https://github.com/valfur03/trome/issues/new?template=bug.yml): the bug form.
+- [A question or an idea](https://github.com/valfur03/trome/issues/new?template=question.yml): the question form.
 
 To help us find the cause quickly, tell us the model of your iPhone, its iOS version, the station, and what you see.
-A screenshot helps a lot.
+A screenshot helps a lot: first check that it shows nothing personal.
 
-A bug or an idea?
-You can also report it on [GitHub](https://github.com/valfur03/trome/issues).
+An issue is public, and everyone can read it.
+Do not write your name, your email address, or where you live in it.
+TROME is a free app: we answer when we can, and we promise no delay.
+
+A security problem, for example a way to learn where someone is?
+Do not write it in a public issue: [send it in private](https://github.com/valfur03/trome/security/advisories/new).
+[SECURITY.md](https://github.com/valfur03/trome/blob/main/SECURITY.md) says what to put in it.
 
 ## Where the data comes from
-
-<Unverified>the sentence about the station list must be the same as in the app, and the NOTICE.md file must exist.</Unverified>
 
 Contains information from the ‘[Prochains passages](https://prim.iledefrance-mobilites.fr)’ database of Île-de-France Mobilités (PRIM), made available under the ‘[Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences)’.
 
@@ -93,4 +98,3 @@ Station list adapted by TROME from Île-de-France Mobilités data, under the [OD
 
 TROME is not an app of RATP or of Île-de-France Mobilités, and neither of them endorses it.
 The names, the signs and the colours of the lines belong to their owners.
-The sources and their licences are listed in full in [NOTICE.md](https://github.com/valfur03/trome/blob/main/NOTICE.md).

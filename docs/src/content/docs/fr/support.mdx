@@ -6,7 +6,6 @@ sidebar:
 ---
 
 import DraftNotice from '../../../components/DraftNotice.astro';
-import Placeholder from '../../../components/Placeholder.astro';
 import Unverified from '../../../components/Unverified.astro';
 
 <DraftNotice />
@@ -57,7 +56,7 @@ Si rien ne change, vérifiez que l’iPhone est connecté à internet.
 
 ## « Horaires indisponibles pour le moment »
 
-<Unverified>ce message et ce qui suit décrivent une fonction de l’app qui n’est pas encore faite.</Unverified>
+<Unverified>ce message et ce qui suit décrivent la prochaine version de l’app, qui n’est pas encore sortie.</Unverified>
 
 TROME peut demander les horaires un nombre limité de fois par jour, et tous ses utilisateurs partagent cette limite.
 Quand beaucoup de monde l’utilise en même temps, la limite peut être atteinte : l’activité en direct affiche alors ce message.
@@ -74,18 +73,24 @@ Un écart d’une ou deux minutes avec l’écran du quai est donc normal : en c
 
 ## Écrivez-nous
 
-Écrivez-nous à <Placeholder>adresse de contact</Placeholder>.
-Nous répondons en général sous <Placeholder>délai de réponse</Placeholder>.
+Pour nous joindre, ouvrez une « issue » sur GitHub, avec un compte gratuit.
+Les formulaires sont en anglais, mais vous pouvez nous écrire en français.
+
+- [Un problème avec l’app](https://github.com/valfur03/trome/issues/new?template=bug.yml) : le formulaire de bug.
+- [Une question ou une idée](https://github.com/valfur03/trome/issues/new?template=question.yml) : le formulaire de question.
 
 Pour que nous trouvions vite la cause, dites-nous le modèle de votre iPhone, sa version d’iOS, la station, et ce que vous voyez.
-Une capture d’écran aide beaucoup.
+Une capture d’écran aide beaucoup : regardez d’abord qu’elle ne montre rien de personnel.
 
-Un bug ou une idée ?
-Vous pouvez aussi les signaler sur [GitHub](https://github.com/valfur03/trome/issues).
+Une issue est publique, et tout le monde peut la lire.
+N’y mettez ni votre nom, ni votre adresse e-mail, ni l’endroit où vous habitez.
+TROME est une app gratuite : nous répondons dès que nous le pouvons, sans promettre de délai.
+
+Un problème de sécurité, par exemple un moyen de savoir où se trouve quelqu’un ?
+Ne l’écrivez pas dans une issue publique : [envoyez-le en privé](https://github.com/valfur03/trome/security/advisories/new).
+[SECURITY.md](https://github.com/valfur03/trome/blob/main/SECURITY.md) (en anglais) dit quoi y mettre.
 
 ## D’où viennent les données
-
-<Unverified>la phrase sur la liste des stations doit être la même que dans l’app, et le fichier NOTICE.md doit exister.</Unverified>
 
 Contient des informations de la base « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), présentement mises à disposition aux conditions de la « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) ».
 
@@ -93,4 +98,3 @@ Liste des stations adaptée par TROME à partir des données d’Île-de-France 
 
 TROME n’est pas une app de la RATP ni d’Île-de-France Mobilités, et aucune des deux ne la soutient.
 Les noms, les pictogrammes et les couleurs des lignes appartiennent à leurs propriétaires.
-Le détail des sources et de leurs licences est dans le fichier [NOTICE.md](https://github.com/valfur03/trome/blob/main/NOTICE.md) (en anglais).

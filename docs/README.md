@@ -89,8 +89,8 @@ On a phone, Starlight puts the language menu inside the menu of the sidebar, so 
 | [`Checklist`](src/components/Checklist.astro) | around a `Steps` list: a tick box on each step, and a count at the top ("3 of 11 steps done"); add `kind="things"` for a list of things to have ("3 of 8 things ready") |
 | [`Screenshot`](src/components/Screenshot.astro) | one picture of the app |
 | [`Screenshots`](src/components/Screenshots.astro) | pictures side by side, each in its own `Screenshot` |
-| [`Placeholder`](src/components/Placeholder.astro) | a fact that the page still waits for, such as a contact address: `<Placeholder>contact address</Placeholder>` shows it highlighted, between brackets |
-| [`Unverified`](src/components/Unverified.astro) | at the top of a part that states something nobody could check yet, such as a feature that is not built: `<Unverified>what is left to check</Unverified>` shows it highlighted, with "To check" in the language of the page |
+| [`Placeholder`](src/components/Placeholder.astro) | a fact that the page still waits for, such as the legal name of the publisher: `<Placeholder>legal name</Placeholder>` shows it highlighted, between brackets |
+| [`Unverified`](src/components/Unverified.astro) | at the top of a part that is not final yet, such as the description of a version of the app that is not out: `<Unverified>what is not final, in the reader's words</Unverified>` shows it highlighted, with "Not final" in the language of the page |
 | [`DraftNotice`](src/components/DraftNotice.astro) | at the top of a page that is not final yet: it says, in the language of the page, that the page is a draft and that its text can change; a page with a `Placeholder` or an `Unverified` must have it, and `make docs-check` fails when it does not |
 
 Give each `Checklist` its own `id`: the browser saves the ticks of the reader under it.
