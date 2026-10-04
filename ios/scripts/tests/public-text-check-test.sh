@@ -90,7 +90,7 @@ git -C "$repo" rm -q --cached ios/README.md
 file server/README.md "The prompter decides (decision-40)."
 expect "server/README.md, rewritten for developers, may not cite the backlog" "$(check)" "fails"
 expect "a failure says which files it checks only for personal data" \
-    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "3"
+    "$(grep -c "checks only personal data, local paths and the old app name in" "$state/out")" "2"
 expect "it finds the backlog id of server/README.md" "$(hit 'server/README.md:1: a backlog id: "decision-40"')" "1"
 rm "$repo/server/README.md"
 git -C "$repo" rm -q --cached server/README.md

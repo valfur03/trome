@@ -13,7 +13,7 @@ The code is in `ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity/`, and
 |---|---|---|
 | Arrival, switch, stop, the 45 minutes | `AutoLiveActivityRules.decide`; `AutoLiveActivityModel` applies the answer | `AutoLiveActivityRulesTests*`, `AutoLiveActivityModelTests` |
 | Snooze, the switch, the buttons | `AutomaticMode`, `AutomaticModeModel`, `SnoozeLiveActivityIntent` | `AutomaticMode*Tests`, `AutoLiveActivitySnoozeTests` |
-| The pause after a swipe | `AutoLiveActivityRules.outcome(of:shown:now:)`, `StationPause`, `AutoLiveActivityModel+Pause` | `AutoLiveActivityRemovalRulesTests`, `AutoLiveActivityPauseTests` |
+| The pause after a swipe | `AutoLiveActivityRules.outcome(of:shown:now:)`, `StationPause`, `AutoLiveActivityModel+Pause`; `ActivityKitStationLiveActivityClient` (`ios/App/LiveActivity/`) reports each end, and whether the app ended it | `AutoLiveActivityRemovalRulesTests`, `AutoLiveActivityPauseTests` |
 | The position of a resume | `ResumePositionRules`, `AutoLiveActivityModel+Resume` | `ResumePositionRulesTests`, `AutoLiveActivityRiderResumeTests` |
 | The permission questions | `LocationQuestionsRules` (`Location/`), `CoreLocationPermission` (`ios/App/Location/`) | `LocationQuestionsRulesTests` |
 | The regions that wake the app | `StationRegionPlan`, `CoreLocationStationRegionWatcher` | `StationRegionPlanTests` |

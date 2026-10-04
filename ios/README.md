@@ -158,7 +158,7 @@ Every text that a rider sees needs its French text, in the same change, or `make
 
 ## Project layout
 
-Each part of the repo has its own folder. The root holds only the files of the whole repo. decision-6 in the backlog explains this layout and the code structure.
+Each part of the repo has its own folder. The root holds only the files of the whole repo.
 
 | Folder or file | What it holds |
 |---|---|
