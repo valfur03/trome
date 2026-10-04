@@ -3,6 +3,7 @@
 This folder holds the iPhone app of TROME, its Live Activity, and their tests.
 This page gets you from a clone to the app in the Simulator, and to a change that passes the checks; [CONTRIBUTING.md](../CONTRIBUTING.md) says how to propose one.
 Run every `make` command from the root of the repo.
+[Project layout](#project-layout), at the end of this page, maps the folders of the code.
 
 ## Set up and run the app
 
@@ -39,25 +40,27 @@ To put the app on your own iPhone, see [Install on your iPhone](#install-on-your
 
 The `make` commands run the app on one shared Simulator, `RATP-Shared`, and only one of them uses it at a time, in any clone or git worktree of the repo.
 A second command waits, and prints `Waiting for the Simulator lock`: let it wait.
-After `make run`, the Simulator stays with your folder until you run `make simulator-shutdown`.
-Before it installs the app, each command removes the app and its data, and resets the permissions, the text size, the appearance and the language of the Simulator.
+After `make run`, the Simulator stays yours, and the other commands wait, until you run `make simulator-shutdown`.
+Each command starts from a clean app: it removes the app and its data, and resets the permissions, the text size, the appearance and the language of the Simulator.
 In your own `xcrun simctl` commands, use the ID that `make -s simulator` prints.
 
-To run the app from Xcode instead, pick a Simulator of your own, because the `make` commands shut the shared ones down when no command uses them.
-Free and shut down the shared one first, so that only one Simulator runs: `make simulator-shutdown`, then `xcrun simctl shutdown "$(make -s simulator)"`.
+To run the app from the **Run** button of Xcode instead, use a Simulator of your own: the `make` commands shut the shared one down a few minutes after their last job, even with your app open.
+Free the shared one and shut it down first, so that only one Simulator runs: `make simulator-shutdown`, then `xcrun simctl shutdown "$(make -s simulator)"`.
+Quit your own Simulator before your next `make` command, for the same reason.
 
 ## Keep the Xcode project up to date
 
 The Xcode project is not in git: XcodeGen makes it from `ios/project.yml`, so change the settings there, not in Xcode.
 The `make` commands update the project before they build, but the **Run** button of Xcode does not, and an old project fails with "Build input file cannot be found".
-So run `make generate` after each `git pull` or change of branch, or run `make git-hooks` once, and git does it for you.
+So run `make generate` before you build in Xcode, after each edit of `ios/project.yml`, `git pull` or change of branch.
+To let git run it after a pull or a change of branch, run `make git-hooks` once.
 
 ## Before you commit
 
 Run `make check`.
 It runs the lint, the checks of the texts, the build, the unit tests and the tests of the scripts, and stops at the first failure, with a message that says what to do.
 The build accepts no warning: fix its cause, and never silence it.
-When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks them too, with Node 24.
+When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks them too, which needs Node 24 ([how to install it](../server/README.md#run-and-test-it-locally)).
 
 `make check` runs no end-to-end test: [Test a change to the iPhone app](guide/tests.md) says which tests your change needs, and how to write one.
 

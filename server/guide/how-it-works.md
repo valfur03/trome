@@ -33,8 +33,9 @@ After `budget` or `prim-limit`, it adds 0 to 59 seconds to `retryAt`, from the s
 
 A PRIM key has a quota of 1,000 calls a day, from 00:00 UTC.
 The server caps its calls lower, with `PRIM_DAILY_CAP` in `server/wrangler.jsonc`: 800 each Paris day for `trome-server`, and 60 for `trome-server-staging`, so that a test there cannot spend the calls of the riders.
-Keep the two caps together well under 1,000 when they share one key, to leave room for `make run LIVE=1`, which no cap limits.
+Keep each cap within its share of [the day of the PRIM key](#the-day-of-the-prim-key), not one of them at 990.
 The server counts each call before it makes it, failed calls too, in its storage, so a restart does not reset it.
+For each stop, one PRIM answer serves every rider, and the requests that come while a PRIM call is in flight wait for that one call.
 
 The cap is shared among the 24 Paris hours, so that the morning peak cannot spend the calls of the evening, and what an hour does not spend goes to the next one.
 The share of each hour, the day shape, follows when Paris rail riders enter a station: it is `dayShapePercents` in [`relay-settings.ts`](../src/core/config/relay-settings.ts), and [NOTICE.md](../../NOTICE.md#the-servers-day-shape) gives its source and its licence.
@@ -58,6 +59,22 @@ When you change a setting, change this page in the same commit; when you change 
 
 The cap of 800 serves about 50 to 60 riders who each start two Live Activities of about 10 minutes a day: [`relay-whole-day.test.ts`](../test/core/relay/relay-whole-day.test.ts) checks that 50 of them get times for more than 95 in 100 of their Live Activities.
 The day shape counts every rider of the rail network: after two weeks of real use, replace it with the share of each hour in the app calls of `make server-counts`, on days with few `out` answers, since an app that gets one asks again.
+
+## The day of the PRIM key
+
+The key has 1,000 calls a day, and PRIM counts its day in UTC.
+Each user of the key has a share, and the shares add up to 990 at most.
+When the key reaches 1,000 calls, PRIM answers `429`, and the production server makes no PRIM call for 1 hour, so no rider gets new times.
+
+| Who calls PRIM with the key | Calls a day | Who counts them |
+|---|---|---|
+| The production Worker | 800 | The production Worker (`PRIM_DAILY_CAP`; `make server-counts`) |
+| The staging Worker | 60 | The staging Worker (its own `PRIM_DAILY_CAP`) |
+| The Debug builds that hold the key (`make run LIVE=1`, your own tests on the Simulator and on your iPhone) | about 130, together | Nothing in the repo: they call PRIM directly. Only your account on the PRIM site shows the calls of the day, and it shows the calls of all the rows together. |
+| Total of the shares | 990 at most | |
+| Margin, up to the 1,000 calls of the key | 10 | The production Worker: its calls from 00:00 to 02:00 in Paris fall in the PRIM day before, and its day shape keeps them at 8 at most |
+
+When you change a cap, change this table in the same commit, and keep the total of the shares at 990 or less.
 
 ## What the server keeps about riders
 

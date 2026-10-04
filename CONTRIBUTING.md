@@ -31,7 +31,7 @@ We do not accept a large change that you cannot explain, or that you did not run
 
 ## Set up
 
-[Build, run and test the iPhone app](ios/README.md) takes you from a clone to the app in the iPhone Simulator, in three commands.
+[Build, run and test the iPhone app](ios/README.md) takes you from a clone to the app in the iPhone Simulator, in two commands.
 With no train data key, the app shows no live times: [The train data key](ios/README.md#the-train-data-key-prim) shows how to add your own free key.
 `make help` lists every command.
 

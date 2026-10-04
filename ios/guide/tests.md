@@ -46,7 +46,7 @@ make e2e ONLY="SnoozeTests LiveActivityTests"
 
 `make e2e` alone runs them all, in a few minutes.
 The tests have no train data key, so the Live Activity says "No data available" unless a test asks for fake trains.
-On a failure, `make e2e` prints the file, the line and the message, and Xcode opens the full results, `ios/.build/e2e.xcresult`.
+On a failure, `make e2e` prints the file, the line and the message; open `ios/.build/e2e.xcresult` in Xcode for the full results.
 
 | Class | What it checks on the real iOS |
 |---|---|
