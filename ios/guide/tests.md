@@ -2,6 +2,7 @@
 
 This page helps you pick the test that your change needs, run it, and write one when no test covers your change.
 Set up the app first ([ios/README.md](../README.md)), and run the commands from the root of the repo.
+Each step of a test command prints one line when it passes and its whole output when it fails, and keeps that output in `.build/logs/` of its part; add `VERBOSE=1` to the command to see every line as it runs.
 
 ## Pick the cheapest test that can catch the bug
 
@@ -46,6 +47,7 @@ make e2e ONLY="SnoozeTests LiveActivityTests"
 
 `make e2e` alone runs them all, in a few minutes.
 The tests have no train data key, so the Live Activity says "No data available" unless a test asks for fake trains.
+On a pass, `make e2e` prints the counts of the tests and their time.
 On a failure, `make e2e` prints the file, the line and the message; open `ios/.build/e2e.xcresult` in Xcode for the full results.
 
 | Class | What it checks on the real iOS |

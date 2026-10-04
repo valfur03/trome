@@ -9,6 +9,7 @@ SUB_MAKE := $(MAKE) --no-print-directory
 help:
 	@echo "Run each command from here (the root). It runs in the folder of its part: ios/, docs/ or server/."
 	@echo "make check               Quality gate: the iOS gate (lint + Markdown line check + public text check + bundle ID check + recommended settings check + key leak check + build with no warning + strings check + unit tests + script tests) + make docs-check if docs/ changed + make server-check if server/ or contracts/ changed"
+	@echo "make <command> VERBOSE=1  Print every line of each step as it runs; without VERBOSE=1, a step that passes prints one line (with its counts and time), a step that fails prints its whole output, and each step keeps its output in .build/logs/ of its part"
 	@$(SUB_MAKE) -C ios help | grep -v '^make check '
 	@$(SUB_MAKE) -C docs help
 	@$(SUB_MAKE) -C server help
