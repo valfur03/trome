@@ -80,7 +80,7 @@ When you change a cap, change this table in the same commit, and keep the total 
 
 Nothing.
 A request holds only a stop and the app token, and the server reads nothing else of it: no position, no device or account identifier, no push token, no IP address, no user agent, no body.
+A test sends all of these, and checks that none is stored or logged.
 After the request, the server keeps no stop in its storage or its log lines: the counts and the error lines have none.
 Only its memory holds a stop, and only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, and a stop whose PRIM call failed for its 60 s pause.
 The server drops each one at its first request after that time, and Cloudflare empties the memory of an idle server within about 3 minutes after its last request.
-A test sends all of these, and checks that none is stored or logged.

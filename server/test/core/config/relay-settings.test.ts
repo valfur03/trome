@@ -37,6 +37,14 @@ describe("relaySettings", () => {
     });
   });
 
+  it("gives no answer an age of use above the start age, after which the relay drops the answer from its memory", () => {
+    const settings = relaySettings({ PRIM_DAILY_CAP: "800" });
+
+    for (const age of [settings.freshAge, settings.heldAge, ...settings.agedAnswers.map((step) => step.age)]) {
+      expect(age).toBeLessThanOrEqual(settings.startAge);
+    }
+  });
+
   it("refuses a cap that is missing, not a whole number, 0, or above the PRIM quota of 1,000", () => {
     for (const value of [undefined, "", "abc", "0", "-1", "800.5", "8e2", " 800", "1001"]) {
       expect(() => relaySettings(value === undefined ? {} : { PRIM_DAILY_CAP: value }), String(value)).toThrow(
