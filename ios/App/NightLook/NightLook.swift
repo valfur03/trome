@@ -11,7 +11,7 @@ import SwiftUI
 ///   at 12%, and white text.
 /// - A state that is fine: a `fine` pill. A state that the rider must fix: a `problem` pill, a `problem` border of
 ///   2 pt on its card, and a `problem` button inside that card. Nothing else on the page is orange.
-/// - A link in a text: `link`.
+/// - A link in a text: `link`, underlined (`underliningLinks()`), so that more than its colour tells it from the text.
 ///
 /// Type: the system font, which grows with the text size of the phone. The screen title is a bold large title, the
 /// title of the plate a bold title 2, a row title a headline. An overline is a bold caption in capitals, with wide
