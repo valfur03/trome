@@ -9,6 +9,7 @@ struct Overline: View {
             .font(.caption.bold())
             .tracking(0.8)
             .foregroundStyle(NightLook.secondaryText)
+            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
             .accessibilityAddTraits(.isHeader)
     }
 }
