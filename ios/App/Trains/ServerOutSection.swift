@@ -1,13 +1,15 @@
 import TROMECore
 import SwiftUI
 
-struct ServerOutNotice: View {
+struct ServerOutSection: View {
     @Environment(StationLiveActivityModel.self) private var liveActivity
 
     var body: some View {
         if let retryAt = liveActivity.serverRetryAt {
-            message(LiveTimesComeBack(retryAt: retryAt, now: Date()))
-                .accessibilityIdentifier("serverOutNotice")
+            Section {
+                message(LiveTimesComeBack(retryAt: retryAt, now: Date()))
+                    .accessibilityIdentifier("serverOutNotice")
+            }
         }
     }
 
