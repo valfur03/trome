@@ -23,6 +23,7 @@ struct ContentView: View {
                         .padding(.horizontal, 4)
                     ServerOutSection()
                     LiveActivityStateSection()
+                    ExampleRow()
                     AutomaticModeSection()
                     PermissionsSection(permissions: permissions, nearestStationModel: nearestStationModel)
                     #if DEBUG

@@ -11,30 +11,41 @@ struct ExampleRow: View {
     }
 
     var body: some View {
-        Button {
-            guard !isStarting else { return }
-            isStarting = true
-            Task {
-                await autoLiveActivity.exampleTapped()
-                isStarting = false
-            }
-        } label: {
-            Label {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("See an example")
-                    explanation
-                        .font(.footnote)
-                        .foregroundStyle(Color.secondary)
-                        .accessibilityIdentifier("exampleExplanation")
+        NightCard {
+            Button {
+                guard !isStarting else { return }
+                isStarting = true
+                Task {
+                    await autoLiveActivity.exampleTapped()
+                    isStarting = false
                 }
-            } icon: {
-                Image(systemName: "eye")
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("See an example")
+                            .font(.headline)
+                            .foregroundStyle(isDisabled ? NightLook.secondaryText : NightLook.text)
+                        explanation
+                            .font(.footnote)
+                            .foregroundStyle(NightLook.secondaryText)
+                            .accessibilityIdentifier("exampleExplanation")
+                    }
+                } icon: {
+                    IconChip(systemImage: "eye.fill")
+                        .opacity(isDisabled ? 0.5 : 1)
+                }
+                .labelStyle(.rowTitle)
+                .frame(maxWidth: .infinity, minHeight: NightLook.minimumTapHeight, alignment: .leading)
+                .contentShape(.rect)
             }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .contentShape(.rect)
+            .buttonStyle(.plain)
+            .disabled(isDisabled)
+            .accessibilityIdentifier("seeAnExample")
         }
-        .disabled(realTrainsStation != nil)
-        .accessibilityIdentifier("seeAnExample")
+    }
+
+    private var isDisabled: Bool {
+        realTrainsStation != nil
     }
 
     private var explanation: Text {
