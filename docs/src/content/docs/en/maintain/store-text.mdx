@@ -11,7 +11,7 @@ import { contactEmail } from '../../../../contact.ts';
 
 export const whatToTestFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
 1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche sur l’écran verrouillé, avec des horaires d’exemple.
-2. À une vraie station de Paris : autorisez la localisation, puis approchez-vous à moins de 150 mètres. App ouverte, les prochains trains apparaissent tout seuls. App fermée, une notification doit vous prévenir : touchez-la. Si rien ne vient, dites-le-nous.
+2. À une vraie station de Paris : autorisez la localisation « Toujours » et les notifications, puis approchez-vous à moins de 150 mètres. App ouverte, les prochains trains apparaissent tout seuls. App fermée, une notification doit vous prévenir : touchez-la. Si rien ne vient, dites-le-nous.
 3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ».
 
 À savoir : il n’y a pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
@@ -19,7 +19,7 @@ Un problème ? Prenez une capture d’écran : TestFlight propose de l’envoyer
 
 export const whatToTestEn = `For Paris and Île-de-France only. Three things to try:
 1. From anywhere: open TROME, tap “See an example”, then lock the iPhone. Châtelet shows on the lock screen, with sample times.
-2. At a real Paris station: allow location, then come within 150 meters. With the app open, the next trains show up by themselves. With the app closed, a notification should tell you: tap it. If nothing comes, tell us.
+2. At a real Paris station: allow location “Always” and notifications, then come within 150 meters. With the app open, the next trains show up by themselves. With the app closed, a notification should tell you: tap it. If nothing comes, tell us.
 3. Not now: on the lock screen, tap “30 min”, “1 h” or “Today”.
 
 Good to know: there is no account to create, and trains show only during the metro and RER service hours.
@@ -206,7 +206,7 @@ App Review rarely sits in Paris, so the notes tell the reviewer how to see the L
 | Sign-in required | Off: TROME has no account. |
 | Contact first name, last name and phone | Yours, given at the submission. Never write them in a file of the repo: the phone goes in the international format, with a plus sign and the country code. |
 | Contact email | <Contact /> |
-| Notes | The English text below (2149 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
+| Notes | The English text below (2178 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
 | Attachment | The recording of the real station, as the recording script says. |
 
 ```text
@@ -215,7 +215,7 @@ TROME shows the next metro and RER trains of the station near you, as a Live Act
 TO REVIEW FROM ANYWHERE (about 2 minutes, nothing to set up):
 1. Open TROME. When iOS asks for your location, you may allow it or not: the app does not need it for the example.
 2. On the main screen, tap "See an example". A Live Activity for Châtelet appears, with SAMPLE times made inside the app (no position, no network). Press the side button to lock the iPhone: it shows on the lock screen, and in the Dynamic Island on iPhones that have one.
-3. The sample times count down while the app runs. If iOS suspends the app and the lock screen says "Open the app", open TROME and tap "See an example" again. The example ends by itself after 10 minutes.
+3. The sample times count down while the app runs. If iOS suspends the app and the lock screen says "Open the app", open TROME and tap "See an example" again. After 10 minutes, the example ends, at the latest when TROME opens again.
 4. On the lock screen, tap the station name to see the next line. The buttons 30 min, 1 h and Today snooze the automatic mode (on the example, they only end it).
 5. On the main screen: the Automatic mode switch, the Snooze row, the Location and Notifications rows, "Privacy policy" and "Help and feedback" (they open web pages in Safari).
 
@@ -233,8 +233,9 @@ Keep the sentence about the video only when the video is attached, and keep the 
 
 ## TestFlight: what the first external testers read
 
-Apple's pages ([Provide test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information/) and [Enter test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/enter-test-information)), read on 7 October 2026, make the beta app description and a feedback email required for external testers, and give no limit for any of these fields.
-So each text stays under 900 bytes, which fits any limit of 1,000 bytes or more.
+Apple's pages ([Provide test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information/) and [Enter test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/enter-test-information)), read on 7 October 2026,
+make the beta app description and a feedback email required for external testers, and give no limit for any of these fields.
+So each text stays under 1,000 bytes, which fits any limit of 1,000 bytes or more.
 Each text says in its first line that TROME works in Paris and Île-de-France only.
 The feedback email is <Contact />, the address of every contact.
 
@@ -252,11 +253,11 @@ TROME works in Paris and Île-de-France only. Near a metro or RER station, it pu
 This is a test version: no account, free, and your feedback helps us.
 ```
 
-What to test, French (886 bytes):
+What to test, French (922 bytes):
 
 <Code code={whatToTestFr} lang="text" />
 
-What to test, English (697 bytes):
+What to test, English (728 bytes):
 
 <Code code={whatToTestEn} lang="text" />
 
@@ -274,6 +275,7 @@ Each line below is a claim that the app cannot keep, or a risk with App Review, 
 - **No `RATP`, `IDFM` or `Île-de-France Mobilités` outside the source line.** The rules of App Review forbid the mark of others, in the title, the subtitle and the keywords above all, and the source line shows the data credit that the licence asks for and the sentence that TROME is not their app.
 - **No promise of times for every line.** The source lists only the next three or four trains of a stop, and the times follow the service hours, so the text says "the next trains", never "live times for every line".
 - **No promise that a closed app starts by itself.** A closed app sends a notification, and one tap starts the Live Activity: the first lines say so.
+  Only a real iPhone at a station shows that iOS wakes the closed app, so see the notification come on your iPhone before you paste the text; if it does not come, remove the closed-app sentences from the description, the notes and the TestFlight text.
 - **No claim outside Paris.** The app is not blocked elsewhere, but it shows nothing useful there, except the example, so the first lines name the limit.
 - **No claim about the battery, and no `real time`.** Nobody measured the first, and the second promises more than the source gives.
 
