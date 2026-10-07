@@ -129,7 +129,7 @@ To write a new line, make its logger with `Logger(category:)` from `TROMECore`, 
 
 ## Install on your iPhone (free Apple ID)
 
-The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open http://localhost:4321/trome/en/build/install-on-your-iphone/. The page is `docs/src/content/docs/en/build/install-on-your-iphone.mdx`.
+The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open http://localhost:4321/en/build/install-on-your-iphone/. The page is `docs/src/content/docs/en/build/install-on-your-iphone.mdx`.
 
 In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git).
 Run `make generate`, open the project `ios/TROME.xcodeproj` in Xcode, choose the scheme `TROME` and your iPhone, and click Run.

@@ -33,6 +33,9 @@ INTERNAL_RULES = [
 ]
 EXAMPLE_EMAIL = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$",
                            re.IGNORECASE)
+# The public contact address of the project, on its own domain: the Help page, the privacy policy and the store text give it to every reader.
+# No other real email address passes.
+PUBLIC_CONTACT_EMAIL = "support@trome.valfur.fr"
 NOT_AN_EMAIL = re.compile(r"^git@|@\d+x\.", re.IGNORECASE)
 
 INTERNAL_FILES = {
@@ -88,7 +91,8 @@ def hits(root, path):
         for reason, pattern in rules:
             for found in pattern.finditer(line):
                 text = found.group(0)
-                if reason == "an email address" and (EXAMPLE_EMAIL.search(text) or NOT_AN_EMAIL.search(text)):
+                if reason == "an email address" and (
+                        EXAMPLE_EMAIL.search(text) or NOT_AN_EMAIL.search(text) or text == PUBLIC_CONTACT_EMAIL):
                     continue
                 if not is_allowed(path, text):
                     yield number, reason, text

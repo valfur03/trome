@@ -34,7 +34,7 @@ The maintainer takes no legal action against research in good faith that keeps t
 
 - The iPhone app and its Live Activity, in [`ios/`](ios/).
 - The train data server, in [`server/`](server/), as it runs for TROME.
-- The docs site, in [`docs/`](docs/), at https://valfur03.github.io/trome/.
+- The docs site, in [`docs/`](docs/), at https://trome.valfur.fr/.
 - The build and the scripts of this repo, for example a step that could put a key in a log or in a built app.
 
 Check the problem on the latest code of `main`, or on the latest version of the app.

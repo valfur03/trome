@@ -6,7 +6,7 @@ Whether you want to report a bug, ask a question, or change the code or the docs
 ## Report a bug or ask a question
 
 The trains do not show on your lock screen?
-[Help](https://valfur03.github.io/trome/en/support/) lists each problem and its fix ([Aide](https://valfur03.github.io/trome/fr/support/) in French), so start there.
+[Help](https://trome.valfur.fr/en/support/) lists each problem and its fix ([Aide](https://trome.valfur.fr/fr/support/) in French), so start there.
 
 Open an issue in the **Issues** tab of the repo.
 You can write it in French or in English.

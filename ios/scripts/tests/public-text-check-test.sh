@@ -74,6 +74,17 @@ expect "it says what to write instead" "$(grep -c "write the rule and its reason
 expect "it says how to allow a word" "$(grep -c "add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py" "$state/out")" "1"
 
 reset_repo
+file docs/contact.ts "export const supportEmail = 'support@trome.valfur.fr';"
+file CLAUDE.md "Write to support@trome.valfur.fr."
+expect "the public contact address of the project passes, in any file" "$(check)" "passes"
+
+file docs/help.md "Write to other@trome.valfur.fr or to xsupport@trome.valfur.fr or to support@trome.valfur.fr.example.fr."
+expect "any other address on the domain of the project still fails" "$(check)" "fails"
+expect "it finds another address of the domain" "$(hit 'docs/help.md:1: an email address: "other@trome.valfur.fr"')" "1"
+expect "it finds an address that only ends like the contact address" "$(hit 'docs/help.md:1: an email address: "xsupport@trome.valfur.fr"')" "1"
+expect "it finds an address that only starts like the contact address" "$(hit 'docs/help.md:1: an email address: "support@trome.valfur.fr.example.fr"')" "1"
+
+reset_repo
 file CLAUDE.md "Read decision-9 (TASK-44). The prompter decides; the agents wait for the manager."
 file .claude/rules/merge.md "The factory merges one task at a time (TASK-159)."
 expect "CLAUDE.md and .claude/ may cite the backlog and its words" "$(check)" "passes"

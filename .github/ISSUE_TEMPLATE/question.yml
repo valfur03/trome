@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         **A question about the app on your iPhone?**
-        [The Help page](https://valfur03.github.io/trome/en/support/) answers the common ones, and [la page d’aide](https://valfur03.github.io/trome/fr/support/) in French.
+        [The Help page](https://trome.valfur.fr/en/support/) answers the common ones, and [la page d’aide](https://trome.valfur.fr/fr/support/) in French.
         You can write in French or in English.
   - type: textarea
     id: question

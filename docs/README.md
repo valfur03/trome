@@ -21,8 +21,8 @@ Run the docs commands from the root of the repo:
 
 | Command | What it does |
 |---|---|
-| `make docs-dev` | Serves the site at http://localhost:4321/trome/, and reloads the page each time you save a file. The search box does not work here. |
-| `make docs` | Builds the site as it is published, and serves it at http://localhost:4321/trome/, with the search. |
+| `make docs-dev` | Serves the site at http://localhost:4321/, and reloads the page each time you save a file. The search box does not work here. |
+| `make docs` | Builds the site as it is published, and serves it at http://localhost:4321/, with the search. |
 | `make docs-stop` | Stops the server when it runs in the background, which Astro does when the command does not run in a terminal. In a terminal, press Ctrl + C instead. |
 | `make docs-check` | Runs the tests of the components, checks the pages, builds the site, and fails on a broken internal link or a warning. |
 
@@ -47,8 +47,8 @@ When only the pages differ, Starlight now runs Pagefind in another way: read `di
 ## Add a page
 
 Each page is an `.mdx` file in [`src/content/docs/`](src/content/docs/), in the folder of its language: `fr/` or `en/`.
-Its address is its path after the base path of the site, `/trome/`, so `fr/support.mdx` is at `/trome/fr/support/`.
-The site lives at https://valfur03.github.io/trome/, and [`astro.config.mjs`](astro.config.mjs) sets this address in one place.
+Its address is its path, so `fr/support.mdx` is at `/fr/support/`.
+The site lives at https://trome.valfur.fr/, with no repo name in the path, and [`astro.config.mjs`](astro.config.mjs) sets this address in one place.
 An address with no page shows [`src/pages/404.astro`](src/pages/404.astro), one page in French and English, because the site cannot know the language of a mistyped address.
 
 The sidebar has one section for each reader, set in `astro.config.mjs`:
@@ -57,7 +57,7 @@ The sidebar has one section for each reader, set in `astro.config.mjs`:
 - **Build it yourself** shows each page of `en/build/`.
 - **Maintain** shows each page of `en/maintain/`: the pages for the maintainer, who releases the app.
 
-Write a link to another page of the site with the base path and the language, for example `[Aide](/trome/fr/support/)`: Astro does not add them.
+Write a link to another page of the site with the base path and the language, for example `[Aide](/fr/support/)`: Astro does not add them.
 
 Start the file with a title and a description, which search engines and link previews show.
 `sidebar.order` sets the place of the page in its section:
@@ -153,6 +153,34 @@ To publish `main` again with no new commit, click **Run workflow** on the same p
 
 On a free GitHub account, Pages works only on a public repo, so while the repo is private the workflow only runs the check and publishes nothing.
 After the repo becomes public, its owner sets **Settings > Pages > Build and deployment > Source** to **GitHub Actions** once, then clicks **Run workflow** to publish the site for the first time.
+
+### The domain of the site
+
+The site is served at its own domain, `trome.valfur.fr`, so its address depends on neither the GitHub account nor the name of the repo.
+The app and the App Store page hold this address, and Apple keeps it until a new version: do not change it once they do.
+A site that a workflow publishes ignores any `CNAME` file, so the domain is set in the repo, in **Settings > Pages > Custom domain**, never in a file.
+That setting needs DNS records at the host of the domain, which the owner of the domain adds:
+
+1. Before the first publish, verify the domain: at github.com/settings/pages, click **Add a domain**, enter `trome.valfur.fr`, and add the TXT record that GitHub shows (named `_github-pages-challenge-<account>.trome`).
+   The check protects the domain from a takeover by another GitHub account, and it also covers its subdomains.
+   Keep the record afterwards.
+2. Add four `A` records and four `AAAA` records at the name `trome`, with the addresses of [GitHub's page on custom domains](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
+   Use no `CNAME` here: a name that has a `CNAME` can hold no other record, and the mail of `support@trome.valfur.fr` needs its own records at the same name.
+   GitHub documents `A` records only for an apex domain, and a `CNAME` for a subdomain, so GitHub accepting them here is not proven until the first check.
+   Use no wildcard record such as `*.valfur.fr`, which GitHub warns against.
+3. Run the **Docs site** workflow once, then enter `trome.valfur.fr` as the custom domain in **Settings > Pages**.
+4. When GitHub's DNS check is green, tick **Enforce HTTPS**.
+   DNS changes and the HTTPS option can take up to a day.
+
+When the DNS check fails, look at these, in this order:
+
+- The records are at the name `trome`, with no `CNAME` beside the `A` records, and no wildcard record.
+- Your DNS host does not proxy them: keep them DNS-only.
+- `dig trome.valfur.fr +short` prints the four GitHub addresses.
+- The TXT record of the domain check is still there.
+
+If GitHub refuses the `A` records for a subdomain, the fallback is one `CNAME` at `trome` to `<account>.github.io`, and the mail on another name.
+The contact address is written in one file ([`src/contact.ts`](src/contact.ts)), so this change stays small.
 
 ## Write a page
 

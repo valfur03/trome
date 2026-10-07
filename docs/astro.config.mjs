@@ -3,18 +3,16 @@ import { defineConfig } from 'astro/config';
 import starlightLinksValidator from 'starlight-links-validator';
 import { searchIndex } from './src/search-index.ts';
 
-// The address of the site on GitHub Pages: https://valfur03.github.io/trome/.
-// The App Store page and the app link to its pages, so the address must not change once they do.
-// GitHub does not redirect the address of a project site when the repo gets a new name.
-// If the name of the repo changes, change `base` here: make docs-check then lists each link of the pages that still starts with the old one.
-const site = 'https://valfur03.github.io';
-const base = '/trome';
+// The address of the site: https://trome.valfur.fr/, at the root of its own domain, with no repo name in the path.
+// The App Store page and the app link to its pages, and Apple keeps these addresses until a new version, so this address must not change once they do.
+// It is a domain of its own so that it depends on neither the GitHub account nor the name of the repo.
+// The domain itself is set in the repo settings, Pages: see "Publish the site" in docs/README.md.
+const site = 'https://trome.valfur.fr';
 
 export default defineConfig({
   site,
-  base,
   // French is the language of most riders, so the address of the site opens the French home.
-  redirects: { '/': `${base}/fr/` },
+  redirects: { '/': '/fr/' },
   integrations: [
     starlight({
       title: 'TROME',

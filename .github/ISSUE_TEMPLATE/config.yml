@@ -1,10 +1,10 @@
 blank_issues_enabled: false
 contact_links:
   - name: "Help: TROME does not show my trains"
-    url: https://valfur03.github.io/trome/en/support/
+    url: https://trome.valfur.fr/en/support/
     about: The Help page lists each problem with the Live Activity and its fix. Most take a few taps.
   - name: "Aide : TROME n’affiche pas mes prochains passages"
-    url: https://valfur03.github.io/trome/fr/support/
+    url: https://trome.valfur.fr/fr/support/
     about: La page d’aide donne chaque problème de l’activité en direct et sa solution. La plupart se règlent en quelques gestes.
   - name: Report a security problem privately
     url: https://github.com/valfur03/trome/security/advisories/new

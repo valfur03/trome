@@ -66,7 +66,7 @@ Check that each one is ready before you start the step that needs it, so that yo
 - **For step 4: the production server.** You set its secrets in your own terminal with `make server-secrets`, which asks for each value at a hidden prompt, then you run `make server-deploy`, and its `/health` address answers `{"status":"ok"}`.
   Never put a secret in a file or in a message: a file can end up in git, and git keeps it for good.
 - **For step 4: the server address and the app token in the release build.** The release build reads them from a build settings file that git ignores, never from a file of the repo.
-- **For steps 4 and 5: the privacy page and the help page online,** with your legal name, your city and your contact address filled in: [Confidentialité](/trome/fr/privacy/), [Privacy](/trome/en/privacy/), [Aide](/trome/fr/support/) and [Help](/trome/en/support/).
+- **For steps 4 and 5: the privacy page and the help page online,** with your legal name, your city and your contact address filled in: [Confidentialité](/fr/privacy/), [Privacy](/en/privacy/), [Aide](/fr/support/) and [Help](/en/support/).
   The app opens the same two pages from its screen, and the build of step 4 must already have these addresses.
 - **For step 5: the beta app description,** a few lines in English for the testers: the first lines of the store description work.
 - **For step 6: the App Privacy answers,** written from the privacy page, so that the store and the page say the same thing.
@@ -74,7 +74,7 @@ Check that each one is ready before you start the step that needs it, so that yo
 - **For steps 5 and 7: the review notes,** in English and under 4,000 bytes, and **the recording script**: you film the recording yourself, on your iPhone, at a real station, with the final build.
 - **For step 8: the notes of the version,** in two layers.
   For developers, the commit log, whose messages start with their type (`feat`, `fix`, `docs`), and `CHANGELOG.md` in the repo, which sums it up for each version.
-  For riders, three or four lines in their own words, in French and in English, written by a person: they go on the site's What's new page ([Nouveautés](/trome/fr/whats-new/), [What's new](/trome/en/whats-new/)), and from the second version on, in the What's New field of the store.
+  For riders, three or four lines in their own words, in French and in English, written by a person: they go on the site's What's new page ([Nouveautés](/fr/whats-new/), [What's new](/en/whats-new/)), and from the second version on, in the What's New field of the store.
 
 </Checklist>
 
@@ -409,8 +409,8 @@ Apple counts the limits in characters, except the keywords, which it counts in b
 5. Open **App Privacy**, click **Edit** next to **Privacy Policy**, and enter the address of the privacy page in each language, the French one for French:
 
    ```text
-   https://valfur03.github.io/trome/fr/privacy/
-   https://valfur03.github.io/trome/en/privacy/
+   https://trome.valfur.fr/fr/privacy/
+   https://trome.valfur.fr/en/privacy/
    ```
 
    Then click **Get Started**, and give the App Privacy answers.
@@ -422,8 +422,8 @@ Apple counts the limits in characters, except the keywords, which it counts in b
    Then fill in for each language: the **Promotional Text** (at most 170 characters), the **Description** (at most 4,000 characters), the **Keywords** (at most 100 bytes, with no name of another app or company), the **Support URL** (the help page of that language, below) and the **Copyright** (the year and your legal name, without the © sign, which Apple adds):
 
    ```text
-   https://valfur03.github.io/trome/fr/support/
-   https://valfur03.github.io/trome/en/support/
+   https://trome.valfur.fr/fr/support/
+   https://trome.valfur.fr/en/support/
    ```
 
    The first version has no **What's New** field.

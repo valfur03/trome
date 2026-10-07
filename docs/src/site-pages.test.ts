@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import { supportEmail } from './contact.ts';
 import { draftsWithoutNotice, isInBothLanguages, pagesWithoutTwin } from './site-pages.ts';
 
 const contentFolder = new URL('content/docs/', import.meta.url);
@@ -64,5 +65,11 @@ describe('the pages of the site', () => {
   it('shows the draft notice on each page that has a placeholder or a part to check', () => {
     const pages = sitePages.map((path) => ({ path, text: readFileSync(new URL(path, contentFolder), 'utf8') }));
     assert.deepEqual(draftsWithoutNotice(pages), [], 'Add <DraftNotice /> at the top of the page.');
+  });
+
+  it('writes the contact address nowhere but in src/contact.ts', () => {
+    const address = new RegExp(supportEmail.replace(/[.]/g, '\\.'), 'i');
+    const pages = sitePages.filter((path) => address.test(readFileSync(new URL(path, contentFolder), 'utf8')));
+    assert.deepEqual(pages, [], 'Show the address with <Contact />, so that a change of address is a change of src/contact.ts.');
   });
 });

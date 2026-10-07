@@ -6,8 +6,8 @@ body:
     attributes:
       value: |
         **TROME does not show your trains?**
-        Most cases take a few taps to fix: read [the Help page](https://valfur03.github.io/trome/en/support/) first, or [la page d’aide](https://valfur03.github.io/trome/fr/support/) in French.
-        **Built TROME with Xcode?** [If it does not work](https://valfur03.github.io/trome/en/build/install-on-your-iphone/#if-it-does-not-work) covers the usual problems, the PRIM train data key included.
+        Most cases take a few taps to fix: read [the Help page](https://trome.valfur.fr/en/support/) first, or [la page d’aide](https://trome.valfur.fr/fr/support/) in French.
+        **Built TROME with Xcode?** [If it does not work](https://trome.valfur.fr/en/build/install-on-your-iphone/#if-it-does-not-work) covers the usual problems, the PRIM train data key included.
         Anyone can report a bug, in French or in English.
   - type: textarea
     id: what-happened
