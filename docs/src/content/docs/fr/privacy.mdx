@@ -47,7 +47,7 @@ Notre serveur ne les lit pas et ne les garde pas.
 
 ## Ce que notre serveur garde, et combien de temps
 
-Après sa réponse, notre serveur ne garde aucune station demandée : ni dans ses totaux, ni dans ses erreurs, ni dans ses journaux.
+Après sa réponse, notre serveur n’écrit aucune station demandée : ni dans ses totaux, ni dans ses erreurs, ni dans ses journaux.
 Il garde seulement :
 
 - **des totaux**, pendant 30 jours : combien de demandes il reçoit chaque heure et chaque jour, combien d’appels il fait à la source des horaires, et combien d’erreurs.
@@ -56,7 +56,7 @@ Il garde seulement :
   Elle n’a pas de station non plus ;
 - **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la donner à tous ceux qui la demandent.
   Elle reste dans la mémoire de notre serveur, sans jamais être écrite, et il l’efface après 10 minutes au plus.
-  Elle ne dit ni qui a demandé la station, ni quand ;
+  Elle ne dit pas qui a demandé la station ;
 - **la station dont la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, pendant quelques minutes au plus : le serveur ne rappelle pas la source tout de suite.
 
 Notre serveur ne garde ni adresse IP, ni identifiant de vous ou de votre iPhone, ni votre position.
@@ -74,7 +74,7 @@ PRIM ne reçoit rien qui vienne de vous.
 
 ## Ce qui reste sur votre iPhone
 
-TROME garde sur votre iPhone vos réglages (le mode automatique et la pause), la dernière station affichée, et les derniers horaires reçus.
+TROME garde sur votre iPhone vos réglages (le mode automatique, la pause et la sourdine), la dernière station affichée, et les derniers horaires reçus.
 L’app ne les envoie nulle part, mais ils font partie des sauvegardes de votre iPhone, comme les données de toutes les apps.
 Supprimer l’app les supprime.
 
@@ -108,7 +108,7 @@ Vous pouvez aussi adresser une réclamation à la [CNIL](https://www.cnil.fr/fr/
 
 ## Qui sommes-nous
 
-TROME est fait par <Placeholder>nom légal</Placeholder>.
+TROME est fait par Valentin Furmanek.
 Pour nous joindre : écrivez à <Contact />.
 
 ## Quand cette page change
