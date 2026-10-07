@@ -18,11 +18,12 @@ expect() {
 
 project="$state/main"
 worktree="$state/worktree-1"
-mkdir -p "$project/.git" "$project/ios/App" "$worktree/.git" "$worktree/ios/App" "$worktree/docs" "$worktree/server/src"
+mkdir -p "$project/.git" "$project/ios/App" "$worktree/.git" "$worktree/ios/App" "$worktree/docs/src/content" "$worktree/server/src"
 cp -R "$root/.claude" "$project/.claude"
 echo "let x = 1" > "$project/ios/App/X.swift"
 echo "let x = 1" > "$worktree/ios/App/X.swift"
 echo "A page." > "$worktree/docs/page.mdx"
+echo "A Help page." > "$worktree/docs/src/content/support.mdx"
 
 run() {
     printf '%s' "$1" | CLAUDE_PROJECT_DIR="$project" TMPDIR="$state" python3 "$hook" > "$state/out"
@@ -49,11 +50,11 @@ read_event() { event "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Read\"
 bash_event() { event "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1")}${2:-}}" "${3:-s1}"; }
 
 expect "a read of an app file of another worktree brings the rules of its paths, next to the output" \
-    "$(run "$(read_event "$worktree/ios/App/X.swift")" | delivered)" "context ios-code tests"
+    "$(run "$(read_event "$worktree/ios/App/X.swift")" | delivered)" "context assets ios-code tests"
 expect "the same rules do not come twice in one session" \
     "$(run "$(read_event "$worktree/ios/App/X.swift")" | delivered)" "none"
 expect "another subagent of the same session gets them again" \
-    "$(run "$(read_event "$worktree/ios/App/X.swift" ',"agent_id":"a2"')" | delivered)" "context ios-code tests"
+    "$(run "$(read_event "$worktree/ios/App/X.swift" ',"agent_id":"a2"')" | delivered)" "context assets ios-code tests"
 expect "a read in the folder of the session is left to Claude Code, which loads its paths rules itself" \
     "$(run "$(read_event "$project/ios/App/X.swift" '' s2)" | delivered)" "none"
 
@@ -66,7 +67,7 @@ e2e=$(bash_event "cd $worktree && make e2e ONLY=\"SnoozeTests LiveActivityTests\
 expect "a Simulator job is stopped once, with the rules of its command" "$(run "$e2e" | delivered)" "deny simulator tests"
 expect "the same command again goes through" "$(run "$e2e" | delivered)" "none"
 expect "make -C and a variable bring the rules of each command" \
-    "$(run "$(bash_event "make -C $worktree run LIVE=1 LANGUAGE=fr" '' s5)" | delivered)" "deny live-data qa simulator"
+    "$(run "$(bash_event "make -C $worktree run LIVE=1 LANGUAGE=fr" '' s5)" | delivered)" "deny assets live-data qa simulator"
 expect "make merge after nvm brings the merge and Simulator rules" \
     "$(run "$(bash_event '. "$HOME/.nvm/nvm.sh" && nvm use && make merge' '' s6)" | delivered)" "deny merge simulator"
 expect "git -C rebase brings the merge rules" \
@@ -78,7 +79,7 @@ expect "a command through the Simulator lock brings the Simulator rules" \
 expect "a server command brings the server rules" \
     "$(run "$(bash_event 'make server-dev' '' s10)" | delivered)" "deny server"
 expect "a variable before make, that make reads from the environment, brings its rules" \
-    "$(run "$(bash_event 'LIVE=1 make run' '' s15)" | delivered)" "deny live-data qa simulator"
+    "$(run "$(bash_event 'LIVE=1 make run' '' s15)" | delivered)" "deny assets live-data qa simulator"
 expect "make merge behind caffeinate and its options brings its rules" \
     "$(run "$(bash_event 'caffeinate -i make merge' '' s16)" | delivered)" "deny merge simulator"
 expect "make e2e behind timeout and its duration brings its rules" \
@@ -99,6 +100,10 @@ post="{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\"
 expect "a diff in the output of a command brings the rules of its files" "$(run "$(event "$post" s11)" | delivered)" "context server"
 post="{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -n 1,5p $worktree/docs/page.mdx\"},\"tool_response\":{\"stdout\":\"A page.\"},\"cwd\":\"$project\"}"
 expect "a command that reads a file brings the rules of that file" "$(run "$(event "$post" s12)" | delivered)" "context docs-site writing"
+expect "a page of the docs site, which an asset of the app is, brings the assets rules" \
+    "$(run "$(read_event "$worktree/docs/src/content/support.mdx" '' s23)" | delivered)" "context assets docs-site writing"
+expect "make run, which QA runs, brings the assets rules" \
+    "$(run "$(bash_event 'make run LANGUAGE=fr' '' s24)" | delivered)" "deny assets qa simulator"
 
 qa_subagent=$(event '{"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"subagent_type":"qa-tester","prompt":"QA of a task"}}' s13)
 expect "the start of a QA subagent is stopped once, with the live data rules" "$(run "$qa_subagent" | delivered)" "deny live-data"

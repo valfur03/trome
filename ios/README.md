@@ -75,6 +75,7 @@ When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks
 - [auto-live-activity.md](guide/auto-live-activity.md): when the Live Activity starts and stops by itself, the snooze and the pause, and the permission questions.
 - [example.md](guide/example.md): what "See an example" shows, when it ends, and how to make it shorter.
 - [render-check.md](guide/render-check.md): `make live-activity-render`, which finds a Live Activity that is too tall or cut.
+- [assets.md](guide/assets.md): the docs pictures, the store page and the video that show the app, and how to make each again.
 
 ## The train data key (PRIM)
 
