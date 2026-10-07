@@ -86,7 +86,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         await activate(model)
         gps.report(Places.fiftyMetersFromA)
-        await waitUntil { locationService.position == Places.fiftyMetersFromA }
+        await waitUntil { model.state.openArrivalStationId == Places.stationA.id }
         #expect(model.liveActivityProblem == .turnedOff)
         #expect(client.started.isEmpty)
 
