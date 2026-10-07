@@ -104,7 +104,7 @@ Tap **Far from any station**: it ends.
 
 ### With the app in the background: the arrival notification
 
-In the background, the app shows a notification, **Next trains at** and the station, instead of the Live Activity.
+In the background, the app shows a notification with the name of the station, instead of the Live Activity.
 In the Simulator, iOS keeps the app running for only about 10 to 25 seconds after you leave it, and nothing wakes it after that: do steps 3 and 4 within those seconds.
 
 1. Tap **Use the real GPS**, and in the **Settings** app of the Simulator, set the location of TROME to **Always**.
@@ -121,7 +121,7 @@ In the Simulator, iOS keeps the app running for only about 10 to 25 seconds afte
    xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838
    ```
 
-   The notification **Next trains at Abbesses** shows within a few seconds.
+   The notification **Abbesses** shows within a few seconds.
    Tap it to start the Live Activity, or touch and hold it to snooze the station.
 
 On your iPhone, iOS also wakes a suspended or closed app near a station, after a few seconds to a few minutes: test that case there, with **Debug > Simulate Location** in Xcode.

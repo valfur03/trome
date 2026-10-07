@@ -47,7 +47,7 @@ A fake position is always trusted.
 |---|---|
 | The rider comes within 150 meters of a station, and the app is open | The Live Activity of this station starts at once |
 | The same, but a system popup covers the app (a permission question) | It waits, and starts when the app is active again; if the app goes to the background first, the notification comes instead |
-| The same, with the app in the background or closed | One notification, "Next trains at <station>" ("<station> : prochains passages"). A tap opens the app and starts the Live Activity |
+| The same, with the app in the background or closed | One notification, with the station name alone as its title ("Abbesses") and no body, also when Live Activities are off. A tap opens the app and starts the Live Activity |
 | The rider opens the app at that station without tapping the notification | The Live Activity starts, and the notification goes away, also when notifications are off |
 | A Live Activity shows, and the rider comes within 150 meters of another station | It switches to the new station: no second Live Activity, no second notification |
 | The rider moves more than 250 meters from the station of the Live Activity | It ends, once the rider has been within 250 meters of it |

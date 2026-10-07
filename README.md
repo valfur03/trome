@@ -11,7 +11,7 @@ It is open source and not on the App Store yet: [follow the launch](#get-it-on-y
 
 [Get it](#get-it-on-your-iphone) · [Help](https://trome.valfur.fr/en/support/) · [Privacy](https://trome.valfur.fr/en/privacy/) · [Read the Swift code](#read-or-change-the-code)
 
-You walk up to Saint-Paul, and your iPhone says **Next trains at Saint-Paul (Le Marais)**.
+You walk up to Saint-Paul, and your iPhone shows a notification with its name, **Saint-Paul (Le Marais)**.
 Tap the notification: the next trains stay on your lock screen while you go down to the platform.
 If TROME is already open on your screen, they show with no tap.
 

@@ -34,7 +34,7 @@ final class UserNotificationArrivalNotifier: ArrivalNotifier {
 
     func notify(_ station: Station) async {
         let content = UNMutableNotificationContent()
-        content.title = String(localized: "Next trains at \(station.name)")
+        content.title = station.name
         content.sound = .default
         content.userInfo = [Self.stationIdKey: station.id]
         content.categoryIdentifier = Self.categoryIdentifier

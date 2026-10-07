@@ -16,6 +16,7 @@ final class ArrivalNotificationTests: E2ETestCase {
     private static let chateauRouge = CLLocation(latitude: 48.887102, longitude: 2.349556)
     private static let julesJoffrin = CLLocation(latitude: 48.892453, longitude: 2.344614)
     private static let longerThanAHeldPositionIsTrusted: TimeInterval = 21
+    private static let notificationTitleIdentifier = "NotificationTitle"
 
     @MainActor
     func testTappingTheArrivalNotificationOfTheAppInTheBackgroundShowsTheLiveActivity() {
@@ -28,9 +29,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
         moveThePhone(to: Self.abbesses)
 
-        let notification = springboard.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Next trains at Abbesses"))
-            .firstMatch
+        let notification = arrivalNotification(titled: "Abbesses")
         XCTAssertTrue(waitFor(notification))
         notification.tap()
 
@@ -52,9 +51,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
         moveThePhone(to: Self.chateauRouge)
 
-        let notification = springboard.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Next trains at Château Rouge"))
-            .firstMatch
+        let notification = arrivalNotification(titled: "Château Rouge")
         XCTAssertTrue(waitFor(notification))
         notification.press(forDuration: 1.5)
         let notForOneHour = springboard.buttons["Not for 1 h"]
@@ -86,9 +83,7 @@ final class ArrivalNotificationTests: E2ETestCase {
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
         moveThePhone(to: Self.julesJoffrin)
 
-        let notification = springboard.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Next trains at Jules Joffrin"))
-            .firstMatch
+        let notification = arrivalNotification(titled: "Jules Joffrin")
         XCTAssertTrue(waitFor(notification))
         let standsStill = XCTestExpectation(description: "the phone stands still at the station")
         _ = XCTWaiter.wait(for: [standsStill], timeout: Self.longerThanAHeldPositionIsTrusted)
@@ -98,5 +93,12 @@ final class ArrivalNotificationTests: E2ETestCase {
         XCTAssertTrue(waitFor(liveActivityStation("Jules Joffrin")))
         XCTAssertTrue(waitForNo(notification), "The arrival notification stayed after the Live Activity started")
         closeNotificationCenter()
+    }
+
+    @MainActor
+    private func arrivalNotification(titled title: String) -> XCUIElement {
+        springboard.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND label == %@", Self.notificationTitleIdentifier, title))
+            .firstMatch
     }
 }

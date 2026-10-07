@@ -177,16 +177,6 @@
         }
       }
     },
-    "Next trains at %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ : prochains passages"
-          }
-        }
-      }
-    },
     "No live times until around %@" : {
       "localizations" : {
         "fr" : {

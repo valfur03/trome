@@ -47,7 +47,7 @@ Use the words of the RATP signs and of iOS in French, not a word-for-word transl
 The [table of terms](../../docs/README.md#write-the-riders-pages-in-french) gives the words that the app already uses.
 
 A station name can start with a vowel or an article (Abbesses, Le Kremlin-Bicêtre, Les Sablons), so never put `de` or `à` just before a `%@` that holds a name: French would need `d’Abbesses`, `du Kremlin-Bicêtre` or `aux Sablons`.
-Put the name first, as a label, as the app does: `%@ : prochains passages`, `Sur l’écran verrouillé : %@`.
+Put the name first, as a label, as the app does: `Sur l’écran verrouillé : %@`.
 To check such a text, look at it in French at a name that starts with a vowel and at one that starts with an article, not only at Châtelet.
 
 Some texts have no French text: the Testing tools, which are inside `#if DEBUG`, the texts of `TROMECore`, which the app and the Live Activity turn into the texts that a rider reads, and the name of the app.
