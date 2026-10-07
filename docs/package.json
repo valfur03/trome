@@ -9,7 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check --minimumFailingSeverity warning",
+    "check": "node scripts/astro-check-packages.ts && CI=true astro check --minimumFailingSeverity warning",
     "test": "node --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\""
   },
   "dependencies": {

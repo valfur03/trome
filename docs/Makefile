@@ -15,7 +15,7 @@ node-check:
 	@./scripts/node-check.sh
 
 docs-install: node-check
-	@if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then \
+	@if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modules/.package-lock.json ] || [ .npmrc -nt node_modules/.package-lock.json ]; then \
 		$(QUIET) $(LOGS)/docs-install.log 'added [0-9]+ packages' npm ci; \
 	fi
 

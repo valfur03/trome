@@ -28,6 +28,7 @@ Run the docs commands from the root of the repo:
 
 To use another port, add `PORT=<n>`, for example `make docs-dev PORT=4400`.
 The first docs command installs the packages in `docs/node_modules`, about 300 MB.
+[`.npmrc`](.npmrc) turns off `legacy-peer-deps`, even when your own npm config turns it on: with it, npm skips `@emnapi/runtime`, a peer dependency that `astro check` needs.
 `make check`, the quality gate of the repo, runs `make docs-check` when your branch changes a file in `docs/`.
 
 The build must print no warning, so `make docs` and `make docs-check` stop on one: fix its cause, and never hide it.
