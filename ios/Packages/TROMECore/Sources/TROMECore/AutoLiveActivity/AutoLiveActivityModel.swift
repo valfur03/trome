@@ -240,9 +240,9 @@ public final class AutoLiveActivityModel {
     }
 
     private func endLiveActivity() async {
-        await liveActivity.stop()
         services.locationKeeper.end()
         restartFeed(fetchNow: false)
+        await liveActivity.stop()
     }
 
     func syncWithSystem() {

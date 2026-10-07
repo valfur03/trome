@@ -37,6 +37,7 @@ public final class StationLiveActivityModel {
     private var firstLineIndex: Int
     private var keptTimesStaleDate: Date?
     @ObservationIgnored private var lastSystemCall: Task<Void, Never>?
+    @ObservationIgnored private var startCount = 0
 
     public init(
         client: any StationLiveActivityClient,
@@ -58,6 +59,7 @@ public final class StationLiveActivityModel {
     }
 
     public func start(station: Station, trains: NextTrainsState) async {
+        await waitForTheSystemCallsInProgress()
         if client.isShowing, keepShownTimesIfFailed(trains, at: station) {
             startError = nil
             isShowing = true
@@ -84,6 +86,7 @@ public final class StationLiveActivityModel {
         }
         startError = nil
         isShowing = true
+        startCount += 1
         keptTimesStaleDate = nil
         serverRetryAt = trains.serverRetryAt
         remember(StationLiveActivityInputs(station: station, trains: trains))
@@ -129,9 +132,13 @@ public final class StationLiveActivityModel {
     }
 
     public func stop() async {
-        await inOrder { [client] in await client.end() }
         isShowing = false
         forgetShownContent()
+        let startsBeforeTheEnd = startCount
+        await inOrder { [client] in await client.end() }
+        if startCount == startsBeforeTheEnd {
+            isShowing = false
+        }
     }
 
     public func syncWithSystem() {
@@ -200,6 +207,15 @@ public final class StationLiveActivityModel {
         await inOrder { [client] in await client.update(content) }
     }
 
+    private func waitForTheSystemCallsInProgress() async {
+        while let pending = lastSystemCall {
+            await pending.value
+            if lastSystemCall == pending {
+                lastSystemCall = nil
+            }
+        }
+    }
+
     private func inOrder(_ call: @escaping @MainActor () async -> Void) async {
         let previous = lastSystemCall
         let next = Task {
@@ -208,6 +224,9 @@ public final class StationLiveActivityModel {
         }
         lastSystemCall = next
         await next.value
+        if lastSystemCall == next {
+            lastSystemCall = nil
+        }
     }
 
     private static func logPager(_ event: String) {
