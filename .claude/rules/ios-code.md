@@ -42,6 +42,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   Such a shared file stays a pure view, with the texts of both String Catalogs.
 - **Texts in French and English.** Each text that a user sees is written in English in the code, and has its French text in the String Catalog of its target, in the same task (`ios/guide/languages.md`).
   `make check` fails on a text with no French text (`make strings-check`).
+  A French text that holds a station name puts the name first, as a label, never after `de` or `à`, and you check it in French at Abbesses or Le Kremlin-Bicêtre, not only at Châtelet (`ios/guide/languages.md`, "Write French that a Paris rider would say").
   Use a text that SwiftUI translates (`Text("...")`, a `LocalizedStringKey`) or `String(localized:)`, never a plain `String` given to `Text`.
   The texts of `ios/App/TestingTools/` stay in English: they are inside `#if DEBUG`, so Xcode keeps them out of the catalog.
   The catalogs in git must be the ones that Xcode writes, so that a build in Xcode in the main folder changes no file: after you change a text, run `make strings-sync`, then add the French texts and commit the catalogs (`make strings-check` fails when a build in Xcode would change a catalog).

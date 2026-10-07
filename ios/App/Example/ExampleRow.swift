@@ -50,7 +50,7 @@ struct ExampleRow: View {
 
     private var explanation: Text {
         if let station = realTrainsStation {
-            return Text("The real trains of \(station.name) are already on the lock screen.")
+            return Text("\(station.name): the real trains are already on the lock screen.")
         }
         let name = autoLiveActivity.exampleStation?.name ?? ""
         let minutes = Int(AutoLiveActivityRules.defaultExampleDuration / 60)

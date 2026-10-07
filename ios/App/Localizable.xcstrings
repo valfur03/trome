@@ -17,6 +17,16 @@
         }
       }
     },
+    "%@: the real trains are already on the lock screen." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : les vrais passages sont déjà sur l’écran verrouillé."
+          }
+        }
+      }
+    },
     "1 hour" : {
       "localizations" : {
         "fr" : {
@@ -505,16 +515,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’affichage sur l’écran verrouillé n’a pas pu démarrer."
-          }
-        }
-      }
-    },
-    "The real trains of %@ are already on the lock screen." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les vrais passages de %@ sont déjà sur l’écran verrouillé."
           }
         }
       }
