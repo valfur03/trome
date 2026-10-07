@@ -96,7 +96,7 @@ help:
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key, that a new key replaces the old one, that a Release build holds the app token of the server but never the PRIM key, that a Release build with no server host or no app token fails, and that the Release app passes the upload checks of App Store Connect: a privacy manifest with a reason for each required reason API that its code uses, the answer on encryption, a version such as 1.0.0 (uses fake values)"
 	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID (also with the Debug IDs of Local.xcconfig set), or when a Release build is signed automatically"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
-	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock)"
+	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make merge               Merge the branch of this folder into main (after the review and QA), with the Simulator lock all along: rebase, make check, full make e2e, fast-forward"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
@@ -212,7 +212,7 @@ e2e: project
 	@$(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
 	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
 		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E tests: ' \
-		sh -c '"$$@"; status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); exit $$status' e2e \
+		sh -c '"$$@"; status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); [ $$status -eq 0 ] || ./scripts/e2e-keep.py $(E2E_RESULT) $(LOGS)/e2e.log "$(APP_PATH)"; exit $$status' e2e \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \

@@ -56,6 +56,16 @@ step_failed() {
     exit 1
 }
 
+e2e_evidence() {
+    kept=$(cat "$1" 2> /dev/null || true)
+    rm -f "$1"
+    if [ -n "$kept" ]; then
+        echo "The log, the .xcresult and the Simulator log of the failed run are kept in $kept"
+    else
+        echo "The failed run kept no evidence folder: it stopped before the tests ran, so its output above is all there is."
+    fi
+}
+
 stop_rebase() {
     in_rebase || step_failed rebase "git rebase failed before it started, so no rebase is in progress: '$branch' is as it was before."
     conflicts=$(git diff --name-only --diff-filter=U | sed 's/^/  /')
@@ -118,7 +128,9 @@ merge() {
     sh -c "$check_command" || step_failed "quality gate"
     if changes_app_code "$old" "$tested"; then
         step "3/4 full E2E suite ($e2e_command)"
-        sh -c "$e2e_command" || step_failed "full E2E suite"
+        evidence_note=$(mktemp "${TMPDIR:-/tmp}/trome-e2e-evidence.XXXXXX")
+        TROME_E2E_EVIDENCE_NOTE=$evidence_note sh -c "$e2e_command" || step_failed "full E2E suite" "$(e2e_evidence "$evidence_note")"
+        rm -f "$evidence_note"
     else
         step "3/4 full E2E suite: skipped, $branch changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the server or the contracts, see .claude/rules/tests.md)"
     fi

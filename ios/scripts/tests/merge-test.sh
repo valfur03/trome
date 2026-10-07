@@ -272,13 +272,21 @@ expect "make merge frees the Simulator lock when the gate fails" "$(lock_state)"
 
 new_task e2e
 commit "$state/e2e" e2e e2e
-TROME_MERGE_E2E="$passing_e2e && exit 1"
+TROME_MERGE_E2E="$passing_e2e && echo /kept/2026-10-07-141744-task-e2e > \"\$TROME_E2E_EVIDENCE_NOTE\" && exit 1"
 merge e2e
 TROME_MERGE_E2E=$passing_e2e
 expect "make merge fails when the E2E suite fails" "$status" "1"
 expect "make merge leaves main unchanged when the E2E suite fails" "$(rev main)" "$before"
 expect "make merge says that the E2E suite failed" "$(contains "$state/e2e.log" "the step 'full E2E suite' failed")" "yes"
+expect "make merge says where the failed E2E run kept its log and its .xcresult" "$(tail -1 "$state/e2e.log")" "The log, the .xcresult and the Simulator log of the failed run are kept in /kept/2026-10-07-141744-task-e2e"
 expect "make merge frees the Simulator lock when the E2E suite fails" "$(lock_state)" "free"
+
+new_task bare
+commit "$state/bare" bare bare
+TROME_MERGE_E2E="$passing_e2e && exit 1"
+merge bare
+TROME_MERGE_E2E=$passing_e2e
+expect "make merge says when the failed E2E run kept no evidence, as when it stopped at the build" "$(tail -1 "$state/bare.log")" "The failed run kept no evidence folder: it stopped before the tests ran, so its output above is all there is."
 
 new_task conflict
 commit "$state/conflict" shared "from the task"

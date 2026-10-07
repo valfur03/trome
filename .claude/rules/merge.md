@@ -68,6 +68,9 @@ When a step fails for a reason on the branch (a rebase conflict, the gate, the E
 The Software Engineer fixes the cause on the branch (for a rebase conflict, it runs `git -C <worktree> rebase main` and solves the conflict) and hands the task over again.
 Then the manager runs `make merge` again.
 
+When the E2E suite fails, `make merge` prints the folder where the run kept its log, its `.xcresult` and the Simulator log (in `~/Library/Logs/TROME/e2e-failures/`).
+Put that path in the comment or the bug task: the folder outlives the worktree and the next run, so the next agent can read the evidence.
+
 When the E2E suite fails and `make merge` prints "The Mac slept during the E2E tests" after the failing tests, the cause is likely not on the branch: the Simulator stopped while the Mac slept, and the waits of the tests ran on the clock.
 The task does not go back to its Software Engineer.
 The manager runs `make merge` again, once (the rule on flaky tests).

@@ -90,7 +90,8 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 A flaky test (it fails, then passes with no change) is a bug.
 Rerun a failing test at most once, to know if it is flaky.
 Then fix the cause in your task if the test covers your code.
-Otherwise, create a `bug` task with the test name, how often it failed, and the error.
+Otherwise, create a `bug` task with the test name, how often it failed, the error, and the evidence folder that the failed run printed.
+That task is priority high, and it is fixed before new work (the prompter's order of 2026-10-07).
 Never fix it with retries or longer timeouts alone: find the cause (a race, a shared state, a missing wait for a condition).
 
 ## Repo layout
