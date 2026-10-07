@@ -57,7 +57,7 @@ The sidebar has one section for each reader, set in `astro.config.mjs`:
 - **Build it yourself** shows each page of `en/build/`.
 - **Maintain** shows each page of `en/maintain/`: the pages for the maintainer, who releases the app.
 
-Write a link to another page of the site with the base path and the language, for example `[Aide](/fr/support/)`: Astro does not add them.
+Write a link to another page of the site with its language, for example `[Aide](/fr/support/)`: Astro does not add it.
 
 Start the file with a title and a description, which search engines and link previews show.
 `sidebar.order` sets the place of the page in its section:
