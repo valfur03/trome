@@ -28,7 +28,10 @@ The order is:
 make merge
 ```
 
-When the branch changes `docs/`, `server/` or `contracts/`, load Node 24 first: `. "$HOME/.nvm/nvm.sh" && nvm use && make merge`.
+There is no Node to load first, whatever the branch changes.
+When the active Node is older than the one of `.nvmrc`, `make merge` takes that Node from nvm (`nvm which`), so the docs and server checks of the gate run with it.
+When nvm does not have it and the branch changes `docs/`, `server/` or `contracts/`, `make merge` refuses at once, before it waits for a lock, and says what to run (`nvm install`).
+Why: twice (2026-10-04 and 2026-10-07), a merge waited for the lock, then failed in the gate because the shell had the old default Node and the branch changed a docs page.
 Run it in the background: it can wait long for the Simulator lock.
 
 It takes the Simulator lock, then does these steps.

@@ -358,4 +358,51 @@ expect "with two Simulator slots, the second merge succeeds" "$(finish_merge slo
 expect "with two Simulator slots, the second merge still waits for the first one" "$(rev main~1) $(rev main~2)" "$(rev task/slot1) $before"
 unset RATP_SIM_SLOTS RATP_SIM_MIN_IDLE_PERCENT
 
+fake_node() {
+    mkdir -p "$1"
+    printf '#!/bin/sh\ncase "$1" in -v) echo v%s.0.0 ;; *) echo %s ;; esac\n' "$2" "$2" > "$1/node"
+    chmod +x "$1/node"
+}
+fake_node "$state/old-node" 20
+fake_node "$state/nvm/versions/node/v24.0.0/bin" 24
+mkdir "$state/nvm-without-24"
+printf 'nvm() { [ "$1" = which ] && [ -x "$NVM_DIR/versions/node/v$2.0.0/bin/node" ] && echo "$NVM_DIR/versions/node/v$2.0.0/bin/node"; }\n' > "$state/nvm/nvm.sh"
+cp "$state/nvm/nvm.sh" "$state/nvm-without-24/nvm.sh"
+advance_main .nvmrc 24
+path_before_node=$PATH
+export PATH="$state/old-node:$PATH" NVM_DIR="$state/nvm"
+TROME_MERGE_CHECK="$passing_check && node -v >> \"\$FAKE_SIM_STATE/steps\""
+
+new_task docsnode
+mkdir -p "$state/docsnode/docs"
+commit "$state/docsnode" docs/page.md "page"
+merge docsnode
+expect "with an old Node active, make merge of a docs change succeeds when nvm has the Node of .nvmrc" "$status" "0"
+expect "the gate of that merge runs with the Node of .nvmrc" "$(tr '\n' ' ' < "$state/steps")" "check check-locked v24.0.0 "
+
+export NVM_DIR="$state/nvm-without-24"
+lockf -k "$RATP_MERGE_LOCK" sh -c 'read -r line < "$0"' "$state/release-merge-lock" &
+merge_lock_holder=$!
+until ! lockf -s -k -t 0 "$RATP_MERGE_LOCK" true 2> /dev/null; do sleep 0.1; done
+new_task docsnonode
+mkdir -p "$state/docsnonode/docs"
+commit "$state/docsnonode" docs/other.md "other"
+before=$(rev main)
+merge docsnonode
+echo release > "$state/release-merge-lock"
+wait "$merge_lock_holder"
+expect "with an old Node and no Node of .nvmrc in nvm, make merge of a docs change fails" "$status" "1"
+expect "it fails before it waits for a lock" "$(contains "$state/docsnonode.log" "waiting for the merge")" "no"
+expect "it runs no gate" "$(cat "$state/steps")" ""
+expect "it says what to run" "$(contains "$state/docsnonode.log" "but the active Node is v20.0.0, and nvm has no Node 24. Run 'nvm install' in ")" "yes"
+expect "main is unchanged when Node is missing" "$(rev main)" "$before"
+
+new_task appnonode
+commit "$state/appnonode" app "app"
+merge appnonode
+expect "with an old Node and no Node of .nvmrc in nvm, make merge of a change with no docs, server or contracts succeeds" "$status" "0"
+export PATH="$path_before_node"
+unset NVM_DIR
+TROME_MERGE_CHECK=$passing_check
+
 [ "$failures" -eq 0 ]

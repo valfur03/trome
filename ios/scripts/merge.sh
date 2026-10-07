@@ -48,6 +48,32 @@ The fast-forward would not be able to update these files. $target is unchanged.
 $owner_changes"
 }
 
+node_major() {
+    command -v node > /dev/null && node -p 'process.versions.node.split(".")[0]' 2> /dev/null
+}
+
+nvm_node() {
+    nvm_script="${NVM_DIR:-$HOME/.nvm}/nvm.sh"
+    [ -f "$nvm_script" ] || return 1
+    bash -c '. "$1" --no-use > /dev/null 2>&1; nvm which "$2" 2> /dev/null' _ "$nvm_script" "$1"
+}
+
+use_node() {
+    [ -f .nvmrc ] || return 0
+    required=$(tr -d '[:space:]v' < .nvmrc)
+    [ "$(node_major || echo 0)" -lt "$required" ] || return 0
+    found=$(nvm_node "$required") || found=
+    if [ -x "$found" ]; then
+        PATH="$(dirname "$found"):$PATH"
+        export PATH
+        step "uses Node $(node -v) of nvm, as .nvmrc asks"
+        return 0
+    fi
+    git diff --quiet "$target...HEAD" -- docs server contracts && return 0
+    active=$(node -v 2> /dev/null || echo "none")
+    fail "'$branch' changes docs/, server/ or contracts/, so the gate needs Node $required, but the active Node is $active, and nvm has no Node $required. Run 'nvm install' in $root, then 'make merge' again."
+}
+
 step_failed() {
     echo "make merge: the step '$1' failed. $target is unchanged (still $(git rev-parse --short "$old")). make merge now frees the Simulator lock." >&2
     if [ -n "${2:-}" ]; then
@@ -144,6 +170,7 @@ merge() {
 case "${1:-}" in
     "")
         check_worktree
+        use_node
         lockf -s -k -t 0 "$merge_lock" true || echo "make merge: waiting for the merge of another worktree to end" >&2
         exec lockf -k "$merge_lock" "$scripts/sim-lock.sh" job "$scripts/merge.sh" locked
         ;;
