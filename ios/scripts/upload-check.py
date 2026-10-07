@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import plistlib
 import re
 import subprocess
@@ -111,6 +112,37 @@ def check_encryption(bundle, info):
     return []
 
 
+def check_icon(bundle, info):
+    icons = info.get("CFBundleIcons")
+    icon = icons.get("CFBundlePrimaryIcon") if isinstance(icons, dict) else None
+    name = icon.get("CFBundleIconName") if isinstance(icon, dict) else None
+    if not name:
+        return [
+            f"{bundle.name}: the app has no icon (no CFBundleIconName in its Info.plist); "
+            "set ASSETCATALOG_COMPILER_APPICON_NAME of the app in ios/project.yml"
+        ]
+    catalog = bundle / "Assets.car"
+    try:
+        renditions = json.loads(
+            subprocess.run(
+                ["xcrun", "assetutil", "--info", str(catalog)], capture_output=True, text=True, check=True
+            ).stdout
+        )
+    except (OSError, ValueError, subprocess.CalledProcessError):
+        return [f"{bundle.name}: the app has no icon (its asset catalog Assets.car is missing or cannot be read)"]
+    for rendition in renditions:
+        if (
+            rendition.get("AssetType") == "Icon Image"
+            and rendition.get("Name") == name
+            and rendition.get("PixelWidth") == 1024
+            and rendition.get("PixelHeight") == 1024
+        ):
+            if rendition.get("Opaque") is True:
+                return []
+            return [f"{bundle.name}: the icon {name} has transparent pixels; the App Store refuses it"]
+    return [f"{bundle.name}: the app has no icon {name} of 1024 x 1024 pixels in Assets.car"]
+
+
 def check_manifest(bundle, manifest):
     name = f"{bundle.name}/{MANIFEST}"
     if isinstance(manifest, Exception):
@@ -207,6 +239,7 @@ def check_bundle(bundle, app_version, is_app):
     problems = check_info(bundle, info, app_version)
     if is_app:
         problems += check_encryption(bundle, info)
+        problems += check_icon(bundle, info)
     manifest_path = bundle / MANIFEST
     declared = {}
     if manifest_path.is_file():
@@ -238,7 +271,7 @@ def main(arguments):
             print(f"  - {problem}", file=sys.stderr)
         sys.exit(1)
     print(
-        f"upload-check: OK ({app.name} {app_version} has its privacy manifest, its answer on encryption, "
+        f"upload-check: OK ({app.name} {app_version} has its icon, its privacy manifest, its answer on encryption, "
         "and a reason for each required reason API that its code and its extensions use)"
     )
 

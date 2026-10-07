@@ -58,7 +58,7 @@ To let git run it after a pull or a change of branch, run `make git-hooks` once.
 ## Before you commit
 
 Run `make check`.
-It runs the lint, the checks of the texts, the build, the unit tests and the tests of the scripts, and stops at the first failure, with a message that says what to do.
+It runs the lint, the checks of the texts and of the app icon, the build, the unit tests and the tests of the scripts, and stops at the first failure, with a message that says what to do.
 The build accepts no warning: fix its cause, and never silence it.
 When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks them too, which needs Node 24 ([how to install it](../server/README.md#run-and-test-it-locally)).
 
@@ -186,6 +186,8 @@ Inside `ios/`:
 
 The feature folders have the same names in `ios/App/`, in the sources of `TROMECore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`, `Example`.
 `ios/App/` also has `Permissions`, `About`, `NightLook` (the look of the main screen) and `TestingTools` (debug builds only).
+The app icon is `ios/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png`: one square PNG of 1024 x 1024 pixels, with no transparency and no rounded corners, from which iOS makes every size, the rounded corners and the dark and tinted icons.
+`make app-icon-check` checks it.
 The rules for the code (where each file goes, which module depends on which) are in [`.claude/rules/ios-code.md`](../.claude/rules/ios-code.md).
 
 You can also run the commands of one part in its folder: `make -C ios check` runs only the checks of the app.

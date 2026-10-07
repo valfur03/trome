@@ -56,8 +56,18 @@ manifest() {
     } > "$1/PrivacyInfo.xcprivacy"
 }
 
+icon() {
+    mkdir -p "$state/icon/Assets.xcassets/AppIcon.appiconset"
+    printf '%s' '{"images":[{"filename":"AppIcon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"xcode","version":1}}' \
+        > "$state/icon/Assets.xcassets/AppIcon.appiconset/Contents.json"
+    "$tests/make-png.py" "$state/icon/Assets.xcassets/AppIcon.appiconset/AppIcon.png" 1024 1024 "$2"
+    xcrun actool "$state/icon/Assets.xcassets" --compile "$1" --platform iphonesimulator --minimum-deployment-target 18.0 \
+        --app-icon AppIcon --target-device iphone --output-partial-info-plist "$state/icon/partial.plist" > /dev/null
+}
+
+has_icon='<key>CFBundleIcons</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconName</key><string>AppIcon</string></dict></dict>'
 stat_reason='<dict><key>NSPrivacyAccessedAPIType</key><string>NSPrivacyAccessedAPICategoryFileTimestamp</string><key>NSPrivacyAccessedAPITypeReasons</key><array><string>C617.1</string></array></dict>'
-no_encryption='<key>ITSAppUsesNonExemptEncryption</key><false/>'
+no_encryption="<key>ITSAppUsesNonExemptEncryption</key><false/>$has_icon"
 uses_stat='#include <sys/stat.h>
 int main(int argc, char **argv) { struct stat s; return stat(argv[0], &s); }'
 
@@ -67,7 +77,23 @@ executable "$app/PlugIns/Sample.appex/Extension" 'int main(void) { return 0; }'
 info "$app" Sample 1.0.0 "$no_encryption"
 info "$app/PlugIns/Sample.appex" Extension 1.0.0 ""
 manifest "$app" "$stat_reason"
-expect "an app with its manifest, its answer on encryption and version 1.0.0 passes" "$(passes)" yes
+icon "$app" opaque
+expect "an app with its icon, its manifest, its answer on encryption and version 1.0.0 passes" "$(passes)" yes
+
+info "$app" Sample 1.0.0 '<key>ITSAppUsesNonExemptEncryption</key><false/>'
+expect "an app whose Info.plist names no icon fails" "$(passes)" no
+expect "it says that the app has no icon, and which setting gives one" \
+    "$(says 'the app has no icon (no CFBundleIconName')$(says 'ASSETCATALOG_COMPILER_APPICON_NAME')" yesyes
+info "$app" Sample 1.0.0 "$no_encryption"
+
+rm "$app/Assets.car"
+expect "an app with no Assets.car fails" "$(passes)" no
+expect "it says that the asset catalog is missing" "$(says 'its asset catalog Assets.car is missing')" yes
+
+icon "$app" clear
+expect "an app whose icon has transparent pixels fails" "$(passes)" no
+expect "it says that the App Store refuses a transparent icon" "$(says 'the icon AppIcon has transparent pixels')" yes
+icon "$app" opaque
 
 rm "$app/PrivacyInfo.xcprivacy"
 expect "an app with no privacy manifest fails" "$(passes)" no
