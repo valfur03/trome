@@ -1,0 +1,297 @@
+---
+title: The App Store text of TROME 1.0, ready to paste
+description: The titles, subtitle, description, keywords, review notes and TestFlight texts of version 1.0, in French and English, with the limit of each field and the size of each text.
+sidebar:
+  order: 2
+---
+
+import { Code } from '@astrojs/starlight/components';
+import Contact from '../../../../components/Contact.astro';
+import { contactEmail } from '../../../../contact.ts';
+
+export const whatToTestFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
+1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche sur l’écran verrouillé, avec des horaires d’exemple.
+2. À une vraie station de Paris : autorisez la localisation, puis approchez-vous à moins de 150 mètres. App ouverte, les prochains trains apparaissent tout seuls. App fermée, une notification doit vous prévenir : touchez-la. Si rien ne vient, dites-le-nous.
+3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ».
+
+À savoir : il n’y a pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
+Un problème ? Prenez une capture d’écran : TestFlight propose de l’envoyer. Vous pouvez aussi écrire à ${contactEmail}.`;
+
+export const whatToTestEn = `For Paris and Île-de-France only. Three things to try:
+1. From anywhere: open TROME, tap “See an example”, then lock the iPhone. Châtelet shows on the lock screen, with sample times.
+2. At a real Paris station: allow location, then come within 150 meters. With the app open, the next trains show up by themselves. With the app closed, a notification should tell you: tap it. If nothing comes, tell us.
+3. Not now: on the lock screen, tap “30 min”, “1 h” or “Today”.
+
+Good to know: there is no account to create, and trains show only during the metro and RER service hours.
+A problem? Take a screenshot: TestFlight offers to send it. You can also write to ${contactEmail}.`;
+
+This page holds every text that you paste into App Store Connect and TestFlight for TROME 1.0, in French and in English, with the limit of its field and its size.
+[The release guide](/en/maintain/release-on-the-app-store/) says where each field is and when to fill it in.
+This page says what goes in it.
+
+French comes first, because most riders are French: paste the French text in the primary language, then the English text.
+Apple counts characters for every field below except the keywords and the review notes, which it counts in bytes: an accented letter such as é takes two bytes.
+The limits are those of Apple's help pages, read on 7 October 2026: [Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/) and [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/).
+The sizes below are counted by script on the texts as they stand, so count again after any edit.
+
+## The store title: three to try, in order
+
+The title is the first thing a rider reads, and its limit is 30 characters.
+The exact title `TROME` is probably refused: two apps already carry the word, a Peruvian newspaper and a hospital group in India, and App Store Connect refuses a name that another app holds.
+So the title is `TROME`, a dash, and a few words that say what it is.
+The name under the icon stays `TROME`, because it is another field that the store does not check.
+
+Try the candidates in this order, and take the first that App Store Connect accepts.
+Apple's public search (read on 7 October 2026) shows no app with these titles, and no transit app with the word.
+It cannot see a name that an unreleased app record holds, so only App Store Connect settles it.
+
+| Try | French (primary) | English (U.S.) |
+|---|---|---|
+| 1 | `TROME – Métro et RER Paris` (26) | `TROME – Paris Metro & RER` (25) |
+| 2 | `TROME – Prochains trains Paris` (30) | `TROME – Next Paris Trains` (25) |
+| 3 | `TROME – Prochains passages` (26) | `TROME – Next Metro & RER` (24) |
+
+The first title says the two things that a Paris rider types in the search: the network and the city.
+Other apps say the same in their titles, for example `Métro Paris & RER` and `Paris Metro, RER & Offline Map`, so no word of it is ours alone, and the dash and `TROME` make the whole title ours.
+The third title has no `RER` and no city: keep it for a refusal of a word.
+The title never carries the name of RATP or of Île-de-France Mobilités: the source line at the end of the description is the only place for them.
+
+## The subtitle and the promotional text: the first screen of the page
+
+A rider who scrolls the store reads the title, the subtitle and the first screenshots, then the promotional text.
+Both languages say the same facts: where TROME works, what it shows, and that it is free with no account and no ads.
+
+Subtitle, French (26 of 30 characters):
+
+```text
+Sur votre écran verrouillé
+```
+
+Subtitle, English (30 of 30 characters):
+
+```text
+Next trains on the lock screen
+```
+
+Promotional text, French (164 of 170 characters):
+
+```text
+TROME repère la station près de vous et met ses prochains trains sur l’écran verrouillé. Métro et RER, Paris et Île-de-France. Gratuit, sans compte, sans publicité.
+```
+
+Promotional text, English (144 of 170 characters):
+
+```text
+TROME finds the station near you and puts its next trains on your lock screen. Metro and RER, Paris and Île-de-France. Free, no account, no ads.
+```
+
+Apple lets you change the promotional text at any time, with no new version.
+
+## The description
+
+Only its first lines show before **more**, so they carry the pitch and the honest limit: the place, the price, and what a closed app does.
+Each block below is a section with its own line, because the store shows plain text.
+
+French (1923 of 4000 characters):
+
+```text
+Approchez d’une station : le prochain métro ou RER s’affiche sur votre écran verrouillé, dans les deux sens.
+Aucune station à choisir. App fermée, un toucher sur la notification suffit.
+Pour Paris et l’Île-de-France uniquement. Gratuit, sans compte, sans publicité.
+
+Ce que vous voyez
+• Les prochains trains de chaque sens, avec leur destination (même sur les lignes à branches) et les minutes d’attente.
+• Chaque ligne de la station : touchez le nom pour passer à la suivante.
+• Sur l’écran verrouillé, et dans la Dynamic Island sur les iPhone qui en ont une.
+
+Quand ça démarre
+TROME détecte la station quand vous êtes à 150 mètres environ. App ouverte, les prochains trains s’affichent tout seuls. App fermée, une notification vous prévient.
+Quand vous vous éloignez, ils disparaissent.
+Pas maintenant ? Mettez TROME en pause 30 minutes, 1 heure ou jusqu’à la fin de la journée, depuis l’écran verrouillé.
+
+Votre position reste sur votre iPhone
+TROME s’en sert pour trouver la station la plus proche, et ne l’envoie à personne.
+Pour vous prévenir app fermée, il demande la localisation « Toujours ». Si vous la refusez, TROME marche quand l’app est ouverte.
+
+Bon à savoir
+• Métro (lignes 1 à 14, 3bis et 7bis) et RER (A à E). Ni bus, ni tram, ni itinéraires, ni info trafic.
+• Hors de l’Île-de-France, seul « Voir un exemple » fonctionne : Châtelet, avec des horaires d’exemple.
+• Les horaires suivent le service du métro et du RER : la nuit, quand les trains ne circulent pas, rien ne s’affiche. Un écart d’une ou deux minutes avec l’écran du quai est normal.
+• iPhone, iOS 18 ou plus. En français et en anglais.
+
+Horaires : « Prochains passages » d’Île-de-France Mobilités (PRIM), sous « Licence Mobilités ». Stations : adaptées à partir de données d’Île-de-France Mobilités, sous licences ODbL et Licence Ouverte v2.0. TROME n’est pas une app de la RATP ni d’Île-de-France Mobilités, et aucune des deux ne la soutient.
+```
+
+English (1727 of 4000 characters):
+
+```text
+Walk up to a metro or RER station: the next trains show on your lock screen, both directions.
+No station to pick. With the app closed, one tap on the notification is enough.
+For Paris and Île-de-France only. Free, no account, no ads.
+
+What you see
+• The next trains of each direction, with their destination (on lines with branches too) and the minutes to wait.
+• Every line of the station: tap the station name to move to the next line.
+• On the lock screen, and in the Dynamic Island on iPhones that have one.
+
+When it starts
+TROME detects the station when you are within about 150 meters. With the app open, the next trains show up by themselves. With the app closed, a notification tells you.
+When you walk away, they go.
+Not now? Snooze TROME for 30 minutes, 1 hour or the rest of the day, from the lock screen.
+
+Your position stays on your iPhone
+TROME uses it to find the nearest station, and sends it to nobody.
+To tell you when the app is closed, it asks for Always location. If you refuse, TROME works while the app is open.
+
+Good to know
+• Metro (lines 1 to 14, 3bis and 7bis) and RER (A to E). No bus, no tram, no trip planner, no traffic news.
+• Outside Île-de-France, only “See an example” works: Châtelet, with sample times.
+• The times follow the metro and RER service: at night, when the trains stop, nothing shows. A minute or two off the platform screen is normal.
+• iPhone, iOS 18 or later. In French and in English.
+
+Train times: ‘Prochains passages’ of Île-de-France Mobilités (PRIM), under the ‘Licence Mobilités’. Stations: adapted from Île-de-France Mobilités data, under the ODbL and the Licence Ouverte v2.0. TROME is not an app of RATP or of Île-de-France Mobilités, and neither of them supports it.
+```
+
+## The keywords
+
+Apple reads the title, the subtitle and the keywords for search, and not the description.
+So no word below repeats the title or the subtitle, and none is the name of another app or company.
+Write them with a comma and no space after it.
+
+French (99 of 100 bytes):
+
+```text
+horaires,prochains passages,train,transport,quai,station,attente,Île-de-France,activité en direct
+```
+
+English (92 of 100 bytes):
+
+```text
+subway,transit,departures,schedule,platform,station,commute,wait,live activity,Ile-de-France
+```
+
+## Category, age rating, price and territories
+
+| Field | Answer |
+|---|---|
+| Primary category | **Navigation**: it is where the transit apps of Paris sit, and where a rider who wants the next trains looks. |
+| Secondary category | **Travel**: it fits a visitor, and it costs nothing. |
+| Age rating | Answer **None** or **No** to every question: no user content, no web browser in the app, no messaging, no ads, no purchase, no mature content, and no gambling. The two rows that open the privacy and help pages open Safari, outside the app. The result is **4+**. |
+| Made for Kids | **Not Applicable**, as the release guide says. |
+| Price | **Free**, with no in-app purchase and no ads. |
+| Territories | **All Countries or Regions**, with no geographic block: the app shows nothing useful outside Île-de-France, and the first lines of the store text say so. |
+| Copyright | The year and your legal name, for example `2026 Your Name`, without the © sign. |
+
+## The addresses
+
+TROME has one public address for every contact, and a site on its own domain.
+
+| Field | Value |
+|---|---|
+| Support URL | `https://trome.valfur.fr/fr/support/` (French), `https://trome.valfur.fr/en/support/` (English) |
+| Privacy Policy URL | `https://trome.valfur.fr/fr/privacy/` (French), `https://trome.valfur.fr/en/privacy/` (English) |
+| Developer website, and the optional Marketing URL | `https://trome.valfur.fr/` |
+| Email of the App Review contact | <Contact /> |
+| TestFlight feedback email | <Contact /> |
+
+The seller on the store page is your legal name, because the account is an individual one.
+The release guide, step 1, explains the question about the European Union trader status.
+
+## What App Review reads: the contact and the notes
+
+App Review rarely sits in Paris, so the notes tell the reviewer how to see the Live Activity from anywhere.
+
+| Field | Text |
+|---|---|
+| Sign-in required | Off: TROME has no account. |
+| Contact first name, last name and phone | Yours, given at the submission. Never write them in a file of the repo: the phone goes in the international format, with a plus sign and the country code. |
+| Contact email | <Contact /> |
+| Notes | The English text below (2149 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
+| Attachment | The recording of the real station, as the recording script says. |
+
+```text
+TROME shows the next metro and RER trains of the station near you, as a Live Activity on the lock screen. It works in Paris and Île-de-France only. No account, no sign-in, no purchase, no ads. iPhone only, iOS 18 or later.
+
+TO REVIEW FROM ANYWHERE (about 2 minutes, nothing to set up):
+1. Open TROME. When iOS asks for your location, you may allow it or not: the app does not need it for the example.
+2. On the main screen, tap "See an example". A Live Activity for Châtelet appears, with SAMPLE times made inside the app (no position, no network). Press the side button to lock the iPhone: it shows on the lock screen, and in the Dynamic Island on iPhones that have one.
+3. The sample times count down while the app runs. If iOS suspends the app and the lock screen says "Open the app", open TROME and tap "See an example" again. The example ends by itself after 10 minutes.
+4. On the lock screen, tap the station name to see the next line. The buttons 30 min, 1 h and Today snooze the automatic mode (on the example, they only end it).
+5. On the main screen: the Automatic mode switch, the Snooze row, the Location and Notifications rows, "Privacy policy" and "Help and feedback" (they open web pages in Safari).
+
+HOW IT WORKS IN REAL USE (see the attached video, recorded at a Paris station on a real iPhone):
+- Within about 150 meters of a metro or RER station, with the app open, the Live Activity starts by itself with real times.
+- With the app closed, iOS wakes TROME near a station. TROME sends a local notification, and one tap starts the Live Activity. This is why we ask for "Always" location: the app is closed when people arrive. With "While Using" only, the app still works while it is open.
+- The position is used on the iPhone to find the nearest station. It is never sent to our server. The server gets only the identifier of a stop.
+- Notifications are local, and optional.
+
+TRAIN DATA: real times come from the PRIM service of Île-de-France Mobilités, through our server, which is running during the review. Metro and RER do not run all night: outside service hours there are no real times, but the example works at any hour.
+```
+
+Check each line of these notes against the build that you submit, with the rehearsal of the release guide.
+Keep the sentence about the video only when the video is attached, and keep the sentence about the server only while it runs.
+
+## TestFlight: what the first external testers read
+
+Apple's pages ([Provide test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information/) and [Enter test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/enter-test-information)), read on 7 October 2026, make the beta app description and a feedback email required for external testers, and give no limit for any of these fields.
+So each text stays under 900 bytes, which fits any limit of 1,000 bytes or more.
+Each text says in its first line that TROME works in Paris and Île-de-France only.
+The feedback email is <Contact />, the address of every contact.
+
+Beta app description, French (282 bytes):
+
+```text
+TROME fonctionne à Paris et en Île-de-France seulement. Près d’une station de métro ou de RER, il met les prochains trains sur l’écran verrouillé de votre iPhone. Ailleurs, essayez « Voir un exemple ».
+Version de test : sans compte, gratuite, et vos retours nous aident.
+```
+
+Beta app description, English (244 bytes):
+
+```text
+TROME works in Paris and Île-de-France only. Near a metro or RER station, it puts the next trains on the lock screen of your iPhone. Anywhere else, try “See an example”.
+This is a test version: no account, free, and your feedback helps us.
+```
+
+What to test, French (886 bytes):
+
+<Code code={whatToTestFr} lang="text" />
+
+What to test, English (697 bytes):
+
+<Code code={whatToTestEn} lang="text" />
+
+TestFlight shows the text in the language of the tester's iPhone, and falls back to the primary language.
+
+## What 1.0 says to riders, outside the store
+
+The first version of an app has no **What's New** field.
+The 1.0 lines are on the site, in the pages [Nouveautés](/fr/whats-new/) and [What's new](/en/whats-new/), and in `CHANGELOG.md`: they are the one source of the notes of the version, and they are not pasted in the store.
+
+## What the text must not say
+
+Each line below is a claim that the app cannot keep, or a risk with App Review, so a rewrite of the text keeps away from it.
+
+- **No `RATP`, `IDFM` or `Île-de-France Mobilités` outside the source line.** The rules of App Review forbid the mark of others, in the title, the subtitle and the keywords above all, and the source line shows the data credit that the licence asks for and the sentence that TROME is not their app.
+- **No promise of times for every line.** The source lists only the next three or four trains of a stop, and the times follow the service hours, so the text says "the next trains", never "live times for every line".
+- **No promise that a closed app starts by itself.** A closed app sends a notification, and one tap starts the Live Activity: the first lines say so.
+- **No claim outside Paris.** The app is not blocked elsewhere, but it shows nothing useful there, except the example, so the first lines name the limit.
+- **No claim about the battery, and no `real time`.** Nobody measured the first, and the second promises more than the source gives.
+
+## When the app changes, check these claims
+
+The store text, the screenshots and the video must stay true to the app.
+After a change that touches one of these claims, check its guide, and edit the text of this page and the store in the same change.
+
+| The text says | It is true in |
+|---|---|
+| The next trains of both directions of every line, with the destination of each train | [the Live Activity guide](https://github.com/valfur03/trome/blob/main/ios/guide/live-activity.md) |
+| The lock screen and the Dynamic Island | [the Live Activity guide](https://github.com/valfur03/trome/blob/main/ios/guide/live-activity.md) |
+| Starts within about 150 meters, by itself when the app is open, by a notification when it is closed, and goes away when you leave | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |
+| The location **Always** is asked for the closed app, and **While Using** works while the app is open | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |
+| A pause of 30 minutes, 1 hour or the rest of the day | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |
+| **See an example**: Châtelet with sample times, from anywhere | [the example guide](https://github.com/valfur03/trome/blob/main/ios/guide/example.md) |
+| Metro 1 to 14, 3bis and 7bis, RER A to E, and no bus or tram | [the station list guide](https://github.com/valfur03/trome/blob/main/ios/guide/stations.md) |
+| In French and in English | [the texts guide](https://github.com/valfur03/trome/blob/main/ios/guide/languages.md) |
+| iPhone only, iOS 18 or later | `deploymentTarget` and `TARGETED_DEVICE_FAMILY` in `ios/project.yml` |
+| Free, no account, no ads, the position sent to nobody | [the privacy policy](/en/privacy/) |
+| The source line and the sentence that TROME is not their app | [NOTICE.md](https://github.com/valfur03/trome/blob/main/NOTICE.md) |

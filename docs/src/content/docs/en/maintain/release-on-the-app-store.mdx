@@ -59,6 +59,7 @@ Check that each one is ready before you start the step that needs it, so that yo
 <Checklist id="release-have-ready" kind="things">
 
 - **For steps 2 and 6: the store text,** in French and in English: three store titles in order of preference, the subtitle, the promotional text, the description, the keywords, the category, the answers of the age rating questionnaire, and the copyright line.
+  [The App Store text of TROME 1.0](/en/maintain/store-text/) holds them all, ready to paste.
   The name on the home screen stays TROME, whatever store title you get.
 - **For step 3: the change of the repo that signs the release build with your paid team,** and with no other team.
   It can only be made after step 1.
@@ -68,10 +69,10 @@ Check that each one is ready before you start the step that needs it, so that yo
 - **For step 4: the server address and the app token in the release build.** The release build reads them from a build settings file that git ignores, never from a file of the repo.
 - **For steps 4 and 5: the privacy page and the help page online,** with your legal name, your city and your contact address filled in: [Confidentialité](/fr/privacy/), [Privacy](/en/privacy/), [Aide](/fr/support/) and [Help](/en/support/).
   The app opens the same two pages from its screen, and the build of step 4 must already have these addresses.
-- **For step 5: the beta app description,** a few lines in English for the testers: the first lines of the store description work.
+- **For step 5: the beta app description and what to test,** a few lines for the testers, in French and in English: [the store text page](/en/maintain/store-text/#testflight-what-the-first-external-testers-read) holds them.
 - **For step 6: the App Privacy answers,** written from the privacy page, so that the store and the page say the same thing.
 - **For step 6: the screenshots,** in French and in English, at the 6.9-inch size of App Store Connect (for example 1260 × 2736 pixels), made by one command in the repo.
-- **For steps 5 and 7: the review notes,** in English and under 4,000 bytes, and **the recording script**: you film the recording yourself, on your iPhone, at a real station, with the final build.
+- **For steps 5 and 7: the review notes,** in English and under 4,000 bytes ([in the store text page](/en/maintain/store-text/#what-app-review-reads-the-contact-and-the-notes)), and **the recording script**: you film the recording yourself, on your iPhone, at a real station, with the final build.
 - **For step 8: the notes of the version,** in two layers.
   For developers, the commit log, whose messages start with their type (`feat`, `fix`, `docs`), and `CHANGELOG.md` in the repo, which sums it up for each version.
   For riders, three or four lines in their own words, in French and in English, written by a person: they go on the site's What's new page ([Nouveautés](/fr/whats-new/), [What's new](/en/whats-new/)), and from the second version on, in the What's New field of the store.
@@ -569,6 +570,8 @@ Apple offers it only for an update, not for the first version: choose it from ve
 Apple's help, read on 3 October 2026: [View ratings and reviews](https://developer.apple.com/help/app-store-connect/monitor-ratings-and-reviews/view-ratings-and-reviews/), [View tester feedback](https://developer.apple.com/help/app-store-connect/test-a-beta-version/view-tester-feedback/),
 [Acquiring crash reports and diagnostic logs](https://developer.apple.com/documentation/xcode/acquiring-crash-reports-and-diagnostic-logs).
 Cloudflare's docs, read on 3 October 2026: [workers.dev](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/).
+
+First, when the store link opens on your iPhone, [change the site to the store link](/en/maintain/after-the-release/): the homes and the README still say that TROME is not on the App Store yet.
 
 For the first week, look at these once a day:
 

@@ -1,0 +1,59 @@
+---
+title: After the release, change the site to the store link
+description: Replace "Not on the App Store yet" with the App Store link on the two homes, the README, the What's new pages and the changelog, the day the store page opens.
+sidebar:
+  order: 3
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Until TROME is released, the site and the README say that it is not on the App Store yet, and their first button installs it with a Mac.
+App Review opens the home of the site as the support address, and a rider reads it before the store page.
+The day the store link opens, those words become false, so change them the same day.
+
+You need the store link of TROME, which opens its page on your iPhone, and the release date.
+Do not start before the link opens: after the release, the store can take up to 24 hours to show the app.
+Nothing in this page is merged before the release.
+
+<Steps>
+
+1. In `docs/src/content/docs/fr/index.mdx`, delete the last sentence of the tagline, ` Pas encore sur l’App Store.`, and make the store link the first action:
+
+   ```yaml
+   actions:
+     - text: Télécharger sur l’App Store
+       link: <store link>
+       icon: external
+     - text: Aide
+       link: /fr/support/
+       variant: minimal
+   ```
+
+   Then change the description of the last card, « L’installer vous-même », to `Vous préférez le construire vous-même ? Installez TROME avec un Mac, Xcode et un identifiant Apple gratuit. Guide en anglais.`.
+
+2. In `docs/src/content/docs/en/index.mdx`, do the same: delete ` Not on the App Store yet.` at the end of the tagline, and use these actions and this card description:
+
+   ```yaml
+   actions:
+     - text: Get it on the App Store
+       link: <store link>
+       icon: external
+     - text: Help
+       link: /en/support/
+       variant: minimal
+   ```
+
+   `Prefer to build it yourself? Install TROME with a Mac, Xcode and a free Apple ID.`
+
+   The Mac install stays as the first card of both homes: a builder finds it there, and a rider has one clear button.
+
+3. In `README.md`, make the first paragraph say `It is open source and free on the App Store: [get it](<store link>), or [build it with a Mac](https://trome.valfur.fr/en/build/install-on-your-iphone/).`, and rewrite the first lines of the section **Get it on your iPhone** the same way: the store link first, the iOS 18 line, and no line about watching the repo.
+
+4. In the pages `fr/whats-new.mdx` and `en/whats-new.mdx`, change the heading `Version 1.0, bientôt` or `Version 1.0, coming soon` to the release date, such as `Version 1.0 – 12 novembre 2026` or `Version 1.0 – November 12, 2026`, and delete the sentence that says TROME is not on the App Store yet.
+   In `CHANGELOG.md`, change `1.0.0 – not released yet` to `1.0.0 – ` and the date.
+
+5. Run `make check`, then open the French home on your iPhone, at phone width: the first button opens the store page of TROME, and the first screen no longer says that it is not out.
+
+</Steps>
+
+The store text itself says nothing about the release, so it needs no change.
