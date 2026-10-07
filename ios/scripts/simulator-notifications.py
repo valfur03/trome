@@ -4,7 +4,7 @@ import re
 import sys
 from pathlib import Path
 
-APP_SECTION = re.compile(r"\.(trome\.dev(\.render-check-host)?|RATPActivity[A-Za-z]*(\.xctrunner)?)$")
+APP_SECTION = re.compile(r"\.trome\.dev(\.render-check-host)?$")
 
 
 def usage():
