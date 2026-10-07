@@ -3,6 +3,9 @@ import Testing
 @testable import TROMECore
 
 struct ExampleTimetableTests {
+    // The phone locked within 10 s of the tap, then iOS suspends the app about 9 s later.
+    private static let lastUpdateBeforeTheSuspension: TimeInterval = 19
+
     private let start = Date(timeIntervalSince1970: 1_000_000)
     private let catalog: StationCatalog
     private let hub: [Station]
@@ -62,19 +65,44 @@ struct ExampleTimetableTests {
         }
     }
 
-    @Test func aTrainIsInItsLastMinuteAtOnce() throws {
-        let soonest = try #require(content(after: 0).trains.linesPage?.soonestTrain)
+    @Test(arguments: Array(stride(from: 0.0, through: 300, by: 10)))
+    func noTrainOfTheHubLeavesInTheFirstFiveMinutes(after seconds: TimeInterval) throws {
+        let staleDate = try #require(content(after: seconds).staleDate)
 
-        #expect(soonest.time.timeIntervalSince(start) < 60)
+        #expect(staleDate > start.addingTimeInterval(5 * 60))
+    }
+
+    @Test(arguments: [
+        (minute: 1, laDefense: [5, 8], vincennes: [7, 10]),
+        (minute: 3, laDefense: [3, 6], vincennes: [5, 8]),
+        (minute: 5, laDefense: [1, 4], vincennes: [3, 6])
+    ])
+    func theLockScreenCountsDownWhileTheAppIsSuspended(
+        minute: Int,
+        laDefense: [Int],
+        vincennes: [Int]
+    ) throws {
+        let lastUpdate = content(after: Self.lastUpdateBeforeTheSuspension)
+        let now = start.addingTimeInterval(TimeInterval(minute * 60))
+        let page = try #require(lastUpdate.trains.linesPage)
+        let line = try #require(page.lines.first)
+        let shown = Dictionary(uniqueKeysWithValues: line.directions.map { direction in
+            (direction.label, direction.trains.map { $0.countdownMinutes(at: now) })
+        })
+
+        #expect(line.line.name == "1")
+        #expect(try #require(lastUpdate.staleDate) > now)
+        #expect(line.directions.allSatisfy { $0.trains.allSatisfy { $0.time > now } })
+        #expect(shown == ["La Défense": laDefense, "Château de Vincennes": vincennes])
     }
 
     @Test func theTimesCountDownAndRenew() {
         let timetable = ExampleTimetable(start: start)
         let first = timetable.departures(at: hub, now: start)
-        let later = timetable.departures(at: hub, now: start.addingTimeInterval(300))
+        let later = timetable.departures(at: hub, now: start.addingTimeInterval(600))
 
         #expect(Set(first.map(\.time)) != Set(later.map(\.time)))
-        #expect(later.allSatisfy { $0.time > start.addingTimeInterval(300) })
+        #expect(later.allSatisfy { $0.time > start.addingTimeInterval(600) })
         #expect(later.count == first.count)
     }
 }

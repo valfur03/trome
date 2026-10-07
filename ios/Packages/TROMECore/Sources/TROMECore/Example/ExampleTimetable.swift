@@ -4,7 +4,11 @@ struct ExampleTimetable: Sendable {
     static let stationId = "IDFM:21959"
     static let trainsPerSide = 4
     static let platformSeconds: TimeInterval = 30
-    static let firstTrainSeconds: TimeInterval = 50
+    /// No train of the hub leaves before this time after the tap.
+    /// iOS suspends the app soon after the lock, and with no server nothing updates the Live Activity:
+    /// it goes stale when its soonest train leaves.
+    /// So the lock screen counts down for 5 minutes, and a train of the first page is in its last minute from 4:20.
+    static let firstDepartureSeconds: TimeInterval = 5 * 60 + 20
 
     let start: Date
 
@@ -54,6 +58,6 @@ struct ExampleTimetable: Sendable {
     }
 
     private static func firstTrainDelay(lineIndex: Int, sideIndex: Int, interval: TimeInterval) -> TimeInterval {
-        (firstTrainSeconds + TimeInterval(lineIndex * 67 + sideIndex * 101)).truncatingRemainder(dividingBy: interval)
+        firstDepartureSeconds + TimeInterval(lineIndex * 67 + sideIndex * 101).truncatingRemainder(dividingBy: interval)
     }
 }

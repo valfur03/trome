@@ -9,7 +9,7 @@ A tap shows the Live Activity of Châtelet, with sample times, for 10 minutes.
 The main screen then says "On the lock screen: Châtelet (example)".
 
 - It shows all the metro and RER lines of the Châtelet hub, in both directions, on the pages of the Live Activity.
-- A train is in its last minute at once, so you see how the Live Activity shows a train at the platform.
+- No train leaves in the first 5 minutes, and a train of the first page is in its last minute after about 4 minutes (see below).
 - The sample times are made in the app (`ExampleTimetable` in `TROMECore`): no position, no permission, no network and no train data are needed, so the example makes no call to the train data service or to the server.
 - The Live Activity has no mark of its own: it looks like a real one.
 
@@ -17,7 +17,9 @@ The main screen then says "On the lock screen: Châtelet (example)".
 
 The sample times count down and renew while the app runs.
 When iOS suspends the app (the phone locked, the app in the background), the app cannot update the Live Activity any more.
-So, once the first shown train has left, the Live Activity shows "Open the app", as a real one does.
+So no train of the example leaves in the first 5 minutes 20 seconds after the tap: until then, the lock screen counts down with no update.
+After that, the Live Activity shows "Open the app", as a real one does.
+A tap on the arrow of the Live Activity runs the app for a moment, so its next page shows renewed times.
 Why: the example has no server to push new times, and it must not use the position to keep the app running.
 
 ## When it ends
