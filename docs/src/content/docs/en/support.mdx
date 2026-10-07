@@ -1,12 +1,13 @@
 ---
-title: Help
-description: What to do when the TROME Live Activity does not show, does not start by itself or stops updating, and how to write to us.
+title: TROME help
+description: What to do when the TROME Live Activity does not show, does not start by itself or stops updating, what TROME asks of the iPhone and why, and how to write to us.
 sidebar:
+  label: Help
   order: 1
 ---
 
 import DraftNotice from '../../../components/DraftNotice.astro';
-import Unverified from '../../../components/Unverified.astro';
+import Placeholder from '../../../components/Placeholder.astro';
 import Contact from '../../../components/Contact.astro';
 
 <DraftNotice />
@@ -15,7 +16,11 @@ The next trains do not show on your lock screen, or their minutes stop moving?
 iOS calls this display a Live Activity.
 
 Find your case below: most take a few taps to fix.
-If nothing works, [write to us](#write-to-us).
+Want to know why TROME asks for **Always** location or for notifications?
+Read [what TROME asks of the iPhone](#what-trome-asks-of-the-iphone-and-why).
+
+If nothing works, write to <Contact />.
+TROME is made by <Placeholder>legal name</Placeholder>.
 
 ## The Live Activity does not show
 
@@ -42,10 +47,12 @@ To get this notification, TROME needs two permissions, in **Settings > Apps > TR
 
 - **Location** set to **Always**.
   With **While Using the App**, the Live Activity starts by itself only while TROME is open.
+  [Why **Always**?](#why-trome-asks-for-always-location)
 - **Notifications** turned on.
+  [Why notifications?](#why-trome-asks-for-notifications)
 
 You get one notification for each arrival.
-After a snooze (the **30 min**, **1 h** and **Today** buttons of the Live Activity, or **Not for 1 h** and **Not today** on the notification), nothing starts until the snooze ends.
+After a snooze, nothing starts until the snooze ends: see [what the snooze and the pause do](#what-the-automatic-mode-the-snooze-and-the-pause-do).
 
 ## The times stop updating
 
@@ -57,10 +64,9 @@ If nothing changes, check that the iPhone is connected to the internet.
 
 ## “Times unavailable”
 
-<Unverified>this message and what follows describe the next version of the app, which is not out yet.</Unverified>
-
 TROME can ask for train times a limited number of times each day, and all its users share this limit.
-When many people use it at the same time, the limit can be reached, and the Live Activity then shows this message.
+When many people use it at the same time, the limit can be reached.
+The Live Activity then shows this message, and the app says **No live times until around 2:59 PM**, with the time of the next try.
 
 The minutes already shown keep counting down until the first train leaves.
 You have nothing to do: TROME asks for the times again by itself, at the time that the app shows.
@@ -74,10 +80,58 @@ TROME shows the wait in whole minutes, worked out from the last times it got.
 Between two updates, a train can run early or late, and at busy times the times that TROME gets can be a few minutes old.
 So a gap of a minute or two with the platform screen is normal: when in doubt, trust the platform screen.
 
+## What TROME asks of the iPhone, and why
+
+### Why TROME asks for **Always** location
+
+With **Always**, iOS tells TROME when you come near a station, even when the app is closed.
+This is what lets TROME send you the arrival notification.
+
+With **While Using the App**, TROME knows your position only while the app is open.
+The Live Activity then starts by itself only while the app is open.
+
+The app sends your position to nobody.
+The [privacy policy](/en/privacy/#your-position) says what it does with it.
+
+### Why the iPhone shows a location arrow
+
+While the Live Activity shows, TROME follows your position, to switch to the next station and to stop when you leave.
+The iPhone shows this with a location arrow in the status bar, and, with **While Using the App**, with a blue indicator.
+With **Always**, a hollow arrow can also stay on outside the Live Activity: iOS shows that TROME is waiting for you to come near a station.
+This is normal.
+
+### What the automatic mode, the snooze and the pause do
+
+The **automatic mode** shows the Live Activity when you come near a station, and removes it when you leave: the distances are [above](#the-live-activity-does-not-show).
+When you turn it off, the Live Activity ends at once and nothing starts until you turn it on again.
+
+**Snooze** stops TROME for every station, for 30 minutes, 1 hour or the rest of the day.
+The Live Activity ends at once, and no notification or automatic start comes before the time of return that the app shows.
+The automatic mode stays on.
+The **30 min**, **1 h** and **Today** buttons of the Live Activity, and **Not for 1 h** and **Not today** on the notification, do the same.
+To start again sooner, tap **Cancel the snooze**.
+
+The **pause** is for one station only.
+When you swipe the Live Activity away, it does not come back at this station for 1 hour.
+The app then says “Paused at Châtelet until 3:51 PM”, and **Cancel the pause at Châtelet** puts it back at once.
+
+### Why TROME asks for notifications
+
+When TROME is closed, it cannot show the Live Activity by itself.
+The notification tells you that you are near a station, and you tap it to show the Live Activity.
+Without notifications, the Live Activity starts when you open TROME near a station.
+
+TROME asks for notifications only after the location, and only once.
+It makes them on your iPhone: no server sends you any.
+
+### What “See an example” shows
+
+**See an example** puts Châtelet on the lock screen for 10 minutes, with sample times, so that you can try TROME outside Paris.
+These are not real trains: the app says “example” as long as it shows.
+
 ## Write to us
 
 To reach us, write to <Contact />.
-You can write in English or in French.
 TROME is a free app: we answer when we can, and we promise no delay.
 
 If you have a free GitHub account, you can also open an issue with one of these forms.

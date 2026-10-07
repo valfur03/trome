@@ -1,6 +1,6 @@
 ---
 title: Privacy policy
-description: The data that the TROME app uses, where it goes, what is kept and for how long, and what you can ask us.
+description: What TROME does with your position, what the app sends to our server, what the server keeps and for how long, and how to write to us.
 sidebar:
   label: Privacy
   order: 2
@@ -8,7 +8,6 @@ sidebar:
 
 import DraftNotice from '../../../components/DraftNotice.astro';
 import Placeholder from '../../../components/Placeholder.astro';
-import Unverified from '../../../components/Unverified.astro';
 import Contact from '../../../components/Contact.astro';
 
 <DraftNotice />
@@ -16,14 +15,16 @@ import Contact from '../../../components/Contact.astro';
 Updated: <Placeholder>date</Placeholder>.
 
 TROME needs to know which station you are near, not who you are.
-Here is the data that the TROME iPhone app uses, where it goes, and what is kept.
+Here is what the TROME iPhone app does with your data, what our server keeps, and who gets it.
 
 ## In short
 
 - TROME has no account, shows no ads, and does not measure what you do in the app.
-- Your exact position stays on your iPhone.
-- To show the train times, the app sends our server the identifier of the stop, but not your position, and nothing that identifies you.
-- Our server keeps no data that could identify you.
+- Your position stays on your iPhone: the app sends it to nobody.
+- To show the train times, the app sends our server the identifier of the station you are near, but not your position, and nothing that identifies you.
+- Our server writes down nowhere which station was asked for, when, or by whom.
+- TROME collects no data about you, and the App Store page says so too: Data Not Collected.
+  What Apple gives us, for example if you test TROME with TestFlight, is explained [below](#what-apple-gives-us).
 
 ## Your position
 
@@ -36,34 +37,40 @@ Without your position, TROME cannot find the nearest station.
 
 ## What the app sends to our server
 
-<Unverified>this part describes the version of the app that asks our server for the times. This version is not out yet.</Unverified>
-
 To show the next trains, the app asks our server for the times.
 It sends the identifier of the stop (for example the one of Châtelet station) and a code that every copy of the app shares, which says nothing about you.
 It sends neither your position, nor an identifier of your iPhone, nor anything that identifies you.
+The stop that the app asks for shows which station you are near at that moment.
 
 Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and of iOS.
 Our server does not read them and does not keep them.
 
-The stop that the app asks for shows which station you are near at that moment.
-Our server keeps:
+## What our server keeps, and for how long
 
-- the latest times of each stop, to give them to everyone who asks;
-- totals, for 30 days: the number of requests it got each hour, and the number of times it asked for the times of each stop each day, to stay within the limit of the source of the times;
-- the list of errors, for 7 days: the time, the stop and the kind of error.
+After it answers, our server keeps no stop that was asked for: not in its totals, not in its errors, not in its logs.
+It keeps only:
 
-None of this data says who made the request.
+- **totals**, for 30 days: how many requests it gets each hour and each day, how many calls it makes to the source of the times, and how many errors.
+  These totals have no stop;
+- **a list of errors**, for 7 days: the time, the kind of error and its code.
+  It has no stop either;
+- **the latest answer of the source of the times for each stop**, as the source gave it, to give it to everyone who asks.
+  It stays in the memory of our server, never written down, and the server erases it after 10 minutes at most.
+  It does not say who asked for the stop, or when;
+- **the stop for which the source just failed**, with the time of the failure, in the same memory, for a few minutes at most: the server does not call the source again at once.
 
-Our server asks Île-de-France Mobilités (PRIM) for the times with the identifier of the stop only: PRIM gets nothing that comes from you.
+Our server keeps no IP address, no identifier of you or of your iPhone, and no position.
+No request log is turned on at our host.
 
-## What our host sees
+## What our host and the source of the times see
 
-<Unverified>our server is not online yet, so this part says how it will be set up.</Unverified>
+Our server runs on Cloudflare.
+Cloudflare gets each request before our server does, so it sees the address of the request, with the identifier of the stop, and the network details that come with any web request, such as your IP address and the approximate place that it finds from it.
+We turned off every log that Cloudflare could keep for us, and our server keeps none of it.
+Cloudflare handles what it sees under its own [privacy policy](https://www.cloudflare.com/privacypolicy/).
 
-Our server will run on Cloudflare.
-Cloudflare will get each request before our server does, so it will see your IP address and the technical details of the request, to deliver it.
-We will turn off the request logs that Cloudflare can keep for us.
-Cloudflare handles this data under its own [privacy policy](https://www.cloudflare.com/privacypolicy/).
+Our server asks Île-de-France Mobilités (PRIM) for the times with the identifier of the stop and the key of TROME only.
+PRIM gets nothing that comes from you.
 
 ## What stays on your iPhone
 
@@ -87,19 +94,20 @@ Apple explains it in [TestFlight & Privacy](https://www.apple.com/legal/privacy/
 
 We use this information only to fix and improve TROME, and we share it with nobody.
 
-## Your rights
+## See or delete what we have about you
 
-Apart from what Apple gives us and the messages that you send us, we keep no data about you, so there is nothing else to see or delete on our side.
-We keep your messages for as long as it takes to answer you and fix the problem, and we delete them if you ask.
+Our server keeps nothing that could lead back to you, so there is nothing to see or delete there.
+A person has only what Apple gives us, if they test TROME with TestFlight, and the messages they write to us.
+We keep a message for as long as it takes to answer you and fix the problem, then we delete it, and sooner if you ask.
 
 To ask a question, or to see or delete what we have about you, write to <Contact />.
-You can write in English or in French.
-An issue on GitHub with [the question form](https://github.com/valfur03/trome/issues/new?template=question.yml) works too, but an issue is public and GitHub keeps it under its own [privacy policy](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement): do not write your name, your email address, or anything personal in it.
+If you were invited to TestFlight by email, write from the address of the invitation: it is what lets us find your name, and we take you off the list of testers.
+An issue on GitHub with [the question form](https://github.com/valfur03/trome/issues/new?template=question.yml) works too for a question, but an issue is public and GitHub keeps it under its own [privacy policy](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement): do not write your name, your email address, or anything personal in it.
 You can also complain to the [CNIL](https://www.cnil.fr/en), the French data protection authority.
 
 ## Who we are
 
-TROME is made by <Placeholder>legal name</Placeholder>, <Placeholder>city</Placeholder>, France.
+TROME is made by <Placeholder>legal name</Placeholder>.
 To reach us, write to <Contact />.
 
 ## When this page changes
