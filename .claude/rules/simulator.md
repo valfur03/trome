@@ -27,7 +27,7 @@ How that code works, and the measurements behind these rules, are in `.claude/ru
 All worktrees use one shared Simulator, named `RATP-Shared`.
 
 - Each job installs its own build of the app.
-  Before that, it removes the app and its data (and the host app of the render check), resets the permissions, sets the text size and the appearance back to the iOS default (Large text, Light), and clears the fake position of the Simulator.
+  Before that, it removes the app and its data (and the host app of the render check), resets the permissions (notifications included), sets the text size and the appearance back to the iOS default (Large text, Light), and clears the fake position of the Simulator.
   So a job never sees the data or the saved settings of another worktree.
 - The Simulator stays booted between jobs, so the next job does not wait for a cold boot.
 - It shuts down by itself after 5 minutes with no job.

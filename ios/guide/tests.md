@@ -51,6 +51,7 @@ On a pass, `make e2e` prints the counts of the tests and their time.
 On a failure, `make e2e` prints the file, the line and the message; open `ios/.build/e2e.xcresult` in Xcode for the full results.
 A failed run also keeps its log, its `.xcresult`, the Simulator log of the run, the crash reports of the app and its context (the load of the Mac, the tests in the order they ran) in `~/Library/Logs/TROME/e2e-failures/`, one folder per run, and prints that folder.
 The next run and a new worktree do not touch it, so the evidence of a flaky failure stays; it keeps the 20 newest runs.
+A failed `make docs-screenshots` keeps its evidence in the same folder.
 
 | Class | What it checks on the real iOS |
 |---|---|

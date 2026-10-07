@@ -321,6 +321,19 @@ expect "a job closes a system popup that an earlier job left on the Simulator" "
 expect "a job restarts SpringBoard only after it removed the app of the earlier job" "$(cat "$state/apps-at-springboard-restart.$default" 2> /dev/null || echo "no restart")" ""
 expect "a job goes on when SpringBoard does not say it is ready" "$(FAKE_SPRINGBOARD_NOT_READY=1 TROME_SPRINGBOARD_WAIT_SECONDS=1 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null 2>&1 && echo reset || true)" "reset"
 
+notification_settings() {
+    python3 -c 'import plistlib, sys; print(" ".join(sorted(plistlib.load(open(sys.argv[1], "rb"))["sectionInfo"])))' "$1"
+}
+notifications="$state/data.$default/Library/BulletinBoard/VersionedSectionInfo.plist"
+mkdir -p "${notifications%/*}"
+python3 -c 'import plistlib, sys; plistlib.dump({"sectionInfo": {name: b"settings" for name in sys.argv[2:]}, "sectionInfoVersionNumber": 2}, open(sys.argv[1], "wb"))' \
+    "$notifications" com.apple.Maps com.example.trome.dev com.example.trome.dev.render-check-host com.other.App
+cp "$notifications" "$state/notifications-of-the-app"
+"$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
+expect "a job removes the notification setting that the app of an earlier job left on the Simulator" "$(notification_settings "$notifications")" "com.apple.Maps com.other.App"
+expect "a job removes the notification setting before SpringBoard restarts and reads it" "$(notification_settings "$state/notifications-at-springboard-restart.$default")" "com.apple.Maps com.other.App"
+expect "a job stops when SpringBoard keeps the notification setting of the app" "$(FAKE_SPRINGBOARD_SAVES_NOTIFICATIONS="$state/notifications-of-the-app" "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset sh -c 'echo ran' 2>&1 || true)" "The Simulator still keeps the notification setting of com.example.trome.dev com.example.trome.dev.render-check-host after the reset, so the app would get no notification question."
+
 chronod_line() {
     echo "2026-10-01 15:31:19.389 Df chronod[28175:eb6459] [com.apple.chrono:taskservice] $1"
 }

@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 
+scripts=$(cd "$(dirname "$0")" && pwd)
 shared_name_pattern='RATP-Shared(-Small)?(-[0-9]+)?'
 springboard_wait_seconds=${TROME_SPRINGBOARD_WAIT_SECONDS:-60}
 widget_host_wait_seconds=${TROME_WIDGET_HOST_WAIT_SECONDS:-240}
@@ -217,15 +218,25 @@ reset_display() {
 #   and covers the new app, until SpringBoard restarts.
 # - When the app is removed while iOS shows its "Change to Always Allow" popup, the location service keeps
 #   that popup in flight and ignores every new location request of the app, until it restarts.
+# - The notification setting of the removed app ("Allow") stays when the app is removed just after a cold boot:
+#   SpringBoard misses the removal, so it never forgets the setting, and the next install of the app is allowed with no
+#   question. 'simctl privacy' does not cover notifications, so the reset removes the setting from the file that
+#   SpringBoard reads when it starts, just before it restarts SpringBoard.
 reset_device() {
     uninstall_apps "$1"
     xcrun simctl privacy "$1" reset all
     set_language "$1"
     reset_display "$1"
+    data=$(xcrun simctl getenv "$1" HOME)
+    "$scripts/simulator-notifications.py" forget "$data"
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.SpringBoard
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.locationd
     xcrun simctl location "$1" clear
     wait_for_springboard "$1"
+    if ! remembered=$("$scripts/simulator-notifications.py" remembered "$data"); then
+        echo "The Simulator still keeps the notification setting of $remembered after the reset, so the app would get no notification question." >&2
+        exit 1
+    fi
 }
 
 grant_location_while_using() {

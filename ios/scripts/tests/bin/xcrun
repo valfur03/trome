@@ -52,6 +52,7 @@ case "$command" in
     delete) rm "$state/device.$1" ;;
     get_app_container) touch "$state/apps.$1"; grep -qxF "$2" "$state/apps.$1" ;;
     launch) echo "$2" > "$state/launched.$1" ;;
+    getenv) [ "$2" = HOME ] && echo "$state/data.$1" ;;
     ui) [ $# -lt 3 ] || echo "$3" > "$state/ui.$1.$2" ;;
     spawn)
         prefs="$state/prefs.$1"
@@ -78,6 +79,13 @@ case "$command" in
                     cat "$state/global.$1.AppleLanguages" "$state/global.$1.AppleLocale" 2> /dev/null \
                         | paste -s -d ' ' - > "$state/language-at-springboard-restart.$1"
                     rm -f "$state/popup.$1"
+                    notifications="$state/data.$1/Library/BulletinBoard/VersionedSectionInfo.plist"
+                    if [ -e "$notifications" ]; then
+                        cp "$notifications" "$state/notifications-at-springboard-restart.$1"
+                        if [ -n "${FAKE_SPRINGBOARD_SAVES_NOTIFICATIONS:-}" ]; then
+                            cp "$FAKE_SPRINGBOARD_SAVES_NOTIFICATIONS" "$notifications"
+                        fi
+                    fi
                 fi
                 ;;
             "log show")

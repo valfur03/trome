@@ -107,7 +107,7 @@ help:
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
-	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock)"
+	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock); a failed run keeps its evidence, as make e2e does"
 	@echo "make live-activity-render  Draw the Live Activity views for every station and page, in French, and list the too tall ones, the cut texts and the breaches of the cut rules (takes the Simulator lock; not in the gate)"
 	@echo "make live-activity-render ENGLISH=1  Same, in French, then in English"
 
@@ -252,7 +252,7 @@ live-activity-render: project
 docs-screenshots: project
 	@$(QUIET) $(LOGS)/docs-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
 	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
-		$(QUIET) $(LOGS)/docs-screenshots.log '^Saved ' ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) \
+		$(QUIET) $(LOGS)/docs-screenshots.log '^Saved ' ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) $(LOGS)/docs-screenshots.log "$(APP_PATH)" \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300

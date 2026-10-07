@@ -2,20 +2,23 @@
 set -eu
 
 usage() {
-    echo "Usage: $0 <result bundle> <xcodebuild command...>" >&2
+    echo "Usage: $0 <result bundle> <log file> <app path> <xcodebuild command...>" >&2
     echo "Build first with build-for-testing: the script runs test-without-building, so the Simulator lock is not held during the build." >&2
     echo "Run it through the Simulator lock, in ios/: ./scripts/sim-lock.sh job ./scripts/simulator.sh reset ./scripts/simulator.sh with-destination $0 ..." >&2
+    echo "A failed run keeps its evidence with scripts/e2e-keep.py: the log file is the one that this run writes to, and the app path is the app under test." >&2
     exit 1
 }
 
-[ $# -ge 2 ] || usage
+[ $# -ge 4 ] || usage
 if ! command -v pngquant > /dev/null; then
     echo "pngquant is not installed. Run 'make setup' to install it." >&2
     exit 1
 fi
 
 result=$1
-shift
+log=$2
+app=$3
+shift 3
 
 scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/.." && pwd)
@@ -78,7 +81,12 @@ for language in $languages; do
     [ "$language" = "$shown_language" ] || show_language "$language"
     language_result=$(result_of "$language")
     TEST_RUNNER_DOCS_LANGUAGE=$language "$@" -resultBundlePath "$language_result" test-without-building \
-        || { status=$?; "$scripts/e2e-failures.py" "$language_result"; exit $status; }
+        || {
+            status=$?
+            "$scripts/e2e-failures.py" "$language_result"
+            "$scripts/e2e-keep.py" "$language_result" "$log" "$app"
+            exit $status
+        }
     mkdir -p "$exported/$language"
     xcrun xcresulttool export attachments --path "$language_result" --output-path "$exported/$language" \
         --filter "*.png" > /dev/null
