@@ -46,6 +46,14 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
+    func resetLocationAuthorization(of app: XCUIApplication) {
+        terminateWithItsRelaunches(app)
+        app.resetAuthorizationStatus(for: .location)
+        _ = app.wait(for: .runningBackground, timeout: 1)
+        terminateWithItsRelaunches(app)
+    }
+
+    @MainActor
     func launch(_ app: XCUIApplication) {
         app.launch()
         XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
@@ -100,8 +108,7 @@ class E2ETestCase: XCTestCase {
             }
             if mayResetLocation, location.label == "Location, Off" {
                 mayResetLocation = false
-                terminateWithItsRelaunches(app)
-                app.resetAuthorizationStatus(for: .location)
+                resetLocationAuthorization(of: app)
                 app.launch()
                 continue
             }

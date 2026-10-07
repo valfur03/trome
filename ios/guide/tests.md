@@ -77,6 +77,7 @@ Each class inherits from `E2ETestCase` ([`ios/UITests/E2ETestCase.swift`](../UIT
 | Helper | What it does |
 |---|---|
 | `makeApp()`, `launch(_:)` | Make the app with a clean state, launch it, and answer the permission popups. Use them, not `app.launch()`. |
+| `resetLocationAuthorization(of:)` | Resets the location permission, so that the next launch shows the real popups. Use it, not `app.resetAuthorizationStatus(for: .location)`: on the reset, iOS may start the app in the background, and a launch at that moment fails with "No such process". |
 | `waitFor(_:)`, `waitForNo(_:)`, `tap(_:)` | Wait up to 30 seconds for an element to show or to go, or before a tap. |
 | `moveThePhone(to:)` | Sets the position of the Simulator, which the app reads through its real Core Location code. |
 | `openNotificationCenter(over:)`, `liveActivityStation(_:)` | Open the Notification Center, where the Live Activity shows as on the lock screen, and find a station in it. |
@@ -102,3 +103,4 @@ The server has [its own tests](../../server/README.md).
 A test that fails, then passes with no change, is a bug: run it again once to know.
 If it covers your change, find the cause, such as a race or a missing wait, and fix it: a retry or a longer timeout only hides it.
 If it does not, open an issue with the name of the test, how often it failed, and its error.
+The folder that the failed run printed (in `~/Library/Logs/TROME/e2e-failures/`) holds the evidence: its `simulator.log` shows what iOS did around the failure, such as a launch or an end of the app.

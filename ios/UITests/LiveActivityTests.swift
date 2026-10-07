@@ -13,8 +13,8 @@ final class LiveActivityTests: E2ETestCase {
     @MainActor
     func testUserAllowsLocationAtAStationThenSeesTheLiveActivityAndSnoozesIt() {
         let app = makeApp()
+        resetLocationAuthorization(of: app)
         moveThePhone(to: Self.atChampDeMars)
-        app.resetAuthorizationStatus(for: .location)
         app.launch()
         answerPermissionPrompts(in: app)
 

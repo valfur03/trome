@@ -13,7 +13,6 @@ from pathlib import Path
 KEPT_RUNS = 20
 SIMULATOR_LOG_MARGIN_SECONDS = 5
 NO_SUMMARY_LOG_SECONDS = 900
-LAUNCH_PROCESSES = ["runningboardd", "SpringBoard", "locationd", "tccd", "testmanagerd"]
 
 
 def usage():
@@ -138,10 +137,9 @@ def keep_simulator_log(folder, bundle_id, executable, start, end):
     udid = simulator_udid()
     if not udid:
         return "not kept: no shared Simulator found"
-    processes = LAUNCH_PROCESSES + ([executable] if executable else [])
-    predicate = " OR ".join(f'process == "{process}"' for process in processes)
-    if bundle_id:
-        predicate += f' OR eventMessage CONTAINS "{bundle_id}"'
+    if not bundle_id or not executable:
+        return "not kept: the app has no bundle ID or no executable name"
+    predicate = f'process == "{executable}" OR eventMessage CONTAINS "{bundle_id}"'
     window = ["--last", f"{NO_SUMMARY_LOG_SECONDS}s"]
     if start is not None:
         window = ["--start", moment(start - SIMULATOR_LOG_MARGIN_SECONDS), "--end", moment(end + SIMULATOR_LOG_MARGIN_SECONDS)]
@@ -150,7 +148,7 @@ def keep_simulator_log(folder, bundle_id, executable, start, end):
         status = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT).returncode
     if status != 0:
         return f"simulator.log (log show ended with exit {status}: see its end)"
-    return f"simulator.log (processes {', '.join(processes)}, and every line that names {bundle_id})"
+    return f"simulator.log (the lines of {executable}, and every line of iOS that names {bundle_id})"
 
 
 def prune(root, folder):

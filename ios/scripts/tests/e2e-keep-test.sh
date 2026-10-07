@@ -34,7 +34,7 @@ plutil -insert CFBundleIdentifier -string com.example.trome.dev "$state/app/TROM
 plutil -insert CFBundleExecutable -string TROME "$state/app/TROME.app/Info.plist"
 echo "result" > "$state/build/e2e.xcresult/Info.plist"
 echo "the whole output of xcodebuild" > "$state/build/e2e.log"
-git init -q -b task/42 "$state/repo"
+git init -q -b fix/launch "$state/repo"
 git -C "$state/repo" -c user.name=Test -c user.email=test@example.com commit -q --allow-empty -m start
 
 start=$(($(date +%s) - 120))
@@ -67,7 +67,7 @@ has() {
 
 expect "keeping the evidence of a failed run succeeds" "$(keep)" "exit 0"
 kept=$(ls -d "$state/kept"/*)
-expect "the run gets its own folder, named by the time and the branch" "$(basename "$kept" | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}-//')" "task-42"
+expect "the run gets its own folder, named by the time and the branch" "$(basename "$kept" | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}-//')" "fix-launch"
 expect "it says where the evidence is" "$(cat "$state/out")" "E2E evidence: the log, the result bundle, the Simulator log and the context of this failed run are kept in $kept"
 expect "it keeps the result bundle" "$(cat "$kept/e2e.xcresult/Info.plist")" "result"
 expect "it keeps the log" "$(cat "$kept/e2e.log")" "the whole output of xcodebuild"
@@ -76,7 +76,7 @@ expect "the Simulator log is the one of the shared Simulator" "$(cut -d' ' -f3 "
 window_start=$(date -r "$((start - 5))" "+%Y-%m-%d %H:%M:%S")
 window_end=$(date -r "$((start + 105))" "+%Y-%m-%d %H:%M:%S")
 expect "the Simulator log covers the run, with 5 s on each side" "$(grep -c -- "--start $window_start --end $window_end" "$state/log-show-args")" "1"
-expect "the Simulator log has the launch services and every line that names the app" "$(grep -c 'process == "runningboardd" OR .*process == "TROME" OR eventMessage CONTAINS "com.example.trome.dev"' "$state/log-show-args")" "1"
+expect "the Simulator log has the lines of the app, and every line of iOS that names it" "$(grep -c 'process == "TROME" OR eventMessage CONTAINS "com.example.trome.dev"$' "$state/log-show-args")" "1"
 expect "it keeps the crash report of the app written during the run" "$(has "$kept/TROME-today.ips")" "yes"
 expect "it does not keep an older crash report" "$(has "$kept/TROME-old.ips")" "no"
 expect "it does not keep the crash report of another process" "$(has "$kept/Other-today.ips")" "no"
