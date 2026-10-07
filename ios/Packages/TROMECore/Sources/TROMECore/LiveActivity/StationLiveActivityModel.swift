@@ -1,5 +1,10 @@
 import Foundation
 import Observation
+#if DEBUG
+import os
+
+private let pagerLogger = Logger(category: "LiveActivity")
+#endif
 
 public enum StationLiveActivityError: Error, Equatable, Sendable {
     case turnedOff
@@ -97,8 +102,12 @@ public final class StationLiveActivityModel {
     }
 
     public func showNextLines() async {
-        guard isShowing, let shown = content ?? client.shownContent, let page = shown.trains.linesPage else { return }
+        guard isShowing, let shown = content ?? client.shownContent, let page = shown.trains.linesPage else {
+            Self.logPager("show the next lines: no page shown (showing: \(isShowing))")
+            return
+        }
         firstLineIndex = page.nextFirstIndex
+        Self.logPager("show the next lines of \(shown.stationName): page from \(page.firstIndex) to \(firstLineIndex)")
         guard let inputs, !keptTimesAreStale(at: now()) else {
             await send(shown)
             return
@@ -199,6 +208,12 @@ public final class StationLiveActivityModel {
         }
         lastSystemCall = next
         await next.value
+    }
+
+    private static func logPager(_ event: String) {
+        #if DEBUG
+        pagerLogger.notice("\(event, privacy: .public)")
+        #endif
     }
 
     private func switchesStation(to station: Station) -> Bool {

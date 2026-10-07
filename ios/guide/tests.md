@@ -82,7 +82,7 @@ Each class inherits from `E2ETestCase` ([`ios/UITests/E2ETestCase.swift`](../UIT
 | `moveThePhone(to:)` | Sets the position of the Simulator, which the app reads through its real Core Location code. |
 | `openNotificationCenter(over:)`, `liveActivityStation(_:)` | Open the Notification Center, where the Live Activity shows as on the lock screen, and find a station in it. |
 | `bringToFront(_:)` | Opens the app again, and waits until the Notification Center no longer covers it. Use it, not `app.activate()`: iOS drops a tap while the Notification Center still slides away. |
-| `tapOnTheLiveActivity(_:)` | Waits until a button of the Live Activity stops moving, then taps it. |
+| `tapOnTheLiveActivity(_:)` | Waits until the tap point of a button of the Live Activity stays on the card on screen, then taps that point. The frame of a widget element is in the card's own space, so the frame alone does not show the card move. |
 
 In debug builds, `--fake-trains` gives fake trains with no call to PRIM, and `--fake-trains at-platform` a train at the platform at once ([the other states](testing-tools.md#ask-for-a-train-at-the-platform-or-another-state)).
 `--keep-running-in-background` keeps the app awake in the background, so that a new position reaches it.

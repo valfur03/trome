@@ -112,7 +112,7 @@ Release builds write none of these lines.
 |---|---|
 | `PRIM` | Each train of each PRIM answer, and whether the app keeps it, and why |
 | `LiveActivityContent` | Each content that the app sends to the Live Activity, train by train |
-| `LiveActivity` | Each state that iOS sends for a Live Activity, each end that the app asks for, and each pause of a station |
+| `LiveActivity` | Each state that iOS sends for a Live Activity, each end that the app asks for, each pause of a station, and each tap on the header that shows the next line |
 | `StationRegions` | Whether iOS can watch regions, and each region event |
 | `BackgroundLocation` | When the app starts and stops getting the position in the background |
 

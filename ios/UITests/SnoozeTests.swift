@@ -37,14 +37,11 @@ final class SnoozeTests: E2ETestCase {
         XCTAssertTrue(liveActivityPager.label.contains("2 other lines"), liveActivityPager.label)
         XCTAssertGreaterThanOrEqual(liveActivityPager.frame.height, 44, "The tap area of the pager is too small")
         tapOnTheLiveActivity(liveActivityPager, pointsBelowItsTop: 3)
-        XCTAssertTrue(
-            waitFor(liveActivityElement(containing: "Bobigny - Pablo Picasso")),
-            "The next lines did not show. The app is \(app.state == .runningForeground ? "open" : "not open"), "
-                + "and the Live Activity \(liveActivity.exists ? "shows" : "does not show") in the Notification Center"
-        )
+        XCTAssertTrue(waitFor(liveActivityElement(containing: "Bobigny - Pablo Picasso")), nextLinesDidNotShow(in: app))
         XCTAssertTrue(liveActivityElement(containing: "Place d'Italie").exists)
         XCTAssertTrue(waitForNo(liveActivityElement(containing: "Porte de Clignancourt")))
         tapOnTheLiveActivity(liveActivityPager, pointsBelowItsTop: 3)
+        XCTAssertTrue(waitFor(liveActivityElement(containing: "La Courneuve")), nextLinesDidNotShow(in: app))
         XCTAssertTrue(waitFor(liveActivityRow(of: "Mairie d'Ivry")), "The fork of line 7 has no row for each end")
         XCTAssertTrue(liveActivityRow(of: "Villejuif - Louis Aragon").exists)
         tapOnTheLiveActivity(liveActivity.buttons["Snooze for 30 minutes"])
@@ -61,6 +58,13 @@ final class SnoozeTests: E2ETestCase {
         tap(app.buttons["cancelSnooze"])
         XCTAssertTrue(waitFor(app.buttons["snoozeMenu"]))
         XCTAssertFalse(snoozeState.exists)
+    }
+
+    @MainActor
+    private func nextLinesDidNotShow(in app: XCUIApplication) -> String {
+        "The next lines did not show. The app is \(app.state == .runningForeground ? "open" : "not open"), "
+            + "and the Live Activity \(liveActivity.exists ? "shows" : "does not show") in the Notification Center. "
+            + "The app log says 'show the next lines' when the tap reached the app"
     }
 
     @MainActor
