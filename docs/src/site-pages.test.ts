@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { supportEmail } from './contact.ts';
+import { contactEmail } from './contact.ts';
 import { draftsWithoutNotice, isInBothLanguages, pagesWithoutTwin } from './site-pages.ts';
 
 const contentFolder = new URL('content/docs/', import.meta.url);
@@ -68,7 +68,7 @@ describe('the pages of the site', () => {
   });
 
   it('writes the contact address nowhere but in src/contact.ts', () => {
-    const address = new RegExp(supportEmail.replace(/[.]/g, '\\.'), 'i');
+    const address = new RegExp(contactEmail.replace(/[.]/g, '\\.'), 'i');
     const pages = sitePages.filter((path) => address.test(readFileSync(new URL(path, contentFolder), 'utf8')));
     assert.deepEqual(pages, [], 'Show the address with <Contact />, so that a change of address is a change of src/contact.ts.');
   });

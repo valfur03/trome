@@ -165,7 +165,7 @@ That setting needs DNS records at the host of the domain, which the owner of the
    The check protects the domain from a takeover by another GitHub account, and it also covers its subdomains.
    Keep the record afterwards.
 2. Add four `A` records and four `AAAA` records at the name `trome`, with the addresses of [GitHub's page on custom domains](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
-   Use no `CNAME` here: a name that has a `CNAME` can hold no other record, and the mail of `support@trome.valfur.fr` needs its own records at the same name.
+   Use no `CNAME` here: a name that has a `CNAME` can hold no other record, and the mail of `contact@trome.valfur.fr` needs its own records at the same name.
    GitHub documents `A` records only for an apex domain, and a `CNAME` for a subdomain, so GitHub accepting them here is not proven until the first check.
    Use no wildcard record such as `*.valfur.fr`, which GitHub warns against.
 3. Run the **Docs site** workflow once, then enter `trome.valfur.fr` as the custom domain in **Settings > Pages**.

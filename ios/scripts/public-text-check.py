@@ -35,7 +35,7 @@ EXAMPLE_EMAIL = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(
                            re.IGNORECASE)
 # The public contact address of the project, on its own domain: the Help page, the privacy policy and the store text give it to every reader.
 # No other real email address passes.
-PUBLIC_CONTACT_EMAIL = "support@trome.valfur.fr"
+PUBLIC_CONTACT_EMAIL = "contact@trome.valfur.fr"
 NOT_AN_EMAIL = re.compile(r"^git@|@\d+x\.", re.IGNORECASE)
 
 INTERNAL_FILES = {
