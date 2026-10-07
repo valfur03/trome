@@ -1,3 +1,5 @@
+import { hour } from "./clock";
+
 const parisParts = new Intl.DateTimeFormat("en-US", {
   timeZone: "Europe/Paris",
   hourCycle: "h23",
@@ -14,35 +16,39 @@ interface LocalTime {
   month: number;
   day: number;
   hour: number;
-  minute: number;
-  second: number;
+}
+
+// The Paris clock changes only at a whole UTC hour (01:00 UTC by the EU rules), so each UTC hour has one offset.
+// Intl is slow (several microseconds a call, many calls a request): ask it once per UTC hour, and keep the last answer.
+let offsetUtcHour = Number.NaN;
+let offsetOfThatHour = 0;
+
+function parisOffset(at: number): number {
+  const utcHour = Math.floor(at / hour);
+  if (utcHour !== offsetUtcHour) {
+    const start = utcHour * hour;
+    const parts = Object.fromEntries(
+      parisParts.formatToParts(start).map(({ type, value }) => [type, Number(value)]),
+    ) as Partial<Record<Intl.DateTimeFormatPartTypes, number>>;
+    offsetOfThatHour =
+      Date.UTC(parts.year ?? 0, (parts.month ?? 0) - 1, parts.day ?? 0, parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0) - start;
+    offsetUtcHour = utcHour;
+  }
+  return offsetOfThatHour;
 }
 
 function parisTime(at: number): LocalTime {
-  const parts = Object.fromEntries(
-    parisParts.formatToParts(at).map(({ type, value }) => [type, Number(value)]),
-  ) as Partial<Record<Intl.DateTimeFormatPartTypes, number>>;
+  const local = new Date(at + parisOffset(at));
   return {
-    year: parts.year ?? 0,
-    month: parts.month ?? 0,
-    day: parts.day ?? 0,
-    hour: parts.hour ?? 0,
-    minute: parts.minute ?? 0,
-    second: parts.second ?? 0,
+    year: local.getUTCFullYear(),
+    month: local.getUTCMonth() + 1,
+    day: local.getUTCDate(),
+    hour: local.getUTCHours(),
   };
 }
 
 function twoDigits(value: number): string {
   return String(value).padStart(2, "0");
-}
-
-function parisOffset(at: number): number {
-  const local = parisTime(at);
-  const wholeSecond = at - (((at % 1000) + 1000) % 1000);
-  return (
-    Date.UTC(local.year, local.month - 1, local.day, local.hour, local.minute, local.second) -
-    wholeSecond
-  );
 }
 
 export function parisDay(at: number): string {

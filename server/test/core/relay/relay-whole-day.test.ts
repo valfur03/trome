@@ -109,7 +109,12 @@ function expectWithinTheShares(result: DayResult): void {
   expect(result.callsWithNoBudget).toBeGreaterThan(800);
 }
 
-describe("Relay: a whole Paris day of riders of the model of the server spike (2 Live Activities a rider, 6 to 14 minutes each)", () => {
+// Nothing in these tests waits: the clock and PRIM are fakes, so their time is only CPU (about 0.1 s each on an idle Mac).
+// On a busy Mac, a CPU test gets a small share of a core, and the default limit of 5 s measures the Mac, not the relay.
+// So their limit is far above their time on a very busy Mac, and only catches a loop that never ends.
+const onlyCpuTimeout = 30_000;
+
+describe("Relay: a whole Paris day of riders of the model of the server spike (2 Live Activities a rider, 6 to 14 minutes each)", { timeout: onlyCpuTimeout }, () => {
   describe("riders who start by the measured hourly profile of the Paris rail validations", () => {
     it("serves 50 riders within the cap and the shares of the hours, with times for more than 95 in 100 Live Activities and for every Live Activity that starts from 05:00 to 07:00, over 4 days", async () => {
       let liveActivities = 0;

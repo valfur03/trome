@@ -33,4 +33,19 @@ describe("Paris time", () => {
     expect(nextParisDayStart(at("2027-03-27T12:00:00.000Z"))).toBe(at("2027-03-27T23:00:00.000Z"));
     expect(nextParisDayStart(at("2027-03-28T12:00:00.000Z"))).toBe(at("2027-03-28T22:00:00.000Z"));
   });
+
+  it("gives the Paris day and hour of Intl around each half hour of the days of the changes of the clock, in order and out of order", () => {
+    const intlParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit" });
+    const intl = (time: number) => {
+      const parts = Object.fromEntries(intlParts.formatToParts(time).map(({ type, value }) => [type, value]));
+      return { day: `${parts.year ?? ""}-${parts.month ?? ""}-${parts.day ?? ""}`, hour: Number(parts.hour) };
+    };
+    const times = ["2026-10-24T21:00:00.000Z", "2027-03-27T22:00:00.000Z"].flatMap((from) =>
+      Array.from({ length: 2 * 30 }, (_, index) => at(from) + index * 30 * 60_000).flatMap((time) => [time - 1, time]),
+    );
+
+    for (const time of [...times, ...[...times].reverse()]) {
+      expect({ day: parisDay(time), hour: parisHourOfDay(time) }, new Date(time).toISOString()).toEqual(intl(time));
+    }
+  });
 });
