@@ -1,10 +1,11 @@
 import Foundation
+import TROMECore
 
 enum AboutLinks {
-    static let privacyPolicy = placeholder("privacy-policy")
-    static let helpAndFeedback = placeholder("help-and-feedback")
+    static let privacyPolicy = DocsSitePage.privacy.url(appLanguage: appLanguage)
+    static let helpAndFeedback = DocsSitePage.support.url(appLanguage: appLanguage)
 
-    private static func placeholder(_ page: String) -> URL {
-        URL(string: "https://example.com/placeholder-\(page)")!
+    private static var appLanguage: String? {
+        Bundle.main.preferredLocalizations.first
     }
 }

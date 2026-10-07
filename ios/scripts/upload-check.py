@@ -63,6 +63,8 @@ REQUIRED_REASON_APIS = {
     },
 }
 
+PLACEHOLDER_HOST = b"example.com"
+
 VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 BUILD_NUMBER = re.compile(r"^\d+(\.\d+){0,2}$")
 
@@ -232,6 +234,16 @@ def check_required_reasons(bundle, info, declared, has_manifest):
     return problems
 
 
+def check_placeholder_address(bundle, info):
+    executable = bundle / info.get("CFBundleExecutable", "")
+    if not executable.is_file() or PLACEHOLDER_HOST not in executable.read_bytes():
+        return []
+    return [
+        f"{bundle.name}: its code holds a placeholder address ({PLACEHOLDER_HOST.decode()}); "
+        "a link of the app would open no real page, and App Review refuses a broken privacy policy link"
+    ]
+
+
 def check_bundle(bundle, app_version, is_app):
     info = read_plist(bundle / "Info.plist")
     if isinstance(info, Exception) or not isinstance(info, dict):
@@ -251,6 +263,7 @@ def check_bundle(bundle, app_version, is_app):
             "Apple refuses an upload without it"
         )
     problems += check_required_reasons(bundle, info, declared, manifest_path.is_file())
+    problems += check_placeholder_address(bundle, info)
     return problems
 
 
@@ -272,7 +285,7 @@ def main(arguments):
         sys.exit(1)
     print(
         f"upload-check: OK ({app.name} {app_version} has its icon, its privacy manifest, its answer on encryption, "
-        "and a reason for each required reason API that its code and its extensions use)"
+        "a reason for each required reason API that its code and its extensions use, and no placeholder address)"
     )
 
 

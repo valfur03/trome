@@ -134,6 +134,13 @@ expect "an extension whose version is not the app's fails" "$(passes)" no
 expect "it says that the versions differ" "$(says 'the app and its extensions must have the same version')" yes
 info "$app" Sample 1.0.0 "$no_encryption"
 
+executable "$app/Sample" '#include <stdio.h>
+#include <sys/stat.h>
+int main(int argc, char **argv) { struct stat s; puts("https://example.com/placeholder-privacy-policy"); return stat(argv[0], &s); }'
+expect "an app whose code holds a placeholder address fails" "$(passes)" no
+expect "it names the placeholder host" "$(says 'its code holds a placeholder address (example.com)')" yes
+executable "$app/Sample" "$uses_stat"
+
 executable "$app/PlugIns/Sample.appex/Extension" "$uses_stat"
 expect "an extension whose code uses such an API, with no manifest of its own, fails" "$(passes)" no
 expect "it asks for a manifest in the extension" "$(says 'so a PrivacyInfo.xcprivacy at the top of Sample.appex must declare')" yes

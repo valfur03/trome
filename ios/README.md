@@ -185,8 +185,8 @@ Inside `ios/`:
 | `Config/` | Build settings. Your key and Team ID go in the local files here. |
 | `scripts/` | Helper scripts for the `make` commands of the app. |
 
-The feature folders have the same names in `ios/App/`, in the sources of `TROMECore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`, `Example`.
-`ios/App/` also has `Permissions`, `About`, `NightLook` (the look of the main screen) and `TestingTools` (debug builds only).
+The feature folders have the same names in `ios/App/`, in the sources of `TROMECore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`, `Example`, `About`.
+`ios/App/` also has `Permissions`, `NightLook` (the look of the main screen) and `TestingTools` (debug builds only).
 The app icon is `ios/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png`: one square PNG of 1024 x 1024 pixels, with no transparency and no rounded corners, from which iOS makes every size, the rounded corners and the dark and tinted icons.
 `make app-icon-check` checks it.
 The rules for the code (where each file goes, which module depends on which) are in [`.claude/rules/ios-code.md`](../.claude/rules/ios-code.md).

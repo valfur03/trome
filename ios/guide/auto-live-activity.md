@@ -138,7 +138,7 @@ The app is the Live Activity, so the main screen shows its state and its control
 | **Privacy policy** and **Help and feedback**, which open their web pages in Safari | Always |
 | The source of the train data and of the station list, with their links, at the foot | Always |
 
-The two addresses of these rows are in `ios/App/About/AboutLinks.swift`; for now they are placeholders, because the pages are not online yet.
+Each row opens the page of the language of the app, French or English, on the docs site: `DocsSitePage` in `TROMECore` holds the addresses, the same as on the store page.
 
 The screen has one look, a night page, in the light and the dark mode of the phone, as the Live Activity is dark on the lock screen.
 Each state is a filled pill: green when it is fine, orange with an "Open Settings" button when you must act.
