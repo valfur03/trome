@@ -125,3 +125,22 @@ In the Simulator, iOS keeps the app running for only about 10 to 25 seconds afte
    Tap it to start the Live Activity, or touch and hold it to snooze the station.
 
 On your iPhone, iOS also wakes a suspended or closed app near a station, after a few seconds to a few minutes: test that case there, with **Debug > Simulate Location** in Xcode.
+
+### On your iPhone: see why no notification came
+
+**Testing tools** > **Wake log** shows, newest first, what iOS woke the app for and what the app decided, with the time of each line.
+It keeps the last 300 lines across launches, with no cable and no Xcode.
+At the top, **Phone now** shows the settings that can stop a wake: the location (Always, precise), Background App Refresh, Low Power Mode, the notifications, and a fake position.
+
+| Icon | A line for |
+|---|---|
+| Power | Each launch of the app, with the settings of the phone; each time the app comes on screen or leaves it |
+| Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports |
+| Map | Each time the app chooses again the stations that iOS watches |
+| Branch | Each arrival that the app decides, with its reason: notified, started, or why not |
+| Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
+
+A launch that no "App on screen" line follows is a launch by iOS in the background.
+No line at all after a walk near a station means that iOS never woke the app.
+**Share** sends the log as text, and **Clear** empties it.
+Release builds record nothing.

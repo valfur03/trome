@@ -88,6 +88,7 @@ public struct AutoLiveActivityRules: Sendable {
     public struct Decision: Equatable, Sendable {
         public var state: AutoLiveActivityState
         public var actions: [Action]
+        var arrival: ArrivalOutcome?
     }
 
     public let maximumDuration: TimeInterval
@@ -176,43 +177,65 @@ private extension AutoLiveActivityRules.Decision {
         response: AutoLiveActivityRules.ArrivalResponse,
         catalog: StationCatalog
     ) {
-        let nearest = catalog.nearestStation(to: position, within: AutoLiveActivityRules.arrivalRadiusMeters)?.station
-        if let nearest, nearest.id != state.arrivalStationId {
-            state.arrivalStationId = nearest.id
-            state.pendingArrivalStationId = nil
-            state.openArrivalStationId = nil
-            arrive(at: nearest, now: now, response: response)
-        } else if nearest == nil, let arrivalId = state.arrivalStationId,
-                  let arrival = catalog.station(withId: arrivalId),
-                  position.distance(to: arrival.coordinate) > AutoLiveActivityRules.stopRadiusMeters {
-            state.arrivalStationId = nil
-            state.pendingArrivalStationId = nil
-            state.openArrivalStationId = nil
-            actions.append(.withdrawNotification)
+        guard let nearest = catalog.nearestStation(
+            to: position, within: AutoLiveActivityRules.arrivalRadiusMeters
+        )?.station else {
+            arrival = .noStationNear(catalog.nearestStation(to: position, within: .infinity))
+            leaveArrivalIfFar(from: position, catalog: catalog)
+            return
         }
+        guard nearest.id != state.arrivalStationId else {
+            arrival = state.shown?.stationId == nearest.id ? .alreadyShown(nearest) : .alreadyArrived(nearest)
+            return
+        }
+        state.arrivalStationId = nearest.id
+        state.pendingArrivalStationId = nil
+        state.openArrivalStationId = nil
+        arrive(at: nearest, now: now, response: response)
+    }
+
+    mutating func leaveArrivalIfFar(from position: Coordinate, catalog: StationCatalog) {
+        guard let arrivalId = state.arrivalStationId,
+              let arrivalStation = catalog.station(withId: arrivalId),
+              position.distance(to: arrivalStation.coordinate) > AutoLiveActivityRules.stopRadiusMeters else { return }
+        state.arrivalStationId = nil
+        state.pendingArrivalStationId = nil
+        state.openArrivalStationId = nil
+        actions.append(.withdrawNotification)
     }
 
     mutating func arrive(at station: Station, now: Date, response: AutoLiveActivityRules.ArrivalResponse) {
-        guard state.pause?.pauses(station.id, at: now) != true else { return }
+        if let pause = state.pause, pause.pauses(station.id, at: now) {
+            arrival = .paused(station, until: pause.end)
+            return
+        }
         if let shown = state.shown {
-            guard shown.stationId != station.id else { return }
+            guard shown.stationId != station.id else {
+                arrival = .alreadyShown(station)
+                return
+            }
             state.shown = .init(stationId: station.id, startedAt: shown.startedAt, hasBeenNear: true)
             actions.append(.switchTo(station))
+            arrival = .switched(station)
             return
         }
         switch response {
         case .start:
             state.shown = .init(stationId: station.id, startedAt: now, hasBeenNear: true)
             actions.append(.start(station))
+            arrival = .started(station)
         case .keepOpen:
             state.openArrivalStationId = station.id
+            arrival = .liveActivitiesOff(station)
         case .notify:
             state.openArrivalStationId = station.id
             actions.append(.notify(station))
+            arrival = .notified(station)
         case .later:
             state.pendingArrivalStationId = station.id
+            arrival = .waitsForTheApp(station)
         case .none:
-            break
+            arrival = .automaticStartOff(station)
         }
     }
 
@@ -222,6 +245,7 @@ private extension AutoLiveActivityRules.Decision {
         state.shown = .init(stationId: station.id, startedAt: now, hasBeenNear: true)
         actions.append(.start(station))
         actions.append(.withdrawNotification)
+        arrival = .started(station)
     }
 
     mutating func answerPendingArrival(

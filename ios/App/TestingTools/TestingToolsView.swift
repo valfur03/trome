@@ -49,6 +49,16 @@ struct TestingToolsView: View {
             } footer: {
                 Text("Pick a station by hand, see its next trains, and show them on the lock screen.")
             }
+            Section {
+                NavigationLink("Wake log") {
+                    WakeLogScreen()
+                }
+                .accessibilityIdentifier("wakeLog")
+            } header: {
+                Text("Arrival notification")
+            } footer: {
+                Text("What iOS woke the app for, and what the app decided.")
+            }
         }
         .navigationTitle("Testing tools")
         .task {

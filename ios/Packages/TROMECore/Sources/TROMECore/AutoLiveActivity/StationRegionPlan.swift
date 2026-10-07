@@ -1,9 +1,9 @@
 import Foundation
 
 public struct WatchedRegion: Hashable, Sendable {
-    private static let arrivalPrefix = "arrival:"
-    private static let stopPrefix = "stop:"
-    private static let refreshId = "refresh"
+    static let arrivalPrefix = "arrival:"
+    static let stopPrefix = "stop:"
+    static let refreshId = "refresh"
 
     public let id: String
     public let center: Coordinate

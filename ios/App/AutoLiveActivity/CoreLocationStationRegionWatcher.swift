@@ -8,12 +8,15 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     private static let monitorNamesOfOlderBuilds = ["RATPStationRegions"]
 
     var onWake: (@MainActor (_ enteredRegionId: String?, _ lastKnownFix: PositionFix?) async -> Void)?
+    var wakeLog: WakeLog?
+    var regionLabel: (String) -> String = { $0 }
 
     private let manager = CLLocationManager()
     private var session: CLServiceSession?
     private var monitorTask: Task<CLMonitor, Never>?
     private var eventsTask: Task<Void, Never>?
     private var watched: [String: WatchedRegion]?
+    private var hasLoggedNoAlways = false
 
     func resume() async {
         _ = await startedMonitor()
@@ -46,7 +49,10 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         if let monitorTask {
             return await monitorTask.value
         }
-        guard manager.authorizationStatus == .authorizedAlways else { return nil }
+        guard manager.authorizationStatus == .authorizedAlways else {
+            recordNoAlways()
+            return nil
+        }
         Self.logAvailability()
         session = CLServiceSession(authorization: .always)
         let task = Task {
@@ -56,6 +62,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         monitorTask = task
         let monitor = await task.value
         listen(to: monitor)
+        await recordStart(of: monitor)
         return monitor
     }
 
@@ -75,6 +82,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
             do {
                 for try await event in await monitor.events {
                     Self.log(event)
+                    self?.record(event)
                     await self?.handle(identifier: event.identifier, state: event.state)
                 }
             } catch {
@@ -90,6 +98,38 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
 }
 
 extension CoreLocationStationRegionWatcher {
+    private func recordNoAlways() {
+        #if DEBUG
+        guard !hasLoggedNoAlways else { return }
+        hasLoggedNoAlways = true
+        wakeLog?.record(.system, "Regions not watched: location is not Always")
+        #endif
+    }
+
+    private func recordStart(of monitor: CLMonitor) async {
+        #if DEBUG
+        guard let wakeLog else { return }
+        let count = await monitor.identifiers.count
+        wakeLog.record(.system, "Region watch on: iOS keeps \(count) regions for the app")
+        #endif
+    }
+
+    private func record(_ event: CLMonitor.Event) {
+        #if DEBUG
+        guard let wakeLog else { return }
+        let region = regionLabel(event.identifier)
+        let what = switch event.state {
+        case .satisfied: "iOS: entered \(region)"
+        case .unsatisfied: "iOS: left \(region)"
+        case .unknown: "iOS: \(region) is unknown"
+        case .unmonitored: "iOS: \(region) is not watched"
+        @unknown default: "iOS: \(region), state \(event.state.rawValue)"
+        }
+        let problems = Self.diagnostics(of: event)
+        wakeLog.record(.system, problems.isEmpty ? what : "\(what) [\(problems)]")
+        #endif
+    }
+
     nonisolated private static let logger = Logger(category: "StationRegions")
 
     nonisolated private static func logAvailability() {
@@ -109,9 +149,8 @@ extension CoreLocationStationRegionWatcher {
         #endif
     }
 
-    nonisolated private static func log(_ event: CLMonitor.Event) {
-        #if DEBUG
-        let diagnostics = [
+    nonisolated private static func diagnostics(of event: CLMonitor.Event) -> String {
+        [
             ("authorizationDenied", event.authorizationDenied),
             ("authorizationDeniedGlobally", event.authorizationDeniedGlobally),
             ("authorizationRestricted", event.authorizationRestricted),
@@ -123,6 +162,11 @@ extension CoreLocationStationRegionWatcher {
             ("serviceSessionRequired", event.serviceSessionRequired),
             ("authorizationRequestInProgress", event.authorizationRequestInProgress)
         ].filter(\.1).map(\.0).joined(separator: ", ")
+    }
+
+    nonisolated private static func log(_ event: CLMonitor.Event) {
+        #if DEBUG
+        let problems = diagnostics(of: event)
         let state = switch event.state {
         case .unknown: "unknown"
         case .satisfied: "satisfied"
@@ -132,7 +176,7 @@ extension CoreLocationStationRegionWatcher {
         }
         logger.notice("""
             \(event.identifier, privacy: .public): state \(state, privacy: .public), \
-            diagnostics [\(diagnostics, privacy: .public)]
+            diagnostics [\(problems, privacy: .public)]
             """)
         #endif
     }

@@ -169,3 +169,4 @@ It stops running when the rider closes it from the app switcher, when the locati
 Then the 45 minutes apply only when iOS wakes the app again or the rider opens it, and the Live Activity gets no new times until then.
 The app sends no push update, so no server can refresh a Live Activity of an app that does not run.
 To see what the app does, [read the logs](../README.md#read-the-logs): the categories `LiveActivity` and `BackgroundLocation` log each state, end, pause and background start.
+On an iPhone, with no cable, the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) shows each wake by iOS and each arrival decision.

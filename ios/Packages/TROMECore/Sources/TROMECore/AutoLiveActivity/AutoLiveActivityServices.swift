@@ -68,17 +68,20 @@ extension AutoLiveActivityModel {
         public let regionWatcher: any StationRegionWatcher
         public let locationKeeper: any BackgroundLocationKeeper
         public let liveActivityRemovals: any LiveActivityRemovalWatcher
+        public let wakeLog: WakeLog?
 
         public init(
             notifier: any ArrivalNotifier,
             regionWatcher: any StationRegionWatcher,
             locationKeeper: any BackgroundLocationKeeper,
-            liveActivityRemovals: any LiveActivityRemovalWatcher
+            liveActivityRemovals: any LiveActivityRemovalWatcher,
+            wakeLog: WakeLog? = nil
         ) {
             self.notifier = notifier
             self.regionWatcher = regionWatcher
             self.locationKeeper = locationKeeper
             self.liveActivityRemovals = liveActivityRemovals
+            self.wakeLog = wakeLog
         }
     }
 

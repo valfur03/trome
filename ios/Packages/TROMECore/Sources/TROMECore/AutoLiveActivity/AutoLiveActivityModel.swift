@@ -4,7 +4,7 @@ import Observation
 @MainActor
 @Observable
 public final class AutoLiveActivityModel {
-    private struct RegionPlanKey {
+    struct RegionPlanKey {
         let center: Coordinate
         let stopStationId: String?
     }
@@ -26,12 +26,13 @@ public final class AutoLiveActivityModel {
     var appIsActive: Bool { appPhase == .active }
     private var hasAskedForNotifications = false
     private var pendingTappedStationId: String?
-    private var plannedRegions: RegionPlanKey?
-    private var hasClearedRegions = false
+    var plannedRegions: RegionPlanKey?
+    var hasClearedRegions = false
     @ObservationIgnored private var timerTask: Task<Void, Never>?
     @ObservationIgnored var feedTask: Task<Void, Never>?
     @ObservationIgnored var pauseTimerTask: Task<Void, Never>?
     @ObservationIgnored var removedOutsideTheApp: AutoLiveActivityState.Shown?
+    @ObservationIgnored var lastLoggedOutcomeKey: String?
 
     public init(
         catalog: StationCatalog,
@@ -74,6 +75,7 @@ public final class AutoLiveActivityModel {
 
     public func setAppPhase(_ phase: AppPhase) {
         let wasActive = appIsActive
+        logScreenChange(from: appPhase, to: phase)
         appPhase = phase
         if phase != .active {
             cannotFindPosition = false
@@ -106,18 +108,6 @@ public final class AutoLiveActivityModel {
 
     public func notificationActionChosen(_ action: ArrivalNotificationAction) async {
         await snooze(for: action.snoozeDuration)
-    }
-
-    public func handleRegionEvent(enteredRegionId: String?, lastKnownFix: PositionFix?) async {
-        guard inputs.locationService.source == .realGPS else { return }
-        let fix = WatchedRegion.fix(
-            afterEnteringRegionId: enteredRegionId,
-            lastKnownFix: lastKnownFix,
-            now: configuration.now(),
-            catalog: catalog
-        )
-        guard let fix else { return }
-        await handle(fix, maximumAge: AutoLiveActivityRules.maximumMonitoredPositionAge)
     }
 
     public func startByHand(_ station: Station) async {
@@ -199,13 +189,14 @@ public final class AutoLiveActivityModel {
         }
     }
 
-    func evaluate(position: Coordinate?, asAResume: Bool = false) async {
+    func evaluate(position: Coordinate?, asAResume: Bool = false, logsEveryOutcome: Bool = false) async {
         syncWithSystem()
         endPauseIfOver()
         let decide = asAResume
             ? configuration.rules.resume(state:position:now:onArrival:catalog:)
             : configuration.rules.decide(state:position:now:onArrival:catalog:)
         let decision = decide(state, position, configuration.now(), arrivalResponse, catalog)
+        log(decision.arrival, everyOutcome: logsEveryOutcome)
         state = decision.state
         for action in decision.actions {
             await perform(action)
@@ -256,8 +247,8 @@ public final class AutoLiveActivityModel {
         restartFeed(fetchNow: false)
     }
 
-    func handle(_ position: Coordinate, asAResume: Bool = false) async {
-        await evaluate(position: position, asAResume: asAResume)
+    func handle(_ position: Coordinate, asAResume: Bool = false, logsEveryOutcome: Bool = false) async {
+        await evaluate(position: position, asAResume: asAResume, logsEveryOutcome: logsEveryOutcome)
         await refreshRegions(around: position)
     }
 
@@ -331,15 +322,6 @@ private extension AutoLiveActivityModel {
         return AutoLiveActivityRules.trusts(fix, now: configuration.now(), maximumAge: maximumAge)
     }
 
-    func handle(_ fix: PositionFix, maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge) async {
-        guard trusts(fix, maximumAge: maximumAge) else {
-            await refreshRegions(around: fix.coordinate)
-            return
-        }
-        cannotFindPosition = false
-        await handle(fix.coordinate)
-    }
-
     func askForNotificationsIfAllowed() {
         guard !hasAskedForNotifications, inputs.permission.authorization == .authorized else { return }
         hasAskedForNotifications = true
@@ -359,27 +341,19 @@ private extension AutoLiveActivityModel {
 }
 
 extension AutoLiveActivityModel {
-    func refreshRegions(around position: Coordinate?) async {
-        guard inputs.locationService.source == .realGPS else {
-            guard plannedRegions != nil || !hasClearedRegions else { return }
-            plannedRegions = nil
-            hasClearedRegions = true
-            await services.regionWatcher.watch([])
+    func handle(
+        _ fix: PositionFix,
+        maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge,
+        logsEveryOutcome: Bool = false
+    ) async {
+        guard trusts(fix, maximumAge: maximumAge) else {
+            if logsEveryOutcome {
+                logUntrusted(fix, maximumAge: maximumAge)
+            }
+            await refreshRegions(around: fix.coordinate)
             return
         }
-        guard let position else { return }
-        hasClearedRegions = false
-        let stopStationId = state.shown?.stationId ?? state.arrivalStationId
-        if let plannedRegions, plannedRegions.stopStationId == stopStationId,
-           plannedRegions.center.distance(to: position) < StationRegionPlan.replanDistanceMeters {
-            return
-        }
-        plannedRegions = RegionPlanKey(center: position, stopStationId: stopStationId)
-        let regions = StationRegionPlan.regions(
-            around: position,
-            stopStation: stopStationId.flatMap(catalog.station(withId:)),
-            catalog: catalog
-        )
-        await services.regionWatcher.watch(regions)
+        cannotFindPosition = false
+        await handle(fix.coordinate, logsEveryOutcome: logsEveryOutcome)
     }
 }

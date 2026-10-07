@@ -34,7 +34,7 @@ struct TROMEApp: App {
         let nextTrainsModel = NextTrainsModel(provider: departuresProvider, catalog: stationCatalog)
         let liveActivityClient = ActivityKitStationLiveActivityClient()
         let liveActivityModel = Self.makeLiveActivityModel(client: liveActivityClient)
-        let regionWatcher = CoreLocationStationRegionWatcher()
+        let regionWatcher = Self.makeRegionWatcher(catalog: stationCatalog, locationService: locationService)
         let automaticModeModel = AutomaticModeModel(store: AutomaticModeStore(storage: UserDefaults.standard))
         let autoLiveActivityModel = Self.makeAutoLiveActivityModel(
             catalog: stationCatalog,
@@ -91,6 +91,9 @@ struct TROMEApp: App {
             .environment(automaticModeModel)
             .environment(\.stationCatalog, stationCatalog)
             .environment(\.appName, appName)
+            #if DEBUG
+            .environment(regionWatcher.wakeLog)
+            #endif
         }
     }
 
@@ -120,10 +123,11 @@ struct TROMEApp: App {
             liveActivity: liveActivity,
             inputs: inputs,
             services: .init(
-                notifier: UserNotificationArrivalNotifier(),
+                notifier: UserNotificationArrivalNotifier(wakeLog: regionWatcher.wakeLog),
                 regionWatcher: regionWatcher,
                 locationKeeper: CoreLocationBackgroundLocationKeeper(),
-                liveActivityRemovals: liveActivityRemovals
+                liveActivityRemovals: liveActivityRemovals,
+                wakeLog: regionWatcher.wakeLog
             ),
             configuration: .init(
                 store: AutoLiveActivityStore(storage: UserDefaults.standard),
@@ -157,6 +161,20 @@ struct TROMEApp: App {
         }
         Task { await regionWatcher.resume() }
         return notificationResponseHandler
+    }
+
+    private static func makeRegionWatcher(
+        catalog: StationCatalog,
+        locationService: LocationService
+    ) -> CoreLocationStationRegionWatcher {
+        let regionWatcher = CoreLocationStationRegionWatcher()
+        #if DEBUG
+        let wakeLog = WakeLog(storage: UserDefaults.standard)
+        wakeLog.recordLaunch(locationSource: locationService.source)
+        regionWatcher.wakeLog = wakeLog
+        regionWatcher.regionLabel = { WatchedRegion.label(ofId: $0, catalog: catalog) }
+        #endif
+        return regionWatcher
     }
 
     private static func primConfigurationOfThisBuild() -> PRIMConfiguration? {

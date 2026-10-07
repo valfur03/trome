@@ -1,0 +1,48 @@
+import Foundation
+
+enum ArrivalOutcome: Equatable, Sendable {
+    case notified(Station)
+    case started(Station)
+    case switched(Station)
+    case liveActivitiesOff(Station)
+    case waitsForTheApp(Station)
+    case automaticStartOff(Station)
+    case paused(Station, until: Date)
+    case alreadyShown(Station)
+    case alreadyArrived(Station)
+    case noStationNear(NearbyStation?)
+
+    var logKey: String {
+        guard case .noStationNear(let nearest) = self else { return summary }
+        return "noStationNear:\(nearest?.station.id ?? "")"
+    }
+
+    var summary: String {
+        let arrivalRadius = Int(AutoLiveActivityRules.arrivalRadiusMeters)
+        let stopRadius = Int(AutoLiveActivityRules.stopRadiusMeters)
+        return switch self {
+        case .notified(let station):
+            "Notified: \(station.name)"
+        case .started(let station):
+            "Live Activity started: \(station.name)"
+        case .switched(let station):
+            "Live Activity switched to \(station.name)"
+        case .liveActivitiesOff(let station):
+            "No start at \(station.name): Live Activities are off in Settings"
+        case .waitsForTheApp(let station):
+            "Waits at \(station.name): a system popup covers the app"
+        case .automaticStartOff(let station):
+            "No notification at \(station.name): automatic start is snoozed or off"
+        case .paused(let station, let end):
+            "No notification at \(station.name): paused until \(end.formatted(date: .omitted, time: .shortened))"
+        case .alreadyShown(let station):
+            "No notification at \(station.name): its Live Activity shows"
+        case .alreadyArrived(let station):
+            "No notification at \(station.name): same arrival as before, until the app sees you \(stopRadius) m away"
+        case .noStationNear(let nearest?):
+            "No station within \(arrivalRadius) m: nearest is \(nearest.station.name), \(Int(nearest.distanceMeters)) m"
+        case .noStationNear(nil):
+            "No station within \(arrivalRadius) m"
+        }
+    }
+}

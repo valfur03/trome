@@ -46,32 +46,6 @@ final class StubLocationKeeper: BackgroundLocationKeeper {
     }
 }
 
-@MainActor
-final class StubLocationPermission: LocationPermission {
-    var authorization: LocationAuthorization = .authorized
-    var isAskingAlways = false
-    private var alwaysQuestionWaiters: [CheckedContinuation<Void, Never>] = []
-
-    var isWaitingForAlwaysQuestion: Bool {
-        !alwaysQuestionWaiters.isEmpty
-    }
-
-    func requestAuthorization() async -> LocationAuthorization {
-        authorization
-    }
-
-    func waitForAlwaysQuestion() async {
-        guard isAskingAlways else { return }
-        await withCheckedContinuation { alwaysQuestionWaiters.append($0) }
-    }
-
-    func answerAlwaysQuestion() {
-        isAskingAlways = false
-        alwaysQuestionWaiters.forEach { $0.resume() }
-        alwaysQuestionWaiters = []
-    }
-}
-
 final class TestClock: Sendable {
     static let refreshInterval: Duration = .seconds(30)
     private let date = Mutex(Date(timeIntervalSince1970: 1_000_000))
@@ -116,6 +90,7 @@ struct AutoLiveActivityModelTests {
     let locationService: LocationService
     let screenTrains: NextTrainsModel
     let automaticMode: AutomaticModeModel
+    let wakeLog = WakeLog(storage: InMemoryKeyValueStore())
 
     init() {
         let clock = clock
@@ -164,7 +139,8 @@ struct AutoLiveActivityModelTests {
                 notifier: notifier,
                 regionWatcher: watcher,
                 locationKeeper: keeper,
-                liveActivityRemovals: removals
+                liveActivityRemovals: removals,
+                wakeLog: wakeLog
             ),
             configuration: .init(store: AutoLiveActivityStore(storage: storage), now: now, sleep: sleep)
         )

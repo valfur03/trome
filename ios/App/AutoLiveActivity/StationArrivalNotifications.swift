@@ -8,6 +8,11 @@ final class UserNotificationArrivalNotifier: ArrivalNotifier {
     nonisolated static let categoryIdentifier = "stationArrival"
 
     private let center = UNUserNotificationCenter.current()
+    private let wakeLog: WakeLog?
+
+    init(wakeLog: WakeLog? = nil) {
+        self.wakeLog = wakeLog
+    }
 
     nonisolated static func registerActions(in center: UNUserNotificationCenter) {
         let actions = ArrivalNotificationAction.allCases.map {
@@ -39,13 +44,33 @@ final class UserNotificationArrivalNotifier: ArrivalNotifier {
         content.userInfo = [Self.stationIdKey: station.id]
         content.categoryIdentifier = Self.categoryIdentifier
         let request = UNNotificationRequest(identifier: Self.identifier, content: content, trigger: nil)
-        try? await center.add(request)
+        do {
+            try await center.add(request)
+            #if DEBUG
+            await record("Notification handed to iOS: \(station.name)")
+            #endif
+        } catch {
+            #if DEBUG
+            await record("iOS refused the notification of \(station.name): \(error.localizedDescription)")
+            #endif
+        }
     }
 
     func withdraw() {
         center.removePendingNotificationRequests(withIdentifiers: [Self.identifier])
         center.removeDeliveredNotifications(withIdentifiers: [Self.identifier])
+        #if DEBUG
+        wakeLog?.record(.notification, "Notification withdrawn")
+        #endif
     }
+
+    #if DEBUG
+    private func record(_ text: String) async {
+        guard let wakeLog else { return }
+        let settings = await PhoneStateReport.notifications(center.notificationSettings())
+        wakeLog.record(.notification, "\(text) (\(settings))")
+    }
+    #endif
 }
 
 final class ArrivalNotificationResponseHandler: NSObject, UNUserNotificationCenterDelegate {

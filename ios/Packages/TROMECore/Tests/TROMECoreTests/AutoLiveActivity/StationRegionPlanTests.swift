@@ -100,3 +100,24 @@ struct StationRegionPlanTests {
         #expect(fixAfter(nil, nil) == nil)
     }
 }
+
+extension StationRegionPlanTests {
+    @Test func namesEachRegionForTheWakeLog() {
+        let catalog = AutoTestPlaces.catalog
+
+        #expect(WatchedRegion.label(ofId: "arrival:a", catalog: catalog) == "Station A")
+        #expect(WatchedRegion.label(ofId: "stop:b", catalog: catalog) == "stop area of Station B")
+        #expect(WatchedRegion.label(ofId: "refresh", catalog: catalog) == "area around you")
+        #expect(WatchedRegion.label(ofId: "arrival:unknown", catalog: catalog) == "arrival:unknown")
+    }
+
+    @Test func summarizesTheWatchedStationsFromTheNearestToTheFarthest() {
+        let all = stations(count: 3)
+        let catalog = StationCatalog(stations: all)
+        let regions = StationRegionPlan.regions(around: origin, stopStation: nil, catalog: catalog)
+
+        let summary = WatchedRegion.summary(of: regions, around: origin, catalog: catalog)
+
+        #expect(summary == "Watching 3 stations, from Station 1 (111 m) to Station 3 (333 m); area around you 200 m")
+    }
+}
