@@ -17,7 +17,7 @@ The main screen then says "On the lock screen: Châtelet (example)".
 
 The sample times count down and renew while the app runs.
 When iOS suspends the app (the phone locked, the app in the background), the app cannot update the Live Activity any more.
-So, once the first shown train has left, the Live Activity shows "Open the app for new times", as a real one does.
+So, once the first shown train has left, the Live Activity shows "Open the app", as a real one does.
 Why: the example has no server to push new times, and it must not use the position to keep the app running.
 
 ## When it ends

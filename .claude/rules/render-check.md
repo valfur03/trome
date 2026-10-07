@@ -23,7 +23,7 @@ It lists the drawings that are too tall, the cut texts and the breaches of decis
   The render check lists the texts that break it, in the images: (a) a time that is cut (for example "dans 3…"); (b) a destination shown with fewer than 6 characters before its "…" (a destination shorter than 6 characters that is shown whole is not a breach); (c) the two directions of one line that show the same text (for example "Mairie d'…" twice); (d) a station label name that is cut.
   It knows which text is cut from SwiftUI's own layout of each text (`Text.LayoutKey`: cut or not, and how many characters show), and which text it is from the text recognition of the Mac on that part of the image, compared with the texts of the drawn state.
   A breach is a defect to write in the task notes: the Product Owner decides case by case (decision-15).
-  "Other cut texts" (for example "Ouvrez l'app pour mettre à jour les horaires") are not breaches: a person reads them in `cut-texts.txt`.
+  "Other cut texts" (for example "Horaires indisponibles") are not breaches: a person reads them in `cut-texts.txt`.
 - **It is not a gate.** It is not part of `make check` or `make e2e`, and it fails only when it cannot run, even with breaches.
   Why: decision-15 keeps it a report until option C (decision-14) is shipped, because C redraws these views.
   Making it a gate is not for a Live Activity task to decide.
