@@ -45,9 +45,13 @@ struct StationLiveActivityEndTests {
         await model.start(station: abbesses, trains: .loading)
         let stop = await holdTheEnd(of: model)
 
-        await model.update(station: abbesses, trains: .noLiveData)
+        let update = Task { await model.update(station: abbesses, trains: .noLiveData) }
+        for _ in 0..<100 {
+            await Task.yield()
+        }
         client.releaseHeldEnd()
         await stop.value
+        await update.value
 
         #expect(client.updates.isEmpty)
         #expect(model.isShowing == false)
