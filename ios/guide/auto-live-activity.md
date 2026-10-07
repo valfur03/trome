@@ -133,7 +133,7 @@ The app is the Live Activity, so the main screen shows its state and its control
 | **Snooze**, with 30 minutes, 1 hour and the rest of today | The automatic mode is on |
 | **Snoozed**, the time of return, and **Cancel the snooze** | A snooze is on |
 | "Paused at <station> until <time>" and **Cancel the pause at <station>** | After a swipe, also while a snooze is on, but not while the switch is off |
-| "No live times until around 9:00" ("Pas d’horaires en direct avant 09:00 environ"), under the name of the app | A Live Activity shows, and the server of the app has no PRIM calls left for its station. The time is when the app asks the server again, in the time format and time zone of the phone. When it is on another day, the line says "No live times until tomorrow." |
+| "No live times until around 9:00" ("Pas d’horaires en direct avant 09:00 environ"), under the name of the app | A Live Activity shows, and the server of the app has no PRIM calls left for its station. The time is when the app asks the server again, in the time format and time zone of the phone. When it is on another day, the line says "No live times until tomorrow" ("Pas d’horaires en direct avant demain"). |
 | The **Location** and **Notifications** rows, each with its state as a pill | Always; a missing or refused permission turns the card orange, with an **Open Settings** button, and the line "Choose Always" under a location that is not **Always** |
 | **Privacy policy** and **Help and feedback**, which open their web pages in Safari | Always |
 | The source of the train data and of the station list, with their links, at the foot | Always |
