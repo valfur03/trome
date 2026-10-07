@@ -8,7 +8,7 @@ struct PermissionsSection: View {
 
     var body: some View {
         let rows = [locationRow] + (permissions.notifications.map { [notificationsRow($0)] } ?? [])
-        NightCard(isProblem: rows.contains { !$0.isGranted }) {
+        NightCard(isProblem: rows.contains { $0.status == .missing }) {
             ForEach(rows.indices, id: \.self) { index in
                 if index > 0 {
                     NightDivider()
@@ -21,12 +21,12 @@ struct PermissionsSection: View {
     private var locationRow: PermissionRow {
         switch permissions.location {
         case .always:
-            PermissionRow(title: "Location", state: "Always", isGranted: true, kind: .location)
+            PermissionRow(title: "Location", state: "Always", status: .granted, kind: .location)
         case .whileUsing:
             PermissionRow(
                 title: "Location",
                 state: "While Using the App",
-                isGranted: false,
+                status: .missing,
                 kind: .location,
                 hint: "Choose Always",
                 fix: .openSettings
@@ -35,7 +35,7 @@ struct PermissionsSection: View {
             PermissionRow(
                 title: "Location",
                 state: "Off",
-                isGranted: false,
+                status: .missing,
                 kind: .location,
                 hint: "Choose Always",
                 fix: .openSettings
@@ -44,7 +44,7 @@ struct PermissionsSection: View {
             PermissionRow(
                 title: "Location",
                 state: "Not asked yet",
-                isGranted: false,
+                status: .missing,
                 kind: .location,
                 fix: .action("Allow location") {
                     Task {
@@ -59,17 +59,17 @@ struct PermissionsSection: View {
     private func notificationsRow(_ notifications: NotificationAccess) -> PermissionRow {
         switch notifications {
         case .allowed:
-            PermissionRow(title: "Notifications", state: "On", isGranted: true, kind: .notifications)
+            PermissionRow(title: "Notifications", state: "On", status: .granted, kind: .notifications)
         case .denied:
             PermissionRow(
                 title: "Notifications",
                 state: "Off",
-                isGranted: false,
+                status: .missing,
                 kind: .notifications,
                 fix: .openSettings
             )
         case .notDecided:
-            PermissionRow(title: "Notifications", state: "Not asked yet", isGranted: false, kind: .notifications)
+            PermissionRow(title: "Notifications", state: "Not asked yet", status: .notAsked, kind: .notifications)
         }
     }
 }
@@ -80,6 +80,12 @@ private struct PermissionRow: View {
         case notifications
     }
 
+    enum Status {
+        case granted
+        case missing
+        case notAsked
+    }
+
     enum Fix {
         case openSettings
         case action(LocalizedStringKey, () -> Void)
@@ -87,7 +93,7 @@ private struct PermissionRow: View {
 
     let title: LocalizedStringKey
     let state: LocalizedStringKey
-    let isGranted: Bool
+    let status: Status
     let kind: Kind
     var hint: LocalizedStringKey?
     var fix: Fix?
@@ -96,7 +102,7 @@ private struct PermissionRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            StateRow(state: state, kind: isGranted ? .fine : .problem) {
+            StateRow(state: state, kind: pill) {
                 Text(title)
                     .font(.headline)
             }
@@ -110,6 +116,14 @@ private struct PermissionRow: View {
             }
             fixButton
                 .buttonStyle(.problem)
+        }
+    }
+
+    private var pill: StatePill.Kind {
+        switch status {
+        case .granted: .fine
+        case .missing: .problem
+        case .notAsked: .neutral(systemImage: "hourglass")
         }
     }
 

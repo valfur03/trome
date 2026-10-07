@@ -113,7 +113,7 @@ private struct SnoozeState: View {
     let end: Date
 
     var body: some View {
-        StateRow(state: "Snoozed", kind: .choice(systemImage: "bell.slash.fill")) {
+        StateRow(state: "Snoozed", kind: .neutral(systemImage: "bell.slash.fill")) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Back on at \(end, style: .time)")
                     .font(.headline)

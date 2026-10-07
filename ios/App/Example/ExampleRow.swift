@@ -25,10 +25,12 @@ struct ExampleRow: View {
                         Text("See an example")
                             .font(.headline)
                             .foregroundStyle(isDisabled ? NightLook.secondaryText : NightLook.text)
-                        explanation
-                            .font(.footnote)
-                            .foregroundStyle(NightLook.secondaryText)
-                            .accessibilityIdentifier("exampleExplanation")
+                        if isDisabled {
+                            Text("Real trains already showing")
+                                .font(.footnote)
+                                .foregroundStyle(NightLook.secondaryText)
+                                .accessibilityIdentifier("exampleExplanation")
+                        }
                     }
                 } icon: {
                     IconChip(systemImage: "eye.fill")
@@ -46,14 +48,5 @@ struct ExampleRow: View {
 
     private var isDisabled: Bool {
         realTrainsStation != nil
-    }
-
-    private var explanation: Text {
-        if realTrainsStation != nil {
-            return Text("Real trains already showing")
-        }
-        let name = autoLiveActivity.exampleStation?.name ?? ""
-        let minutes = Int(AutoLiveActivityRules.defaultExampleDuration / 60)
-        return Text("\(name), \(minutes) min")
     }
 }

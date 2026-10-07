@@ -128,13 +128,13 @@ The app is the Live Activity, so the main screen shows its state and its control
 |---|---|
 | "On the lock screen: <station>" ("Sur l’écran verrouillé : <station>") | A Live Activity shows; otherwise "Nothing on the lock screen" ("Rien sur l’écran verrouillé") |
 | "On the lock screen: Châtelet (example)" ("Sur l’écran verrouillé : Châtelet (exemple)") | The example of **See an example** shows |
-| **See an example**, with the line "Châtelet, 10 min": a tap puts Châtelet on the lock screen, with sample times, for 10 minutes ([See an example](example.md)) | Always; while the real trains of a station show, it is grey, starts nothing, and its line says "Real trains already showing" ("Vrais passages déjà affichés") |
+| **See an example**: a tap puts Châtelet on the lock screen, with sample times, for 10 minutes ([See an example](example.md)) | Always; while the real trains of a station show, it is grey, starts nothing, and its line says "Real trains already showing" ("Vrais passages déjà affichés") |
 | The switch **Automatic mode** | Always |
 | **Snooze**, with 30 minutes, 1 hour and the rest of today | The automatic mode is on |
 | **Snoozed**, the time of return, and **Cancel the snooze** | A snooze is on |
 | "Paused at <station> until <time>" and **Cancel the pause at <station>** | After a swipe, also while a snooze is on, but not while the switch is off |
 | "No live times until around 9:00" ("Pas d’horaires en direct avant 09:00 environ"), under the name of the app | A Live Activity shows, and the server of the app has no PRIM calls left for its station. The time is when the app asks the server again, in the time format and time zone of the phone. When it is on another day, the line says "No live times until tomorrow" ("Pas d’horaires en direct avant demain"). |
-| The **Location** and **Notifications** rows, each with its state as a pill | Always; a missing or refused permission turns the card orange, with an **Open Settings** button, and the line "Choose Always" under a location that is not **Always** |
+| The **Location** and **Notifications** rows, each with its state as a pill | Always; a refused permission, or a location that is not **Always**, turns the card orange, with a button to fix it, and the line "Choose Always" under a location that is **While Using the App** or **Off**. Notifications not asked yet show a grey pill, since the app asks for them by itself ([the questions, in order](#the-questions-ios-asks-in-order)). |
 | **Privacy policy** and **Help and feedback**, which open their web pages in Safari | Always |
 | The source of the train data and of the station list, with their links, at the foot | Always |
 

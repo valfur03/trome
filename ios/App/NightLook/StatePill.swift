@@ -4,7 +4,7 @@ struct StatePill: View {
     enum Kind {
         case fine
         case problem
-        case choice(systemImage: String)
+        case neutral(systemImage: String)
     }
 
     let state: LocalizedStringKey
@@ -28,7 +28,7 @@ struct StatePill: View {
         switch kind {
         case .fine: "checkmark"
         case .problem: "exclamationmark.triangle.fill"
-        case .choice(let systemImage): systemImage
+        case .neutral(let systemImage): systemImage
         }
     }
 
@@ -36,7 +36,7 @@ struct StatePill: View {
         switch kind {
         case .fine: NightLook.fine
         case .problem: NightLook.problem
-        case .choice: NightLook.divider
+        case .neutral: NightLook.divider
         }
     }
 }

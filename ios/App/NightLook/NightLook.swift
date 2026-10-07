@@ -25,7 +25,8 @@ import SwiftUI
 /// Elements:
 /// - A row: an `IconChip` (32 pt, 9 pt corners), its title, and an arrow up and right when it opens a web page.
 /// - A state: a `StatePill`, a filled capsule with an icon and a word: a check when fine, a triangle when the rider
-///   must act, and the icon of the state when it is a choice of the rider (a snooze).
+///   must act, and, on grey, the icon of a state where the rider has nothing to do (a snooze, a question that the
+///   app asks by itself).
 /// - A button: a capsule at least 48 pt high (`ProblemButtonStyle`), or a grey `ChipLabel` at least 44 pt high for a
 ///   quiet action. The switch and the menus stay the system ones.
 enum NightLook {
