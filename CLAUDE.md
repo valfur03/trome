@@ -52,7 +52,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 | `tooling.md` | The shared build cache, the git hooks | touch `ios/scripts/`, the `Makefile` files |
 | `server.md` | Code structure of the server, the server and its commands | touch `server/`, `contracts/`; run `make server-...` |
 | `docs-site.md` | The docs site: Node 24, port, screenshots | touch `docs/`; run `make docs...` |
-| `assets.md` | The docs, store page and video stay true to the app; the "Assets:" line of the notes | touch the app screen, the Live Activity, the texts, the docs pages; run `make run` |
+| `assets.md` | The docs, store page and video stay true to the app; the "Assets:" line of the notes | touch an asset, its source or what it shows; run `make run` |
 | `writing.md` | Who writes the pages, where a change writes its text, the public text check | touch a Markdown or MDX file, or the text checks |
 
 ## The rules that no agent may break

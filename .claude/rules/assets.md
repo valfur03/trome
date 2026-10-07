@@ -3,6 +3,7 @@ paths:
   - "ios/App/**"
   - "ios/Widget/**"
   - "ios/Packages/TROMECore/Sources/TROMECore/LiveActivity/**"
+  - "ios/Config/Base.xcconfig"
   - "ios/DocsScreenshots/**"
   - "ios/scripts/docs-screenshots.sh"
   - "ios/guide/assets.md"
