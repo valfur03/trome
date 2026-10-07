@@ -3,9 +3,10 @@ import TROMECore
 
 extension WakeLog {
     func recordLaunch(locationSource: LocationSource) {
+        let phone = PhoneStateReport.launchLines(locationSource: locationSource)
+        record(.launch, (["App launched"] + phone).joined(separator: "\n"))
         Task { @MainActor in
-            let phone = await PhoneStateReport.lines(locationSource: locationSource)
-            record(.launch, (["App launched"] + phone).joined(separator: "\n"))
+            record(.launch, (["Phone at launch"] + (await PhoneStateReport.laterLines())).joined(separator: "\n"))
         }
     }
 }

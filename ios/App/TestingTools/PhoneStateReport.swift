@@ -7,13 +7,22 @@ import UserNotifications
 @MainActor
 enum PhoneStateReport {
     static func lines(locationSource: LocationSource) async -> [String] {
+        launchLines(locationSource: locationSource) + (await laterLines())
+    }
+
+    static func launchLines(locationSource: LocationSource) -> [String] {
+        [
+            location(CLLocationManager()),
+            "Low Power Mode: \(ProcessInfo.processInfo.isLowPowerModeEnabled ? "on" : "off")",
+            "Position: \(position(locationSource))"
+        ]
+    }
+
+    static func laterLines() async -> [String] {
         let notificationSettings = await UNUserNotificationCenter.current().notificationSettings()
         return [
-            location(CLLocationManager()),
             "Background App Refresh: \(backgroundRefresh(UIApplication.shared.backgroundRefreshStatus))",
-            "Low Power Mode: \(ProcessInfo.processInfo.isLowPowerModeEnabled ? "on" : "off")",
-            "Notifications: \(notifications(notificationSettings))",
-            "Position: \(position(locationSource))"
+            "Notifications: \(notifications(notificationSettings))"
         ]
     }
 
@@ -25,6 +34,9 @@ enum PhoneStateReport {
         case .provisional: "delivered quietly"
         case .ephemeral: "ephemeral"
         @unknown default: "status \(settings.authorizationStatus.rawValue)"
+        }
+        guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else {
+            return authorization
         }
         var parts = [authorization]
         if settings.alertSetting != .enabled {

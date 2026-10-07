@@ -27,7 +27,7 @@ public struct WakeLogEntry: Codable, Equatable, Sendable, Identifiable {
 @Observable
 public final class WakeLog {
     public static let key = "testingTools.wakeLog"
-    public static let maximumEntries = 300
+    public static let maximumEntries = 500
 
     public private(set) var entries: [WakeLogEntry]
     @ObservationIgnored private let storage: any KeyValueStore
@@ -40,7 +40,10 @@ public final class WakeLog {
             .flatMap { try? JSONDecoder().decode([WakeLogEntry].self, from: $0) } ?? []
     }
 
-    public func record(_ kind: WakeLogEntry.Kind, _ text: String) {
+    public func record(_ kind: WakeLogEntry.Kind, _ text: String, unlessRepeated: Bool = false) {
+        if unlessRepeated, entries.first(where: { $0.kind == kind })?.text == text {
+            return
+        }
         entries.insert(WakeLogEntry(date: now(), kind: kind, text: text), at: 0)
         if entries.count > Self.maximumEntries {
             entries.removeLast(entries.count - Self.maximumEntries)

@@ -41,6 +41,8 @@ extension AutoLiveActivityModel {
 
     func logPlan(_ regions: [WatchedRegion], around position: Coordinate) {
         guard let wakeLog = services.wakeLog else { return }
-        wakeLog.record(.regions, WatchedRegion.summary(of: regions, around: position, catalog: catalog))
+        wakeLog.record(
+            .regions, WatchedRegion.summary(of: regions, around: position, catalog: catalog), unlessRepeated: true
+        )
     }
 }

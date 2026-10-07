@@ -19,13 +19,15 @@ extension WatchedRegion {
         let stations = regions
             .compactMap { arrivalStationId(inRegionId: $0.id).flatMap(catalog.station(withId:)) }
             .map { (name: $0.name, distance: Int(position.distance(to: $0.coordinate))) }
+        let stop = regions.first { $0.id.hasPrefix(stopPrefix) }
+            .map { "; \(label(ofId: $0.id, catalog: catalog))" } ?? ""
         let refresh = regions.first { $0.id == refreshId }.map { "; area around you \(Int($0.radiusMeters)) m" } ?? ""
         guard let nearest = stations.first, let farthest = stations.last else {
-            return "Watching no station\(refresh)"
+            return "Watching no station\(stop)\(refresh)"
         }
         return """
             Watching \(stations.count) stations, from \(nearest.name) (\(nearest.distance) m) \
-            to \(farthest.name) (\(farthest.distance) m)\(refresh)
+            to \(farthest.name) (\(farthest.distance) m)\(stop)\(refresh)
             """
     }
 }

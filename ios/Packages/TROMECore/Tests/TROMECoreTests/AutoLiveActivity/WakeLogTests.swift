@@ -39,4 +39,15 @@ struct WakeLogTests {
         #expect(log.entries.isEmpty)
         #expect(WakeLog(storage: storage).entries.isEmpty)
     }
+
+    @Test func skipsALineThatRepeatsTheLastOneOfItsKindWhenAsked() {
+        let log = WakeLog(storage: storage)
+        log.record(.regions, "plan 1")
+        log.record(.decision, "decision")
+        log.record(.regions, "plan 1", unlessRepeated: true)
+        log.record(.regions, "plan 2", unlessRepeated: true)
+        log.record(.decision, "decision")
+
+        #expect(log.entries.map(\.text) == ["decision", "plan 2", "decision", "plan 1"])
+    }
 }

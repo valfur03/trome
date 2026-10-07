@@ -120,4 +120,14 @@ extension StationRegionPlanTests {
 
         #expect(summary == "Watching 3 stations, from Station 1 (111 m) to Station 3 (333 m); area around you 200 m")
     }
+
+    @Test func namesTheStopAreaInTheSummary() {
+        let all = stations(count: 3)
+        let catalog = StationCatalog(stations: all)
+        let regions = StationRegionPlan.regions(around: origin, stopStation: all[0], catalog: catalog)
+
+        let summary = WatchedRegion.summary(of: regions, around: origin, catalog: catalog)
+
+        #expect(summary.contains("(333 m); stop area of Station 1; area around you 200 m"))
+    }
 }

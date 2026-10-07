@@ -17,6 +17,8 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     private var eventsTask: Task<Void, Never>?
     private var watched: [String: WatchedRegion]?
     private var hasLoggedNoAlways = false
+    private var firstStates = RegionFirstStates()
+    private var firstStatesFlush: Task<Void, Never>?
 
     func resume() async {
         _ = await startedMonitor()
@@ -36,7 +38,9 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         for id in existingIds.subtracting(newIds) {
             await monitor.remove(id)
         }
-        for region in regions where previous[region.id] != region {
+        let added = regions.filter { previous[$0.id] != $0 }
+        expectFirstStates(of: Set(added.map(\.id)))
+        for region in added {
             let condition = CLMonitor.CircularGeographicCondition(
                 center: CLLocationCoordinate2D(latitude: region.center.latitude, longitude: region.center.longitude),
                 radius: region.radiusMeters
@@ -114,20 +118,63 @@ extension CoreLocationStationRegionWatcher {
         #endif
     }
 
+    private func expectFirstStates(of ids: Set<String>) {
+        #if DEBUG
+        flushFirstStates()
+        firstStates = RegionFirstStates(expecting: ids)
+        firstStatesFlush = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
+            self?.flushFirstStates()
+        }
+        #endif
+    }
+
+    private func flushFirstStates() {
+        #if DEBUG
+        firstStatesFlush?.cancel()
+        firstStatesFlush = nil
+        if let summary = firstStates.summary {
+            wakeLog?.record(.system, summary)
+        }
+        firstStates = RegionFirstStates()
+        #endif
+    }
+
     private func record(_ event: CLMonitor.Event) {
         #if DEBUG
         guard let wakeLog else { return }
         let region = regionLabel(event.identifier)
-        let what = switch event.state {
+        let problems = Self.diagnostics(of: event)
+        let state = Self.firstState(of: event)
+        if firstStates.take(id: event.identifier, label: region, state: state, problems: problems) {
+            if firstStates.isComplete {
+                flushFirstStates()
+            }
+            return
+        }
+        let what = Self.line(of: event, region: region)
+        wakeLog.record(.system, problems.isEmpty ? what : "\(what) [\(problems)]")
+        #endif
+    }
+
+    nonisolated private static func firstState(of event: CLMonitor.Event) -> RegionFirstStates.State {
+        switch event.state {
+        case .satisfied: .inside
+        case .unsatisfied: .outside
+        case .unmonitored: .notWatched
+        default: .unknown
+        }
+    }
+
+    nonisolated private static func line(of event: CLMonitor.Event, region: String) -> String {
+        switch event.state {
         case .satisfied: "iOS: entered \(region)"
         case .unsatisfied: "iOS: left \(region)"
         case .unknown: "iOS: \(region) is unknown"
         case .unmonitored: "iOS: \(region) is not watched"
         @unknown default: "iOS: \(region), state \(event.state.rawValue)"
         }
-        let problems = Self.diagnostics(of: event)
-        wakeLog.record(.system, problems.isEmpty ? what : "\(what) [\(problems)]")
-        #endif
     }
 
     nonisolated private static let logger = Logger(category: "StationRegions")
