@@ -62,6 +62,7 @@ So has a place with several stations: Châtelet, Châtelet - Les Halles and Les 
 - An RER station has one stop area for both directions, and a quay serves one direction, so the trains of a quay go together.
   A quay gets its direction from the destinations of its trains, and from the `DirectionRef` of PRIM ("Aller" or "Retour") only when PRIM gives both values at that station: on RER A, it gives "Aller" to every train.
 - On the trunk of an RER line, before every fork, a train goes in the direction whose branches hold its destination.
+  On RER A, D and E, a train that ends at another station of the trunk goes in the direction of that station, from the ordered `trunkStations` of `TransitLine+RERLineEnds.swift` (a La Défense train at Vincennes goes west, a Goussainville train at Gare de Lyon goes toward Creil), even when no quay or `DirectionRef` tells it.
   A train whose direction stays unknown shows in its own row with its destination, but not on the trunk: there it would add a third row that keeps one train only.
 
 ## The lock screen
