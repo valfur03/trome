@@ -49,6 +49,11 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   The texts of `TROMECore` (for example `TransitLine.displayName`) are not translated: the app and the widget make the texts that a user sees.
   The name of the app is written once, `APP_NAME` in `ios/Config/Base.xcconfig` (decision-43): never write it in a text of the app or the widget.
   A view reads it with `@Environment(\.appName)` and puts it in its text as an argument (`%@` in the catalog); a permission text of `ios/project.yml` uses `$(APP_NAME)`, and `make strings-sync` puts it in their French texts.
+- **A text on a screen has a job.** It names an action, says a state, or meets a legal duty (a licence notice).
+  A sentence that explains or reassures goes to the Help page or the docs, and the screen shows the state with an icon, a colour and a position (a pill, an orange card, a dimmed row).
+  A text that must stay gets the fewest words that work, on one line when it can; VoiceOver still gets a label for each state.
+  Why: a rider scans the screen and does not read it, and the Help page can say it once, with room (the prompter's order of 2026-10-07, TASK-298).
+  The reviewer checks each new text against this rule.
 - **Access control.** In `TROMECore`, only what the app or the widget uses is `public`.
   The rest stays `internal`.
   Tests use `@testable import TROMECore`.

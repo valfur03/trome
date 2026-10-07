@@ -49,11 +49,11 @@ struct ExampleRow: View {
     }
 
     private var explanation: Text {
-        if let station = realTrainsStation {
-            return Text("\(station.name): the real trains are already on the lock screen.")
+        if realTrainsStation != nil {
+            return Text("Real trains already showing")
         }
         let name = autoLiveActivity.exampleStation?.name ?? ""
         let minutes = Int(AutoLiveActivityRules.defaultExampleDuration / 60)
-        return Text("\(name) on the lock screen, with sample times, for \(minutes) minutes.")
+        return Text("\(name), \(minutes) min")
     }
 }

@@ -4,7 +4,6 @@ import UIKit
 
 struct LiveActivityStartError: View {
     @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
-    @Environment(\.appName) private var appName
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -32,7 +31,7 @@ struct LiveActivityStartError: View {
     private func message(for error: StationLiveActivityError) -> LocalizedStringKey {
         switch error {
         case .turnedOff:
-            "Live Activities are turned off for this app. Turn them on in Settings > \(appName)."
+            "Live Activities are off"
         case .failed:
             "The lock screen display could not start."
         }

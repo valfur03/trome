@@ -7,8 +7,16 @@ struct ServerOutSection: View {
     var body: some View {
         if let retryAt = liveActivity.serverRetryAt {
             NightCard {
-                message(LiveTimesComeBack(retryAt: retryAt, now: Date()))
-                    .accessibilityIdentifier("serverOutNotice")
+                Label {
+                    message(LiveTimesComeBack(retryAt: retryAt, now: Date()))
+                        .font(.subheadline.weight(.semibold))
+                } icon: {
+                    Image(systemName: "antenna.radiowaves.left.and.right.slash")
+                        .foregroundStyle(NightLook.secondaryText)
+                        .accessibilityHidden(true)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("serverOutNotice")
             }
         }
     }
@@ -17,9 +25,9 @@ struct ServerOutSection: View {
         switch comeBack {
         case .around(let retryAt):
             let time = retryAt.formatted(date: .omitted, time: .shortened)
-            return Text("Many riders are using the app right now. Live times come back around \(time).")
+            return Text("No live times until around \(time)")
         case .tomorrow:
-            return Text("Many riders are using the app right now. Live times come back tomorrow.")
+            return Text("No live times until tomorrow")
         }
     }
 }

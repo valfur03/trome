@@ -240,7 +240,7 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
     Tap **Change to Always Allow**.
     Then the app can tell you when you arrive at a station, also when it is closed.
     If you keep "While Using the App", this works only while the app is open.
-    The **Permissions** part of the main screen then says so, with an **Open Settings** button.
+    The **Location** row of the main screen then turns orange, with an **Open Settings** button.
     While the Live Activity shows, the app uses your location to keep the train times up to date.
     With **Always**, iOS shows no blue location indicator.
     With "While Using the App", iOS turns the status bar blue (or shows a blue bubble in the Dynamic Island) while the Live Activity shows.
@@ -252,9 +252,9 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
     <Screenshot src={appNotificationPermission} alt="The iPhone asks: TROME would like to send you notifications. The buttons are Don't Allow and Allow." />
 
-33. Look at the main screen of the app. It says what the Live Activity does (or which station it shows), with **See an example**, then the automatic mode, and the **Permissions** part. The app is ready. Later versions of the app can show this screen a bit differently.
+33. Look at the main screen of the app. It says what shows on the lock screen, with **See an example**, then the automatic mode, and the **Location** and **Notifications** rows. The app is ready. Later versions of the app can show this screen a bit differently.
 
-    <Screenshot src={appMainScreen} alt="The main screen of the app: what the Live Activity does, the See an example row, the automatic mode, and the permissions." />
+    <Screenshot src={appMainScreen} alt="The main screen of the app: nothing on the lock screen yet, the See an example row, the automatic mode, and the permissions." />
 
 </Steps>
 
@@ -582,7 +582,7 @@ While the iPhone is connected and the app runs from Xcode, you can also fake the
   ```
 
   If it still says "not set", in Xcode choose **Product > Clean Build Folder**, then click **Run** again.
-- **The app cannot find the nearest station, or the Permissions part shows Location as Off.** Tap **Open Settings** in the app, or on the iPhone open **Settings > Apps > TROME > Location** (on older iOS: **Settings > TROME > Location**). Choose **While Using the App** or **Always**.
+- **The app cannot find the nearest station, or the main screen shows Location as Off.** Tap **Open Settings** in the app, or on the iPhone open **Settings > Apps > TROME > Location** (on older iOS: **Settings > TROME > Location**). Choose **While Using the App** or **Always**.
 - **You get no notification near a station.** Open **Settings > Apps > TROME** (on older iOS: **Settings > TROME**). Turn on **Notifications**. Under **Location**, choose **Always**.
 - **The app shows "Fake position" in orange.** You turned on a fake position in Testing tools. Open Testing tools and tap **Use the real GPS**.
 - **Live Activities are turned off.** Open **Settings > Apps > TROME** (on older iOS: **Settings > TROME**) and turn on **Live Activities**.

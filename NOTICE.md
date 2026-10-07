@@ -45,7 +45,7 @@ A work that only shows the data, such as an app screen or a picture, may have an
 The app shows this notice for the station list on its main screen, with links to the two licences.
 It writes the date the way the phone writes dates, so on an iPhone in English with the region United States it reads:
 
-> Station list adapted by TROME from Île-de-France Mobilités data of September 27, 2026, under the ODbL and the Licence Ouverte v2.0.
+> Stations: adapted from Île-de-France Mobilités data of September 27, 2026, under the ODbL and the Licence Ouverte v2.0.
 
 ## The train times
 
@@ -53,7 +53,7 @@ The app and the server in [`server/`](server/) get the next trains from the "Pro
 This data is under the [Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences).
 As this licence asks, the app shows this notice on its main screen, with a link to PRIM on the name of the database and a link to the licence on its name:
 
-> Contains information from the ‘Prochains passages’ database of Île-de-France Mobilités (PRIM), made available under the ‘Licence Mobilités’.
+> Train times: ‘Prochains passages’ of Île-de-France Mobilités (PRIM), under the ‘Licence Mobilités’.
 
 The tests of the app and of the server read recorded PRIM answers: the files in [`contracts/prim/`](contracts/prim/), and the PRIM answers inside the examples of [`contracts/api/`](contracts/api/).
 They come from the same database, so they are under the Licence Mobilités too.

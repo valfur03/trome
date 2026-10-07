@@ -102,7 +102,7 @@ The resume needs a position, in this order:
 ## When iOS refuses to start it
 
 If Live Activities are off for the app (in **Settings**, or "Don't Allow" when iOS asks), the Live Activity does not start.
-While they are off and the switch **Automatic mode** is on, the main screen says, as soon as the rider opens the app, at a station or not, "Live Activities are turned off for this app. Turn them on in Settings > TROME.", with an **Open Settings** button.
+While they are off and the switch **Automatic mode** is on, the main screen says, as soon as the rider opens the app, at a station or not, "Live Activities are off" ("Activités en direct désactivées"), with an **Open Settings** button.
 The message goes when they are on again and the rider comes back to the app; at a station, the Live Activity then starts at once (see [Back on at a station](#back-on-at-a-station)).
 Any other failure of ActivityKit says "The lock screen display could not start."
 
@@ -118,7 +118,7 @@ The app needs the location "Always" to start the Live Activity while it is close
 3. The notifications, only after the second answer.
 
 With **While Using the App** only, the Live Activity starts by itself only while the app is open.
-The **Permissions** part of the main screen says so, with a button to open **Settings**.
+The **Location** row of the main screen is then orange, with the line "Choose Always" ("Choisissez Toujours") and a button to open **Settings**.
 
 ## What the main screen shows
 
@@ -126,19 +126,19 @@ The app is the Live Activity, so the main screen shows its state and its control
 
 | The screen shows | When |
 |---|---|
-| "On the lock screen: <station>" ("Sur l’écran verrouillé : <station>") | A Live Activity shows; otherwise a line that says what the Live Activity does |
+| "On the lock screen: <station>" ("Sur l’écran verrouillé : <station>") | A Live Activity shows; otherwise "Nothing on the lock screen" ("Rien sur l’écran verrouillé") |
 | "On the lock screen: Châtelet (example)" ("Sur l’écran verrouillé : Châtelet (exemple)") | The example of **See an example** shows |
-| **See an example**, with one line that says what it shows: a tap puts Châtelet on the lock screen, with sample times, for 10 minutes ([See an example](example.md)) | Always; while the real trains of a station show, it starts nothing and its line says which station shows |
+| **See an example**, with the line "Châtelet, 10 min": a tap puts Châtelet on the lock screen, with sample times, for 10 minutes ([See an example](example.md)) | Always; while the real trains of a station show, it is grey, starts nothing, and its line says "Real trains already showing" ("Vrais passages déjà affichés") |
 | The switch **Automatic mode** | Always |
 | **Snooze**, with 30 minutes, 1 hour and the rest of today | The automatic mode is on |
 | **Snoozed**, the time of return, and **Cancel the snooze** | A snooze is on |
 | "Paused at <station> until <time>" and **Cancel the pause at <station>** | After a swipe, also while a snooze is on, but not while the switch is off |
-| "Many riders are using the app right now. Live times come back around 9:00." ("Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent vers 09:00.") | A Live Activity shows, and the server of the app has no PRIM calls left for its station. The time is when the app asks the server again, in the time format and time zone of the phone. When it is on another day, the line ends with "Live times come back tomorrow." |
-| **Permissions** | Always; it says what a missing or refused permission breaks |
-| **About**: **Privacy policy** and **Help and feedback**, which open their web pages in Safari | Always |
+| "No live times until around 9:00" ("Pas d’horaires en direct avant 09:00 environ"), under the name of the app | A Live Activity shows, and the server of the app has no PRIM calls left for its station. The time is when the app asks the server again, in the time format and time zone of the phone. When it is on another day, the line says "No live times until tomorrow." |
+| The **Location** and **Notifications** rows, each with its state as a pill | Always; a missing or refused permission turns the card orange, with an **Open Settings** button, and the line "Choose Always" under a location that is not **Always** |
+| **Privacy policy** and **Help and feedback**, which open their web pages in Safari | Always |
 | The source of the train data and of the station list, with their links, at the foot | Always |
 
-The two addresses of **About** are in `ios/App/About/AboutLinks.swift`; for now they are placeholders, because the pages are not online yet.
+The two addresses of these rows are in `ios/App/About/AboutLinks.swift`; for now they are placeholders, because the pages are not online yet.
 
 The screen has one look, a night page, in the light and the dark mode of the phone, as the Live Activity is dark on the lock screen.
 Each state is a filled pill: green when it is fine, orange with an "Open Settings" button when you must act.

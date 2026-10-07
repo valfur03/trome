@@ -20,10 +20,10 @@ struct LiveActivityStateSection: View {
                     .accessibilityIdentifier("liveActivityStationName")
             } else {
                 Label {
-                    Text("The Live Activity shows the next trains of the station nearest to you on your lock screen.")
-                        .font(.subheadline)
+                    Text("Nothing on the lock screen")
+                        .font(.headline)
                         .foregroundStyle(.white.opacity(0.85))
-                        .accessibilityIdentifier("liveActivityExplanation")
+                        .accessibilityIdentifier("liveActivityNothingShown")
                 } icon: {
                     Image(systemName: "lock.iphone")
                         .font(.title3.weight(.semibold))

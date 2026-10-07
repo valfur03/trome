@@ -5,8 +5,8 @@ struct TrainDataSourceNotice: View {
         Text(
             AttributedString(
                 localized: """
-                Contains information from the ‘[Prochains passages](https://prim.iledefrance-mobilites.fr)’ \
-                database of Île-de-France Mobilités (PRIM), made available under the \
+                Train times: ‘[Prochains passages](https://prim.iledefrance-mobilites.fr)’ \
+                of Île-de-France Mobilités (PRIM), under the \
                 ‘[Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences)’.
                 """
             )

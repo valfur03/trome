@@ -3,7 +3,6 @@ import SwiftUI
 struct AboutSection: View {
     var body: some View {
         NightCard {
-            Overline(title: "About")
             LinkRow(
                 title: "Privacy policy",
                 systemImage: "hand.raised.fill",

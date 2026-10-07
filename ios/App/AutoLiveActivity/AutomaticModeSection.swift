@@ -83,9 +83,6 @@ struct AutomaticModeSection: View {
                     .font(.subheadline)
                     .accessibilityIdentifier("positionNotFound")
             }
-            Text(footer)
-                .font(.footnote)
-                .foregroundStyle(NightLook.secondaryText)
         }
     }
 
@@ -101,20 +98,6 @@ struct AutomaticModeSection: View {
             ChipLabel("Snooze", systemImage: "bell.slash")
         }
         .accessibilityIdentifier("snoozeMenu")
-    }
-
-    private var footer: LocalizedStringKey {
-        switch automaticMode.mode {
-        case .turnedOn:
-            """
-            The Live Activity starts by itself when you come near a metro or RER station, \
-            and stops when you leave. Snooze it to stop it for a while.
-            """
-        case .snoozed:
-            "No notification and no automatic Live Activity until the snooze ends."
-        case .turnedOff:
-            "No notification and no automatic Live Activity."
-        }
     }
 
     private func title(of duration: SnoozeDuration) -> LocalizedStringKey {

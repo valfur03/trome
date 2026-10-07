@@ -6,12 +6,9 @@ struct PermissionsSection: View {
     let permissions: PermissionsModel
     let nearestStationModel: NearestStationModel
 
-    @Environment(\.appName) private var appName
-
     var body: some View {
         let rows = [locationRow] + (permissions.notifications.map { [notificationsRow($0)] } ?? [])
         NightCard(isProblem: rows.contains { !$0.isGranted }) {
-            Overline(title: "Permissions")
             ForEach(rows.indices, id: \.self) { index in
                 if index > 0 {
                     NightDivider()
@@ -24,28 +21,14 @@ struct PermissionsSection: View {
     private var locationRow: PermissionRow {
         switch permissions.location {
         case .always:
-            PermissionRow(
-                title: "Location",
-                state: "Always",
-                isGranted: true,
-                kind: .location,
-                hint: """
-                    While the Live Activity shows, your iPhone may show that the app uses your location \
-                    to keep the train times up to date, and this is normal.
-                    """
-            )
+            PermissionRow(title: "Location", state: "Always", isGranted: true, kind: .location)
         case .whileUsing:
             PermissionRow(
                 title: "Location",
                 state: "While Using the App",
                 isGranted: false,
                 kind: .location,
-                hint: """
-                    The Live Activity can start by itself only while the app is open. \
-                    To get a notification near a station when the app is closed, set Location to Always. \
-                    While the Live Activity shows, your iPhone may show that the app uses your location \
-                    to keep the train times up to date, and this is normal.
-                    """,
+                hint: "Choose Always",
                 fix: .openSettings
             )
         case .denied:
@@ -54,10 +37,7 @@ struct PermissionsSection: View {
                 state: "Off",
                 isGranted: false,
                 kind: .location,
-                hint: """
-                    The app cannot find the nearest station without your location. \
-                    Turn on Location for \(appName) in Settings, and choose Always.
-                    """,
+                hint: "Choose Always",
                 fix: .openSettings
             )
         case .notDecided:
@@ -66,7 +46,6 @@ struct PermissionsSection: View {
                 state: "Not asked yet",
                 isGranted: false,
                 kind: .location,
-                hint: "The app needs your location to find the nearest metro or RER station.",
                 fix: .action("Allow location") {
                     Task {
                         await nearestStationModel.refresh()
@@ -87,20 +66,10 @@ struct PermissionsSection: View {
                 state: "Off",
                 isGranted: false,
                 kind: .notifications,
-                hint: """
-                    The app cannot tell you that you are near a station while it is closed. \
-                    Turn on Notifications for \(appName) in Settings.
-                    """,
                 fix: .openSettings
             )
         case .notDecided:
-            PermissionRow(
-                title: "Notifications",
-                state: "Not asked yet",
-                isGranted: false,
-                kind: .notifications,
-                hint: "The app asks for notifications once it can use your location."
-            )
+            PermissionRow(title: "Notifications", state: "Not asked yet", isGranted: false, kind: .notifications)
         }
     }
 }

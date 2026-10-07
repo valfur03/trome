@@ -1,28 +1,18 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%@ on the lock screen, with sample times, for %lld minutes." : {
+    "%@, %lld min" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ on the lock screen, with sample times, for %2$lld minutes."
+            "value" : "%1$@, %2$lld min"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ sur l’écran verrouillé, avec des passages fictifs, pendant %2$lld minutes."
-          }
-        }
-      }
-    },
-    "%@: the real trains are already on the lock screen." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ : les vrais passages sont déjà sur l’écran verrouillé."
+            "value" : "%1$@, %2$lld min"
           }
         }
       }
@@ -43,16 +33,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "30 minutes"
-          }
-        }
-      }
-    },
-    "About" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "À propos"
           }
         }
       }
@@ -127,12 +107,12 @@
         }
       }
     },
-    "Contains information from the ‘[Prochains passages](https://prim.iledefrance-mobilites.fr)’ database of Île-de-France Mobilités (PRIM), made available under the ‘[Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences)’." : {
+    "Choose Always" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contient des informations de la base « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), présentement mises à disposition aux conditions de la « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) »."
+            "value" : "Choisissez Toujours"
           }
         }
       }
@@ -157,12 +137,12 @@
         }
       }
     },
-    "Live Activities are turned off for this app. Turn them on in Settings > %@." : {
+    "Live Activities are off" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les activités en direct sont désactivées pour cette app. Activez-les dans Réglages > %@."
+            "value" : "Activités en direct désactivées"
           }
         }
       }
@@ -187,26 +167,6 @@
         }
       }
     },
-    "Many riders are using the app right now. Live times come back around %@." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent vers %@."
-          }
-        }
-      }
-    },
-    "Many riders are using the app right now. Live times come back tomorrow." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beaucoup de monde utilise l’app en ce moment. Les horaires en direct reviennent demain."
-          }
-        }
-      }
-    },
     "Metro %@" : {
       "localizations" : {
         "fr" : {
@@ -227,22 +187,22 @@
         }
       }
     },
-    "No notification and no automatic Live Activity until the snooze ends." : {
+    "No live times until around %@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucune notification et aucune activité en direct automatique jusqu’à la fin de la pause."
+            "value" : "Pas d’horaires en direct avant %@ environ"
           }
         }
       }
     },
-    "No notification and no automatic Live Activity." : {
+    "No live times until tomorrow" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucune notification et aucune activité en direct automatique."
+            "value" : "Pas d’horaires en direct avant demain"
           }
         }
       }
@@ -273,6 +233,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pas aujourd’hui"
+          }
+        }
+      }
+    },
+    "Nothing on the lock screen" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien sur l’écran verrouillé"
           }
         }
       }
@@ -353,22 +323,22 @@
         }
       }
     },
-    "Permissions" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisations"
-          }
-        }
-      }
-    },
     "Privacy policy" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Politique de confidentialité"
+          }
+        }
+      }
+    },
+    "Real trains already showing" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vrais passages déjà affichés"
           }
         }
       }
@@ -413,98 +383,12 @@
         }
       }
     },
-    "Station list adapted by %@ from Île-de-France Mobilités data of %@, under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) and the [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0)." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Station list adapted by %1$@ from Île-de-France Mobilités data of %2$@, under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) and the [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0)."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liste des stations adaptée par %1$@ à partir des données d’Île-de-France Mobilités du %2$@, sous licences [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) et [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0)."
-          }
-        }
-      }
-    },
-    "Tap to show them on your lock screen." : {
+    "Stations: adapted from Île-de-France Mobilités data of %@, under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) and the [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0)." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Touchez pour les afficher sur l’écran verrouillé."
-          }
-        }
-      }
-    },
-    "The app asks for notifications once it can use your location." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’app demande l’accès aux notifications une fois qu’elle peut utiliser votre position."
-          }
-        }
-      }
-    },
-    "The app cannot find the nearest station without your location. Turn on Location for %@ in Settings, and choose Always." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sans votre position, l’app ne peut pas trouver la station la plus proche. Activez la localisation pour %@ dans Réglages, et choisissez Toujours."
-          }
-        }
-      }
-    },
-    "The app cannot tell you that you are near a station while it is closed. Turn on Notifications for %@ in Settings." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quand l’app est fermée, elle ne peut pas vous prévenir que vous êtes près d’une station. Activez les notifications pour %@ dans Réglages."
-          }
-        }
-      }
-    },
-    "The app needs your location to find the nearest metro or RER station." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’app a besoin de votre position pour trouver la station de métro ou de RER la plus proche."
-          }
-        }
-      }
-    },
-    "The Live Activity can start by itself only while the app is open. To get a notification near a station when the app is closed, set Location to Always. While the Live Activity shows, your iPhone may show that the app uses your location to keep the train times up to date, and this is normal." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’activité en direct ne peut démarrer toute seule que si l’app est ouverte. Pour recevoir une notification près d’une station quand l’app est fermée, réglez la localisation sur Toujours. Pendant que l’activité en direct est affichée, votre iPhone peut indiquer que l’app utilise votre position pour garder les horaires à jour : c’est normal."
-          }
-        }
-      }
-    },
-    "The Live Activity shows the next trains of the station nearest to you on your lock screen." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’activité en direct affiche sur l’écran verrouillé les prochains passages à la station la plus proche de vous."
-          }
-        }
-      }
-    },
-    "The Live Activity starts by itself when you come near a metro or RER station, and stops when you leave. Snooze it to stop it for a while." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’activité en direct démarre toute seule quand vous arrivez près d’une station de métro ou de RER, et s’arrête quand vous partez. Mettez-la en pause pour l’arrêter un moment."
+            "value" : "Stations : adaptées à partir des données d’Île-de-France Mobilités du %@, sous licences [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) et [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0)."
           }
         }
       }
@@ -519,12 +403,12 @@
         }
       }
     },
-    "While the Live Activity shows, your iPhone may show that the app uses your location to keep the train times up to date, and this is normal." : {
+    "Train times: ‘[Prochains passages](https://prim.iledefrance-mobilites.fr)’ of Île-de-France Mobilités (PRIM), under the ‘[Licence Mobilités](https://prim.iledefrance-mobilites.fr/en/licences)’." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pendant que l’activité en direct est affichée, votre iPhone peut indiquer que l’app utilise votre position pour garder les horaires à jour : c’est normal."
+            "value" : "Horaires : « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), sous « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) »."
           }
         }
       }
