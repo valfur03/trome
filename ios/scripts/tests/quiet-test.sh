@@ -141,7 +141,7 @@ chmod +x "$state/bin/"* "$state/fake-simulator"
 run_make() {
     PATH="$state/bin:$PATH" make --no-print-directory -C "$ios" -o project \
         BUILD_DIR="$state/build" USE_SHARED_CACHE= SIM_LOCK="$state/fake-simulator" SIMULATOR="$state/fake-simulator" \
-        "$@" > "$state/out" 2>&1 && echo "exit 0" || echo "exit 1"
+        TROME_E2E_EVIDENCE="$state/kept" "$@" > "$state/out" 2>&1 && echo "exit 0" || echo "exit 1"
 }
 
 expect "make lint passes quietly" "$(FAKE=pass run_make lint) $(lines)" "exit 0 1"
@@ -166,5 +166,7 @@ expect "it prints the failing tests of xcodebuild and of scripts/e2e-failures.py
     "$(has '** TEST EXECUTE FAILED **') $(has 'SnoozeTests.swift:42: SnoozeTests/testSnooze(): The next lines did not show.')" "1 1"
 expect "its last line of output names the step and the log file" \
     "$(grep -c "^e2e: FAILED (exit 65, [0-9]* s). The whole output is above, and in $state/build/logs/e2e.log" "$state/out")" "1"
+expect "a failed make e2e keeps its log in a folder of the evidence of failed runs, and a pass keeps nothing" \
+    "$(ls "$state/kept" | wc -l | tr -d ' ') $(ls "$state/kept"/*/e2e.log | wc -l | tr -d ' ')" "1 1"
 
 [ "$failures" -eq 0 ]
