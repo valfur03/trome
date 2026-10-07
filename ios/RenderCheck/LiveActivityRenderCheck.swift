@@ -92,6 +92,7 @@ final class LiveActivityRenderCheck: XCTestCase {
         }
         rows += try drawTheRERStates(of: catalog, into: outDir)
         rows += try await drawTheServerOutStates(of: catalog, fake: fake, into: outDir)
+        rows += try drawTheNoTimesStates(of: catalog, into: outDir)
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
         )
@@ -136,6 +137,17 @@ final class LiveActivityRenderCheck: XCTestCase {
         for (page, rer) in Self.rerStates(at: catalog, now: Date()).enumerated() {
             let pageNumber = Self.firstRERStatesPage + page
             rows += try drawEveryVariant(of: rer.state, at: rer.station, page: pageNumber, into: outDir)
+        }
+        return rows
+    }
+
+    private func drawTheNoTimesStates(of catalog: StationCatalog, into outDir: URL) throws -> [String] {
+        let samples = Self.noTimesStates(at: catalog, now: Date())
+        XCTAssertEqual(samples.count, 2, "States with no times that the render check could not build")
+        var rows: [String] = []
+        for (page, sample) in samples.enumerated() {
+            let pageNumber = Self.firstNoTimesStatesPage + page
+            rows += try drawEveryVariant(of: sample.state, at: sample.station, page: pageNumber, into: outDir)
         }
         return rows
     }

@@ -64,7 +64,7 @@ The day shape counts every rider of the rail network: after two weeks of real us
 
 The day of the PRIM key: the key has 1,000 calls a day, and PRIM counts its day in UTC.
 Each user of the key has a share, and the shares add up to 990 at most.
-When the key reaches 1,000 calls, PRIM answers 429, and the production server makes no PRIM call for 1 hour: every rider reads "Times unavailable for now".
+When the key reaches 1,000 calls, PRIM answers 429, and the production server makes no PRIM call for 1 hour: every rider reads "Times unavailable".
 
 | Who calls PRIM with the key | Calls a day | Who counts them |
 |---|---|---|

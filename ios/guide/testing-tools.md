@@ -73,7 +73,7 @@ Start the Live Activity at once, then put the app in the background and look at 
 | `fork-end-no-train` | At the same stations: the second end gets no train, so its row shows the grey dash. |
 | `fork-end-over-an-hour` | At the same stations: the second end gets one train after 70 minutes, so it says **> 1 h**, then counts down from 60. |
 | `server-out` | As if the server of the app were out of PRIM calls. Trains every 4 minutes, the first one 3 minutes after the launch. From 1 to 8 minutes after the launch, the fake trains answer "out" with the time 8 minutes after the launch as the time to ask again. The times shown keep counting down, then the Live Activity says **Times unavailable for now** when the first train leaves, the main screen says when the live times come back, and the times come back 8 minutes after the launch. |
-| `server-out-tomorrow` | The fake trains answer "out" from the launch until 40 seconds after midnight (the time zone of the phone): the Live Activity starts with **Times unavailable for now**, and the main screen says that the live times come back tomorrow. |
+| `server-out-tomorrow` | The fake trains answer "out" from the launch until 40 seconds after midnight (the time zone of the phone): the Live Activity starts with **Times unavailable**, and the main screen says that the live times come back tomorrow. |
 
 The states are in `FakeTrainsScenario`; a name that the app does not know gives no fake trains.
 To start a state again, launch the app again with the same arguments.

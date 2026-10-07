@@ -5,9 +5,10 @@ struct NoTrainsText: View {
     var isCompact = false
 
     var body: some View {
-        Text(nextTrainIsOverAnHourAway ? "In over 1 hour" : "No trains")
+        Text(nextTrainIsOverAnHourAway ? "> 1 h" : "No trains")
             .font(isCompact ? .caption.bold() : .subheadline.bold())
             .foregroundStyle(.secondary)
             .lineLimit(1)
+            .accessibilityLabel(nextTrainIsOverAnHourAway ? Text("In over 1 hour") : Text("No trains"))
     }
 }

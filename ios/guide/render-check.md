@@ -26,9 +26,9 @@ It leaves its small host app on the Simulator, and the next job removes it.
 |---|---|
 | **Views** | `LockScreenView` at the width of an iPhone 17 (373 points) and an iPhone SE (355 points), and `ExpandedIslandBottomRegion` (338 points), the bottom of the expanded Dynamic Island |
 | **Text sizes** | Large (the default) and XXXL, the largest size that iOS uses for a Live Activity |
-| **States** | Fresh, and stale (the "Open the app for new times." state) |
+| **States** | Fresh, and stale (the "Open the app" state) |
 | **Data** | The fake trains, for each station of the list with the stations of its place, and for every page of its lines |
-| **Made-up pages** | From page 90, each state of a wait on one station: the metro strips at Lamarck - Caulaincourt, the fork group at Liège, the RER rows at Auber and Invalides. The words "Times unavailable for now" (the server of the app is out) are drawn as page 110 of Saint-Lazare (a hub page), page 111 of Lamarck - Caulaincourt (metro strips), page 112 of Auber (RER rows) and page 113 of Abbesses (no times at all): the stale images show them in place of "Open the app for new times." |
+| **Made-up pages** | From page 90, each state of a wait on one station: the metro strips at Lamarck - Caulaincourt, the fork group at Liège, the RER rows at Auber and Invalides. The words "Times unavailable" (the server of the app is out) are drawn as page 110 of Saint-Lazare (a hub page), page 111 of Lamarck - Caulaincourt (metro strips), page 112 of Auber (RER rows) and page 113 of Abbesses (no times at all): the stale images show them in place of "Open the app". Page 120 of Abbesses draws "Loading…", and page 121 the same station with no times while the server is up. |
 | **Images** | A PNG at 3x for every station that has a hub, and for the stations of `imageStations` in `ios/RenderCheck/LiveActivityRenderCheck.swift` (the longest names, the biggest hubs, forks, RER branches); the other stations are only measured |
 
 The views are drawn with `ImageRenderer` in a unit test bundle, so there is no lock screen.

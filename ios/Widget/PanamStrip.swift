@@ -55,10 +55,7 @@ struct PanamStrip: View {
                 if !direction.nextTrainIsOverAnHourAway {
                     message("No trains", color: .secondary)
                 } else if !isStale {
-                    ViewThatFits(in: .horizontal) {
-                        message("In over 1 hour", color: Self.amber)
-                        message("> 1 h", color: Self.amber)
-                    }
+                    message("> 1 h", color: Self.amber)
                 }
             } else if !isStale {
                 HStack(spacing: 0) {

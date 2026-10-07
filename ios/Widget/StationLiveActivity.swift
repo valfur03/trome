@@ -160,18 +160,15 @@ private struct TrainsSummary: View {
             switch state.trains {
             case .loading:
                 if !isStale {
-                    Text("Loading the next trains…")
+                    Text("Loading…")
                         .foregroundStyle(.secondary)
+                        .accessibilityLabel(Text("Loading the next trains…"))
                 }
             case .noData:
-                Text(noDataOf: state)
+                Text.timesUnavailable
                     .font(.subheadline.bold())
                     .minimumScaleFactor(0.8)
-                if !state.serverIsOut {
-                    Text("No train times for this station right now.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                    .accessibilityLabel(Text.spokenTimesUnavailable)
             case .lines(let page) where page.showsSeveralLines:
                 ForEach(page.lines, id: \.self) { line in
                     LineTrainsView(line: line, isStale: isStale, isCompact: isCompact)
@@ -196,6 +193,7 @@ private struct TrainsSummary: View {
                 Text(staleTimesOf: state)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .accessibilityLabel(Text(spokenStaleTimesOf: state))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

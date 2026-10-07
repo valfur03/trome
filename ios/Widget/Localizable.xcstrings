@@ -217,6 +217,16 @@
         }
       }
     },
+    "Loading…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement…"
+          }
+        }
+      }
+    },
     "Metro %@" : {
       "localizations" : {
         "fr" : {
@@ -237,16 +247,6 @@
         }
       }
     },
-    "No data available" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucune donnée disponible"
-          }
-        }
-      }
-    },
     "no train announced" : {
       "localizations" : {
         "fr" : {
@@ -257,22 +257,22 @@
         }
       }
     },
-    "No train times for this station right now." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pas d’horaires pour cette station en ce moment."
-          }
-        }
-      }
-    },
     "No trains" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pas de train"
+          }
+        }
+      }
+    },
+    "Open the app" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrez l’app"
           }
         }
       }
@@ -343,6 +343,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mettre en pause jusqu’à la fin de la journée"
+          }
+        }
+      }
+    },
+    "Times unavailable" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Horaires indisponibles"
           }
         }
       }

@@ -44,6 +44,7 @@ struct PanamStripsView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
+                    .accessibilityLabel(Text(spokenStaleTimesOf: state))
                     .invalidatableContent()
             }
             SnoozeButtons()

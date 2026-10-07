@@ -15,13 +15,11 @@ extension DynamicIslandWait {
         case .noTrain:
             Text("No trains")
         case .stale:
-            Text("Open the app for new times.")
+            .spokenOpenTheApp
         case .loading:
             Text("Loading the next trains…")
-        case .noData:
-            Text("No data available")
-        case .timesUnavailable:
-            .timesUnavailable
+        case .noData, .timesUnavailable:
+            .spokenTimesUnavailable
         }
     }
 

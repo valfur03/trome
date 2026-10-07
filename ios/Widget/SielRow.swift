@@ -107,10 +107,7 @@ struct SielNoTrainBox: View {
         if !nextTrainIsOverAnHourAway {
             message("No trains", color: .secondary)
         } else if !isStale {
-            ViewThatFits(in: .horizontal) {
-                message("In over 1 hour", color: PanamStrip.amber)
-                message("> 1 h", color: PanamStrip.amber)
-            }
+            message("> 1 h", color: PanamStrip.amber)
         }
     }
 

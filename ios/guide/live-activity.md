@@ -82,10 +82,10 @@ The page decides which look draws it, in `LinesPage.panamStripsLine` and `LinesP
 | In 1 minute or more, within the hour | The minutes, rounded up, as a bare number: "4" means 4 minutes | The same |
 | Less than a minute away | "0" | "Approaching" ("À l'approche") |
 | At the platform: PRIM says `VehicleAtStop`, or the time is between the arrival and the departure | "At the platform" ("À quai") on one line; at a smaller size when it does not fit, then on two lines | "At the platform" ("À quai") |
-| Next train over 60 minutes away | "In over 1 hour", or "> 1 h" when the words do not fit the box, across both columns | The same, in the box |
+| Next train over 60 minutes away | "> 1 h", across both columns | The same, in the box |
 | No train listed for the direction | "No trains" ("Pas de train"), grey | The same |
 | One train only | The second column is empty | One row |
-| Old times: the stale rule, below | The boxes are empty, the ends of line stay, and a line says "Open the app for new times." | One row for each direction, with its name and an empty box |
+| Old times: the stale rule, below | The boxes are empty, the ends of line stay, and a line says "Open the app" | One row for each direction, with its name and an empty box |
 
 - The number counts down by itself, also with the app closed, because it is a timer of iOS.
   Counting never reaches "0": "0" is the state of the last minute.
@@ -109,7 +109,7 @@ A station after the fork names only the end of its branch, and shows plain strip
 |---|---|
 | Trains | The waits, as in a strip |
 | No train listed, while the other end has some | A grey dash "–" in the first column: the app has no time for this end now, which does not mean that no train comes |
-| Its next train over an hour away | "In over 1 hour", or "> 1 h", across both columns |
+| Its next train over an hour away | "> 1 h", across both columns |
 | No train at all, for either end, and none beyond the hour | "No trains" in both rows |
 
 PRIM lists only three or four trains for a direction, for both ends together, so an end with one train, or with none, is the usual look.
@@ -173,7 +173,7 @@ Only a few formats do that, so use one of these:
 ### The stale rule
 
 The content has a stale date: the time of the first shown train, or, when no train comes within the hour, the moment when the first later train comes within it, or 60 seconds after "Loading".
-At that date, iOS hides the waits and the line "Open the app for new times." shows.
+At that date, iOS hides the waits and the line "Open the app" shows.
 iOS does it with no help of the app, also when the app is closed.
 
 iOS never does it sooner than 2 minutes after the last content that the app sent.
@@ -186,17 +186,17 @@ The log of the Simulator shows it: `liveactivitiesd` plans its task "Marking act
 | Does not run, and the last content came more than 2 minutes before the train left | The waits go 1 to 3 seconds after the train left |
 | Does not run, and the last content came less than 2 minutes before | The waits stay until 2 minutes after the content: "0" for up to about a minute after the train left, "Approaching" or "At the platform" for up to about 2 minutes |
 
-When no direction has a train within the hour, "In over 1 hour" and "> 1 h" go the same way once the first train comes within the hour.
+When no direction has a train within the hour, "> 1 h" goes the same way once the first train comes within the hour.
 
 ### When it cannot show times
 
 | The Live Activity says | When |
 |---|---|
-| "Loading the next trains…" | The first call has not answered. After 2 minutes at most, iOS marks it stale |
-| "No data available", and "No train times for this station right now." | The app has no times for the station: no key, a first call that fails, or a switch to a station whose first call fails. Also after a failed call that follows "No trains", because that state never gets old |
+| "Loading…" | The first call has not answered. After 2 minutes at most, iOS marks it stale |
+| "Times unavailable" ("Horaires indisponibles") | The app has no times for the station: no key, a first call that fails, or a switch to a station whose first call fails. Also after a failed call that follows "No trains", because that state never gets old |
 | "No trains" on each line | PRIM lists no train at all for the station |
-| "Times unavailable for now" ("Horaires indisponibles pour le moment"), in place of "Open the app for new times." and "No data available" | The server of the app is out because its budget of PRIM calls is used up (see [what a failed call does](trains.md#what-a-failed-call-does-to-the-live-activity)). The times already shown keep counting down until the first shown train has left, then they are hidden and these words show, with the strips and their ends of line. A Live Activity that starts while the server is out shows them too; with no times at all, it shows them alone, with no "No train times for this station right now." below, because both lines would be cut at the largest text sizes. The Dynamic Island says the same to VoiceOver and shows its dash. No icon, no colour, no alert, no notification and no sound |
-| The last times, still counting down, then "Open the app for new times." | A call fails while times of this station show: [what each failure does](trains.md#what-a-failed-call-does-to-the-live-activity) |
+| "Times unavailable", in place of "Open the app" | The server of the app is out because its budget of PRIM calls is used up (see [what a failed call does](trains.md#what-a-failed-call-does-to-the-live-activity)). The times already shown keep counting down until the first shown train has left, then they are hidden and these words show, with the strips and their ends of line. A Live Activity that starts while the server is out shows them too. The Dynamic Island says the same to VoiceOver and shows its dash. No icon, no colour, no alert, no notification and no sound |
+| The last times, still counting down, then "Open the app" | A call fails while times of this station show: [what each failure does](trains.md#what-a-failed-call-does-to-the-live-activity) |
 
 The other causes keep their words: no network, or a closed app that iOS marks stale.
 The app has no timetable, so it cannot tell a line that stopped for the night from a line that is closed: it never says that the service ended.
@@ -206,3 +206,4 @@ The app has no timetable, so it cannot tell a line that stopped for the night fr
 Each strip and each row is one element that reads the end of line and its waits in minutes ("Mairie d'Issy, 4 minutes, then 8 minutes"), or "Approaching", "At the platform", never "zero".
 The header reads the line and the station (or "walk to" another station), then "Show the next line" and the number of other lines.
 In the compact view the badge reads the line and the number reads the wait; the minimal view reads both.
+The short words of the rare states read in full: "> 1 h" reads "In over 1 hour", "Loading…" reads "Loading the next trains…", "Open the app" reads "Open the app for new times.", and "Times unavailable" reads "Times unavailable for now".

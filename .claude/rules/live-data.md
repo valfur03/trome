@@ -65,4 +65,4 @@ Before G5, production spends nothing, so a QA run may use 60 calls.
 From G5 on, production spends up to its full share once riders use it, so 5 QA runs a day no longer leave the prompter most of the day: a QA run gets 30 calls, and 2 runs a day at most.
 
 When PRIM answers "too many requests" (HTTP 429), stop at once and tell the manager.
-The manager tells the prompter that the production server may have paused its PRIM calls for an hour: every rider then reads "Times unavailable for now".
+The manager tells the prompter that the production server may have paused its PRIM calls for an hour: every rider then reads "Times unavailable".
