@@ -78,9 +78,10 @@ file docs/contact.ts "export const contactEmail = 'contact@trome.valfur.fr';"
 file CLAUDE.md "Write to contact@trome.valfur.fr."
 expect "the public contact address of the project passes, in any file" "$(check)" "passes"
 
-file docs/help.md "Write to other@trome.valfur.fr or to xcontact@trome.valfur.fr or to contact@trome.valfur.fr.example.fr."
+file docs/help.md "Write to other@trome.valfur.fr or to support@trome.valfur.fr or to xcontact@trome.valfur.fr or to contact@trome.valfur.fr.example.fr."
 expect "any other address on the domain of the project still fails" "$(check)" "fails"
 expect "it finds another address of the domain" "$(hit 'docs/help.md:1: an email address: "other@trome.valfur.fr"')" "1"
+expect "it finds the old contact address" "$(hit 'docs/help.md:1: an email address: "support@trome.valfur.fr"')" "1"
 expect "it finds an address that only ends like the contact address" "$(hit 'docs/help.md:1: an email address: "xcontact@trome.valfur.fr"')" "1"
 expect "it finds an address that only starts like the contact address" "$(hit 'docs/help.md:1: an email address: "contact@trome.valfur.fr.example.fr"')" "1"
 
