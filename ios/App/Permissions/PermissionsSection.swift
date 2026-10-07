@@ -8,7 +8,7 @@ struct PermissionsSection: View {
 
     var body: some View {
         let rows = [locationRow] + (permissions.notifications.map { [notificationsRow($0)] } ?? [])
-        NightCard(isProblem: rows.contains { $0.status == .missing }) {
+        NightCard(isProblem: rows.contains { $0.status == .needsAction }) {
             ForEach(rows.indices, id: \.self) { index in
                 if index > 0 {
                     NightDivider()
@@ -26,7 +26,7 @@ struct PermissionsSection: View {
             PermissionRow(
                 title: "Location",
                 state: "While Using the App",
-                status: .missing,
+                status: .needsAction,
                 kind: .location,
                 hint: "Choose Always",
                 fix: .openSettings
@@ -35,7 +35,7 @@ struct PermissionsSection: View {
             PermissionRow(
                 title: "Location",
                 state: "Off",
-                status: .missing,
+                status: .needsAction,
                 kind: .location,
                 hint: "Choose Always",
                 fix: .openSettings
@@ -44,7 +44,7 @@ struct PermissionsSection: View {
             PermissionRow(
                 title: "Location",
                 state: "Not asked yet",
-                status: .missing,
+                status: .needsAction,
                 kind: .location,
                 fix: .action("Allow location") {
                     Task {
@@ -64,12 +64,12 @@ struct PermissionsSection: View {
             PermissionRow(
                 title: "Notifications",
                 state: "Off",
-                status: .missing,
+                status: .needsAction,
                 kind: .notifications,
                 fix: .openSettings
             )
         case .notDecided:
-            PermissionRow(title: "Notifications", state: "Not asked yet", status: .notAsked, kind: .notifications)
+            PermissionRow(title: "Notifications", state: "Not asked yet", status: .waiting, kind: .notifications)
         }
     }
 }
@@ -82,8 +82,8 @@ private struct PermissionRow: View {
 
     enum Status {
         case granted
-        case missing
-        case notAsked
+        case needsAction
+        case waiting
     }
 
     enum Fix {
@@ -122,8 +122,8 @@ private struct PermissionRow: View {
     private var pill: StatePill.Kind {
         switch status {
         case .granted: .fine
-        case .missing: .problem
-        case .notAsked: .neutral(systemImage: "hourglass")
+        case .needsAction: .problem
+        case .waiting: .neutral(systemImage: "hourglass")
         }
     }
 
