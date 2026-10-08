@@ -197,8 +197,9 @@ finish() {
     mv "$queue/$1.result.new" "$queue/$1.result"
 }
 
+# A pid that the system gave again to another process is not the make merge of the entry.
 alive() {
-    kill -0 "$(field "$1" pid)" 2> /dev/null
+    ps -p "$(field "$1" pid)" -o command= 2> /dev/null | grep -q 'merge\.sh'
 }
 
 failed() {
@@ -224,14 +225,19 @@ make merge stopped the rebase (git rebase --abort): '$2' is as it was before. Th
 
 # Puts the branches of a train that did not land back where they were before make merge,
 # so that no branch keeps the commits of another task of the train.
+# A branch that got a new commit during the merge stays as it is: a reset would drop that commit.
 put_back() {
-    for put_key in $stacked; do
+    for put_key in $touched; do
         put_root=$(field "$put_key" root)
         put_orig=$(cat "$work/$put_key.orig")
-        if [ "$(git -C "$put_root" rev-parse HEAD)" != "$put_orig" ]; then
-            git -C "$put_root" reset -q --keep "$put_orig" \
-                || say "could not put '$(field "$put_key" branch)' back on $(short "$put_orig"): look at $put_root before the next merge."
+        put_head=$(git -C "$put_root" rev-parse HEAD)
+        [ "$put_head" != "$put_orig" ] || continue
+        if [ -f "$work/$put_key.tested" ] && [ "$put_head" != "$(cat "$work/$put_key.tested")" ]; then
+            say "'$(field "$put_key" branch)' got a new commit during the merge, so make merge leaves it on $(short "$put_head"). It may hold the commits of the tasks before it in the train: look at $put_root before the next merge."
+            continue
         fi
+        git -C "$put_root" reset -q --keep "$put_orig" \
+            || say "could not put '$(field "$put_key" branch)' back on $(short "$put_orig"): look at $put_root before the next merge."
     done
     put_back_on_exit=
 }
@@ -278,6 +284,8 @@ land() {
     stacked=
     conflicted=
     fallback=
+    touched=
+    put_back_on_exit=
     for key; do
         if ! alive "$key"; then
             step "the make merge of $(field "$key" branch) was stopped: it does not land."
@@ -292,6 +300,9 @@ land() {
         fi
         task_branch=$(branch_of "$task_root")
         git -C "$task_root" rev-parse HEAD > "$work/$key.orig"
+        touched="$touched $key"
+        # From the first rebase on, a stopped train puts every branch back: a later task is rebased onto the earlier ones.
+        [ "$#" -le 1 ] || put_back_on_exit=1
         if [ "$base" = "$old" ]; then
             step "1/4 rebase $task_branch onto $target ($(short "$base"))"
         else
@@ -330,9 +341,10 @@ land() {
         names="$names${names:+, }$(field "$key" branch)"
     done
     if [ "$count" -gt 1 ]; then
-        put_back_on_exit=1
         once=", once for $names"
     else
+        # One task alone keeps its rebased branch when a step fails, as a merge alone always did.
+        put_back_on_exit=
         once=
     fi
     stack_step=

@@ -189,7 +189,8 @@ merge_waits() {
     for merge_entry in "$merge_queue"/*.task; do
         [ -f "$merge_entry" ] && [ ! -e "${merge_entry%.task}.result" ] || continue
         merge_pid=$(sed -n 's/^pid=//p' "$merge_entry" 2> /dev/null || true)
-        if [ -n "$merge_pid" ] && kill -0 "$merge_pid" 2> /dev/null; then
+        # A pid that the system gave again to another process is not a merge that waits.
+        if [ -n "$merge_pid" ] && ps -p "$merge_pid" -o command= 2> /dev/null | grep -q 'merge\.sh'; then
             merge_root=$(sed -n 's/^root=//p' "$merge_entry" 2> /dev/null || true)
             return 0
         fi

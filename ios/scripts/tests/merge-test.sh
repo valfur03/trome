@@ -539,6 +539,62 @@ RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-dead-merge 
 expect "a job does not wait for a merge whose make merge has ended" "$(steps_line)" "after-dead-merge "
 rm -f "$queue/0000000001.000000.$dead.task"
 
+sleep 30 &
+other=$!
+printf 'pid=%s\nroot=/gone\nbranch=task/gone\nnode=\n' "$other" > "$queue/0000000001.000000.$other.task"
+: > "$state/steps"
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-reused-pid >> "$FAKE_SIM_STATE/steps"' > "$state/reused.log" 2>&1
+expect "a job does not wait for a merge whose pid now belongs to another process" "$(steps_line) $(contains "$state/reused.log" "a merge goes first")" "after-reused-pid  no"
+kill "$other" 2> /dev/null || true
+wait "$other" 2> /dev/null || true
+rm -f "$queue/0000000001.000000.$other.task"
+
+# The train is stopped while it rebases its third task: the second task, already rebased onto the first one, goes back too.
+app_task kill_a
+app_task kill_b
+app_task kill_c
+kill_a_head=$(rev task/kill_a)
+before=$(rev main)
+cat > "$repo/.git/hooks/pre-rebase" << EOF
+#!/bin/sh
+case "\$(git rev-parse --show-toplevel)" in
+    */kill_c) touch "$state/rebasing-kill-c"; sleep 2 ;;
+esac
+EOF
+chmod +x "$repo/.git/hooks/pre-rebase"
+mkfifo "$state/release-kill-qa"
+"$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"' "$state/release-kill-qa" > /dev/null 2>&1 &
+kill_qa=$!
+wait_until test -e "$RATP_SIM_LOCK/pid"
+start_merge kill_a
+wait_until has_queued 1
+start_merge kill_b
+wait_until has_queued 2
+start_merge kill_c
+wait_until has_queued 3
+: > "$state/steps"
+echo release > "$state/release-kill-qa"
+wait "$kill_qa"
+wait_until test -e "$state/rebasing-kill-c"
+pkill -TERM -f "$scripts/merge.sh train" || true
+pkill -KILL -P "$(grep -l '^branch=task/kill_a$' "$queue"/*.task | xargs sed -n 's/^pid=//p')" lockf
+wait_until test -e "$state/kill_a.status"
+expect "after a train stopped during a rebase, the other tasks land" "$(finish_merge kill_b) $(finish_merge kill_c)" "0 0"
+expect "a train stopped during a rebase puts back the branches it rebased: main gets no commit of the stopped task" "$(rev main~2)" "$before"
+expect "the task of the stopped train is back on its own commits" "$(rev task/kill_a)" "$kill_a_head"
+expect "a stopped train frees the Simulator lock" "$(lock_state)" "free"
+rm -f "$repo/.git/hooks/pre-rebase"
+
+# A task that gets a new commit during its train keeps it.
+app_task moved_a
+app_task moved_b
+TROME_MERGE_CHECK="$passing_check && if [ ! -e \"\$FAKE_SIM_STATE/moved-marker\" ]; then touch \"\$FAKE_SIM_STATE/moved-marker\"; echo new > \"\$FAKE_SIM_STATE/moved_a/moved-new\"; git -C \"\$FAKE_SIM_STATE/moved_a\" add moved-new; git -C \"\$FAKE_SIM_STATE/moved_a\" commit -q -m new; fi"
+merge_together moved_a moved_b
+TROME_MERGE_CHECK=$passing_check
+expect "when a task gets a new commit during its train, both tasks still land one by one" "$(finish_merge moved_a) $(finish_merge moved_b)" "0 0"
+expect "the new commit of a task during its train is not lost" "$(git -C "$repo" show main:moved-new 2> /dev/null)" "new"
+expect "make merge says that it left the branch with the new commit as it was" "$(cat "$state/moved_a.log" "$state/moved_b.log" | grep -c "'task/moved_a' got a new commit during the merge")" "1"
+
 fake_node() {
     mkdir -p "$1"
     printf '#!/bin/sh\ncase "$1" in -v) echo v%s.0.0 ;; *) echo %s ;; esac\n' "$2" "$2" > "$1/node"
