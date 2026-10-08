@@ -245,6 +245,15 @@ Name each thing the way the reader sees it, with the label of the screen or of t
 Use one term for one thing, and the same term as the app: if the app says **Snooze**, do not write "pause" on one page and "mute" on the next.
 Leave out filler, such as "please note", "simply" or "easy".
 
+Speak as one person.
+One person makes TROME, so where the maker speaks, a page says "I", "me" and "my" (in French "je", "me", "mon", "ma", "mes"), and never "we", "us" or "our" ("nous", "notre", "nos"): they pretend a company that does not exist.
+The maker never names himself in the third person either.
+Write "I am Valentin Furmanek, and I make TROME", not "TROME is made by Valentin Furmanek", and "write to me", not "contact us".
+A sentence that a team would say (a department, "our servers", "we decided") is rewritten for one person, with no pretended company: "my server" is right for the one that the maker runs.
+A page that only tells the reader what to do, with "you", needs no "I".
+A copyright or licence line, where the law asks for a name, is not speech and stays as it is.
+Why: a reader who meets "we" on one page and "I" on the next stops trusting both, and a name in the third person reads as someone else speaking.
+
 ### Write the riders' pages in French
 
 Most riders are French.
@@ -323,9 +332,9 @@ A text that belongs in the flow of the page stays in the flow.
 ### Give a reason only when the reader needs it
 
 A reason belongs on a page when the reader needs it to act, or to trust the page.
-Leave out the history of the team: no dates of decisions, no measurements, no task numbers, and no "we decided".
+Leave out the history of how the project is made: no dates of decisions, no measurements, no task numbers, and no "I decided".
 
-- Not: "After the tests of September, the team chose to ask for Always."
+- Not: "After the tests of September, I chose to ask for Always."
 - But: "Tap **Change to Always Allow**: then the app can tell you when you arrive at a station, even when it is closed."
 
 ### Say once what you could not check
@@ -379,9 +388,10 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
 5. **Each section earns its place.** For each section, ask what this reader would lose without it.
    If the answer is nothing, the section goes.
    No page has a fixed length: it is as long as its reader's job needs, and this point and the first screen decide, not a count of lines.
-6. **Nothing for another reader.** No inner workings of the team, no history, no measurements, no task numbers, and a reason only when the reader needs it.
+6. **Nothing for another reader.** No inner workings of how the project is made, no history, no measurements, no task numbers, and a reason only when the reader needs it.
 7. **Voice.** A person would say each sentence aloud.
    The page is plain, direct and warm, with no filler, and its terms match the app and iOS.
+   One person speaks: where the maker speaks, the page says "I" ("je" in French), and has no "we", "us" or "our" ("nous", "notre"), and his name never speaks about him in the third person.
 8. **True.** Each command was run, each link was opened, and the steps were followed as the reader follows them.
    What could not be checked is said once.
 9. **Pictures.** They show the current app, and each alt text says what the picture shows, in the language of the page.

@@ -6,7 +6,7 @@ When a check fails and you cannot see why, say what failed: the review can help.
 You can delete these notes.
 -->
 
-<!-- Write the number of the issue where we agreed on the change right after the #, for example: Closes #12 -->
+<!-- Write the number of the issue where I said yes to the change right after the #, for example: Closes #12 -->
 Closes #
 
 ## What changes

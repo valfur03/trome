@@ -1,14 +1,14 @@
 # Report a security problem privately
 
 Found a way to read a secret of TROME, to learn where a rider is, or to make the app or the server do what it should not?
-Tell us in private: a public report shows everyone how to use the problem.
+Tell me in private: a public report shows everyone how to use the problem.
 Do not open an issue or a pull request about it: everyone can read them.
 Not sure that it is a security problem? Report it privately anyway.
 
 ## Send your report on GitHub
 
 Open [Report a vulnerability](https://github.com/valfur03/trome/security/advisories/new), which is also in the **Security** tab of the repo.
-You need a GitHub account, which is free, and only you and the maintainer see the report.
+You need a GitHub account, which is free, and only you and I see the report.
 
 In the report, say what the problem is and where it is: the file, the screen, or the request to the server.
 Then give the steps that show it, and what someone could do with it.
@@ -16,12 +16,12 @@ Then give the steps that show it, and what someone could do with it.
 ## What to expect: no promise
 
 TROME is a free app under the MIT licence, which comes with no warranty, and this page makes no promise either.
-The maintainer reads reports on a best-effort basis, with no promise of a reply or a fix.
+I read reports on a best-effort basis, with no promise of a reply or a fix.
 TROME has no bug bounty, so it pays for no report.
 
 ## Test in good faith, and wait 90 days to publish
 
-The maintainer takes no legal action against research in good faith that keeps to these rules:
+I take no legal action against research in good faith that keeps to these rules:
 
 - Report the problem privately, as above.
 - Do not read, change or keep the data of other people.
@@ -40,12 +40,12 @@ The maintainer takes no legal action against research in good faith that keeps t
 Check the problem on the latest code of `main`, or on the latest version of the app.
 A problem that shows only on the server that riders use is still worth a report: say what you saw.
 
-A problem of iOS, GitHub, Cloudflare or PRIM, the train data service of Île-de-France Mobilités, goes to them: we do not run them.
+A problem of iOS, GitHub, Cloudflare or PRIM, the train data service of Île-de-France Mobilités, goes to them: I do not run them.
 
-## What we already know: the app token
+## What I already know: the app token
 
 Every copy of the app holds the same token, which it sends to the server, so anyone who has the app can pull the token out.
-We know this, so a report that shows only this is not needed.
+I know this, so a report that shows only this is not needed.
 With the token, someone could use up the server's train data calls, and riders would then get no times until the server may call again: the next hour, or the next day at worst.
 The token does not give the PRIM key, and the server never makes more train data calls than its daily cap.
 A way past that cap, a way to the PRIM key, or a server that answers a wrong or missing token is worth a report.

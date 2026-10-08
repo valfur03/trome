@@ -8,7 +8,7 @@ body:
         TROME does one thing on purpose: it shows when the next trains come, on the lock screen.
         So agree on a change here before you write code: [Ask before you change something](https://github.com/valfur03/trome/blob/main/CONTRIBUTING.md#ask-before-you-change-something) says why, and what TROME leaves out.
         Search the [open and closed issues](https://github.com/valfur03/trome/issues?q=is%3Aissue) first: your idea may be there already.
-        The maintainer answers in this issue, and you start your pull request once they say yes.
+        I answer in this issue, and you start your pull request once I say yes.
         You can write in French or in English.
   - type: textarea
     id: problem

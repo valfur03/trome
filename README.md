@@ -3,6 +3,7 @@
 ### Your next metro, on your lock screen
 
 Walk up to a metro or RER station in the Paris region, and TROME shows its next trains on your iPhone's lock screen, both directions of every line.
+I am Valentin Furmanek, and I make TROME for my own metro and RER rides, and for other riders.
 It is open source and not on the App Store yet: [follow the launch](#get-it-on-your-iphone), or [build it with a Mac](https://trome.valfur.fr/en/build/install-on-your-iphone/).
 
 <p align="center">

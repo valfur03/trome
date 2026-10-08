@@ -1,7 +1,7 @@
 # Notice
 
 This file says where the data of TROME comes from, which licence covers each part of the repo, and what you must do when you reuse the data.
-It is our reading of the licences, not legal advice: the licence texts are what counts.
+It is my reading of the licences, not legal advice: the licence texts are what counts.
 
 ## The code
 
@@ -35,7 +35,7 @@ When you share `stations.json`, an extract of it, or a work made from it, in pub
 
 - Say that the data comes from Île-de-France Mobilités and was adapted by TROME, name the two licences, and link to them.
 - Give the date of the last update of the data, as the Licence Ouverte asks: 2026-09-27.
-  It is the date of our copy, the day the script downloaded the four datasets: `stations.json` is built from what the datasets held that day.
+  It is the date of my copy, the day the script downloaded the four datasets: `stations.json` is built from what the datasets held that day.
   The dataset pages may show a later date, because Île-de-France Mobilités updates these datasets almost every day.
   That later date is the date of newer data than `stations.json` holds, so do not give it.
 - If you make a new database from it, keep that database under the ODbL, and offer a copy of it to the people who use it or a work made from it, as the ODbL asks.
@@ -71,7 +71,7 @@ It is made from one dataset that Île-de-France Mobilités publishes on its open
 The dataset covers the 2nd quarter of 2026, and its page gives 2026-09-22 as the date of its last update.
 The licence and the date above are the ones that the dataset page showed on 2026-10-03.
 
-TROME adapts the data, so the numbers of the day shape are ours, not numbers of the dataset.
+TROME adapts the data, so the numbers of the day shape are mine, not numbers of the dataset.
 For each hour, TROME takes the mean of the shares of all rail stops (each stop counts the same), over a week of 5 weekdays out of the school holidays, 1 Saturday and 1 Sunday, and rounds it to 0.1%.
 Then it raises each hour below 0.5% to 0.5%, takes the extra share from the other hours in proportion, and fixes the last digits so that the 24 hours add up to 100%.
 
@@ -83,7 +83,7 @@ It asks for two things in return: name the source, and give the date of the last
 The day shape is a work made from the data, and it is in the code: a copy of `relay-settings.ts` shares it too.
 When you share the day shape, or a work made from it, in public:
 
-- Say that the data comes from Île-de-France Mobilités and was adapted by TROME, so that no one takes our numbers for theirs.
+- Say that the data comes from Île-de-France Mobilités and was adapted by TROME, so that no one takes my numbers for theirs.
 - Give the date of the last update of the data: 2026-09-22.
 - Name the Licence Ouverte v2.0, and link to it.
   The licence does not ask for this, but it tells the next person what they may do with the data.

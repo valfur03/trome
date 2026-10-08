@@ -1,6 +1,6 @@
 ---
 title: Politique de confidentialité
-description: Ce que TROME fait de votre position, ce que l’app envoie à notre serveur, ce que le serveur garde et combien de temps, et comment nous écrire.
+description: Ce que TROME fait de votre position, ce que l’app envoie à mon serveur, ce que le serveur garde et combien de temps, et comment m’écrire.
 sidebar:
   label: Confidentialité
   order: 2
@@ -15,39 +15,39 @@ import Contact from '../../../components/Contact.astro';
 Mise à jour : <Placeholder>date</Placeholder>.
 
 TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
-Voici ce que l’app TROME pour iPhone fait de vos données, ce que notre serveur garde, et à qui elles vont.
+Voici ce que l’app TROME pour iPhone fait de vos données, ce que mon serveur garde, et à qui elles vont.
 
 ## En bref
 
 - TROME n’a pas de compte, n’affiche pas de publicité et ne mesure pas ce que vous faites dans l’app.
 - Votre position reste sur votre iPhone : l’app ne l’envoie à personne.
-- Pour afficher les horaires, l’app envoie à notre serveur l’identifiant de la station près de laquelle vous êtes, mais ni votre position, ni rien qui vous identifie.
-- Notre serveur n’écrit nulle part quelle station a été demandée, ni quand, ni par qui.
+- Pour afficher les horaires, l’app envoie à mon serveur l’identifiant de la station près de laquelle vous êtes, mais ni votre position, ni rien qui vous identifie.
+- Mon serveur n’écrit nulle part quelle station a été demandée, ni quand, ni par qui.
 - TROME ne collecte aucune donnée sur vous, et la fiche de l’App Store le dit aussi : données non collectées.
-  Ce qu’Apple nous transmet, par exemple si vous testez TROME avec TestFlight, est expliqué [plus bas](#ce-quapple-nous-transmet).
+  Ce qu’Apple me transmet, par exemple si vous testez TROME avec TestFlight, est expliqué [plus bas](#ce-quapple-me-transmet).
 
 ## Votre position
 
 TROME utilise votre position, sur l’iPhone, pour trouver la station la plus proche, et pour afficher ou retirer l’activité en direct quand vous arrivez près d’une station ou que vous vous en éloignez.
 Avec l’accès **Toujours**, iOS prévient TROME quand vous arrivez près d’une station, même quand l’app est fermée.
 
-L’app n’envoie votre position à personne : ni à nous, ni à qui que ce soit d’autre.
+L’app n’envoie votre position à personne : ni à moi, ni à qui que ce soit d’autre.
 Vous pouvez changer cet accès à tout moment dans **Réglages > Apps > TROME > Position**.
 Sans votre position, TROME ne peut pas trouver la station la plus proche.
 
-## Ce que l’app envoie à notre serveur
+## Ce que l’app envoie à mon serveur
 
-Pour afficher les prochains passages, l’app demande les horaires à notre serveur.
+Pour afficher les prochains passages, l’app demande les horaires à mon serveur.
 Elle lui envoie l’identifiant de l’arrêt (par exemple celui de la station Châtelet) et un code commun à toutes les copies de l’app, qui ne dit rien de vous.
 Elle n’envoie ni votre position, ni un identifiant de votre iPhone, ni rien qui vous identifie.
 L’arrêt demandé montre près de quelle station vous êtes à ce moment-là.
 
 Comme toute connexion à internet, la demande arrive avec l’adresse IP de votre iPhone et des informations techniques, comme les versions de l’app et d’iOS.
-Notre serveur ne les lit pas et ne les garde pas.
+Mon serveur ne les lit pas et ne les garde pas.
 
-## Ce que notre serveur garde, et combien de temps
+## Ce que mon serveur garde, et combien de temps
 
-Après sa réponse, notre serveur n’écrit aucune station demandée : ni dans ses totaux, ni dans ses erreurs, ni dans ses journaux.
+Après sa réponse, mon serveur n’écrit aucune station demandée : ni dans ses totaux, ni dans ses erreurs, ni dans ses journaux.
 Il garde seulement :
 
 - **des totaux**, pendant 30 jours : combien de demandes il reçoit chaque heure et chaque jour, combien d’appels il fait à la source des horaires, et combien d’erreurs.
@@ -55,21 +55,21 @@ Il garde seulement :
 - **une liste d’erreurs**, pendant 7 jours : l’heure, le type d’erreur et son code.
   Elle n’a pas de station non plus ;
 - **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la donner à tous ceux qui la demandent.
-  Elle reste dans la mémoire de notre serveur, sans jamais être écrite, et il l’efface après 10 minutes au plus.
+  Elle reste dans la mémoire de mon serveur, sans jamais être écrite, et il l’efface après 10 minutes au plus.
   Elle ne dit pas qui a demandé la station ;
 - **la station dont la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, pendant quelques minutes au plus : le serveur ne rappelle pas la source tout de suite.
 
-Notre serveur ne garde ni adresse IP, ni identifiant de vous ou de votre iPhone, ni votre position.
-Aucun journal des demandes n’est activé chez notre hébergeur.
+Mon serveur ne garde ni adresse IP, ni identifiant de vous ou de votre iPhone, ni votre position.
+Aucun journal des demandes n’est activé chez mon hébergeur.
 
-## Ce que voient notre hébergeur et la source des horaires
+## Ce que voient mon hébergeur et la source des horaires
 
-Notre serveur fonctionne chez Cloudflare.
-Cloudflare reçoit chaque demande avant notre serveur : il voit donc l’adresse de la demande, avec l’identifiant de l’arrêt, et les informations réseau qui accompagnent toute demande web, comme votre adresse IP et le lieu approximatif qu’il en déduit.
-Nous avons désactivé tous les journaux que Cloudflare pourrait garder pour nous, et notre serveur n’en garde rien.
+Mon serveur fonctionne chez Cloudflare.
+Cloudflare reçoit chaque demande avant mon serveur : il voit donc l’adresse de la demande, avec l’identifiant de l’arrêt, et les informations réseau qui accompagnent toute demande web, comme votre adresse IP et le lieu approximatif qu’il en déduit.
+J’ai désactivé tous les journaux que Cloudflare pourrait garder pour moi, et mon serveur n’en garde rien.
 Cloudflare traite ce qu’il voit selon sa [politique de confidentialité](https://www.cloudflare.com/fr-fr/privacypolicy/).
 
-Notre serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de l’arrêt et la clé de TROME.
+Mon serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de l’arrêt et la clé de TROME.
 PRIM ne reçoit rien qui vienne de vous.
 
 ## Ce qui reste sur votre iPhone
@@ -81,36 +81,36 @@ Supprimer l’app les supprime.
 ## D’où viennent les notifications
 
 Les notifications de TROME sont créées sur votre iPhone, quand vous arrivez près d’une station.
-Nous n’envoyons aucune notification depuis un serveur, et l’app ne demande pas d’identifiant de notification.
+Je n’envoie aucune notification depuis un serveur, et l’app ne demande pas d’identifiant de notification.
 
-## Ce qu’Apple nous transmet
+## Ce qu’Apple me transmet
 
-Si vous partagez les analyses avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple nous transmet des rapports de plantage et des statistiques d’usage, sans rien qui dise qui vous êtes.
+Si vous partagez les analyses avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple me transmet des rapports de plantage et des statistiques d’usage, sans rien qui dise qui vous êtes.
 Apple l’explique dans [Partager des informations relatives à l’analyse, au diagnostic et à l’utilisation avec Apple](https://support.apple.com/fr-fr/108971).
 
-Si vous testez TROME avec TestFlight, Apple nous transmet vos rapports de plantage, des données d’usage et les commentaires que vous envoyez.
+Si vous testez TROME avec TestFlight, Apple me transmet vos rapports de plantage, des données d’usage et les commentaires que vous envoyez.
 Si vous avez été invité par e-mail, ils arrivent avec votre nom et votre adresse e-mail, mais pas si vous avez rejoint le test par un lien public.
 Apple l’explique dans [TestFlight et confidentialité](https://www.apple.com/legal/privacy/data/fr/test-flight/).
 
-Nous utilisons ces informations seulement pour corriger et améliorer TROME, et nous ne les partageons avec personne.
+J’utilise ces informations seulement pour corriger et améliorer TROME, et je ne les partage avec personne.
 
-## Voir ou supprimer ce que nous avons sur vous
+## Voir ou supprimer ce que j’ai sur vous
 
-Notre serveur ne garde rien qui permette de vous retrouver : il n’y a donc rien à consulter ni à supprimer chez lui.
-Une personne n’a chez nous que ce qu’Apple nous transmet, si elle teste TROME avec TestFlight, et les messages qu’elle nous écrit.
-Nous gardons un message le temps de vous répondre et de régler le problème, puis nous le supprimons, et plus tôt si vous le demandez.
+Mon serveur ne garde rien qui permette de vous retrouver : il n’y a donc rien à consulter ni à supprimer chez lui.
+Une personne n’a chez moi que ce qu’Apple me transmet, si elle teste TROME avec TestFlight, et les messages qu’elle m’écrit.
+Je garde un message le temps de vous répondre et de régler le problème, puis je le supprime, et plus tôt si vous le demandez.
 
-Pour poser une question, ou pour voir ou supprimer ce que nous avons sur vous, écrivez à <Contact />.
-Si vous avez été invité à TestFlight par e-mail, écrivez depuis l’adresse de l’invitation : c’est elle qui nous permet de retrouver votre nom, et nous vous retirons de la liste des testeurs.
+Pour poser une question, ou pour voir ou supprimer ce que j’ai sur vous, écrivez à <Contact />.
+Si vous avez été invité à TestFlight par e-mail, écrivez depuis l’adresse de l’invitation : c’est elle qui me permet de retrouver votre nom, et je vous retire de la liste des testeurs.
 Une issue GitHub avec [le formulaire de question](https://github.com/valfur03/trome/issues/new?template=question.yml) marche aussi pour une question, mais une issue est publique et GitHub la garde selon sa [politique de confidentialité](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) (en anglais) :
 n’y mettez ni votre nom, ni votre adresse e-mail, ni rien de personnel.
 Vous pouvez aussi adresser une réclamation à la [CNIL](https://www.cnil.fr/fr/plaintes).
 
-## Qui sommes-nous
+## Qui je suis
 
-TROME est fait par Valentin Furmanek.
-Pour nous joindre : écrivez à <Contact />.
+Je suis Valentin Furmanek, et je développe TROME.
+Pour me joindre, écrivez à <Contact />.
 
 ## Quand cette page change
 
-Quand cette page change, nous changeons sa date, en haut de la page.
+Quand cette page change, je change sa date, en haut de la page.

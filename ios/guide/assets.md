@@ -24,5 +24,5 @@ A change is big for the video when a viewer would see another app: the look of t
 A fix, a new row that the video never shows, or a text in a corner is not.
 
 A change of the app never edits the video.
-When it alters what the video shows, the maintainers choose: make the video again now, make it again with the next big change, or take it off the store page until it is true again.
+When it alters what the video shows, the maintainer chooses: make the video again now, make it again with the next big change, or take it off the store page until it is true again.
 Why: an old video still shows the app, but a false one shows an app that riders will not get.

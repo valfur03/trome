@@ -22,17 +22,17 @@ TROME does one thing on purpose: it shows when the next trains come, on the lock
 It does not plan routes, show maps, cover other cities or other kinds of transport, or copy the transport apps that riders already use.
 
 So before you start a pull request, open an issue that says what you want to change and why, and wait for an answer.
-That way we agree on the change first, and you do not lose a day on a change that we cannot accept.
+That way I can tell you yes or no first, and you do not lose a day on a change that I cannot accept.
 
 ## Use AI tools, and answer for your change
 
-TROME is built with Claude Code, Anthropic's coding assistant: it writes most of the code and the docs, and the maintainer directs the work.
+I build TROME with Claude Code, Anthropic's coding assistant: it writes most of the code and the docs, and I direct the work.
 That is why the repo has a [CLAUDE.md](CLAUDE.md) and a [.claude](.claude/rules) folder: they are the manual that Claude Code reads, and they are public so that you can read them too.
 If you use Claude Code, it reads them by itself: `CLAUDE.md` in every session, and each file of `.claude/rules/` when the work touches its topic.
 
 You may use any tool, AI included.
 But read and run your change before you send it, be ready to explain it, and answer for it in the review.
-We do not accept a large change that you cannot explain, or that you did not run.
+I do not accept a large change that you cannot explain, or that you did not run.
 
 ## Set up
 
@@ -87,12 +87,12 @@ The changelog for developers will be made from these titles, so the kind says wh
 
 ## Send your change
 
-Push your branch to your fork, and open a pull request that links the issue where we agreed on the change.
+Push your branch to your fork, and open a pull request that links the issue where I said yes to the change.
 Say what you changed and how you checked it.
 The repo has no automatic checks on pull requests yet, so also say that `make check` passes.
 
 Then the change gets a review, which may ask for changes: push them to the same branch, and the pull request updates.
-When we accept the change, it lands on `main`.
+When I accept the change, it lands on `main`.
 
 ## Licence
 
