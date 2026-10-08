@@ -22,7 +22,7 @@ The order is:
 3. The manager rebases the branch onto `main` right before QA, so QA tests the branch on the latest `main`.
    When this rebase has a conflict, the manager stops it (`git rebase --abort`), and the task goes back to its Software Engineer, who solves it.
 4. QA tests the branch.
-5. When QA passed the task, the manager runs one command in the worktree of the task, one task at a time, instead of the separate steps (rebase, gate, E2E run, fast-forward):
+5. When QA passed the task, the manager runs one command in the worktree of the task, instead of the separate steps (rebase, gate, E2E run, fast-forward), as soon as QA passed it, also while another merge runs:
 
 ```sh
 make merge
@@ -34,7 +34,20 @@ When nvm does not have it and the branch changes `docs/`, `server/` or `contract
 Why: twice (2026-10-04 and 2026-10-07), a merge waited for the lock, then failed in the gate because the shell had the old default Node and the branch changed a docs page.
 Run it in the background: it can wait long for the Simulator lock.
 
-It takes the Simulator lock, then does these steps.
+**A merge goes first.** While a `make merge` waits, a Simulator job that is not a merge (QA, a review, `make e2e`) does not take the lock: it prints `Waiting for the Simulator lock: a merge goes first`.
+The job that holds the lock keeps it to its end: a merge never cuts it off.
+Why: a merge finishes a task, and the tasks that depend on it wait for it; on 2026-10-07, a merge waited about 25 minutes behind a QA run and a review.
+
+**Merges that wait together land as one train.** The `make merge` that gets the Simulator lock takes every task whose `make merge` waits, in the order they started.
+It rebases each task onto the one before it, then runs the gate and the full E2E suite once, on the last one, and fast-forwards `main` to it.
+Why: each landing held the Simulator about 5 minutes, 28% of its time on 2026-10-07; a train of 2 or 3 tasks costs about one landing.
+When the train fails (the gate, the E2E suite, the fast-forward), `main` does not move, each branch goes back to where it was, and the tasks land one by one, in the same run, each with its own gate and E2E run, as below.
+So the task at fault goes back to its Software Engineer, and the others still land.
+When every task passes alone, the failure of the train was flaky: `make merge` says so, with the evidence folder, and the manager creates a bug task for it (see "Flaky tests" in `CLAUDE.md`).
+A task that conflicts with a task before it in the train skips the train and lands alone when that task does not land.
+Each `make merge` prints the result of its own task; the one that ran the train also prints every step.
+
+For each task alone, or once for a train, it takes the Simulator lock, then does these steps.
 Each step runs only when the step before it passed:
 
 1. It rebases the branch of the worktree onto the tip of `main`.
@@ -54,7 +67,7 @@ It refuses to start on `main`, with changes that are not committed, with `ONLY=`
 
 Why one command, with the lock all along:
 
-- **Merges queue one after another.** A second `make merge` waits for the first one (it prints `waiting for the merge of another worktree`), then for the Simulator lock.
+- **Merges queue one after another.** A second `make merge` waits for the first one (it prints `waiting for the merge of another worktree`): it lands in the train of the first one when that one still waits for the Simulator, or else after it.
   When its turn comes, `main` already has the first merge, so it rebases onto it.
   Its fast-forward is never refused because another merge landed during its run.
 - **A full E2E run is never repeated.** Before, another merge could land between the end of a full run and the fast-forward.
@@ -65,7 +78,7 @@ Why one command, with the lock all along:
 Why the Software Engineer does not rebase: the manager rebases right before QA, and `make merge` rebases again, so a rebase at hand-over only repeated them.
 The permission system also refused it once.
 
-`make merge` changes only `main` and the branch of the task.
+`make merge` changes only `main` and the branches of the tasks that it lands.
 It never checks out `main` in the worktree of the task.
 When a step fails for a reason on the branch (a rebase conflict, the gate, the E2E suite), the task goes back to its Software Engineer (status `To Do`, with a comment).
 The Software Engineer fixes the cause on the branch (for a rebase conflict, it runs `git -C <worktree> rebase main` and solves the conflict) and hands the task over again.

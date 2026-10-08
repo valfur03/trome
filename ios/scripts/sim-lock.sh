@@ -3,6 +3,7 @@ set -eu
 
 base_lock=${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}
 watcher="$base_lock.slots-watcher"
+merge_queue=${RATP_MERGE_QUEUE:-$base_lock.merge-queue}
 # One Simulator job at a time: a second Simulator next to the first one takes the whole CPU of the Mac,
 # and each job then runs several times slower. The code of a second slot stays, but off.
 slots=${RATP_SIM_SLOTS:-1}
@@ -15,6 +16,10 @@ simulator="$scripts/simulator.sh"
 watch_seconds=${RATP_SIM_WATCH_SECONDS:-10}
 watcher_version=3
 held_slots=
+if [ -n "${RATP_SIM_MERGE:-}" ]; then
+    # A merge looks at the lock every second, so it wins the free lock even against the scripts of an older branch.
+    poll_seconds=1
+fi
 
 case "$slots" in
     "" | *[!0-9]* | 0)
@@ -178,9 +183,29 @@ cpu_idle_percent() {
     echo "${idle:-0}"
 }
 
+# A merge goes first: a job that is not a merge waits while a 'make merge' waits in the queue.
+merge_waits() {
+    [ -z "${RATP_SIM_MERGE:-}" ] || return 1
+    for merge_entry in "$merge_queue"/*.task; do
+        [ -f "$merge_entry" ] && [ ! -e "${merge_entry%.task}.result" ] || continue
+        merge_pid=$(sed -n 's/^pid=//p' "$merge_entry" 2> /dev/null || true)
+        if [ -n "$merge_pid" ] && kill -0 "$merge_pid" 2> /dev/null; then
+            merge_root=$(sed -n 's/^root=//p' "$merge_entry" 2> /dev/null || true)
+            return 0
+        fi
+    done
+    return 1
+}
+
 try_to_take_a_slot() {
     free_slots=
     busy=
+    if merge_waits; then
+        wait_kind=merge
+        busy=$merge_root
+        wait_reason="a merge goes first ($merge_root)"
+        return 1
+    fi
     for candidate in $(all_slots); do
         use_slot "$candidate"
         if [ ! -e "$lock" ] || remove_if_stale; then
@@ -233,7 +258,15 @@ acquire() {
 
 acquire_slot() {
     said=
-    until mkdir "$lock" 2> /dev/null; do
+    until ! merge_waits && mkdir "$lock" 2> /dev/null; do
+        if merge_waits; then
+            if [ "merge $merge_root" != "$said" ]; then
+                echo "Waiting for the Simulator lock of slot $RATP_SIM_SLOT: a merge goes first ($merge_root)" >&2
+                said="merge $merge_root"
+            fi
+            sleep "$poll_seconds"
+            continue
+        fi
         if [ ! -e "$lock" ]; then
             sleep 1
             continue

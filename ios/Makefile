@@ -99,7 +99,7 @@ help:
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
-	@echo "make merge               Merge the branch of this folder into main (after the review and QA), with the Simulator lock all along: rebase, make check, full make e2e, fast-forward"
+	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, fast-forward. Merges that wait together share one run; when it fails, they land one by one"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"

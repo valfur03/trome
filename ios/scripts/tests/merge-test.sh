@@ -5,7 +5,7 @@ scripts=$(cd "$tests/.." && pwd)
 state=$(mktemp -d)
 repo="$state/repo"
 failures=0
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE ONLY RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID || true
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE ONLY RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID RATP_SIM_MERGE RATP_MERGE_QUEUE || true
 export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 RATP_MERGE_LOCK="$state/merge.lock" SCRIPTS="$scripts"
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.com
@@ -357,6 +357,187 @@ expect "with two Simulator slots, the first of two merges succeeds" "$(finish_me
 expect "with two Simulator slots, the second merge succeeds" "$(finish_merge slot2)" "0"
 expect "with two Simulator slots, the second merge still waits for the first one" "$(rev main~1) $(rev main~2)" "$(rev task/slot1) $before"
 unset RATP_SIM_SLOTS RATP_SIM_MIN_IDLE_PERCENT
+
+queue="$RATP_SIM_LOCK.merge-queue"
+
+queued() {
+    ls "$queue"/*.task 2> /dev/null | wc -l | tr -d ' '
+}
+
+wait_until() {
+    tries=0
+    until "$@" || [ "$tries" -ge 100 ]; do
+        sleep 0.1
+        tries=$((tries + 1))
+    done
+}
+
+has_queued() {
+    [ "$(queued)" -ge "$1" ]
+}
+
+# Starts the merges of the tasks one after another while another merge holds the merge lock, so that they wait together.
+merge_together() {
+    lockf -k "$RATP_MERGE_LOCK" sh -c 'read -r line < "$0"' "$state/release-merge-lock" &
+    merge_lock_holder=$!
+    until ! lockf -s -k -t 0 "$RATP_MERGE_LOCK" true 2> /dev/null; do sleep 0.1; done
+    : > "$state/steps"
+    : > "$state/refs"
+    count=0
+    for task; do
+        start_merge "$task"
+        count=$((count + 1))
+        wait_until has_queued "$count"
+    done
+    echo release > "$state/release-merge-lock"
+    wait "$merge_lock_holder"
+}
+
+e2e_runs() {
+    grep -c '^e2e$' "$state/steps" || true
+}
+
+steps_line() {
+    tr '\n' ' ' < "$state/steps"
+}
+
+app_task() {
+    new_task "$1"
+    mkdir -p "$state/$1/ios/App"
+    commit "$state/$1" "ios/App/$1.swift" "$1"
+}
+
+failing_e2e="$passing_e2e && test ! -e fails-e2e"
+
+mkfifo "$state/release-qa"
+new_task queue_a
+new_task queue_b
+commit "$state/queue_a" queue_a queue_a
+commit "$state/queue_b" queue_b queue_b
+before=$(rev main)
+: > "$state/steps"
+"$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"; echo qa-end >> "$FAKE_SIM_STATE/steps"' "$state/release-qa" > "$state/qa.log" 2>&1 &
+qa=$!
+wait_until test -e "$RATP_SIM_LOCK/pid"
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo review >> "$FAKE_SIM_STATE/steps"' > "$state/review.log" 2>&1 &
+review=$!
+wait_until grep -q "Waiting for the Simulator lock" "$state/review.log"
+start_merge queue_a
+wait_until has_queued 1
+start_merge queue_b
+wait_until has_queued 2
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo late >> "$FAKE_SIM_STATE/steps"' > "$state/late-job.log" 2>&1 &
+late_job=$!
+wait_until grep -q "Waiting for the Simulator lock" "$state/late-job.log"
+expect "a merge does not cut off the job that holds the Simulator" "$(cat "$state/steps")" ""
+echo release > "$state/release-qa"
+wait "$qa"
+expect "the first merge of a train lands" "$(finish_merge queue_a)" "0"
+expect "the second merge of a train lands" "$(finish_merge queue_b)" "0"
+wait "$review" "$late_job"
+expect "merges go before the jobs that wait, also the ones that came first, and two merges that wait together share one gate and one E2E run" "$(steps_line | cut -d ' ' -f 1-6)" "qa-end check check-locked e2e e2e-locked nested-job"
+expect "the jobs that wait run after the merges" "$(steps_line | cut -d ' ' -f 7- | tr ' ' '\n' | sort | tr '\n' ' ')" " late review "
+expect "a job that waits says that a merge goes first" "$(contains "$state/review.log" "a merge goes first")" "yes"
+expect "a train lands its tasks in the order they came, each one rebased onto the one before it" "$(rev main) $(rev main~1) $(rev main~2)" "$(rev task/queue_b) $(rev task/queue_a) $before"
+expect "a task of a train says that it landed in the train" "$(contains "$state/queue_b.log" "task/queue_b landed in a train of 2 tasks, which shared one gate and one E2E run.")" "yes"
+expect "a task of a train says where the steps of its train are" "$(contains "$state/queue_b.log" "this task went in the train of the make merge of")" "yes"
+expect "main has no merge commit after a train" "$(git -C "$repo" rev-list --merges main)" ""
+expect "a train frees the Simulator lock" "$(lock_state)" "free"
+expect "a train leaves no task in the queue" "$(queued)" "0"
+
+for task in docs_a docs_b docs_c; do
+    new_task "$task"
+    commit "$state/$task" "$task.md" "$task"
+done
+before=$(rev main)
+merge_together docs_a docs_b docs_c
+expect "three merges that wait together land" "$(finish_merge docs_a) $(finish_merge docs_b) $(finish_merge docs_c)" "0 0 0"
+expect "a train of three tasks runs one gate, and no E2E run when no task changes app code" "$(steps_line)" "check check-locked "
+expect "a train of three lands the three tasks in order" "$(rev main) $(rev main~1) $(rev main~2) $(rev main~3)" "$(rev task/docs_c) $(rev task/docs_b) $(rev task/docs_a) $before"
+
+app_task second_ok
+app_task second_bad
+commit "$state/second_bad" fails-e2e bad
+before=$(rev main)
+bad_head=$(rev task/second_bad)
+TROME_MERGE_E2E=$failing_e2e
+merge_together second_ok second_bad
+expect "when the second task of a train fails, the first one still lands" "$(finish_merge second_ok)" "0"
+expect "when the second task of a train fails, it does not land" "$(finish_merge second_bad)" "1"
+expect "when the second task of a train fails, main is the first task, which passed alone" "$(rev main) $(rev main~1)" "$(rev task/second_ok) $before"
+expect "when a train fails, its tasks land one by one: one E2E run for the train, then one for each task" "$(e2e_runs)" "3"
+expect "the failed task says which step failed" "$(contains "$state/second_bad.log" "the step 'full E2E suite' failed for task/second_bad")" "yes"
+expect "the train says which step failed" "$(contains "$state/second_ok.log" "the train of task/second_ok, task/second_bad failed at the step 'full E2E suite'")" "yes"
+expect "a train that fails for a task is not called flaky" "$(contains "$state/second_bad.log" "flaky")" "no"
+expect "the failed task keeps its own commits, on top of main" "$(git -C "$repo" rev-list --count main..task/second_bad) $(git -C "$repo" merge-base --is-ancestor main task/second_bad && echo on-main)" "2 on-main"
+
+app_task first_bad
+commit "$state/first_bad" fails-e2e bad
+app_task first_ok
+before=$(rev main)
+first_bad_head=$(rev task/first_bad)
+merge_together first_bad first_ok
+TROME_MERGE_E2E=$passing_e2e
+expect "when the first task of a train fails, it does not land" "$(finish_merge first_bad)" "1"
+expect "when the first task of a train fails, the second one still lands" "$(finish_merge first_ok)" "0"
+expect "when the first task of a train fails, main is the second task alone" "$(rev main~1)" "$before"
+expect "the second task does not keep the commits of the first one" "$(git -C "$repo" merge-base --is-ancestor "$first_bad_head" task/first_ok && echo mixed || echo apart)" "apart"
+expect "the first task is back on its own commits" "$(rev task/first_bad)" "$first_bad_head"
+expect "the first task says which step failed" "$(contains "$state/first_bad.log" "the step 'full E2E suite' failed for task/first_bad")" "yes"
+expect "main has no merge commit after a failed train" "$(git -C "$repo" rev-list --merges main)" ""
+expect "a failed train frees the Simulator lock" "$(lock_state)" "free"
+
+app_task flaky_a
+app_task flaky_b
+before=$(rev main)
+TROME_MERGE_E2E="$passing_e2e && if [ ! -e \"\$FAKE_SIM_STATE/flaked\" ]; then touch \"\$FAKE_SIM_STATE/flaked\"; echo /kept/flaky > \"\$TROME_E2E_EVIDENCE_NOTE\"; exit 1; fi"
+merge_together flaky_a flaky_b
+TROME_MERGE_E2E=$passing_e2e
+expect "when a train fails once with a flaky test, both tasks land" "$(finish_merge flaky_a) $(finish_merge flaky_b)" "0 0"
+expect "after a flaky train, main has both tasks in order" "$(rev main) $(rev main~1) $(rev main~2)" "$(rev task/flaky_b) $(rev task/flaky_a) $before"
+expect "make merge says that the failure of the train is flaky" "$(contains "$state/flaky_b.log" "that failure is flaky. Create a bug task")" "yes"
+expect "make merge gives the evidence of the flaky run" "$(tail -1 "$state/flaky_b.log")" "The log, the .xcresult and the Simulator log of the failed run are kept in /kept/flaky"
+
+new_task clash_a
+new_task clash_b
+commit "$state/clash_a" clash "from a"
+commit "$state/clash_b" clash "from b"
+clash_head=$(rev task/clash_b)
+before=$(rev main)
+merge_together clash_a clash_b
+expect "when the second task of a train conflicts with the first one, the first one lands" "$(finish_merge clash_a)" "0"
+expect "the task that conflicts with the one before it does not land" "$(finish_merge clash_b)" "1"
+expect "the train runs the gate and the E2E suite once, without the task that conflicts" "$(steps_line)" "check check-locked e2e e2e-locked nested-job "
+expect "main is the first task, after a conflict in the train" "$(rev main~1)" "$before"
+expect "the task that conflicts says that its rebase failed" "$(contains "$state/clash_b.log" "the step 'rebase' failed for task/clash_b")" "yes"
+expect "the task that conflicts is as it was before" "$(rev task/clash_b) $(git -C "$state/clash_b" status --porcelain)" "$clash_head "
+
+app_task stop_a
+app_task stop_b
+stop_b_head=$(rev task/stop_b)
+before=$(rev main)
+TROME_MERGE_CHECK="$passing_check && sleep 2"
+merge_together stop_a stop_b
+wait_until grep -q '^check$' "$state/steps"
+stopped=$(grep -l '^branch=task/stop_b$' "$queue"/*.task | xargs sed -n 's/^pid=//p')
+pkill -TERM -P "$stopped" || true
+kill "$stopped" 2> /dev/null || true
+TROME_MERGE_CHECK=$passing_check
+expect "when the make merge of a task of a train is stopped, the other task still lands" "$(finish_merge stop_a)" "0"
+finish_merge stop_b > /dev/null
+expect "a task whose make merge was stopped during its train does not land" "$(rev main) $(rev main~1)" "$(rev task/stop_a) $before"
+expect "a task whose make merge was stopped during its train is back on its own commits" "$(rev task/stop_b)" "$stop_b_head"
+expect "a stopped make merge leaves no task in the queue" "$(queued)" "0"
+
+mkdir -p "$queue"
+sh -c 'exit 0' &
+dead=$!
+wait "$dead"
+printf 'pid=%s\nroot=/gone\nbranch=task/gone\nnode=\n' "$dead" > "$queue/0000000001.000000.$dead.task"
+: > "$state/steps"
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-dead-merge >> "$FAKE_SIM_STATE/steps"' > "$state/dead.log" 2>&1
+expect "a job does not wait for a merge whose make merge has ended" "$(steps_line)" "after-dead-merge "
+rm -f "$queue/0000000001.000000.$dead.task"
 
 fake_node() {
     mkdir -p "$1"
