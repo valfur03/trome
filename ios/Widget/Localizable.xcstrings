@@ -60,7 +60,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@, à pied jusqu’à %2$@"
+            "value" : "%1$@, %2$@, à pied"
           }
         }
       }
