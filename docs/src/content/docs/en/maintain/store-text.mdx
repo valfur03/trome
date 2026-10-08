@@ -276,10 +276,28 @@ Each line below is a claim that the app cannot keep, or a risk with App Review, 
 - **No promise of times for every line.** The source lists only the next three or four trains of a stop, and the times follow the service hours, so the text says "the next trains", never "live times for every line".
 - **No promise of a start with no tap.** Version 1 has no silent start: a closed app sends a notification, and one tap brings the Live Activity.
   The first lines say what the rider gets, and the notification is named once, in the block "Quand les trains s’affichent" / "When the trains show".
-  Only a real iPhone at a station shows that iOS wakes the closed app, so see the notification come on your iPhone before you paste the text; if it does not come, remove the closed-app sentences from the description, the notes and the TestFlight text.
+  Only a real iPhone at a station shows that iOS wakes the closed app, so see the notification come on your iPhone before you paste any text that says it comes.
+  Until you have seen it, the public What's new pages and `CHANGELOG.md` say nothing about the closed app: [the clause that waits for the proof](#the-closed-app-clause-that-waits-for-the-proof) is not in them.
 - **No headline that says a notification pops up.** The notification is the way in of version 1, not what TROME is.
 - **No claim outside Paris.** The app is not blocked elsewhere, but it shows nothing useful there, except the example, so the first lines name the limit.
 - **No claim about the battery, and no `real time`.** Nobody measured the first, and the second promises more than the source gives.
+
+## The closed-app clause that waits for the proof
+
+Five places hold the claim that a closed app sends a notification: the description, the review notes, the TestFlight text, the What's new pages and `CHANGELOG.md`.
+The store texts above carry it already, and you check them before you paste.
+The What's new pages and `CHANGELOG.md` go online with the site, so they carry it only after the proof.
+
+When the notification has come on a real iPhone at a station, add the clause to the 1.0 line of each of the three, so that the line reads:
+
+- `fr/whats-new.mdx`: `App ouverte, les trains s’affichent à votre arrivée à une station ; app fermée, une notification vous prévient : touchez-la, et ils s’affichent.`
+- `en/whats-new.mdx` and `CHANGELOG.md`: `With the app open, the trains show when you arrive at a station; with the app closed, a notification tells you, and one tap shows them.`
+
+When it did not come, or not every time, remove the closed-app sentences from the other three places instead, and leave the What's new line as it stands:
+
+- the description, French and English: the block "Quand les trains s’affichent" / "When the trains show" keeps only its sentence about the open app, and the permission sentence "Pour l’app fermée" / "For the closed app" goes;
+- the review notes: the bullet about the closed app;
+- the TestFlight text: step 2 of "What to test" says only what happens with the app open.
 
 ## Sentences to change when the Live Activity starts by itself
 
@@ -289,7 +307,7 @@ The day it starts with no tap, edit these sentences, and only these:
 - the description, French and English: the block "Quand les trains s’affichent" / "When the trains show", and the permission sentence "Pour l’app fermée" / "For the closed app";
 - the review notes: the bullet about the closed app;
 - the TestFlight text: step 2 of "What to test";
-- the 1.0 line about the notification on the What's new pages and in `CHANGELOG.md`, which a new version replaces.
+- the closed-app clause of the 1.0 line on the What's new pages and in `CHANGELOG.md`, if you added it, and a line about the new start in the entry of the next version.
 
 The titles, the subtitle, the promotional text and the beta description do not name the notification, so they stay.
 
