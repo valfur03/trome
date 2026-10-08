@@ -18,6 +18,8 @@ BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 QUIET := ./scripts/quiet.sh
+BUILD_GATE := ./scripts/build-gate.py build
+TEST_RUN_GATE := ./scripts/build-gate.py tests
 LOGS := $(BUILD_DIR)/logs
 CORE_PACKAGE := Packages/TROMECore
 NO_KEY := -xcconfig Config/NoKey.xcconfig
@@ -61,7 +63,7 @@ USE_SHARED_CACHE := ./scripts/shared-cache.sh use "$(TROME_SHARED_CACHE)"
 SHARED_SDK_MODULES := SDK_EXPLICIT_MODULES_OUTPUT_PATH="$(TROME_SHARED_CACHE)/SDKExplicitPrecompiledModules"
 endif
 
-XCODEBUILD := $(USE_SHARED_CACHE) xcodebuild -quiet \
+XCODEBUILD := $(BUILD_GATE) $(USE_SHARED_CACHE) xcodebuild -quiet \
 	-project $(PROJECT) \
 	-derivedDataPath $(DERIVED_DATA) \
 	-clonedSourcePackagesDirPath $(BUILD_DIR)/SourcePackages \
@@ -152,18 +154,18 @@ ifeq ($(LIVE),1)
 	@$(BUILD_APP) -xcconfig "$(PRIM_SECRETS)" PRIM_SECRETS_STAMP="$$(stat -f '%Fm-%i-%z' "$(PRIM_SECRETS)")"
 else
 	@rm -rf $(BUILD_RESULT)
-	@$(QUIET) $(LOGS)/build.log '' $(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/build.log '' $(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)
 	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 endif
 
 strings-check: project
-	@./scripts/strings-sync.sh check $(EXPORT_STRINGS)
+	@$(BUILD_GATE) ./scripts/strings-sync.sh check $(EXPORT_STRINGS)
 	@./scripts/strings-check.py $(STRING_CATALOGS)
 	@./scripts/app-name-sync.py --check Config/Base.xcconfig App/InfoPlist.xcstrings
 
 strings-sync: project
 	@./scripts/app-name-sync.py Config/Base.xcconfig App/InfoPlist.xcstrings
-	@./scripts/strings-sync.sh sync $(EXPORT_STRINGS)
+	@$(BUILD_GATE) ./scripts/strings-sync.sh sync $(EXPORT_STRINGS)
 
 prose-check:
 	@./scripts/prose-check.py
@@ -172,7 +174,7 @@ public-text-check:
 	@./scripts/public-text-check.py
 
 test:
-	@$(QUIET) $(LOGS)/unit-tests.log 'Test run with|Executed [1-9]' swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/unit-tests.log 'Test run with|Executed [1-9]' swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
 
 test-scripts:
 	@mkdir -p $(LOGS)
@@ -213,8 +215,8 @@ e2e: project
 			|| { echo "No E2E test named $${test#*/} in $$class" >&2; exit 1; };; esac; \
 	done
 	@rm -rf $(E2E_RESULT)
-	@$(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@$(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
 		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E tests: ' \
 		sh -c '"$$@"; status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); [ $$status -eq 0 ] || ./scripts/e2e-keep.py $(E2E_RESULT) $(LOGS)/e2e.log "$(APP_PATH)"; exit $$status' e2e \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
@@ -247,15 +249,15 @@ merge:
 	@./scripts/merge.sh
 
 live-activity-render: project
-	@$(QUIET) $(LOGS)/live-activity-render-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) with-destination \
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/live-activity-render-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@$(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/live-activity-render.log '^Simulator time' ./scripts/live-activity-render.sh render $(RENDER_OUT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -collect-test-diagnostics never test-without-building
 	@./scripts/live-activity-render.sh report $(RENDER_OUT)
 
 docs-screenshots: project
-	@$(QUIET) $(LOGS)/docs-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@$(SIM_LOCK) job $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/docs-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@$(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/docs-screenshots.log '^Saved ' ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) $(LOGS)/docs-screenshots.log "$(APP_PATH)" \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \

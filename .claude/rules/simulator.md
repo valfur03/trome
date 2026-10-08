@@ -96,7 +96,9 @@ A merge goes first: while a `make merge` waits (its entry in `/tmp/ratp-sim.lock
 A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock.
 It does not free the lock when it ends: the outer job does.
 
-`make check`, `make test` and `make test-scripts` need no Simulator and no lock.
+`make check`, `make test` and `make test-scripts` need no Simulator and no Simulator lock.
+But their builds wait while a Simulator test run runs (they print `Waiting: a Simulator test run ... needs a quiet Mac`), and a test run waits for the builds that run (the build gate, `.claude/rules/tooling.md`).
+This is normal: do not stop them.
 
 The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
 

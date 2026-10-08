@@ -40,6 +40,7 @@ To put the app on your own iPhone, see [Install on your iPhone](#install-on-your
 
 The `make` commands run the app on one shared Simulator, `RATP-Shared`, and only one of them uses it at a time, in any clone or git worktree of the repo.
 A second command waits, and prints `Waiting for the Simulator lock`: let it wait.
+While the tests of a command run on the Simulator, the builds of every clone wait, and print `Waiting: a Simulator test run ... needs a quiet Mac`: a build next to the tests slows iOS so much that it drops the taps of the tests.
 After `make run`, the Simulator stays yours, and the other commands wait, until you run `make simulator-shutdown`.
 Each command starts from a clean app: it removes the app and its data, and resets the permissions (notifications included), the text size, the appearance and the language of the Simulator.
 In your own `xcrun simctl` commands, use the ID that `make -s simulator` prints.

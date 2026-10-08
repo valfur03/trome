@@ -121,7 +121,7 @@ build_release() {
     release_settings="$work/$1-$(date +%s)-$$.xcconfig"
     printf 'PRIM_API_KEY = %s\nTRAIN_SERVER_HOST = %s\nTRAIN_SERVER_APP_TOKEN = %s\n' \
         "$release_key" "$2" "$3" > "$release_settings"
-    (cd "$root" && xcodebuild -quiet \
+    (cd "$root" && ./scripts/build-gate.py build xcodebuild -quiet \
         -project TROME.xcodeproj -scheme TROME -configuration Release \
         -destination 'generic/platform=iOS Simulator' ARCHS="$(uname -m)" \
         -derivedDataPath "$build/DerivedData" -clonedSourcePackagesDirPath "$build/SourcePackages" \
