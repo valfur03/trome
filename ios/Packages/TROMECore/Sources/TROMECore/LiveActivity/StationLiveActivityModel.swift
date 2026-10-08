@@ -135,9 +135,10 @@ public final class StationLiveActivityModel {
     /// The next time a running app draws the Live Activity again: when a train of the page changes its
     /// status, or, for kept times, when they get old, to mark them stale (iOS would wait up to 2 minutes).
     /// With no trains to draw the page from, only the mark is planned: a date that `redraw()` cannot act on
-    /// would come back at once, and the background loop would never sleep.
+    /// would come back at once, and the background loop would never sleep. The content of an earlier launch
+    /// counts too: a failed call that changes nothing keeps it, and its times still get old.
     func nextRedrawDate(after now: Date) -> Date? {
-        guard let content, !content.isMarkedStale else { return nil }
+        guard let content = content ?? client.shownContent, !content.isMarkedStale else { return nil }
         let pageDate = inputs == nil
             ? nil
             : content.trains.linesPage?.nextRedrawDate(after: content.updatedAt).map { max($0, now) }

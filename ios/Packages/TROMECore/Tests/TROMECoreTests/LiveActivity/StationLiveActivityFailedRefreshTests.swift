@@ -234,6 +234,22 @@ struct StationLiveActivityFailedRefreshTests {
         #expect(client.updates.last?.isMarkedStale == true)
         #expect(model.nextRedrawDate(after: clock.now) == nil)
     }
+
+    @Test func plansTheMarkOfTheTrainsShownBeforeTheAppStartedWhenAFailedRefreshChangesNothing() async {
+        client.isShowing = true
+        client.shownContent = content(concorde, concordeTrains(inSeconds: [120, 400]))
+        let firstTrain = clock.now.addingTimeInterval(120)
+        let model = makeModel()
+        await model.update(station: concorde, trains: .failed(.unreachable))
+
+        #expect(model.nextRedrawDate(after: clock.now) == firstTrain)
+
+        clock.advance(by: 120)
+        await model.redraw()
+
+        #expect(client.updates.map(\.isMarkedStale) == [true])
+        #expect(model.nextRedrawDate(after: clock.now) == nil)
+    }
 }
 
 private extension StationActivityAttributes.ContentState {
