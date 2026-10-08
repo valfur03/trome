@@ -303,6 +303,29 @@ extension AutoLiveActivityModelTests {
         #expect(provider.callCount == callCount)
     }
 
+    @Test func marksTheKeptTimesStaleInTheBackgroundWhenTheFirstShownTrainLeavesWhileTheServerIsOut() async {
+        let line12 = TransitLine(mode: .metro, name: "12")
+        let station = Station(id: "m", name: "Station M", coordinate: Coordinate(48.8600, 2.3600), lines: [line12])
+        let departure = clock.now.addingTimeInterval(300)
+        provider.answer(.success([
+            Departure(line: line12, destination: "Mairie d'Issy", time: departure, arrivalTime: departure - 10)
+        ]), for: station)
+        let model = makeModel(catalog: StationCatalog(stations: [station]))
+        await arrive(at: station.coordinate, in: model)
+        await waitUntil { client.updates.contains { !$0.shownTrains.isEmpty } }
+        provider.answer(.failure(.serverOut(retryAt: clock.now.addingTimeInterval(1_840))), for: station)
+        model.setAppPhase(.background)
+
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { client.updates.last?.isMarkedStale == true }
+
+        let atThePlatform = client.updates.last { $0.shownTrains.first?.status == .atPlatform }
+        #expect(atThePlatform?.serverIsOut == true)
+        #expect(client.updates.last?.serverIsOut == true)
+        #expect(client.updates.last?.updatedAt == atThePlatform?.updatedAt)
+        #expect(clock.now == departure)
+    }
+
     @Test func redrawsAtOnceWhenTheAppLeavesTheScreenAfterTheTrainAtThePlatformLeft() async {
         let line12 = TransitLine(mode: .metro, name: "12")
         let station = Station(id: "m", name: "Station M", coordinate: Coordinate(48.8600, 2.3600), lines: [line12])

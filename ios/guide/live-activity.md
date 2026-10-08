@@ -183,7 +183,7 @@ The log of the Simulator shows it: `liveactivitiesd` plans its task "Marking act
 
 | The app | What the rider sees |
 |---|---|
-| Runs | Nothing of the rule: the app sends a new content when the train leaves |
+| Runs | Nothing of the rule: the app sends a new content when the train leaves. With times kept after a failed call, it sends them again marked stale (`isMarkedStale`), and the widget hides the waits at once |
 | Does not run, and the last content came more than 2 minutes before the train left | The waits go 1 to 3 seconds after the train left |
 | Does not run, and the last content came less than 2 minutes before | The waits stay until 2 minutes after the content: "0" for up to about a minute after the train left, "Approaching" or "At the platform" for up to about 2 minutes |
 

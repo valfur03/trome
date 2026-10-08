@@ -59,7 +59,7 @@ Any other failure, such as no network or a time-out, fails this call only.
 
 | Before the call, the Live Activity shows | After it |
 |---|---|
-| Train times | The same times, still counting down; once the first train has left, iOS shows **Open the app** |
+| Train times | The same times, still counting down; once the first train has left, the Live Activity shows **Open the app** ([the stale rule](live-activity.md#the-stale-rule)) |
 | **No trains** | **Times unavailable**, because **No trains** never gets old on its own |
 | No times yet | **Times unavailable** |
 | Any of these, and the server is out because its budget of PRIM calls is used up (`"budget"`, or `"prim-limit"`: PRIM said "too many requests") | **Times unavailable**, in place of **Open the app**: opening the app would not help |

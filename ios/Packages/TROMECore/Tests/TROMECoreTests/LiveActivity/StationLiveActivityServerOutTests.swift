@@ -67,6 +67,23 @@ struct StationLiveActivityServerOutTests {
         #expect(client.updates.last?.trains.linesPage != nil)
     }
 
+    @Test func marksTheKeptTimesStaleAndKeepsSayingTheServerIsOutOnceTheFirstShownTrainHasLeft() async {
+        let model = makeModel()
+        await model.start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
+        await model.update(station: concorde, trains: serverOut)
+
+        clock.advance(by: 120)
+        await model.redraw()
+        await model.update(station: concorde, trains: serverOut)
+
+        #expect(client.updates.count == 2)
+        let marked = client.updates.last
+        #expect(marked?.isMarkedStale == true)
+        #expect(marked?.serverIsOut == true)
+        let looksStale = marked?.isStale(systemSaysStale: false) ?? false
+        #expect(marked?.dynamicIslandWait(isStale: looksStale).wait == .timesUnavailable)
+    }
+
     @Test func saysTheServerIsOutWhenTheLiveActivityStartsWhileTheServerIsOut() async {
         let model = makeModel()
 

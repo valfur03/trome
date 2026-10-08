@@ -21,11 +21,21 @@ struct StationActivityContentServerOutTests {
         let content = try JSONDecoder().decode(StationActivityAttributes.ContentState.self, from: Data(older.utf8))
 
         #expect(content.serverIsOut == false)
+        #expect(content.isMarkedStale == false)
         #expect(content.trains == .noData)
     }
 
+    @Test(arguments: [(false, false, false), (true, false, true), (false, true, true), (true, true, true)])
+    func looksStaleWhenIOSSaysSoOrTheAppMarkedIt(systemSaysStale: Bool, isMarkedStale: Bool, looksStale: Bool) {
+        var content = lines(isOut: true)
+        content.isMarkedStale = isMarkedStale
+
+        #expect(content.isStale(systemSaysStale: systemSaysStale) == looksStale)
+    }
+
     @Test func keepsWhetherTheServerIsOutFromTheAppToTheWidget() throws {
-        let content = lines(isOut: true)
+        var content = lines(isOut: true)
+        content.isMarkedStale = true
 
         let data = try JSONEncoder().encode(content)
 

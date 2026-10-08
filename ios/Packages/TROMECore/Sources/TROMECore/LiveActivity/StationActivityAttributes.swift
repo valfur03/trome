@@ -6,12 +6,23 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
         public var trains: Trains
         public var updatedAt: Date
         public var serverIsOut: Bool
+        /// Set by the app on the times that it kept after a failed call, once their stale date has passed.
+        /// iOS marks a content stale no sooner than 2 minutes after the last update (seen in the log of
+        /// `liveactivitiesd`), so a running app says it itself, and the widget draws the stale look at once.
+        public var isMarkedStale: Bool
 
-        public init(stationName: String, trains: Trains, updatedAt: Date, serverIsOut: Bool = false) {
+        public init(
+            stationName: String,
+            trains: Trains,
+            updatedAt: Date,
+            serverIsOut: Bool = false,
+            isMarkedStale: Bool = false
+        ) {
             self.stationName = stationName
             self.trains = trains
             self.updatedAt = updatedAt
             self.serverIsOut = serverIsOut
+            self.isMarkedStale = isMarkedStale
         }
 
         public init(from decoder: any Decoder) throws {
@@ -20,6 +31,12 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
             trains = try container.decode(Trains.self, forKey: .trains)
             updatedAt = try container.decode(Date.self, forKey: .updatedAt)
             serverIsOut = try container.decodeIfPresent(Bool.self, forKey: .serverIsOut) ?? false
+            isMarkedStale = try container.decodeIfPresent(Bool.self, forKey: .isMarkedStale) ?? false
+        }
+
+        /// Whether the widget draws the stale look: iOS says so, or the app did.
+        public func isStale(systemSaysStale: Bool) -> Bool {
+            systemSaysStale || isMarkedStale
         }
     }
 
@@ -37,6 +54,7 @@ private enum ContentStateKey: String, CodingKey {
     case trains
     case updatedAt
     case serverIsOut
+    case isMarkedStale
 }
 
 extension StationActivityAttributes.ContentState {

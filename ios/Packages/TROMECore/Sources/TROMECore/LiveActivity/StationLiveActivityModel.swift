@@ -112,23 +112,29 @@ public final class StationLiveActivityModel {
         firstLineIndex = page.nextFirstIndex
         Self.logPager("show the next lines of \(shown.stationName): page from \(page.firstIndex) to \(firstLineIndex)")
         guard let inputs, !keptTimesAreStale(at: now()) else {
-            await send(shown)
+            await send(markedStaleIfTheKeptTimesAreOld(shown))
             return
         }
         await show(station: inputs.station, trains: inputs.trains)
     }
 
     func redraw() async {
-        guard isShowing, let inputs, !keptTimesAreStale(at: now()) else { return }
+        guard isShowing, let inputs else { return }
+        guard !keptTimesAreStale(at: now()) else {
+            await markTheKeptTimesStaleOnceTheyAreOld()
+            return
+        }
         await show(station: inputs.station, trains: inputs.trains)
     }
 
+    /// The next time a running app draws the Live Activity again: when a train of the page changes its
+    /// status, or, for kept times, when they get old, to mark them stale (iOS would wait up to 2 minutes).
     func nextRedrawDate(after now: Date) -> Date? {
-        guard let content, let date = content.trains.linesPage?.nextRedrawDate(after: content.updatedAt) else {
-            return nil
-        }
-        let due = max(date, now)
-        return keptTimesAreStale(at: due) ? nil : due
+        guard let content, !content.isMarkedStale else { return nil }
+        let pageDate = content.trains.linesPage?.nextRedrawDate(after: content.updatedAt).map { max($0, now) }
+        guard let keptTimesStaleDate else { return pageDate }
+        let markDate = max(keptTimesStaleDate, now)
+        return pageDate.map { min($0, markDate) } ?? markDate
     }
 
     public func stop() async {
@@ -162,10 +168,33 @@ public final class StationLiveActivityModel {
 
     private func sayWhetherTheServerIsOut(_ trains: NextTrainsState) async {
         serverRetryAt = trains.serverRetryAt
-        guard var shown = content ?? client.shownContent, shown.serverIsOut != (serverRetryAt != nil) else { return }
-        shown.serverIsOut = serverRetryAt != nil
-        content = shown
-        await send(shown)
+        guard let shown = content ?? client.shownContent else { return }
+        var kept = markedStaleIfTheKeptTimesAreOld(shown)
+        kept.serverIsOut = serverRetryAt != nil
+        await sendIfChanged(kept, from: shown)
+    }
+
+    private func markTheKeptTimesStaleOnceTheyAreOld() async {
+        guard let shown = content ?? client.shownContent else { return }
+        await sendIfChanged(markedStaleIfTheKeptTimesAreOld(shown), from: shown)
+    }
+
+    private func sendIfChanged(
+        _ kept: StationActivityAttributes.ContentState,
+        from shown: StationActivityAttributes.ContentState
+    ) async {
+        guard kept != shown else { return }
+        content = kept
+        await send(kept)
+    }
+
+    private func markedStaleIfTheKeptTimesAreOld(
+        _ shown: StationActivityAttributes.ContentState
+    ) -> StationActivityAttributes.ContentState {
+        guard keptTimesAreStale(at: now()) else { return shown }
+        var marked = shown
+        marked.isMarkedStale = true
+        return marked
     }
 
     private func show(station: Station, trains: NextTrainsState) async {

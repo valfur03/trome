@@ -6,7 +6,7 @@ import WidgetKit
 struct StationLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: StationActivityAttributes.self) { context in
-            LockScreenView(state: context.state, isStale: context.isStale)
+            LockScreenView(state: context.state, isStale: context.looksStale)
                 .activityBackgroundTint(.black)
                 .environment(\.colorScheme, .dark)
         } dynamicIsland: { context in
@@ -25,7 +25,7 @@ struct StationLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ExpandedIslandBottomRegion(state: context.state, isStale: context.isStale)
+                    ExpandedIslandBottomRegion(state: context.state, isStale: context.looksStale)
                 }
             } compactLeading: {
                 if let line = context.island.line {
@@ -247,8 +247,12 @@ private struct LineDirectionRow: View {
 }
 
 private extension ActivityViewContext<StationActivityAttributes> {
+    var looksStale: Bool {
+        state.isStale(systemSaysStale: isStale)
+    }
+
     var island: DynamicIslandWait {
-        state.dynamicIslandWait(isStale: isStale)
+        state.dynamicIslandWait(isStale: looksStale)
     }
 }
 

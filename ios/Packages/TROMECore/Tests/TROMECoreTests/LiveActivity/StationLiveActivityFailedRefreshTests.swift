@@ -55,7 +55,7 @@ struct StationLiveActivityFailedRefreshTests {
         #expect(client.updates.last?.staleDate == firstTrain)
     }
 
-    @Test func letsTheKeptTrainsGoStaleOnceTheFirstShownTrainHasLeft() async {
+    @Test func marksTheKeptTrainsStaleOnceTheFirstShownTrainHasLeft() async {
         let model = makeModel()
         await model.start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
         let shown = client.shownContent
@@ -63,15 +63,40 @@ struct StationLiveActivityFailedRefreshTests {
 
         clock.advance(by: 120)
         await model.redraw()
+        await model.redraw()
         await model.update(station: concorde, trains: .failed(.unreachable))
 
-        #expect(client.updates.isEmpty)
-        #expect(client.shownContent == shown)
+        #expect(client.updates == [shown?.markedStale].compactMap { $0 })
         #expect(shown?.staleDate == clock.now)
         #expect(model.nextRedrawDate(after: clock.now) == nil)
     }
 
-    @Test func letsTheTrainsSavedByTheLastAppGoStaleOnceTheFirstShownTrainHasLeft() async {
+    @Test func plansToMarkTheKeptTrainsStaleWhenTheFirstShownTrainLeaves() async {
+        let model = makeModel()
+        let firstTrain = clock.now.addingTimeInterval(120)
+        await model.start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
+        await model.update(station: concorde, trains: .failed(.unreachable))
+
+        clock.advance(by: 100)
+        await model.redraw()
+
+        #expect(client.updates.last?.isMarkedStale == false)
+        #expect(model.nextRedrawDate(after: clock.now) == firstTrain)
+    }
+
+    @Test func marksTheKeptTrainsStaleWhenACallFailsAfterTheFirstShownTrainHasLeft() async {
+        let model = makeModel()
+        await model.start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
+        let shown = client.shownContent
+        await model.update(station: concorde, trains: .failed(.unreachable))
+
+        clock.advance(by: 125)
+        await model.update(station: concorde, trains: .failed(.unreachable))
+
+        #expect(client.updates == [shown?.markedStale].compactMap { $0 })
+    }
+
+    @Test func marksTheTrainsSavedByTheLastAppStaleOnceTheFirstShownTrainHasLeft() async {
         let store = StationLiveActivityInputsStore(storage: InMemoryKeyValueStore())
         await makeModel(store: store).start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
         let shown = client.shownContent
@@ -80,11 +105,10 @@ struct StationLiveActivityFailedRefreshTests {
         clock.advance(by: 120)
         await appStartedAgain.redraw()
 
-        #expect(client.updates.isEmpty)
-        #expect(client.shownContent == shown)
+        #expect(client.updates == [shown?.markedStale].compactMap { $0 })
     }
 
-    @Test func sendsTheShownContentAgainWhenTheRiderAsksForTheNextLinesOfStaleTimes() async {
+    @Test func sendsTheShownContentMarkedStaleWhenTheRiderAsksForTheNextLinesOfStaleTimes() async {
         let model = makeModel()
         await model.start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
         let shown = client.shownContent
@@ -93,7 +117,21 @@ struct StationLiveActivityFailedRefreshTests {
         clock.advance(by: 120)
         await model.showNextLines()
 
-        #expect(client.updates == [shown])
+        #expect(client.updates == [shown?.markedStale].compactMap { $0 })
+    }
+
+    @Test func showsFreshTrainsUnmarkedWhenACallWorksAfterTheKeptTrainsWereMarkedStale() async {
+        let model = makeModel()
+        await model.start(station: concorde, trains: concordeTrains(inSeconds: [120, 400]))
+        await model.update(station: concorde, trains: .failed(.unreachable))
+        clock.advance(by: 120)
+        await model.redraw()
+
+        await model.update(station: concorde, trains: concordeTrains(inSeconds: [60, 300]))
+
+        #expect(client.updates.last?.isMarkedStale == false)
+        let fresh = [clock.now.addingTimeInterval(60), clock.now.addingTimeInterval(300)]
+        #expect(client.updates.last?.shownTrainTimes == fresh)
     }
 
     @Test func drawsTheTrainsSavedByTheLastAppUntilTheFirstShownTrainLeaves() async {
@@ -184,6 +222,12 @@ struct StationLiveActivityFailedRefreshTests {
 }
 
 private extension StationActivityAttributes.ContentState {
+    var markedStale: Self {
+        var marked = self
+        marked.isMarkedStale = true
+        return marked
+    }
+
     var shownTrainTimes: [Date] {
         trains.linesPage?.lines.flatMap(\.directions).flatMap(\.trains).map(\.time) ?? []
     }
