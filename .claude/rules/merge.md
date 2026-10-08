@@ -64,6 +64,7 @@ When the folder of `main` has changes that are not committed (also staged or new
 Changes on other files of that folder do not stop it.
 It checks this again when its turn comes, and the fast-forward still fails safely when such changes appear during the run.
 It refuses to start on `main`, with changes that are not committed, with `ONLY=` (the E2E suite is always the full one), or with nothing to merge.
+It lands only the commit that it started with: a task whose branch gets a new commit while its `make merge` waits or runs does not land, and keeps that commit.
 
 Why one command, with the lock all along:
 

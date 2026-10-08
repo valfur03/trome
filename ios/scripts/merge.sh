@@ -175,7 +175,7 @@ enqueue() {
     mkdir -p "$queue"
     key=$(perl -MTime::HiRes=time -e 'printf "%.6f", time').$$
     node_path=$(command -v node 2> /dev/null || true)
-    printf 'pid=%s\nroot=%s\nbranch=%s\nnode=%s\n' "$$" "$root" "$branch" "${node_path:+$(dirname "$node_path")}" > "$queue/$key.new"
+    printf 'pid=%s\nroot=%s\nbranch=%s\nhead=%s\nnode=%s\n' "$$" "$root" "$branch" "$(git rev-parse HEAD)" "${node_path:+$(dirname "$node_path")}" > "$queue/$key.new"
     trap 'rm -f "$queue/$key.new" "$queue/$key.task" "$queue/$key.result" "$queue/$key.result.new"' EXIT
     trap 'exit 129' HUP
     trap 'exit 130' INT
@@ -233,7 +233,7 @@ put_back() {
         put_head=$(git -C "$put_root" rev-parse HEAD)
         [ "$put_head" != "$put_orig" ] || continue
         if [ -f "$work/$put_key.tested" ] && [ "$put_head" != "$(cat "$work/$put_key.tested")" ]; then
-            say "'$(field "$put_key" branch)' got a new commit during the merge, so make merge leaves it on $(short "$put_head"). It may hold the commits of the tasks before it in the train: look at $put_root before the next merge."
+            say "'$(field "$put_key" branch)' got a new commit during the merge, so make merge leaves it on $(short "$put_head"), and it does not land. It may hold the commits of the tasks before it in the train: look at $put_root before the next merge."
             continue
         fi
         git -C "$put_root" reset -q --keep "$put_orig" \
@@ -300,6 +300,11 @@ land() {
         fi
         task_branch=$(branch_of "$task_root")
         git -C "$task_root" rev-parse HEAD > "$work/$key.orig"
+        # Only the commit that make merge started with lands: a later commit was not tested before the merge.
+        if [ "$(cat "$work/$key.orig")" != "$(field "$key" head)" ]; then
+            finish "$key" 1 "make merge: '$task_branch' got a new commit ($(short "$(cat "$work/$key.orig")")) after its make merge started on $(short "$(field "$key" head)"). It does not land: make merge lands only the commit that it started with. Run 'make merge' again if the new commit belongs to the task."
+            continue
+        fi
         touched="$touched $key"
         # From the first rebase on, a stopped train puts every branch back: a later task is rebased onto the earlier ones.
         [ "$#" -le 1 ] || put_back_on_exit=1

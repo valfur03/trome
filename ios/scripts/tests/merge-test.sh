@@ -585,15 +585,32 @@ expect "the task of the stopped train is back on its own commits" "$(rev task/ki
 expect "a stopped train frees the Simulator lock" "$(lock_state)" "free"
 rm -f "$repo/.git/hooks/pre-rebase"
 
-# A task that gets a new commit during its train keeps it.
+# A task that gets a new commit during its train keeps it, but does not land: that commit was not tested before the merge.
 app_task moved_a
 app_task moved_b
 TROME_MERGE_CHECK="$passing_check && if [ ! -e \"\$FAKE_SIM_STATE/moved-marker\" ]; then touch \"\$FAKE_SIM_STATE/moved-marker\"; echo new > \"\$FAKE_SIM_STATE/moved_a/moved-new\"; git -C \"\$FAKE_SIM_STATE/moved_a\" add moved-new; git -C \"\$FAKE_SIM_STATE/moved_a\" commit -q -m new; fi"
 merge_together moved_a moved_b
 TROME_MERGE_CHECK=$passing_check
-expect "when a task gets a new commit during its train, both tasks still land one by one" "$(finish_merge moved_a) $(finish_merge moved_b)" "0 0"
-expect "the new commit of a task during its train is not lost" "$(git -C "$repo" show main:moved-new 2> /dev/null)" "new"
+expect "when a task gets a new commit during its train, the other task still lands, and that task does not" "$(finish_merge moved_a) $(finish_merge moved_b)" "1 0"
+expect "the new commit of a task during its train does not reach main" "$(git -C "$repo" show main:moved-new 2> /dev/null || echo absent)" "absent"
+expect "the new commit of a task during its train is not lost" "$(git -C "$repo" show task/moved_a:moved-new 2> /dev/null)" "new"
+expect "make merge says why the task with the new commit does not land" "$(contains "$state/moved_a.log" "make merge lands only the commit that it started with")" "yes"
 expect "make merge says that it left the branch with the new commit as it was" "$(cat "$state/moved_a.log" "$state/moved_b.log" | grep -c "'task/moved_a' got a new commit during the merge")" "1"
+
+# A task that gets a new commit while its make merge waits does not land either: a stopped make merge may still wait for the merge lock.
+app_task waited
+before=$(rev main)
+lockf -k "$RATP_MERGE_LOCK" sh -c 'read -r line < "$0"' "$state/release-merge-lock" &
+merge_lock_holder=$!
+until ! lockf -s -k -t 0 "$RATP_MERGE_LOCK" true 2> /dev/null; do sleep 0.1; done
+start_merge waited
+wait_until has_queued 1
+commit "$state/waited" waited-new new
+waited_head=$(rev task/waited)
+echo release > "$state/release-merge-lock"
+wait "$merge_lock_holder"
+expect "a task that got a new commit while its make merge waited does not land" "$(finish_merge waited) $(rev main)" "1 $before"
+expect "that task keeps its new commit" "$(rev task/waited)" "$waited_head"
 
 fake_node() {
     mkdir -p "$1"
