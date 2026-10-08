@@ -102,4 +102,14 @@ extension LineDirectionsTests {
         #expect(direction.trains.map(\.status) == [.atPlatform, nil])
         #expect(direction.trainsOfEachEnd?.map { $0.trains.map(\.status) } == [[.atPlatform], [nil]])
     }
+
+    @Test func keepsWhatPRIMSaysOfASecondRERTrainAsAnRERPlatformCanHoldSeveralTrains() throws {
+        let result = directions(of: rerB, at: "Châtelet - Les Halles", [
+            train(rerB, to: "Mitry - Claye", inMinutes: 4, from: rerQuay(1)),
+            train(rerB, to: "Mitry - Claye", inMinutes: 6, from: rerQuay(1), atStop: true)
+        ])
+        let north = try #require(result.first { $0.trains.contains { $0.destination == "Mitry - Claye" } })
+
+        #expect(north.trains.map(\.status) == [nil, .atPlatform])
+    }
 }
