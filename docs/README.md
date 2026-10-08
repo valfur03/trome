@@ -215,6 +215,15 @@ What is true comes first: a line that promises more than the product does is a d
 Leave out hype, jokes and claims that the reader cannot check, such as "seamless" or "powerful": a fact that they can check persuades more.
 Then test the lines as the first point of [Review a page](#review-a-page) says.
 
+### Say what is true today, and what stays true
+
+A page can be right about the app today and still mislead, when the app is about to do something else.
+Before you edit a page, read the part of the maker's vision that it touches, and the list of sentences tied to a behaviour that will change.
+The maintainer keeps both: ask for them when you do not have them.
+Say what the rider gets in the terms of the vision, then say once, in one place, how this version does it, in words that stay true when the rest ships.
+When your page holds a new sentence tied to a behaviour that will change, quote it in the description of your change, so that the maintainer adds it to the list.
+[Review a page](#review-a-page), point 3, is how a reviewer checks all this.
+
 ### Pick one kind of page
 
 Each page is one of four kinds ([Diátaxis](https://diataxis.fr/)).
@@ -379,23 +388,30 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
    A wrong or missing answer is a finding that names the reader and the line that lost them.
 2. **Reader and job.** The page serves one main reader, and its first lines say what it gives.
    A second reader gets a link, or a page of their own.
-3. **Kind and shape.** The page is one kind.
+3. **True to where TROME is going.** A page can be true today and still mislead: a rider plans around it, and it must be rewritten when the app changes.
+   Read the part of the maker's vision that the page touches, and the list of sentences tied to a behaviour that will change (the maintainer keeps both: ask for them when you do not have them).
+   Then check three things.
+   The first lines say what the rider gets, in the terms of the vision, and not how this version gets there.
+   Each behaviour that this version does only in part is told once, as how it works today, in words that stay true when the rest ships.
+   Each sentence of the list that the page holds still says what the list says.
+   No test of the code finds a failure here, so a review that skips this point leaves it unseen, and is incomplete.
+4. **Kind and shape.** The page is one kind.
    A tutorial works from a clean start; a how-to has its goal, what you need, the steps and the result; a reference is complete and easy to scan; an explanation has no steps.
    Each step list, section, table and callout is used as [Choose the right shape](#choose-the-right-shape) says.
-4. **Headings and the first picture.** Each heading says what the reader finds or does there, so that the headings alone tell the page.
+5. **Headings and the first picture.** Each heading says what the reader finds or does there, so that the headings alone tell the page.
    On a front page or a home, the first picture shows the product at work, close to the headline, with an alt text that says what it shows: never an empty screen.
-5. **Each section earns its place.** For each section, ask what this reader would lose without it.
+6. **Each section earns its place.** For each section, ask what this reader would lose without it.
    If the answer is nothing, the section goes.
    No page has a fixed length: it is as long as its reader's job needs, and this point and the first screen decide, not a count of lines.
-6. **Nothing for another reader.** No inner workings of how the project is made, no history, no measurements, no task numbers, and a reason only when the reader needs it.
-7. **Voice.** A person would say each sentence aloud.
+7. **Nothing for another reader.** No inner workings of how the project is made, no history, no measurements, no task numbers, and a reason only when the reader needs it.
+8. **Voice.** A person would say each sentence aloud.
    The page is plain, direct and warm, with no filler, and its terms match the app and iOS.
    One person speaks: where the maker speaks, the page says "I" ("je" in French), and has no "we", "us" or "our" ("nous", "notre"), and his name never speaks about him in the third person.
-8. **True.** Each command was run, each link was opened, and the steps were followed as the reader follows them.
+9. **True.** Each command was run, each link was opened, and the steps were followed as the reader follows them.
    What could not be checked is said once.
-9. **Pictures.** They show the current app, and each alt text says what the picture shows, in the language of the page.
-10. **One home for each fact.** A fact is on one page, and the other pages link to it.
-11. **French.** A riders' page reads as French that a Paris rider would write, and the French and English pages say the same facts.
-12. **On a phone first.** Most riders read the site on an iPhone, so read each riders' page at phone width (390 pixels) before you read it on a computer.
+10. **Pictures.** They show the current app, and each alt text says what the picture shows, in the language of the page.
+11. **One home for each fact.** A fact is on one page, and the other pages link to it.
+12. **French.** A riders' page reads as French that a Paris rider would write, and the French and English pages say the same facts.
+13. **On a phone first.** Most riders read the site on an iPhone, so read each riders' page at phone width (390 pixels) before you read it on a computer.
     Check that its language menu, its menu and its tables work there.
-13. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.
+14. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.

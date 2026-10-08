@@ -21,6 +21,8 @@ Why: a store page or a video that shows a screen the app no longer has misleads 
 
 - **A change that makes an asset false updates it, in the same task:** the docs pictures and pages, the store screenshots, the store text.
   Why: the engineer of the change knows what changed; an asset left for later is forgotten.
+- **A change that ships, cuts or defers a behaviour that the vision names** also swaps the page sentences that the ledger lists for it, in the same merge (`.claude/rules/writing.md`, "A page is compared with the vision").
+  Why: an asset can match the app and still sell a way of working that the vision is replacing.
 - **The video is the exception: the engineer never touches it.** It costs the most to make again, so it changes only for a big change, and the Product Owner decides.
   A change is big for the video when a viewer would see another app: the look of the screen, the flow of the first use, the name or the icon, a feature that the video shows or says is there.
   A fix, a new row that the video never shows, or a text in a corner is not.
