@@ -34,7 +34,7 @@ When nvm does not have it and the branch changes `docs/`, `server/` or `contract
 Why: twice (2026-10-04 and 2026-10-07), a merge waited for the lock, then failed in the gate because the shell had the old default Node and the branch changed a docs page.
 Run it in the background: it can wait long for the Simulator lock.
 
-**A merge goes first.** While a `make merge` waits, a Simulator job that is not a merge (QA, a review, `make e2e`) does not take the lock: it prints `Waiting for the Simulator lock: a merge goes first`.
+**A merge goes first.** While a `make merge` waits, a Simulator job that is not a merge (QA, a review, `make e2e`) does not take the lock: it prints `Waiting for the Simulator lock of slot 1: a merge goes first`, with the folder of that merge.
 The job that holds the lock keeps it to its end: a merge never cuts it off.
 Why: a merge finishes a task, and the tasks that depend on it wait for it; on 2026-10-07, a merge waited about 25 minutes behind a QA run and a review.
 
@@ -79,7 +79,8 @@ Why one command, with the lock all along:
 Why the Software Engineer does not rebase: the manager rebases right before QA, and `make merge` rebases again, so a rebase at hand-over only repeated them.
 The permission system also refused it once.
 
-`make merge` changes only `main` and the branches of the tasks that it lands.
+`make merge` changes only `main` and the branches of the tasks that it tries to land.
+A task that lands, or a task alone whose gate or E2E suite fails, keeps its branch rebased onto `main`; after a train fails, each branch is back where it was.
 It never checks out `main` in the worktree of the task.
 When a step fails for a reason on the branch (a rebase conflict, the gate, the E2E suite), the task goes back to its Software Engineer (status `To Do`, with a comment).
 The Software Engineer fixes the cause on the branch (for a rebase conflict, it runs `git -C <worktree> rebase main` and solves the conflict) and hands the task over again.

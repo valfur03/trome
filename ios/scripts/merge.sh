@@ -233,11 +233,11 @@ put_back() {
         put_head=$(git -C "$put_root" rev-parse HEAD)
         [ "$put_head" != "$put_orig" ] || continue
         if [ -f "$work/$put_key.tested" ] && [ "$put_head" != "$(cat "$work/$put_key.tested")" ]; then
-            say "'$(field "$put_key" branch)' got a new commit during the merge, so make merge leaves it on $(short "$put_head"), and it does not land. It may hold the commits of the tasks before it in the train: look at $put_root before the next merge."
+            say "'$(field "$put_key" branch)' got a new commit during the merge, so make merge leaves it on $(short "$put_head"), and it does not land. It may hold the commits of the tasks before it in the train: before its next make merge, check that 'git -C $put_root log --oneline $target..HEAD' shows only commits of this task."
             continue
         fi
         git -C "$put_root" reset -q --keep "$put_orig" \
-            || say "could not put '$(field "$put_key" branch)' back on $(short "$put_orig"): look at $put_root before the next merge."
+            || say "could not put '$(field "$put_key" branch)' back on $(short "$put_orig"), likely because of changes that are not committed in $put_root. Commit or stash them, then run 'git -C $put_root reset --keep $put_orig' before its next make merge."
     done
     put_back_on_exit=
 }
