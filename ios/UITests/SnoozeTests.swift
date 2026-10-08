@@ -64,7 +64,8 @@ final class SnoozeTests: E2ETestCase {
     private func nextLinesDidNotShow(in app: XCUIApplication) -> String {
         "The next lines did not show. The app is \(app.state == .runningForeground ? "open" : "not open"), "
             + "and the Live Activity \(liveActivity.exists ? "shows" : "does not show") in the Notification Center. "
-            + "The app log says 'show the next lines' when the tap reached the app"
+            + "The app log says 'show the next lines' when the tap reached the app, "
+            + "and the context of the kept run names a tap that iOS dropped"
     }
 
     @MainActor

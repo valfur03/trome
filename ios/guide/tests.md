@@ -105,3 +105,4 @@ A test that fails, then passes with no change, is a bug: run it again once to kn
 If it covers your change, find the cause, such as a race or a missing wait, and fix it: a retry or a longer timeout only hides it.
 If it does not, open an issue with the name of the test, how often it failed, and its error.
 The folder that the failed run printed (in `~/Library/Logs/TROME/e2e-failures/`) holds the evidence: its `simulator.log` shows what iOS did around the failure, such as a launch or an end of the app.
+Its `context.txt` also says how long iOS took to run each tap on a Live Activity button, and names a tap that took more than 30 s: iOS starts a new process for each tap before the app gets it, and a busy Mac can delay that start past the wait of a test.

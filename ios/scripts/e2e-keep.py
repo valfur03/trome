@@ -13,6 +13,11 @@ from pathlib import Path
 KEPT_RUNS = 20
 SIMULATOR_LOG_MARGIN_SECONDS = 5
 NO_SUMMARY_LOG_SECONDS = 900
+# iOS runs the intent of a Live Activity button in a new process of its intent runner, then in the app. Its widget
+# host (chronod) logs a watchdog when the intent has not ended after this time.
+LIVE_ACTIVITY_TAP_LIMIT_SECONDS = 30
+INTENT_RUNNER = "BackgroundShortcutRunner"
+LOG_LINE = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+) +\S+ +(\S+?)\[(\d+):")
 
 
 def usage():
@@ -139,7 +144,7 @@ def keep_simulator_log(folder, bundle_id, executable, start, end):
         return "not kept: no shared Simulator found"
     if not bundle_id or not executable:
         return "not kept: the app has no bundle ID or no executable name"
-    predicate = f'process == "{executable}" OR eventMessage CONTAINS "{bundle_id}"'
+    predicate = simulator_log_predicate(bundle_id, executable)
     window = ["--last", f"{NO_SUMMARY_LOG_SECONDS}s"]
     if start is not None:
         window = ["--start", moment(start - SIMULATOR_LOG_MARGIN_SECONDS), "--end", moment(end + SIMULATOR_LOG_MARGIN_SECONDS)]
@@ -148,7 +153,74 @@ def keep_simulator_log(folder, bundle_id, executable, start, end):
         status = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT).returncode
     if status != 0:
         return f"simulator.log (log show ended with exit {status}: see its end)"
-    return f"simulator.log (the lines of {executable}, and every line of iOS that names {bundle_id})"
+    return (
+        f"simulator.log (the lines of {executable}, every line of iOS that names {bundle_id}, "
+        "and the path of the Live Activity buttons: the taps of chronod and iOS's intent runner)"
+    )
+
+
+def simulator_log_predicate(bundle_id, executable):
+    return " OR ".join([
+        f'process == "{executable}"',
+        f'eventMessage CONTAINS "{bundle_id}"',
+        '(process == "chronod" AND category == "interactions")',
+        f'process == "{INTENT_RUNNER}"',
+        f'(process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned {INTENT_RUNNER}[")',
+    ])
+
+
+def live_activity_taps(simulator_log):
+    """Says how long iOS took to run each tap on a Live Activity button, and names each tap that took too long."""
+    try:
+        lines = simulator_log.read_text(errors="replace").splitlines()
+    except OSError:
+        return None
+    taps, running, runner_spawns, runner_starts = [], {}, {}, {}
+    for line in lines:
+        match = LOG_LINE.match(line)
+        if not match:
+            continue
+        at, process, pid = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S.%f"), match.group(2), match.group(3)
+        spawned = re.search(rf"Successfully spawned {INTENT_RUNNER}\[(\d+)\]", line)
+        if process == "launchd_sim" and spawned:
+            runner_spawns[spawned.group(1)] = at
+        elif process == INTENT_RUNNER:
+            runner_starts.setdefault(pid, at)
+        elif process == "chronod" and "[com.apple.chrono:interactions]" in line:
+            action = re.search(r"action: <LNAction: (0x[0-9a-f]+), identifier: ([^,]+),", line)
+            oldest = min(running, key=lambda address: running[address]["start"]) if running else None
+            if "Starting to run action" in line and action:
+                tap = {"name": action.group(2), "start": at}
+                taps.append(tap)
+                running[action.group(1)] = tap
+            elif "Successfully ran action" in line and action and action.group(1) in running:
+                running.pop(action.group(1))["ran"] = at
+            elif "Watchdog fired on interaction runner" in line and oldest:
+                running[oldest]["watchdog"] = at
+            elif "Failed to execute LNAction" in line and oldest:
+                running.pop(oldest)["failed"] = at
+    if not taps:
+        return "none in the Simulator log"
+    ran = [(tap["ran"] - tap["start"]).total_seconds() for tap in taps if "ran" in tap]
+    parts = [f"{len(ran)} ran, the longest in {max(ran):.1f} s"] if ran else []
+    for tap in taps:
+        if "watchdog" not in tap and "ran" in tap:
+            continue
+        text = f"the tap on {tap['name']} at {tap['start']:%H:%M:%S}"
+        if "watchdog" in tap:
+            text += f" had not ended after {LIVE_ACTIVITY_TAP_LIMIT_SECONDS} s (the watchdog of iOS fired)"
+        runner = next((pid for pid, spawned_at in runner_spawns.items() if spawned_at >= tap["start"]), None)
+        if runner in runner_starts:
+            started = (runner_starts[runner] - runner_spawns[runner]).total_seconds()
+            text += f", its intent runner ({INTENT_RUNNER}) took {started:.0f} s to start"
+        if "ran" in tap:
+            text += f", and it ran in {(tap['ran'] - tap['start']).total_seconds():.0f} s"
+        elif "failed" in tap:
+            text += f", and it failed at {tap['failed']:%H:%M:%S}"
+        else:
+            text += ", and it had not ended at the end of the log"
+        parts.append(text)
+    return "; ".join(parts)
 
 
 def prune(root, folder):
@@ -180,6 +252,7 @@ def main():
     bundle_id, executable = app_info(app)
     crash_reports = keep_crash_reports(folder, executable, start if start is not None else time.time() - NO_SUMMARY_LOG_SECONDS)
     simulator_log = keep_simulator_log(folder, bundle_id, executable, start, end)
+    taps = live_activity_taps(folder / "simulator.log")
 
     context = [
         f"Failed E2E run, kept at {now.strftime('%Y-%m-%d %H:%M:%S')}",
@@ -189,6 +262,7 @@ def main():
         f"Load of the Mac at the end of the run: {load_of_the_mac()}",
         f"Crash reports of the app: {crash_reports}",
         f"Simulator log: {simulator_log}",
+        f"Taps on a Live Activity button: {taps or 'unknown (no Simulator log)'}",
         f"Result bundle: {bundle.name if bundle.exists() else 'none (the run ended before it wrote one)'}",
         f"Log: {log.name if log.exists() else 'none'}",
         "Tests, in the order they ran:",
@@ -200,6 +274,8 @@ def main():
     note = os.environ.get("TROME_E2E_EVIDENCE_NOTE")
     if note:
         Path(note).write_text(f"{folder}\n")
+    if taps and "the tap on" in taps:
+        print(f"Taps on a Live Activity button: {taps}.")
     print(f"E2E evidence: the log, the result bundle, the Simulator log and the context of this failed run are kept in {folder}")
 
 

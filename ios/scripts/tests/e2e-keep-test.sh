@@ -19,7 +19,11 @@ case "$1 $2" in
         ;;
     "simctl spawn")
         echo "$*" > "$FAKE_STATE/log-show-args"
-        echo "runningboardd: Launch request for com.example.trome.dev"
+        if [ -e "$FAKE_STATE/simulator.log" ]; then
+            cat "$FAKE_STATE/simulator.log"
+        else
+            echo "runningboardd: Launch request for com.example.trome.dev"
+        fi
         ;;
     *) exit 1 ;;
 esac
@@ -76,7 +80,9 @@ expect "the Simulator log is the one of the shared Simulator" "$(cut -d' ' -f3 "
 window_start=$(date -r "$((start - 5))" "+%Y-%m-%d %H:%M:%S")
 window_end=$(date -r "$((start + 105))" "+%Y-%m-%d %H:%M:%S")
 expect "the Simulator log covers the run, with 5 s on each side" "$(grep -c -- "--start $window_start --end $window_end" "$state/log-show-args")" "1"
-expect "the Simulator log has the lines of the app, and every line of iOS that names it" "$(grep -c 'process == "TROME" OR eventMessage CONTAINS "com.example.trome.dev"$' "$state/log-show-args")" "1"
+expect "the Simulator log has the lines of the app, and every line of iOS that names it" "$(grep -c 'process == "TROME" OR eventMessage CONTAINS "com.example.trome.dev" OR ' "$state/log-show-args")" "1"
+expect "it also has the path of a tap on a Live Activity button: the taps of chronod, and the intent runner with its launch" "$(grep -c 'OR (process == "chronod" AND category == "interactions") OR process == "BackgroundShortcutRunner" OR (process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned BackgroundShortcutRunner\[")$' "$state/log-show-args")" "1"
+expect "with no tap in the Simulator log, the context says so" "$(grep '^Taps' "$kept/context.txt")" "Taps on a Live Activity button: none in the Simulator log"
 expect "it keeps the crash report of the app written during the run" "$(has "$kept/TROME-today.ips")" "yes"
 expect "it does not keep an older crash report" "$(has "$kept/TROME-old.ips")" "no"
 expect "it does not keep the crash report of another process" "$(has "$kept/Other-today.ips")" "no"
@@ -104,6 +110,34 @@ third=$(cat "$state/note")
 expect "it then keeps the log" "$(has "$third/e2e.log") $(has "$third/e2e.xcresult")" "yes no"
 expect "it then reads the last 15 min of the Simulator log" "$(grep -c -- "--last 900s" "$state/log-show-args")" "1"
 expect "the context says that there is no result bundle" "$(grep '^Result bundle' "$third/context.txt")" "Result bundle: none (the run ended before it wrote one)"
+
+# The lines of a real run (2026-10-08) where a tap took too long, after a tap that ran, shortened.
+cat > "$state/simulator.log" << 'EOF'
+2026-10-08 09:07:40.192 Df TROME[50654:21e4b] [TROME:LiveActivity] the app ends 0 Live Activities []
+2026-10-08 09:07:50.100 Df chronod[35014:20bc6] [com.apple.chrono:interactions] Starting to run action: <LNAction: 0x108932c40, identifier: ShowNextLinesIntent, mangledTypeName: 9TROMECore19ShowNextLinesIntentV, openAppWhenRun: NO>
+2026-10-08 09:07:50.200 Df launchd_sim[34811:22799] [pid/35014/com.apple.WorkflowKit.BackgroundShortcutRunner.A [51900]:] Successfully spawned BackgroundShortcutRunner[51900] because ipc (mach)
+2026-10-08 09:07:52.700 Df BackgroundShortcutRunner[51900:0] [com.apple.libsystem.libdispatch:] BUG in libdispatch: 25G83 24A434 - 612 - 0x4
+2026-10-08 09:07:56.600 Df chronod[35014:3d77e] [com.apple.chrono:interactions] Successfully ran action: <LNAction: 0x108932c40, identifier: ShowNextLinesIntent, mangledTypeName: 9TROMECore19ShowNextLinesIntentV>
+2026-10-08 09:08:00.224 Df chronod[35014:20bc6] [com.apple.chrono:interactions] Starting to run action: <LNAction: 0x108877ae0, identifier: ShowNextLinesIntent, mangledTypeName: 9TROMECore19ShowNextLinesIntentV, openAppWhenRun: NO>
+2026-10-08 09:08:00.349 Df launchd_sim[34811:22799] [pid/35014/com.apple.WorkflowKit.BackgroundShortcutRunner.B [51915]:] Successfully spawned BackgroundShortcutRunner[51915] because ipc (mach)
+2026-10-08 09:08:30.241 E  chronod[35014:1da3d] [com.apple.chrono:interactions] Watchdog fired on interaction runner for extension: com.example.trome.dev::com.example.trome.dev.widget
+2026-10-08 09:08:33.316 Df BackgroundShortcutRunner[51915:0] [com.apple.libsystem.libdispatch:] BUG in libdispatch: 25G83 24A434 - 612 - 0x4
+2026-10-08 09:09:04.550 E  chronod[35014:2392e] [com.apple.chrono:interactions] Failed to execute LNAction with error: ChronoCore.InteractiveWidgetActionRunner.Errors.runnerClientError(Error Domain=LNConnectionErrorDomain Code=1014)
+EOF
+slow="the tap on ShowNextLinesIntent at 09:08:00 had not ended after 30 s (the watchdog of iOS fired), its intent runner (BackgroundShortcutRunner) took 33 s to start, and it failed at 09:09:04"
+TROME_E2E_EVIDENCE_NOTE="$state/note"
+export TROME_E2E_EVIDENCE_NOTE
+keep > /dev/null
+unset TROME_E2E_EVIDENCE_NOTE
+expect "the context says how long the taps took, and names the tap that took too long, with its runner and its end" "$(grep '^Taps' "$(cat "$state/note")/context.txt")" "Taps on a Live Activity button: 1 ran, the longest in 6.5 s; $slow"
+expect "it also prints that tap, before the folder" "$(head -1 "$state/out")" "Taps on a Live Activity button: 1 ran, the longest in 6.5 s; $slow."
+grep -v "Watchdog\|51915:0\|Failed to execute" "$state/simulator.log" > "$state/cut.log" && mv "$state/cut.log" "$state/simulator.log"
+TROME_E2E_EVIDENCE_NOTE="$state/note"
+export TROME_E2E_EVIDENCE_NOTE
+keep > /dev/null
+unset TROME_E2E_EVIDENCE_NOTE
+expect "a tap still running at the end of the log is named" "$(grep '^Taps' "$(cat "$state/note")/context.txt")" "Taps on a Live Activity button: 1 ran, the longest in 6.5 s; the tap on ShowNextLinesIntent at 09:08:00, and it had not ended at the end of the log"
+rm "$state/simulator.log"
 
 for old in $(seq 1 25); do
     mkdir "$state/kept/2020-01-01-0000$old-old"
