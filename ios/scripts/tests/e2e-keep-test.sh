@@ -137,6 +137,18 @@ export TROME_E2E_EVIDENCE_NOTE
 keep > /dev/null
 unset TROME_E2E_EVIDENCE_NOTE
 expect "a tap still running at the end of the log is named" "$(grep '^Taps' "$(cat "$state/note")/context.txt")" "Taps on a Live Activity button: 1 ran, the longest in 6.5 s; the tap on ShowNextLinesIntent at 09:08:00, and it had not ended at the end of the log"
+grep -v "spawned BackgroundShortcutRunner\[51915\]" "$state/simulator.log" > "$state/cut.log" && mv "$state/cut.log" "$state/simulator.log"
+cat >> "$state/simulator.log" << 'EOF'
+2026-10-08 09:09:10.000 Df chronod[35014:20bc6] [com.apple.chrono:interactions] Starting to run action: <LNAction: 0x108877f00, identifier: SnoozeLiveActivityIntent, mangledTypeName: 9TROMECore24SnoozeLiveActivityIntentV, openAppWhenRun: NO>
+2026-10-08 09:09:10.100 Df launchd_sim[34811:22799] [pid/35014/com.apple.WorkflowKit.BackgroundShortcutRunner.C [51930]:] Successfully spawned BackgroundShortcutRunner[51930] because ipc (mach)
+2026-10-08 09:09:12.100 Df BackgroundShortcutRunner[51930:0] [com.apple.libsystem.libdispatch:] BUG in libdispatch: 25G83 24A434 - 612 - 0x4
+2026-10-08 09:09:15.000 Df chronod[35014:3d77e] [com.apple.chrono:interactions] Successfully ran action: <LNAction: 0x108877f00, identifier: SnoozeLiveActivityIntent, mangledTypeName: 9TROMECore24SnoozeLiveActivityIntentV>
+EOF
+TROME_E2E_EVIDENCE_NOTE="$state/note"
+export TROME_E2E_EVIDENCE_NOTE
+keep > /dev/null
+unset TROME_E2E_EVIDENCE_NOTE
+expect "a slow tap is not given the intent runner of a later tap" "$(grep '^Taps' "$(cat "$state/note")/context.txt")" "Taps on a Live Activity button: 2 ran, the longest in 6.5 s; the tap on ShowNextLinesIntent at 09:08:00, and it had not ended at the end of the log"
 rm "$state/simulator.log"
 
 for old in $(seq 1 25); do

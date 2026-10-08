@@ -203,13 +203,15 @@ def live_activity_taps(simulator_log):
         return "none in the Simulator log"
     ran = [(tap["ran"] - tap["start"]).total_seconds() for tap in taps if "ran" in tap]
     parts = [f"{len(ran)} ran, the longest in {max(ran):.1f} s"] if ran else []
-    for tap in taps:
+    for index, tap in enumerate(taps):
         if "watchdog" not in tap and "ran" in tap:
             continue
         text = f"the tap on {tap['name']} at {tap['start']:%H:%M:%S}"
         if "watchdog" in tap:
             text += f" had not ended after {LIVE_ACTIVITY_TAP_LIMIT_SECONDS} s (the watchdog of iOS fired)"
-        runner = next((pid for pid, spawned_at in runner_spawns.items() if spawned_at >= tap["start"]), None)
+        # The runner of this tap is the first one spawned after it, and before the next tap.
+        next_tap = taps[index + 1]["start"] if index + 1 < len(taps) else datetime.max
+        runner = next((pid for pid, at in runner_spawns.items() if tap["start"] <= at < next_tap), None)
         if runner in runner_starts:
             started = (runner_starts[runner] - runner_spawns[runner]).total_seconds()
             text += f", its intent runner ({INTENT_RUNNER}) took {started:.0f} s to start"
