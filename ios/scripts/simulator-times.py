@@ -70,7 +70,7 @@ def jobs_summary(jobs):
     last_end = max(job["when"].timestamp() + job["wait_s"] + job["hold_s"] for job in jobs)
     span = max(int(last_end - first.timestamp()), 1)
     held = sum(job["hold_s"] for job in jobs)
-    print(f"Simulator jobs from {first.strftime('%Y-%m-%d %H:%M')}: {len(jobs)} jobs held the Simulator "
+    print(f"Simulator jobs from {first.strftime('%Y-%m-%d %H:%M')}: {len(jobs)} job{"s" if len(jobs) > 1 else ""} held the Simulator "
           f"{duration(held)} of {duration(span)} ({held * 100 // span}%).")
     rows = [["kind", "jobs", "held", "share", "median hold", "waited", "median wait", "max wait", "held for builds"]]
     kinds = sorted({job["kind"] for job in jobs}, key=lambda kind: (-sum(j["hold_s"] for j in jobs if j["kind"] == kind), kind))
