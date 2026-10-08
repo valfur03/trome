@@ -303,7 +303,7 @@ A list of facts is not a step list.
 **A section** answers one question of the reader, and its heading is that question or task, in the reader's words.
 
 - Not: "## Notes", or "## About the permissions".
-- But: "## The Live Activity does not start by itself".
+- But: "## The Live Activity does not show".
 
 **A table** is for a behaviour with many states, or for facts that the reader compares.
 A sentence that lists six cases is hard to read, and a case is easy to miss:
