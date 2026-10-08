@@ -91,6 +91,24 @@ expect "a stopped test run stops its command and passes its status" "$status" "1
 expect "a build does not wait for a stopped test run" "$("$script" build echo built 2> "$state/stopped.err")" "built"
 expect "the stopped test run left no wait" "$(cat "$state/stopped.err")" ""
 
+"$script" build sh -c 'touch "$0"; exec sleep 30' "$state/hung-build.started" 2> /dev/null &
+hung=$!
+wait_for '[ -e "$state/hung-build.started" ]' || true
+expect "a test run waits for a hung build only up to its limit, then runs" \
+    "$(RATP_BUILD_GATE_TESTS_WAIT=1 "$script" tests echo ran 2> "$state/hung-build.err")" "ran"
+expect "it says that it runs next to the build" "$(grep -c "the tests run next to them" "$state/hung-build.err")" "1"
+kill "$hung" 2> /dev/null || true
+wait "$hung" 2> /dev/null || true
+
+"$script" tests sh -c 'touch "$0"; exec sleep 30' "$state/hung-tests.started" 2> /dev/null &
+hung=$!
+wait_for '[ -e "$state/hung-tests.started" ]' || true
+expect "a build waits for a hung test run only up to its limit, then runs" \
+    "$(RATP_BUILD_GATE_BUILD_WAIT=1 "$script" build echo built 2> "$state/hung-tests.err")" "built"
+expect "it says that it runs next to the test run" "$(grep -c "this build runs next to it" "$state/hung-tests.err")" "1"
+kill "$hung" 2> /dev/null || true
+wait "$hung" 2> /dev/null || true
+
 makefile="$tests/../../Makefile"
 expect "every Simulator test run of ios/Makefile goes through the gate" \
     "$(grep -F '$(SIM_LOCK) job' "$makefile" | grep -F ' reset ' | grep -cvF '$(SIM_LOCK) job $(TEST_RUN_GATE) ')" "0"

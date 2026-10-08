@@ -31,6 +31,8 @@ No wait in a test can fix that: iOS itself drops the tap.
   `$(XCODEBUILD)` already holds it, for a build that a script runs.
 - A new Simulator test run puts `$(TEST_RUN_GATE)` right after `$(SIM_LOCK) job`.
   A command inside a held gate runs at once, so the build steps of a test run never wait for themselves.
+- A test run waits at most 20 minutes for the builds, and a build at most 30 minutes for a test run; then each runs anyway and says so.
+  Why: a hung `swift test` or a hung test run must not freeze every build and every Simulator job of every worktree.
 - `make run` takes no gate: a QA session holds the Simulator for many minutes, and the builds of the other worktrees must go on.
 - `ios/scripts/tests/build-gate-test.sh` checks the gate and this wiring of `ios/Makefile`.
 

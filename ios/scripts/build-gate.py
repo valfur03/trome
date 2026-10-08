@@ -11,8 +11,10 @@ failed. So the builds and the test runs share a machine-wide lock: many builds r
 
 A test run that waits has priority over new builds (a second lock file, the "turn", that a test run holds from the
 start of its wait to its end), so a stream of builds never keeps it waiting. The kernel frees the locks of a process
-that dies, so a killed build or test run never blocks the others. A command inside a held gate (the unit tests that
-`make check` starts, the build inside a test run) runs at once: it is already counted.
+that dies, so a killed build or test run never blocks the others. A process that hangs does not freeze the others
+either: a test run waits at most 20 minutes for the builds, and a build at most 30 minutes for a test run, then each
+runs anyway and says so (much longer than a healthy build or test run). A command inside a held gate (the unit tests
+that `make check` starts, the build inside a test run) runs at once: it is already counted.
 """
 import fcntl
 import os
@@ -22,6 +24,8 @@ import sys
 
 PREFIX = os.environ.get("RATP_BUILD_GATE") or "/tmp/ratp-build-gate"
 HELD = "RATP_BUILD_GATE_HELD"
+TESTS_WAIT = int(os.environ.get("RATP_BUILD_GATE_TESTS_WAIT") or 20 * 60)
+BUILD_WAIT = int(os.environ.get("RATP_BUILD_GATE_BUILD_WAIT") or 30 * 60)
 
 
 def usage():
@@ -40,6 +44,23 @@ def try_lock(fd, mode):
         return True
     except BlockingIOError:
         return False
+
+
+def lock_within(fd, mode, seconds):
+    """Take the lock, or give up after the given seconds (a hung process must not freeze the others)."""
+    def expire(_signum, _frame):
+        raise TimeoutError
+
+    previous = signal.signal(signal.SIGALRM, expire)
+    signal.alarm(seconds)
+    try:
+        fcntl.flock(fd, mode)
+        return True
+    except TimeoutError:
+        return False
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 def is_alive(pid):
@@ -109,7 +130,10 @@ def build(command):
         folder = test_run_folder()
         where = f" ({folder})" if folder else ""
         print(f"Waiting: a Simulator test run{where} needs a quiet Mac. This build starts when the test run ends.", file=sys.stderr)
-        fcntl.flock(turn, fcntl.LOCK_EX)
+        if not lock_within(turn, fcntl.LOCK_EX, BUILD_WAIT):
+            print(f"The Simulator test run{where} still runs after {BUILD_WAIT // 60} minutes: this build runs next to it.", file=sys.stderr)
+            os.close(turn)
+            return run(command, "build")
     shared = open_lock("lock")
     fcntl.flock(shared, fcntl.LOCK_SH)
     os.close(turn)
@@ -144,7 +168,10 @@ def tests(command):
         builds = running_builds()
         names = ": " + ", ".join(builds) if builds else ""
         print(f"Waiting for the builds that run to end, so that the tests run on a quiet Mac (new builds wait){names}", file=sys.stderr)
-        fcntl.flock(alone, fcntl.LOCK_EX)
+        if not lock_within(alone, fcntl.LOCK_EX, TESTS_WAIT):
+            builds = running_builds()
+            names = ": " + ", ".join(builds) if builds else ""
+            print(f"Builds still run after {TESTS_WAIT // 60} minutes: the tests run next to them{names}", file=sys.stderr)
     try:
         return run(command, "tests")
     finally:
