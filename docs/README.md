@@ -253,7 +253,7 @@ A sentence that a team would say (a department, "our servers", "we decided") is 
 A page that only tells the reader what to do, with "you", needs no "I".
 A copyright or licence line, where the law asks for a name, is not speech and stays as it is.
 Why: a reader who meets "we" on one page and "I" on the next stops trusting both, and a name in the third person reads as someone else speaking.
-`make public-text-check` fails on these words in the prose of every Markdown and MDX file of the repo; code, link addresses and text in double quotes are not checked, so a quotation may keep them.
+`make public-text-check` fails on these words in the prose of every Markdown and MDX file of the repo; code, link addresses and text in double or curly quotes are not checked, so a quotation may keep them.
 
 ### Write the riders' pages in French
 

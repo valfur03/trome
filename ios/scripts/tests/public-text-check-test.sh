@@ -176,6 +176,7 @@ We run it, so let us know; Let's talk, Let’s go. It is ours, made by ourselves
 file docs/fr/aide.mdx "Nous écrivons notre page pour nos usagers : la nôtre, les nôtres.
 Ce que nous faisons nous-mêmes. Contactez-nous ! Écrivez-nous."
 file CLAUDE.md "Us too: we decide."
+file docs/en/apostrophe.md "A straight single quote is also an apostrophe, so 'we' is the page's own word."
 expect "a team's voice in the prose of a Markdown or MDX file fails, in English and in French, CLAUDE.md included" "$(check)" "fails"
 expect "it finds we, with the file, the line and the reason" "$(hit "docs/en/about.mdx:6: $voice: \"We\"")" "1"
 expect "it finds our in a heading and in the front matter, quoted or not" \
@@ -190,10 +191,13 @@ expect "it finds nous, notre, nos, la nôtre and les nôtres" \
 expect "it finds nous inside a sentence, nous-mêmes, and nous after a hyphen" \
     "$(hit "docs/fr/aide.mdx:2: $voice: \"nous\"") $(hit "docs/fr/aide.mdx:2: $voice: \"nous-mêmes\"")" "3 1"
 expect "it finds a capital Us and the we of CLAUDE.md" "$(hit "CLAUDE.md:1: $voice: \"Us\"") $(hit "CLAUDE.md:1: $voice: \"we\"")" "1 1"
+expect "it finds a word in straight single quotes, which also mark an apostrophe" "$(hit "docs/en/apostrophe.md:1: $voice: \"we\"")" "1"
 expect "it says how one person speaks" "$(grep -c "says I (je in French), never we, us, our, nous, notre or nos" "$state/out")" "1"
 
 reset_repo
-file docs/en/quote.md "A page never says \"we\" or “our”, and the French never says « nous » or « nos ».
+file docs/en/quote.mdx "import Card from '../ours/us/Card.astro';
+A page never says \"we\" or “our”, the title ‘Our Daily Trains’ is quoted, and the French never says « nous » or « nos ».
+<a href=\"/fr/us/\">Help</a> <img src=\"/our/lock.png\" alt=\"The lock screen\" />
 Run \`let us = load()\` or \`\`we\`\`, and read [Apple's help](https://support.apple.com/en-us/108971) or https://example.com/our/us.
 The US store, the Notre-Dame-des-Champs station, a user, the status, a bonus, focus, Wed, nose.
 <Screenshot alt=\"The lock screen\" title=\"Help\" />
@@ -206,7 +210,7 @@ nous écrivons
 ~~~"
 file docs/fr/page.mdx "Les horaires reçus, les nouveautés, le nouveau train, les nombreux usagers, Notre-Dame-de-Lorette."
 file ios/App/Model.swift "// we keep our state here"
-expect "code, link addresses, double quotes, names and words that only contain the pronoun pass, and only Markdown and MDX are read for it" "$(check)" "passes"
+expect "code, MDX imports, link addresses (href and src too), double and curly quotes, names and words that only contain the pronoun pass, and only Markdown and MDX are read for it" "$(check)" "passes"
 
 reset_repo
 file ios/scripts/public-text-check.py "INTERNAL_RULES = [\"prompter\", \"/Users/\"]"

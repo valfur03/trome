@@ -41,13 +41,16 @@ VOICE_REASON = "a word of a team's voice (one person speaks: say I, or je in Fre
 VOICE_RULE = re.compile(
     r"(?<!\w)(?:[Ww]e|[Uu]s|[Oo]urs?|[Oo]urselves|[Ll]et['’]s|[Nn]ous|[Nn]otre|[Nn]os|[Nn]ôtres?)(?![\w-])"
     r"|(?<!\w)[Nn]ous-mêmes?(?![\w-])")
-# What a page shows but does not say in its own voice: inline code, the target of a link or a bare address, and a
-# quotation in double quotes ("we", “we”, « nous »). The value of an attribute (alt="...") is the page's own text, so its
-# quotes are taken off before the quotations; the double quotes of the front matter are YAML syntax, not a quotation.
+# What a page shows but does not say in its own voice: inline code, the import line of an MDX file, the target of a
+# link (a Markdown link, an href or a src) or a bare address, and a quotation in double or curly quotes ("we", “we”,
+# ‘Our Title’, « nous »). A straight single quote is also an apostrophe, so it does not mark a quotation. The value of
+# another attribute (alt="...") is the page's own text, so its quotes are taken off before the quotations; the double
+# quotes of the front matter are YAML syntax, not a quotation.
 INLINE_CODE = re.compile(r"(`+).+?\1")
-ADDRESS = re.compile(r"\]\([^)]*\)|<?https?://[^\s>)]+>?")
+MDX_IMPORT = re.compile(r"^import\s.*\sfrom\s")
+ADDRESS = re.compile(r"\]\([^)]*\)|<?https?://[^\s>)]+>?|\b(?:href|src)=(?:\"[^\"]*\"|'[^']*'|\{[^}]*\})")
 ATTRIBUTE_VALUE = re.compile(r"=\"([^\"]*)\"")
-QUOTATION = re.compile(r"\"[^\"]*\"|“[^”]*”|«[^»]*»")
+QUOTATION = re.compile(r"\"[^\"]*\"|“[^”]*”|‘[^’]*’|«[^»]*»")
 EXAMPLE_EMAIL = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$",
                            re.IGNORECASE)
 # The public contact address of the project, on its own domain: the Help page, the privacy policy and the store text give it to every reader.
@@ -124,6 +127,8 @@ def voice_hits(path, content):
         if front_matter and number > 1 and line.strip() == "---":
             front_matter = False
             continue
+        if path.endswith(".mdx") and MDX_IMPORT.match(line):
+            continue
         prose = ADDRESS.sub(" ", INLINE_CODE.sub(" ", line))
         if not front_matter:
             prose = QUOTATION.sub(" ", ATTRIBUTE_VALUE.sub(r"= \1 ", prose))
@@ -157,7 +162,7 @@ def main(arguments):
             "no email address other than an example one, no local path, and not the old names of the app, of the Xcode project or of its module (it is TROME),\n"
             "nor the old RATP_ names of the build settings and of the variables of the tools, the old build cache folder or the old key of the docs site (they use TROME now).\n"
             "One person makes TROME: the prose of a Markdown or MDX file says I (je in French), never we, us, our, nous, notre or nos;\n"
-            "code, link addresses and text in double quotes are not checked, so put a quoted word in double quotes.\n"
+            "code, link addresses and text in double or curly quotes are not checked, so put a quoted word in double quotes.\n"
             "CLAUDE.md and .claude/ may cite the backlog.\n"
             "When a hit is a normal word in its place, add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py,\n"
             "with its reason (CLAUDE.md, rule \"Public text\").",
