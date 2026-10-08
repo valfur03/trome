@@ -95,6 +95,7 @@ public final class AutoLiveActivityModel {
         askForNotificationsIfAllowed()
         await openTappedStation()
         await evaluate(position: nil)
+        await restartTheExampleAtTheFront()
         plannedRegions = nil
         await refreshRegions(around: inputs.locationService.position)
         restartFeed(fetchNow: false)

@@ -19,17 +19,20 @@ The sample times count down and renew while the app runs.
 When iOS suspends the app (the phone locked, the app in the background), the app cannot update the Live Activity any more.
 So no train of the example leaves in the first 5 minutes 20 seconds after the tap: until then, the lock screen counts down with no update.
 After that, the Live Activity shows "Open the app", as a real one does.
+When the app comes back to the front while the example shows, stale or not, the sample starts again, as with a second tap: once the phone locks, the lock screen counts down for 5 more minutes.
+So "Open the app" keeps its promise, also when the rider locks the phone at once.
 A tap on the arrow of the Live Activity runs the app for a moment, so its next page shows renewed times.
 Why: the example has no server to push new times, and it must not use the position to keep the app running.
 
 ## When it ends
 
-- It ends after 10 minutes.
-  When iOS suspended the app until then, it ends at the next launch of the app.
+- It ends 10 minutes after its last start: the tap, or the last return of the app to the front.
+  When iOS suspended the app until then, it ends at the next launch of the app, and starts nothing.
 - A second tap starts it again, with fresh times.
 - A swipe ends it, with no pause.
 - A snooze button of the Live Activity ends it, with no snooze.
 - An arrival at a station replaces it with the real trains of that station.
+- Once it has ended, for any of these reasons, the app at the front does not start it again: only a tap does.
 - It never changes the automatic mode, a snooze or a pause, and the app keeps nothing of it once it ends.
 
 While the real trains of a station show, the row starts nothing and says which station shows.

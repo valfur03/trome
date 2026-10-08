@@ -137,4 +137,89 @@ extension AutoLiveActivityModelTests {
         #expect(relaunched.showsExample)
         #expect(keeper.isKeeping == false)
     }
+
+    // The return to the front: what the lock screen shows once the phone locks again.
+
+    func lockedScreenAfterTheFront(of model: AutoLiveActivityModel) async -> StationActivityAttributes.ContentState? {
+        await activate(model)
+        model.setAppPhase(.background)
+        return client.shownContent
+    }
+
+    func secondsOfCountdown(on content: StationActivityAttributes.ContentState?) -> TimeInterval {
+        guard let content, !content.isMarkedStale, let staleDate = content.staleDate else { return 0 }
+        return staleDate.timeIntervalSince(clock.now)
+    }
+
+    @Test(arguments: [60.0, 330, 540])
+    func theFrontRestartsTheExampleForFiveMoreMinutes(secondsAfterTheTap seconds: TimeInterval) async throws {
+        let model = try await showingTheExample()
+        model.setAppPhase(.background)
+        clock.advance(by: seconds)
+
+        let locked = await lockedScreenAfterTheFront(of: model)
+
+        #expect(locked?.stationName == "Châtelet")
+        #expect(secondsOfCountdown(on: locked) >= 300)
+        #expect(client.started.count == 1)
+        #expect(AutoLiveActivityStore(storage: storage).load().exampleStartedAt == clock.now)
+    }
+
+    @Test func theTenMinutesCountFromTheLastReturnToTheFront() async throws {
+        let model = try await showingTheExample()
+        model.setAppPhase(.background)
+        clock.advance(by: 300)
+        _ = await lockedScreenAfterTheFront(of: model)
+        clock.advance(by: 599)
+
+        let locked = await lockedScreenAfterTheFront(of: model)
+        #expect(secondsOfCountdown(on: locked) >= 300)
+        clock.advance(by: 600)
+        await activate(model)
+        await waitUntil { !client.isShowing }
+
+        #expect(client.endCount == 1)
+        #expect(model.showsExample == false)
+    }
+
+    @Test func theFrontAfterASwipeStartsNothing() async throws {
+        let model = try await showingTheExample()
+        model.setAppPhase(.background)
+        let updateCount = client.updates.count
+        client.isShowing = false
+
+        await activate(model)
+
+        #expect(client.started.count == 1)
+        #expect(client.updates.count == updateCount)
+        #expect(model.showsExample == false)
+        #expect(model.pausedStation == nil)
+    }
+
+    @Test func theFrontAfterASnoozeButtonStartsNothing() async throws {
+        let model = try await showingTheExample()
+        model.setAppPhase(.background)
+        await model.snoozeTappedOnTheLockScreen(for: .oneHour)
+        clock.advance(by: 60)
+
+        await activate(model)
+
+        #expect(client.isShowing == false)
+        #expect(client.started.count == 1)
+        #expect(model.showsExample == false)
+    }
+
+    @Test func theFrontAfterARealArrivalKeepsTheRealTrains() async throws {
+        let model = try await showingTheExample()
+        gps.report(Places.fiftyMetersFromA)
+        await waitUntil { model.shownStation != nil && keeper.isKeeping }
+        model.setAppPhase(.background)
+        clock.advance(by: 60)
+
+        await activate(model)
+
+        #expect(client.shownContent?.stationName == "Station A")
+        #expect(model.showsExample == false)
+        #expect(AutoLiveActivityStore(storage: storage).load().exampleStartedAt == nil)
+    }
 }

@@ -37,6 +37,15 @@ extension AutoLiveActivityRules {
         return ExampleDecision(state: state, actions: [.end])
     }
 
+    /// The app at the front restarts the example that still shows, as a tap on the row does,
+    /// so that the lock screen counts down for its full first minutes again once the phone locks.
+    /// An example past its duration ends instead, and an ended one stays ended.
+    func appComesToTheFront(state: AutoLiveActivityState, isShowing: Bool, now: Date) -> ExampleDecision {
+        let checked = checkTheExample(state: state, isShowing: isShowing, now: now)
+        guard checked.actions.isEmpty, checked.state.exampleStartedAt != nil else { return checked }
+        return tapOnTheExample(state: checked.state, now: now)
+    }
+
     func answerLockScreenSnooze(state: AutoLiveActivityState) -> LockScreenSnoozeAnswer {
         state.exampleStartedAt == nil ? .snooze : .endTheExample
     }

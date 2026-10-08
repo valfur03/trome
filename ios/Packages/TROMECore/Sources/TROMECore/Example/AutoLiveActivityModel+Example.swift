@@ -25,6 +25,15 @@ extension AutoLiveActivityModel {
         }
     }
 
+    func restartTheExampleAtTheFront() async {
+        guard showsExample else { return }
+        await apply(configuration.rules.appComesToTheFront(
+            state: state,
+            isShowing: liveActivity.isShowing,
+            now: configuration.now()
+        ))
+    }
+
     func forgetTheExampleIfRemoved() {
         guard state.exampleStartedAt != nil, !liveActivity.isShowing else { return }
         state.exampleStartedAt = nil

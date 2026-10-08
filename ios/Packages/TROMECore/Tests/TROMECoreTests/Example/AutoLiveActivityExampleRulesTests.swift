@@ -122,4 +122,42 @@ struct AutoLiveActivityExampleRulesTests {
 
         #expect(decoded.exampleStartedAt == state.exampleStartedAt)
     }
+
+    @Test(arguments: [60.0, 330, 599])
+    func theFrontRestartsAShownExampleFromNow(startedSecondsAgo seconds: TimeInterval) {
+        let state = showingTheExample(startedSecondsAgo: seconds)
+
+        let decision = rules.appComesToTheFront(state: state, isShowing: true, now: now)
+
+        #expect(decision.actions == [.show])
+        #expect(decision.state.exampleStartedAt == now)
+        #expect(decision.state.pause == pause)
+    }
+
+    @Test func theFrontEndsAnExamplePastItsTenMinutes() {
+        let state = showingTheExample(startedSecondsAgo: 600)
+
+        let decision = rules.appComesToTheFront(state: state, isShowing: true, now: now)
+
+        #expect(decision.actions == [.end])
+        #expect(decision.state.exampleStartedAt == nil)
+    }
+
+    @Test func theFrontForgetsASwipedExampleWithNoAction() {
+        let decision = rules.appComesToTheFront(state: showingTheExample(), isShowing: false, now: now)
+
+        #expect(decision.actions.isEmpty)
+        #expect(decision.state.exampleStartedAt == nil)
+    }
+
+    @Test func theFrontStartsNothingWithNoExample() {
+        let shown = AutoLiveActivityState(shown: .init(stationId: "a", startedAt: now, hasBeenNear: true))
+
+        for state in [AutoLiveActivityState(pause: pause), shown] {
+            let decision = rules.appComesToTheFront(state: state, isShowing: true, now: now)
+
+            #expect(decision.actions.isEmpty)
+            #expect(decision.state == state)
+        }
+    }
 }
