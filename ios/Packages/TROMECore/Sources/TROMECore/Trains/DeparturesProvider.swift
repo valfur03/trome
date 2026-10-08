@@ -11,10 +11,14 @@ public enum NextTrainsError: Error, Equatable, Sendable {
 public struct DeparturesAnswer: Equatable, Sendable {
     public var departures: [Departure]
     public var answeredAt: Date?
+    /// The stops (PRIM monitoring references) whose call failed while another stop of the station answered:
+    /// the app does not know the trains of their directions, which is not the same as no train.
+    public var unansweredStops: Set<String>
 
-    public init(departures: [Departure], answeredAt: Date? = nil) {
+    public init(departures: [Departure], answeredAt: Date? = nil, unansweredStops: Set<String> = []) {
         self.departures = departures
         self.answeredAt = answeredAt
+        self.unansweredStops = unansweredStops
     }
 }
 

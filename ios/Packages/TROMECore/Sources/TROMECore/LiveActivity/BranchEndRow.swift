@@ -4,6 +4,7 @@ public struct BranchEndRow: Hashable, Sendable {
         case notListed
         case overAnHour
         case noTrain
+        case noAnswer
     }
 
     public var end: String
@@ -23,6 +24,9 @@ extension LineDirection {
         }
         if endTrains.nextTrainIsOverAnHourAway {
             return .overAnHour
+        }
+        if hasNoAnswer {
+            return .noAnswer
         }
         return listsNoTrain ? .noTrain : .notListed
     }

@@ -14,6 +14,7 @@ struct PanamDirectionRows: View {
                     destination: branch.destination,
                     trains: branch.trains,
                     nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway,
+                    hasNoAnswer: direction.hasNoAnswer,
                     line: line,
                     isStale: isStale,
                     isCompact: isCompact
@@ -27,6 +28,7 @@ private struct PanamRow: View {
     let destination: String
     let trains: [LineDirection.Train]
     let nextTrainIsOverAnHourAway: Bool
+    let hasNoAnswer: Bool
     let line: TransitLine
     let isStale: Bool
     let isCompact: Bool
@@ -55,7 +57,7 @@ private struct PanamRow: View {
                 .fixedSize(horizontal: fitsTheWholeDestination, vertical: true)
             Spacer(minLength: 6)
             if trains.isEmpty {
-                if !nextTrainIsOverAnHourAway || !isStale {
+                if !hasNoAnswer && (!nextTrainIsOverAnHourAway || !isStale) {
                     NoTrainsText(nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway, isCompact: isCompact)
                         .fixedSize()
                 }

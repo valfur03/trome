@@ -46,6 +46,7 @@ public final class NextTrainsModel {
     private let now: @Sendable () -> Date
     private let sleep: @Sendable (Duration) async throws -> Void
     private var shownStationId: String?
+    private var lastBoard: DepartureBoard?
     private var updateCount = 0
 
     public init(
@@ -96,6 +97,7 @@ public final class NextTrainsModel {
         }
         if shownStationId != station.id {
             shownStationId = station.id
+            lastBoard = nil
             state = .loading
         }
         let stations = catalog?.hubStations(of: station) ?? [station]
@@ -112,8 +114,18 @@ public final class NextTrainsModel {
         case .success(let answer):
             let currentTime = now()
             let answeredAt = min(answer.answeredAt ?? currentTime, currentTime)
-            let board = DepartureBoard(departures: answer.departures, stations: stations, now: answeredAt)
-            state = board.isEmpty ? .noLiveData : .departures(board, updatedAt: answeredAt)
+            let board = DepartureBoard(
+                departures: answer.departures,
+                stations: stations,
+                now: answeredAt,
+                unansweredStops: answer.unansweredStops,
+                earlierDepartures: answer.unansweredStops.isEmpty
+                    ? []
+                    : lastBoard?.departuresToKeep(forUnanswered: answer.unansweredStops, now: currentTime) ?? []
+            )
+            lastBoard = board
+            let knowsThereIsNoTrain = board.isEmpty && board.unansweredStops.isEmpty
+            state = knowsThereIsNoTrain ? .noLiveData : .departures(board, updatedAt: answeredAt)
         case .failure(let error):
             state = .failed(error)
         }

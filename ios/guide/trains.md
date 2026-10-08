@@ -48,7 +48,8 @@ It stops asking when PRIM refuses the key or says that the quota is used up, in 
 When the server cannot ask PRIM for a stop, it answers 503 with `"out"` and the time when it asks PRIM again.
 The app then makes no call for that stop before that time, also when you open the app or the Live Activity switches station, and asks once at that time.
 When the server is still out, the app waits for the new time; when times come back, it shows them at once.
-When several stops of a station are out, the app waits for the latest of their times and then asks them all: a direction whose stop still waits would show no train, which is false.
+When several stops of a station are out, the app waits for the latest of their times and then asks them all, so that their times come back together.
+When one stop is out, or its call fails, while another stop of the station answers, the directions of that stop never show "No trains": they keep their last times or an empty box ([when it cannot show times](live-activity.md#when-it-cannot-show-times)).
 It counts that time from the `Retry-After` delay of the answer, not from the clock of the phone, and waits at least 30 seconds, so a phone with a wrong clock never asks again and again.
 A debug build calls PRIM directly and never gets this answer: only the fake trains `server-out` and `server-out-tomorrow` give it ([the states of the fake trains](testing-tools.md#ask-for-a-train-at-the-platform-or-another-state)).
 When the server is out because PRIM failed (`"prim-failure"`, a minute), the app waits the same way but keeps the usual words below: that cause is not the budget of the app.

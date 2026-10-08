@@ -8,7 +8,8 @@ import Foundation
 /// A metro line with no stop area asks for each of its quays (`PRIMStopReference`).
 /// The answer for a stop area can hold trains of lines that the app gives to another station of the place,
 /// so it keeps only the trains of the lines that it asked this stop area for.
-/// It throws the error of a failed call only when no train is left from the other calls.
+/// It throws the error of a failed call only when no train is left from the other calls;
+/// else it says which stops did not answer (`DeparturesAnswer.unansweredStops`).
 public struct PRIMDeparturesProvider: DeparturesProvider {
     public static let endpoint = URL(string: "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring")!
     static let timeout: TimeInterval = 15
@@ -48,6 +49,10 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         let stopRequest: StopRequest
         let visits: Result<[MonitoredVisit], any Error>
         var answeredAt: Date?
+
+        var failed: Bool {
+            if case .failure = visits { true } else { false }
+        }
     }
 
     struct StopAnswer {
@@ -95,7 +100,11 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         if departures.isEmpty, let error = Self.error(of: answers) {
             throw error
         }
-        return DeparturesAnswer(departures: departures, answeredAt: answers.compactMap(\.answeredAt).min())
+        return DeparturesAnswer(
+            departures: departures,
+            answeredAt: answers.compactMap(\.answeredAt).min(),
+            unansweredStops: Set(answers.filter(\.failed).map(\.stopRequest.monitoringRef))
+        )
     }
 
     static func error(of answers: [Answer]) -> (any Error)? {

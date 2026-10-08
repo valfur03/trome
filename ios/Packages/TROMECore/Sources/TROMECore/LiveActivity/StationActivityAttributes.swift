@@ -124,11 +124,19 @@ extension StationActivityAttributes.Trains {
                 return LineTrains(
                     line: line.shown,
                     directions: servingStation.map { station in
-                        LineDirections.directions(
+                        let answered = LineDirections.directions(
                             of: line,
                             at: station,
                             from: upcoming,
                             later: board.laterDepartures,
+                            now: now
+                        )
+                        guard board.hasNoAnswer(for: line) else { return answered }
+                        return LineDirections.directions(
+                            of: line,
+                            at: station,
+                            answered: answered,
+                            earlier: board.earlierDepartures(of: line),
                             now: now
                         )
                     } ?? [],

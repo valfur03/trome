@@ -83,6 +83,9 @@ struct PanamBranchEndRows: View {
                 SielNoTrainBox(nextTrainIsOverAnHourAway: true, isStale: false)
             case .noTrain:
                 SielNoTrainBox(nextTrainIsOverAnHourAway: false, isStale: false)
+            case .noAnswer:
+                Color.clear
+                    .frame(height: rowHeight)
             }
         }
     }
@@ -106,6 +109,8 @@ struct PanamBranchEndRows: View {
             return Text("\(name), \(Text("In over 1 hour"))")
         case .noTrain:
             return Text("\(name), \(Text("No trains"))")
+        case .noAnswer:
+            return name
         }
     }
 

@@ -167,10 +167,10 @@ final class LiveActivityRenderCheck: XCTestCase {
             let pageNumber = Self.firstServerOutStatesPage + page
             rows += try drawEveryVariant(of: sample.state, at: sample.station, page: pageNumber, into: outDir)
         }
-        return rows
+        return rows + (try await drawTheNoAnswerStates(of: catalog, fake: fake, into: outDir))
     }
 
-    private func drawEveryVariant(
+    func drawEveryVariant(
         of state: StationActivityAttributes.ContentState,
         at station: Station,
         page: Int,

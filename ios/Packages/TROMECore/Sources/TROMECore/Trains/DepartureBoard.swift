@@ -10,11 +10,23 @@ public struct DepartureBoard: Hashable, Sendable {
     let laterDepartures: [Departure]
     public let stations: [Station]
     public let lines: [TransitLine]
+    /// The stops of the stations whose call failed while another stop answered (`DeparturesAnswer`).
+    public let unansweredStops: Set<String>
+    /// The trains that an earlier answer gave for the unanswered stops, kept as they were.
+    let earlierDepartures: [Departure]
 
-    public init(departures: [Departure], stations: [Station], now: Date) {
+    public init(
+        departures: [Departure],
+        stations: [Station],
+        now: Date,
+        unansweredStops: Set<String> = [],
+        earlierDepartures: [Departure] = []
+    ) {
         let lines = Self.lines(of: stations)
         self.stations = stations
         self.lines = lines
+        self.unansweredStops = unansweredStops
+        self.earlierDepartures = earlierDepartures
         let notDeparted = departures
             .filter { !Self.hasLeft(at: $0.time, now: now) }
             .sorted { $0.time < $1.time }

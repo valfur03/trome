@@ -45,7 +45,7 @@ struct SielRowsView: View {
                 spokenState: spokenStateWithoutTrains(of: direction),
                 boxWidth: boxWidth
             ) {
-                if direction.trains.isEmpty {
+                if direction.trains.isEmpty && !direction.hasNoAnswer {
                     SielNoTrainBox(nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway, isStale: isStale)
                 }
             }
@@ -62,7 +62,7 @@ struct SielRowsView: View {
     }
 
     private func spokenStateWithoutTrains(of direction: LineDirection) -> Text? {
-        guard direction.trains.isEmpty else { return nil }
+        guard direction.trains.isEmpty, !direction.hasNoAnswer else { return nil }
         if direction.nextTrainIsOverAnHourAway {
             return isStale ? nil : Text("In over 1 hour")
         }

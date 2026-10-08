@@ -62,3 +62,22 @@ struct StationLiveActivityInputsStoreTests {
         #expect(store.load() == nil)
     }
 }
+
+extension StationLiveActivityInputsStoreTests {
+    @Test func loadsTheStopsThatDidNotAnswerAndTheTimesKeptForThem() {
+        let storage = InMemoryKeyValueStore()
+        let kept = Departure(line: line1, destination: "La Défense", time: now.addingTimeInterval(120))
+        let board = DepartureBoard(
+            departures: [Departure(line: lineA, destination: "Marne-la-Vallée", time: now.addingTimeInterval(240))],
+            stations: [chatelet, lesHalles],
+            now: now,
+            unansweredStops: ["STIF:StopPoint:Q:1:"],
+            earlierDepartures: [kept]
+        )
+        let inputs = StationLiveActivityInputs(station: chatelet, trains: .departures(board, updatedAt: now))
+
+        StationLiveActivityInputsStore(storage: storage).save(inputs)
+
+        #expect(StationLiveActivityInputsStore(storage: storage).load() == inputs)
+    }
+}

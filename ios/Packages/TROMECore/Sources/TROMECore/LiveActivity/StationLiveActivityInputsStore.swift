@@ -14,7 +14,13 @@ public struct StationLiveActivityInputsStore {
     }
 
     private enum SavedTrains: Codable {
-        case departures(stations: [Station], departures: [Departure], updatedAt: Date)
+        case departures(
+            stations: [Station],
+            departures: [Departure],
+            updatedAt: Date,
+            unansweredStops: Set<String>? = nil,
+            earlierDepartures: [Departure]? = nil
+        )
         case noLiveData
     }
 
@@ -30,8 +36,14 @@ public struct StationLiveActivityInputsStore {
             return nil
         }
         switch saved.trains {
-        case .departures(let stations, let departures, let updatedAt):
-            let board = DepartureBoard(departures: departures, stations: stations, now: updatedAt)
+        case .departures(let stations, let departures, let updatedAt, let unansweredStops, let earlierDepartures):
+            let board = DepartureBoard(
+                departures: departures,
+                stations: stations,
+                now: updatedAt,
+                unansweredStops: unansweredStops ?? [],
+                earlierDepartures: earlierDepartures ?? []
+            )
             return StationLiveActivityInputs(station: saved.station, trains: .departures(board, updatedAt: updatedAt))
         case .noLiveData:
             return StationLiveActivityInputs(station: saved.station, trains: .noLiveData)
@@ -51,7 +63,9 @@ public struct StationLiveActivityInputsStore {
             .departures(
                 stations: board.stations,
                 departures: board.departures + board.laterDepartures,
-                updatedAt: updatedAt
+                updatedAt: updatedAt,
+                unansweredStops: board.unansweredStops,
+                earlierDepartures: board.earlierDepartures
             )
         case .noLiveData:
             .noLiveData

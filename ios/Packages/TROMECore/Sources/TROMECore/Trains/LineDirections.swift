@@ -28,19 +28,28 @@ public struct LineDirection: Codable, Hashable, Sendable {
     public var nextTrainIsOverAnHourAway: Bool
     public var branchEnds: [String]?
     public var trainsOfEachEnd: [BranchEndTrains]?
+    var noAnswer: Bool?
 
     public init(
         label: String,
         trains: [Train],
         nextTrainIsOverAnHourAway: Bool = false,
         branchEnds: [String]? = nil,
-        trainsOfEachEnd: [BranchEndTrains]? = nil
+        trainsOfEachEnd: [BranchEndTrains]? = nil,
+        hasNoAnswer: Bool = false
     ) {
         self.label = label
         self.trains = trains
         self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
         self.branchEnds = branchEnds
         self.trainsOfEachEnd = trainsOfEachEnd
+        self.noAnswer = hasNoAnswer ? true : nil
+    }
+
+    /// Whether the stop of this direction did not answer while another stop of the station did:
+    /// the app does not know its trains, so it shows an empty box, never "no train".
+    public var hasNoAnswer: Bool {
+        noAnswer ?? false
     }
 
     public init(label: String, times: [Date], nextTrainIsOverAnHourAway: Bool = false) {
@@ -131,11 +140,12 @@ enum LineDirections {
         return shown
     }
 
-    private static func directions(
+    static func directions(
         of line: TransitLine,
         at station: Station,
         trainsFrom departures: [Departure],
-        now: Date
+        now: Date,
+        showsEverySide: Bool = false
     ) -> [LineDirection] {
         let trains = departures
             .filter { $0.line.mode == line.mode && $0.line.name == line.name }
@@ -159,7 +169,7 @@ enum LineDirections {
 
         let hasMetroQuayOfUnknownSide = line.mode == .metro
             && groups.contains { $0.isOneDirection && $0.side == nil && !$0.trains.isEmpty }
-        let showsEmptySides = quays.count != 1 && !hasMetroQuayOfUnknownSide
+        let showsEmptySides = showsEverySide || (quays.count != 1 && !hasMetroQuayOfUnknownSide)
         let sideDirections = sides.indices.compactMap { index -> LineDirection? in
             let sideTrains = oneEntryPerTrain(
                 groups.filter { $0.side == index }.flatMap(\.trains).sorted { $0.time < $1.time },

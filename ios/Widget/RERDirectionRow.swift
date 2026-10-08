@@ -21,7 +21,7 @@ struct RERDirectionRow: View {
                     .font(isCompact ? .caption : .subheadline)
                 Spacer(minLength: 8)
                 if direction.times.isEmpty {
-                    if !direction.nextTrainIsOverAnHourAway || !isStale {
+                    if !direction.hasNoAnswer && (!direction.nextTrainIsOverAnHourAway || !isStale) {
                         NoTrainsText(
                             nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway,
                             isCompact: isCompact

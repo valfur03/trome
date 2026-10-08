@@ -69,6 +69,9 @@ private extension LinesPage {
             }
             return DynamicIslandWait(line: soonest.line, wait: wait)
         }
+        if let lineWithNoAnswer {
+            return DynamicIslandWait(line: lineWithNoAnswer, wait: isStale ? .stale : .noData)
+        }
         if nextTrainIsOverAnHourAway {
             return DynamicIslandWait(
                 line: lineOfTheTrainOverAnHourAway ?? allLines.first,

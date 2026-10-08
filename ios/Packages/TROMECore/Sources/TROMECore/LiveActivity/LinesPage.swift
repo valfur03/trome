@@ -34,7 +34,7 @@ public struct LineTrains: Codable, Hashable, Sendable {
     }
 
     public var hasNoTrain: Bool {
-        directions.allSatisfy { $0.trains.isEmpty && !$0.nextTrainIsOverAnHourAway }
+        directions.allSatisfy { $0.trains.isEmpty && !$0.nextTrainIsOverAnHourAway && !$0.hasNoAnswer }
     }
 }
 
@@ -69,6 +69,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
     public var nextTrainIsOverAnHourAway: Bool
     var nextTrainComesWithinTheHourAt: Date?
     var lineOfTheTrainOverAnHourAway: TransitLine?
+    var lineWithNoAnswer: TransitLine?
 
     public init(
         lines: [LineTrains],
@@ -108,6 +109,7 @@ public struct LinesPage: Codable, Hashable, Sendable {
             soonestTrain: soonestTrain,
             nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway
         )
+        lineWithNoAnswer = lines.first { $0.directions.contains(where: \.hasNoAnswer) }?.line
         if nextTrainIsOverAnHourAway {
             nextTrainComesWithinTheHourAt = laterTrain?.time.addingTimeInterval(-DepartureBoard.farthestTimeSeconds)
             lineOfTheTrainOverAnHourAway = laterTrain.flatMap { train in

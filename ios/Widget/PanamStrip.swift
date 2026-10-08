@@ -38,7 +38,8 @@ struct PanamStrip: View {
             name: direction.name,
             trains: direction.trains,
             nextTrainIsOverAnHourAway: direction.nextTrainIsOverAnHourAway,
-            isStale: isStale
+            isStale: isStale,
+            hasNoAnswer: direction.hasNoAnswer
         ))
     }
 
@@ -52,7 +53,9 @@ struct PanamStrip: View {
                     .hidden()
             }
             if trains.isEmpty {
-                if !direction.nextTrainIsOverAnHourAway {
+                if direction.hasNoAnswer {
+                    EmptyView()
+                } else if !direction.nextTrainIsOverAnHourAway {
                     message("No trains", color: .secondary)
                 } else if !isStale {
                     message("> 1 h", color: Self.amber)
@@ -87,10 +90,11 @@ struct PanamStrip: View {
         name: String,
         trains: [LineDirection.Train],
         nextTrainIsOverAnHourAway: Bool,
-        isStale: Bool
+        isStale: Bool,
+        hasNoAnswer: Bool = false
     ) -> Text {
         let name = Text(verbatim: name)
-        if isStale {
+        if isStale || hasNoAnswer {
             return name
         }
         guard let first = trains.first else {
