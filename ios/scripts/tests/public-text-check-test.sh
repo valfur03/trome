@@ -166,10 +166,11 @@ expect "it lets the refusal and its tests name the old setting names" "$(grep -c
 reset_repo
 file ios/scripts/public-text-check.py "INTERNAL_RULES = [\"prompter\", \"/Users/\"]"
 file ios/scripts/tests/public-text-check-test.sh "file docs/page.mdx \"TASK-140\""
+printf 'docs/draft.md\n' > "$repo/.gitignore"
 printf 'The factory, /Users/jane.\n' > "$repo/docs/draft.md"
 printf 'TASK-1\0binary\n' > "$repo/docs/image.png"
 git -C "$repo" add docs/image.png
-expect "it skips its own word list and examples, the files that git does not track, and binary files" "$(check)" "passes"
+expect "it skips its own word list and examples, the files that git ignores, and binary files" "$(check)" "passes"
 expect "with VERBOSE=1, it says which files it skips, and why" "$(VERBOSE=1 check > /dev/null; grep -c "skips ios/scripts/public-text-check.py: it holds the word list" "$state/out")" "1"
 
 mkdir "$state/allowing"
@@ -182,6 +183,12 @@ file ios/App/Other.swift "let factory = StationFactory()"
 (cd "$repo" && "$state/allowing/public-text-check.py") > "$state/out" 2>&1 && result="passes" || result="fails"
 expect "a text of ALLOWED_TEXTS passes in its own file only" "$result $(hit "ios/App/Other.swift:1: a word of the team's own process: \"factory\"") \
 $(grep -c "Factory.swift" "$state/out")" "fails 1 0"
+
+reset_repo
+file docs/page.mdx "The Simulator runs one job at a time."
+printf 'echo "the factory runs it"\n' > "$repo/ios/scripts/new.sh"
+expect "a new file that git does not track yet is checked, so a mistake in it shows before the commit" "$(check)" "fails"
+expect "it finds the word of the team in the new file" "$(hit "ios/scripts/new.sh:1: a word of the team's own process: \"factory\"")" "1"
 
 (cd "$state" && "$scripts/public-text-check.py") > /dev/null 2>&1 && result="passes" || result="fails"
 expect "outside a git repo, it fails" "$result" "fails"

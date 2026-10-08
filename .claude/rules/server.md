@@ -42,7 +42,7 @@ The reviewer checks them, as for the iOS app.
 - **Use your own port.** `make server-dev` uses 8787 in the main folder only (the prompter's), 8787 plus the number at the end of the folder name in a worktree (8974 in `task-187`), and a port from 9800 to 9899 in a worktree whose name ends with no number (for example `qa`).
   Run it in the background, and stop it with `make server-stop` as soon as your check is done, and before your job ends.
 - **Fake secrets only.** `make server-dev` creates `server/.dev.vars` (ignored by git) from `server/.dev.vars.example`, with fake values.
-  Never put a real key in it, and never commit it (`make server-check` fails when git tracks a `.dev.vars` or `.env` file of `server/`).
+  Never put a real key in it, and never commit it (`make server-check` fails when git tracks a `.dev.vars` or `.env` file of `server/`, or when such a file is new and git does not ignore it).
 - **No deploy and no account** (a rule of `CLAUDE.md`).
 - **No PRIM call from `make server-dev`.** The dev server calls the real PRIM, with the fake key, as soon as a departures request has the right app token.
   So an agent never sends `GET /v1/stops/.../departures` with the app token of `server/.dev.vars` to it: check those answers in the tests, which fake PRIM.

@@ -77,9 +77,16 @@ in_repo README.md "One sentence."
 in_repo docs/page.mdx "One sentence."
 in_repo CLAUDE.md "One sentence."
 in_repo notes.txt "$long"
-printf '%s\n' "$long" > "$repo/untracked.md"
-expect "with no file, it checks the Markdown and MDX files of the repo, from any folder of it" "$(check_repo)" "passes"
+printf 'ignored.md\n' > "$repo/.gitignore"
+printf '%s\n' "$long" > "$repo/ignored.md"
+expect "with no file, it checks the Markdown and MDX files of the repo, from any folder of it, and skips the files that git ignores" \
+    "$(check_repo)" "passes"
 expect "it counts the files that it checked" "$(grep -c "OK (3 files" "$state/out")" "1"
+
+printf '%s\n' "$long" > "$repo/docs/new.md"
+expect "a new file that git does not track yet is checked, so a mistake in it shows before the commit" "$(check_repo)" "fails"
+expect "the message names the new file" "$(grep -c "^prose-check: docs/new.md:1: 405 characters" "$state/out")" "1"
+rm "$repo/docs/new.md"
 
 in_repo docs/page.mdx "$long"
 expect "a long line of an MDX file of the repo fails" "$(check_repo)" "fails"
