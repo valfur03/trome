@@ -112,26 +112,35 @@ public final class StationLiveActivityModel {
         firstLineIndex = page.nextFirstIndex
         Self.logPager("show the next lines of \(shown.stationName): page from \(page.firstIndex) to \(firstLineIndex)")
         guard let inputs, !keptTimesAreStale(at: now()) else {
-            await send(markedStaleIfTheKeptTimesAreOld(shown))
+            let kept = markedStaleIfTheKeptTimesAreOld(shown)
+            if kept != shown {
+                content = kept
+            }
+            await send(kept)
             return
         }
         await show(station: inputs.station, trains: inputs.trains)
     }
 
     func redraw() async {
-        guard isShowing, let inputs else { return }
+        guard isShowing else { return }
         guard !keptTimesAreStale(at: now()) else {
             await markTheKeptTimesStaleOnceTheyAreOld()
             return
         }
+        guard let inputs else { return }
         await show(station: inputs.station, trains: inputs.trains)
     }
 
     /// The next time a running app draws the Live Activity again: when a train of the page changes its
     /// status, or, for kept times, when they get old, to mark them stale (iOS would wait up to 2 minutes).
+    /// With no trains to draw the page from, only the mark is planned: a date that `redraw()` cannot act on
+    /// would come back at once, and the background loop would never sleep.
     func nextRedrawDate(after now: Date) -> Date? {
         guard let content, !content.isMarkedStale else { return nil }
-        let pageDate = content.trains.linesPage?.nextRedrawDate(after: content.updatedAt).map { max($0, now) }
+        let pageDate = inputs == nil
+            ? nil
+            : content.trains.linesPage?.nextRedrawDate(after: content.updatedAt).map { max($0, now) }
         guard let keptTimesStaleDate else { return pageDate }
         let markDate = max(keptTimesStaleDate, now)
         return pageDate.map { min($0, markDate) } ?? markDate

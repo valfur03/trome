@@ -116,8 +116,10 @@ struct StationLiveActivityFailedRefreshTests {
 
         clock.advance(by: 120)
         await model.showNextLines()
+        await model.redraw()
 
         #expect(client.updates == [shown?.markedStale].compactMap { $0 })
+        #expect(model.nextRedrawDate(after: clock.now) == nil)
     }
 
     @Test func showsFreshTrainsUnmarkedWhenACallWorksAfterTheKeptTrainsWereMarkedStale() async {
@@ -218,6 +220,19 @@ struct StationLiveActivityFailedRefreshTests {
         await model.update(station: concorde, trains: .failed(.unreachable))
 
         #expect(client.updates.isEmpty)
+    }
+
+    @Test func marksTheTrainsThatTheLiveActivityShowedBeforeTheAppStartedStaleWithNoSavedTrains() async {
+        client.isShowing = true
+        client.shownContent = content(concorde, concordeTrains(inSeconds: [120, 400]))
+        let model = makeModel()
+        await model.update(station: concorde, trains: .failed(.serverOut(retryAt: clock.now.addingTimeInterval(1_840))))
+
+        clock.advance(by: 120)
+        await model.redraw()
+
+        #expect(client.updates.last?.isMarkedStale == true)
+        #expect(model.nextRedrawDate(after: clock.now) == nil)
     }
 }
 
