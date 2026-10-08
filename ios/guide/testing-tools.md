@@ -141,7 +141,8 @@ At the top, **Phone now** shows the settings that can stop a wake: the location 
 | Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
 
 "App launched" is written at the start of the launch.
-When "App on screen" follows it in the same second, you opened the app; when it does not, iOS launched the app in the background.
+When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.
+Only an area line after it says that iOS woke the app near a station: iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
 **Share** sends the log as text, and **Clear** empties it.
 Release builds record nothing.
