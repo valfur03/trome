@@ -40,12 +40,18 @@ struct FakeTrainsScenarioTests {
         }
     }
 
-    @Test func putsTheSecondTrainOfEachStripAtThePlatform() async throws {
+    @Test func countsTheMinutesOfASecondTrainAtThePlatformUntilTheFirstTrainIsThere() async throws {
         for minutes in [0, 3.4] {
             #expect(try await boxes(at: "Lamarck - Caulaincourt", .atPlatformSecond, afterMinutes: minutes) == [
-                [nil, .atPlatform], [nil, .atPlatform]
+                [nil, nil], [nil, nil]
             ])
         }
+        let firstStripOnceItsFirstTrainIsThere = try await boxes(
+            at: "Lamarck - Caulaincourt",
+            .atPlatformSecond,
+            afterMinutes: 4.6
+        )[0]
+        #expect(firstStripOnceItsFirstTrainIsThere == [.atPlatform, .atPlatform])
     }
 
     @Test func putsBothTrainsOfEachStripAtThePlatform() async throws {

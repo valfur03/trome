@@ -11,29 +11,29 @@ extension LineDirections {
         let ends = line.ends ?? LineEnds(first: [], second: [])
         let reachableEnds = ends.reachableEnds(of: side, from: station.name)
         let branchEnds = line.mode == .metro && reachableEnds.count > 1 ? reachableEnds : nil
+        let trains = withStatuses(sideTrains, of: line, at: now)
         return LineDirection(
             label: reachableEnds.joined(separator: " / "),
-            trains: sideTrains.prefix(timesPerDirection).map { train in
-                shown(train, at: now, as: endName(of: train.destination, in: side, ends: ends))
+            trains: trains.prefix(timesPerDirection).map { train in
+                shown(train, as: endName(of: train.train.destination, in: side, ends: ends))
             },
             branchEnds: branchEnds,
-            trainsOfEachEnd: branchEnds.map { trainsOfEachEnd($0, from: sideTrains, ends: ends, now: now) }
+            trainsOfEachEnd: branchEnds.map { trainsOfEachEnd($0, from: trains, ends: ends) }
         )
     }
 
     private static func trainsOfEachEnd(
         _ reachableEnds: [String],
-        from sideTrains: [Departure],
-        ends: LineEnds,
-        now: Date
+        from sideTrains: [TrainWithStatus],
+        ends: LineEnds
     ) -> [BranchEndTrains] {
         reachableEnds.map { end in
             BranchEndTrains(
                 end: end,
                 trains: sideTrains
-                    .filter { endName(of: $0.destination, in: [end], ends: ends) != nil }
+                    .filter { endName(of: $0.train.destination, in: [end], ends: ends) != nil }
                     .prefix(timesPerDirection)
-                    .map { shown($0, at: now, as: end) }
+                    .map { shown($0, as: end) }
             )
         }
     }

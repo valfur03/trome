@@ -66,7 +66,7 @@ Start the Live Activity at once, then put the app in the background and look at 
 | State | What the Live Activity shows |
 |---|---|
 | `at-platform` | The first box of each strip says **À quai** for 5 minutes; then a train comes every 4 minutes and waits 30 seconds at the platform. |
-| `at-platform-second` | The second box says **À quai** for about 3 minutes, next to a train that leaves first; then the first train comes and leaves, and the second one 2 minutes later. |
+| `at-platform-second` | The data puts the second train at the platform before the first train comes: for about 4 minutes, both boxes count their minutes. Then both say **À quai** once the first train is there; the first train leaves, and the second one 2 minutes later. |
 | `at-platform-both` | Both boxes say **À quai** for 5 minutes; then the first train leaves, and the second one 2 minutes later. |
 | `ten-to-nine` | The second box shows 10 or more, and counts down to 9 by itself 3 to 4 minutes after the launch, then every 6 minutes. Look while the app is in the background. |
 | `fork-end-one-train` | At a station of line 7 or 13 before the fork, such as Liège: the second end gets one train, which leaves after 8 minutes, then shows the grey dash. |

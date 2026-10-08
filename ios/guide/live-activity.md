@@ -14,7 +14,7 @@ Put a rule in `TROMECore` (`ios/Packages/TROMECore/Sources/TROMECore/`), with a 
 |---|---|---|
 | Which lines and which trains a page holds, the order of the pages | `LinesPage`, `ContentState` (`LiveActivity/`) | `LinesPageTests*`, `StationActivityContentTests*` |
 | Which direction a train goes in, how many trains a direction keeps | `LineDirections` (`Trains/`) | `LineDirectionsTests*` |
-| When a train is approaching or at the platform | `PlatformStatus` (`Trains/`) | `PlatformStatusTests` |
+| When a train is approaching or at the platform, and never at the platform behind a train still on its way | `PlatformStatus` (`Trains/`) | `PlatformStatusTests`, `LineDirectionsTests+OnePlatform` |
 | What the compact and minimal views show | the rules in `DynamicIslandWait`; the views `CompactIslandWait`, `MinimalIslandWait`, `IslandNumber` | `DynamicIslandWaitTests` |
 | The look of a metro strip, a fork group, an RER row or a header | `PanamStrip`, `PanamBranchEndRows`, `SielRowsView`, `PanamStripsHeader` in `ios/Widget/`; `StationLiveActivity.swift` holds the entry views | [the render check](render-check.md) |
 | The header and its tap | `LinesPagerButton`, `ShowNextLinesIntent`, `StationLiveActivityModel.showNextLines()` | `StationLiveActivityModelTests` |
@@ -88,6 +88,10 @@ The page decides which look draws it, in `LinesPage.panamStripsLine` and `LinesP
 | One train only | The second column is empty | One row |
 | Old times: the stale rule, below | The boxes are empty, the ends of line stay, and a line says "Open the app" | One row for each direction, with its name and an empty box |
 
+- On a metro strip, a train after one that has not reached its platform yet shows its minutes, even when PRIM says that it is approaching or at the platform.
+  Why: a metro platform holds one train of a direction, and trains do not pass each other there, so "At the platform" behind a train still on its way is wrong, and a rider could run for a train that is minutes away.
+  Each platform counts alone: at a fork station where each branch has its own platform, the train of one branch may be at its platform while the other branch waits for its train.
+  RER rows keep what PRIM says, as an RER station can have several tracks for one direction.
 - The number counts down by itself, also with the app closed, because it is a timer of iOS.
   Counting never reaches "0": "0" is the state of the last minute.
 - An RER row never says "0", and draws no other status than the two words: PRIM gives none that a rider can trust.

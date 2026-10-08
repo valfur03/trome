@@ -174,9 +174,9 @@ enum LineDirections {
             .map { group in
                 LineDirection(
                     label: group.trains[0].destination,
-                    trains: oneEntryPerTrain(group.trains, of: line)
+                    trains: withStatuses(oneEntryPerTrain(group.trains, of: line), of: line, at: now)
                         .prefix(timesPerDirection)
-                        .map { shown($0, at: now) }
+                        .map { shown($0) }
                 )
             }
         return Array((sideDirections + otherDirections).prefix(maximumDirections))
@@ -192,15 +192,6 @@ enum LineDirections {
             kept.append(train)
         }
         return kept
-    }
-
-    static func shown(_ train: Departure, at now: Date, as destination: String? = nil) -> LineDirection.Train {
-        LineDirection.Train(
-            time: train.time,
-            destination: destination ?? train.destination,
-            status: PlatformStatus(of: train, at: now),
-            arrivalTime: train.arrivalTime
-        )
     }
 
     private static func groups(of trains: [Departure], quays: [String]) -> [Group] {

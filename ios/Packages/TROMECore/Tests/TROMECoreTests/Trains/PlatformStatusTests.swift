@@ -58,3 +58,28 @@ struct PlatformStatusTests {
         #expect(dates == [now.addingTimeInterval(141), now.addingTimeInterval(200), now.addingTimeInterval(200)])
     }
 }
+
+extension PlatformStatusTests {
+    private func train(on quay: String, leavesIn seconds: TimeInterval, atStop: Bool = false) -> Departure {
+        Departure(
+            line: TransitLine(mode: .metro, name: "13"),
+            destination: "Saint-Denis-Université",
+            time: now.addingTimeInterval(seconds),
+            quayRef: quay,
+            isAtStop: atStop
+        )
+    }
+
+    @Test func letsEachPlatformOfADirectionHoldItsOwnTrain() {
+        let trains = [train(on: "Q:1", leavesIn: 240), train(on: "Q:2", leavesIn: 300, atStop: true)]
+
+        #expect(PlatformStatus.ofEach(trains, at: now, oneTrainPerPlatform: true) == [nil, .atPlatform])
+    }
+
+    @Test func keepsWhatPRIMSaysWhereAPlatformCanHoldSeveralTrains() {
+        let trains = [train(on: "Q:1", leavesIn: 240), train(on: "Q:1", leavesIn: 300, atStop: true)]
+
+        #expect(PlatformStatus.ofEach(trains, at: now, oneTrainPerPlatform: false) == [nil, .atPlatform])
+        #expect(PlatformStatus.ofEach(trains, at: now, oneTrainPerPlatform: true) == [nil, nil])
+    }
+}
