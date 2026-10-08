@@ -102,6 +102,15 @@ This is normal: do not stop them.
 
 The lock frees itself when its job dies, when its worktree is removed, or when the Simulator is shut down.
 
+## The records of the Simulator time
+
+Each Simulator job adds one line to `~/Library/Logs/TROME/simulator-jobs.tsv` when it frees the Simulator: when it asked, its kind (`merge`, `e2e`, `run`, `docs-screenshots`, `live-activity-render`, or `job` for a command through `sim-lock.sh job`), its wait, its hold, the part of the hold that its test run waited for builds, how it ended, the folder and the branch.
+A `make run` adds its line at `make simulator-shutdown`, so its hold counts the whole session.
+Each wait of the build gate adds a line to `~/Library/Logs/TROME/build-waits.tsv`.
+`make simulator-times` sums them up by kind (`SINCE=2026-10-08` for a part).
+Never delete or edit these files: they compare the Simulator time across weeks.
+A script test sets `TROME_LOGS` to a folder of its own, so it never writes these files.
+
 ## Hold the Simulator only while you use it
 
 Every job that uses the Simulator (`make run`, `make e2e`, `make docs-screenshots`, a job through `ios/scripts/sim-lock.sh job`) frees it as soon as its check is done, not a moment later.

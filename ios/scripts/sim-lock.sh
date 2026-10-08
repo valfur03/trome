@@ -14,8 +14,13 @@ scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/../.." && pwd)
 simulator="$scripts/simulator.sh"
 watch_seconds=${RATP_SIM_WATCH_SECONDS:-10}
-watcher_version=3
+watcher_version=4
 held_slots=
+# Each Simulator job adds one line here when it frees the Simulator: when it asked, how long it waited, how long it held it.
+# It is outside /tmp, so a restart of the Mac keeps it; 'make simulator-times' sums it up.
+logs=${TROME_LOGS:-$HOME/Library/Logs/TROME}
+jobs_log="$logs/simulator-jobs.tsv"
+tab=$(printf '\t')
 if [ -n "${RATP_SIM_MERGE:-}" ]; then
     # A merge looks at the lock every second, so it wins the free lock even against the scripts of an older branch.
     poll_seconds=1
@@ -108,6 +113,7 @@ remove_if_stale() {
     removed=1
     if is_stale; then
         echo "Removing a stale Simulator lock of $(holder worktree)" >&2
+        record_job stale
         touch "$last_job"
         rm -rf "$lock"
         removed=0
@@ -119,6 +125,53 @@ remove_if_stale() {
 write_size() {
     echo "${RATP_SIM_SIZE:-}" > "$lock/size.new"
     mv "$lock/size.new" "$lock/size"
+}
+
+one_line() {
+    printf '%s' "$1" | tr '\t\n' '  '
+}
+
+# Called right after a job takes a free lock, with $asked (when it started to wait) and $waited_for (why it waited).
+stamp() {
+    taken=$(date +%s)
+    kind=${RATP_SIM_KIND:-$1}
+    if [ -n "${RATP_SIM_MERGE:-}" ]; then
+        kind=merge
+    fi
+    branch=$(git -C "$root" rev-parse --abbrev-ref HEAD 2> /dev/null || echo "?")
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$taken" "$asked_at" "$(one_line "$kind")" "$((taken - asked))" \
+        "$(one_line "$(basename "$root")")" "$(one_line "$branch")" "$waited_for" > "$lock/job"
+    one_line "${RATP_SIM_DETAIL:-}" > "$lock/detail"
+}
+
+start_waiting() {
+    asked=$(date +%s)
+    asked_at=$(date +%Y-%m-%dT%H:%M:%S%z)
+    waited_for=
+}
+
+waited_for() {
+    case ",$waited_for," in
+        *",$1,"*) ;;
+        *) waited_for="$waited_for${waited_for:+,}$1" ;;
+    esac
+}
+
+# Adds the line of the job that holds $lock to the records; a job that the scripts of an older branch took has no line.
+record_job() {
+    [ -f "$lock/job" ] || return 0
+    IFS=$tab read -r taken asked_at kind wait worktree branch waited_for < "$lock/job" || return 0
+    hold=$(($(date +%s) - taken))
+    gate_wait=$(cat "$lock/gate-wait" 2> /dev/null || true)
+    detail=$(cat "$lock/detail" 2> /dev/null || true)
+    {
+        mkdir -p "$logs" &&
+            if [ ! -s "$jobs_log" ]; then
+                printf 'asked\tkind\twait_s\thold_s\tgate_wait_s\tend\tworktree\tbranch\tdetail\twaited_for\n' >> "$jobs_log"
+            fi &&
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$asked_at" "$kind" "$wait" "$hold" "${gate_wait:-0}" "$1" \
+                "$worktree" "$branch" "$detail" "$waited_for" >> "$jobs_log"
+    } 2> /dev/null || true
 }
 
 mark_held() {
@@ -239,11 +292,13 @@ try_to_take_a_slot() {
 
 acquire() {
     said=
+    start_waiting
     until try_to_take_a_slot; do
         if [ "$wait_kind" = race ]; then
             sleep 1
             continue
         fi
+        waited_for "$wait_kind"
         if [ "$wait_kind $busy" != "$said" ]; then
             echo "Waiting for the Simulator lock: $wait_reason" >&2
             said="$wait_kind $busy"
@@ -251,6 +306,7 @@ acquire() {
         sleep "$poll_seconds"
     done
     take
+    stamp "$1"
     start_watcher
     if [ -n "$said" ]; then
         echo "Got the Simulator lock (slot $RATP_SIM_SLOT)" >&2
@@ -259,8 +315,10 @@ acquire() {
 
 acquire_slot() {
     said=
+    start_waiting
     until ! merge_waits && mkdir "$lock" 2> /dev/null; do
         if merge_waits; then
+            waited_for merge
             if [ "merge $merge_root" != "$said" ]; then
                 echo "Waiting for the Simulator lock of slot $RATP_SIM_SLOT: a merge goes first ($merge_root)" >&2
                 said="merge $merge_root"
@@ -275,6 +333,7 @@ acquire_slot() {
         if remove_if_stale; then
             continue
         fi
+        waited_for busy
         held_by=$(describe_holder)
         if [ "$held_by" != "$said" ]; then
             echo "Waiting for the Simulator lock of slot $RATP_SIM_SLOT, held by $held_by" >&2
@@ -283,6 +342,7 @@ acquire_slot() {
         sleep "$poll_seconds"
     done
     take
+    stamp all
 }
 
 enter() {
@@ -290,15 +350,17 @@ enter() {
         join_session
         start_watcher
     else
-        acquire
+        acquire "$1"
     fi
 }
 
+# $1: how the job ended, for its record (the exit status of its command, or "freed" after 'open').
 release() {
     released=
     for held in $held_slots; do
         use_slot "$held"
         if [ "$(holder pid)" = "$$" ] || owns_session; then
+            record_job "$1"
             touch "$last_job"
             rm -rf "$lock"
             released=1
@@ -363,7 +425,7 @@ watch() {
 on_exit() {
     status=$?
     trap - EXIT
-    release
+    release "$status"
     exit "$status"
 }
 
@@ -371,13 +433,13 @@ on_exit_if_failed() {
     status=$?
     trap - EXIT
     if [ "$status" -ne 0 ]; then
-        release
+        release "$status"
     fi
     exit "$status"
 }
 
 open_simulator() {
-    enter
+    enter open
     trap on_exit_if_failed EXIT
     "$@"
     "$simulator" udid > "$lock/udid"
@@ -397,7 +459,7 @@ case "$command" in
         if in_held_job; then
             exec "$@"
         fi
-        enter
+        enter job
         trap on_exit EXIT
         "$@"
         ;;
@@ -419,7 +481,7 @@ case "$command" in
         if find_session; then
             held_slots=$RATP_SIM_SLOT
             "$simulator" uninstall "$(holder udid)" || true
-            release
+            release freed
         fi
         ;;
     all)

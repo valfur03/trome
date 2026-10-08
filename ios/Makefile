@@ -17,6 +17,8 @@ RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
+# What the record of a 'make run' says besides its kind (sim-lock.sh, make simulator-times).
+RUN_DETAIL := $(strip $(if $(filter 1,$(LIVE)),LIVE=1) $(if $(filter 1,$(SMALL)),SMALL=1) $(if $(LANGUAGE),LANGUAGE=$(LANGUAGE)))
 QUIET := ./scripts/quiet.sh
 BUILD_GATE := ./scripts/build-gate.py build
 TEST_RUN_GATE := ./scripts/build-gate.py tests
@@ -75,7 +77,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -106,6 +108,7 @@ help:
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
 	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle)"
+	@echo "make simulator-times     How long the Simulator jobs waited for the Simulator and held it, by kind (merge, e2e, run...), and how long builds waited for a test run; SINCE=2026-10-08 for a part (records in ~/Library/Logs/TROME/)"
 	@echo "make simulator-delete    Delete the shared Simulators, also those of a second-slot trial (waits until no other Simulator job runs)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
 	@echo "make clean               Delete the build folder and the Xcode project"
@@ -200,7 +203,7 @@ live-key-check: project
 	@TROME_SHARED_CACHE="$(TROME_SHARED_CACHE)" ./scripts/live-key-check.sh
 
 run: build
-	@$(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
+	@RATP_SIM_KIND=run RATP_SIM_DETAIL="$(RUN_DETAIL)" $(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"
 
 switch-language:
 	@$(SIM_LOCK) reopen $(SIMULATOR) switch-language "$(APP_PATH)"
@@ -216,7 +219,7 @@ e2e: project
 	done
 	@rm -rf $(E2E_RESULT)
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@$(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
+	@RATP_SIM_KIND=e2e RATP_SIM_DETAIL="$(ONLY)" $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
 		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E tests: ' \
 		sh -c '"$$@"; status=$$?; ./scripts/e2e-failures.py $(E2E_RESULT); [ $$status -eq 0 ] || ./scripts/e2e-keep.py $(E2E_RESULT) $(LOGS)/e2e.log "$(APP_PATH)"; exit $$status' e2e \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
@@ -233,11 +236,14 @@ simulator:
 simulator-shutdown:
 	@$(SIM_LOCK) free
 
+simulator-times:
+	@./scripts/simulator-times.py $(if $(SINCE),--since "$(SINCE)")
+
 simulator-delete:
-	@$(SIM_LOCK) all $(SIMULATOR) delete
+	@RATP_SIM_KIND=simulator-delete $(SIM_LOCK) all $(SIMULATOR) delete
 
 simulator-delete-old:
-	@$(SIM_LOCK) job $(SIMULATOR) delete-old
+	@RATP_SIM_KIND=simulator-delete-old $(SIM_LOCK) job $(SIMULATOR) delete-old
 
 clean:
 	rm -rf $(BUILD_DIR) $(PROJECT) $(OLD_PROJECT)
@@ -250,14 +256,14 @@ merge:
 
 live-activity-render: project
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/live-activity-render-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@$(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
+	@RATP_SIM_KIND=live-activity-render $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/live-activity-render.log '^Simulator time' ./scripts/live-activity-render.sh render $(RENDER_OUT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -collect-test-diagnostics never test-without-building
 	@./scripts/live-activity-render.sh report $(RENDER_OUT)
 
 docs-screenshots: project
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/docs-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@$(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
+	@RATP_SIM_KIND=docs-screenshots $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/docs-screenshots.log '^Saved ' ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) $(LOGS)/docs-screenshots.log "$(APP_PATH)" \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \

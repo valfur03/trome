@@ -15,17 +15,23 @@ that dies, so a killed build or test run never blocks the others. A process that
 either: a test run waits at most 20 minutes for the builds, and a build at most 30 minutes for a test run, then each
 runs anyway and says so (much longer than a healthy build or test run). A command inside a held gate (the unit tests
 that `make check` starts, the build inside a test run) runs at once: it is already counted.
+
+Each wait adds one line to ~/Library/Logs/TROME/build-waits.tsv (the folder is TROME_LOGS), and a test run inside a
+Simulator job adds its wait to the record of that job (sim-lock.sh): it held the Simulator while it waited.
 """
 import fcntl
 import os
 import signal
 import subprocess
 import sys
+import time
 
 PREFIX = os.environ.get("RATP_BUILD_GATE") or "/tmp/ratp-build-gate"
 HELD = "RATP_BUILD_GATE_HELD"
 TESTS_WAIT = int(os.environ.get("RATP_BUILD_GATE_TESTS_WAIT") or 20 * 60)
 BUILD_WAIT = int(os.environ.get("RATP_BUILD_GATE_BUILD_WAIT") or 30 * 60)
+LOGS = os.environ.get("TROME_LOGS") or os.path.expanduser("~/Library/Logs/TROME")
+WAITS_HEADER = "asked\tgate\twait_s\tworktree\twaited_for\n"
 
 
 def usage():
@@ -106,6 +112,53 @@ def running_builds():
     return builds
 
 
+def worktree_name(path):
+    """The folder of the clone: the make commands of the app run in its ios/ folder."""
+    path = path.rstrip("/")
+    if os.path.basename(path) == "ios":
+        path = os.path.dirname(path)
+    return os.path.basename(path) or "?"
+
+
+def one_line(text):
+    return " ".join(str(text).split())
+
+
+def record_wait(gate, asked_at, started, waited_for):
+    """Adds the wait to the records; a record that cannot be written never stops the build or the test run."""
+    seconds = round(time.monotonic() - started)
+    try:
+        os.makedirs(LOGS, exist_ok=True)
+        path = os.path.join(LOGS, "build-waits.tsv")
+        line = "\t".join([asked_at, gate, str(seconds), one_line(worktree_name(os.getcwd())), one_line(waited_for)])
+        with open(path, "a", encoding="utf-8") as file:
+            if file.tell() == 0:
+                file.write(WAITS_HEADER)
+            file.write(line + "\n")
+    except OSError:
+        pass
+    return seconds
+
+
+def add_to_simulator_job(seconds):
+    """The test run waited while its Simulator job held the Simulator: that job's record counts this time apart."""
+    lock = os.environ.get("RATP_SIM_HELD_LOCK")
+    if not lock or not os.path.isdir(lock):
+        return
+    path = os.path.join(lock, "gate-wait")
+    total = read_text(path)
+    try:
+        with open(path + ".new", "w", encoding="utf-8") as file:
+            file.write(f"{(int(total) if total.isdigit() else 0) + seconds}\n")
+        os.replace(path + ".new", path)
+    except OSError:
+        pass
+
+
+def now_text():
+    return time.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+
 def run(command, role):
     env = dict(os.environ, **{HELD: role})
     try:
@@ -127,13 +180,16 @@ def run(command, role):
 def build(command):
     turn = open_lock("turn")
     if not try_lock(turn, fcntl.LOCK_EX):
+        asked_at, started = now_text(), time.monotonic()
         folder = test_run_folder()
         where = f" ({folder})" if folder else ""
         print(f"Waiting: a Simulator test run{where} needs a quiet Mac. This build starts when the test run ends.", file=sys.stderr)
         if not lock_within(turn, fcntl.LOCK_EX, BUILD_WAIT):
+            record_wait("build", asked_at, started, f"a test run ({worktree_name(folder) if folder else '?'}), then ran next to it")
             print(f"The Simulator test run{where} still runs after {BUILD_WAIT // 60} minutes: this build runs next to it.", file=sys.stderr)
             os.close(turn)
             return run(command, "build")
+        record_wait("build", asked_at, started, f"a test run ({worktree_name(folder) if folder else '?'})")
     shared = open_lock("lock")
     fcntl.flock(shared, fcntl.LOCK_SH)
     os.close(turn)
@@ -156,9 +212,12 @@ def build(command):
 
 def tests(command):
     turn = open_lock("turn")
+    asked_at, started = now_text(), time.monotonic()
+    waited_for = []
     if not try_lock(turn, fcntl.LOCK_EX):
         folder = test_run_folder()
         where = f" ({folder})" if folder else ""
+        waited_for.append(f"a test run ({worktree_name(folder) if folder else '?'})")
         print(f"Waiting: another Simulator test run{where} is running.", file=sys.stderr)
         fcntl.flock(turn, fcntl.LOCK_EX)
     os.ftruncate(turn, 0)
@@ -167,11 +226,15 @@ def tests(command):
     if not try_lock(alone, fcntl.LOCK_EX):
         builds = running_builds()
         names = ": " + ", ".join(builds) if builds else ""
+        waited_for.append(f"{len(builds) or '?'} builds")
         print(f"Waiting for the builds that run to end, so that the tests run on a quiet Mac (new builds wait){names}", file=sys.stderr)
         if not lock_within(alone, fcntl.LOCK_EX, TESTS_WAIT):
             builds = running_builds()
             names = ": " + ", ".join(builds) if builds else ""
+            waited_for.append("then ran next to them")
             print(f"Builds still run after {TESTS_WAIT // 60} minutes: the tests run next to them{names}", file=sys.stderr)
+    if waited_for:
+        add_to_simulator_job(record_wait("tests", asked_at, started, ", ".join(waited_for)))
     try:
         return run(command, "tests")
     finally:

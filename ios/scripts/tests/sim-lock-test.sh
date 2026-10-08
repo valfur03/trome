@@ -6,7 +6,7 @@ state=$(mktemp -d)
 default=11111111-1111-1111-1111-111111111111
 old=22222222-2222-2222-2222-222222222222
 failures=0
-export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock"
+export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" TROME_LOGS="$state/logs"
 unset RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID RATP_SIM_MERGE RATP_MERGE_QUEUE || true
 
 version=$(sed -n 's/^watcher_version=//p' "$scripts/sim-lock.sh")

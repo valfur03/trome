@@ -426,11 +426,15 @@ train() {
         train_keys="$train_keys $entry_key"
     done
     set -- $train_keys
+    names=
+    for entry_key; do
+        names="$names${names:+, }$(field "$entry_key" branch)"
+    done
+    # The record of this Simulator job (make simulator-times) names the tasks of the train.
+    if [ -d "${RATP_SIM_HELD_LOCK:-}" ]; then
+        printf '%s\n' "$names" > "$RATP_SIM_HELD_LOCK/detail" 2> /dev/null || true
+    fi
     if [ "$#" -gt 1 ]; then
-        names=
-        for entry_key; do
-            names="$names${names:+, }$(field "$entry_key" branch)"
-        done
         step "$# tasks wait to land, in this order: $names. They go as one train, with one gate and one E2E run for all."
     fi
     land "$@"

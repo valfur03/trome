@@ -6,7 +6,7 @@ state=$(mktemp -d)
 repo="$state/repo"
 failures=0
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE ONLY RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID RATP_SIM_MERGE RATP_MERGE_QUEUE || true
-export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 RATP_MERGE_LOCK="$state/merge.lock" SCRIPTS="$scripts"
+export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 RATP_MERGE_LOCK="$state/merge.lock" SCRIPTS="$scripts" TROME_LOGS="$state/logs"
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.com
 
@@ -443,6 +443,10 @@ expect "a task of a train says that it landed in the train" "$(contains "$state/
 expect "a task of a train says where the steps of its train are" "$(contains "$state/queue_b.log" "this task went in the train of the make merge of")" "yes"
 expect "main has no merge commit after a train" "$(git -C "$repo" rev-list --merges main)" ""
 expect "a train frees the Simulator lock" "$(lock_state)" "free"
+expect "the record of the Simulator job of a train is a merge, and names the tasks of the train" \
+    "$(awk -F '\t' '$2 == "merge" && $9 ~ /queue/ { print $9 }' "$state/logs/simulator-jobs.tsv")" "task/queue_a, task/queue_b"
+expect "the records of the jobs that waited behind the merges say that they waited for a merge" \
+    "$(awk -F '\t' '$2 == "job" && $10 ~ /merge/' "$state/logs/simulator-jobs.tsv" | wc -l | tr -d ' ')" "2"
 expect "a train leaves no task in the queue" "$(queued)" "0"
 
 for task in docs_a docs_b docs_c; do

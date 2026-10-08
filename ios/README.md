@@ -44,6 +44,8 @@ While the tests of a command run on the Simulator, the builds of every clone wai
 After `make run`, the Simulator stays yours, and the other commands wait, until you run `make simulator-shutdown`.
 Each command starts from a clean app: it removes the app and its data, and resets the permissions (notifications included), the text size, the appearance and the language of the Simulator.
 In your own `xcrun simctl` commands, use the ID that `make -s simulator` prints.
+To see where the time of the Simulator goes, run `make simulator-times`: by kind of command, how long each waited for the Simulator and held it, and how long builds waited for the tests (add `SINCE=2026-10-08` for a part).
+Each command adds its line to `~/Library/Logs/TROME/simulator-jobs.tsv` when it frees the Simulator, and nothing deletes these lines.
 
 To run the app from the **Run** button of Xcode instead, use a Simulator of your own: the `make` commands shut the shared one down a few minutes after their last job, even with your app open.
 Free the shared one and shut it down first, so that only one Simulator runs: `make simulator-shutdown`, then `xcrun simctl shutdown "$(make -s simulator)"`.

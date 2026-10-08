@@ -3,7 +3,7 @@ set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
 script="$tests/../build-gate.py"
 state=$(mktemp -d)
-export RATP_BUILD_GATE="$state/gate"
+export RATP_BUILD_GATE="$state/gate" TROME_LOGS="$state/logs"
 unset RATP_BUILD_GATE_HELD
 failures=0
 trap 'kill $(jobs -p) 2> /dev/null || true; rm -rf "$state"' EXIT
