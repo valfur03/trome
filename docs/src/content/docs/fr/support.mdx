@@ -1,6 +1,6 @@
 ---
 title: Aide de TROME
-description: Que faire quand l’activité en direct de TROME ne s’affiche pas, ne démarre pas toute seule ou ne se met plus à jour, ce que TROME demande à l’iPhone et pourquoi, et comment m’écrire.
+description: Que faire quand l’activité en direct de TROME ne s’affiche pas, ne s’affiche pas quand vous arrivez à une station ou ne se met plus à jour, ce que TROME demande à l’iPhone et pourquoi, et comment m’écrire.
 sidebar:
   label: Aide
   order: 1
@@ -37,10 +37,10 @@ Je suis Valentin Furmanek, et je développe TROME.
 
 L’activité en direct s’affiche sur l’écran verrouillé et dans le Centre de notifications, et dans la Dynamic Island sur les iPhone qui en ont une.
 
-## L’activité en direct ne démarre pas toute seule
+## Rien ne s’affiche quand vous arrivez à une station
 
-Quand TROME est ouvert, l’activité en direct démarre dès que vous arrivez près d’une station.
-Quand TROME est fermé, vous recevez une notification au nom de la station, par exemple **« Châtelet »** : touchez-la pour afficher l’activité en direct.
+App ouverte, l’activité en direct s’affiche dès que vous arrivez près d’une station.
+App fermée, vous recevez une notification au nom de la station, par exemple **« Châtelet »** : touchez-la pour afficher l’activité en direct.
 
 Pour recevoir cette notification, TROME a besoin de deux autorisations, dans **Réglages > Apps > TROME** :
 
@@ -51,7 +51,7 @@ Pour recevoir cette notification, TROME a besoin de deux autorisations, dans **R
   [Pourquoi les notifications ?](#pourquoi-trome-demande-les-notifications)
 
 Vous recevez une seule notification à chaque arrivée.
-Après une pause, rien ne démarre jusqu’à la fin de la pause : voyez [ce que font la pause et la sourdine](#que-font-le-mode-automatique-la-pause-et-la-sourdine).
+Pendant une pause, rien ne démarre : voyez [ce que font la pause et la sourdine](#que-font-le-mode-automatique-la-pause-et-la-sourdine).
 
 ## Les horaires ne se mettent plus à jour
 
@@ -84,10 +84,8 @@ Un écart d’une ou deux minutes avec l’écran du quai est donc normal : en c
 ### Pourquoi TROME demande la position **Toujours**
 
 Avec **Toujours**, iOS prévient TROME quand vous arrivez près d’une station, même quand l’app est fermée.
-C’est ce qui permet à TROME de vous envoyer la notification d’arrivée.
 
 Avec **Lorsque l’app est active**, TROME ne connaît votre position que pendant que l’app est ouverte.
-L’activité en direct ne démarre alors toute seule que si l’app est ouverte.
 
 L’app n’envoie votre position à personne.
 La [politique de confidentialité](/fr/privacy/#votre-position) dit ce qu’elle en fait.
@@ -107,7 +105,7 @@ Quand vous le désactivez, l’activité en direct s’arrête tout de suite et 
 **Mettre en pause** arrête TROME pour toutes les stations, 30 minutes, 1 heure ou jusqu’à la fin de la journée.
 L’activité en direct s’arrête tout de suite, et ni notification ni démarrage automatique ne viennent avant l’heure de reprise que l’app affiche.
 Le mode automatique reste activé.
-Les boutons **30 min**, **1 h** et **Aujourd’hui** de l’activité en direct, et **Pas pendant 1 h** et **Pas aujourd’hui** de la notification, font la même chose.
+Les boutons **30 min**, **1 h** et **Aujourd’hui** de l’activité en direct sur l’écran verrouillé, et **Pas pendant 1 h** et **Pas aujourd’hui** de la notification, font la même chose.
 Pour reprendre plus tôt, touchez **Annuler la pause**.
 
 La **sourdine** concerne une seule station.
@@ -116,9 +114,8 @@ L’app écrit alors « Châtelet : en sourdine jusqu’à 15:51 », et **Réact
 
 ### Pourquoi TROME demande les notifications
 
-Quand TROME est fermé, il ne peut pas afficher l’activité en direct de lui-même.
-La notification vous prévient que vous êtes près d’une station, et vous touchez pour l’afficher.
-Sans notifications, l’activité en direct démarre quand vous ouvrez TROME près d’une station.
+Elles vous préviennent que vous êtes près d’une station quand TROME est fermé.
+Sans elles, l’activité en direct s’affiche quand vous ouvrez TROME près d’une station.
 
 TROME ne demande les notifications qu’après la position, une seule fois.
 Il les crée sur votre iPhone : aucun serveur ne vous en envoie.

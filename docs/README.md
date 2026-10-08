@@ -273,6 +273,8 @@ Use the words of the RATP signs and of iOS in French, then write the English pag
 | Automatic mode | Mode automatique |
 | Snooze | Mettre en pause in the app, Pause on the Live Activity |
 | Snoozed | En pause |
+| Paused (one station, after a swipe) | En sourdine |
+| Cancel the pause at a station | Réactiver |
 | Permissions | Autorisations |
 | Settings | Réglages |
 | Tap | Touchez |

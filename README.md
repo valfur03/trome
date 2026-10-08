@@ -12,12 +12,10 @@ It is open source and not on the App Store yet: [follow the launch](#get-it-on-y
 
 [Get it](#get-it-on-your-iphone) · [Help](https://trome.valfur.fr/en/support/) · [Privacy](https://trome.valfur.fr/en/privacy/) · [Read the Swift code](#read-or-change-the-code)
 
-You walk up to Saint-Paul, and your iPhone shows a notification with its name, **Saint-Paul (Le Marais)**.
-Tap the notification: the next trains stay on your lock screen while you go down to the platform.
-If TROME is already open on your screen, they show with no tap.
-
 - **No station to pick.** TROME finds the station when you are about 150 metres from it, and takes the trains off your lock screen when you walk away.
 - **Every line of the station.** At a station with many lines, tap the name of the station to see the next line, metro or RER.
+- **How the trains show.** With TROME open, they show when you arrive.
+  With TROME closed, a notification names the station: tap it, and they show while you go down to the platform.
 - **Not now?** Snooze it from the lock screen for 30 minutes, an hour, or the rest of the day.
 - **Your exact position stays on your iPhone.** No account and no ads: read [what TROME sends, and what it keeps](https://trome.valfur.fr/en/privacy/).
 
@@ -31,7 +29,7 @@ You add your own free key from Île-de-France Mobilités for the train times, an
 
 ## The trains do not show?
 
-[Help](https://trome.valfur.fr/en/support/) lists each problem and its fix: the Live Activity does not show, does not start by itself, or its minutes stop moving.
+[Help](https://trome.valfur.fr/en/support/) lists each problem and its fix: the Live Activity does not show, nothing comes when you arrive at a station, or its minutes stop moving.
 En français : [Aide](https://trome.valfur.fr/fr/support/).
 
 ## Read or change the code
