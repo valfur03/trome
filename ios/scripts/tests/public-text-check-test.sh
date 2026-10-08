@@ -163,6 +163,51 @@ expect "it finds the old helper settings of the project, outside the refusal" "$
 expect "it finds the old variables of merge and of the Simulator script" "$(grep -c "merge.sh:1:\|simulator.sh:1:" "$state/out")" "4"
 expect "it lets the refusal and its tests name the old setting names" "$(grep -c "old-setting-names.sh\|git-hooks-test.sh" "$state/out")" "0"
 
+voice="a word of a team's voice (one person speaks: say I, or je in French)"
+
+reset_repo
+file docs/en/about.mdx "---
+title: Our app
+description: \"We made it\"
+---
+## Our server
+We run it, so let us know; Let's talk, Let’s go. It is ours, made by ourselves.
+<Screenshot alt=\"We show the lock screen\" />"
+file docs/fr/aide.mdx "Nous écrivons notre page pour nos usagers : la nôtre, les nôtres.
+Ce que nous faisons nous-mêmes. Contactez-nous ! Écrivez-nous."
+file CLAUDE.md "Us too: we decide."
+expect "a team's voice in the prose of a Markdown or MDX file fails, in English and in French, CLAUDE.md included" "$(check)" "fails"
+expect "it finds we, with the file, the line and the reason" "$(hit "docs/en/about.mdx:6: $voice: \"We\"")" "1"
+expect "it finds our in a heading and in the front matter, quoted or not" \
+    "$(hit "docs/en/about.mdx:5: $voice: \"Our\"") $(hit "docs/en/about.mdx:2: $voice: \"Our\"") $(hit "docs/en/about.mdx:3: $voice: \"We\"")" "1 1 1"
+expect "it finds let us, let's with both apostrophes, ours and ourselves" \
+    "$(hit "docs/en/about.mdx:6: $voice: \"us\"") $(hit "docs/en/about.mdx:6: $voice: \"Let's\"") $(hit "docs/en/about.mdx:6: $voice: \"Let’s\"") $(hit "docs/en/about.mdx:6: $voice: \"ours\"") $(hit "docs/en/about.mdx:6: $voice: \"ourselves\"")" \
+    "1 1 1 1 1"
+expect "it finds we in the text of an attribute, which is the page's own text" "$(hit "docs/en/about.mdx:7: $voice: \"We\"")" "1"
+expect "it finds nous, notre, nos, la nôtre and les nôtres" \
+    "$(hit "docs/fr/aide.mdx:1: $voice: \"Nous\"") $(hit "docs/fr/aide.mdx:1: $voice: \"notre\"") $(hit "docs/fr/aide.mdx:1: $voice: \"nos\"") $(hit "docs/fr/aide.mdx:1: $voice: \"nôtre\"") $(hit "docs/fr/aide.mdx:1: $voice: \"nôtres\"")" \
+    "1 1 1 1 1"
+expect "it finds nous inside a sentence, nous-mêmes, and nous after a hyphen" \
+    "$(hit "docs/fr/aide.mdx:2: $voice: \"nous\"") $(hit "docs/fr/aide.mdx:2: $voice: \"nous-mêmes\"")" "3 1"
+expect "it finds a capital Us and the we of CLAUDE.md" "$(hit "CLAUDE.md:1: $voice: \"Us\"") $(hit "CLAUDE.md:1: $voice: \"we\"")" "1 1"
+expect "it says how one person speaks" "$(grep -c "says I (je in French), never we, us, our, nous, notre or nos" "$state/out")" "1"
+
+reset_repo
+file docs/en/quote.md "A page never says \"we\" or “our”, and the French never says « nous » or « nos ».
+Run \`let us = load()\` or \`\`we\`\`, and read [Apple's help](https://support.apple.com/en-us/108971) or https://example.com/our/us.
+The US store, the Notre-Dame-des-Champs station, a user, the status, a bonus, focus, Wed, nose.
+<Screenshot alt=\"The lock screen\" title=\"Help\" />
+\`\`\`sh
+# we build it, then let us run our tests
+make check
+\`\`\`
+~~~
+nous écrivons
+~~~"
+file docs/fr/page.mdx "Les horaires reçus, les nouveautés, le nouveau train, les nombreux usagers, Notre-Dame-de-Lorette."
+file ios/App/Model.swift "// we keep our state here"
+expect "code, link addresses, double quotes, names and words that only contain the pronoun pass, and only Markdown and MDX are read for it" "$(check)" "passes"
+
 reset_repo
 file ios/scripts/public-text-check.py "INTERNAL_RULES = [\"prompter\", \"/Users/\"]"
 file ios/scripts/tests/public-text-check-test.sh "file docs/page.mdx \"TASK-140\""
@@ -174,15 +219,19 @@ expect "it skips its own word list and examples, the files that git ignores, and
 expect "with VERBOSE=1, it says which files it skips, and why" "$(VERBOSE=1 check > /dev/null; grep -c "skips ios/scripts/public-text-check.py: it holds the word list" "$state/out")" "1"
 
 mkdir "$state/allowing"
-cp "$scripts/public-text-check.py" "$scripts/repo_files.py" "$state/allowing/"
-sed -i '' 's|^ALLOWED_TEXTS: list\[Allowed\] = \[$|ALLOWED_TEXTS: list[Allowed] = [Allowed("ios/App/Factory.swift", "factory", "the name of a type"),|' \
+cp "$scripts/public-text-check.py" "$scripts/repo_files.py" "$scripts/markdown_prose.py" "$state/allowing/"
+sed -i '' 's|^ALLOWED_TEXTS: list\[Allowed\] = \[$|ALLOWED_TEXTS: list[Allowed] = [Allowed("ios/App/Factory.swift", "factory", "the name of a type"), Allowed("docs/en/history.md", "we", "a title of a book"),|' \
     "$state/allowing/public-text-check.py"
 reset_repo
 file ios/App/Factory.swift "let factory = StationFactory()"
 file ios/App/Other.swift "let factory = StationFactory()"
+file docs/en/history.md "Read the book we, a novel."
+file docs/en/other.md "Read the book we, a novel."
 (cd "$repo" && "$state/allowing/public-text-check.py") > "$state/out" 2>&1 && result="passes" || result="fails"
 expect "a text of ALLOWED_TEXTS passes in its own file only" "$result $(hit "ios/App/Other.swift:1: a word of the team's own process: \"factory\"") \
 $(grep -c "Factory.swift" "$state/out")" "fails 1 0"
+expect "a word of a team's voice in ALLOWED_TEXTS passes in its own file only" \
+    "$(hit "docs/en/other.md:1: $voice: \"we\"") $(grep -c "history.md" "$state/out")" "1 0"
 
 reset_repo
 file docs/page.mdx "The Simulator runs one job at a time."

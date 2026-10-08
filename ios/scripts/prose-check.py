@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-import re
 import sys
 
+from markdown_prose import lines_outside_code_blocks
 from repo_files import repo_files
 
 MAX_LENGTH = 400
-FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 PATTERNS = ["*.md", "*.mdx"]
 
 USAGE = "Usage: prose-check.py [Markdown file...] (no file: every Markdown and MDX file of the repo)"
@@ -14,20 +13,10 @@ USAGE = "Usage: prose-check.py [Markdown file...] (no file: every Markdown and M
 def long_lines(path):
     try:
         with open(path, encoding="utf-8") as file:
-            lines = file.read().split("\n")
+            text = file.read()
     except OSError as error:
         sys.exit(f"prose-check: could not read {path}: {error}")
-    fence = None
-    for number, line in enumerate(lines, start=1):
-        opening = FENCE.match(line)
-        if fence:
-            if opening and opening.group(1)[0] == fence[0] and len(opening.group(1)) >= len(fence) \
-                    and not line[opening.end():].strip():
-                fence = None
-            continue
-        if opening:
-            fence = opening.group(1)
-            continue
+    for number, line in lines_outside_code_blocks(text):
         if line.lstrip().startswith("|"):
             continue
         if len(line) > MAX_LENGTH:

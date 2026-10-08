@@ -57,7 +57,7 @@ To stay in the budget:
 
 Why 60, then 30: the public PRIM page of the API "Prochains passages - requête unitaire" gives a quota of 1,000,000 calls per day.
 But since 13 March 2024, new PRIM accounts get a lower quota by default (users report 1,000 calls per day).
-We do not know the quota of the prompter's key, so we plan for 1,000 calls per day.
+The quota of the prompter's key is not known, so the plan is 1,000 calls per day.
 One key serves the production server, the staging server and every Debug build that holds it, QA's `make run LIVE=1` included.
 Their shares are in one table, "The day of the PRIM key" in `server/guide/how-it-works.md` (decision-59): read the numbers there, and do not copy them here.
 The Debug builds and QA share one row of it, with the prompter's own tests and iPhone trial, and the server does not count them.

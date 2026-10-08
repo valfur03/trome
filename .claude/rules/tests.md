@@ -24,11 +24,11 @@ For each thing that could go wrong, ask: what could a rider lose, and what is th
 - **Unit test** (`TROMECore`, on the Mac, seconds).
   Any rule or value that you can write as "this input gives this output": what the Live Activity must show, the start, switch and end rules, the snooze, the PRIM answers (recorded fixtures, in `contracts/prim/`).
 - **Code review.** The structure, the wiring, the access control, and the level of each new check.
-  A new E2E test or step with no seam, an assert on the app's own echo of its state, a setup through the UI that is not the seam, or a fake of our code or of iOS at the seam under test is a medium finding.
+  A new E2E test or step with no seam, an assert on the app's own echo of its state, a setup through the UI that is not the seam, or a fake of the app's code or of iOS at the seam under test is a medium finding.
 - **Render check of the Live Activity** (proposed by decision-9, not built yet).
-  How our views draw a given ContentState at the extreme cases: the 160 pt limit, cut or wrapped text.
+  How the app's views draw a given ContentState at the extreme cases: the 160 pt limit, cut or wrapped text.
 - **E2E test** (the shared Simulator, the factory's bottleneck).
-  Only for a seam where our code meets iOS and a fake would lie: ActivityKit starts, switches and ends a real Live Activity; the widget process draws our ContentState; iOS runs the intents of the Live Activity buttons; a real notification opens the app; the position from iOS reaches the rules; the permission popups come in order.
+  Only for a seam where the app's code meets iOS and a fake would lie: ActivityKit starts, switches and ends a real Live Activity; the widget process draws the app's ContentState; iOS runs the intents of the Live Activity buttons; a real notification opens the app; the position from iOS reaches the rules; the permission popups come in order.
   Assert on what the rider or iOS shows (the Live Activity in the Notification Center, the notification, the popup), not on an app label.
   Set up the state with a platform hook (`XCUIDevice.location`) or a launch argument, not through the app screen or the Testing tools.
   Fake only what is not the seam under test (`--fake-trains` replaces PRIM).

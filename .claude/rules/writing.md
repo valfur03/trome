@@ -21,6 +21,7 @@ The rules for every file (keep the docs true, one sentence per line, public text
   When a hit is a normal word in its place (for example the name of a type), add it to `ALLOWED_TEXTS` in that file, with its path, its text and the reason.
   Only `CLAUDE.md` and `.claude/` may cite the backlog (`INTERNAL_FILES`).
   Every other file passes the whole check, the front page `README.md`, `ios/README.md` and `server/README.md` included: the rewrites of TASK-202, TASK-203 and TASK-204 moved the feature text to `ios/guide/`, so no text for readers is exempt.
+  It also fails on a team's voice ("we", "us", "our", "let's"; "nous", "notre", "nos") in the prose of every Markdown and MDX file, `CLAUDE.md` and `.claude/` included, but not in code, link addresses or double quotes: one person makes TROME, so a page says "I" (doc-1, "The voice: one person, I"); the app texts are not Markdown, so a rider text may say "nos".
   The only files that it skips, `SKIPPED_FILES`, are the check itself (its word list), its test (the examples that it must find) and a file that a tool generates, each with its reason.
 - **Where a change writes its text.** Each text lives in one file, chosen by its reader.
   Link to the file that holds a fact, and never copy the fact.

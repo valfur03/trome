@@ -4,6 +4,7 @@ import re
 import sys
 from typing import NamedTuple
 
+from markdown_prose import MARKDOWN_SUFFIXES, lines_outside_code_blocks
 from repo_files import repo_files
 
 
@@ -31,6 +32,22 @@ INTERNAL_RULES = [
     ("a word of the team's own process", re.compile(r"\bthe manager\b", re.IGNORECASE)),
     ("a word of the team's own process", re.compile(r"(?<![\w-])(?<!user )agents?(?![\w-])", re.IGNORECASE)),
 ]
+# The voice of one person: one person makes TROME, so a page says "I" ("je" in French), never a team's "we" or "nous",
+# which pretend a company that does not exist. It applies to the prose of the Markdown and MDX files only: a code word
+# such as a variable or a path is not a voice. Lowercase or capitalised only, so "US" (the country) is not a hit.
+# A word followed by a hyphen is part of a name ("Notre-Dame", a station), except "nous-même(s)"; a word after a hyphen
+# is a hit, for "contactez-nous".
+VOICE_REASON = "a word of a team's voice (one person speaks: say I, or je in French)"
+VOICE_RULE = re.compile(
+    r"(?<!\w)(?:[Ww]e|[Uu]s|[Oo]urs?|[Oo]urselves|[Ll]et['’]s|[Nn]ous|[Nn]otre|[Nn]os|[Nn]ôtres?)(?![\w-])"
+    r"|(?<!\w)[Nn]ous-mêmes?(?![\w-])")
+# What a page shows but does not say in its own voice: inline code, the target of a link or a bare address, and a
+# quotation in double quotes ("we", “we”, « nous »). The value of an attribute (alt="...") is the page's own text, so its
+# quotes are taken off before the quotations; the double quotes of the front matter are YAML syntax, not a quotation.
+INLINE_CODE = re.compile(r"(`+).+?\1")
+ADDRESS = re.compile(r"\]\([^)]*\)|<?https?://[^\s>)]+>?")
+ATTRIBUTE_VALUE = re.compile(r"=\"([^\"]*)\"")
+QUOTATION = re.compile(r"\"[^\"]*\"|“[^”]*”|«[^»]*»")
 EXAMPLE_EMAIL = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$",
                            re.IGNORECASE)
 # The public contact address of the project, on its own domain: the Help page, the privacy policy and the store text give it to every reader.
@@ -86,8 +103,9 @@ def hits(root, path):
         sys.exit(f"public-text-check: could not read {path}: {error}")
     if b"\0" in data:
         return
+    content = data.decode("utf-8", errors="replace")
     rules = PERSONAL_RULES if matching(path, INTERNAL_FILES) else PERSONAL_RULES + INTERNAL_RULES
-    for number, line in enumerate(data.decode("utf-8", errors="replace").split("\n"), start=1):
+    for number, line in enumerate(content.split("\n"), start=1):
         for reason, pattern in rules:
             for found in pattern.finditer(line):
                 text = found.group(0)
@@ -96,6 +114,22 @@ def hits(root, path):
                     continue
                 if not is_allowed(path, text):
                     yield number, reason, text
+    if path.endswith(MARKDOWN_SUFFIXES):
+        yield from voice_hits(path, content)
+
+
+def voice_hits(path, content):
+    front_matter = content.startswith("---\n")
+    for number, line in lines_outside_code_blocks(content):
+        if front_matter and number > 1 and line.strip() == "---":
+            front_matter = False
+            continue
+        prose = ADDRESS.sub(" ", INLINE_CODE.sub(" ", line))
+        if not front_matter:
+            prose = QUOTATION.sub(" ", ATTRIBUTE_VALUE.sub(r"= \1 ", prose))
+        for found in VOICE_RULE.finditer(prose):
+            if not is_allowed(path, found.group(0)):
+                yield number, VOICE_REASON, found.group(0)
 
 
 def describe_exceptions(paths):
@@ -122,6 +156,8 @@ def main(arguments):
             "No backlog id and no word of the team's own process (the backlog is private, and a stranger cannot read it),\n"
             "no email address other than an example one, no local path, and not the old names of the app, of the Xcode project or of its module (it is TROME),\n"
             "nor the old RATP_ names of the build settings and of the variables of the tools, the old build cache folder or the old key of the docs site (they use TROME now).\n"
+            "One person makes TROME: the prose of a Markdown or MDX file says I (je in French), never we, us, our, nous, notre or nos;\n"
+            "code, link addresses and text in double quotes are not checked, so put a quoted word in double quotes.\n"
             "CLAUDE.md and .claude/ may cite the backlog.\n"
             "When a hit is a normal word in its place, add it to ALLOWED_TEXTS in ios/scripts/public-text-check.py,\n"
             "with its reason (CLAUDE.md, rule \"Public text\").",
@@ -129,7 +165,8 @@ def main(arguments):
         )
         sys.exit(1)
     print(f"public-text-check: OK ({len(checked)} files: no backlog id, no word of the team's own process, "
-          "no personal email address, no local path, no old name of the app, of the project, of its module, of a setting or of a tool)")
+          "no personal email address, no local path, no old name of the app, of the project, of its module, of a setting or of a tool, "
+          "no team's voice in the prose)")
 
 
 main(sys.argv[1:])
