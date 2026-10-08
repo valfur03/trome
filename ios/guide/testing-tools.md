@@ -142,7 +142,9 @@ At the top, **Phone now** shows the settings that can stop a wake: the location 
 
 "App launched" is written at the start of the launch.
 When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.
-Only an area line after it says that iOS woke the app near a station: iOS also launches apps ahead of time, with no reason in the log.
+Only a line "iOS: entered" a station after it, or "inside" a station in a "first state" line, says that iOS woke the app near that station.
+Other area lines can follow any launch: iOS can send the state of each area when the app starts ("left", "not watched"), and "area around you" and "stop area" are not stations.
+iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
 **Share** sends the log as text, and **Clear** empties it.
 Release builds record nothing.
