@@ -55,7 +55,7 @@ A fake position is always trusted.
 | The same station again | Nothing, until the rider leaves the station and comes back |
 
 Each arrival gives at most one notification and one automatic start.
-The app counts a station as left when a trusted position is more than 250 meters from it, or when iOS says that the phone left its stop area, even with no position.
+For its next arrival, a station counts as left when a trusted position is more than 250 meters from it, or when iOS says that the phone left its stop area, even with no position.
 An arrival that waits behind a system popup is not done until the app acts on it: if iOS closes the app first, the notification or the start comes once, when the app runs again at that station.
 A Live Activity that you start by hand ([Testing tools](testing-tools.md#show-or-stop-the-live-activity-by-hand)) follows the same stop rules, and the 45 minutes apply to every Live Activity.
 A debug build can [shorten the 45 minutes](testing-tools.md#make-the-45-minute-limit-shorter).
