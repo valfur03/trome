@@ -218,11 +218,10 @@ Then test the lines as the first point of [Review a page](#review-a-page) says.
 ### Say what is true today, and what stays true
 
 A page can be right about the app today and still mislead, when the app is about to do something else.
-Before you edit a page, read the part of the maker's vision that it touches, and the list of sentences tied to a behaviour that will change.
-The maintainer keeps both: ask for them when you do not have them.
+Before you edit a page, read the part of the maker's vision that it touches, and the list of sentences tied to a behaviour that will change (the maintainer keeps both: ask for them).
 Say what the rider gets in the terms of the vision, then say once, in one place, how this version does it, in words that stay true when the rest ships.
-When your page holds a new sentence tied to a behaviour that will change, quote it in the description of your change, so that the maintainer adds it to the list.
-[Review a page](#review-a-page), point 3, is how a reviewer checks all this.
+Quote each new sentence tied to a behaviour that will change in the description of your change, so that the maintainer adds it to the list.
+[Review a page](#review-a-page), point 3, is how a reviewer checks this.
 
 ### Pick one kind of page
 
@@ -388,13 +387,12 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
    A wrong or missing answer is a finding that names the reader and the line that lost them.
 2. **Reader and job.** The page serves one main reader, and its first lines say what it gives.
    A second reader gets a link, or a page of their own.
-3. **True to where TROME is going.** A page can be true today and still mislead: a rider plans around it, and it must be rewritten when the app changes.
-   Read the part of the maker's vision that the page touches, and the list of sentences tied to a behaviour that will change (the maintainer keeps both: ask for them when you do not have them).
-   Then check three things.
+3. **True to where TROME is going.** A page can be true today and still mislead: a rider plans around it, and it needs a rewrite when the app changes.
+   Read the part of the vision that the page touches, and the list of sentences tied to a behaviour that will change (the maintainer keeps both: ask for them).
    The first lines say what the rider gets, in the terms of the vision, and not how this version gets there.
    Each behaviour that this version does only in part is told once, as how it works today, in words that stay true when the rest ships.
-   Each sentence of the list that the page holds still says what the list says.
-   No test of the code finds a failure here, so a review that skips this point leaves it unseen, and is incomplete.
+   Each sentence of the list that the page holds is still true: when its event has happened, the page has the new wording.
+   No test of the code finds a failure here, so a review that skips this point is incomplete.
 4. **Kind and shape.** The page is one kind.
    A tutorial works from a clean start; a how-to has its goal, what you need, the steps and the result; a reference is complete and easy to scan; an explanation has no steps.
    Each step list, section, table and callout is used as [Choose the right shape](#choose-the-right-shape) says.

@@ -17,7 +17,7 @@ The guides of `ios/guide/` are long (up to 16 KB): read one only when your job n
 | Change the server | `server/README.md`; `server/guide/how-it-works.md` when the API or the quota changes | 2.5 KB; 6.6 KB |
 | Review a change | the start file of the part that the diff touches, as above | as above |
 | QA | `ios/README.md`, to the end of its index "The guides"; then the guide of the feature of the task | 5 KB, then 3 to 16 KB |
-| Write or review a docs page | `docs/README.md`, section "Write a page" (to write) or "Review a page" (to review) | 10.5 KB or 4.1 KB |
+| Write or review a docs page | `docs/README.md`, section "Write a page" (to write) or "Review a page" (to review) | 10.4 KB or 4.1 KB |
 | Product Owner, manager | nothing in the repo: this file, the backlog, and the rules that your commands bring | none |
 | An outside contributor's view | `CONTRIBUTING.md` | 5.2 KB |
 

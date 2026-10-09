@@ -15,16 +15,16 @@ The rules for every file (keep the docs true, one sentence per line, public text
   Why: each page is written for one reader and one job (decision-49); a page that grows by the facts of each task stops serving its reader, as the README did.
 - **The writing guide and the review bar.** A page follows `docs/README.md` ("Write a page"), and a docs review uses its "Review a page", the public form of the bar of decision-49 section 5.
   These rules for agents stay out of the public pages: `CONTRIBUTING.md` is for an outside contributor, and the checks below explain themselves when they fail.
-- **A page is compared with the vision, not only with the code diff.** The checks on a change see the lines that the change makes false, so they never see a page that is true of the code and wrong for the product (the notification told as the way TROME works, on every page, passed every review and QA).
+- **A page is compared with the vision, not only with the code diff.** The checks see the lines that a change makes false, so a page that is true of the code and wrong for the product passes them (the notification told as the way TROME works, on every page, passed every review and QA).
   The ledger of vision-bound sentences lists each sentence that tells a behaviour that the vision will change, with the event that changes it.
-  The Product Owner keeps it in doc-6, section "Ledger of vision-bound sentences" (the audit of TASK-317 made it; until the Product Owner moves it, it is in the notes of TASK-317, section "Ledger").
+  The Product Owner keeps it in doc-6, section "Ledger of vision-bound sentences" (until it moves there, it is in the notes of TASK-317, section "Ledger").
   - The writer reads it before editing a page that it names, writes the behaviour as it works today, once, and tells the Product Owner about each new sentence of that kind, so that it gets a row.
   - The reviewer reads it for any change that touches a page or a behaviour that it names, and uses point 3 of "Review a page" for a docs page.
     A merge that makes a ledger line false and leaves it is refused.
-  - A ticket or a decision that changes, ships or defers a behaviour that the vision names (for example the Live Activity, how it starts, hubs, the Dynamic Island, the permissions, the look of the platform screens) names in its criteria the pages that say it.
+  - A ticket or a decision that changes, ships or defers a behaviour that the vision names (the Live Activity, how it starts, hubs, the Dynamic Island, the permissions, the look of the platform screens) names in its criteria the pages that say it.
     They change in the same merge, or in a docs ticket that merges with it.
     The Product Owner writes that criterion, and the reviewer checks it.
-  Why: the vision is the only place that says where the product goes, so only a page read against it shows that it will mislead; and a swap that nobody owns when the behaviour ships is forgotten.
+  Why: only a page read against the vision shows that it will mislead; and a swap that nobody owns when the behaviour ships is forgotten.
 - **The public text check.** `make public-text-check` applies the rule "Public text" of `CLAUDE.md`.
   Its word list is in `ios/scripts/public-text-check.py`.
   It also fails on the old names of the Xcode project and of its module (in the word list, in any case): only the files that remove what a build of the old name left on a Mac or on the Simulator may write the old project name, and `ALLOWED_TEXTS` lists them with the reason.
@@ -44,7 +44,6 @@ The rules for every file (keep the docs true, one sentence per line, public text
   |---|---|
   | A new or changed `make` command | the `help` line of its Makefile, and the guide page of its topic; `CONTRIBUTING.md` only when a command that it names changes |
   | A changed rule that a rider sees (the Live Activity) | the guide file of its feature (`ios/guide/<feature>.md`); a rider page of the docs site only when its summary becomes false |
-  | A behaviour that the vision names changes, ships or is deferred | the pages of the ledger that say it, in the same merge (see the rule above) |
   | The internals of a type | the doc comment on the type |
   | A new feature folder | a new guide file, a line in `ios/README.md`, a line in `ARCHITECTURE.md` |
   | Structure or dependency direction | `ARCHITECTURE.md` |
