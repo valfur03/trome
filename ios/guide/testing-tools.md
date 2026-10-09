@@ -132,6 +132,15 @@ On your iPhone, iOS also wakes a suspended or closed app near a station, after a
 It keeps the last 500 lines across launches, with no cable and no Xcode.
 At the top, **Phone now** shows the settings that can stop a wake: the location (Always, precise), Background App Refresh, Low Power Mode, the notifications, and a fake position.
 
+Check this before every walk, because a fake position makes the walk test nothing:
+the app keeps a fake position across launches, and with it the app watches no area, so iOS wakes nothing.
+
+1. On the main screen of the app, look for **Fake position** in orange.
+   It must not be there.
+2. In **Wake log**, read the line "Position" of **Phone now**.
+   It must say "real GPS", not "fake".
+3. When either one says fake, go back to **Testing tools** and tap **Use the real GPS**, then open **Wake log** again.
+
 | Icon | A line for |
 |---|---|
 | Power | Each launch of the app, then the settings of the phone at that launch; each time the app comes on screen or leaves it |
@@ -146,5 +155,9 @@ Only a line "iOS: entered" a station after it, or "inside" a station in a "first
 Other area lines can follow any launch: iOS can send the state of each area when the app starts ("left", "not watched"), and "area around you" and "stop area" are not stations.
 iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
+A log with "Position: fake" in **Phone now** and the line "Region watch on: iOS keeps 0 regions for the app" is the log of a walk with a fake position.
+It says nothing about a closed app: tap **Use the real GPS**, then walk again.
+With the real GPS, that line gives a number above 0.
+For a first walk, stand about 2 minutes inside the station area, because iOS can take a few seconds to a few minutes to report it ([the arrival notification](#with-the-app-in-the-background-the-arrival-notification)).
 **Share** sends the log as text, and **Clear** empties it.
 Release builds record nothing.
