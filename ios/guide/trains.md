@@ -40,7 +40,7 @@ In the background, a Live Activity still costs its calls every 30 seconds to 2 m
 | When | The app asks |
 |---|---|
 | The app is open with a Live Activity, or with **Next trains of a station** | Every 30 seconds, one call for both when they show the same station |
-| The app is in the background with a Live Activity | 5 seconds after the first train on it leaves, or at once when a train leaves and the last answer has no train to take its place in its row (so the next train of a fork end comes with the same update), but at least 30 seconds and at most 2 minutes after the last call |
+| The app is in the background with a Live Activity | 5 seconds after the first train on it leaves, or at once when a train leaves and the last answer has no train to take its place in its row (so the next train of a fork end comes with the same update; with no answer within 2 seconds, the train that left goes at once), but at least 30 seconds and at most 2 minutes after the last call |
 | The Live Activity starts or switches station in the background, or you leave the app before it sent its first times | At once |
 
 In the background, the app asks only while iOS keeps it running.

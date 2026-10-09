@@ -5,6 +5,8 @@ public enum BackgroundTrainsRefresh {
     public static let maximumDelay: TimeInterval = 120
     public static let delayAfterDeparture: TimeInterval = 5
     static let launchDelay: TimeInterval = 3
+    /// How long a call made in place of a redraw waits for its answer before the redraw happens anyway.
+    static let answerWaitInPlaceOfARedraw: TimeInterval = 2
 
     public static func delay(untilStale staleDate: Date?, now: Date) -> TimeInterval {
         guard let staleDate else { return maximumDelay }

@@ -72,7 +72,7 @@ extension AutoLiveActivityModel {
             }
             if asksPRIM {
                 lastCall = configuration.now()
-                await feed(station, redrawsIfItFails: redrawDate != nil)
+                await feed(station, inPlaceOfARedraw: redrawDate != nil)
                 asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
             }
             nextCall = nextPRIMCall(for: station, asksPRIM: asksPRIM)
@@ -86,6 +86,17 @@ extension AutoLiveActivityModel {
             lastCall: lastCall,
             now: configuration.now()
         )
+    }
+
+    private func redrawAfterTheAnswerWait() -> Task<Void, Never> {
+        Task { [weak self, sleep = configuration.sleep] in
+            do {
+                try await sleep(.seconds(BackgroundTrainsRefresh.answerWaitInPlaceOfARedraw))
+            } catch {
+                return
+            }
+            await self?.liveActivity.redraw()
+        }
     }
 
     private var waitsForItsTrains: Bool {
@@ -117,14 +128,17 @@ extension AutoLiveActivityModel {
         }
     }
 
-    /// Asks for new times and shows them. A call made in place of a redraw that fails still makes that redraw
-    /// first, so that the kept times lose the train that left and keep counting down until the next one leaves.
-    func feed(_ station: Station, redrawsIfItFails: Bool = false) async {
+    /// Asks for new times and shows them. A call made in place of a redraw still makes that redraw when its
+    /// answer is slow or fails, so that the train that left never stays on the Live Activity for the whole call,
+    /// and the kept times keep counting down until the next one leaves.
+    func feed(_ station: Station, inPlaceOfARedraw: Bool = false) async {
         let trains = inputs.liveActivityTrains
+        let redrawWhileTheAnswerIsLate = inPlaceOfARedraw ? redrawAfterTheAnswerWait() : nil
         await trains.refresh(for: station)
+        redrawWhileTheAnswerIsLate?.cancel()
         guard !Task.isCancelled, shownStation?.id == station.id else { return }
         let state = trains.state(for: station)
-        if redrawsIfItFails, case .failed = state {
+        if inPlaceOfARedraw, case .failed = state {
             await liveActivity.redraw()
         }
         await liveActivity.update(station: station, trains: state)

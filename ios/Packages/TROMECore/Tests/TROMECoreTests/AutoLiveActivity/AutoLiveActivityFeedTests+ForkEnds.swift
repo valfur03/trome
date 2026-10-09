@@ -54,6 +54,40 @@ extension AutoLiveActivityModelTests {
         #expect(afterTheDeparture.allSatisfy { $0.saintDenisTimes == next })
     }
 
+    @Test func dropsTheTrainThatLeftAfterAShortWaitWhenTheAnswerOfTheCallAtItsDepartureIsSlow() async throws {
+        let station = try liege()
+        let line13 = try #require(station.lines.first)
+        let start = clock.now
+        provider.answer(.success([
+            north(Self.saintDenis, leavesAfter: 100, of: line13),
+            north(Self.asnieres, leavesAfter: 220, of: line13),
+            north(Self.saintDenis, leavesAfter: 460, of: line13)
+        ]), for: station)
+        let model = makeModel(catalog: StationCatalog(stations: [station]))
+        await arrive(at: station.coordinate, in: model)
+        await waitUntil { client.updates.contains { !$0.saintDenisTimes.isEmpty } }
+        model.setAppPhase(.background)
+        provider.answer(.success([
+            north(Self.asnieres, leavesAfter: 220, of: line13),
+            north(Self.saintDenis, leavesAfter: 460, of: line13),
+            north(Self.saintDenis, leavesAfter: 940, of: line13)
+        ]), for: station)
+        provider.holdAnswers()
+
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        let redrawn = start.addingTimeInterval(100 + BackgroundTrainsRefresh.answerWaitInPlaceOfARedraw)
+        await waitUntil { client.updates.contains { $0.updatedAt >= redrawn } }
+        let whileTheAnswerIsLate = client.updates.last
+        provider.releaseAnswers()
+        await waitUntil {
+            client.updates.last?.saintDenisTimes.count == 2 && client.updates.last != whileTheAnswerIsLate
+        }
+
+        #expect(whileTheAnswerIsLate?.updatedAt == redrawn)
+        #expect(whileTheAnswerIsLate?.saintDenisTimes == [start.addingTimeInterval(460)])
+        #expect(client.updates.last?.saintDenisTimes == [460, 940].map { start.addingTimeInterval($0) })
+    }
+
     @Test func dropsTheTrainThatLeftAndKeepsTheOthersWhenTheCallAtItsDepartureFails() async throws {
         let station = try liege()
         let line13 = try #require(station.lines.first)
