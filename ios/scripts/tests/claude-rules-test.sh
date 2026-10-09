@@ -68,8 +68,8 @@ expect "a Simulator job is stopped once, with the rules of its command" "$(run "
 expect "the same command again goes through" "$(run "$e2e" | delivered)" "none"
 expect "make -C and a variable bring the rules of each command" \
     "$(run "$(bash_event "make -C $worktree run LIVE=1 LANGUAGE=fr" '' s5)" | delivered)" "deny assets live-data qa simulator"
-expect "make merge after cd brings the merge and Simulator rules" \
-    "$(run "$(bash_event "cd $worktree && make merge" '' s6)" | delivered)" "deny merge simulator"
+expect "make merge through fnm exec, after cd, brings the merge and Simulator rules" \
+    "$(run "$(bash_event "cd $worktree && fnm exec --using=.nvmrc -- make merge" '' s6)" | delivered)" "deny merge simulator"
 expect "a docs command through fnm exec brings the docs rules" \
     "$(run "$(bash_event 'fnm exec --using=.nvmrc -- make docs-check' '' s6b)" | delivered)" "deny docs-site"
 expect "a server command through fnm exec, with a separate version, brings the server rules" \

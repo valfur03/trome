@@ -25,12 +25,12 @@ The order is:
 5. When QA passed the task, the manager runs one command in the worktree of the task, instead of the separate steps (rebase, gate, E2E run, fast-forward), as soon as QA passed it, also while another merge runs:
 
 ```sh
-make merge
+fnm exec --using=.nvmrc -- make merge
 ```
 
-There is no Node to load first, whatever the branch changes.
-When the active Node is older than the one of `.nvmrc`, or missing, `make merge` takes that Node from fnm (`fnm exec --using=.nvmrc`), so the docs and server checks of the gate run with it.
-When fnm does not have it and the branch changes `docs/`, `server/` or `contracts/`, `make merge` refuses at once, before it waits for a lock, and says what to run (`fnm install`).
+Run it through fnm whatever the branch changes: the shell of an agent loads no Node manager, so its `node` is an old one, or none, and the docs and server checks of the gate need the Node of `.nvmrc`.
+`make merge` uses the Node of its caller and calls no Node manager, so it works with any of them.
+When that Node is older than the one of `.nvmrc` and the branch changes `docs/`, `server/` or `contracts/`, `make merge` refuses at once, before it waits for a lock, and says what to run.
 Why: twice (2026-10-04 and 2026-10-07), a merge waited for the lock, then failed in the gate because the shell had the old default Node and the branch changed a docs page.
 Run it in the background: it can wait long for the Simulator lock.
 

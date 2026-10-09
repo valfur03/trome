@@ -88,34 +88,18 @@ node_major() {
     "${1:-node}" -p 'process.versions.node.split(".")[0]' 2> /dev/null
 }
 
-# A shell that runs this script may not have loaded a Node manager, so its node is an old default, or none.
-# fnm exec needs no shell setup: it runs node of the version that .nvmrc names, if fnm has it.
-fnm_node() {
-    command -v fnm > /dev/null || return 1
-    fnm exec --using=.nvmrc -- node -p process.execPath 2> /dev/null
-}
-
 required_node() {
     tr -d '[:space:]v' < .nvmrc
 }
 
-use_node() {
+# The caller picks the Node, with any Node manager: this script only checks it, at once, before it waits for a lock.
+check_node() {
     [ -f .nvmrc ] || return 0
     required=$(required_node)
     [ "$(node_major || echo 0)" -lt "$required" ] || return 0
-    found=$(fnm_node) || found=
-    if [ -x "$found" ] && [ "$(node_major "$found" || echo 0)" -ge "$required" ]; then
-        PATH="$(dirname "$found"):$PATH"
-        export PATH
-        step "uses Node $(node -v) of fnm, as .nvmrc asks"
-        return 0
-    fi
     git diff --quiet "$target...HEAD" -- docs server contracts && return 0
     active=$(node -v 2> /dev/null || echo "none")
-    if command -v fnm > /dev/null; then
-        fail "'$branch' changes docs/, server/ or contracts/, so the gate needs Node $required, but the active Node is $active, and fnm has no Node $required. Run 'fnm install' in $root, then 'make merge' again."
-    fi
-    fail "'$branch' changes docs/, server/ or contracts/, so the gate needs Node $required, but the active Node is $active, and fnm is not installed. Install fnm, run 'fnm install' in $root, then 'make merge' again."
+    fail "'$branch' changes docs/, server/ or contracts/, so the gate needs Node $required (see .nvmrc), but the active Node is $active. Run make merge again with that Node, for example: fnm exec --using=.nvmrc -- make merge (run 'fnm install' once before)."
 }
 
 # The gate of a train needs the Node that each of its tasks needs: when the Node of this process is too old,
@@ -483,7 +467,7 @@ case "${1:-}" in
         [ -z "$problem" ] || fail "$problem"
         problem=$(target_folder_problem "$root")
         [ -z "$problem" ] || fail "$problem"
-        use_node
+        check_node
         enqueue
         lockf -s -k -t 0 "$merge_lock" true || step "waiting for the merge of another worktree to end; this task may go in its train"
         status=0
