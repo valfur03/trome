@@ -17,7 +17,7 @@ The rules for every file (keep the docs true, one sentence per line, public text
   These rules for agents stay out of the public pages: `CONTRIBUTING.md` is for an outside contributor, and the checks below explain themselves when they fail.
 - **A page is compared with the vision, not only with the code diff.** The checks see the lines that a change makes false, so a page that is true of the code and wrong for the product passes them (the notification told as the way TROME works, on every page, passed every review and QA).
   The ledger of vision-bound sentences lists each sentence that tells a behaviour that the vision will change, with the event that changes it.
-  The Product Owner keeps it in doc-6, section "Ledger of vision-bound sentences" (until it moves there, it is in the notes of TASK-317, section "Ledger").
+  The Product Owner keeps it in doc-6, section "Ledger of vision-bound sentences".
   - The writer reads it before editing a page that it names, writes the behaviour as it works today, once, and tells the Product Owner about each new sentence of that kind, so that it gets a row.
   - The reviewer reads it for any change that touches a page or a behaviour that it names, and uses point 3 of "Review a page" for a docs page.
     A merge that makes a ledger line false and leaves it is refused.
