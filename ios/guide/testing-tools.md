@@ -78,7 +78,7 @@ Start the Live Activity at once, then put the app in the background and look at 
 
 The states are in `FakeTrainsScenario`; for a name that the app does not know, the command says so.
 To start a state again, run the same command again, also while a Live Activity shows.
-Each launch writes one `FakeTrains` line in the log of the app ([Read the logs](../README.md#read-the-logs)): who launched the app (the harness or iOS), the saved choice, and the trains that the app uses.
+Each launch writes one `FakeTrains` line in the log of the app ([Read the logs](../README.md#read-the-logs)): its `--fake-trains` argument or no argument, the saved choice, and the trains that the app uses.
 
 ## Make the 45-minute limit shorter
 

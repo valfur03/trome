@@ -16,17 +16,17 @@ struct FakeTrainsLaunchTests {
         store.launch(with: [executable] + arguments, at: now).logLine(hasTrainDataKey: hasTrainDataKey, timeZone: utc)
     }
 
-    @Test func saysTheHarnessAskedForAStateAndTheAppUsesIt() {
+    @Test func saysTheLaunchAskedForAStateAndTheAppUsesIt() {
         #expect(logLine(["--fake-trains", "at-platform"], at: launch)
-            == "launch by the harness, --fake-trains at-platform | saved: no fake trains"
+            == "launch with arguments, --fake-trains at-platform | saved: no fake trains"
             + " | uses: fake trains at-platform from 13:46:40")
     }
 
-    @Test func saysIOSLaunchedTheAppWithNoArgumentAndItKeepsTheSavedState() {
+    @Test func saysALaunchWithNoArgumentKeepsTheSavedState() {
         _ = store.launch(with: [executable, "--fake-trains", "ten-to-nine"], at: launch)
 
         #expect(logLine([], at: launch + 600)
-            == "launch by iOS, no argument | saved: fake trains ten-to-nine from 13:46:40"
+            == "launch with no argument | saved: fake trains ten-to-nine from 13:46:40"
             + " | uses: fake trains ten-to-nine from 13:46:40")
     }
 
@@ -34,20 +34,20 @@ struct FakeTrainsLaunchTests {
         _ = store.launch(with: [executable, "--fake-trains", "ten-to-nine"], at: launch)
 
         #expect(logLine(["--fake-trains"], at: launch + 60)
-            == "launch by the harness, --fake-trains | saved: fake trains ten-to-nine from 13:46:40"
+            == "launch with arguments, --fake-trains | saved: fake trains ten-to-nine from 13:46:40"
             + " | uses: fake trains default from 13:47:40")
     }
 
     @Test func saysAStateItDoesNotKnowAndThatItUsesNoFakeTrains() {
         #expect(logLine(["--fake-trains", "at-plaform"], at: launch)
-            == "launch by the harness, --fake-trains at-plaform (unknown state) | saved: no fake trains"
+            == "launch with arguments, --fake-trains at-plaform (unknown state) | saved: no fake trains"
             + " | uses: no fake trains, no key: no data")
     }
 
     @Test func writesNoOtherArgumentSoNoSecretReachesTheLog() {
         let line = logLine(["-primAPIKey", "secret-value"], at: launch, hasTrainDataKey: true)
 
-        #expect(line == "launch by the harness, no --fake-trains | saved: no fake trains"
+        #expect(line == "launch with arguments, no --fake-trains | saved: no fake trains"
             + " | uses: no fake trains, live trains of the key")
         #expect(!line.contains("secret-value"))
     }

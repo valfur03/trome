@@ -119,7 +119,7 @@ Release builds write none of these lines.
 | `LiveActivity` | Each state that iOS sends for a Live Activity, each end that the app asks for, each pause of a station, and each tap on the header that shows the next line |
 | `StationRegions` | Whether iOS can watch regions, and each region event |
 | `BackgroundLocation` | When the app starts and stops getting the position in the background |
-| `FakeTrains` | Each launch: by the harness, with its `--fake-trains` argument, or by iOS, with no argument; the fake trains that it found saved; the trains that it uses. After you asked for [fake trains](guide/testing-tools.md#get-fake-trains-with-no-key), `launch by iOS, no argument` is a launch that lost its arguments: it uses the saved choice, so a screen with no data and `uses: no fake trains` is not a bug of the app |
+| `FakeTrains` | Each launch: with arguments (it writes only `--fake-trains` and its state), or with no argument (a launch by iOS, `make run`, `make switch-language`); the fake trains that it found saved; the trains that it uses. `uses: fake trains <state>` means that the app got the state, so a screen with no data is not a lost argument; `uses: no fake trains` means that it has none: run `make fake-trains` again |
 
 In the Simulator, read the last 5 minutes, or put `log stream` in place of `log show --last 5m` to follow the lines as they come:
 

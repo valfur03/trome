@@ -19,22 +19,22 @@ public struct FakeTrainsLaunch {
         let time = Date.ISO8601FormatStyle(timeZone: timeZone).time(includingFractionalSeconds: false)
         let noFakeTrains = "no fake trains, " + (hasTrainDataKey ? "live trains of the key" : "no key: no data")
         return [
-            "launch \(launchedBy)",
+            "launch \(launchedWith)",
             "saved: \(saved.map { describe($0, time) } ?? "no fake trains")",
             "uses: \(used.map { describe($0, time) } ?? noFakeTrains)"
         ].joined(separator: " | ")
     }
 
-    private var launchedBy: String {
-        guard !arguments.isEmpty else { return "by iOS, no argument" }
+    private var launchedWith: String {
+        guard !arguments.isEmpty else { return "with no argument" }
         guard let index = arguments.firstIndex(of: FakeDeparturesProvider.launchArgument) else {
-            return "by the harness, no \(FakeDeparturesProvider.launchArgument)"
+            return "with arguments, no \(FakeDeparturesProvider.launchArgument)"
         }
         guard let name = arguments.dropFirst(index + 1).first, !name.hasPrefix("-") else {
-            return "by the harness, \(FakeDeparturesProvider.launchArgument)"
+            return "with arguments, \(FakeDeparturesProvider.launchArgument)"
         }
         let known = FakeTrainsScenario(rawValue: name) != nil
-        return "by the harness, \(FakeDeparturesProvider.launchArgument) \(name)\(known ? "" : " (unknown state)")"
+        return "with arguments, \(FakeDeparturesProvider.launchArgument) \(name)\(known ? "" : " (unknown state)")"
     }
 
     private func describe(_ choice: FakeTrainsStore.Choice, _ time: Date.ISO8601FormatStyle) -> String {

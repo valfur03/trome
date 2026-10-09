@@ -39,12 +39,12 @@ case "$command" in
         echo "launch $*" >> "$state/calls"
         pid=$((500 + count))
         if [ "$count" -le "${FAKE_LOST_LAUNCHES:-0}" ]; then
-            line="launch by iOS, no argument | saved: fake trains old from 10:00:00 | uses: fake trains old from 10:00:00"
+            line="launch with no argument | saved: fake trains old from 10:00:00 | uses: fake trains old from 10:00:00"
         else
             name=${2:-default}
             case "$name" in
-                nope) line="launch by the harness, --fake-trains nope (unknown state) | saved: no fake trains | uses: no fake trains, no key: no data" ;;
-                *) line="launch by the harness, $* | saved: no fake trains | uses: fake trains $name from 10:01:00" ;;
+                nope) line="launch with arguments, --fake-trains nope (unknown state) | saved: no fake trains | uses: no fake trains, no key: no data" ;;
+                *) line="launch with arguments, $* | saved: no fake trains | uses: fake trains $name from 10:01:00" ;;
             esac
         fi
         echo "2026-10-09 10:01:00.000000+0200  localhost TROME[$pid]: (TROMECore) [TROME:FakeTrains] $line" >> "$state/log"
@@ -93,7 +93,7 @@ expect "it is applied at the third launch" "$(cat "$state/launches") $(cat "$sta
 export FAKE_LOST_LAUNCHES=3
 expect "three launches that iOS took over fail" "$(run ten-to-nine)" "exit 1"
 expect "it says the state was not applied, and shows the line of the app" "$(cat "$state/out")" "fake trains: ten-to-nine not applied, launch again
-The last line of the app: 2026-10-09 10:01:00.000000+0200  localhost TROME[503]: (TROMECore) [TROME:FakeTrains] launch by iOS, no argument | saved: fake trains old from 10:00:00 | uses: fake trains old from 10:00:00"
+The last line of the app: 2026-10-09 10:01:00.000000+0200  localhost TROME[503]: (TROMECore) [TROME:FakeTrains] launch with no argument | saved: fake trains old from 10:00:00 | uses: fake trains old from 10:00:00"
 unset FAKE_LOST_LAUNCHES
 
 expect "a state that the app does not know fails at once" "$(run nope)" "exit 1"
