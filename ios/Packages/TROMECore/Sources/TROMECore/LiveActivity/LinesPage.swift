@@ -127,6 +127,33 @@ public struct LinesPage: Codable, Hashable, Sendable {
         return (trainDates + (soonestTrain?.redrawDates ?? [])).filter { $0 > now }.min()
     }
 
+    /// Whether a row of this page shows fewer trains than the same row of `shown`: a train of that row has left,
+    /// and the answer that this page comes from holds no later train to take its place.
+    func showsFewerTrainsInARow(than shown: LinesPage) -> Bool {
+        let counts = trainCountOfEachRow
+        return shown.trainCountOfEachRow.contains { row, count in counts[row, default: 0] < count }
+    }
+
+    private struct Row: Hashable {
+        var line: TransitLine
+        var direction: String
+        var end: String?
+    }
+
+    private var trainCountOfEachRow: [Row: Int] {
+        var counts: [Row: Int] = [:]
+        for line in lines {
+            for direction in line.directions {
+                counts[Row(line: line.line, direction: direction.label), default: 0] += direction.trains.count
+                for endTrains in direction.trainsOfEachEnd ?? [] {
+                    let row = Row(line: line.line, direction: direction.label, end: endTrains.end)
+                    counts[row, default: 0] += endTrains.trains.count
+                }
+            }
+        }
+        return counts
+    }
+
     public var showsSeveralLines: Bool {
         allLines.count > 1
     }

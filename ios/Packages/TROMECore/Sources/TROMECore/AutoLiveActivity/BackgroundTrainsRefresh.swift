@@ -19,6 +19,20 @@ public enum BackgroundTrainsRefresh {
         return now.addingTimeInterval(delay(untilStale: staleDate, now: now))
     }
 
+    /// Whether the redraw at the departure of a train asks for new times instead, when it would leave a row with
+    /// fewer trains: the next train of that row then comes with the same update, not a few seconds later.
+    /// The call keeps the minimum delay after the last one, and never comes before the retry time of a server
+    /// that is out.
+    static func asksInsteadOfRedrawing(
+        losesATrain: Bool,
+        after state: NextTrainsState,
+        lastCall: Date,
+        now: Date
+    ) -> Bool {
+        guard losesATrain, now >= lastCall.addingTimeInterval(minimumDelay) else { return false }
+        return state.serverRetryAt.map { $0 <= now } ?? true
+    }
+
     public static func shouldAskAgain(after state: NextTrainsState) -> Bool {
         switch state {
         case .missingKey, .failed(.keyRejected), .failed(.quotaExceeded):

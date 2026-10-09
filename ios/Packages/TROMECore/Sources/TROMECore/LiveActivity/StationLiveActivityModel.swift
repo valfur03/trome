@@ -147,6 +147,17 @@ public final class StationLiveActivityModel {
         return pageDate.map { min($0, markDate) } ?? markDate
     }
 
+    /// Whether `redraw()` would leave a row of the page with fewer trains than it shows now: a train has left,
+    /// and the last answer holds no later train for its row. A new answer may hold one.
+    func redrawLosesATrain() -> Bool {
+        guard isShowing, !keptTimesAreStale(at: now()), let inputs,
+              let shown = (content ?? client.shownContent)?.trains.linesPage,
+              let redrawn = makeContent(station: inputs.station, trains: inputs.trains, serverIsOut: false)
+                .trains.linesPage
+        else { return false }
+        return redrawn.showsFewerTrainsInARow(than: shown)
+    }
+
     public func stop() async {
         isShowing = false
         forgetShownContent()

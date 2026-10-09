@@ -58,4 +58,34 @@ struct BackgroundTrainsRefreshTests {
 
         #expect(nextCall == now.addingTimeInterval(60 + BackgroundTrainsRefresh.delayAfterDeparture))
     }
+
+    @Test func asksInsteadOfRedrawingWhenARowWouldLoseATrainLongEnoughAfterTheLastCall() {
+        let asks = BackgroundTrainsRefresh.asksInsteadOfRedrawing(
+            losesATrain: true,
+            after: .failed(.unreachable),
+            lastCall: now.addingTimeInterval(-BackgroundTrainsRefresh.minimumDelay),
+            now: now
+        )
+
+        #expect(asks)
+    }
+
+    @Test(arguments: [
+        (false, -60.0, nil as TimeInterval?),
+        (true, -29.0, nil),
+        (true, -60.0, 1_840.0)
+    ])
+    func redrawsWithoutAskingOtherwise(losesATrain: Bool, lastCall: TimeInterval, retryIn: TimeInterval?) {
+        let state: NextTrainsState = retryIn.map { .failed(.serverOut(retryAt: now.addingTimeInterval($0))) }
+            ?? .failed(.unreachable)
+
+        let asks = BackgroundTrainsRefresh.asksInsteadOfRedrawing(
+            losesATrain: losesATrain,
+            after: state,
+            lastCall: now.addingTimeInterval(lastCall),
+            now: now
+        )
+
+        #expect(!asks)
+    }
 }

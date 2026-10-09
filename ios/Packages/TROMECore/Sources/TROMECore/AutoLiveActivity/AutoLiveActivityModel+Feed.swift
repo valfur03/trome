@@ -48,6 +48,7 @@ extension AutoLiveActivityModel {
 
     func keepFeedingInBackground(_ station: Station, fetchNow: Bool) async {
         var asksPRIM = true
+        var lastCall = configuration.now()
         var nextCall = fetchNow || waitsForItsTrains
             ? configuration.now()
             : nextPRIMCall(for: station, asksPRIM: asksPRIM)
@@ -65,16 +66,26 @@ extension AutoLiveActivityModel {
             }
             syncWithSystem()
             guard liveActivity.isShowing else { return }
-            if redrawDate != nil {
+            if redrawDate != nil, !(asksPRIM && asksInsteadOfRedrawing(at: station, lastCall: lastCall)) {
                 await liveActivity.redraw()
                 continue
             }
             if asksPRIM {
-                await feed(station)
+                lastCall = configuration.now()
+                await feed(station, redrawsIfItFails: redrawDate != nil)
                 asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
             }
             nextCall = nextPRIMCall(for: station, asksPRIM: asksPRIM)
         }
+    }
+
+    private func asksInsteadOfRedrawing(at station: Station, lastCall: Date) -> Bool {
+        BackgroundTrainsRefresh.asksInsteadOfRedrawing(
+            losesATrain: liveActivity.redrawLosesATrain(),
+            after: inputs.liveActivityTrains.state(for: station),
+            lastCall: lastCall,
+            now: configuration.now()
+        )
     }
 
     private var waitsForItsTrains: Bool {
@@ -106,10 +117,16 @@ extension AutoLiveActivityModel {
         }
     }
 
-    func feed(_ station: Station) async {
+    /// Asks for new times and shows them. A call made in place of a redraw that fails still makes that redraw
+    /// first, so that the kept times lose the train that left and keep counting down until the next one leaves.
+    func feed(_ station: Station, redrawsIfItFails: Bool = false) async {
         let trains = inputs.liveActivityTrains
         await trains.refresh(for: station)
         guard !Task.isCancelled, shownStation?.id == station.id else { return }
-        await liveActivity.update(station: station, trains: trains.state(for: station))
+        let state = trains.state(for: station)
+        if redrawsIfItFails, case .failed = state {
+            await liveActivity.redraw()
+        }
+        await liveActivity.update(station: station, trains: state)
     }
 }
