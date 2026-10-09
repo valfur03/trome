@@ -614,27 +614,39 @@ expect "that task keeps its new commit" "$(rev task/waited)" "$waited_head"
 
 fake_node() {
     mkdir -p "$1"
-    printf '#!/bin/sh\ncase "$1" in -v) echo v%s.0.0 ;; *) echo %s ;; esac\n' "$2" "$2" > "$1/node"
+    printf '#!/bin/sh\ncase "$1" in -v) echo v%s.0.0 ;; -p) [ "$2" = process.execPath ] && echo "$0" || echo %s ;; esac\n' "$2" "$2" > "$1/node"
     chmod +x "$1/node"
 }
+# A fake fnm: fnm exec --using=.nvmrc runs the command with the Node of $FAKE_FNM_DIR that .nvmrc names, or fails as fnm does when it has no such Node.
+fake_fnm() {
+    mkdir -p "$1"
+    cat > "$1/fnm" << 'FNM'
+#!/bin/sh
+[ "$1" = exec ] && [ "$2" = --using=.nvmrc ] && [ "$3" = -- ] || exit 2
+shift 3
+version=$(tr -d '[:space:]v' < .nvmrc)
+[ -x "$FAKE_FNM_DIR/v$version/node" ] || { echo "error: Requested version v$version.x.x is not currently installed" >&2; exit 1; }
+PATH="$FAKE_FNM_DIR/v$version:$PATH" exec "$@"
+FNM
+    chmod +x "$1/fnm"
+}
 fake_node "$state/old-node" 20
-fake_node "$state/nvm/versions/node/v24.0.0/bin" 24
-mkdir "$state/nvm-without-24"
-printf 'nvm() { [ "$1" = which ] && [ -x "$NVM_DIR/versions/node/v$2.0.0/bin/node" ] && echo "$NVM_DIR/versions/node/v$2.0.0/bin/node"; }\n' > "$state/nvm/nvm.sh"
-cp "$state/nvm/nvm.sh" "$state/nvm-without-24/nvm.sh"
+fake_fnm "$state/old-node"
+fake_node "$state/fnm/v24" 24
+mkdir "$state/fnm-without-24"
 advance_main .nvmrc 24
 path_before_node=$PATH
-export PATH="$state/old-node:$PATH" NVM_DIR="$state/nvm"
+export PATH="$state/old-node:$PATH" FAKE_FNM_DIR="$state/fnm"
 TROME_MERGE_CHECK="$passing_check && node -v >> \"\$FAKE_SIM_STATE/steps\""
 
 new_task docsnode
 mkdir -p "$state/docsnode/docs"
 commit "$state/docsnode" docs/page.md "page"
 merge docsnode
-expect "with an old Node active, make merge of a docs change succeeds when nvm has the Node of .nvmrc" "$status" "0"
+expect "with an old Node active, make merge of a docs change succeeds when fnm has the Node of .nvmrc" "$status" "0"
 expect "the gate of that merge runs with the Node of .nvmrc" "$(tr '\n' ' ' < "$state/steps")" "check check-locked v24.0.0 "
 
-export NVM_DIR="$state/nvm-without-24"
+export FAKE_FNM_DIR="$state/fnm-without-24"
 lockf -k "$RATP_MERGE_LOCK" sh -c 'read -r line < "$0"' "$state/release-merge-lock" &
 merge_lock_holder=$!
 until ! lockf -s -k -t 0 "$RATP_MERGE_LOCK" true 2> /dev/null; do sleep 0.1; done
@@ -645,18 +657,18 @@ before=$(rev main)
 merge docsnonode
 echo release > "$state/release-merge-lock"
 wait "$merge_lock_holder"
-expect "with an old Node and no Node of .nvmrc in nvm, make merge of a docs change fails" "$status" "1"
+expect "with an old Node and no Node of .nvmrc in fnm, make merge of a docs change fails" "$status" "1"
 expect "it fails before it waits for a lock" "$(contains "$state/docsnonode.log" "waiting for the merge")" "no"
 expect "it runs no gate" "$(cat "$state/steps")" ""
-expect "it says what to run" "$(contains "$state/docsnonode.log" "but the active Node is v20.0.0, and nvm has no Node 24. Run 'nvm install' in ")" "yes"
+expect "it says what to run" "$(contains "$state/docsnonode.log" "but the active Node is v20.0.0, and fnm has no Node 24. Run 'fnm install' in ")" "yes"
 expect "main is unchanged when Node is missing" "$(rev main)" "$before"
 
 new_task appnonode
 commit "$state/appnonode" app "app"
 merge appnonode
-expect "with an old Node and no Node of .nvmrc in nvm, make merge of a change with no docs, server or contracts succeeds" "$status" "0"
+expect "with an old Node and no Node of .nvmrc in fnm, make merge of a change with no docs, server or contracts succeeds" "$status" "0"
 export PATH="$path_before_node"
-unset NVM_DIR
+unset FAKE_FNM_DIR
 TROME_MERGE_CHECK=$passing_check
 
 [ "$failures" -eq 0 ]

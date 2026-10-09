@@ -10,9 +10,10 @@ These rules are for every change to the docs site and every run of its commands.
 `docs/README.md` explains the docs site and its commands (section "Run the site").
 The rules on writing are in `CLAUDE.md` and in `.claude/rules/writing.md`: they hold for the whole repo, not only for `docs/`.
 
-- **Node 24.** Each Bash call starts a new shell with the old default Node.
-  Run the docs commands like this: `. "$HOME/.nvm/nvm.sh" && nvm use && make docs-check`.
+- **Node 24.** Each Bash call starts a new shell with no Node manager loaded, so its `node` is an old one, or none.
+  Run the docs commands through fnm, which reads `.nvmrc`: `fnm exec --using=.nvmrc -- make docs-check`.
   The same goes for `make check` when your task changes `docs/`.
+  Never run `fnm use`: it changes the Node of the prompter's terminal (the prompter's order, 2026-10-09).
 - **Install `docs/node_modules` only when your task touches the docs.** It takes about 300 MB.
   `make check` runs `make docs-check` only when your branch changes `docs/`, so the other tasks never install it.
 - **Use your own port.** The default port 4321 is for the prompter.

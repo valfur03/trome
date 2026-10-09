@@ -37,7 +37,8 @@ The reviewer checks them, as for the iOS app.
 
 `server/README.md` explains the server and its commands; `server/guide/how-it-works.md` its API and its quota, and `server/guide/deploy.md` the deploy and the secrets.
 
-- **Node 24.** Run the server commands like this: `. "$HOME/.nvm/nvm.sh" && nvm use && make server-check`.
+- **Node 24.** Run the server commands through fnm, which reads `.nvmrc`: `fnm exec --using=.nvmrc -- make server-check`.
+  Never run `fnm use`: it changes the Node of the prompter's terminal.
   The same goes for `make check` when your task changes `server/` or `contracts/`: `make check` runs `make server-check` only then, so the app tasks never install `server/node_modules` (about 300 MB).
 - **Use your own port.** `make server-dev` uses 8787 in the main folder only (the prompter's), 8787 plus the number at the end of the folder name in a worktree (8974 in `task-187`), and a port from 9800 to 9899 in a worktree whose name ends with no number (for example `qa`).
   Run it in the background, and stop it with `make server-stop` as soon as your check is done, and before your job ends.

@@ -8,14 +8,8 @@ It shows how to run the site and add a page, how to write a page that its reader
 ## Run the site
 
 The site is built with [Starlight](https://starlight.astro.build), on Astro, and needs Node 24, the version in [`.nvmrc`](../.nvmrc).
-The first time, install that version with [nvm](https://github.com/nvm-sh/nvm), from the root of the repo:
-
-```sh
-nvm install
-```
-
-Then run `nvm use` in each new terminal, before a docs command.
-If the active Node is too old, the docs commands stop and tell you so.
+Install that version once with a Node version manager that reads this file, such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm), and make it the active Node before a docs command.
+If the active Node is too old, the docs commands stop and say what to run.
 
 Run the docs commands from the root of the repo:
 
@@ -237,8 +231,8 @@ Use short sentences and common words: many readers do not have English as their 
 But link the sentences the way a person speaks, with "so", "but", "then" and "when".
 Read each sentence aloud, and rewrite the ones that no person would say.
 
-- Not: "The docs need Node 24. The file `.nvmrc` pins it. Install it one time with nvm."
-- But: "The site needs Node 24, the version in `.nvmrc`, so install it once with nvm."
+- Not: "The docs need Node 24. The file `.nvmrc` pins it. Install it one time with a version manager."
+- But: "The site needs Node 24, the version in `.nvmrc`, so install it once with a version manager."
 
 Write "you", and use the active voice: "Tap **Allow**", not "Allow must be tapped".
 Name each thing the way the reader sees it, with the label of the screen or of the iOS menu, in bold: **Settings > Privacy & Security**.

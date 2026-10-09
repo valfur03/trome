@@ -17,6 +17,7 @@ WRAPPERS = {
     "caffeinate": {"-t", "-w"},
     "nice": {"-n", "--adjustment"},
     "timeout": {"-s", "--signal", "-k", "--kill-after"},
+    "fnm exec": {"--using", "--fnm-dir", "--log-level", "--arch", "--node-dist-mirror", "--version-file-strategy"},
 }
 SHELLS = {"sh", "bash", "zsh"}
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
@@ -152,9 +153,10 @@ def command_words(words):
         if ASSIGNMENT.match(words[i]):
             assignments.append(words[i])
             i += 1
-        elif words[i] in WRAPPERS:
-            takes_value = WRAPPERS[words[i]]
-            i += 1
+        elif words[i] in WRAPPERS or " ".join(words[i:i + 2]) in WRAPPERS:
+            name = words[i] if words[i] in WRAPPERS else " ".join(words[i:i + 2])
+            takes_value = WRAPPERS[name]
+            i += len(name.split())
             while i < len(words) and (words[i].startswith("-") or DURATION.match(words[i])):
                 i += 2 if words[i] in takes_value else 1
         else:

@@ -2,7 +2,7 @@
 
 This page is for the maintainer, who holds the Cloudflare account of the server and its secrets: a contributor needs none of it, and starts at [server/README.md](../README.md).
 It shows how to deploy the server, set its secrets, connect the app to it, read its counts of requests and PRIM calls, and find a problem without keeping the stops of riders.
-Run the commands from the root of the repo, after `nvm use` ([server/README.md](../README.md)).
+Run the commands from the root of the repo, with Node 24 active ([server/README.md](../README.md)).
 
 | Command | What it does |
 |---|---|

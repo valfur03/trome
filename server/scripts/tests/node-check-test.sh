@@ -36,11 +36,16 @@ expect "a newer Node passes" "$(check)" "passes"
 fake_node 20
 expect "Node 20 fails" "$(check)" "fails"
 expect "the message names the Node that is needed and the active one" \
-    "$(grep -c "The server needs Node 24 or later, but the active Node is v20.0.0" "$state/out")" "1"
-expect "the message says to run nvm use" "$(grep -c "Run 'nvm use'" "$state/out")" "1"
+    "$(grep -c "The server needs Node 24 or later (see .nvmrc), but the active Node is v20.0.0" "$state/out")" "1"
+expect "the message gives a command that runs make with the Node of .nvmrc" \
+    "$(grep -c "fnm exec --using=.nvmrc -- make" "$state/out")" "1"
+expect "the message never says to run fnm use" "$(grep -c "fnm use" "$state/out")" "0"
 
 rm "$state/bin/node"
 expect "no Node fails" "$(check)" "fails"
-expect "the message says to install Node with nvm" "$(grep -c "nvm install" "$state/out")" "1"
+expect "the message says that no Node is on the PATH, and which Node is needed" \
+    "$(grep -c "No Node is on the PATH, but the server needs Node 24 (see .nvmrc)" "$state/out")" "1"
+expect "the message says how to install that Node with fnm" "$(grep -c "fnm install" "$state/out")" "1"
+expect "no message names nvm" "$(grep -cw nvm "$state/out")" "0"
 
 [ "$failures" -eq 0 ]
