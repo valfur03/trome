@@ -135,8 +135,9 @@ At the top, **Phone now** shows the settings that can stop a wake: the location 
 Check this before every walk, because a fake position makes the walk test nothing:
 the app keeps a fake position across launches, and with it the app watches no area, so iOS wakes nothing.
 
-1. On the main screen of the app, scroll down to the end of the cards, under **Location** and **Notifications**.
+1. On the main screen of the app, look just under the card with **Location** (**Localisation** in French) and **Notifications**.
    The orange line "Fake position", with a place name, must not be there.
+   The Testing tools and this line stay in English on a French phone.
 2. In **Wake log**, read the line "Position" of **Phone now**.
    It must say "Position: real GPS", not "Position: fake" with a place name.
 3. When either one says fake, go back to **Testing tools** and tap **Use the real GPS**, then open **Wake log** again.
@@ -156,8 +157,10 @@ Only a line "iOS: entered" a station after it, or "inside" a station in a "first
 Other area lines can follow any launch: iOS can send the state of each area when the app starts ("left", "not watched"), and "area around you" and "stop area" are not stations.
 iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
-A log with "Position: fake" in **Phone now** and, with the Map icon, the line "No region watched: a fake position is on" is the log of a walk with a fake position.
-It says nothing about a closed app: tap **Use the real GPS**, then walk again.
+After a walk, do not read **Phone now** to know the position of the walk: it shows the state when you opened the screen.
+Read the line "App launched" (Power icon) of the walk instead, which says "Position: fake" with a place name, or "Position: real GPS", as it was at that launch.
+A walk with a fake position also has, with the Map icon, the line "No region watched: a fake position is on".
+Such a log says nothing about a closed app: tap **Use the real GPS**, then walk again.
 With the real GPS, a Map line "Watching" some stations (often "Watching 18 stations") shows once the phone has a position; when it does not show, leave the app and open it again.
 The line "Region watch on: iOS keeps N regions for the app" is no proof either way: it counts the areas when the app starts, before the app chooses them, so it can say 0 with the real GPS, and more than 0 with a fake position.
 For a first walk, stand about 2 minutes within 150 meters of a station, because iOS can take a few seconds to a few minutes to report that you entered the area ([the arrival notification](#with-the-app-in-the-background-the-arrival-notification)).
