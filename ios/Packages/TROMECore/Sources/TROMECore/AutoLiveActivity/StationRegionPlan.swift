@@ -8,6 +8,18 @@ public struct WatchedRegion: Hashable, Sendable {
     public let id: String
     public let center: Coordinate
     public let radiusMeters: Double
+    /// The state that iOS assumes for the region until it knows better, also when a new process adds it again.
+    /// A stop area is planned only while the rider is at its station, so it starts inside: only a real exit
+    /// then reports "left". Assumed outside, an echo of that assumption would forget an arrival that the rider
+    /// is still at (and the next "entered" would notify again), and a re-add would swallow a real exit.
+    public let startsInside: Bool
+
+    init(id: String, center: Coordinate, radiusMeters: Double, startsInside: Bool = false) {
+        self.id = id
+        self.center = center
+        self.radiusMeters = radiusMeters
+        self.startsInside = startsInside
+    }
 
     static func arrival(at station: Station) -> WatchedRegion {
         WatchedRegion(
@@ -21,7 +33,8 @@ public struct WatchedRegion: Hashable, Sendable {
         WatchedRegion(
             id: stopPrefix + station.id,
             center: station.coordinate,
-            radiusMeters: AutoLiveActivityRules.stopRadiusMeters
+            radiusMeters: AutoLiveActivityRules.stopRadiusMeters,
+            startsInside: true
         )
     }
 

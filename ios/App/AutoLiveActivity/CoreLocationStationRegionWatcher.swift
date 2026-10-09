@@ -45,7 +45,8 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
                 center: CLLocationCoordinate2D(latitude: region.center.latitude, longitude: region.center.longitude),
                 radius: region.radiusMeters
             )
-            await monitor.add(condition, identifier: region.id, assuming: .unsatisfied)
+            let assumed: CLMonitor.Event.State = region.startsInside ? .satisfied : .unsatisfied
+            await monitor.add(condition, identifier: region.id, assuming: assumed)
         }
     }
 

@@ -33,7 +33,20 @@ struct StationRegionPlanTests {
         let regions = StationRegionPlan.regions(around: origin, stopStation: all[25], catalog: catalog)
 
         #expect(regions.count == StationRegionPlan.maximumRegions)
-        #expect(regions.contains(WatchedRegion(id: "stop:s26", center: all[25].coordinate, radiusMeters: 250)))
+        #expect(regions.contains(
+            WatchedRegion(id: "stop:s26", center: all[25].coordinate, radiusMeters: 250, startsInside: true)
+        ))
+    }
+
+    /// A stop area assumed outside would be reported as left while the rider is still at the station,
+    /// for example when a new process adds the regions again, and the next "entered" would notify twice.
+    @Test func onlyTheStopAreaStartsInsideSoARelaunchAtTheStationReportsNoExit() {
+        let all = stations(count: 30)
+        let catalog = StationCatalog(stations: all)
+
+        let regions = StationRegionPlan.regions(around: origin, stopStation: all[0], catalog: catalog)
+
+        #expect(regions.filter(\.startsInside).map(\.id) == ["stop:s1"])
     }
 
     @Test func refreshesTheRegionsBeforeThePhoneCanReachAStationThatIsNotWatched() {
