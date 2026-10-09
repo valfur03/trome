@@ -412,4 +412,6 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
 12. **French.** A riders' page reads as French that a Paris rider would write, and the French and English pages say the same facts.
 13. **On a phone first.** Most riders read the site on an iPhone, so read each riders' page at phone width (390 pixels) before you read it on a computer.
     Check that its language menu, its menu and its tables work there.
-14. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.
+14. **No sideways scroll.** Open the page at the width of its reader (1280 pixels for a maintainer on a laptop, 390 for a rider on a phone) and measure the page itself, not only its code blocks: `document.documentElement.scrollWidth` must equal `clientWidth`.
+    A table, a long inline code or a wide picture can push the whole page sideways while every block wraps, and a text to paste is then cut at the right, out of the reader's sight.
+15. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.

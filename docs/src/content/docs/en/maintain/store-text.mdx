@@ -92,7 +92,7 @@ Apple lets you change the promotional text at any time, with no new version.
 Only its first lines show before **more**, so they carry what the rider gets, the honest limit of the place, and the price.
 Each block below is a section with its own line, because the store shows plain text.
 
-French (1949 of 4000 characters):
+French (1955 of 4000 characters):
 
 ```text wrap
 Les prochains trains de la station où vous entrez, sur votre écran verrouillé : métro ou RER, dans les deux sens.
@@ -101,7 +101,7 @@ Gratuit, sans compte, sans publicité.
 
 Ce que vous voyez
 • Les prochains trains de chaque sens, avec leur destination (même sur les lignes à branches) et les minutes d’attente.
-• Chaque ligne de la station : touchez le nom de la station pour passer à la suivante.
+• Chaque ligne de la station : touchez le nom de la station pour passer à la ligne suivante.
 • Sur l’écran verrouillé, et dans la Dynamic Island sur les iPhone qui en ont une.
 
 Quand les trains s’affichent
@@ -160,27 +160,33 @@ Write them with a comma and no space after it.
 
 French (99 of 100 bytes):
 
-```text
+```text wrap
 horaires,prochains passages,train,transport,quai,station,attente,Île-de-France,activité en direct
 ```
 
 English (92 of 100 bytes):
 
-```text
+```text wrap
 subway,transit,departures,schedule,platform,station,commute,wait,live activity,Ile-de-France
 ```
 
 The French keywords above fit title 1.
 Titles 2 and 3 already carry some of them, and a word that is in the title adds nothing in the keywords, so its bytes are wasted.
-Those two titles also lack `métro` and `RER`, which title 1 has.
-When App Store Connect accepts title 2 or 3, paste the French keywords of its row instead.
+Those two titles also lack `métro` and `RER`, which title 1 has, and title 3 lacks `Paris`.
+When App Store Connect accepts title 2 or 3, paste the French keywords below instead.
 The English keywords repeat no word of any English title, so they stay.
 
-| Title taken | French keywords to paste | Bytes |
-|---|---|---|
-| 1 | The line above | 99 of 100 |
-| 2, `Prochains trains Paris` | `horaires,passages,transport,quai,station,attente,Île-de-France,activité en direct,métro,RER` | 94 of 100 |
-| 3, `Prochains passages` | `horaires,train,transport,quai,station,attente,Île-de-France,activité en direct,métro,RER` | 91 of 100 |
+French keywords for title 2, `Prochains trains Paris` (94 of 100 bytes):
+
+```text wrap
+horaires,passages,transport,quai,station,attente,Île-de-France,activité en direct,métro,RER
+```
+
+French keywords for title 3, `Prochains passages` (97 of 100 bytes):
+
+```text wrap
+horaires,train,transport,quai,station,attente,Île-de-France,activité en direct,métro,RER,Paris
+```
 
 ## Category, age rating, price and territories
 
@@ -300,10 +306,18 @@ Five places hold the claim that a closed app sends a notification as a line of t
 The store texts above carry it already, and you check them before you paste.
 The What's new pages and `CHANGELOG.md` go online with the site, so they carry it only after the proof.
 
-When the notification has come on a real iPhone at a station, add the clause to the 1.0 line of each of the three, so that the line reads:
+When the notification has come on a real iPhone at a station, add the clause to the 1.0 line of each of the three.
+In `fr/whats-new.mdx`, the line reads:
 
-- `fr/whats-new.mdx`: `App ouverte, les trains s’affichent à votre arrivée à une station ; app fermée, une notification vous prévient : touchez-la, et ils s’affichent.`
-- `en/whats-new.mdx` and `CHANGELOG.md`: `With the app open, the trains show when you arrive at a station; with the app closed, a notification tells you, and one tap shows them.`
+```text wrap
+App ouverte, les trains s’affichent à votre arrivée à une station ; app fermée, une notification vous prévient : touchez-la, et ils s’affichent.
+```
+
+In `en/whats-new.mdx` and `CHANGELOG.md`, the line reads:
+
+```text wrap
+With the app open, the trains show when you arrive at a station; with the app closed, a notification tells you, and one tap shows them.
+```
 
 When it did not come, or not every time, remove the closed-app sentences from the other three places instead, and leave the What's new line as it stands:
 
