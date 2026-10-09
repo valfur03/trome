@@ -158,19 +158,20 @@ waited_for() {
 }
 
 # Adds the line of the job that holds $lock to the records; a job that the scripts of an older branch took has no line.
+# Its variables start with rec_: a job that waits removes a stale lock here, and must keep its own asked_at and waited_for.
 record_job() {
     [ -f "$lock/job" ] || return 0
-    IFS=$tab read -r taken asked_at kind wait worktree branch waited_for < "$lock/job" || return 0
-    hold=$(($(date +%s) - taken))
-    gate_wait=$(cat "$lock/gate-wait" 2> /dev/null || true)
-    detail=$(cat "$lock/detail" 2> /dev/null || true)
+    IFS=$tab read -r rec_taken rec_asked_at rec_kind rec_wait rec_worktree rec_branch rec_waited_for < "$lock/job" || return 0
+    rec_hold=$(($(date +%s) - rec_taken))
+    rec_gate_wait=$(cat "$lock/gate-wait" 2> /dev/null || true)
+    rec_detail=$(cat "$lock/detail" 2> /dev/null || true)
     {
         mkdir -p "$logs" &&
             if [ ! -s "$jobs_log" ]; then
                 printf 'asked\tkind\twait_s\thold_s\tgate_wait_s\tend\tworktree\tbranch\tdetail\twaited_for\n' >> "$jobs_log"
             fi &&
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$asked_at" "$kind" "$wait" "$hold" "${gate_wait:-0}" "$1" \
-                "$worktree" "$branch" "$detail" "$waited_for" >> "$jobs_log"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$rec_asked_at" "$rec_kind" "$rec_wait" "$rec_hold" "${rec_gate_wait:-0}" "$1" \
+                "$rec_worktree" "$rec_branch" "$rec_detail" "$rec_waited_for" >> "$jobs_log"
     } 2> /dev/null || true
 }
 

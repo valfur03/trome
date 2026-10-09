@@ -106,6 +106,15 @@ wait "$killed" 2> /dev/null || true
 expect "a job that died without freeing the Simulator is recorded as stale, then the next job is recorded" \
     "$(records) $(field end 2 "$jobs_log") $(field end 1 "$jobs_log")" "7 stale 0"
 
+mkdir "$RATP_SIM_LOCK"
+sh -c 'echo $$' > "$RATP_SIM_LOCK/pid"
+echo /another/worktree > "$RATP_SIM_LOCK/worktree"
+printf '1\t2026-01-01T00:00:00+0000\te2e\t5\tother\ttask/other\tmerge\n' > "$RATP_SIM_LOCK/job"
+"$scripts/sim-lock.sh" job true 2> /dev/null
+expect "the job that removes a stale lock keeps its own asked time and wait reason in its record" \
+    "$(field asked 2 "$jobs_log") $(field waited_for 2 "$jobs_log") $(field asked 1 "$jobs_log" | cut -c 1-10) [$(field waited_for 1 "$jobs_log")]" \
+    "2026-01-01T00:00:00+0000 merge $(date +%Y-%m-%d) []"
+
 "$scripts/build-gate.py" build sh -c 'touch "$0.started"; sleep 2' "$state/build" &
 wait_for '[ -e "$state/build.started" ]'
 "$scripts/sim-lock.sh" job "$scripts/build-gate.py" tests true 2> /dev/null
