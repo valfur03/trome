@@ -90,7 +90,7 @@ struct AutoLiveActivityRulesTests {
         let decision = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
 
         #expect(decision.actions.isEmpty)
-        #expect(decision.state == AutoLiveActivityState(arrivalStationId: "a", pendingArrivalStationId: "a"))
+        #expect(decision.state == AutoLiveActivityState(pendingArrivalStationId: "a"))
     }
 
     @Test func startsAWaitingArrivalWhenTheAppIsActiveAgainWithNoNewPosition() {
@@ -136,12 +136,12 @@ struct AutoLiveActivityRulesTests {
         #expect(decision.state.pendingArrivalStationId == nil)
     }
 
-    @Test func doesNotSaveAWaitingArrival() throws {
-        let state = AutoLiveActivityState(arrivalStationId: "a", pendingArrivalStationId: "a")
+    @Test func doesNotSaveAWaitingArrivalAsDone() throws {
+        let covered = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
 
-        let saved = try JSONDecoder().decode(AutoLiveActivityState.self, from: JSONEncoder().encode(state))
+        let saved = try JSONDecoder().decode(AutoLiveActivityState.self, from: JSONEncoder().encode(covered.state))
 
-        #expect(saved == AutoLiveActivityState(arrivalStationId: "a"))
+        #expect(saved == AutoLiveActivityState())
     }
 
     @Test func doesNothingOutsideTheArrivalRadius() {

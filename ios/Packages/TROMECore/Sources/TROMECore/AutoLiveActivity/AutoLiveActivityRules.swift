@@ -165,6 +165,15 @@ public struct AutoLiveActivityRules: Sendable {
     }
 }
 
+extension AutoLiveActivityRules.Decision {
+    mutating func forgetArrival() {
+        state.arrivalStationId = nil
+        state.pendingArrivalStationId = nil
+        state.openArrivalStationId = nil
+        actions.append(.withdrawNotification)
+    }
+}
+
 private extension AutoLiveActivityRules.Decision {
     mutating func end() {
         state.shown = nil
@@ -195,13 +204,10 @@ private extension AutoLiveActivityRules.Decision {
     }
 
     mutating func leaveArrivalIfFar(from position: Coordinate, catalog: StationCatalog) {
-        guard let arrivalId = state.arrivalStationId,
+        guard let arrivalId = state.arrivalStationId ?? state.pendingArrivalStationId,
               let arrivalStation = catalog.station(withId: arrivalId),
               position.distance(to: arrivalStation.coordinate) > AutoLiveActivityRules.stopRadiusMeters else { return }
-        state.arrivalStationId = nil
-        state.pendingArrivalStationId = nil
-        state.openArrivalStationId = nil
-        actions.append(.withdrawNotification)
+        forgetArrival()
     }
 
     mutating func arrive(at station: Station, now: Date, response: AutoLiveActivityRules.ArrivalResponse) {
@@ -232,6 +238,7 @@ private extension AutoLiveActivityRules.Decision {
             actions.append(.notify(station))
             arrival = .notified(station)
         case .later:
+            state.arrivalStationId = nil
             state.pendingArrivalStationId = station.id
             arrival = .waitsForTheApp(station)
         case .none:
@@ -256,6 +263,7 @@ private extension AutoLiveActivityRules.Decision {
         guard response != .later, let stationId = state.pendingArrivalStationId else { return }
         state.pendingArrivalStationId = nil
         guard let station = catalog.station(withId: stationId) else { return }
+        state.arrivalStationId = station.id
         arrive(at: station, now: now, response: response)
     }
 

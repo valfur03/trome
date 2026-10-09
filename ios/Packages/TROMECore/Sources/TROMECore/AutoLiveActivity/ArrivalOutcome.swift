@@ -10,6 +10,7 @@ enum ArrivalOutcome: Equatable, Sendable {
     case paused(Station, until: Date)
     case alreadyShown(Station)
     case alreadyArrived(Station)
+    case left(Station)
     case noStationNear(NearbyStation?)
 
     var logKey: String {
@@ -38,7 +39,9 @@ enum ArrivalOutcome: Equatable, Sendable {
         case .alreadyShown(let station):
             "No notification at \(station.name): its Live Activity shows"
         case .alreadyArrived(let station):
-            "No notification at \(station.name): same arrival as before, until the app sees you \(stopRadius) m away"
+            "No notification at \(station.name): same arrival as before, until you leave its \(stopRadius) m area"
+        case .left(let station):
+            "Left \(station.name): iOS says the phone left its \(stopRadius) m area"
         case .noStationNear(let nearest?):
             "No station within \(arrivalRadius) m: nearest is \(nearest.station.name), \(Int(nearest.distanceMeters)) m"
         case .noStationNear(nil):

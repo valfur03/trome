@@ -1,13 +1,19 @@
 import Foundation
 
 extension AutoLiveActivityModel {
-    public func handleRegionEvent(enteredRegionId: String?, lastKnownFix: PositionFix?) async {
+    public func handleRegionEvent(_ event: RegionEvent, lastKnownFix: PositionFix?) async {
         guard inputs.locationService.source == .realGPS else {
             services.wakeLog?.record(.decision, "Ignored: a fake position is on")
             return
         }
+        if let stationId = event.leftStopStationId {
+            await apply(
+                configuration.rules.leaveStopArea(of: stationId, state: state, catalog: catalog),
+                logsEveryOutcome: true
+            )
+        }
         let fix = WatchedRegion.fix(
-            afterEnteringRegionId: enteredRegionId,
+            afterEnteringRegionId: event.enteredRegionId,
             lastKnownFix: lastKnownFix,
             now: configuration.now(),
             catalog: catalog
@@ -16,7 +22,18 @@ extension AutoLiveActivityModel {
             logNoRecentPosition(lastKnownFix)
             return
         }
+        if let stationId = event.leftStopStationId, isInsideStopArea(of: stationId, fix) {
+            logPositionBeforeLeaving()
+            return
+        }
         await handle(fix, maximumAge: AutoLiveActivityRules.maximumMonitoredPositionAge, logsEveryOutcome: true)
+    }
+
+    /// A position inside the stop area that iOS says the phone left is older than the exit: deciding on it
+    /// would take the rider back to the station, and notify a second time as they leave.
+    private func isInsideStopArea(of stationId: String, _ fix: PositionFix) -> Bool {
+        guard let station = catalog.station(withId: stationId) else { return false }
+        return fix.coordinate.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters
     }
 
     func refreshRegions(around position: Coordinate?) async {

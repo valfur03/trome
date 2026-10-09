@@ -197,6 +197,10 @@ public final class AutoLiveActivityModel {
             ? configuration.rules.resume(state:position:now:onArrival:catalog:)
             : configuration.rules.decide(state:position:now:onArrival:catalog:)
         let decision = decide(state, position, configuration.now(), arrivalResponse, catalog)
+        await apply(decision, logsEveryOutcome: logsEveryOutcome)
+    }
+
+    func apply(_ decision: AutoLiveActivityRules.Decision, logsEveryOutcome: Bool) async {
         log(decision.arrival, everyOutcome: logsEveryOutcome)
         state = decision.state
         for action in decision.actions {

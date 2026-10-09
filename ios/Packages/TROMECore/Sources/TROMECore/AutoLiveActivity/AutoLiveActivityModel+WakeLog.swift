@@ -30,6 +30,10 @@ extension AutoLiveActivityModel {
         wakeLog.record(.decision, "No decision: the last position is \(age) s old")
     }
 
+    func logPositionBeforeLeaving() {
+        services.wakeLog?.record(.decision, "No decision: the last position is inside the area that the phone left")
+    }
+
     func logUntrusted(_ fix: PositionFix, maximumAge: TimeInterval) {
         guard let wakeLog = services.wakeLog else { return }
         let age = Int(configuration.now().timeIntervalSince(fix.timestamp))

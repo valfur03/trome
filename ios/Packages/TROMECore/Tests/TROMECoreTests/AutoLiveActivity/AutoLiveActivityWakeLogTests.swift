@@ -30,7 +30,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         let old = PositionFix(coordinate: Places.fiftyMetersFromA, accuracyMeters: 10, timestamp: clock.now - 600)
 
-        await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: old)
+        await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: old)
 
         #expect(decisions == ["No decision: the last position is 600 s old"])
     }
@@ -39,7 +39,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         let rough = PositionFix(coordinate: Places.fiftyMetersFromA, accuracyMeters: 400, timestamp: clock.now - 30)
 
-        await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: rough)
+        await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: rough)
 
         #expect(decisions == ["No decision: position not trusted, ±400 m and 30 s old (needs ±100 m and 120 s)"])
         #expect(notifier.notified.isEmpty)

@@ -156,8 +156,8 @@ struct TROMEApp: App {
         )
         UserNotificationArrivalNotifier.registerActions(in: .current())
         UNUserNotificationCenter.current().delegate = notificationResponseHandler
-        regionWatcher.onWake = { [weak autoLiveActivityModel] enteredRegionId, lastKnownFix in
-            await autoLiveActivityModel?.handleRegionEvent(enteredRegionId: enteredRegionId, lastKnownFix: lastKnownFix)
+        regionWatcher.onWake = { [weak autoLiveActivityModel] event, lastKnownFix in
+            await autoLiveActivityModel?.handleRegionEvent(event, lastKnownFix: lastKnownFix)
         }
         Task { await regionWatcher.resume() }
         return notificationResponseHandler

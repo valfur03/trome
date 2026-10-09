@@ -107,7 +107,7 @@ extension AutoLiveActivityModelTests {
     @Test func watchesTheStationsAroundARoughPositionFromRegionMonitoring() async {
         let model = makeModel()
 
-        await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: roughFix(at: Places.fiftyMetersFromA))
+        await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: roughFix(at: Places.fiftyMetersFromA))
 
         #expect(notifier.notified.isEmpty)
         #expect(watcher.watched.last?.map(\.id) == ["arrival:a", "arrival:b", "refresh"])
@@ -117,7 +117,8 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
 
-        await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: roughFix(at: Places.fourHundredMetersFromA))
+        let rough = roughFix(at: Places.fourHundredMetersFromA)
+        await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: rough)
 
         #expect(client.endCount == 0)
         #expect(model.shownStation == Places.stationA)
@@ -126,7 +127,7 @@ extension AutoLiveActivityModelTests {
     @Test func notifiesOnEnteringAnArrivalAreaWithARoughPosition() async {
         let model = makeModel()
 
-        await model.handleRegionEvent(enteredRegionId: "arrival:a", lastKnownFix: roughFix(at: Places.atB))
+        await model.handleRegionEvent(.entered(regionId: "arrival:a"), lastKnownFix: roughFix(at: Places.atB))
 
         #expect(notifier.notified == [Places.stationA])
     }
@@ -139,7 +140,7 @@ extension AutoLiveActivityModelTests {
             timestamp: clock.now.addingTimeInterval(-100)
         )
 
-        await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: fix)
+        await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: fix)
 
         #expect(notifier.notified == [Places.stationA])
     }

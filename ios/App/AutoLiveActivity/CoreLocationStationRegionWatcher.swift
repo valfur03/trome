@@ -7,7 +7,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     private static let monitorName = "TROMEStationRegions"
     private static let monitorNamesOfOlderBuilds = ["RATPStationRegions"]
 
-    var onWake: (@MainActor (_ enteredRegionId: String?, _ lastKnownFix: PositionFix?) async -> Void)?
+    var onWake: (@MainActor (_ event: RegionEvent, _ lastKnownFix: PositionFix?) async -> Void)?
     var wakeLog: WakeLog?
     var regionLabel: (String) -> String = { $0 }
 
@@ -96,8 +96,13 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     }
 
     private func handle(identifier: String, state: CLMonitor.Event.State) async {
-        guard state == .satisfied || state == .unsatisfied else { return }
-        await onWake?(state == .satisfied ? identifier : nil, manager.location.flatMap(PositionFix.init))
+        let event: RegionEvent
+        switch state {
+        case .satisfied: event = .entered(regionId: identifier)
+        case .unsatisfied: event = .left(regionId: identifier)
+        default: return
+        }
+        await onWake?(event, manager.location.flatMap(PositionFix.init))
     }
 }
 

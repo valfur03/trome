@@ -52,9 +52,11 @@ A fake position is always trusted.
 | A Live Activity shows, and the rider comes within 150 meters of another station | It switches to the new station: no second Live Activity, no second notification |
 | The rider moves more than 250 meters from the station of the Live Activity | It ends, once the rider has been within 250 meters of it |
 | 45 minutes after the Live Activity started | It ends. A switch does not start the count again |
-| The same station again | Nothing, until the rider leaves (more than 250 meters, with no station within 150 meters) and comes back |
+| The same station again | Nothing, until the rider leaves the station and comes back |
 
 Each arrival gives at most one notification and one automatic start.
+The app counts a station as left when a trusted position is more than 250 meters from it, or when iOS says that the phone left its stop area, even with no position.
+An arrival that waits behind a system popup is not done until the app acts on it: if iOS closes the app first, the notification or the start comes once, when the app runs again at that station.
 A Live Activity that you start by hand ([Testing tools](testing-tools.md#show-or-stop-the-live-activity-by-hand)) follows the same stop rules, and the 45 minutes apply to every Live Activity.
 A debug build can [shorten the 45 minutes](testing-tools.md#make-the-45-minute-limit-shorter).
 

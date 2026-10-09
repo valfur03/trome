@@ -154,7 +154,7 @@ struct AutoLiveActivityModelTests {
 
     func wake(_ model: AutoLiveActivityModel, at position: Coordinate) async {
         let fix = PositionFix(coordinate: position, accuracyMeters: 10, timestamp: clock.now)
-        await model.handleRegionEvent(enteredRegionId: nil, lastKnownFix: fix)
+        await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: fix)
     }
 
     func activate(_ model: AutoLiveActivityModel) async {
