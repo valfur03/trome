@@ -9,10 +9,15 @@ let package = Package(
         .macOS(.v15)
     ],
     products: [
-        .library(name: "TROMECore", targets: ["TROMECore"])
+        .library(name: "TROMECore", targets: ["TROMECore"]),
+        .library(name: "TROMEBadge", targets: ["TROMEBadge"])
     ],
     targets: [
         .target(name: "TROMECore", resources: [.copy("Resources/stations.json")]),
-        .testTarget(name: "TROMECoreTests", dependencies: ["TROMECore"])
+        .testTarget(name: "TROMECoreTests", dependencies: ["TROMECore"]),
+        // The line badges are drawn by SwiftUI, which TROMECore must not import; they get their own module so that
+        // the app and the widget share one badge, and its test draws every badge on the Mac.
+        .target(name: "TROMEBadge", dependencies: ["TROMECore"]),
+        .testTarget(name: "TROMEBadgeTests", dependencies: ["TROMEBadge"])
     ]
 )

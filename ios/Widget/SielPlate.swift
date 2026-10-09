@@ -1,3 +1,4 @@
+import TROMEBadge
 import TROMECore
 import SwiftUI
 

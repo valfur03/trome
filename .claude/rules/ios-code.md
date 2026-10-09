@@ -18,6 +18,8 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
 
 - **Two modules, one direction.** `ios/Packages/TROMECore` holds the rules, the state (`@Observable` models), the value types, the PRIM client, and the protocols of the system services.
   The app (`ios/App/`) and the widget (`ios/Widget/`) depend on `TROMECore`, never the reverse.
+  The same package has one small SwiftUI module, `TROMEBadge`: the line badge that the app and the widget both draw, at the size of each surface; it depends on `TROMECore`, never the reverse.
+  Why: when each surface drew its own badge, the digit was off the centre on some of them (TASK-335); one view, with a test that draws every badge on the Mac, keeps them all true.
 - **`TROMECore` stays free of the UI and of iOS.** No `import SwiftUI`, `UIKit`, `WidgetKit` or `MapKit`.
   It must build and pass its tests on the Mac (`make test`).
   An iOS-only framework is allowed only for a type that the app and the widget share (today: the `ActivityAttributes` conformance and `SnoozeLiveActivityIntent`, the intent of the Live Activity's buttons), inside `#if os(iOS)`.
@@ -38,7 +40,8 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
 - **Testing tools are for debug builds only.** Each file in `ios/App/TestingTools/` is inside `#if DEBUG`.
 - **The widget is a pure view.** `ios/Widget/` uses only `StationActivityAttributes` and its value types from `TROMECore`, and `SnoozeLiveActivityIntent` for its buttons (iOS runs the intent in the app, not in the widget).
   No model, no provider, no network.
-  The app also compiles the line badges of the widget (`MetroLineBadge`, `RERSquareBadge`, and the colours and names of a line), listed one by one in the sources of the app in `ios/project.yml`, so that the main screen and the Live Activity draw the same badges.
+  It also uses `TROMEBadge` for the line badges.
+  The app compiles `Widget/LineBadge.swift` (the badge with the name that VoiceOver reads) and `Widget/TransitLine+LocalizedName.swift`, listed one by one in the sources of the app in `ios/project.yml`, so that the main screen and the Live Activity draw the same badges.
   Such a shared file stays a pure view, with the texts of both String Catalogs.
 - **Texts in French and English.** Each text that a user sees is written in English in the code, and has its French text in the String Catalog of its target, in the same task (`ios/guide/languages.md`).
   `make check` fails on a text with no French text (`make strings-check`).
@@ -62,6 +65,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   An extension that adds a topic goes in `Type+Topic.swift`.
   Names say the role: `...View`, `...Section`, `...Screen`, `...Model`, `...Rules`, `...Store`, and the framework name first for an adapter.
 - **Tests.** Unit tests: `ios/Packages/TROMECore/Tests/TROMECoreTests/<Feature>/<Type>Tests.swift`.
+  The test of the line badge draws every badge on the Mac: `ios/Packages/TROMECore/Tests/TROMEBadgeTests/LineBadge/`.
   The recorded PRIM answers are in `contracts/prim/`, shared with the server tests (`Fixture.data(_:)` reads them).
   E2E tests: `ios/UITests/`, one file per seam with iOS (see `.claude/rules/tests.md`).
   Tests of the scripts: `ios/scripts/tests/<name>-test.sh` (`make test-scripts`, with a fake `xcrun` for the Simulator scripts).

@@ -60,12 +60,12 @@ targets:
     platform: iOS
     sources:
       - App
-      - Widget/MetroLineBadge.swift
-      - Widget/RERSquareBadge.swift
-      - Widget/TransitLine+BadgeColor.swift
+      - Widget/LineBadge.swift
       - Widget/TransitLine+LocalizedName.swift
     dependencies:
       - package: TROMECore
+      - package: TROMECore
+        product: TROMEBadge
       - target: TROMEWidget
     preBuildScripts:
       - name: Refuse the old setting names
@@ -115,6 +115,8 @@ targets:
       - Widget
     dependencies:
       - package: TROMECore
+      - package: TROMECore
+        product: TROMEBadge
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
     info:
@@ -186,6 +188,8 @@ targets:
           - Localizable.xcstrings
     dependencies:
       - package: TROMECore
+      - package: TROMECore
+        product: TROMEBadge
       - target: TROMERenderCheckHost
     settings:
       base:
@@ -203,6 +207,7 @@ schemes:
       config: Debug
       targets:
         - package: TROMECore/TROMECoreTests
+        - package: TROMECore/TROMEBadgeTests
 
   TROMEUITests:
     build:

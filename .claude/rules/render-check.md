@@ -3,6 +3,7 @@ paths:
   - "ios/Widget/**"
   - "ios/RenderCheck/**"
   - "ios/Packages/TROMECore/Sources/TROMECore/LiveActivity/**"
+  - "ios/Packages/TROMECore/Sources/TROMEBadge/**"
   - "ios/scripts/live-activity-render*"
   - "ios/scripts/tests/live-activity-render-test.sh"
 commands:

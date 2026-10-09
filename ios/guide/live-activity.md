@@ -31,6 +31,7 @@ The values that a change often needs are constants:
 | More than 2 directions: only the next train of each | `LinesPage.maximumRowsWithTwoTrains` |
 | 60 seconds, the stale date of "Loading" | `ContentState.loadingTimeout` |
 | 20 points for the number of the compact view, 11 for its words, 60 points before a word wraps | `IslandNumber.font`, `CompactIslandWait.wordFont`, `CompactIslandWait.wordMaximumWidth` |
+| A badge of 24 points in the header and the compact view, 20 in a row; in the compact view, an RER square 3 points in from the round end of the island, which would cut its corners | `LineBadgeSurface.diameter`, `StationLiveActivity.rerIslandInset` |
 
 ## One line for each page
 
@@ -51,6 +52,8 @@ So has a place with several stations: Châtelet, Châtelet - Les Halles and Les 
   PRIM sometimes lists one metro train twice, less than a minute apart: the page keeps the first, because no two metro trains leave a platform that close.
 - **The badges** are drawn by the app, in the official colour of the line from the station list, and never grey or hollow: a circle with the number for a metro line, a rounded square with the letter for an RER line.
   The app does not use the RATP or Île-de-France Mobilités pictograms, which it may not share.
+  One view, `LineBadgeView` in the `TROMEBadge` module, draws them on the lock screen, in the Dynamic Island and on the app screen, each at its own size.
+  It draws the number or letter as the outlines of the bold system font, and centres what it draws, not the box of a text, which would put a digit off the centre by the room that a font keeps for accents and descenders.
 
 ### Which direction a train goes in
 

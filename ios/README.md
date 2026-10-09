@@ -179,7 +179,7 @@ Inside `ios/`:
 |---|---|
 | `App/` | The iPhone app (SwiftUI): the entry point, the views, and the adapters to the iOS frameworks. One folder per feature. |
 | `Widget/` | The widget extension. It shows the Live Activity. |
-| `Packages/TROMECore/` | The rules, the state and the data of the app, shared by the app and the widget, with its unit tests. One folder per feature. |
+| `Packages/TROMECore/` | The rules, the state and the data of the app, shared by the app and the widget, with its unit tests. One folder per feature. Its second module, `TROMEBadge`, draws the line badge for both. |
 | `UITests/` | The end-to-end tests (XCUITest). |
 | `DocsScreenshots/` | The XCUITest suite that takes the app screenshots of the docs. |
 | `RenderCheck/` | The render check of the Live Activity views (`make live-activity-render`): a unit test bundle, and in `Host/` the small app that runs it with the texts of the widget. |

@@ -21,6 +21,7 @@ A change that no rider can see, such as the look of the Testing tools, needs no 
 
 The unit tests check the rules, the state and the data of the app, in the `TROMECore` package, with [Swift Testing](https://developer.apple.com/documentation/testing).
 They run on your Mac with no Simulator: `make test`.
+The same command runs the test of the line badge, `LineBadgeViewTests`: it draws the badge of every line at the size of each surface, and fails when a number is off the centre, a metro badge is not round, or a colour is not the colour of the line.
 To run one suite or one test, give its name to `swift test`, with the options of `make test` so that it builds nothing again:
 
 ```sh

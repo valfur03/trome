@@ -2,11 +2,11 @@ import TROMECore
 import SwiftUI
 
 extension TransitLine {
-    var badgeColor: Color {
+    public var badgeColor: Color {
         color?.backgroundRGB.map(Color.init(lineRGB:)) ?? .gray
     }
 
-    var badgeTextColor: Color {
+    public var badgeTextColor: Color {
         color?.textRGB.map(Color.init(lineRGB:)) ?? .primary
     }
 }

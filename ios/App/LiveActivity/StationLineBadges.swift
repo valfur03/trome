@@ -7,10 +7,7 @@ struct StationLineBadges: View {
     var body: some View {
         WrappingLayout(spacing: 6) {
             ForEach(lines, id: \.self) { line in
-                switch line.mode {
-                case .metro: MetroLineBadge(line: line, size: .regular)
-                case .rer: RERSquareBadge(line: line)
-                }
+                LineBadge(line: line, surface: .header)
             }
         }
         .accessibilityElement(children: .combine)

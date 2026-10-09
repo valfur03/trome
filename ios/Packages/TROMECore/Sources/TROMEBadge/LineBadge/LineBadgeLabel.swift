@@ -1,0 +1,91 @@
+import CoreText
+import SwiftUI
+import TROMECore
+
+/// The number or letter of a line badge, drawn as the outlines of its glyphs and centred by its ink.
+///
+/// A `Text` centres its line box, not what it draws: the box of a digit holds room for accents and descenders, and
+/// the side bearings of a glyph are not equal, so a digit drawn by a `Text` sits off the centre of its badge.
+/// This shape takes the outlines of the bold system font, measures the box of their ink, and puts its centre on
+/// the centre of the badge, at any size and on every surface.
+struct LineBadgeLabel: Shape {
+    /// The height of a digit or a capital letter, as a share of the badge height.
+    static let capHeightRatio: CGFloat = 0.44
+    /// The smallest room between the ink and the edge of the badge, as a share of the badge height.
+    static let marginRatio: CGFloat = 0.1
+    /// The size of "bis" against the size of its number.
+    static let bisScale: CGFloat = 0.55
+    static let bis = "bis"
+
+    let name: String
+    let mode: TransitMode
+
+    func path(in rect: CGRect) -> Path {
+        let side = min(rect.width, rect.height)
+        guard side > 0 else { return Path() }
+        let glyphs = Self.glyphs(of: name, side: side)
+        let bounds = glyphs.boundingBoxOfPath
+        guard !bounds.isEmpty else { return Path() }
+        let scale = fitScale(of: bounds.size, side: side)
+        var transform = CGAffineTransform(translationX: rect.midX, y: rect.midY)
+            .scaledBy(x: scale, y: -scale)
+            .translatedBy(x: -bounds.midX, y: -bounds.midY)
+        guard let placed = glyphs.copy(using: &transform) else { return Path() }
+        return Path(placed)
+    }
+
+    /// Shrinks the label when its ink would come nearer to the edge than the margin: the corners of the ink box
+    /// stay inside a circle, or inside a square, smaller than the badge by the margin.
+    private func fitScale(of size: CGSize, side: CGFloat) -> CGFloat {
+        let room = side * (1 - 2 * Self.marginRatio)
+        let fit: CGFloat
+        switch mode {
+        case .metro:
+            fit = room / (size.width * size.width + size.height * size.height).squareRoot()
+        case .rer:
+            fit = room / max(size.width, size.height)
+        }
+        return min(1, fit)
+    }
+
+    /// The outlines of the name, in the units of CoreText (y up), with its main glyphs at the cap height of the
+    /// badge. A name that ends with "bis" draws it smaller, on the same baseline.
+    static func glyphs(of name: String, side: CGFloat) -> CGPath {
+        let main = name.hasSuffix(bis) ? String(name.dropLast(bis.count)) : name
+        let probe = font(size: 100)
+        let fontSize = 100 * side * capHeightRatio / CTFontGetCapHeight(probe)
+        let path = CGMutablePath()
+        let mainFont = font(size: fontSize)
+        let mainWidth = append(main, font: mainFont, at: 0, to: path)
+        if main != name {
+            let bisFont = font(size: fontSize * bisScale)
+            _ = append(bis, font: bisFont, at: mainWidth + fontSize * 0.04, to: path)
+        }
+        return path
+    }
+
+    static func font(size: CGFloat) -> CTFont {
+        CTFontCreateUIFontForLanguage(.emphasizedSystem, size, nil)
+            ?? CTFontCreateWithName("Helvetica-Bold" as CFString, size, nil)
+    }
+
+    /// Adds the outlines of a text, with its baseline at y = 0 and its origin at the offset, and returns its advance.
+    private static func append(_ text: String, font: CTFont, at offset: CGFloat, to path: CGMutablePath) -> CGFloat {
+        let attributes = [kCTFontAttributeName as NSAttributedString.Key: font]
+        let line = CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: attributes))
+        let runs = CTLineGetGlyphRuns(line) as? [CTRun] ?? []
+        for run in runs {
+            let count = CTRunGetGlyphCount(run)
+            var glyphs = [CGGlyph](repeating: 0, count: count)
+            var positions = [CGPoint](repeating: .zero, count: count)
+            CTRunGetGlyphs(run, CFRange(location: 0, length: count), &glyphs)
+            CTRunGetPositions(run, CFRange(location: 0, length: count), &positions)
+            for index in 0..<count {
+                guard let outline = CTFontCreatePathForGlyph(font, glyphs[index], nil) else { continue }
+                let move = CGAffineTransform(translationX: offset + positions[index].x, y: positions[index].y)
+                path.addPath(outline, transform: move)
+            }
+        }
+        return CTLineGetTypographicBounds(line, nil, nil, nil)
+    }
+}

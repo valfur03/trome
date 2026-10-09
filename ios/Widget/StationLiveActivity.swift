@@ -4,6 +4,10 @@ import SwiftUI
 import WidgetKit
 
 struct StationLiveActivity: Widget {
+    /// The system clips the compact leading region with the round end of the island, which cuts the corners of a
+    /// square RER badge but not a metro circle. This inset keeps the square whole: the island grows by twice the inset.
+    private static let rerIslandInset: CGFloat = 3
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: StationActivityAttributes.self) { context in
             LockScreenView(state: context.state, isStale: context.looksStale)
@@ -29,7 +33,8 @@ struct StationLiveActivity: Widget {
                 }
             } compactLeading: {
                 if let line = context.island.line {
-                    IslandLineBadge(line: line)
+                    LineBadge(line: line, surface: .compactIsland)
+                        .padding(.leading, line.mode == .rer ? Self.rerIslandInset : 0)
                 }
             } compactTrailing: {
                 CompactIslandWait(island: context.island, drawnAt: context.state.updatedAt)
@@ -59,24 +64,21 @@ struct LockScreenView: View {
             HStack(alignment: .center) {
                 if let page = state.multiLinePage {
                     StationAndLinesHeader(stationName: state.stationName, page: page)
-                } else if let line = state.leadingLine, line.mode == .metro {
-                    MetroLineBadge(line: line, size: .regular)
+                } else if let line = state.leadingLine {
+                    LineBadge(line: line, surface: .header)
                     Text(state.stationName)
                         .font(.headline)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                     Spacer(minLength: 0)
                 } else {
-                    Image(systemName: state.leadingLine?.symbolName ?? "tram.fill")
+                    Image(systemName: "tram.fill")
                         .font(.headline)
                         .accessibilityHidden(true)
                     Text(state.stationName)
                         .font(.headline)
                         .lineLimit(1)
                     Spacer()
-                    if let line = state.leadingLine {
-                        LineBadge(line: line)
-                    }
                 }
             }
             .zIndex(1)
@@ -212,7 +214,7 @@ private struct LineTrainsView: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
-            SmallLineBadge(line: line.line)
+            LineBadge(line: line.line, surface: .lineRow)
             VStack(alignment: .leading, spacing: 0) {
                 if let stationName = line.stationName {
                     ServingStationName(name: stationName)

@@ -69,18 +69,9 @@ struct PanamStripsHeader: View {
         .system(size: nameSize * scale, weight: .semibold)
     }
 
-    @ViewBuilder private var badge: some View {
-        switch line.line.mode {
-        case .metro:
-            MetroLineBadge(line: line.line, size: .regular)
-        case .rer:
-            RERSquareBadge(line: line.line)
-        }
-    }
-
     private func row(showsColumnTitles: Bool, @ViewBuilder name: () -> some View) -> some View {
         HStack(spacing: 6) {
-            badge
+            LineBadge(line: line.line, surface: .header)
             name()
             Spacer(minLength: 4)
             if page.hasOtherLines {
