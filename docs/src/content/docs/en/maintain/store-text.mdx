@@ -12,7 +12,7 @@ import { contactEmail } from '../../../../contact.ts';
 export const whatToTestFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
 1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche sur l’écran verrouillé, avec des horaires d’exemple.
 2. À une vraie station de Paris : autorisez la localisation « Toujours » et les notifications, puis approchez-vous à moins de 150 mètres. App ouverte, les trains s’affichent à votre arrivée. App fermée, une notification doit vous prévenir : touchez-la, et ils s’affichent. Si rien ne vient, dites-le-moi.
-3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ».
+3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ». Sur l’exemple, ils ne font que l’arrêter.
 
 À savoir : il n’y a pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
 Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envoyer. Vous pouvez aussi m’écrire à ${contactEmail}.`;
@@ -20,7 +20,7 @@ Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envo
 export const whatToTestEn = `For Paris and Île-de-France only. Three things to try:
 1. From anywhere: open TROME, tap “See an example”, then lock the iPhone. Châtelet shows on the lock screen, with sample times.
 2. At a real Paris station: allow location “Always” and notifications, then come within 150 meters. With the app open, the trains show when you arrive. With the app closed, a notification should tell you: one tap shows them. If nothing comes, tell me.
-3. Not now: on the lock screen, tap “30 min”, “1 h” or “Today”.
+3. Not now: on the lock screen, tap “30 min”, “1 h” or “Today”. On the example, they only end it.
 
 Good to know: there is no account to create, and trains show only during the metro and RER service hours.
 A problem? Take a screenshot: TestFlight offers to send it to me. You can also write to me at ${contactEmail}.`;
@@ -75,13 +75,13 @@ Next trains on the lock screen
 
 Promotional text, French (154 of 170 characters):
 
-```text
+```text wrap
 Les prochains trains de la station où vous entrez, sur votre écran verrouillé. Métro et RER, Paris et Île-de-France. Gratuit, sans compte, sans publicité.
 ```
 
 Promotional text, English (132 of 170 characters):
 
-```text
+```text wrap
 The next trains of the station you walk into, on your lock screen. Metro and RER, Paris and Île-de-France. Free, no account, no ads.
 ```
 
@@ -94,14 +94,14 @@ Each block below is a section with its own line, because the store shows plain t
 
 French (1935 of 4000 characters):
 
-```text
+```text wrap
 Les prochains trains de la station où vous entrez, sur votre écran verrouillé : métro ou RER, dans les deux sens.
 Aucune station à choisir. Pour Paris et l’Île-de-France uniquement.
 Gratuit, sans compte, sans publicité.
 
 Ce que vous voyez
 • Les prochains trains de chaque sens, avec leur destination (même sur les lignes à branches) et les minutes d’attente.
-• Chaque ligne de la station : touchez le nom pour passer à la suivante.
+• Chaque ligne de la station : touchez le nom de la station pour passer à la suivante.
 • Sur l’écran verrouillé, et dans la Dynamic Island sur les iPhone qui en ont une.
 
 Quand les trains s’affichent
@@ -124,7 +124,7 @@ Horaires : « Prochains passages » d’Île-de-France Mobilités (PRIM), sous �
 
 English (1702 of 4000 characters):
 
-```text
+```text wrap
 The next trains of the station you walk into, on your lock screen: metro or RER, both directions.
 No station to pick. For Paris and Île-de-France only.
 Free, no account, no ads.
@@ -155,7 +155,7 @@ Train times: ‘Prochains passages’ of Île-de-France Mobilités (PRIM), under
 ## The keywords
 
 Apple reads the title, the subtitle and the keywords for search, and not the description.
-So no word below repeats the title or the subtitle, and none is the name of another app or company.
+So no word below repeats title 1 or the subtitle, and none is the name of another app or company.
 Write them with a comma and no space after it.
 
 French (99 of 100 bytes):
@@ -169,6 +169,18 @@ English (92 of 100 bytes):
 ```text
 subway,transit,departures,schedule,platform,station,commute,wait,live activity,Ile-de-France
 ```
+
+The French keywords above fit title 1.
+Titles 2 and 3 already carry some of them, and a word that is in the title adds nothing in the keywords, so its bytes are wasted.
+Those two titles also lack `métro` and `RER`, which title 1 has.
+When App Store Connect accepts title 2 or 3, paste the French keywords of its row instead.
+The English keywords repeat no word of any English title, so they stay.
+
+| Title taken | French keywords to paste | Bytes |
+|---|---|---|
+| 1 | The line above | 99 of 100 |
+| 2, `Prochains trains Paris` | `horaires,passages,transport,quai,station,attente,Île-de-France,activité en direct,métro,RER` | 94 of 100 |
+| 3, `Prochains passages` | `horaires,train,transport,quai,station,attente,Île-de-France,activité en direct,métro,RER` | 91 of 100 |
 
 ## Category, age rating, price and territories
 
@@ -209,7 +221,7 @@ App Review rarely sits in Paris, so the notes tell the reviewer how to see the L
 | Notes | The English text below (2247 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
 | Attachment | The recording of the real station, as the recording script says. |
 
-```text
+```text wrap
 I make TROME alone. It shows the next metro and RER trains of the station you walk into, as a Live Activity on the lock screen. It works in Paris and Île-de-France only. No account, no sign-in, no purchase, no ads. iPhone only, iOS 18 or later.
 
 TO REVIEW FROM ANYWHERE (about 2 minutes, nothing to set up):
@@ -241,25 +253,25 @@ The feedback email is <Contact />, the address of every contact.
 
 Beta app description, French (232 bytes):
 
-```text
+```text wrap
 Pour Paris et l’Île-de-France seulement : les prochains trains de la station où vous entrez, sur votre écran verrouillé. Ailleurs, essayez « Voir un exemple ».
 Version de test, gratuite, sans compte : vos retours m’aident.
 ```
 
 Beta app description, English (208 bytes):
 
-```text
+```text wrap
 For Paris and Île-de-France only: the next trains of the station you walk into, on your lock screen. Anywhere else, try “See an example”.
 This is a test version, free, no account: your feedback helps me.
 ```
 
-What to test, French (948 bytes):
+What to test, French (995 bytes):
 
-<Code code={whatToTestFr} lang="text" />
+<Code code={whatToTestFr} lang="text" wrap />
 
-What to test, English (746 bytes):
+What to test, English (780 bytes):
 
-<Code code={whatToTestEn} lang="text" />
+<Code code={whatToTestEn} lang="text" wrap />
 
 TestFlight shows the text in the language of the tester's iPhone, and falls back to the primary language.
 
