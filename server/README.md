@@ -7,7 +7,9 @@ It runs on Cloudflare Workers.
 
 ## Run and test it locally
 
-You need Node 24, the version in [`.nvmrc`](../.nvmrc): install it once with a Node version manager that reads this file, such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm), and make it the active Node before a server command.
+You need Node 24, the version in [`.nvmrc`](../.nvmrc): install it once with a Node version manager that reads this file, then use it for each server command.
+With [nvm](https://github.com/nvm-sh/nvm), run `nvm install` once, then `nvm use` in each new terminal.
+With [fnm](https://github.com/Schniz/fnm), run `fnm install` once, then run each command through fnm, for example `fnm exec --using=.nvmrc -- make server-check`.
 From the root of the repo:
 
 ```sh

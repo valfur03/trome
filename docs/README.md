@@ -8,7 +8,9 @@ It shows how to run the site and add a page, how to write a page that its reader
 ## Run the site
 
 The site is built with [Starlight](https://starlight.astro.build), on Astro, and needs Node 24, the version in [`.nvmrc`](../.nvmrc).
-Install that version once with a Node version manager that reads this file, such as [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm), and make it the active Node before a docs command.
+Install that version once with a Node version manager that reads this file, then use it for each docs command.
+With [nvm](https://github.com/nvm-sh/nvm), run `nvm install` once, then `nvm use` in each new terminal.
+With [fnm](https://github.com/Schniz/fnm), run `fnm install` once, then run each command through fnm, for example `fnm exec --using=.nvmrc -- make docs-dev`.
 If the active Node is too old, the docs commands stop and say what to run.
 
 Run the docs commands from the root of the repo:

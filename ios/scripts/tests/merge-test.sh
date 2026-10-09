@@ -667,6 +667,26 @@ new_task appnonode
 commit "$state/appnonode" app "app"
 merge appnonode
 expect "with an old Node and no Node of .nvmrc in fnm, make merge of a change with no docs, server or contracts succeeds" "$status" "0"
+
+# A PATH with the old Node and no fnm: the folders that hold an fnm are left out.
+fake_node "$state/old-node-without-fnm" 20
+no_fnm_path="$state/old-node-without-fnm"
+old_ifs=$IFS
+IFS=:
+for dir in $path_before_node; do
+    [ -x "$dir/fnm" ] || no_fnm_path="$no_fnm_path:$dir"
+done
+IFS=$old_ifs
+export PATH="$no_fnm_path"
+new_task docsnofnm
+mkdir -p "$state/docsnofnm/docs"
+commit "$state/docsnofnm" docs/third.md "third"
+before=$(rev main)
+merge docsnofnm
+expect "with an old Node and no fnm, make merge of a docs change fails" "$status" "1"
+expect "it runs no gate when fnm is missing" "$(cat "$state/steps")" ""
+expect "it says to install fnm" "$(contains "$state/docsnofnm.log" "and fnm is not installed. Install fnm, run 'fnm install' in ")" "yes"
+expect "main is unchanged when fnm is missing" "$(rev main)" "$before"
 export PATH="$path_before_node"
 unset FAKE_FNM_DIR
 TROME_MERGE_CHECK=$passing_check
