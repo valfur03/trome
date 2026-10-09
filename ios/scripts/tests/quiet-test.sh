@@ -6,6 +6,10 @@ ios=$(cd "$scripts/.." && pwd)
 state=$(mktemp -d)
 failures=0
 trap 'rm -rf "$state"' EXIT
+# The make commands below go through the build gate. The gate of the Mac is shared with every worktree: a test run or a
+# build of another worktree would add its wait line to the output, and a test run here would stop their builds.
+export RATP_BUILD_GATE="$state/gate"
+unset RATP_BUILD_GATE_HELD
 
 expect() {
     if [ "$2" = "$3" ]; then
@@ -149,6 +153,30 @@ expect "make lint fails on a violation" "$(FAKE=fail run_make lint)" "exit 1"
 expect "it prints every lint violation with its file and line" "$(has '/x/App/Foo.swift:3:1: error: Line Length Violation')" "1"
 
 expect "make test passes with the count of the unit tests" "$(FAKE=pass run_make test) $(lines) $(has 'Test run with 653 tests in 45 suites passed')" "exit 0 1 1"
+expect "the make commands of this test use a gate of their own, never the gate of the Mac" "$(test -e "$state/gate.lock" && echo yes || echo no)" "yes"
+
+wait_for() {
+    tries=0
+    until "$@"; do
+        tries=$((tries + 1))
+        [ "$tries" -lt 300 ] || return 1
+        sleep 0.1
+    done
+}
+# A fake test run holds the gate of this test: make test waits, says why on one line, then passes as usual.
+"$scripts/build-gate.py" tests sh -c 'touch "$1/held"; until [ -f "$1/release" ]; do sleep 0.1; done' sh "$state" &
+holder=$!
+wait_for test -f "$state/held" || true
+(FAKE=pass run_make test > "$state/busy-status") &
+busy=$!
+wait_for grep -q '^Waiting: a Simulator test run' "$state/out" || true
+touch "$state/release"
+wait "$busy"
+wait "$holder"
+expect "while a Simulator test run holds the gate, make test passes with the wait line, then the count of the unit tests" \
+    "$(cat "$state/busy-status") $(lines) $(sed -n 1p "$state/out" | cut -c1-29) $(sed -n 2p "$state/out" | grep -c 'unit-tests: OK .*Test run with 653 tests in 45 suites passed')" \
+    "exit 0 2 Waiting: a Simulator test run 1"
+
 expect "make test fails on a failing unit test" "$(FAKE=fail run_make test)" "exit 1"
 expect "it prints the failing unit test with its name and message" \
     "$(has '✘ Test "the snooze ends at the next train" recorded an issue at SnoozeTests.swift:42:9: Expectation failed')" "1"
