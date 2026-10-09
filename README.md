@@ -10,7 +10,7 @@ It is open source and not on the App Store yet: [follow the launch](#get-it-on-y
   <img src="docs/src/assets/screenshots/live-activity-metro-en.png" width="260" alt="An iPhone lock screen at 9:41 with the TROME Live Activity of Saint-Paul (Le Marais), metro line 1: the next trains to La Défense in 3 and 7 minutes, and to Château de Vincennes in 4 and 8 minutes, above the Snooze buttons 30 min, 1 h and Today.">
 </p>
 
-[Get it](#get-it-on-your-iphone) · [Help](https://trome.valfur.fr/en/support/) · [Privacy](https://trome.valfur.fr/en/privacy/) · [Read the Swift code](#read-or-change-the-code)
+[Get it](#get-it-on-your-iphone) · [Help](https://trome.valfur.fr/en/support/) · [Privacy](https://trome.valfur.fr/en/privacy/) · [Aide en français](https://trome.valfur.fr/fr/support/) · [Read the Swift code](#read-or-change-the-code)
 
 - **No station to pick.** TROME finds the station when you are about 150 metres from it, and takes the trains off your lock screen when you walk away.
 - **Every line of the station.** At a station with many lines, tap the name of the station to see the next line, metro or RER.
@@ -30,7 +30,8 @@ You add your own free key from Île-de-France Mobilités for the train times, an
 ## The trains do not show?
 
 [Help](https://trome.valfur.fr/en/support/) lists each problem and its fix: the Live Activity does not show, nothing comes when you arrive at a station, or its minutes stop moving.
-En français : [Aide](https://trome.valfur.fr/fr/support/).
+
+En français : [Aide](https://trome.valfur.fr/fr/support/).
 
 ## Read or change the code
 
