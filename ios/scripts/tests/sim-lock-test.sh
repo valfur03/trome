@@ -174,6 +174,9 @@ expect "switch-language after make run SMALL=1 keeps only the small Simulator bo
 expect "switch-language after make run SMALL=1 opens the app again on the small Simulator" "$(cat "$state/launched.$small" 2> /dev/null || true)" "com.example.trome.dev"
 expect "switch-language after make run SMALL=1 does not open the app on RATP-Shared" "$(cat "$state/launched.$default" 2> /dev/null || true)" ""
 expect "the lock keeps the small Simulator after switch-language" "$(cat "$RATP_SIM_LOCK/udid") $(cat "$RATP_SIM_LOCK/size")" "$small small"
+"$scripts/sim-lock.sh" reopen false > /dev/null 2>&1 && reopened=passes || reopened=fails
+expect "a reopen whose command fails fails, and this folder keeps its Simulator, with no job running" \
+    "$reopened $(cat "$RATP_SIM_LOCK/udid") $(cat "$RATP_SIM_LOCK/pid" 2> /dev/null || echo idle)" "fails $small idle"
 
 "$scripts/sim-lock.sh" open sh -c '"$1" boot && kill -0 "$(cat "$RATP_SIM_LOCK/pid")" && echo held > "$FAKE_SIM_STATE/switch"' \
     sh "$scripts/simulator.sh" > /dev/null

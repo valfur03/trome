@@ -38,26 +38,27 @@ Each visit costs calls of your key: see [one call for each stop area](trains.md#
 
 ## Get fake trains, with no key
 
-Launch the app with `--fake-trains` to get fake trains at every station, with no call to PRIM, also in a build with a key:
+After `make run`, open the app again with fake trains at every station, with no call to PRIM, also in a build with a key:
 
 ```sh
-xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains
+make fake-trains
 ```
 
-If you set your own bundle ID in `ios/Config/Local.xcconfig`, use the one that `make generate` prints.
+It prints `fake trains: default applied` once the app uses them, or `not applied, launch again`: then run it again.
 The first train comes 3 minutes after the launch, the other direction one minute later, then one train every 4 minutes.
 
 The app saves the choice at each launch that has arguments: on with `--fake-trains`, off without it.
-A launch with no argument keeps it: a launch by iOS (a tap on the Live Activity, a region event), the **Run** button of Xcode with the default scheme, and `make switch-language`.
+A launch with no argument keeps it: a launch by iOS (a tap on the Live Activity, a region event, a start again in the background), the **Run** button of Xcode with the default scheme, and `make switch-language`.
+`make fake-trains` also saves the choice before it opens the app, because iOS can start the app again in the background a moment after it is closed, and that launch has no argument.
 `make run` installs the app again, so it starts with no fake trains.
 So on your iPhone, fake trains can stay in place of your live trains: to drop them, run the app once with any other argument (**Product > Scheme > Edit Scheme > Run > Arguments**), or delete the app.
 
 ### Ask for a train at the platform, or another state
 
-A real train stays at the platform for only 20 to 30 seconds, so add the name of a state after `--fake-trains` to get one at once:
+A real train stays at the platform for only 20 to 30 seconds, so add the name of a state to get one at once:
 
 ```sh
-xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --fake-trains at-platform
+make fake-trains STATE=at-platform
 ```
 
 The times start at this launch.
@@ -75,17 +76,9 @@ Start the Live Activity at once, then put the app in the background and look at 
 | `server-out` | As if the server of the app were out of PRIM calls. Trains every 4 minutes, the first one 3 minutes after the launch. From 1 to 8 minutes after the launch, the fake trains answer "out" with the time 8 minutes after the launch as the time to ask again. The times shown keep counting down, then the Live Activity says **Times unavailable** when the first train leaves, the main screen says when the live times come back, and the times come back 8 minutes after the launch. |
 | `server-out-tomorrow` | The fake trains answer "out" from the launch until 40 seconds after midnight (the time zone of the phone): the Live Activity starts with **Times unavailable**, and the main screen says that the live times come back tomorrow. |
 
-The states are in `FakeTrainsScenario`; a name that the app does not know gives no fake trains.
-To start a state again, launch the app again with the same arguments.
-
-While a Live Activity shows, iOS starts the app again in the background a moment after you close it, and `xcrun simctl launch` can then bring that app to the front with no arguments.
-So launch the app before you start the Live Activity, and check its arguments:
-
-```sh
-ps -axww -o args | grep "TROME.app/TROME"
-```
-
-When the line ends with `TROME` alone, launch the app again; if a Live Activity shows, stop it first.
+The states are in `FakeTrainsScenario`; for a name that the app does not know, the command says so.
+To start a state again, run the same command again, also while a Live Activity shows.
+Each launch writes one `FakeTrains` line in the log of the app ([Read the logs](../README.md#read-the-logs)): who launched the app (the harness or iOS), the saved choice, and the trains that the app uses.
 
 ## Make the 45-minute limit shorter
 

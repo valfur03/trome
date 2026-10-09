@@ -187,8 +187,9 @@ struct TROMEApp: App {
 
     private static func departuresProvider(primConfiguration: PRIMConfiguration?) -> (any DeparturesProvider)? {
         #if DEBUG
-        let fakeTrainsStore = FakeTrainsStore(storage: UserDefaults.standard)
-        if let fakeProvider = fakeTrainsStore.provider(forLaunchWith: ProcessInfo.processInfo.arguments) {
+        let fakeTrains = FakeTrainsStore(storage: UserDefaults.standard).launch(with: ProcessInfo.processInfo.arguments)
+        fakeTrains.log(hasTrainDataKey: primConfiguration != nil)
+        if let fakeProvider = fakeTrains.provider {
             return fakeProvider
         }
         return primConfiguration.map { PRIMDeparturesProvider.loggingEachAnswer(apiKey: $0.apiKey) }

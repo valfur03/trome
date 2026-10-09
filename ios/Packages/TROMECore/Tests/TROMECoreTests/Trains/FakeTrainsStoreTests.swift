@@ -74,6 +74,22 @@ struct FakeTrainsStoreTests {
         #expect(provider?.scenario == nil)
     }
 
+    /// `ios/scripts/fake-trains.sh` writes this JSON in the preferences of the app, so that a launch by iOS with no
+    /// argument still gets the state that the harness asked for.
+    @Test(arguments: [
+        (#"{"scenario":"fork-end-one-train","start":800000000}"#, FakeTrainsScenario?.some(.forkEndWithOneTrain)),
+        (#"{"start":800000000}"#, nil)
+    ])
+    func readsTheChoiceThatTheHarnessScriptSaves(json: String, scenario: FakeTrainsScenario?) {
+        storage.set(Data(json.utf8), forKey: FakeTrainsStore.key)
+
+        let provider = store.provider(forLaunchWith: [executable])
+
+        #expect(provider != nil)
+        #expect(provider?.scenario == scenario)
+        #expect(provider?.start == Date(timeIntervalSinceReferenceDate: 800_000_000))
+    }
+
     @Test func givesNoFakeTrainsForAScenarioItDoesNotKnow() {
         _ = store.provider(forLaunchWith: [executable, "--fake-trains"])
 

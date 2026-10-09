@@ -77,7 +77,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -90,6 +90,7 @@ help:
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
 	@echo "make run LANGUAGE=fr     Same, with the Simulator in French (the default is English: LANGUAGE=en)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
+	@echo "make fake-trains STATE=at-platform  After make run: open the app again with fake trains in this state (no STATE: the default times), and say whether the app uses them"
 	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + bundle ID check + app icon check + recommended settings check + key leak check (with the upload checks of the Release app) + build (no warning allowed) + strings check + unit tests + script tests"
 	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, when a text of the app or the Live Activity has no French text, or when a French permission text does not say APP_NAME"
 	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code), and put APP_NAME of Config/Base.xcconfig in the permission texts"
@@ -207,6 +208,9 @@ run: build
 
 switch-language:
 	@$(SIM_LOCK) reopen $(SIMULATOR) switch-language "$(APP_PATH)"
+
+fake-trains:
+	@$(SIM_LOCK) reopen ./scripts/fake-trains.sh "$(APP_PATH)" $(STATE)
 
 # The E2E tests collect no Simulator diagnostics on a failure: they took about 10 minutes, and kept the Simulator.
 e2e: project

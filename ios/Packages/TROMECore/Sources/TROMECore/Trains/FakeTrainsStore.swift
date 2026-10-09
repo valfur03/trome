@@ -15,12 +15,22 @@ public struct FakeTrainsStore {
         self.storage = storage
     }
 
-    public func provider(forLaunchWith launchArguments: [String], at now: Date = Date()) -> FakeDeparturesProvider? {
-        let launchedByTheHarness = launchArguments.count > 1
-        if launchedByTheHarness {
-            save(Self.choice(askedBy: launchArguments, at: now))
+    /// A launch with arguments comes from a harness (`xcrun simctl launch`, a UI test, an Xcode scheme): it saves its
+    /// choice, on or off. A launch with none comes from iOS (a tap on the Live Activity, a region event, a background
+    /// relaunch): it keeps the saved choice, so the fake trains survive it.
+    public func launch(with launchArguments: [String], at now: Date = Date()) -> FakeTrainsLaunch {
+        let saved = load()
+        let arguments = Array(launchArguments.dropFirst())
+        guard !arguments.isEmpty else {
+            return FakeTrainsLaunch(arguments: arguments, saved: saved, used: saved, now: now)
         }
-        return load().map { FakeDeparturesProvider(scenario: $0.scenario, start: $0.start) }
+        let choice = Self.choice(askedBy: launchArguments, at: now)
+        save(choice)
+        return FakeTrainsLaunch(arguments: arguments, saved: saved, used: choice, now: now)
+    }
+
+    public func provider(forLaunchWith launchArguments: [String], at now: Date = Date()) -> FakeDeparturesProvider? {
+        launch(with: launchArguments, at: now).provider
     }
 
     static func choice(askedBy launchArguments: [String], at now: Date) -> Choice? {
