@@ -241,7 +241,9 @@ When a page needs another kind, it links to a page of that kind.
 ### Write the way a person speaks
 
 Use short sentences and common words: many readers do not have English as their first language.
-But link the sentences the way a person speaks, with "so", "but", "then" and "when".
+Short means short enough to read on a phone, never a sentence with no verb.
+For a text that sells the app, such as the store text, read [Write marketing text](#write-marketing-text) too.
+Link the sentences the way a person speaks, with "so", "but", "then" and "when".
 Read each sentence aloud, and rewrite the ones that no person would say.
 
 - Not: "The docs need Node 24. The file `.nvmrc` pins it. Install it one time with a version manager."
@@ -261,6 +263,31 @@ A page that only tells the reader what to do, with "you", needs no "I".
 A copyright or licence line, where the law asks for a name, is not speech and stays as it is.
 Why: a reader who meets "we" on one page and "I" on the next stops trusting both, and a name in the third person reads as someone else speaking.
 `make public-text-check` fails on these words in the prose of every Markdown and MDX file of the repo; code, link addresses and text in double or curly quotes are not checked, so a quotation may keep them.
+
+### Write marketing text
+
+Marketing text is what the reader sees before they have the app: the description and the promotional text of the App Store, the description of TestFlight, and the first lines of a page (its headline, its tagline and its first paragraph).
+Its reader decides in a few seconds, and your words are all they have to decide on.
+So this text is written for a person, not filled in like a form.
+
+- **Write complete sentences, each with a verb.** A fragment belongs in a list, in a badge, or in a subtitle, which Apple calls a phrase.
+  A paragraph is never a row of fragments.
+  - Not: "No station to pick. Free, no account, no ads."
+  - But: "There is no station to pick, and the app is free, with no account and no ads."
+- **The first sentence is the pitch.** The store shows only it before **more**, and a stranger reads only it before they decide.
+  Say what the reader gets, in their words, as an invitation and not as a label.
+  Then say the honest limit and the price, in full sentences too.
+- **Choose the first sentence among three candidates** that come from different angles: the moment when the reader needs the app, what they see, what they no longer do.
+  Say in the description of your change which one you picked, and why.
+- **Keep it plain, not flat.** Use the words that a rider uses, link the sentences the way a person speaks, and vary their length.
+  Leave out hype, jokes, superlatives and any claim that the reader cannot check.
+- **Add no claim.** A rewrite for style keeps the facts of the page and the claims that the app can keep: the text that the store reads is checked against the app, as [Say what is true today](#say-what-is-true-today-and-what-stays-true) says.
+- **Count the limits.** The store limits each field, in characters or in bytes: count each text again by script after every edit.
+
+Why: a text of fragments reads as unfinished, so the reader trusts it less.
+Apple asks for an engaging description, a short paragraph and then a short list, and keeps "phrase" for the subtitle.
+The first lines of the store texts that people praise are full sentences with a verb.
+The rule "short sentences" was written for steps and for readers who do not have English as their first language, and it does not mean "no verb".
 
 ### Write the riders' pages in French
 
@@ -405,7 +432,8 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
    If the answer is nothing, the section goes.
    No page has a fixed length: it is as long as its reader's job needs, and this point and the first screen decide, not a count of lines.
 7. **Nothing for another reader.** No inner workings of how the project is made, no history, no measurements, no task numbers, and a reason only when the reader needs it.
-8. **Voice.** A person would say each sentence aloud.
+8. **Voice.** A person would say each sentence aloud: read each paragraph aloud, and refuse a sentence with no verb outside a list.
+   Marketing text follows [Write marketing text](#write-marketing-text): its first sentence is a pitch with a verb, picked among three candidates, and no paragraph is a row of fragments.
    The page is plain, direct and warm, with no filler, and its terms match the app and iOS.
    One person speaks: where the maker speaks, the page says "I" ("je" in French), and has no "we", "us" or "our" ("nous", "notre"), and his name never speaks about him in the third person.
 9. **True.** Each command was run, each link was opened, and the steps were followed as the reader follows them.
