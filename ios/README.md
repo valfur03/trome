@@ -27,7 +27,7 @@ To put the app on your own iPhone, see [Install on your iPhone](#install-on-your
 
 | Command | What it does |
 |---|---|
-| `make run` | Builds the app and opens it in the Simulator. Add `SMALL=1` for the smallest iPhone (an iPhone SE), or `LANGUAGE=fr` for a Simulator in French. |
+| `make run` | Builds the app and opens it in the Simulator. Add `SMALL=1` for the smallest iPhone (an iPhone SE), `LANGUAGE=fr` for a Simulator in French, or `RELEASE=1` for the app as the store ships it (no Testing tools, no real trains). |
 | `make test` | Runs the unit tests on your Mac, with no Simulator. |
 | `make e2e ONLY=<class>` | Runs one class of end-to-end tests in the Simulator; with no `ONLY`, all of them. |
 | `make strings-sync` | Adds the new texts of the code to the String Catalogs, where you write their French text ([Add or change a text in English and French](guide/languages.md)). |

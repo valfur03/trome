@@ -111,15 +111,17 @@ boot_device() {
     echo "$udid"
 }
 
+# The apps of the builds of this repo: the Debug app and its test hosts, the apps of the old name, and the Release app
+# of make run RELEASE=1, which has the App Store bundle ID of project.yml.
 installed_apps() {
     xcrun simctl listapps "$1" \
-        | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.(trome\.dev(\.render-check-host)?|RATPActivity[A-Za-z]*(\.xctrunner)?))"?;$/\1/p'
+        | sed -n -E 's/^ *CFBundleIdentifier = "?([^";]*\.(trome\.dev(\.render-check-host)?|RATPActivity[A-Za-z]*(\.xctrunner)?)|io\.github\.valfur03\.trome)"?;$/\1/p'
 }
 
 left_preference_domains() {
     xcrun simctl spawn "$1" defaults domains \
         | tr ',' '\n' \
-        | sed -n -E 's/^ *([^ ]*\.(trome\.dev[a-z.-]*|RATPActivity[A-Za-z.]*)) *$/\1/p'
+        | sed -n -E 's/^ *([^ ]*\.(trome\.dev[a-z.-]*|RATPActivity[A-Za-z.]*)|io\.github\.valfur03\.trome(\.[a-z.]+)?) *$/\1/p'
 }
 
 uninstall_apps() {

@@ -198,10 +198,10 @@ RATP_SIM_SIZE=small "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /
 expect "a job on the small Simulator removes the app that an earlier job left on it" "$(cat "$state/apps.$small")" ""
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job on RATP-Shared removes the app that an earlier job left on it" "$(cat "$state/apps.$default")" ""
-printf '%s\n' com.example.trome.dev.render-check-host com.example.trome.dev.uitests.xctrunner com.other.App > "$state/apps.$default"
+printf '%s\n' com.example.trome.dev.render-check-host io.github.valfur03.trome com.example.trome.dev.uitests.xctrunner com.other.App io.github.valfur03.tromeother > "$state/apps.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
-expect "a job removes the host app of the render check, and keeps the test runners and the other apps" \
-    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.trome.dev.uitests.xctrunner com.other.App "
+expect "a job removes the host app of the render check and the Release app, and keeps the test runners and the other apps" \
+    "$(tr '\n' ' ' < "$state/apps.$default")" "com.example.trome.dev.uitests.xctrunner com.other.App io.github.valfur03.tromeother "
 printf '%s\n' com.example.RATPActivity com.example.RATPActivityRenderCheckHost com.example.RATPActivityUITests.xctrunner \
     com.example.RATPActivityDocsScreenshots.xctrunner com.example.RATPActivityOtherHost com.example.trome.dev.docs-screenshots.xctrunner \
     > "$state/apps.$default"
@@ -311,7 +311,7 @@ pretend_a_watcher_runs
 expect "the idle watcher shuts down every shared Simulator" "$(booted)" ""
 
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" boot > /dev/null
-printf '%s\n' com.apple.Maps com.example.trome.dev com.example.trome.dev.uitests.xctrunner com.other.App > "$state/prefs.$default"
+printf '%s\n' com.apple.Maps com.example.trome.dev com.example.trome.dev.uitests.xctrunner com.other.App io.github.valfur03.trome > "$state/prefs.$default"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job deletes the saved settings that the app of an earlier job left on the Simulator" "$(tr '\n' ' ' < "$state/prefs.$default")" "com.apple.Maps com.other.App "
 echo com.example.trome.dev >> "$state/prefs.$default"
@@ -330,12 +330,12 @@ notification_settings() {
 notifications="$state/data.$default/Library/BulletinBoard/VersionedSectionInfo.plist"
 mkdir -p "${notifications%/*}"
 python3 -c 'import plistlib, sys; plistlib.dump({"sectionInfo": {name: b"settings" for name in sys.argv[2:]}, "sectionInfoVersionNumber": 2}, open(sys.argv[1], "wb"))' \
-    "$notifications" com.apple.Maps com.example.trome.dev com.example.trome.dev.render-check-host com.other.App
+    "$notifications" com.apple.Maps com.example.trome.dev com.example.trome.dev.render-check-host com.other.App io.github.valfur03.trome
 cp "$notifications" "$state/notifications-of-the-app"
 "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset > /dev/null
 expect "a job removes the notification setting that the app of an earlier job left on the Simulator" "$(notification_settings "$notifications")" "com.apple.Maps com.other.App"
 expect "a job removes the notification setting before SpringBoard restarts and reads it" "$(notification_settings "$state/notifications-at-springboard-restart.$default")" "com.apple.Maps com.other.App"
-expect "a job stops when SpringBoard keeps the notification setting of the app" "$(FAKE_SPRINGBOARD_SAVES_NOTIFICATIONS="$state/notifications-of-the-app" "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset sh -c 'echo ran' 2>&1 || true)" "The Simulator still keeps the notification setting of com.example.trome.dev com.example.trome.dev.render-check-host after the reset, so the app would get no notification question."
+expect "a job stops when SpringBoard keeps the notification setting of the app" "$(FAKE_SPRINGBOARD_SAVES_NOTIFICATIONS="$state/notifications-of-the-app" "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset sh -c 'echo ran' 2>&1 || true)" "The Simulator still keeps the notification setting of com.example.trome.dev com.example.trome.dev.render-check-host io.github.valfur03.trome after the reset, so the app would get no notification question."
 
 chronod_line() {
     echo "2026-10-01 15:31:19.389 Df chronod[28175:eb6459] [com.apple.chrono:taskservice] $1"

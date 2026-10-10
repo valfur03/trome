@@ -1,0 +1,6 @@
+// The settings of make run RELEASE=1: the app as the store ships it, in the Simulator.
+// The host never answers (.invalid is a name that no DNS ever resolves), so the app shows no real trains.
+// The store build reads the real host and app token from Server.xcconfig instead (see Server.example.xcconfig).
+PRIM_API_KEY =
+TRAIN_SERVER_HOST = release-run.invalid
+TRAIN_SERVER_APP_TOKEN = release-run-no-token

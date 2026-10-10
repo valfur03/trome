@@ -5,7 +5,8 @@ E2E_SCHEME := TROMEUITests
 BUILD_DIR := .build
 DERIVED_DATA := $(BUILD_DIR)/DerivedData
 APP_NAME := $(shell sed -n -E 's/^APP_NAME = (.+)$$/\1/p' Config/Base.xcconfig)
-APP_PATH := $(DERIVED_DATA)/Build/Products/Debug-iphonesimulator/$(APP_NAME).app
+APP_CONFIGURATION := $(if $(filter 1,$(RELEASE)),Release,Debug)
+APP_PATH := $(DERIVED_DATA)/Build/Products/$(APP_CONFIGURATION)-iphonesimulator/$(APP_NAME).app
 E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
 XCODEGEN_CACHE := $(BUILD_DIR)/xcodegen-cache
 E2E_TARGET := TROMEUITests
@@ -18,7 +19,7 @@ BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 # What the record of a 'make run' says besides its kind (sim-lock.sh, make simulator-times).
-RUN_DETAIL := $(strip $(if $(filter 1,$(LIVE)),LIVE=1) $(if $(filter 1,$(SMALL)),SMALL=1) $(if $(LANGUAGE),LANGUAGE=$(LANGUAGE)))
+RUN_DETAIL := $(strip $(if $(filter 1,$(LIVE)),LIVE=1) $(if $(filter 1,$(RELEASE)),RELEASE=1) $(if $(filter 1,$(SMALL)),SMALL=1) $(if $(LANGUAGE),LANGUAGE=$(LANGUAGE)))
 QUIET := ./scripts/quiet.sh
 BUILD_GATE := ./scripts/build-gate.py build
 TEST_RUN_GATE := ./scripts/build-gate.py tests
@@ -54,6 +55,17 @@ else ifneq ($(filter switch-language,$(MAKECMDGOALS)),)
 $(error Say the language: make switch-language LANGUAGE=en (or LANGUAGE=fr))
 endif
 
+# RELEASE=1: the app as the store ships it (Release configuration: no Testing tools, no PRIM key), for the Simulator.
+# Config/ReleaseRun.xcconfig gives it a server host that never answers, so it shows no real trains.
+ifeq ($(RELEASE),1)
+ifneq ($(filter-out build run switch-language,$(MAKECMDGOALS)),)
+$(error RELEASE=1 works only with 'make build', 'make run' and 'make switch-language')
+endif
+ifeq ($(LIVE),1)
+$(error RELEASE=1 never holds the PRIM key: use LIVE=1 or RELEASE=1, not both)
+endif
+endif
+
 ifeq ($(LIVE),1)
 ifneq ($(filter-out build run,$(MAKECMDGOALS)),)
 $(error LIVE=1 works only with 'make build' and 'make run')
@@ -72,6 +84,9 @@ XCODEBUILD := $(BUILD_GATE) $(USE_SHARED_CACHE) xcodebuild -quiet \
 	COMPILER_INDEX_STORE_ENABLE=NO $(SHARED_SDK_MODULES) \
 	SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
+# The Release build is not signed: the store build is signed by the paid team, and the Simulator runs it unsigned.
+BUILD_RELEASE_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -configuration Release -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) \
+	CODE_SIGNING_ALLOWED=NO -xcconfig Config/ReleaseRun.xcconfig build
 EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALLOWED=NO \
 	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
@@ -89,6 +104,7 @@ help:
 	@echo "make run LIVE=1          Same, with your PRIM key from the main folder of the repo (ios/Config/Secrets.xcconfig, see ios/README.md)"
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
 	@echo "make run LANGUAGE=fr     Same, with the Simulator in French (the default is English: LANGUAGE=en)"
+	@echo "make run RELEASE=1       Same, with the app as the store ships it: Release configuration, no Testing tools, no PRIM key, and a server that never answers, so no real trains (also for make build and make switch-language)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
 	@echo "make fake-trains STATE=at-platform  After make run: open the app again with fake trains in this state (no STATE: the default times), and say whether the app uses them"
 	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + bundle ID check + app icon check + recommended settings check + key leak check (with the upload checks of the Release app) + build (no warning allowed) + strings check + unit tests + script tests"
@@ -156,6 +172,10 @@ ifeq ($(LIVE),1)
 	@echo "LIVE=1: the build uses the PRIM key of $(PRIM_SECRETS)"
 	@if [ "$(PRIM_SECRETS)" = "$(OLD_PRIM_SECRETS)" ]; then echo "Note: the key is at its old place. Once the main folder has the ios/ folder, move it there: cd $(MAIN_FOLDER) && mv Config/Secrets.xcconfig ios/Config/ && rmdir Config"; fi
 	@$(BUILD_APP) -xcconfig "$(PRIM_SECRETS)" PRIM_SECRETS_STAMP="$$(stat -f '%Fm-%i-%z' "$(PRIM_SECRETS)")"
+else ifeq ($(RELEASE),1)
+	@rm -rf $(BUILD_RESULT)
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/build-release.log '' $(BUILD_RELEASE_APP) -resultBundlePath $(BUILD_RESULT)
+	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 else
 	@rm -rf $(BUILD_RESULT)
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/build.log '' $(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)

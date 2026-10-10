@@ -4,7 +4,8 @@ import re
 import sys
 from pathlib import Path
 
-APP_SECTION = re.compile(r"\.trome\.dev(\.render-check-host)?$")
+# The Debug app, its test host, and the Release app of make run RELEASE=1 (the App Store bundle ID of project.yml).
+APP_SECTION = re.compile(r"(\.trome\.dev(\.render-check-host)?|^io\.github\.valfur03\.trome)$")
 
 
 def usage():
