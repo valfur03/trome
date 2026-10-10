@@ -104,6 +104,8 @@ export function searchIndex(): AstroIntegration {
         // https://github.com/Pagefind/pagefind/issues/1271
         // So this hook never reads a file that Pagefind wrote, and never lets Pagefind write one: it takes the files in memory and writes them itself.
         // To compare with the index of Starlight, it builds that index again in memory, with the same call as Starlight.
+        // A unit test checks that this copy is still the call of Starlight.
+        // When a release of Pagefind fixes issue 1271, read pagefind-entry.json of Starlight again and remove this copy.
         try {
           const starlightIndex = await newIndex();
           assertNoErrors(await starlightIndex.addDirectory({ path: siteFolder }));

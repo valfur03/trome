@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { findPackageJSON } from 'node:module';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
 import { differencesFromStarlightIndex, entryOf, htmlForSearchIndex, writeIndexFiles } from './search-index.ts';
 
@@ -79,5 +80,19 @@ describe('writeIndexFiles', () => {
     } finally {
       await rm(folder, { recursive: true, force: true });
     }
+  });
+});
+
+describe('the copy of the Pagefind call of Starlight', () => {
+  it('is still the call of Starlight, so the pages of its index are the pages that src/search-index.ts compares with', async () => {
+    const starlightPackage = findPackageJSON('@astrojs/starlight', import.meta.url);
+    assert.ok(starlightPackage, 'Found no Starlight package in node_modules: run make docs-install.');
+    const source = await readFile(join(dirname(starlightPackage), 'dist/integrations/pagefind.js'), 'utf8');
+    assert.match(source, /pagefind\.createIndex\(\)/, 'Starlight now gives options to createIndex: give the same ones in src/search-index.ts.');
+    assert.match(
+      source,
+      /index\.addDirectory\(\{ path: fileURLToPath\(dir\) \}\)/,
+      'Starlight now gives other options to addDirectory: give the same ones in src/search-index.ts.',
+    );
   });
 });
