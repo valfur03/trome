@@ -456,7 +456,7 @@ on_reopen_exit() {
 
 # The Simulator was this folder's before the command, so a failed command keeps it: the folder can run it again.
 reopen_simulator() {
-    enter
+    enter open
     trap on_reopen_exit EXIT
     "$@"
     "$simulator" udid > "$lock/udid"
