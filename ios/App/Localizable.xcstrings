@@ -21,16 +21,6 @@
         }
       }
     },
-    "Allow location" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autoriser la localisation"
-          }
-        }
-      }
-    },
     "Always" : {
       "localizations" : {
         "fr" : {
@@ -97,6 +87,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez Toujours"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
           }
         }
       }

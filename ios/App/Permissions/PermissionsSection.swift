@@ -46,7 +46,7 @@ struct PermissionsSection: View {
                 state: "Not asked yet",
                 status: .needsAction,
                 kind: .location,
-                fix: .action("Allow location") {
+                fix: .action("Continue") {
                     Task {
                         await nearestStationModel.refresh()
                         await permissions.refresh()
