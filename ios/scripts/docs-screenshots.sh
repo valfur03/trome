@@ -25,11 +25,16 @@ root=$(cd "$scripts/.." && pwd)
 screenshots="$root/../docs/src/assets/screenshots"
 languages="en fr"
 app_names="app-location-permission app-always-permission app-notification-permission app-main-screen app-testing-tools"
-live_activity_names="live-activity-metro live-activity-fork live-activity-rer live-activity-island"
+lock_screen_names="live-activity-metro live-activity-fork live-activity-rer"
+live_activity_names="$lock_screen_names live-activity-island"
 names=$app_names
+lock_screen_pictures=""
 for language in $languages; do
     for live_activity_name in $live_activity_names; do
         names="$names $live_activity_name-$language"
+    done
+    for lock_screen_name in $lock_screen_names; do
+        lock_screen_pictures="$lock_screen_pictures $lock_screen_name-$language"
     done
 done
 fake_position=48.8584,2.2945
@@ -41,6 +46,7 @@ udid=$("$scripts/simulator.sh" boot)
 # The Live Activity pictures show the wallpaper that the Simulator keeps: stop before any picture when it is not there.
 "$scripts/wallpaper.sh" check "$udid"
 exported="$root/.build/docs-screenshots"
+picked="$root/.build/docs-screenshots-picked"
 shown_language=en
 
 result_of() {
@@ -70,11 +76,11 @@ cleanup() {
     fi
     xcrun simctl status_bar "$udid" clear 2> /dev/null || true
     xcrun simctl location "$udid" clear 2> /dev/null || true
-    rm -rf "$exported"
+    rm -rf "$exported" "$picked"
 }
 trap cleanup EXIT INT TERM
 
-rm -rf "$exported"
+rm -rf "$exported" "$picked"
 for language in $languages; do
     rm -rf "$(result_of "$language")"
 done
@@ -100,14 +106,14 @@ if [ "$shown_language" != en ]; then
     shown_language=en
 fi
 
-mkdir -p "$screenshots"
-python3 - "$exported" "$screenshots" $names <<'PYTHON'
+mkdir -p "$picked"
+python3 - "$exported" "$picked" $names <<'PYTHON'
 import json
 import shutil
 import sys
 from pathlib import Path
 
-exported, screenshots, names = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3:]
+exported, picked, names = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3:]
 attachments = [
     (folder, attachment)
     for folder in sorted(exported.iterdir())
@@ -123,9 +129,18 @@ for name in names:
     if not matches:
         sys.exit(f"The tests saved no screenshot named {name}")
     folder, attachment = matches[-1]
-    shutil.copyfile(folder / attachment["exportedFileName"], screenshots / f"{name}.png")
+    shutil.copyfile(folder / attachment["exportedFileName"], picked / f"{name}.png")
 PYTHON
 
+# The lock screen sometimes draws the real time and date instead of the 9:41 of the status bar override,
+# with no error and no known cause, so two runs would give other pictures: read the clock of each picture,
+# and change no picture of the docs when one is wrong.
+"$scripts/lock-screen-clock-check.sh" "$picked" $lock_screen_pictures
+
+mkdir -p "$screenshots"
+for name in $names; do
+    cp "$picked/$name.png" "$screenshots/$name.png"
+done
 for name in $names; do
     file="$screenshots/$name.png"
     sips --resampleWidth "$screenshot_width" "$file" > /dev/null
