@@ -27,7 +27,7 @@ It needs no key: the trains are fake.
 The cuts of the screen can sit in Apple's iPhone bezel.
 Its licence forbids copies, so the repo does not hold it, and each maintainer places it once:
 
-1. Download the bezel of the iPhone 17 (the size of the Simulator) from [Apple Design Resources](https://developer.apple.com/design/resources/).
+1. Download, from [Apple Design Resources](https://developer.apple.com/design/resources/), the bezel of an iPhone whose screen has the size of the Simulator's iPhone 17 (1206 x 2622 pixels).
 2. Open the disk image, read and accept the licence.
 3. Copy the PNG of the phone in portrait to `~/Library/Application Support/TROME/store-bezel.png`, or set `STORE_BEZEL` to its path.
 
