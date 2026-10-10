@@ -2,6 +2,7 @@
 set -eu
 
 url=${1:-}
+# The second argument "full" prints the whole report as JSON, instead of the table of the last 14 days.
 if [ -z "$url" ]; then
     echo "Give the address of the server: make server-counts URL=https://trome-server.<your subdomain>.workers.dev" >&2
     exit 1
@@ -17,7 +18,13 @@ if [ -z "$token" ]; then
     exit 1
 fi
 
+answer=$(mktemp)
+trap 'rm -f "$answer"' EXIT
 status=0
-printf 'header = "Authorization: Bearer %s"\n' "$token" | curl --silent --show-error --fail-with-body --config - "${url%/}/v1/owner/counts" || status=$?
-echo
-exit "$status"
+printf 'header = "Authorization: Bearer %s"\n' "$token" | curl --silent --show-error --fail-with-body --config - "${url%/}/v1/owner/counts" > "$answer" || status=$?
+if [ "$status" -ne 0 ]; then
+    cat "$answer"
+    echo
+    exit "$status"
+fi
+node "$(dirname "$0")/counts-table.ts" "${2:-table}" < "$answer"

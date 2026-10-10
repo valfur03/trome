@@ -15,7 +15,7 @@ help:
 	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret); it opens the default browser (LINK=1: it shows a link to open in another browser; CODE=1: a code to type on a Cloudflare page)"
 	@echo "make server-secrets      Set each secret of the production Worker in turn (STAGING=1: of the staging Worker), before its first deploy; it asks for each value"
 	@echo "make server-secret NAME=<name>  Change one secret of the production Worker (STAGING=1: of the staging Worker); it asks for the value"
-	@echo "make server-counts URL=<address>  Read the totals of the server at this address (each hour of today and the last 30 days, and the errors of 7 days, with no stop); it asks for the owner token"
+	@echo "make server-counts URL=<address>  Show the totals of the server at this address, a line per Paris day of the last 14 days (FULL=1: the whole report as JSON, hour by hour for 30 days, with the errors of 7 days); it asks for the owner token"
 	@echo "make server-deploy-staging  Deploy this folder to the staging Worker (needs the Cloudflare account, and make server-secrets STAGING=1 first)"
 	@echo "make server-deploy       Deploy main to the production Worker (needs the Cloudflare account and make server-secrets first; main folder, on main, committed)"
 
@@ -65,8 +65,8 @@ server-secret: server-setup
 	@if [ -z "$(NAME)" ]; then echo "Give the name of the secret: make server-secret NAME=PRIM_API_KEY (or NAME=APP_TOKEN, or NAME=OWNER_TOKEN)." >&2; exit 1; fi
 	./node_modules/.bin/wrangler secret put $(NAME) $(if $(STAGING),--env staging,--env="")
 
-server-counts:
-	@./scripts/counts.sh "$(URL)"
+server-counts: node-check
+	@./scripts/counts.sh "$(URL)" $(if $(FULL),full,table)
 
 server-deploy-staging: server-check
 	@./scripts/deploy.sh staging

@@ -58,7 +58,7 @@ The other settings are in `relaySettings`, in the same file:
 When you change a setting, change this page in the same commit; when you change the day shape, change its section in NOTICE.md too.
 
 The cap of 800 serves about 50 to 60 riders who each start two Live Activities of about 10 minutes a day: [`relay-whole-day.test.ts`](../test/core/relay/relay-whole-day.test.ts) checks that 50 of them get times for more than 95 in 100 of their Live Activities.
-The day shape counts every rider of the rail network: after two weeks of real use, replace it with the share of each hour in the app calls of `make server-counts`, on days with few `out` answers, since an app that gets one asks again.
+The day shape counts every rider of the rail network: after two weeks of real use, replace it with the share of each hour in the app calls of `make server-counts FULL=1`, on days with few `out` answers, since an app that gets one asks again.
 
 ## The day of the PRIM key
 

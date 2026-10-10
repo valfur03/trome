@@ -11,7 +11,7 @@ Run the commands from the root of the repo, with Node 24 active ([server/README.
 | `make server-secret NAME=<name>` | Changes one secret, at once, with no new deploy. |
 | `make server-deploy-staging` | Runs `make server-check`, then deploys your folder, also changes that are not committed, to the staging Worker, `trome-server-staging`. |
 | `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker. It refuses another branch and changes that are not committed. |
-| `make server-counts URL=<address>` | Shows the requests and the PRIM calls of the server, day by day, and asks for the owner token. |
+| `make server-counts URL=<address>` | Shows the requests and the PRIM calls of the server, a line per day of the last 14 days (`FULL=1`: the whole report), and asks for the owner token. |
 
 Add `STAGING=1` to `make server-secrets` or `make server-secret` for the staging Worker.
 Both deploy commands stop when a secret of their Worker is not set, and say which command sets it.
@@ -68,8 +68,13 @@ make server-counts URL=https://trome-server.<your subdomain>.workers.dev
 ```
 
 Paste the owner token when it asks.
-It shows, as JSON, the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls and errors, hour by hour (`parisHour`), with no stop.
-`errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
+It shows a table: today so far, then each Paris day of the last 14 days, newest first, with its app calls, PRIM calls, `out` answers, errors, and the Paris hour with the most app calls.
+A day with no call is a line of zeros.
+When the server keeps no total from 14 days ago, the table starts at its oldest day, and says so.
+App calls are the requests for times with the right app token: a wrong token, `/health` and this read do not count.
+
+Add `FULL=1` for the whole report, as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls and errors, hour by hour (`parisHour`), with no stop.
+Its `errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
 The counts of app calls and cache hits are written at most every 30 seconds, to stay far below the writes that the Free plan allows each day.
 
 ## Find a problem
@@ -86,7 +91,7 @@ Never turn them on in the Cloudflare dashboard either, on the Observability page
 
 To find a problem, use these ways, which keep nothing at Cloudflare:
 
-- `make server-counts` and its `errorLines` ([Read the counts](#read-the-counts)): the failed PRIM calls of the last 7 days, with their time, kind and HTTP status.
+- `make server-counts FULL=1` and its `errorLines` ([Read the counts](#read-the-counts)): the failed PRIM calls of the last 7 days, with their time, kind and HTTP status.
 - `npx wrangler tail` in `server/` (`npx wrangler tail --env staging` for the staging Worker), after `make server-login`: it shows each request and the lines of the server live, and Cloudflare keeps none of it.
   It shows the request URL, so the stop, on your screen: never save its output in a file, and stop it as soon as you have seen the problem.
 - A test that makes the failure again: the tests fake PRIM with recorded answers (`contracts/prim/`), so a new test can play the answer that failed, with no rider and no PRIM call ([server/README.md](../README.md)).

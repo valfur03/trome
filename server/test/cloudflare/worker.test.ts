@@ -66,6 +66,13 @@ describe("the Worker", () => {
 
     expect(prim.calls).toEqual([]);
     expect(await everyStoredRow()).not.toContain("42155");
+
+    await exports.default.fetch("https://server.test/health");
+    const counts = await exports.default.fetch("https://server.test/v1/owner/counts", {
+      headers: { authorization: `Bearer ${env.OWNER_TOKEN}` },
+    });
+    const report: { days: { appCalls: number }[] } = await counts.json();
+    expect(report.days.map((day) => day.appCalls)).toEqual(report.days.map(() => 0));
   });
 
   it("stores and logs nothing of a rider: no stop, position, device, account, push token, IP, user agent or body", async () => {
