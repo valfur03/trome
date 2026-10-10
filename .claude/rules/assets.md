@@ -10,6 +10,7 @@ paths:
   - "ios/guide/assets.md"
   - "docs/src/content/**"
   - "docs/src/assets/**"
+  - "video/**"
 commands:
   - '^(\S*/)?make\b.*\srun(\s|$)'
 ---

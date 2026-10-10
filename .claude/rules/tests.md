@@ -55,7 +55,7 @@ This is the only full run of a task.
 Docs are not app code: `docs/`, every Markdown or MDX file (`*.md`, `*.mdx`, in any folder, for example `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`, `ios/README.md`, `ios/guide/`), `LICENSE` at the root, and `.claude/` (the agents' rules and settings).
 No E2E test, no build and no script of the E2E suite reads them, and `make check` still checks them.
 One exception: a Markdown or MDX file in a folder that the build of the app takes as its sources (`ios/App/`, `ios/Widget/`, `ios/UITests/`, `ios/DocsScreenshots/`, `ios/RenderCheck/`, `ios/Packages/` except its unit tests) is app code, because XcodeGen copies it into the app as a resource.
-Unit tests (`ios/Packages/TROMECore/Tests/`), the server (`server/`, its `Makefile` included: no E2E test uses it), the shared test files of `contracts/`, the files of `.github/` (the GitHub workflows and forms: no build and no test of the repo reads them, and GitHub runs the workflows on its own machines) and backlog files are not app code either.
+Unit tests (`ios/Packages/TROMECore/Tests/`), the server (`server/`, its `Makefile` included: no E2E test uses it), the film (`video/`, its `Makefile` included), the shared test files of `contracts/`, the files of `.github/` (the GitHub workflows and forms: no build and no test of the repo reads them, and GitHub runs the workflows on its own machines) and backlog files are not app code either.
 `contracts/` holds only files that tests read: no build of the app or of the server ships one.
 A task that makes the app read a file of `contracts/` at run time, or makes the build or an E2E test read one of these docs files, makes it app code, and changes `is_app_code` in `ios/scripts/merge.sh` in the same task.
 
@@ -67,7 +67,7 @@ A task that makes the app read a file of `contracts/` at run time, or makes the 
   A reviewer who changes app code runs only the E2E test classes of the flows that its change touches.
 - **The manager** runs `make merge` after QA passed the task (see `.claude/rules/merge.md`).
   It runs the full `make e2e` once, after the rebase onto `main`, on the commit that it fast-forwards `main` to.
-  A task that changes only docs (Markdown and MDX files, `LICENSE`, `.claude/`), unit tests, `server/`, `contracts/` or `.github/` (no app code) skips the full run: `main` was green, and the task adds no app code.
+  A task that changes only docs (Markdown and MDX files, `LICENSE`, `.claude/`), unit tests, `server/`, `contracts/`, `video/` or `.github/` (no app code) skips the full run: `main` was green, and the task adds no app code.
   `make merge` sees this by itself.
 - **QA** runs no automated tests.
   It explores the app like a real user.

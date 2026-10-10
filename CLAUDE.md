@@ -43,7 +43,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 |---|---|---|
 | `ios-code.md` | Code structure of the iOS app, the texts in French and English, no warnings | touch `ios/App/`, `ios/Widget/`, `ios/Packages/`, `ios/UITests/`, `ios/RenderCheck/`, `ios/DocsScreenshots/`, `ios/project.yml`, `ios/Config/` |
 | `tests.md` | Test levels, which E2E tests to run | touch the same app files or the tests; run `make e2e` |
-| `simulator.md` | The shared Simulator, the lock, hold it only while you use it, when your job ends | run `make run`, `make e2e`, `make docs-screenshots`, `make live-activity-render`, `make switch-language`, `make merge`, `sim-lock.sh`, `simulator.sh`, `xcrun simctl`, `xcodebuild test`; touch the lock scripts |
+| `simulator.md` | The shared Simulator, the lock, hold it only while you use it, when your job ends | run a command that uses a Simulator (`make run`, `make e2e`, `make merge`, `sim-lock.sh`, ...); touch the lock scripts |
 | `simulator-history.md` | The measurements behind the Simulator rules, and the code of the second slot | touch the lock scripts or `ios/scripts/timing/` |
 | `qa.md` | QA: French first | run `make run` or `make switch-language` |
 | `live-data.md` | Live train data: who uses `LIVE=1`, the PRIM budget of a QA run | run a `make` command with `LIVE=1`; start a QA agent; touch `ios/Config/`, `ios/scripts/live-key-check.sh` |
@@ -52,6 +52,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 | `tooling.md` | The shared build cache, the git hooks | touch `ios/scripts/`, the `Makefile` files |
 | `server.md` | Code structure of the server, the server and its commands | touch `server/`, `contracts/`; run `make server-...` |
 | `docs-site.md` | The docs site: Node 24, port, screenshots | touch `docs/`; run `make docs...` |
+| `video.md` | The film: its renders and its studio | touch `video/`; run `make video-...` |
 | `assets.md` | The docs, store page and video stay true to the app; the "Assets:" line of the notes | touch an asset, its source or what it shows; run `make run` |
 | `writing.md` | Who writes the pages, where a change writes its text, the public text check | touch a Markdown or MDX file, or the text checks |
 
@@ -97,7 +98,7 @@ Never fix it with retries or longer timeouts alone: find the cause (a race, a sh
 
 ## Repo layout
 
-Each part of the repo has its own folder: `ios/` (the iPhone app, with its config and scripts), `docs/` (the docs site), `server/` (the server, a Cloudflare Worker, decision-40) and `contracts/` (the files that the app and the server both test against, decision-6 section 3).
+Each part of the repo has its own folder: `ios/` (the iPhone app, with its config and scripts), `docs/` (the docs site), `server/` (the server, a Cloudflare Worker, decision-40), `video/` (the film) and `contracts/` (the files that the app and the server both test against, decision-6 section 3).
 The root holds only the files of the whole repo: `README.md`, `CLAUDE.md`, `Makefile`, `.gitignore`, `.nvmrc`, `.claude/` (the rules and the hook of Claude Code), and `.github/` (the GitHub workflows, which GitHub reads only at the root).
 
 - Run the `make` commands from the root.

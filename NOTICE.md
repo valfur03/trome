@@ -92,6 +92,12 @@ For example:
 
 > Day shape adapted by TROME from the Île-de-France Mobilités dataset “Validations sur le réseau ferré : Profils horaires par jour type (2ème trimestre 2026)”, last updated 2026-09-22, under the Licence Ouverte v2.0.
 
+## The film
+
+The source of the film, in [`video/`](video/), is under the MIT licence with the rest of the code, its music included: it is made in code.
+The tool that renders it, Remotion, has its own licence, which is not open source, and the font Inter is under the SIL Open Font License 1.1.
+[`video/README.md`](video/README.md#licences) says who may use Remotion for free.
+
 ## Names and marks
 
 TROME is not an app of RATP or of Île-de-France Mobilités, and neither of them endorses it.

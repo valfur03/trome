@@ -1,0 +1,57 @@
+# The film of TROME
+
+This folder holds the source of a short film of the app, made in code with [Remotion](https://www.remotion.dev/) (React components that render to a video).
+It is its own Node project, apart from the docs site and the server.
+For now it renders an empty frame: the name of the app on a plain background, with music.
+
+## What the film shows
+
+Nothing of the app yet.
+When it shows the app, this section says what, and [the list of the pictures and texts that show the app](../ios/guide/assets.md) gets the same line.
+
+## Run it
+
+Run each command from the root of the repo, with the Node version of `.nvmrc`, for example through fnm:
+
+```sh
+fnm exec --using=.nvmrc -- make video-studio
+```
+
+| Command | What it does |
+|---|---|
+| `make video-studio` | Opens the preview studio in the browser, to play the film and change it live. `PORT=<n>` picks the port, `OPEN=0` opens no browser. Ctrl-C stops it. |
+| `make video-still` | Renders one frame to `video/out/still.png`. `FRAME=<n>` picks the frame (60 by default, at 30 frames a second). |
+| `make video-clip` | Renders the whole film, with its music, to `video/out/clip.mp4`. |
+| `make video-check` | The quality gate of the folder: the type check, the unit tests of the music, and the render of one frame, whose size it checks. `make check` runs it only when a branch changes `video/`. |
+
+The first command installs the packages and the headless browser that renders the frames: about 830 MB in `video/node_modules`, once per folder.
+
+The studio listens on every network of the Mac, not only on the Mac itself, and Remotion has no setting to change this.
+So run it on a network that you trust, and stop it when you are done.
+
+## Render
+
+A render is a heavy job: Remotion runs a headless browser and an encoder.
+With one browser tab, a render of a few seconds takes about 15 seconds and 1.6 cores.
+Next to a Simulator job, the first frame of a render timed out.
+So `make video-still`, `make video-clip` and `make video-check` render through the lock of the iOS Simulator jobs (`ios/scripts/sim-lock.sh`): one heavy job at a time, with one browser tab (`remotion.config.ts`) and a low priority (`nice`).
+When another job holds the lock, the render waits and prints `Waiting for the Simulator lock`, with the job that holds it.
+
+Render with these commands, not with the Render button of the studio or with `npx remotion render`: those skip the lock.
+
+## What git keeps
+
+Git keeps the source: the components in `src/`, the music in code in `music/`, and the scripts.
+It ignores what the commands make: `video/out/`, the music file `video/public/music.wav`, and `node_modules`.
+A finished film does not go into git either, because a large file stays in the history of the repo forever.
+
+## Licences
+
+- **Remotion** is not open source: its [licence](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md) is free for an individual, a non-profit, and a company of up to 3 employees, for personal or commercial videos.
+  A larger company needs a paid licence.
+  Each person who renders this film checks that the free licence covers them ([the FAQ of the licence](https://www.remotion.dev/docs/license/faq)).
+- **Inter**, the font of every text that the film draws, is under the [SIL Open Font License 1.1](https://github.com/rsms/inter/blob/master/LICENSE.txt).
+  It comes from the npm package `@fontsource-variable/inter`, with its licence text.
+- **The music** is made in code by `music/synth.ts`, with no sample and no loop of anyone else, so it is under the MIT licence of the repo.
+- **The tools that Remotion downloads**: Chrome Headless Shell (the BSD licence of Chromium) and FFmpeg (LGPL), in `video/node_modules`.
+  React is under the MIT licence.

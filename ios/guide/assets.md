@@ -13,7 +13,7 @@ So when a change makes one of them false, the same change makes it again, except
 | The other pages of the docs site | The home pages, the install guide and the privacy pages describe the screens and what the app sends. | Edit the page |
 | The store screenshots | Not made yet. | Not made yet |
 | The store text, [`store-text.mdx`](../../docs/src/content/docs/en/maintain/store-text.mdx) | Every text that goes into App Store Connect and TestFlight for the version, in French and in English, except the review notes, which are in English only: the title, the subtitle, the promotional text, the description, the keywords, the review notes and the TestFlight texts. | Edit the page, then count the sizes again, because each field has a limit (the page gives it) and the keywords and the review notes count bytes, not characters. Its table "When the app changes, check these claims" names the guide that holds each claim. Then paste the changed field into App Store Connect: only the promotional text can change with no new version, and every other field waits for the next one. |
-| The store video | Not made yet. | Not made yet |
+| The film and its store cut, from [`video/`](../../video/) | Nothing of the app yet: an empty frame with the name of the app. | `make video-clip` ([Run it](../../video/README.md#run-it)) |
 
 The change that makes a new asset adds its row here: what it shows, and its command.
 

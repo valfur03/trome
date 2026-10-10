@@ -210,6 +210,14 @@ merge server
 expect "make merge of a task that changes only the server and the contracts succeeds" "$status" "0"
 expect "make merge skips the E2E suite when the task changes only the server and the contracts" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
 
+new_task video
+mkdir -p "$state/video/video/src"
+commit "$state/video" video/src/Film.tsx film
+commit "$state/video" video/Makefile makefile
+merge video
+expect "make merge of a task that changes only the film source succeeds" "$status" "0"
+expect "make merge skips the E2E suite when the task changes only the film source" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+
 new_task markdown
 mkdir -p "$state/markdown/ios/guide" "$state/markdown/.claude/rules" "$state/markdown/ios/Packages/TROMECore/Tests/TROMECoreTests/Stations"
 for file in CONTRIBUTING.md ARCHITECTURE.md NOTICE.md LICENSE ios/README.md ios/guide/stations.md ios/guide/page.mdx .claude/rules/docs.md .claude/settings.json ios/Packages/TROMECore/Tests/TROMECoreTests/Stations/StationTests.swift; do
@@ -650,6 +658,13 @@ expect "it runs no gate and calls no Node manager" "$(cat "$state/steps")" ""
 expect "it says which Node is needed, which is active, and what to run" \
     "$(contains "$state/docsoldnode.log" "so the gate needs Node 24 (see .nvmrc), but the active Node is v20.0.0. Run make merge again with that Node, for example: fnm exec --using=.nvmrc -- make merge")" "yes"
 expect "main is unchanged when the Node is too old" "$(rev main)" "$before"
+
+new_task videooldnode
+mkdir -p "$state/videooldnode/video"
+commit "$state/videooldnode" video/Film.tsx "film"
+merge videooldnode
+expect "with an old Node active, make merge of a film change fails" "$status" "1"
+expect "it names the film folder" "$(contains "$state/videooldnode.log" "changes docs/, server/, contracts/ or video/, so the gate needs Node 24")" "yes"
 
 new_task appoldnode
 commit "$state/appoldnode" app "app"

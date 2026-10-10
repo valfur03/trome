@@ -97,9 +97,9 @@ check_node() {
     [ -f .nvmrc ] || return 0
     required=$(required_node)
     [ "$(node_major || echo 0)" -lt "$required" ] || return 0
-    git diff --quiet "$target...HEAD" -- docs server contracts && return 0
+    git diff --quiet "$target...HEAD" -- docs server contracts video && return 0
     active=$(node -v 2> /dev/null || echo "none")
-    fail "'$branch' changes docs/, server/ or contracts/, so the gate needs Node $required (see .nvmrc), but the active Node is $active. Run make merge again with that Node, for example: fnm exec --using=.nvmrc -- make merge (run 'fnm install' once before)."
+    fail "'$branch' changes docs/, server/, contracts/ or video/, so the gate needs Node $required (see .nvmrc), but the active Node is $active. Run make merge again with that Node, for example: fnm exec --using=.nvmrc -- make merge (run 'fnm install' once before)."
 }
 
 # The gate of a train needs the Node that each of its tasks needs: when the Node of this process is too old,
@@ -123,7 +123,7 @@ is_app_code() {
     case "$1" in
         ios/Packages/TROMECore/Tests/*) return 1 ;;
         ios/App/* | ios/Widget/* | ios/UITests/* | ios/DocsScreenshots/* | ios/RenderCheck/* | ios/Packages/*) return 0 ;;
-        docs/* | server/* | contracts/* | .claude/* | .github/* | *.md | *.mdx | LICENSE) return 1 ;;
+        docs/* | server/* | contracts/* | video/* | .claude/* | .github/* | *.md | *.mdx | LICENSE) return 1 ;;
     esac
     return 0
 }

@@ -17,6 +17,8 @@ Config/Secrets.xcconfig
 node_modules/
 docs/dist/
 docs/.astro/
+video/out/
+video/public/music.wav
 
 __pycache__/
 server/.wrangler/

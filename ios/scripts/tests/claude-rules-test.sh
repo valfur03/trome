@@ -18,12 +18,13 @@ expect() {
 
 project="$state/main"
 worktree="$state/worktree-1"
-mkdir -p "$project/.git" "$project/ios/App" "$worktree/.git" "$worktree/ios/App" "$worktree/docs/src/content" "$worktree/server/src"
+mkdir -p "$project/.git" "$project/ios/App" "$worktree/.git" "$worktree/ios/App" "$worktree/docs/src/content" "$worktree/server/src" "$worktree/video/src"
 cp -R "$root/.claude" "$project/.claude"
 echo "let x = 1" > "$project/ios/App/X.swift"
 echo "let x = 1" > "$worktree/ios/App/X.swift"
 echo "A page." > "$worktree/docs/page.mdx"
 echo "A Help page." > "$worktree/docs/src/content/support.mdx"
+echo "export const Film = 1;" > "$worktree/video/src/Film.tsx"
 
 run() {
     printf '%s' "$1" | CLAUDE_PROJECT_DIR="$project" TMPDIR="$state" python3 "$hook" > "$state/out"
@@ -108,6 +109,12 @@ expect "a page of the docs site, which an asset of the app is, brings the assets
     "$(run "$(read_event "$worktree/docs/src/content/support.mdx" '' s23)" | delivered)" "context assets docs-site writing"
 expect "make run, which QA runs, brings the assets rules" \
     "$(run "$(bash_event 'make run LANGUAGE=fr' '' s24)" | delivered)" "deny assets qa simulator"
+expect "a file of the film, an asset of the app, brings the film and assets rules" \
+    "$(run "$(read_event "$worktree/video/src/Film.tsx" '' s25)" | delivered)" "context assets video"
+expect "a film command through fnm exec brings the film rules" \
+    "$(run "$(bash_event 'fnm exec --using=.nvmrc -- make video-clip' '' s26)" | delivered)" "deny video"
+expect "a render that skips make brings the film rules" \
+    "$(run "$(bash_event 'cd video && npx remotion render Film out/x.mp4' '' s27)" | delivered)" "deny video"
 
 qa_subagent=$(event '{"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"subagent_type":"qa-tester","prompt":"QA of a task"}}' s13)
 expect "the start of a QA subagent is stopped once, with the live data rules" "$(run "$qa_subagent" | delivered)" "deny live-data"
