@@ -93,7 +93,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper clean clean-shared-cache docs-screenshots live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -288,9 +288,13 @@ live-activity-render: project
 	@./scripts/live-activity-render.sh report $(RENDER_OUT)
 
 simulator-wallpaper: project
-	@./scripts/wallpaper.sh check 2> /dev/null && echo "Wallpaper $$(./scripts/wallpaper.sh id): already set, nothing to do" && exit 0; \
-		$(BUILD_GATE) $(QUIET) $(LOGS)/simulator-wallpaper-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing \
-		&& RATP_SIM_KIND=simulator-wallpaper $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
+	@if ./scripts/wallpaper.sh check 2> /dev/null; then echo "Wallpaper $$(./scripts/wallpaper.sh id): already set, nothing to do"; \
+		else $(MAKE) --no-print-directory simulator-wallpaper-set; fi
+
+# Only through make simulator-wallpaper, when the check fails.
+simulator-wallpaper-set:
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/simulator-wallpaper-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@RATP_SIM_KIND=simulator-wallpaper $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/simulator-wallpaper.log '^Wallpaper ' ./scripts/wallpaper.sh set $(WALLPAPER_RESULT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -parallel-testing-enabled NO -collect-test-diagnostics never
 
