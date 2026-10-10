@@ -42,7 +42,8 @@ Each App ID expires 7 days after Xcode registered it, so the list below tells yo
      When the command shows an error, write this folder in place of the folder of its first line.
 
   2. Choose two IDs of the list whose date has not passed: one for the app, and one for its lock screen part.
-     The ID of the lock screen part must start with the ID of the app and a dot, for example `io.github.janedoe.oldapp` and `io.github.janedoe.oldapp.Widget`: iOS installs the lock screen part only inside an app whose ID starts its own.
+     The ID of the lock screen part must start with the ID of the app and a dot, for example `io.github.janedoe.oldapp` and `io.github.janedoe.oldapp.Widget`, because iOS refuses a lock screen part whose ID does not start with the ID of its app.
+     The easiest pair is the one of an earlier install of TROME: its two IDs end in `.trome.dev` and `.trome.dev.widget`.
 
   3. Quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>.
      In Terminal, open your settings file:

@@ -67,7 +67,8 @@ Every Terminal command runs in the Terminal app. To open it, press <kbd>Cmd</kbd
    xcodebuild -version
    ```
 
-   It prints `Xcode 27.0` and a build number.
+   It prints `Xcode 27` followed by a version number and a build number.
+   When it prints an error instead, [see what to do](/en/build/fix-an-install-problem/#the-terminal-steps-fail).
 
 4. In Terminal, check if you have Homebrew, the tool that installs the other tools of this page:
 
@@ -99,7 +100,8 @@ Every Terminal command runs in the Terminal app. To open it, press <kbd>Cmd</kbd
    cd trome
    ```
 
-   Terminal prints `Cloning into 'trome'...`, and the prompt comes back when the copy is done.
+   When a window asks to install the command line developer tools, click **Install**, wait for it to end, and run the command again.
+   Terminal prints `Cloning into 'trome'...`, and you can type again when the copy is done.
    Running `ls` lists the folders `docs`, `ios` and `server`.
 
    Each later Terminal command runs in this folder. When you open a new Terminal window, run `cd ~/trome` first.
@@ -185,7 +187,8 @@ Then wait for a place to free up, or [reuse App IDs that you registered before](
 
 5. In the **Team** menu, choose **Your Name (Personal Team)**.
    Xcode can show red errors, for example that your team has no devices yet: leave them.
-   The next steps fix them, and an error that names **Release** is on purpose ([why](/en/build/fix-an-install-problem/#xcode-will-not-sign-the-app)).
+   The next steps fix them, and an error that names **Release** is on purpose.
+   When another error is still there after the whole install, [look it up](/en/build/fix-an-install-problem/#xcode-will-not-sign-the-app).
 
 6. Quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>, so that it saves the project.
 
@@ -247,6 +250,7 @@ Apple's help: [Pair devices using a cable](https://developer.apple.com/documenta
 
 5. On the iPhone, open **Settings > Privacy & Security**, and scroll to the bottom.
    Under **Security**, turn on **Developer Mode**.
+   When you do not find it, [see what to do](/en/build/fix-an-install-problem/#xcode-does-not-see-your-iphone-or-developer-mode-is-missing).
    The iPhone asks to restart: tap **Restart**.
 
 6. When the iPhone starts again, unlock it.
@@ -270,7 +274,8 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 <Steps>
 
-1. At the top of the Xcode window, open the **scheme** menu (at the left of the run destination) and choose **TROME**.
+1. At the top of the Xcode window, open the **scheme** menu, which says what to build, and choose **TROME**.
+   It sits at the left of the run destination menu, or in the same box.
    Then open the run destination menu and choose your iPhone.
 
 2. Click the **Run** button (the triangle at the top left), or press <kbd>Cmd</kbd> + <kbd>R</kbd>.
@@ -282,6 +287,7 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 4. The first time, the app does not open, because the iPhone does not trust you yet.
    When the iPhone shows **Untrusted Developer**, tap **Cancel**.
    Xcode can also show an error that asks you to trust the certificate: this is normal.
+   For any other error, [look it up](/en/build/fix-an-install-problem/#the-app-does-not-install-or-does-not-open).
 
 5. On the iPhone, open **Settings > General > VPN & Device Management**.
    Under **Developer App**, tap **Apple Development:** followed by your Apple ID email.
@@ -322,7 +328,7 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
    <Screenshot src={appMainScreen} alt="The main screen of the app: the plate Nothing on the lock screen, the See an example row, the Automatic mode with its Snooze button, the Location and Notifications rows with green pills, and the Privacy policy and Help and feedback rows." />
 
 5. Tap **See an example**, then lock the iPhone with its side button and wake it.
-   The lock screen shows the Live Activity of Châtelet, with sample times, like the picture at the top of this page.
+   The lock screen shows the Live Activity of Châtelet, with sample times, in the same layout as the picture at the top of this page.
    When iOS asks if TROME can show Live Activities, tap **Allow**.
    The example ends after 10 minutes.
 
