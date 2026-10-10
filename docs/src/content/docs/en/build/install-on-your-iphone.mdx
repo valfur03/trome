@@ -1,6 +1,6 @@
 ---
-title: Install the app on your iPhone
-description: Put TROME on your own iPhone with a free Apple ID, step by step. For beginners.
+title: Install TROME on your iPhone
+description: Build TROME on your Mac and run it on your own iPhone, with Xcode and a free Apple ID. No iOS experience needed.
 sidebar:
   order: 1
 ---
@@ -10,599 +10,338 @@ import appLocationPermission from '../../../../assets/screenshots/app-location-p
 import appAlwaysPermission from '../../../../assets/screenshots/app-always-permission.png';
 import appNotificationPermission from '../../../../assets/screenshots/app-notification-permission.png';
 import appMainScreen from '../../../../assets/screenshots/app-main-screen.png';
-import appTestingTools from '../../../../assets/screenshots/app-testing-tools.png';
 import liveActivity from '../../../../assets/screenshots/live-activity-metro-en.png';
 import Checklist from '../../../../components/Checklist.astro';
 import Screenshot from '../../../../components/Screenshot.astro';
 
-This page tells you how to put the TROME app on your own iPhone. You use Xcode on your Mac and your free Apple ID. You do not pay anything.
+This page takes you from a Mac with nothing set up to TROME on your own iPhone, built by you from its source code, with its Live Activity on your lock screen.
+You need a Mac with Xcode, an iPhone with its cable, and a free Apple ID: no iOS experience, and nothing to pay.
+With a free Apple ID the app opens for 7 days at a time, and [installing it again](/en/build/renew-the-app/) takes about 5 minutes.
+Plan on about an hour, plus the download of Xcode if you do not have it yet.
+You start by installing Xcode, and you get the code with one Terminal command.
 
-You need no experience with Xcode or with iOS apps. Do the steps in order. Tick each step when it is done: the top of the list shows how many steps you have done.
+<Screenshot
+  src={liveActivity}
+  crop="live-activity"
+  alt="The Live Activity of Saint-Paul (Le Marais), metro line 1, under the clock of the lock screen: the next trains to La Défense in 3 and 7 minutes, and to Château de Vincennes in 4 and 8 minutes, above the Snooze buttons 30 min, 1 h and Today."
+/>
 
-<Aside type="note" title="Not on this page">
-  This page does not cover TestFlight or the App Store. They need the paid Apple Developer Program. A later tutorial covers them.
-</Aside>
+The Terminal steps on this page were run from a fresh copy of the code.
+The Xcode and iPhone steps follow Apple's pages, and nobody has followed them on a real iPhone from a clean start yet.
+Their screens are Apple's and change with each version, so the page names each button and shows no picture of them.
+When a step does not match what you see, [open an issue](https://github.com/valfur03/trome/issues/new?template=bug.yml) with the step and what you see.
 
-## Before you start
-
-Make sure that you have all these things. Tick each one.
+## What you need
 
 <Checklist id="iphone-before-you-start" kind="things">
 
-- **A Mac with Xcode 27, already set up.** You accepted the Xcode license and downloaded the iOS platform.
-  Test: in Terminal, in the project folder, `make run` opens the app in the Simulator.
-  If Terminal says "Waiting for the Simulator lock", wait: another job is using the Simulator.
-  Then run `make simulator-shutdown` to close it.
-- **The project tools.** You ran `make setup` one time in the project folder (`ios/README.md` explains it).
-- **A free Apple ID**, with its password. Keep your other Apple device or your phone near you: Apple can send you a 6-digit code.
-- **Your own iPhone**, with iOS 18 or later, and its passcode. To see the iOS version, open Settings > General > About on the iPhone.
-- **A cable** from the iPhone to the Mac. It must carry data, not only power. The cable that came with the iPhone is good.
-- **Internet** on the Mac and on the iPhone.
-- **Optional: your PRIM key**, to see live train times. You can add it later (see [Add the train data key](#add-the-train-data-key-prim)).
-- **Time: about 1 hour** the first time. After that, about 5 minutes each week (see [The app stops after 7 days](#the-app-stops-after-7-days)).
+- **A Mac that can run Xcode 27.** Its page in the Mac App Store says if yours can. The Mac needs the internet.
+- **An iPhone with iOS 18 or later**, and its passcode. To see the version, open **Settings > General > About** on the iPhone.
+- **A cable** from the iPhone to the Mac. It must carry data, not only power: the cable that came with the iPhone does. The iPhone needs the internet once, to trust your app.
+- **A free Apple ID**, with its password. Keep your other Apple device near you: Apple can send it a 6-digit code.
 
 </Checklist>
 
-## Words you will see
-
-- **Terminal**: the Mac app where you type commands. Each command in this page runs in the **project folder**: the main folder of the TROME repo on your Mac, not a git worktree. To go there in Terminal, type `cd` and a space, drag the folder from the Finder into the Terminal window, then press <kbd>Return</kbd>.
-- **Xcode**: the Apple app that builds iPhone apps. It puts the app on your iPhone.
-- **Apple ID** (Apple calls it "Apple Account"): the email and password that you use for iCloud and the App Store.
-- **Personal Team**: a free developer account that Xcode makes from your Apple ID. It lets you put apps on your own iPhone only.
-- **Team ID**: the code of your Personal Team. It has 10 letters and digits, for example `AB12CD34EF`.
-- **Bundle ID**: the name of the app for Apple, for example `io.github.yourname.trome.dev`. No other app in the world can use the same one.
-- **Signing**: Xcode puts a digital signature on the app. The iPhone uses it to check who made the app. Xcode does it for you.
-- **Developer Mode**: an iPhone setting. The iPhone runs apps from Xcode only when it is on.
-- **Trust**: you tell the iPhone that you know the person who made the app (you).
-
-### Why some steps have no picture
-
-This page shows pictures of the app only. The app pictures come from the iPhone Simulator on the Mac. Xcode and the iPhone Settings are Apple screens. The people who wrote this page had no real iPhone, and Apple changes these screens with each version of Xcode and iOS. So for these screens, the steps give the exact menu names and a link to Apple's own help page.
-
 ## Install the app
 
-This list has 5 parts and 32 steps. The top of the list shows how many steps you have done.
+Tick each step when it is done: the top of the list shows how many steps you have done.
+Every Terminal command runs in the Terminal app. To open it, press <kbd>Cmd</kbd> + <kbd>Space</kbd>, type `Terminal` and press <kbd>Return</kbd>.
 
 <Checklist id="iphone-install">
 
-### Part 1 of 5: Add your Apple ID to Xcode (5 minutes)
-
-Apple's help: [Set up code signing for physical devices](https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices#Set-up-code-signing-for-physical-devices).
+### Get your Mac ready
 
 <Steps>
 
-1. Open Xcode.
+1. Install Xcode 27, the Apple app that builds iPhone apps, from the [Mac App Store](https://apps.apple.com/app/xcode/id497799835).
+   The download is large and can take a while.
+   When it ends, Xcode is in your **Applications** folder.
 
-2. In the menu bar, choose **Xcode > Settings…** (or press <kbd>Cmd</kbd> + <kbd>,</kbd>). Click **Apple Accounts**.
+2. Open Xcode, agree to the license, and let it install what it asks for.
+   When it offers platforms to download, keep **iOS** ticked.
+   When it is ready, Xcode shows its welcome window: quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>.
 
-   _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+3. In Terminal, check that Xcode is ready for the Terminal:
 
-3. Click the **+** button at the bottom left. Choose **Apple Account**, then click **Continue**.
+   ```sh
+   xcodebuild -version
+   ```
 
-   _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+   It prints `Xcode 27.0` and a build number.
 
-4. Type your Apple ID email and password. If Apple sends a 6-digit code to your other device, type it.
+4. In Terminal, check if you have Homebrew, the tool that installs the other tools of this page:
 
-   _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+   ```sh
+   brew --version
+   ```
 
-5. Check the list of teams at the right. It shows **Your Name (Personal Team)**. Close the Settings window.
+   If it prints a version, go on to the next part.
+   If not, install it with the command of [brew.sh](https://brew.sh).
+   It needs a Mac account that is an administrator, asks you to press <kbd>Return</kbd>, and then asks for your Mac password (nothing shows while you type it):
 
-   _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+   ```sh
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+
+   It ends with a **Next steps** list: copy the lines under it, paste them into Terminal, press <kbd>Return</kbd>, then run `brew --version` again.
 
 </Steps>
 
-### Part 2 of 5: Give the project your Team ID and bundle ID (10 minutes)
-
-The project reads your settings from a file that only you have: `ios/Config/Local.xcconfig`. Git ignores it.
+### Get the code
 
 <Steps>
 
-6. Choose your **bundle ID prefix**: a name that only you use. Use `io.github.` and your GitHub name, for example `io.github.janedoe`. Use only lowercase letters, digits, hyphens and dots. Do not use `com.example`: someone else already has it. Write your prefix down: the next steps use it.
-
-   Your app gets the bundle ID `<your prefix>.trome.dev`, for example `io.github.janedoe.trome.dev`. It ends with `.dev`, so it is never the ID of TROME on the App Store, whatever prefix you choose: your free Apple ID cannot take that ID by mistake.
-
-7. In Terminal, in the project folder, create the Xcode project and open it:
+1. In Terminal, copy the code to your home folder and go into it:
 
    ```sh
-   make generate && open ios/TROME.xcodeproj
+   cd ~
+   git clone https://github.com/valfur03/trome.git
+   cd trome
    ```
 
-8. In Xcode, in the left column, click the blue icon **TROME** at the top. In the middle, under **TARGETS**, click **TROME**. Click the tab **Signing & Capabilities**.
+   Terminal prints `Cloning into 'trome'...`, and the prompt comes back when the copy is done.
+   Running `ls` lists the folders `docs`, `ios` and `server`.
 
-   _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+   Each later Terminal command runs in this folder. When you open a new Terminal window, run `cd ~/trome` first.
 
-9. In the **Team** menu, choose **Your Name (Personal Team)**. Xcode can now show red errors. This is normal: the next steps fix them. An error for Release can stay: it is on purpose ([why](#part-2-team-id-and-bundle-id)).
+</Steps>
 
-   If you see a **Set Up Signing** button instead of the **Team** menu, click it. In the window that opens, choose **Your Name (Personal Team)** in the **Team** menu. In **Bundle Identifier**, type your prefix followed by `.trome.dev`, for example `io.github.janedoe.trome.dev`. Click **Set Up**.
+### Choose the name of your app
 
-10. Quit Xcode: press <kbd>Cmd</kbd> + <kbd>Q</kbd>. Xcode saves the project.
+Apple knows each app by its **bundle ID**, a name that no other app in the world has, such as `io.github.janedoe.trome.dev`.
+The first time Xcode signs an app for your iPhone, which means that it adds the signature that lets the iPhone trust the app, it registers that name with your Apple ID.
+Apple calls this record an **App ID**.
 
-11. In Terminal, find your Team ID:
+TROME has two parts that Xcode signs: the app, and its Live Activity, the part that draws on the lock screen.
+So one install registers 2 App IDs.
+A free Apple ID can register 10 App IDs in 7 days, and each one frees its place 7 days after it was registered.
+A normal install uses 2 of the 10.
 
-    ```sh
-    grep -m 1 DEVELOPMENT_TEAM ios/TROME.xcodeproj/project.pbxproj
-    ```
+So choose your name once, and keep it: a new name registers 2 new App IDs.
+The project also has test parts for people who change the code, and signing them costs more App IDs, so this page never builds them.
+When you reach the limit, Xcode says **Your maximum App ID limit has been reached** or **No profiles for … were found**.
+Then wait for a place to free up, or [reuse App IDs that you registered before](/en/build/reuse-your-app-ids/).
 
-    It shows a line like `DEVELOPMENT_TEAM = AB12CD34EF;`. Your Team ID is the 10 letters and digits (here `AB12CD34EF`).
+<Steps>
 
-12. Create your settings file, and open it in TextEdit:
+1. In Terminal, copy the settings file of the project and open the copy in TextEdit:
 
-    ```sh
-    cp ios/Config/Local.example.xcconfig ios/Config/Local.xcconfig && open -e ios/Config/Local.xcconfig
-    ```
+   ```sh
+   cp ios/Config/Local.example.xcconfig ios/Config/Local.xcconfig
+   open -e ios/Config/Local.xcconfig
+   ```
 
-13. In TextEdit, change these two lines, then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file:
+   TextEdit shows a file with comments and two lines to fill in: `DEVELOPMENT_TEAM =` and `TROME_BUNDLE_ID_PREFIX = com.example`.
+   Git ignores this file, so it stays yours.
 
-    ```ini
-    DEVELOPMENT_TEAM = AB12CD34EF
-    TROME_BUNDLE_ID_PREFIX = io.github.janedoe
-    ```
+2. Change `com.example` to a prefix that only you use: `io.github.` and your GitHub name in lowercase.
+   With no GitHub name, use any other name that only you would pick, such as `me.janedoe`.
+   Use only lowercase letters, digits, hyphens and dots.
+   Leave the line `DEVELOPMENT_TEAM =` empty for now, then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file.
 
-    Put your own Team ID and your own prefix.
+   ```ini
+   TROME_BUNDLE_ID_PREFIX = io.github.janedoe
+   ```
 
-14. In Terminal, create the Xcode project again. It now uses your settings:
+   Your app is now called `<your prefix>.trome.dev`.
+   It ends with `.dev`, so it can never take the name of TROME on the App Store.
+
+3. In Terminal, install the tools and create the Xcode project:
+
+   ```sh
+   make setup
+   ```
+
+   The first run takes a few minutes: it installs XcodeGen, which makes the project, and two tools for people who change the code.
+   The last line shows your names:
+
+   ```text
+   Debug bundle IDs: app io.github.janedoe.trome.dev, Live Activity io.github.janedoe.trome.dev.widget
+   ```
+
+</Steps>
+
+### Sign in to Xcode and find your Team ID
+
+<Steps>
+
+1. Open Xcode, then choose **Xcode > Settings…** in the menu bar (or press <kbd>Cmd</kbd> + <kbd>,</kbd>) and click **Apple Accounts**.
+
+2. Click the **+** button at the bottom left, choose **Apple Account**, and click **Continue**.
+   Sign in with your Apple ID, and type the 6-digit code if Apple sends one.
+   The list of teams at the right shows **Your Name (Personal Team)**: this is the free account that Xcode made from your Apple ID.
+   Close the Settings window.
+
+3. In Terminal, open the project:
+
+   ```sh
+   open ios/TROME.xcodeproj
+   ```
+
+   Xcode shows the project **TROME**.
+
+4. In Xcode, in the left column, click the blue icon **TROME** at the top.
+   In the middle, under **TARGETS**, click **TROME**, then click the tab **Signing & Capabilities**.
+
+5. In the **Team** menu, choose **Your Name (Personal Team)**.
+   Xcode can show red errors, for example that your team has no devices yet: leave them.
+   The next steps fix them, and an error that names **Release** is on purpose ([why](/en/build/fix-an-install-problem/#xcode-will-not-sign-the-app)).
+
+6. Quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>, so that it saves the project.
+
+7. In Terminal, find your Team ID, the code of your Personal Team:
+
+   ```sh
+   grep -m 1 DEVELOPMENT_TEAM ios/TROME.xcodeproj/project.pbxproj
+   ```
+
+   It shows a line like `DEVELOPMENT_TEAM = AB12CD34EF;`.
+   Your Team ID is the 10 letters and digits (here `AB12CD34EF`).
+   When the command shows nothing, [see what to do](/en/build/fix-an-install-problem/#the-terminal-steps-fail).
+
+8. In Terminal, open your settings file again:
+
+   ```sh
+   open -e ios/Config/Local.xcconfig
+   ```
+
+9. After `DEVELOPMENT_TEAM =`, type your Team ID, then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file:
+
+   ```ini
+   DEVELOPMENT_TEAM = AB12CD34EF
+   ```
+
+10. In Terminal, create the project again, so that it reads your team from the file:
 
     ```sh
     make generate
     ```
 
+    The last line shows your names again.
+    Run this command each time you change the settings file.
+
 </Steps>
 
-### Part 3 of 5: Connect the iPhone and turn on Developer Mode (10 to 20 minutes)
+### Connect the iPhone and turn on Developer Mode
 
-Apple's help: [Pair devices using a cable](https://developer.apple.com/documentation/xcode/managing-your-simulated-and-physical-devices-in-device-hub#Pair-devices-using-a-cable), [Enabling Developer Mode on a device](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device), and [the "Trust This Computer" alert](https://support.apple.com/en-us/109054).
+Apple's help: [Pair devices using a cable](https://developer.apple.com/documentation/xcode/managing-your-simulated-and-physical-devices-in-device-hub#Pair-devices-using-a-cable), [Enabling Developer Mode on a device](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device) and [the "Trust This Computer" alert](https://support.apple.com/en-us/109054).
 
 <Steps>
 
-15. Connect the iPhone to the Mac with the cable. Unlock the iPhone.
+1. Connect the iPhone to the Mac with the cable, and unlock the iPhone.
+   When the Mac asks if it can connect the accessory, click **Allow**.
+   The iPhone asks **Trust This Computer?**: tap **Trust**, then type your iPhone passcode.
+   When you see no question, go to the next step.
 
-16. The iPhone asks **Trust This Computer?**. Tap **Trust**, then type your iPhone passcode. If you see no question, go to the next step.
+2. In Terminal, open the project again:
 
-    _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
+   ```sh
+   open ios/TROME.xcodeproj
+   ```
 
-17. In Terminal, open the project:
+3. At the top of the Xcode window, open the **run destination** menu, which shows a device name such as "iPhone 17", and choose **Manage Devices…**.
+   The **Device Hub** window opens.
 
-    ```sh
-    open ios/TROME.xcodeproj
-    ```
+4. In the Device Hub, click your iPhone in the left column.
+   When a **Pair** button shows, click it, then confirm on the iPhone when it asks, with **Trust** or with its passcode.
 
-18. At the top of the Xcode window, open the **run destination** menu (it shows a device name, for example "iPhone 17"). Choose **Manage Devices…**. The **Device Hub** window opens.
+5. On the iPhone, open **Settings > Privacy & Security**, and scroll to the bottom.
+   Under **Security**, turn on **Developer Mode**.
+   The iPhone asks to restart: tap **Restart**.
 
-    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+6. When the iPhone starts again, unlock it.
+   It asks if you want to turn on Developer Mode: tap **Turn On**, then type your passcode.
 
-19. In the Device Hub, click your iPhone in the left column. If a **Pair** button shows, click it. Do what the window asks.
-
-    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
-
-20. On the iPhone, open **Settings > Privacy & Security**. Scroll to the bottom. Under **Security**, turn on **Developer Mode**. The iPhone asks to restart: tap **Restart**.
-
-    _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
-
-21. When the iPhone starts again, unlock it. It asks if you want to turn on Developer Mode. Tap **Turn On** (or **Enable**), then type your passcode.
-
-    _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
-
-22. Look at the Device Hub on the Mac. Wait until your iPhone shows no message and no progress bar. The first time, Xcode copies files from the iPhone. This can take 10 minutes or more. Then close the Device Hub.
-
-    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+7. Look at the Device Hub on the Mac, and wait until your iPhone shows no message and no progress bar.
+   The first time, Xcode copies files from the iPhone, which can take 10 minutes or more.
+   Then close the Device Hub.
 
 </Steps>
 
 <Aside type="caution" title="Developer Mode">
-  Developer Mode makes your iPhone a bit less protected: it can run apps that did not come from the App Store. Turn it on only for apps that you trust, like this one. You can turn it off later in the same place.
+  Developer Mode makes your iPhone a bit less protected: it can run apps that did not come from the App Store.
+  Turn it on only for apps that you trust, like this one.
+  You can turn it off later in the same place.
 </Aside>
 
-### Part 4 of 5: Run the app on the iPhone (10 minutes)
+### Run the app on your iPhone
 
-Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices#Run-the-app). For the trust steps, Apple's page about [trusting a developer on iOS](https://support.apple.com/en-us/118254) shows the same Settings screen (it is written for company apps).
+Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices#Run-the-app).
 
 <Steps>
 
-23. At the top of the Xcode window, open the **scheme** menu (at the left of the run destination). Choose **TROME**. Then open the run destination menu and choose your iPhone.
+1. At the top of the Xcode window, open the **scheme** menu (at the left of the run destination) and choose **TROME**.
+   Then open the run destination menu and choose your iPhone.
 
-    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+2. Click the **Run** button (the triangle at the top left), or press <kbd>Cmd</kbd> + <kbd>R</kbd>.
+   Xcode builds the app, which takes several minutes the first time, then puts it on the iPhone.
 
-24. Click the **Run** button (the triangle at the top left), or press <kbd>Cmd</kbd> + <kbd>R</kbd>.
+3. When the Mac asks for your password with a message like "codesign wants to access key…", type the password that you use to log in to your Mac, and click **Always Allow**.
+   The message can come two times: click **Always Allow** each time.
 
-    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+4. The first time, the app does not open, because the iPhone does not trust you yet.
+   When the iPhone shows **Untrusted Developer**, tap **Cancel**.
+   Xcode can also show an error that asks you to trust the certificate: this is normal.
 
-25. The Mac can ask for your Mac password, with a message like "codesign wants to access key…". Type the password you use to log in to your Mac. Click **Always Allow**. The message can come two times: click **Always Allow** each time.
+5. On the iPhone, open **Settings > General > VPN & Device Management**.
+   Under **Developer App**, tap **Apple Development:** followed by your Apple ID email.
+   Tap **Trust "Apple Development: …"**, then tap **Trust** again in the question.
+   The iPhone needs the internet for this step.
 
-    _No picture: macOS screen ([why](#why-some-steps-have-no-picture))._
-
-26. Xcode puts the app on the iPhone. The first time, the app does not open: the iPhone does not trust you yet. The iPhone can show **Untrusted Developer**: tap **Cancel**. Xcode can also show an error that asks you to trust the certificate. This is normal.
-
-    _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
-
-27. On the iPhone, open **Settings > General > VPN & Device Management**.
-
-    _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
-
-28. Under **Developer App**, tap **Apple Development:** followed by your Apple ID email. Tap **Trust "Apple Development: …"**, then tap **Trust** again in the question. The iPhone needs the internet for this step.
-
-    _No picture: iPhone screen ([why](#why-some-steps-have-no-picture))._
-
-29. In Xcode, click **Run** again. The app opens on your iPhone.
-
-    _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
+6. In Xcode, click **Run** again.
+   The app opens on your iPhone.
 
 </Steps>
 
-### Part 5 of 5: Open the app the first time (5 minutes)
+### Open the app and see the Live Activity
 
 <Steps>
 
-30. The app asks to use your location. Tap **Allow While Using App**. The app uses your location to find the stations near you.
+1. The app asks to use your location.
+   Tap **Allow While Using App**.
 
-    <Screenshot src={appLocationPermission} alt="The iPhone asks: Allow TROME to use your location? The buttons are Allow Once, Allow While Using App, and Don't Allow." />
+   <Screenshot src={appLocationPermission} alt="The iPhone asks: Allow TROME to use your location? The buttons are Allow Once, Allow While Using App, and Don't Allow." />
 
-31. Right after, the app asks if it can also use your location when you do not use it.
-    Tap **Change to Always Allow**.
-    Then the app can tell you when you arrive at a station, also when it is closed.
-    If you keep "While Using the App", this works only while the app is open.
-    The **Location** row of the main screen then turns orange, with an **Open Settings** button.
-    While the Live Activity shows, the app uses your location to keep the train times up to date.
-    With **Always**, iOS shows no blue location indicator.
-    With "While Using the App", iOS turns the status bar blue (or shows a blue bubble in the Dynamic Island) while the Live Activity shows.
-    This is normal: the app cannot hide it.
+2. Right after, the app asks if it can also use your location when you do not use it.
+   Tap **Change to Always Allow**.
+   Then the app can tell you when you arrive at a station, also when it is closed.
+   [Help](/en/support/#what-trome-asks-of-the-iphone-and-why) says what each choice does.
 
-    <Screenshot src={appAlwaysPermission} alt="The iPhone asks: Allow TROME to also use your location even when you are not using the app? The buttons are Keep Only While Using and Change to Always Allow." />
+   <Screenshot src={appAlwaysPermission} alt="The iPhone asks: Allow TROME to also use your location even when you are not using the app? The buttons are Keep Only While Using and Change to Always Allow." />
 
-32. The app asks to send you notifications. Tap **Allow**. The app uses them to tell you when you arrive at a station.
+3. The app asks to send you notifications.
+   Tap **Allow**.
+   The app uses them to tell you when you arrive at a station.
 
-    <Screenshot src={appNotificationPermission} alt="The iPhone asks: TROME would like to send you notifications. The buttons are Don't Allow and Allow." />
+   <Screenshot src={appNotificationPermission} alt="The iPhone asks: TROME would like to send you notifications. The buttons are Don't Allow and Allow." />
 
-33. Look at the main screen of the app. It says what shows on the lock screen, with **See an example**, then the automatic mode, and the **Location** and **Notifications** rows. The app is ready. Later versions of the app can show this screen a bit differently.
+4. Look at the main screen of the app.
+   It says **Nothing on the lock screen**, and has the row **See an example**, the **Automatic mode**, and the **Location** and **Notifications** rows.
+   Both rows show a green pill when you allowed both.
 
-    <Screenshot src={appMainScreen} alt="The main screen of the app: nothing on the lock screen yet, the See an example row, the automatic mode, and the permissions." />
+   <Screenshot src={appMainScreen} alt="The main screen of the app: the plate Nothing on the lock screen, the See an example row, the Automatic mode with its Snooze button, the Location and Notifications rows with green pills, and the Privacy policy and Help and feedback rows." />
+
+5. Tap **See an example**, then lock the iPhone with its side button and wake it.
+   The lock screen shows the Live Activity of Châtelet, with sample times, like the picture at the top of this page.
+   When iOS asks if TROME can show Live Activities, tap **Allow**.
+   The example ends after 10 minutes.
 
 </Steps>
 
 </Checklist>
 
-## What you should see now
+## What you have now
 
-- The TROME icon is on the home screen of your iPhone.
-- The app opens and shows its main screen.
-- Without the PRIM key, the Live Activity has no train times. **Testing tools > Next trains of a station** says "Train data key: not set". To see live trains, [add the key](#add-the-train-data-key-prim).
-
-### The questions of the app
-
-After the first launch, iOS asks you one more question. It comes later, so this page has no picture of it ([why](#why-some-steps-have-no-picture)).
-
-- **Live Activities.** The first time the app shows the next trains on the lock screen, iOS asks on the lock screen if TROME can show Live Activities. Tap **Allow**.
-
-If you tapped the wrong button, you can change your choice later in the iPhone Settings (see [In the app](#in-the-app)).
-
-### How you use the app
-
-The app is a Live Activity: the next trains of the station near you, on the lock screen.
-
-<Screenshot src={liveActivity} alt="The Live Activity of Saint-Paul (Le Marais), metro line 1, under the clock of the lock screen: the next trains to La Défense in 3 and 7 minutes, and to Château de Vincennes in 4 and 8 minutes, above the Snooze buttons 30 min, 1 h and Today." />
-
-When you are about 150 meters from a metro or RER station, the next trains of this station show on the lock screen.
-When you walk away from the station (about 250 meters), or after 45 minutes, the Live Activity goes away by itself.
-
-With the app open on screen when you arrive, the Live Activity shows at once.
-With the app closed, the iPhone shows a notification with the name of the station: tap it, and the Live Activity shows.
-
-To stop the Live Activity for a while, tap **30 min**, **1 h** or **Today** at the bottom of the Live Activity.
-It goes away at once, and no notification comes until the time is over.
-You can also do it from the notification: touch and hold it, then tap **Not for 1 h** or **Not today**.
-The app does not open.
-The main screen of the app shows the snooze, with a button to cancel it.
-To stop the Live Activity at this station only, swipe it away.
-The app pauses this station for 1 hour: no notification and no Live Activity there, but the other stations work as usual.
-The main screen of the app shows the pause, with a button to cancel it.
-To stop TROME for good, turn off **Automatic mode** on the main screen.
-When you cancel the snooze or the pause, or turn **Automatic mode** on again, with the app open at a station, the Live Activity of this station starts at once.
-
-Far from Paris, tap **See an example** on the main screen: the Live Activity of Châtelet shows on the lock screen for 10 minutes, with sample times, not real ones.
-
-To try it without walking to a station, use a fake position (see [Fake your position](#fake-your-position-only-in-this-version)).
-
-## The app stops after 7 days
+TROME is on your iPhone, and its Live Activity works.
+**See an example** shows it again, from anywhere.
 
 <Aside type="danger" title="The app stops opening after 7 days">
-  With a free Apple ID, the app works for 7 days only. After that, it does not open any more. Your iPhone keeps its icon. To use the app for 7 more days, install it again from Xcode with the steps below. Tip: do it each weekend, before the app stops.
+  A free Apple ID signs the app for 7 days. After that, the app does not open, and its icon stays on your iPhone.
+  [Renew the app every 7 days](/en/build/renew-the-app/) takes about 5 minutes: do it each weekend.
 </Aside>
 
-These steps take about 5 minutes. You do not need to trust the developer or turn on Developer Mode again.
-
-<Checklist id="iphone-renew">
-  <Steps>
-
-  1. Connect the iPhone to the Mac with the cable. Unlock the iPhone.
-
-  2. In Terminal, in the project folder, create the Xcode project again and open it:
-
-     ```sh
-     make generate && open ios/TROME.xcodeproj
-     ```
-
-     Do it each time, also when the file exists: the code may have changed since the last time, and the old project does not build any more.
-
-  3. At the top of the Xcode window, choose the scheme **TROME** and your iPhone.
-
-     _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
-
-  4. Click **Run**, or press <kbd>Cmd</kbd> + <kbd>R</kbd>. The app opens on the iPhone. It now works for 7 more days.
-
-     _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
-
-  </Steps>
-</Checklist>
-
-Do not delete the app before you install it again. When you install over the old app, the app keeps its data and your choices.
-One exception: a build from before the app was called TROME has another bundle ID, so the iPhone keeps it as a second app, with another name under its icon. Delete that one, or it goes on sending its notifications. The new app asks for its permissions again.
-
-If the iPhone says **Untrusted Developer** again, do steps 27 to 29 of [Install the app](#install-the-app) again.
-
-Other limits of a free Apple ID ([Apple's list](https://developer.apple.com/help/account/reference/supported-capabilities-ios)):
-
-- You can have at most 3 of your own apps on one iPhone at the same time.
-- Xcode can create at most 10 bundle IDs in 7 days. This app uses 2 (the app and its lock screen part). So do not change your bundle ID prefix often. If you reach the limit, see [The limit of 10 bundle IDs](#the-limit-of-10-bundle-ids).
-- No push notifications from a server. The app still shows its own notifications and its Live Activity.
-
-## The limit of 10 bundle IDs
-
-Xcode can say "Your maximum App ID limit has been reached" or "No profiles for '…' were found".
-A free Apple ID can register at most 10 bundle IDs in 7 days (Apple calls them "App IDs").
-Each bundle ID expires 7 days after Xcode registered it, and then frees its place.
-Xcode registers a bundle ID the first time it signs it, for example after you change your prefix.
-A bundle ID that is already registered costs nothing more.
-
-So you have two ways out:
-
-- **Wait** until a place is free. The list below shows the date when each bundle ID expires.
-- **Use two bundle IDs that you already have**, with the steps below.
-
-<Checklist id="iphone-reuse-bundle-ids">
-  <Steps>
-
-  1. In Terminal, list the bundle IDs that Xcode registered on this Mac, with the date (UTC) when each one expires:
-
-     ```sh
-     for f in ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision; do
-       security cms -D -i "$f" | plutil -extract ExpirationDate raw -o - - | tr '\n' ' '
-       security cms -D -i "$f" | plutil -extract Entitlements.application-identifier raw -o - - | sed 's/^[A-Z0-9]*\.//'
-     done | sort
-     ```
-
-     It shows lines like `2026-10-04T08:27:57Z io.github.janedoe.oldapp`. It does not show your Team ID.
-     Older versions of Xcode keep these files in `~/Library/MobileDevice/Provisioning Profiles/`: if the command shows an error, put this folder in its first line.
-
-  2. Choose two bundle IDs of the list whose date has not passed yet: one for the app, and one for its lock screen part (the Live Activity).
-     The ID of the lock screen part must start with the ID of the app and a dot, for example `io.github.janedoe.oldapp` and `io.github.janedoe.oldapp.Widget`.
-     Why: iOS installs the lock screen part only inside an app whose ID starts its own ID.
-
-  3. Quit Xcode (<kbd>Cmd</kbd> + <kbd>Q</kbd>). In Terminal, in the project folder, open your settings file in TextEdit:
-
-     ```sh
-     open -e ios/Config/Local.xcconfig
-     ```
-
-  4. Add these two lines with your two bundle IDs, then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file:
-
-     ```ini
-     TROME_DEBUG_APP_BUNDLE_ID = io.github.janedoe.oldapp
-     TROME_DEBUG_WIDGET_BUNDLE_ID = io.github.janedoe.oldapp.Widget
-     ```
-
-     Write each ID exactly as the list shows it, with the same capitals.
-     If you add only the first line, the lock screen part gets the ID of the app followed by `.widget`.
-
-  5. Create the Xcode project again:
-
-     ```sh
-     make generate
-     ```
-
-     Its last line shows the two bundle IDs that Xcode will use:
-
-     ```text
-     Debug bundle IDs: app io.github.janedoe.oldapp, Live Activity io.github.janedoe.oldapp.Widget
-     ```
-
-     Do not click **Run** before this line shows your two IDs exactly, capitals included.
-     If an ID is not the one that you wrote, check its line, and first the name at its start: Xcode ignores a line with a wrong name, with no error.
-     For example, a wrong name in the second line gives `io.github.janedoe.oldapp.widget` instead of `io.github.janedoe.oldapp.Widget`, and Xcode would then register a new ID.
-     If it says `FAILED: the Debug ID of the extension (…) does not start with the Debug ID of the app (…)`, look at the two IDs in the message.
-     If one of them ends with `.trome.dev` or `.trome.dev.widget`, the name of its line is wrong. If not, your two IDs do not go together (step 2).
-     Fix the file, save it, and run `make generate` again.
-
-  6. Open the project, choose the scheme **TROME** and your iPhone, and click **Run**, as in steps 3 and 4 of [the 7-day steps](#the-app-stops-after-7-days):
-
-     ```sh
-     open ios/TROME.xcodeproj
-     ```
-
-     If your iPhone has an older app with the same bundle ID, the new app replaces it.
-
-  7. Run the command of step 1 again. The latest date shown for the bundle ID of the app is the day when the app stops opening.
-
-  </Steps>
-</Checklist>
-
-If a bundle ID of your two lines has expired when you click **Run**, Xcode registers it again: this takes a place again.
-To go back to the usual bundle IDs, remove the two lines and run `make generate` again.
-
-<Aside type="danger" title="Never the App Store ID">
-  Never put `io.github.valfur03.trome` or `io.github.valfur03.trome.widget` in these lines, in any capitals.
-  They are the bundle IDs of TROME on the App Store: a free Apple ID that signs them takes them for good, and TROME could then never use them.
-  `make generate` refuses them. If you click **Run** without `make generate`, Xcode shows a bundle ID that starts with `SHIPPING_ID_REFUSED`, and Apple does not register it: remove that line and run `make generate`.
-</Aside>
-
-## Add the train data key (PRIM)
-
-The app gets the train times from PRIM, the open data service of Île-de-France Mobilités. PRIM needs a free key. The key is a secret: it is yours only.
-
-<Aside type="caution" title="Keep your key secret">
-  Never send your key to anyone. Never put it in a screenshot, a message or a git commit. Git ignores the file `ios/Config/Secrets.xcconfig`, so a commit does not take it. The key goes inside the app that you build with the **Run** button (a Debug build). This is fine for your own iPhone. Do not give this app to other people.
-  A Release build (an archive for TestFlight or the App Store) never holds the key: it asks the server of the app for the times instead.
-</Aside>
-
-### Put the key on your Mac (one time)
-
-<Checklist id="prim-key-file">
-  <Steps>
-
-  1. Create a free account on [prim.iledefrance-mobilites.fr](https://prim.iledefrance-mobilites.fr).
-
-  2. In your account page on PRIM, create an API key. Copy it.
-
-  3. In Terminal, in the project folder (the main folder, not a git worktree), create the key file and open it in TextEdit:
-
-     ```sh
-     cp ios/Config/Secrets.example.xcconfig ios/Config/Secrets.xcconfig && open -e ios/Config/Secrets.xcconfig
-     ```
-
-  4. Paste your key after `PRIM_API_KEY =`. Save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file.
-
-  </Steps>
-</Checklist>
-
-Now choose where you run the app. The two ways use the key in a different way.
-
-### Way 1: on your iPhone (Xcode)
-
-The Xcode **Run** button reads the file `ios/Config/Secrets.xcconfig` of the folder that you open. It needs nothing more. (`LIVE=1` is for the `make` commands only. Xcode does not use it.)
-
-<Checklist id="prim-key-iphone">
-  <Steps>
-
-  1. Connect the iPhone and open the project of the main folder in Xcode, as in [the 7-day steps](#the-app-stops-after-7-days).
-
-  2. Click **Run**. Xcode builds the app again, with your key inside.
-
-     _No picture: Xcode screen ([why](#why-some-steps-have-no-picture))._
-
-  3. On the iPhone, open **Testing tools > Next trains of a station**. It now says **Train data key: set**. The Live Activity shows live train times. (No picture: the pictures of this page are made without a key, on purpose.)
-
-  </Steps>
-</Checklist>
-
-### Way 2: on the Simulator of your Mac (Terminal)
-
-A plain `make run` never uses your key. Add `LIVE=1`.
-
-<Checklist id="prim-key-simulator">
-  <Steps>
-
-  1. In Terminal, in the project folder, run:
-
-     ```sh
-     make run LIVE=1
-     ```
-
-  2. In the Simulator, open **Testing tools > Next trains of a station**. It says **Train data key: set**. (No picture: the pictures of this page are made without a key, on purpose.)
-
-  3. When you are done, stop the app:
-
-     ```sh
-     make simulator-shutdown
-     ```
-
-  4. Remove your key from the build folder of the project. This command builds the app again, without the key:
-
-     ```sh
-     make build
-     ```
-
-  </Steps>
-</Checklist>
-
-<Aside type="note" title="Your PRIM quota">
-  PRIM limits the number of calls for each key and each day.
-  The app asks for new times every 30 seconds while it is open.
-  While the Live Activity shows and the app is closed, it asks again soon after the first train leaves (at most every 30 seconds, at least every 2 minutes).
-  Each time, it makes one call for each stop area of the station, and one for each stop area of the other stations of its place: for example 2 calls at Châtelet (its metro stop area, and the RER stop of Châtelet - Les Halles).
-  Close the app and stop the Live Activity when you do not use them.
-</Aside>
-
-## Fake your position: only in this version
-
-This version of the app has a **Testing tools** button at the top right of the main screen.
-It lets you fake your position, to test the app anywhere in Paris without moving: for example, pick a station, type coordinates or an address.
-The app then acts as if you were there.
-Tap **Use the real GPS** to stop.
-Testing tools also has the list of all stations, and the next trains of a station that you pick by hand.
-
-<Screenshot src={appTestingTools} alt="The Testing tools screen: the button Show the Live Activity now, the position used by the app, the button Use the real GPS, and the fake position choices." />
-
-<Aside type="note" title="Not in TestFlight or the App Store">
-  The Testing tools screen exists only in the app that Xcode puts on your iPhone (a "debug" version). The version that you get later through TestFlight or the App Store does not have it.
-</Aside>
-
-While the iPhone is connected and the app runs from Xcode, you can also fake the position with **Debug > Simulate Location** in the Xcode menu bar.
-
-## If it does not work
-
-### Part 1: Apple ID in Xcode
-
-- **You see no "Personal Team" in Xcode > Settings > Apple Accounts.** Remove the account (select it, click **−**), then add it again (steps 3 and 4). Check that the Mac has the internet.
-
-### Part 2: Team ID and bundle ID
-
-- **Step 11 shows nothing.** Xcode did not save the team. Do steps 7 to 11 again. Choose the team in step 9, then quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>.
-- **Xcode says "Signing for … requires a development team".** The Team ID is not in `ios/Config/Local.xcconfig`, or you did not save the file. Check the file, quit Xcode, run `make generate`, and open the project again.
-- **Xcode says that the app identifier "cannot be registered to your development team because it is not available".** Someone else uses your bundle ID prefix. Choose another one in `ios/Config/Local.xcconfig` (step 13). Quit Xcode, run `make generate`, and open the project again.
-- **Signing & Capabilities shows an error for Release, for example a missing provisioning profile.** This is on purpose: leave it as it is. Release builds are only for the App Store, and Xcode never signs them for you. The Run button builds Debug, so the app still goes on your iPhone.
-  Never turn on **Automatically manage signing** for Release: Xcode would then give the App Store ID of TROME to your free Apple ID for good.
-- **Xcode says "Your maximum App ID limit has been reached" or "No profiles for '…' were found".** A free Apple ID can create 10 bundle IDs in 7 days. Wait some days, or use bundle IDs that you already have: see [The limit of 10 bundle IDs](#the-limit-of-10-bundle-ids).
-
-### Part 3: iPhone and Developer Mode
-
-- **The iPhone does not show in Xcode.** Unlock the iPhone. Try another cable: some cables carry power only. Open the Device Hub (step 18) and click **Pair** if you see it. Restart the iPhone, then connect it again.
-- **You tapped "Don't Trust" by mistake.** Unplug the cable and connect it again: the question comes again. If it does not, on the iPhone open Settings > General > Transfer or Reset iPhone > Reset > **Reset Location & Privacy**. This also resets the location and privacy choices of your other apps.
-- **You cannot find Developer Mode in Settings.** It shows only after you connect the iPhone to Xcode. Do steps 15 to 19 first, then look again.
-- **Xcode says "Developer Mode disabled".** Do steps 20 and 21.
-- **Xcode says that the iOS platform or "device support" is not installed.** Click **Get** in the message, or install it in **Xcode > Settings > Components**. Then wait for the download to end. Apple's help: [Downloading and installing additional Xcode components](https://developer.apple.com/documentation/xcode/downloading-and-installing-additional-xcode-components).
-- **Xcode says that the iPhone is busy or "preparing".** Wait. The first time, this can take 10 minutes or more.
-
-### Part 4: running the app
-
-- **The app does not open the first time, or the iPhone says "Untrusted Developer".** Do steps 27 to 29.
-- **The trust screen says "Not Verified", or it asks for the internet.** Connect the iPhone to the internet, open the same screen, and tap **Verify App**.
-- **Xcode says that the maximum number of apps for free development has been reached.** A free Apple ID allows 3 of your own apps on the iPhone. Delete another app that you installed from Xcode, then click **Run** again.
-- **Xcode shows a Register button, or says that your iPhone is not registered.** Open **Signing & Capabilities** (step 8) and click **Register**. Then click **Run** again.
-- **Xcode says "Build input file cannot be found" or "Cannot find … in scope".** The Xcode project is older than the code (for example after a `git pull`). Quit Xcode, run `make generate`, and open the project again.
-- **The Mac asks for your password each time you click Run.** At the message, type your Mac password and click **Always Allow**, not **Allow**.
-
-### After some days
-
-- **The app does not open any more.** The 7 days have ended. Do [the 7-day steps](#the-app-stops-after-7-days).
-
-### In the app
-
-- **Testing tools > Next trains of a station says "Train data key: not set".** On the iPhone: open the project of the main folder (the one with `ios/Config/Secrets.xcconfig`), not a git worktree. On the Simulator: add `LIVE=1`. If you made your key file before the app moved into the `ios/` folder, it is still at `Config/Secrets.xcconfig`. Move it with this command, in the main folder:
-
-  ```sh
-  mv Config/Secrets.xcconfig ios/Config/
-  ```
-
-  If it still says "not set", in Xcode choose **Product > Clean Build Folder**, then click **Run** again.
-- **The app cannot find the nearest station, or the main screen shows Location as Off.** Tap **Open Settings** in the app, or on the iPhone open **Settings > Apps > TROME > Location** (on older iOS: **Settings > TROME > Location**). Choose **While Using the App** or **Always**.
-- **You get no notification near a station.** Open **Settings > Apps > TROME** (on older iOS: **Settings > TROME**). Turn on **Notifications**. Under **Location**, choose **Always**.
-- **The app shows "Fake position" in orange.** You turned on a fake position in Testing tools. Open Testing tools and tap **Use the real GPS**.
-- **Live Activities are turned off.** Open **Settings > Apps > TROME** (on older iOS: **Settings > TROME**) and turn on **Live Activities**.
-
-If a step does not match what you see, open an issue in the GitHub repository of the app: the name of the step and what you see.
-A screenshot helps, but check first that it does not show your PRIM key.
-
-## What the writers could not check
-
-The people who wrote this page had no real iPhone connected to a Mac.
-So they could not check these parts.
-Please open an issue in the GitHub repository of the app when one of them is wrong.
-
-- **All the steps on a real iPhone**: parts 1 to 5, the 7-day steps, and "Way 1" of the PRIM key. Nobody ran the app on a real iPhone yet.
-- **The exact words and places of the Apple screens**: Xcode 27 (Apple Accounts, Signing & Capabilities and its Set Up Signing window, Device Hub, the run destination menu, the error messages), macOS (the "codesign" password message), and the iPhone (Trust This Computer, Developer Mode, VPN & Device Management, Untrusted Developer).
-  The steps follow Apple's pages for Xcode 27, and the usual iOS messages.
-  The exact words can differ a little.
-- **Pictures of the Apple screens**: there are none, on purpose ([why](#why-some-steps-have-no-picture)).
-- **The pictures of the app**: they come from the iPhone Simulator on the Mac, not from a real iPhone. The app looks the same, but the top bar of the iPhone can differ.
-- **The questions of the app on a real iPhone**: the location, notifications, the location "Always", and Live Activities. The pictures of the first three come from the Simulator. Their exact words and the moment when iOS asks them.
-- **What the iPhone shows when the 7 days end**: the app does not open, but the exact message was not checked.
-- **The team ID step (step 11)**: it reads the file that Xcode writes. It was not checked with a real Apple ID.
-
+Where to go next:
+
+- [Add your own train data key](/en/build/add-your-train-data-key/) to see live trains, and to try the app at any station without going there.
+- [Help](/en/support/) says how TROME decides when to show the Live Activity, and what the snooze and the pause do.
+- [Fix a problem with the install](/en/build/fix-an-install-problem/) lists what can go wrong on this page, and what to do.

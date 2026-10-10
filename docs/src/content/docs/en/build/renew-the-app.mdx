@@ -1,0 +1,50 @@
+---
+title: Renew the app every 7 days
+description: Install TROME again from Xcode before it stops opening, in about 5 minutes.
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Checklist from '../../../../components/Checklist.astro';
+
+With a free Apple ID, Xcode signs TROME for 7 days.
+After that, the app does not open, and its icon stays on your iPhone.
+This page installs it again for 7 more days, in about 5 minutes, and the best day to do it is a weekend, before the app stops.
+
+You need the iPhone and its cable, and the Mac where you [installed TROME](/en/build/install-on-your-iphone/), with the folder `~/trome` still there.
+You do not turn on Developer Mode or trust yourself again, and you do not delete the app first: it keeps its data and your choices.
+
+<Checklist id="iphone-renew">
+  <Steps>
+
+  1. Connect the iPhone to the Mac with the cable, and unlock the iPhone.
+
+  2. In Terminal, go to the folder of the code, create the Xcode project again, and open it:
+
+     ```sh
+     cd ~/trome
+     make generate
+     open ios/TROME.xcodeproj
+     ```
+
+     Run `make generate` each time, even when nothing changed: it keeps the project in step with the code.
+     The last line of `make generate` shows your bundle IDs, and Xcode opens the project.
+
+  3. At the top of the Xcode window, choose the scheme **TROME** and your iPhone.
+
+  4. Click **Run**, or press <kbd>Cmd</kbd> + <kbd>R</kbd>.
+     The app opens on the iPhone, and it works for 7 more days.
+
+  </Steps>
+</Checklist>
+
+To get the newest TROME at the same time, run `git pull` in `~/trome` before you create the project again.
+
+When the iPhone says **Untrusted Developer** again, do its trust steps once more, in [Run the app on your iPhone](/en/build/install-on-your-iphone/#run-the-app-on-your-iphone).
+When Xcode shows an error, look it up in [Fix a problem with the install](/en/build/fix-an-install-problem/).
+
+<Aside type="note" title="Keep the same name">
+  Renew with the same `TROME_BUNDLE_ID_PREFIX` each time.
+  A new prefix registers 2 new App IDs, and a free Apple ID can register only 10 in 7 days ([why](/en/build/install-on-your-iphone/#choose-the-name-of-your-app)).
+</Aside>

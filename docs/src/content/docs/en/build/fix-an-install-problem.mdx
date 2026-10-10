@@ -1,0 +1,126 @@
+---
+title: Fix a problem with the install
+description: Find the message that Xcode, Terminal or your iPhone shows while you install TROME, and what to do about it.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Find the message that you see, or what does not happen, in the part of [the install](/en/build/install-on-your-iphone/) where you are.
+Each entry says what to do, and where in the install to go back to.
+
+When your problem is not here, [open an issue](https://github.com/valfur03/trome/issues/new?template=bug.yml) with the step, what you see, and the message of Xcode or Terminal.
+A screenshot helps: check first that it does not show your PRIM key.
+
+## The Terminal steps fail
+
+- **`make: command not found`, or a window asks to install the command line developer tools.**
+  Click **Install**, wait for it to end, and run the command again.
+  The tools come with Xcode, so check that [Xcode is installed and opened once](/en/build/install-on-your-iphone/#get-your-mac-ready).
+- **`xcodebuild` says that Xcode is not selected, or that its license is not accepted.**
+  Run these two commands, which ask for your Mac password, then run `xcodebuild -version` again:
+
+  ```sh
+  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+  sudo xcodebuild -license accept
+  ```
+
+- **`brew: command not found` after you installed Homebrew.**
+  The end of the Homebrew install prints a **Next steps** list: run the lines it shows, then open a new Terminal window.
+- **`make setup` or `make generate` stops with `FAILED:`.**
+  The message names the setting of `ios/Config/Local.xcconfig` to fix.
+  Fix it, save the file, and run the command again.
+- **The last line of `make generate` shows `com.example` as your prefix.**
+  Your prefix is not saved: open `ios/Config/Local.xcconfig`, check the line `TROME_BUNDLE_ID_PREFIX`, save, and run `make generate` again.
+  Do it before you click **Run**, or Xcode tries to register `com.example`.
+- **The command that finds your Team ID shows nothing.**
+  Xcode did not save the team.
+  Open the project, choose the team again in **Signing & Capabilities**, and quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>, then run the command again.
+
+## Xcode will not sign the app
+
+- **You see no Personal Team in Xcode > Settings > Apple Accounts.**
+  Select your account, click **−** to remove it, and add it again.
+  Check that the Mac has the internet.
+- **Xcode shows a Set Up Signing button instead of the Team menu.**
+  Click it. In the window, choose **Your Name (Personal Team)** in the **Team** menu, and type your prefix followed by `.trome.dev` in **Bundle Identifier**, for example `io.github.janedoe.trome.dev`.
+  Then click **Set Up**.
+- **Xcode says "Signing for … requires a development team".**
+  The Team ID is not in `ios/Config/Local.xcconfig`, or you did not save the file.
+  Check the file, quit Xcode, run `make generate`, and open the project again.
+- **Xcode says that the app identifier "cannot be registered to your development team because it is not available".**
+  Someone else uses your prefix.
+  Choose another one in `ios/Config/Local.xcconfig`, quit Xcode, run `make generate`, and open the project again.
+  Each new prefix costs 2 App IDs of your 10 ([why](/en/build/install-on-your-iphone/#choose-the-name-of-your-app)).
+- **Xcode says that your team has no devices.**
+  Connect your iPhone, unlock it, and [trust the Mac](/en/build/install-on-your-iphone/#connect-the-iphone-and-turn-on-developer-mode): Xcode then registers it.
+- **Xcode says "Your maximum App ID limit has been reached" or "No profiles for … were found".**
+  Your free Apple ID registered 10 App IDs in the last 7 days.
+  Wait some days, or [reuse the App IDs that your Mac already has](/en/build/reuse-your-app-ids/).
+- **Signing & Capabilities shows an error for Release, for example a missing provisioning profile.**
+  This is on purpose: leave it.
+  Release is the build for the App Store, and Xcode never signs it for you.
+  The **Run** button builds Debug, so the app still goes on your iPhone.
+
+<Aside type="danger" title="Never turn on automatic signing for Release">
+  Never turn on **Automatically manage signing** for Release.
+  Xcode would then give the App Store ID of TROME to your free Apple ID for good, and TROME could never use it.
+</Aside>
+
+## Xcode does not see your iPhone, or Developer Mode is missing
+
+- **The iPhone does not show in Xcode.**
+  Unlock the iPhone, and try another cable: some cables carry power only.
+  Open the Device Hub from the run destination menu, and click **Pair** if you see it.
+  Restart the iPhone, then connect it again.
+- **You tapped "Don't Trust" by mistake.**
+  Unplug the cable and connect it again: the question comes again.
+  When it does not, open **Settings > General > Transfer or Reset iPhone > Reset > Reset Location & Privacy** on the iPhone.
+  This also resets the location and privacy choices of your other apps.
+- **You cannot find Developer Mode in Settings.**
+  It shows only after the iPhone has been connected to Xcode.
+  Connect the iPhone, open the project, open the Device Hub, then look again.
+- **Xcode says "Developer Mode disabled".**
+  Turn on **Developer Mode** in **Settings > Privacy & Security**, and restart the iPhone ([the steps](/en/build/install-on-your-iphone/#connect-the-iphone-and-turn-on-developer-mode)).
+- **Xcode says that the iOS platform or "device support" is not installed.**
+  Click **Get** in the message, or install it in **Xcode > Settings > Components**, and wait for the download to end.
+  Apple's help: [Downloading and installing additional Xcode components](https://developer.apple.com/documentation/xcode/downloading-and-installing-additional-xcode-components).
+- **Xcode says that the iPhone is busy or "preparing".**
+  Wait: the first time, this can take 10 minutes or more.
+
+## The app does not install, or does not open
+
+- **The app does not open the first time, or the iPhone says "Untrusted Developer".**
+  Trust yourself on the iPhone: [the steps](/en/build/install-on-your-iphone/#run-the-app-on-your-iphone).
+- **The trust screen says "Not Verified", or asks for the internet.**
+  Connect the iPhone to the internet, open the same screen, and tap **Verify App**.
+- **Xcode says that the maximum number of apps for free development has been reached.**
+  A free Apple ID allows 3 of your own apps on one iPhone.
+  Delete another app that you installed from Xcode, then click **Run** again.
+- **Xcode shows a Register button, or says that your iPhone is not registered.**
+  Open **Signing & Capabilities** and click **Register**, then click **Run** again.
+- **Xcode says "Build input file cannot be found" or "Cannot find … in scope".**
+  The Xcode project is older than the code, for example after a `git pull`.
+  Quit Xcode, run `make generate`, and open the project again.
+- **The Mac asks for your password each time you click Run.**
+  Type your Mac password and click **Always Allow**, not **Allow**.
+
+## The app stopped opening after some days
+
+The 7 days of your free Apple ID have ended.
+[Renew the app](/en/build/renew-the-app/): it takes about 5 minutes.
+
+## The app runs, but something is wrong
+
+- **The Testing tools say "Train data key: not set".**
+  Open the project of the folder `~/trome`, which holds `ios/Config/Secrets.xcconfig`, and click **Run** again.
+  When it still says "not set", choose **Product > Clean Build Folder** in Xcode, then click **Run** again.
+  [The key steps](/en/build/add-your-train-data-key/) show the file.
+- **The Live Activity shows no train times.**
+  Without a key, the app has no real times: [add your key](/en/build/add-your-train-data-key/).
+  **See an example** shows sample times with no key.
+- **The app cannot find the nearest station, the main screen shows Location as off, no notification comes near a station, or Live Activities are off.**
+  [Help](/en/support/) lists each case with its fix, for the iPhone settings of TROME.
+- **The app shows "Fake position" in orange.**
+  You turned on a fake position in the Testing tools: open them and tap **Use the real GPS**.

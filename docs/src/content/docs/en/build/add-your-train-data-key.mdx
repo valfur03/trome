@@ -1,0 +1,95 @@
+---
+title: Add your own train data key
+description: Get a free PRIM key, put it in the app that you build, and see live train times on your lock screen.
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import appTestingTools from '../../../../assets/screenshots/app-testing-tools.png';
+import Checklist from '../../../../components/Checklist.astro';
+import Screenshot from '../../../../components/Screenshot.astro';
+
+The app that you build shows no live train times until you give it a key.
+The times come from PRIM, the open data service of Île-de-France Mobilités, and PRIM gives a free key to anyone with an account.
+This page gets you a key, puts it where the app reads it, and shows live trains on your iPhone.
+
+You need TROME on your iPhone, as [Install TROME on your iPhone](/en/build/install-on-your-iphone/) shows, and the iPhone with its cable.
+
+<Aside type="caution" title="Keep your key secret">
+  The key is yours only: never send it to anyone, and never put it in a screenshot, a message or a git commit.
+  Git ignores the file where you put it, so a commit does not take it.
+  The key goes inside the app that you build with the **Run** button, which is fine for your own iPhone: do not give that app to other people.
+</Aside>
+
+## Put the key in your app
+
+<Checklist id="prim-key-iphone">
+  <Steps>
+
+  1. Create a free account on [prim.iledefrance-mobilites.fr](https://prim.iledefrance-mobilites.fr).
+
+  2. In your account on PRIM, create an API key for the API **Prochains passages - requête unitaire**, and copy it.
+
+  3. In Terminal, create the key file and open it in TextEdit:
+
+     ```sh
+     cd ~/trome
+     cp ios/Config/Secrets.example.xcconfig ios/Config/Secrets.xcconfig
+     open -e ios/Config/Secrets.xcconfig
+     ```
+
+     TextEdit shows a file with one line, `PRIM_API_KEY =`.
+
+  4. Paste your key after `PRIM_API_KEY =`, with no quotes, then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file.
+
+     ```ini
+     PRIM_API_KEY = 0123abcd
+     ```
+
+  5. Connect the iPhone and unlock it.
+     Quit Xcode if it is open, then open the project again, so that Xcode reads the file:
+
+     ```sh
+     open ios/TROME.xcodeproj
+     ```
+
+  6. In Xcode, check the scheme **TROME** and your iPhone, then click **Run**.
+     Xcode builds the app again, with your key inside, and the app opens on the iPhone.
+
+  7. In the app, tap **Testing tools** at the top right, then **Next trains of a station**.
+     At the bottom, the screen says **Train data key: set**.
+
+  </Steps>
+</Checklist>
+
+The Live Activity now shows live trains.
+PRIM limits the calls for each key and each day, and the app asks for new times every 30 seconds while it shows them: close the app and stop the Live Activity when you do not use them.
+[The train guide](https://github.com/valfur03/trome/blob/main/ios/guide/trains.md#one-call-for-each-stop-area) counts the calls of each screen.
+
+To use the key in the Simulator of your Mac instead, follow [The train data key](https://github.com/valfur03/trome/blob/main/ios/README.md#the-train-data-key-prim) in the developer guide.
+
+## Try live trains at any station, without going there
+
+The app that Xcode puts on your iPhone has a **Testing tools** screen, and the app of the App Store does not.
+It moves your position to any station, so that you can see the Live Activity of that station, with live trains, without being there.
+
+<Screenshot src={appTestingTools} alt="The Testing tools screen: the button Show the Live Activity now, the position used by the app, the button Use the real GPS, and the fake position choices." />
+
+<Checklist id="prim-key-testing-tools">
+  <Steps>
+
+  1. In the app, tap **Testing tools** at the top right.
+     Under **Fake position**, tap **Pick a station** and choose one.
+     The section **Position used by the app** shows the station, and the main screen says **Fake position** in orange.
+
+  2. Tap **Show the Live Activity now**, then lock the iPhone.
+     The lock screen shows the Live Activity of the station, with live trains.
+
+  3. When you are done, open **Testing tools** and tap **Use the real GPS**.
+     The orange **Fake position** goes away.
+
+  </Steps>
+</Checklist>
+
+[Try the app at any station, without going there](https://github.com/valfur03/trome/blob/main/ios/guide/testing-tools.md) in the developer guide shows the other tools: coordinates, an address, and the next trains of any station.

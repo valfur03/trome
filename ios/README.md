@@ -134,7 +134,9 @@ To write a new line, make its logger with `Logger(category:)` from `TROMECore`, 
 
 ## Install on your iPhone (free Apple ID)
 
-The tutorial "Install the app on your iPhone" of the docs site explains it step by step, for beginners. Run `make docs`, then open http://localhost:4321/en/build/install-on-your-iphone/. The page is `docs/src/content/docs/en/build/install-on-your-iphone.mdx`.
+The tutorial "Install TROME on your iPhone" of the docs site explains it step by step, for beginners.
+Run `make docs`, then open http://localhost:4321/en/build/install-on-your-iphone/.
+The page is `docs/src/content/docs/en/build/install-on-your-iphone.mdx`, and its folder has the how-to pages of the renew, the train data key, the App ID limit and the install problems.
 
 In short: your Team ID and a unique bundle ID prefix go in `ios/Config/Local.xcconfig` (a copy of `ios/Config/Local.example.xcconfig`, ignored by git).
 Run `make generate`, open the project `ios/TROME.xcodeproj` in Xcode, choose the scheme `TROME` and your iPhone, and click Run.
@@ -147,7 +149,7 @@ Only the Release builds (for the App Store) carry `io.github.valfur03.trome` and
 So Xcode can show an error for Release in Signing & Capabilities: leave it, and never turn on "Automatically manage signing" for Release, or Xcode registers the App Store ID to your Apple ID.
 `make bundle-id-check` (part of `make check`) checks both.
 A free Apple ID registers at most 10 bundle IDs in 7 days, and each one expires after 7 days.
-When Xcode says "Your maximum App ID limit has been reached" or "No profiles for ... were found", wait, or reuse two bundle IDs that Xcode already registered on your Mac: the tutorial shows the command that lists them, with the date when each one expires.
+When Xcode says "Your maximum App ID limit has been reached" or "No profiles for ... were found", wait, or reuse two bundle IDs that Xcode already registered on your Mac: the page "Reuse the App IDs that your Mac already has" of the docs site shows the command that lists them, with the date when each one expires.
 To reuse them, set `TROME_DEBUG_APP_BUNDLE_ID` and `TROME_DEBUG_WIDGET_BUNDLE_ID` in `ios/Config/Local.xcconfig` (see `ios/Config/Local.example.xcconfig`), then run `make generate`.
 `make generate` then prints the two bundle IDs that Xcode will use: check them before you click Run, because a mistyped setting name is ignored.
 They are the full bundle IDs of your Debug builds, written as is, and the ID of the Live Activity must start with the ID of the app and a dot; with only the first one set, the Live Activity gets the app ID followed by `.widget`.

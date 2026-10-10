@@ -1,0 +1,102 @@
+---
+title: Reuse the App IDs that your Mac already has
+description: When Xcode says the App ID limit is reached, install TROME under two App IDs that your Apple ID already registered.
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Checklist from '../../../../components/Checklist.astro';
+
+A free Apple ID can register 10 App IDs in 7 days, and TROME uses 2 for each new name ([what an App ID is](/en/build/install-on-your-iphone/#choose-the-name-of-your-app)).
+When Xcode says **Your maximum App ID limit has been reached** or **No profiles for … were found**, you have two ways out: wait until a place frees up, or install TROME under two App IDs that your Apple ID registered before.
+This page shows the second way, which works the same day.
+
+You need the Mac where Xcode registered those App IDs, with the folder `~/trome` as [the install](/en/build/install-on-your-iphone/) made it.
+Each App ID expires 7 days after Xcode registered it, so the list below tells you which ones you can still use.
+
+<Checklist id="iphone-reuse-bundle-ids">
+  <Steps>
+
+  1. In Terminal, list the App IDs that Xcode registered on this Mac, with the date (UTC) when each one expires:
+
+     ```sh
+     for f in ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision; do
+       security cms -D -i "$f" | plutil -extract ExpirationDate raw -o - - | tr '\n' ' '
+       security cms -D -i "$f" | plutil -extract Entitlements.application-identifier raw -o - - | sed 's/^[A-Z0-9]*\.//'
+     done | sort
+     ```
+
+     It shows one line for each App ID, with no Team ID:
+
+     ```text
+     2026-10-04T08:27:57Z io.github.janedoe.oldapp
+     ```
+
+     Older versions of Xcode keep these files in this folder instead:
+
+     ```text
+     ~/Library/MobileDevice/Provisioning\ Profiles
+     ```
+
+     When the command shows an error, write this folder in place of the folder of its first line.
+
+  2. Choose two IDs of the list whose date has not passed: one for the app, and one for its lock screen part.
+     The ID of the lock screen part must start with the ID of the app and a dot, for example `io.github.janedoe.oldapp` and `io.github.janedoe.oldapp.Widget`: iOS installs the lock screen part only inside an app whose ID starts its own.
+
+  3. Quit Xcode with <kbd>Cmd</kbd> + <kbd>Q</kbd>.
+     In Terminal, open your settings file:
+
+     ```sh
+     cd ~/trome
+     open -e ios/Config/Local.xcconfig
+     ```
+
+  4. Add these two lines with your two IDs, written exactly as the list shows them, capitals included.
+     Then save (<kbd>Cmd</kbd> + <kbd>S</kbd>) and close the file.
+
+     ```ini
+     TROME_DEBUG_APP_BUNDLE_ID = io.github.janedoe.oldapp
+     TROME_DEBUG_WIDGET_BUNDLE_ID = io.github.janedoe.oldapp.Widget
+     ```
+
+  5. In Terminal, create the project again:
+
+     ```sh
+     make generate
+     ```
+
+     Its last line shows the two IDs that Xcode will use:
+
+     ```text
+     Debug bundle IDs: app io.github.janedoe.oldapp, Live Activity io.github.janedoe.oldapp.Widget
+     ```
+
+     Do not click **Run** before this line shows your two IDs exactly.
+     Xcode ignores a line with a wrong setting name and says nothing, and then it registers a new ID.
+     When an ID is not the one that you wrote, check the setting name at the start of its line, fix the file, save it, and run `make generate` again.
+     When the command says `FAILED` and names the Debug ID of the extension, your two IDs do not go together: choose them again, so that the lock screen part starts with the app ID and a dot.
+
+  6. Open the project, choose the scheme **TROME** and your iPhone, and click **Run**:
+
+     ```sh
+     open ios/TROME.xcodeproj
+     ```
+
+     The app opens on the iPhone, and it replaces an older app with the same ID.
+
+  7. Run the command that lists the App IDs again.
+     The latest date shown for the ID of your app is the day when the app stops opening.
+
+  </Steps>
+</Checklist>
+
+When an ID of your two lines has expired by the time you click **Run**, Xcode registers it again, and it takes a place again.
+To go back to the usual names, remove the two lines from your settings file and run `make generate` again.
+
+<Aside type="danger" title="Never the App Store ID">
+  Never put `io.github.valfur03.trome` or `io.github.valfur03.trome.widget` in these lines, in any capitals.
+  They are the IDs of TROME on the App Store: a free Apple ID that signs them takes them for good, and TROME could then never use them.
+  `make generate` refuses them.
+  When you click **Run** without `make generate`, Xcode shows an ID that starts with `SHIPPING_ID_REFUSED`, and Apple does not register it: remove the line and run `make generate`.
+</Aside>
