@@ -133,6 +133,10 @@ expect "make docs-screenshots checks the wallpaper before its build and its wait
     "$(sed -n '/^docs-screenshots:/{n;p;}' "$makefile")" "	@./scripts/wallpaper.sh check"
 expect "the docs script checks it again under the lock, before any picture" \
     "$(grep -c '^"$scripts/wallpaper.sh" check "$udid"$' "$scripts/docs-screenshots.sh")" "1"
+expect "make store-screenshots checks the wallpaper before its build and its wait for the lock" \
+    "$(sed -n '/^store-screenshots:/{n;p;}' "$makefile")" "	@./scripts/wallpaper.sh check"
+expect "the store script checks it again under the lock, before any capture" \
+    "$(grep -c '^    "$scripts/wallpaper.sh" check "$udid"$' "$scripts/store-screenshots.sh")" "1"
 
 if [ "$failures" -gt 0 ]; then
     echo "$failures failure(s)"

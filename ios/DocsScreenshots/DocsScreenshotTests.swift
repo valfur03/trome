@@ -32,14 +32,16 @@ final class DocsScreenshotTests: XCTestCase {
         )
     ]
 
-    private static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
-    private static let allowLiveActivitiesAnswers = ["Always Allow", "Toujours autoriser", "Allow", "Autoriser"]
-
     private let timeout: TimeInterval = 30
 
     @MainActor
+    private var steps: ScreenshotSteps {
+        ScreenshotSteps()
+    }
+
+    @MainActor
     private var springboard: XCUIApplication {
-        XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        steps.springboard
     }
 
     private var language: String {
@@ -91,15 +93,15 @@ final class DocsScreenshotTests: XCTestCase {
     private func takeTheScreenshotsOfTheLiveActivity() {
         let app = XCUIApplication()
         app.launchArguments += ["--reset-location-source", "--fake-trains", "--end-live-activity"]
-        XCUIDevice.shared.location = XCUILocation(location: Self.farFromAnyStation)
+        XCUIDevice.shared.location = XCUILocation(location: ScreenshotSteps.farFromAnyStation)
         app.launch()
-        turnOnTheAutomaticMode(in: app)
+        steps.turnOnTheAutomaticMode(in: app)
 
         for screenshot in Self.liveActivityScreenshots {
-            showTheLiveActivity(of: screenshot, in: app)
+            steps.showTheLiveActivity(of: screenshot.station, at: screenshot.position, in: app)
             XCUIDevice.shared.press(.home)
-            openNotificationCenter()
-            waitForTheLiveActivity(of: screenshot)
+            steps.openNotificationCenter()
+            steps.waitForTheLiveActivity(of: screenshot.station, showing: screenshot.destinations)
             saveStillScreenshot(named: "\(screenshot.name)-\(language)")
             XCUIDevice.shared.press(.home)
             if screenshot.savesTheIsland {
@@ -111,95 +113,8 @@ final class DocsScreenshotTests: XCTestCase {
                 settings.terminate()
             }
             app.activate()
-            stopTheLiveActivity(in: app)
+            steps.stopTheLiveActivity(in: app)
         }
-    }
-
-    @MainActor
-    private func turnOnTheAutomaticMode(in app: XCUIApplication) {
-        let toggle = app.switches["automaticModeToggle"]
-        XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
-        if toggle.value as? String == "0" {
-            toggle.switches.firstMatch.tap()
-        }
-        let cancelSnooze = app.buttons["cancelSnooze"]
-        if cancelSnooze.exists {
-            cancelSnooze.tap()
-        }
-        XCTAssertTrue(app.buttons["snoozeMenu"].waitForExistence(timeout: timeout), "The automatic mode is not on")
-        XCTAssertTrue(shownStation(in: app).waitForNonExistence(timeout: timeout), "A Live Activity still shows")
-    }
-
-    @MainActor
-    private func shownStation(in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts["liveActivityStationName"]
-    }
-
-    @MainActor
-    private func showTheLiveActivity(of screenshot: LiveActivityScreenshot, in app: XCUIApplication) {
-        XCUIDevice.shared.location = XCUILocation(location: screenshot.position)
-        let station = shownStation(in: app)
-        XCTAssertTrue(
-            waitUntil { station.exists && station.label.contains(screenshot.station) },
-            "The Live Activity of \(screenshot.station) did not start with the app open at the station"
-        )
-    }
-
-    @MainActor
-    private func stopTheLiveActivity(in app: XCUIApplication) {
-        XCUIDevice.shared.location = XCUILocation(location: Self.farFromAnyStation)
-        XCTAssertTrue(
-            shownStation(in: app).waitForNonExistence(timeout: timeout),
-            "The Live Activity did not end when the phone left the station"
-        )
-    }
-
-    @MainActor
-    private func waitForTheLiveActivity(of screenshot: LiveActivityScreenshot) {
-        let liveActivity = springboard.otherElements["activity-content-view"]
-        XCTAssertTrue(
-            liveActivity.waitForExistence(timeout: timeout),
-            "No Live Activity showed in the Notification Center"
-        )
-        let allowLiveActivities = springboard.buttons
-            .matching(NSPredicate(format: "label IN %@", Self.allowLiveActivitiesAnswers))
-            .firstMatch
-        if allowLiveActivities.waitForExistence(timeout: 3) {
-            allowLiveActivities.tap()
-            XCTAssertTrue(
-                allowLiveActivities.waitForNonExistence(timeout: timeout),
-                "The question to allow Live Activities stayed on the lock screen"
-            )
-        }
-        for text in [screenshot.station] + screenshot.destinations {
-            let element = liveActivity.descendants(matching: .any)
-                .matching(NSPredicate(format: "label CONTAINS %@", text))
-                .firstMatch
-            XCTAssertTrue(
-                element.waitForExistence(timeout: timeout),
-                "The Live Activity of \(screenshot.station) does not show \(text)"
-            )
-        }
-    }
-
-    @MainActor
-    private func openNotificationCenter() {
-        let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.001))
-        let middle = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.7))
-        top.press(forDuration: 0.1, thenDragTo: middle)
-        XCTAssertTrue(springboard.otherElements["lockscreen-date-view"].waitForExistence(timeout: timeout))
-    }
-
-    @MainActor
-    private func waitUntil(_ condition: () -> Bool) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if condition() {
-                return true
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        return condition()
     }
 
     @MainActor
@@ -209,16 +124,7 @@ final class DocsScreenshotTests: XCTestCase {
 
     @MainActor
     private func saveStillScreenshot(named name: String) {
-        var screenshot = XCUIScreen.main.screenshot()
-        let deadline = Date().addingTimeInterval(5)
-        while Date() < deadline {
-            let next = XCUIScreen.main.screenshot()
-            if next.pngRepresentation == screenshot.pngRepresentation {
-                break
-            }
-            screenshot = next
-        }
-        save(screenshot, named: name)
+        save(steps.stillScreenshot(), named: name)
     }
 
     @MainActor

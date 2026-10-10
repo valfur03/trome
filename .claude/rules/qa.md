@@ -29,5 +29,5 @@ So French is the main language of QA.
   The "Testing tools" screen, the "Testing tools" link and the "Fake position" banner of the main screen (debug builds only) stay in English: this is not a bug.
 - The system popups (for example "Autoriser une fois") come from iOS in the language of the Simulator.
   Only their explanation text comes from the app.
-- `make e2e` and `make docs-screenshots` put the Simulator back in English by themselves.
+- `make e2e`, `make docs-screenshots` and `make store-screenshots` put the Simulator back in English by themselves.
 - **Screenshots.** Look at each screenshot once, write what it shows in your QA notes, and do not read the same picture again unless the screen changed: each picture that you read stays in the context of every later call.

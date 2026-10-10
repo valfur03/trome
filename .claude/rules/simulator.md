@@ -4,7 +4,7 @@ paths:
   - "ios/scripts/simulator.sh"
   - "ios/scripts/tests/sim-lock-test.sh"
 commands:
-  - '^(\S*/)?make\b.*\s(run|e2e|docs-screenshots|live-activity-render|switch-language|merge|simulator-delete|simulator-delete-old|simulator-wallpaper)(\s|$)'
+  - '^(\S*/)?make\b.*\s(run|e2e|docs-screenshots|store-screenshots|live-activity-render|switch-language|merge|simulator-delete|simulator-delete-old|simulator-wallpaper)(\s|$)'
   - '^\S*sim-lock\.sh(\s|$)'
   - '^\S*simulator\.sh(\s|$)'
   - '^xcrun\b.*\ssimctl\b'
@@ -13,7 +13,7 @@ commands:
 ---
 # The shared Simulator and its lock
 
-These rules are for every job that boots or uses a Simulator: `make run`, `make e2e`, `make docs-screenshots`, `make simulator-wallpaper`, `make live-activity-render`, `make merge`, and any command through `ios/scripts/sim-lock.sh`.
+These rules are for every job that boots or uses a Simulator: `make run`, `make e2e`, `make docs-screenshots`, `make store-screenshots`, `make simulator-wallpaper`, `make live-activity-render`, `make merge`, and any command through `ios/scripts/sim-lock.sh`.
 The two rules above them, never a second Simulator and at most one Simulator job, are in `CLAUDE.md`.
 
 **The code of the second slot (decided against on this Mac):** `ios/scripts/sim-lock.sh` keeps the code of a second slot, but off (`slots=${RATP_SIM_SLOTS:-1}`).
@@ -87,8 +87,8 @@ The wait can be long, so run these commands in the background.
   With `xcodebuild`, put `ios/scripts/simulator.sh with-destination` before it, and add `-project ios/TROME.xcodeproj`: it adds the `-destination` of the Simulator of the job.
   Never name the Simulator (`name=RATP-Shared`), so the command still works when the second slot is on.
 
-`make docs-screenshots` is a Simulator job too: it takes the lock, like `make e2e`, and frees it when the tests end.
-Its pictures show the wallpaper of `ios/DocsScreenshots/Wallpaper.swift`, which the shared Simulator keeps: `make simulator-wallpaper` sets it once, through the lock, and does nothing when it is already set.
+`make docs-screenshots` and `make store-screenshots` are Simulator jobs too: they take the lock, like `make e2e`, and free it when the tests end.
+Their pictures show the wallpaper of `ios/DocsScreenshots/Wallpaper.swift`, which the shared Simulator keeps: `make simulator-wallpaper` sets it once, through the lock, and does nothing when it is already set.
 A picture command never adds or deletes a wallpaper: it checks it on disk (`ios/scripts/wallpaper.sh check`), and stops at once when it is missing.
 Why: the Simulator has no command for a wallpaper, so it is set by taps in the wallpaper editor, and the delete by taps at the end of each run failed in three runs of five and left a stray wallpaper (TASK-311, decision-76).
 A job reset keeps the wallpaper; a new or erased Simulator does not, so run `make simulator-wallpaper` again after `make simulator-delete`.
@@ -108,7 +108,7 @@ The lock frees itself when its job dies, when its worktree is removed, or when t
 
 ## The records of the Simulator time
 
-Each Simulator job adds one line to `~/Library/Logs/TROME/simulator-jobs.tsv` when it frees the Simulator: when it asked, its kind (`merge`, `e2e`, `run`, `docs-screenshots`, `live-activity-render`, or `job` for a command through `sim-lock.sh job`), its wait, its hold, the part of the hold that its test run waited for builds, how it ended, the folder and the branch.
+Each Simulator job adds one line to `~/Library/Logs/TROME/simulator-jobs.tsv` when it frees the Simulator: when it asked, its kind (`merge`, `e2e`, `run`, `docs-screenshots`, `store-screenshots`, `live-activity-render`, or `job` for a command through `sim-lock.sh job`), its wait, its hold, the part of the hold that its test run waited for builds, how it ended, the folder and the branch.
 A `make run` adds its line at `make simulator-shutdown`, so its hold counts the whole session.
 Each wait of the build gate adds a line to `~/Library/Logs/TROME/build-waits.tsv`.
 `make simulator-times` sums them up by kind (`SINCE=2026-10-08` for a part).
@@ -121,7 +121,7 @@ Every job that uses the Simulator (`make run`, `make e2e`, `make docs-screenshot
 
 - **Prepare first.** Read, plan and build before you take the Simulator.
   `make e2e` already builds before it takes the lock.
-- **Free it right after the check.** `make e2e` and `make docs-screenshots` free the lock by themselves when the tests end.
+- **Free it right after the check.** `make e2e`, `make docs-screenshots` and `make store-screenshots` free the lock by themselves when the tests end.
   After `make run`, run `make simulator-shutdown` as soon as your check by hand is done, not at the end of your job.
 - **Never hold it while you do something else.** Do not keep the lock while you think, fix code, write notes or wait for another job.
   To check again after a fix, run `make run` again: another job may use the Simulator in the meantime.

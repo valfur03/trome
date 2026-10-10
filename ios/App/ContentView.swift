@@ -5,6 +5,9 @@ struct ContentView: View {
     let nearestStationModel: NearestStationModel
     let permissions: PermissionsModel
     let primConfiguration: PRIMConfiguration?
+    #if DEBUG
+    var showsTestingToolsLink = true
+    #endif
 
     @Environment(LocationService.self) private var locationService
     @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
@@ -51,11 +54,16 @@ struct ContentView: View {
             .background(NightLook.page.ignoresSafeArea())
             #if DEBUG
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink("Testing tools") {
-                        TestingToolsView(nearestStationModel: nearestStationModel, primConfiguration: primConfiguration)
+                if showsTestingToolsLink {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink("Testing tools") {
+                            TestingToolsView(
+                                nearestStationModel: nearestStationModel,
+                                primConfiguration: primConfiguration
+                            )
+                        }
+                        .accessibilityIdentifier("testingTools")
                     }
-                    .accessibilityIdentifier("testingTools")
                 }
             }
             #endif

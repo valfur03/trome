@@ -14,6 +14,8 @@ E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := TROMEDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
 WALLPAPER_RESULT := $(BUILD_DIR)/simulator-wallpaper.xcresult
+STORE_SCREENSHOTS_RESULT := $(BUILD_DIR)/store-screenshots.xcresult
+STORE_COMPOSER := $(BUILD_DIR)/store-screenshots-compose
 RENDER_SCHEME := TROMERenderCheck
 RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
@@ -93,7 +95,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -133,6 +135,8 @@ help:
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
 	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock); a failed run keeps its evidence, as make e2e does"
+	@echo "make store-screenshots   Make the store pictures, in English and French, from captures of the shared Simulator (takes the Simulator lock), in ios/.build/store-screenshots/"
+	@echo "make store-screenshots-compose  Make the store pictures again from the last captures, with no Simulator"
 	@echo "make live-activity-render  Draw the Live Activity views for every station and page, in French, and list the too tall ones, the cut texts and the breaches of the cut rules (takes the Simulator lock; not in the gate)"
 	@echo "make live-activity-render ENGLISH=1  Same, in French, then in English"
 
@@ -279,6 +283,21 @@ clean-shared-cache:
 
 merge:
 	@./scripts/merge.sh
+
+store-screenshots: project
+	@./scripts/wallpaper.sh check
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/store-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@RATP_SIM_KIND=store-screenshots $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
+		$(QUIET) $(LOGS)/store-screenshots.log '^Captured ' ./scripts/store-screenshots.sh capture $(STORE_SCREENSHOTS_RESULT) $(LOGS)/store-screenshots.log "$(APP_PATH)" \
+		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
+		-parallel-testing-enabled NO -collect-test-diagnostics never \
+		-test-timeouts-enabled YES -default-test-execution-time-allowance 300
+	@$(MAKE) --no-print-directory store-screenshots-compose
+
+store-screenshots-compose:
+	@mkdir -p $(LOGS)
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/store-screenshots-composer-build.log '' swiftc -O scripts/store-screenshots-compose.swift -o $(STORE_COMPOSER)
+	@./scripts/store-screenshots.sh compose $(STORE_COMPOSER)
 
 live-activity-render: project
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/live-activity-render-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing

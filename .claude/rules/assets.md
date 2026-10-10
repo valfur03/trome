@@ -7,6 +7,8 @@ paths:
   - "ios/Config/Base.xcconfig"
   - "ios/DocsScreenshots/**"
   - "ios/scripts/docs-screenshots.sh"
+  - "ios/scripts/store-screenshots.sh"
+  - "ios/scripts/store-screenshots-compose.swift"
   - "ios/guide/assets.md"
   - "docs/src/content/**"
   - "docs/src/assets/**"

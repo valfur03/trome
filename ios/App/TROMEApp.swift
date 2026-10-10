@@ -78,11 +78,7 @@ struct TROMEApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(
-                nearestStationModel: nearestStationModel,
-                permissions: permissionsModel,
-                primConfiguration: primConfiguration
-            )
+            mainScreen
             .environment(locationService)
             .environment(currentStationModel)
             .environment(nextTrainsModel)
@@ -95,6 +91,18 @@ struct TROMEApp: App {
             .environment(regionWatcher.wakeLog)
             #endif
         }
+    }
+
+    private var mainScreen: ContentView {
+        var screen = ContentView(
+            nearestStationModel: nearestStationModel,
+            permissions: permissionsModel,
+            primConfiguration: primConfiguration
+        )
+        #if DEBUG
+        screen.showsTestingToolsLink = TestingToolsLink.isShown(launchArguments: ProcessInfo.processInfo.arguments)
+        #endif
+        return screen
     }
 
     private static func loadStationCatalog() -> StationCatalog {
