@@ -28,6 +28,7 @@ I am Valentin Furmanek, and I make TROME.
 - **Check that TROME can use your location.**
   Without it, TROME cannot tell which station you are near.
   Open **Settings > Apps > TROME > Location**, and choose **Always** or **While Using the App**.
+  **Precise Location** must also be on: [see why](#trome-does-not-start-near-a-station-or-picks-the-wrong-station).
 - **Go near a station.**
   The Live Activity starts about 150 meters from a metro or RER station.
   It ends when you move more than 250 meters away, or 45 minutes after it started.
@@ -36,6 +37,14 @@ I am Valentin Furmanek, and I make TROME.
   If it says **Snoozed**, tap **Cancel the snooze**, or wait until the time that it shows.
 
 The Live Activity shows on the lock screen and in the Notification Center, and in the Dynamic Island on an iPhone that has one.
+
+## TROME does not start near a station, or picks the wrong station
+
+Open **Settings > Apps > TROME > Location**, and turn on **Precise Location**.
+
+With approximate location, iOS does not let an app watch for your arrival near a place.
+The Live Activity may then not start by itself, and the nearest station may be the wrong one.
+I have not tried this setting on an iPhone yet: if the problem stays after you turn it on, write to me at <Contact />.
 
 ## Nothing comes when TROME is closed
 
@@ -60,6 +69,14 @@ This happens when iOS stops TROME in the background, or when the iPhone has no i
 
 Open TROME: the app asks for new times at once.
 If nothing changes, check that the iPhone is connected to the internet.
+Away from Wi-Fi, see also [cellular data](#the-times-stop-updating-away-from-wi-fi).
+
+## The times stop updating away from Wi-Fi
+
+Open **Settings > Apps > TROME**, and turn on **Cellular Data**.
+
+Without it, TROME cannot ask for new times when the iPhone is not on Wi-Fi.
+Then open TROME: the app asks for new times at once.
 
 ## “Times unavailable”
 

@@ -28,6 +28,7 @@ Je suis Valentin Furmanek, et je développe TROME.
 - **Vérifiez que TROME peut utiliser votre position.**
   Sans elle, TROME ne sait pas de quelle station vous êtes proche.
   Ouvrez **Réglages > Apps > TROME > Position**, et choisissez **Toujours** ou **Lorsque l’app est active**.
+  **Position exacte** doit aussi être activée : [voyez pourquoi](#trome-ne-démarre-pas-près-dune-station-ou-se-trompe-de-station).
 - **Approchez-vous d’une station.**
   L’activité en direct démarre à environ 150 mètres d’une station de métro ou de RER.
   Elle s’arrête quand vous vous éloignez de plus de 250 mètres, ou 45 minutes après son début.
@@ -36,6 +37,14 @@ Je suis Valentin Furmanek, et je développe TROME.
   S’il est **En pause**, touchez **Annuler la pause**, ou attendez l’heure de reprise affichée.
 
 L’activité en direct s’affiche sur l’écran verrouillé et dans le Centre de notifications, et dans la Dynamic Island sur les iPhone qui en ont une.
+
+## TROME ne démarre pas près d’une station, ou se trompe de station
+
+Ouvrez **Réglages > Apps > TROME > Position**, et activez **Position exacte**.
+
+Avec la position approximative, iOS ne laisse pas une app surveiller votre arrivée près d’un lieu.
+L’activité en direct peut alors ne pas démarrer toute seule, et la station la plus proche peut être la mauvaise.
+Je n’ai pas encore essayé ce réglage sur un iPhone : si le problème reste après l’avoir activé, écrivez-moi à <Contact />.
 
 ## Rien ne vient quand TROME est fermé
 
@@ -60,6 +69,14 @@ Cela arrive quand iOS arrête TROME en arrière-plan, ou quand l’iPhone n’a 
 
 Ouvrez TROME : l’app demande de nouveaux horaires tout de suite.
 Si rien ne change, vérifiez que l’iPhone est connecté à internet.
+Hors du Wi-Fi, voyez aussi [les données cellulaires](#les-horaires-ne-se-mettent-plus-à-jour-hors-du-wi-fi).
+
+## Les horaires ne se mettent plus à jour hors du Wi-Fi
+
+Ouvrez **Réglages > Apps > TROME**, et activez **Données cellulaires**.
+
+Sans elles, TROME ne peut pas demander de nouveaux horaires quand l’iPhone n’est pas connecté au Wi-Fi.
+Ensuite, ouvrez TROME : l’app demande de nouveaux horaires tout de suite.
 
 ## « Horaires indisponibles »
 
