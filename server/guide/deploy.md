@@ -84,6 +84,8 @@ The token reads only totals, with no stop and no identifier: a leaked token show
 Prometheus only makes outgoing calls, so nothing opens at your home.
 
 1. Put the owner token, alone on one line, in a file that your secret store writes on the Prometheus host, for example `/run/secrets/trome_owner_token`: never in `prometheus.yml` or in git.
+   The user that runs Prometheus must be able to read this file: it is `nobody` (user 65534) in the `prom/prometheus` image.
+   A Docker Compose secret (`file:`) keeps the owner and the mode of the host file, so a file that only root can read makes the job `DOWN` with a permission error on the credentials file.
 2. Mount that file in the Prometheus container, at the same path.
 3. Add this job under `scrape_configs:` in `prometheus.yml`:
 
@@ -98,7 +100,9 @@ Prometheus only makes outgoing calls, so nothing opens at your home.
    ```
 
 4. Add `--storage.tsdb.retention.time=400d` to the command of Prometheus: about 13 months, as its default of 15 days is shorter than the server's 30 days.
-5. Restart Prometheus, then open its Targets page: the `trome` job shows `UP`.
+5. Recreate Prometheus, so that it takes the new mount, flag and job: with Docker Compose, run `docker compose up -d`, with `--build` when your image copies `prometheus.yml`.
+   `docker compose restart` applies none of them.
+   Then open its Targets page: the `trome` job shows `UP`.
 6. Query `trome_app_calls_previous_day`: it gives the app calls of yesterday, the same as yesterday's line of `make server-counts`.
 
 Use 2 minutes: on a day where every PRIM call fails, one scrape a minute would read about a quarter of the SQLite rows that the Free plan allows each day, and beyond about 5 minutes Prometheus draws gaps.
