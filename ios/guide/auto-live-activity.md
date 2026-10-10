@@ -12,6 +12,7 @@ The code is in `ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity/`, and
 | You want to change | Look in | Its tests |
 |---|---|---|
 | Arrival, switch, stop, the 45 minutes | `AutoLiveActivityRules.decide`; `AutoLiveActivityModel` applies the answer | `AutoLiveActivityRulesTests*`, `AutoLiveActivityModelTests` |
+| A wake by iOS for the area of a station | `ReportedArrivalRules`, `AutoLiveActivityModel+ReportedArrival` | `ReportedArrivalRulesTests`, `AutoLiveActivityRestartTests` |
 | Snooze, the switch, the buttons | `AutomaticMode`, `AutomaticModeModel`, `SnoozeLiveActivityIntent` | `AutomaticMode*Tests`, `AutoLiveActivitySnoozeTests` |
 | The pause after a swipe | `AutoLiveActivityRules.outcome(of:shown:now:)`, `StationPause`, `AutoLiveActivityModel+Pause`; `ActivityKitStationLiveActivityClient` (`ios/App/LiveActivity/`) reports each end, and whether the app ended it | `AutoLiveActivityRemovalRulesTests`, `AutoLiveActivityPauseTests` |
 | The position of a resume | `ResumePositionRules`, `AutoLiveActivityModel+Resume` | `ResumePositionRulesTests`, `AutoLiveActivityRiderResumeTests` |
@@ -30,6 +31,7 @@ The values that a change often needs are constants:
 | 1 hour of pause | `StationPause.duration` |
 | 30 minutes, 1 hour and the rest of the day of a snooze | `SnoozeDuration` |
 | 5 seconds of wait for a position when the rider resumes | `ResumePositionRules.maximumWait` |
+| 10 seconds of wait for a position when iOS says that the phone entered the area of a station | `ReportedArrivalRules.maximumWait` |
 | 20 seconds of wait for the second location question | `LocationQuestionsRules.alwaysQuestionTimeout` |
 | 20 regions, 100 meters before the app chooses them again | `StationRegionPlan.maximumRegions`, `replanDistanceMeters` |
 
@@ -55,6 +57,8 @@ A fake position is always trusted.
 | The same station again | Nothing, until the rider leaves the station and comes back |
 
 Each arrival gives at most one notification and one automatic start.
+When iOS wakes the app because the phone entered the area of a station, the app does not take that as an arrival: iOS also says so when it is wrong, for example for many stations at once after the phone restarts.
+It decides on its last position, or asks iOS for a new one and waits up to 10 seconds for it; with no trusted position within 150 meters (250 meters for the station of that area), nothing comes, and the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) says why.
 For its next arrival, a station counts as left when a trusted position is more than 250 meters from it, or when iOS says that the phone left its stop area, even with no position.
 An arrival that waits behind a system popup is not done until the app acts on it: if iOS closes the app first, the notification or the start comes once, when the app runs again at that station.
 A Live Activity that you start by hand ([Testing tools](testing-tools.md#show-or-stop-the-live-activity-by-hand)) follows the same stop rules, and the 45 minutes apply to every Live Activity.

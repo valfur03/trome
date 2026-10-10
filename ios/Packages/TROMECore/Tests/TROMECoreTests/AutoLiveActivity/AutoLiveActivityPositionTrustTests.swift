@@ -124,8 +124,9 @@ extension AutoLiveActivityModelTests {
         #expect(model.shownStation == Places.stationA)
     }
 
-    @Test func notifiesOnEnteringAnArrivalAreaWithARoughPosition() async {
+    @Test func notifiesOnEnteringAnArrivalAreaWithARoughPositionOnceIOSGivesAPositionThere() async {
         let model = makeModel()
+        gps.currentFixCoordinate = Places.fiftyMetersFromA
 
         await model.handleRegionEvent(.entered(regionId: "arrival:a"), lastKnownFix: roughFix(at: Places.atB))
 

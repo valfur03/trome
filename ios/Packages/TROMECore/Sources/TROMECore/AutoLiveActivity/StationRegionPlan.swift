@@ -47,24 +47,12 @@ public struct WatchedRegion: Hashable, Sendable {
         return String(id.dropFirst(arrivalPrefix.count))
     }
 
-    static func fix(
-        afterEnteringRegionId id: String?,
-        lastKnownFix: PositionFix?,
-        now: Date,
-        catalog: StationCatalog
-    ) -> PositionFix? {
-        let maximumAge = AutoLiveActivityRules.maximumMonitoredPositionAge
-        let recentFix = lastKnownFix.flatMap { now.timeIntervalSince($0.timestamp) <= maximumAge ? $0 : nil }
-        guard let stationId = id.flatMap(arrivalStationId(inRegionId:)),
-              let station = catalog.station(withId: stationId) else {
-            return recentFix
+    /// The position to decide a wake on, other than a report of arrival (`ReportedArrivalRules`): the last one,
+    /// when it is at most 2 minutes old.
+    static func recentFix(_ lastKnownFix: PositionFix?, now: Date) -> PositionFix? {
+        lastKnownFix.flatMap {
+            now.timeIntervalSince($0.timestamp) <= AutoLiveActivityRules.maximumMonitoredPositionAge ? $0 : nil
         }
-        if let recentFix,
-           AutoLiveActivityRules.trusts(recentFix, now: now, maximumAge: maximumAge),
-           recentFix.coordinate.distance(to: station.coordinate) <= AutoLiveActivityRules.arrivalRadiusMeters {
-            return recentFix
-        }
-        return PositionFix(coordinate: station.coordinate, accuracyMeters: 0, timestamp: now)
     }
 }
 

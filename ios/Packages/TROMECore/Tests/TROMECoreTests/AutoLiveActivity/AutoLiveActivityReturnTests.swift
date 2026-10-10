@@ -9,6 +9,7 @@ extension AutoLiveActivityModelTests {
 
     private func comeBack(to model: AutoLiveActivityModel) async {
         let rough = PositionFix(coordinate: Places.atB, accuracyMeters: 1_000, timestamp: clock.now - 600)
+        gps.currentFixCoordinate = Places.fiftyMetersFromA
         await model.handleRegionEvent(.entered(regionId: "arrival:a"), lastKnownFix: rough)
     }
 

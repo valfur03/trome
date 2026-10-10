@@ -10,6 +10,8 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     private var lastCoordinate: Coordinate?
     private var heldRequests: [CheckedContinuation<PositionFix?, Never>] = []
     var givesACurrentFix = true
+    /// Where a request for the current position puts the phone, when it differs from the last reported position.
+    var currentFixCoordinate: Coordinate?
     var holdsTheCurrentFixRequest = false
 
     init(now: @escaping @Sendable () -> Date = { Date() }) {
@@ -50,8 +52,8 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
     }
 
     private func freshFix() -> PositionFix? {
-        guard givesACurrentFix, let lastCoordinate else { return nil }
-        return PositionFix(coordinate: lastCoordinate, accuracyMeters: 0, timestamp: now())
+        guard givesACurrentFix, let coordinate = currentFixCoordinate ?? lastCoordinate else { return nil }
+        return PositionFix(coordinate: coordinate, accuracyMeters: 0, timestamp: now())
     }
 
     func report(_ problem: LocationProblem) {

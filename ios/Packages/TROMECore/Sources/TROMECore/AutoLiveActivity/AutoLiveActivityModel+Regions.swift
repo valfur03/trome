@@ -12,13 +12,12 @@ extension AutoLiveActivityModel {
                 logsEveryOutcome: true
             )
         }
-        let fix = WatchedRegion.fix(
-            afterEnteringRegionId: event.enteredRegionId,
-            lastKnownFix: lastKnownFix,
-            now: configuration.now(),
-            catalog: catalog
-        )
-        guard let fix else {
+        if let station = event.enteredRegionId.flatMap(WatchedRegion.arrivalStationId(inRegionId:))
+            .flatMap(catalog.station(withId:)) {
+            await handleArrival(reportedAt: station, lastKnownFix: lastKnownFix)
+            return
+        }
+        guard let fix = WatchedRegion.recentFix(lastKnownFix, now: configuration.now()) else {
             logNoRecentPosition(lastKnownFix)
             return
         }

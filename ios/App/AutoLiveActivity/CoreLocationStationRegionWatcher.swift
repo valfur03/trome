@@ -1,6 +1,7 @@
 import CoreLocation
 import os
 import TROMECore
+import UIKit
 
 @MainActor
 final class CoreLocationStationRegionWatcher: StationRegionWatcher {
@@ -103,7 +104,28 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         case .unsatisfied: event = .left(regionId: identifier)
         default: return
         }
+        let wakeTime = RegionWakeTime()
         await onWake?(event, manager.location.flatMap(PositionFix.init))
+        wakeTime.end()
+    }
+}
+
+/// Asks iOS for time to finish a region wake: on a report of arrival, the app may wait several seconds
+/// for a position, and iOS suspends an app soon after it wakes it.
+@MainActor
+private final class RegionWakeTime {
+    private var task = UIBackgroundTaskIdentifier.invalid
+
+    init() {
+        task = UIApplication.shared.beginBackgroundTask(withName: "Region wake") { [weak self] in
+            self?.end()
+        }
+    }
+
+    func end() {
+        guard task != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(task)
+        task = .invalid
     }
 }
 

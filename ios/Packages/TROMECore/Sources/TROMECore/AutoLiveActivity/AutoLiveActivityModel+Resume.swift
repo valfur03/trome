@@ -89,13 +89,13 @@ extension AutoLiveActivityModel {
         await handle(position.coordinate)
     }
 
-    private func freshPosition() async -> PositionFix? {
+    func freshPosition(waitingAtMost maximumWait: Duration = ResumePositionRules.maximumWait) async -> PositionFix? {
         let locationService = inputs.locationService
         let sleep = configuration.sleep
         return await withCheckedContinuation { continuation in
             let answer = FirstAnswer(continuation)
             let timeout = Task {
-                try? await sleep(ResumePositionRules.maximumWait)
+                try? await sleep(maximumWait)
                 answer.give(nil)
             }
             Task {
