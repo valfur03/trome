@@ -38,6 +38,8 @@ Pagefind splits a word only at a straight apostrophe, so it would index “l’�
 So [`src/search-index.ts`](src/search-index.ts) indexes the site again, with a straight apostrophe after l’, d’, qu’ and the other French elisions, and a space before each line break.
 The pages keep their apostrophes, but the texts of the search results show the straight ones.
 The build fails when this index and the one of Starlight do not have the same version of Pagefind or the same pages in each language, for example after an update of Starlight.
+Pagefind can say that it wrote its files before they are on disk, so a file of the index of Starlight can stay empty ([Pagefind issue 1271](https://github.com/Pagefind/pagefind/issues/1271)).
+So `src/search-index.ts` builds the index of Starlight again in memory, compares its own index with it there, and writes the files of its own index itself.
 When the version differs, make `pagefind` in `package.json` the version that Starlight uses, as the message says.
 When only the pages differ, Starlight now runs Pagefind in another way: read `dist/integrations/pagefind.js` in `node_modules/@astrojs/starlight`, and give the same options to Pagefind in `src/search-index.ts`.
 

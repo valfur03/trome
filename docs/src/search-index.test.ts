@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
-import { differencesFromStarlightIndex, htmlForSearchIndex } from './search-index.ts';
+import { differencesFromStarlightIndex, entryOf, htmlForSearchIndex, writeIndexFiles } from './search-index.ts';
 
 describe('htmlForSearchIndex', () => {
   it('gives Pagefind a straight apostrophe after a French elision, so it also indexes the word after it', () => {
@@ -43,5 +46,38 @@ describe('differencesFromStarlightIndex', () => {
         '3 pages in "fr", but 4 in the index of Starlight',
       ],
     );
+  });
+});
+
+describe('entryOf', () => {
+  const file = (path: string, text: string) => ({ path, content: new TextEncoder().encode(text) });
+
+  it('reads the entry of the index from the files in memory', () => {
+    const entry = { version: '1.5.2', languages: { fr: { page_count: 4 } } };
+    assert.deepEqual(entryOf([file('pagefind.js', ''), file('pagefind-entry.json', JSON.stringify(entry))]), entry);
+  });
+
+  it('says which file is missing', () => {
+    assert.throws(() => entryOf([file('pagefind.js', '')]), /no pagefind-entry\.json/);
+  });
+});
+
+describe('writeIndexFiles', () => {
+  it('replaces the folder with the files, whole, in their subfolders', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'search-index-test-'));
+    try {
+      const indexFolder = join(folder, 'pagefind');
+      await writeIndexFiles(indexFolder, [{ path: 'old.js', content: new Uint8Array([1]) }]);
+      const big = new Uint8Array(300_000).fill(7);
+      await writeIndexFiles(indexFolder, [
+        { path: 'pagefind-entry.json', content: new TextEncoder().encode('{}') },
+        { path: 'fragment/fr_1.pf_fragment', content: big },
+      ]);
+      assert.deepEqual((await readdir(indexFolder, { recursive: true })).sort(), ['fragment', 'fragment/fr_1.pf_fragment', 'pagefind-entry.json']);
+      assert.deepEqual(new Uint8Array(await readFile(join(indexFolder, 'fragment/fr_1.pf_fragment'))), big);
+      assert.equal(await readFile(join(indexFolder, 'pagefind-entry.json'), 'utf8'), '{}');
+    } finally {
+      await rm(folder, { recursive: true, force: true });
+    }
   });
 });
