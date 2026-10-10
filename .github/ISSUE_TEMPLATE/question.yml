@@ -1,4 +1,4 @@
-name: Ask a question · Poser une question
+name: Poser une question · Ask a question
 description: "Une question sur l’app, l’activité en direct ou vos données ? A question about the app, the Live Activity or your data? Or about building TROME. French or English."
 labels: [question]
 body:
@@ -20,7 +20,7 @@ body:
   - type: textarea
     id: question
     attributes:
-      label: Your question · Votre question
+      label: Votre question · Your question
       description: "Écrivez ce que vous voyez ou voulez savoir. Say what you see or want to know. Building TROME? Add what you tried, with the page or the command if there is one."
       placeholder: |
         TROME marche-t-il hors de Paris ?
