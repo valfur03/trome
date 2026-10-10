@@ -1,5 +1,6 @@
 import { hasBearerToken } from "../auth/bearer-token";
 import type { Logger } from "../logging/logger";
+import { metricsContentType, metricsText, type MetricsSnapshot } from "../metrics/prometheus-metrics";
 import type { CountsReport, RelayAnswer } from "../relay/relay";
 import { isStopReference } from "../relay/stop-reference";
 import type { Clock } from "../time/clock";
@@ -8,6 +9,7 @@ import { departuresResponse, errorResponse } from "./relay-responses";
 export interface RelayService {
   departures(stopRef: string): Promise<RelayAnswer>;
   counts(): Promise<CountsReport>;
+  metrics(): Promise<MetricsSnapshot>;
 }
 
 export interface RouterDependencies {
@@ -19,6 +21,7 @@ export interface RouterDependencies {
 
 const departuresPath = /^\/v1\/stops\/([^/]+)\/departures$/;
 const countsPath = "/v1/owner/counts";
+const metricsPath = "/metrics";
 
 export async function route(request: Request, dependencies: RouterDependencies): Promise<Response> {
   const { pathname } = new URL(request.url);
@@ -54,11 +57,21 @@ async function answer(request: Request, pathname: string, dependencies: RouterDe
     );
   }
 
+  if (pathname === metricsPath) {
+    return (
+      onlyGet(request) ??
+      refuseWithout(request, tokens.owner) ??
+      new Response(metricsText(await relay.metrics()), {
+        headers: { "content-type": metricsContentType, "cache-control": "no-store" },
+      })
+    );
+  }
+
   return errorResponse(404, "not found");
 }
 
 function routeName(pathname: string): string {
-  if (pathname === "/health" || pathname === countsPath) {
+  if (pathname === "/health" || pathname === countsPath || pathname === metricsPath) {
     return pathname;
   }
   return departuresPath.test(pathname) ? "/v1/stops/{stop}/departures" : "unknown";

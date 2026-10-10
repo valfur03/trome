@@ -77,6 +77,35 @@ Add `FULL=1` for the whole report, as JSON: the cap and the PRIM calls of today,
 Its `errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
 The counts of app calls and cache hits are written at most every 30 seconds, to stay far below the writes that the Free plan allows each day.
 
+## Send the totals to your Prometheus
+
+The server also gives its totals at `GET /metrics`, in the Prometheus text format, to the owner token, so that your own Prometheus keeps them longer than the server's 30 days.
+The token reads only totals, with no stop and no identifier: a leaked token shows numbers and nothing about riders.
+Prometheus only makes outgoing calls, so nothing opens at your home.
+
+1. Put the owner token, alone on one line, in a file that your secret store writes on the Prometheus host, for example `/run/secrets/trome_owner_token`: never in `prometheus.yml` or in git.
+2. Mount that file in the Prometheus container, at the same path.
+3. Add this job under `scrape_configs:` in `prometheus.yml`:
+
+   ```yaml
+   - job_name: trome
+     scheme: https
+     scrape_interval: 2m
+     static_configs:
+       - targets: ["trome-server.<your subdomain>.workers.dev"]
+     authorization:
+       credentials_file: /run/secrets/trome_owner_token
+   ```
+
+4. Add `--storage.tsdb.retention.time=400d` to the command of Prometheus: about 13 months, as its default of 15 days is shorter than the server's 30 days.
+5. Restart Prometheus, then open its Targets page: the `trome` job shows `UP`.
+6. Query `trome_app_calls_previous_day`: it gives the app calls of yesterday, the same as yesterday's line of `make server-counts`.
+
+Use 2 minutes: on a day where every PRIM call fails, one scrape a minute would read about a quarter of the SQLite rows that the Free plan allows each day, and beyond about 5 minutes Prometheus draws gaps.
+The `_total` counters count since 00:00 in Paris and start again from 0 there, which `rate()` and `increase()` read as a restart; the `_previous_day` gauges give each whole Paris day exactly.
+To cut the access, give the server a new owner token with `make server-secret NAME=OWNER_TOKEN`, then write it in your file.
+The Metrics page of the Worker in the Cloudflare dashboard is a free extra: it counts every request, refused ones and these scrapes too, so it is never the source of the totals.
+
 ## Find a problem
 
 The app promises that the server keeps no stop of a rider: its App Store privacy label says "Data Not Collected", and its privacy policy says the same.

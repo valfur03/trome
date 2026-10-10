@@ -73,7 +73,9 @@ describe("the API examples of contracts/api/", () => {
         logger: createLogger([], () => undefined),
         clock: harness.clock,
         tokens: { app: appToken, owner: "owner-token-of-the-test" },
-        relay: { departures: (stopRef) => harness.relay.departures(stopRef), counts: () => Promise.resolve(harness.relay.counts()) },
+        relay: { departures: (stopRef) => harness.relay.departures(stopRef), counts: () => Promise.resolve(harness.relay.counts()),
+          metrics: () => Promise.resolve(harness.relay.metrics()),
+        },
       });
 
       expect(answered.status).toBe(response.status);

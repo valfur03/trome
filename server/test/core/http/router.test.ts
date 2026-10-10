@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { route, type RelayService } from "../../../src/core/http/router";
 import { createLogger } from "../../../src/core/logging/logger";
+import type { MetricsSnapshot } from "../../../src/core/metrics/prometheus-metrics";
 import type { CountsReport, RelayAnswer } from "../../../src/core/relay/relay";
 import { FakeClock } from "../time/fake-clock";
 
@@ -18,6 +19,9 @@ const report: CountsReport = {
   errorLines: [],
 };
 
+const zero = { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0 };
+const snapshot: MetricsSnapshot = { today: { ...zero, appCalls: 3 }, previousDay: zero, dailyCap: 800, failuresToday: [] };
+
 function server(answer: RelayAnswer = { kind: "times", body: '{"Siri":{}}', primAnsweredAt: Date.parse("2026-10-02T08:29:30.000Z") }) {
   const lines: string[] = [];
   const asked: string[] = [];
@@ -30,6 +34,10 @@ function server(answer: RelayAnswer = { kind: "times", body: '{"Siri":{}}', prim
     counts: () => {
       countsRead += 1;
       return Promise.resolve(report);
+    },
+    metrics: () => {
+      countsRead += 1;
+      return Promise.resolve(snapshot);
     },
   };
   const send = (request: Request) =>
@@ -179,5 +187,44 @@ describe("route: counts of the owner", () => {
       expect((await send(request)).status).toBe(401);
       expect(countsRead()).toBe(0);
     }
+  });
+});
+
+describe("route: metrics of the owner", () => {
+  it("gives the totals in the Prometheus text format with the owner token", async () => {
+    const { send, lines } = server();
+
+    const response = await send(withToken("https://server.test/metrics", ownerToken));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("text/plain; version=0.0.4; charset=utf-8");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.text()).toContain("\ntrome_app_calls_total 3\n");
+    expect(lines.map((line) => (JSON.parse(line) as { route: string }).route)).toEqual(["/metrics"]);
+  });
+
+  it("gives the refusal of the owner route to the app token, a wrong token and no token, with no number", async () => {
+    const refusal = await server().send(new Request("https://server.test/v1/owner/counts"));
+    const refusalBody = await refusal.text();
+    for (const request of [
+      withToken("https://server.test/metrics", appToken),
+      withToken("https://server.test/metrics", "wrong"),
+      new Request("https://server.test/metrics"),
+    ]) {
+      const { send, countsRead } = server();
+
+      const response = await send(request);
+
+      expect(response.status).toBe(401);
+      expect(response.headers.get("www-authenticate")).toBe("Bearer");
+      expect(await response.text()).toBe(refusalBody);
+      expect(countsRead()).toBe(0);
+    }
+  });
+
+  it("refuses another method", async () => {
+    const response = await server().send(withToken("https://server.test/metrics", ownerToken, { method: "POST" }));
+
+    expect(response.status).toBe(405);
   });
 });

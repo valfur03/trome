@@ -18,6 +18,7 @@ export default {
       relay: {
         departures: (stopRef) => relay.departures(stopRef),
         counts: () => relay.counts(),
+        metrics: () => relay.metrics(),
       },
     });
   },

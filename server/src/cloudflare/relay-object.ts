@@ -6,6 +6,7 @@ import { createLogger } from "../core/logging/logger";
 import { AnswerStore } from "../core/relay/answer-store";
 import { createPrimClient } from "../core/relay/prim-client";
 import { Relay, type CountsReport, type RelayAnswer } from "../core/relay/relay";
+import type { MetricsSnapshot } from "../core/metrics/prometheus-metrics";
 import { UsageCounts } from "../core/usage/usage-counts";
 import { DurableObjectSqlDatabase } from "./durable-object-sql-database";
 
@@ -45,6 +46,10 @@ export class RelayObject extends DurableObject<Env> {
 
   counts(): CountsReport {
     return this.relay.counts();
+  }
+
+  metrics(): MetricsSnapshot {
+    return this.relay.metrics();
   }
 
   override alarm(): void {

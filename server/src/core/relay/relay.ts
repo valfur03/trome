@@ -3,6 +3,7 @@ import type { RelaySettings } from "../config/relay-settings";
 import type { Logger } from "../logging/logger";
 import type { Clock } from "../time/clock";
 import { parisDay } from "../time/paris-time";
+import type { MetricsSnapshot } from "../metrics/prometheus-metrics";
 import type { UsageCounts, UsageReport } from "../usage/usage-counts";
 import type { AnswerStore, StoredAnswer } from "./answer-store";
 import { isTimesAnswer } from "./prim-answer";
@@ -93,6 +94,11 @@ export class Relay {
       limitPauseUntil: limitPauseUntil > clock.now() ? new Date(limitPauseUntil).toISOString() : null,
       ...usage.report(),
     };
+  }
+
+  metrics(): MetricsSnapshot {
+    const { usage, budget, clock } = this.dependencies;
+    return { ...usage.metricsTotals(clock.now()), dailyCap: budget.dailyCap };
   }
 
   stopsInMemory(): string[] {

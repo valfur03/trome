@@ -1,6 +1,6 @@
 import type { SqlDatabase } from "../storage/sql-database";
 import { day, hour } from "../time/clock";
-import { parisDay, parisHour } from "../time/paris-time";
+import { nextParisDayStart, parisDay, parisHour } from "../time/paris-time";
 
 export const tallies = ["appCalls", "cacheHits", "heldAnswers", "outAnswers", "primCalls", "errors"] as const;
 
@@ -60,6 +60,8 @@ export class UsageCounts {
     database.run(
       "CREATE TABLE IF NOT EXISTS error_lines (id INTEGER PRIMARY KEY, at INTEGER NOT NULL, kind TEXT NOT NULL, status INTEGER)",
     );
+    // So that `/metrics` reads only the error lines of today, not those of 7 days.
+    database.run("CREATE INDEX IF NOT EXISTS error_lines_at ON error_lines (at, kind, status)");
     forgetTheStopsOfOlderVersions(database);
   }
 
@@ -116,6 +118,10 @@ export class UsageCounts {
     this.database.run("DELETE FROM error_lines WHERE at < ?", now - errorLinesKeptFor);
   }
 
+  metricsTotals(now: number): ReturnType<typeof metricsTotals> {
+    return metricsTotals(this.database, now);
+  }
+
   report(): UsageReport {
     this.flush();
     const hours = this.database
@@ -139,6 +145,57 @@ export class UsageCounts {
       .map((row) => ({ at: new Date(row.at).toISOString(), kind: row.kind, status: row.status }));
     return { days: [...days.values()], errorLines };
   }
+}
+
+/**
+ * The totals of today and of the previous Paris day, for `/metrics`.
+ * It reads only the written hours, never the counts still in memory, and writes nothing: a value that it showed is stored, so the next read is never lower within the day.
+ * It reads the hours of the last 50 hours only (a Paris day has 25 hours at most), and the error lines of today only.
+ */
+export function metricsTotals(database: SqlDatabase, now: number): {
+  today: Tallies;
+  previousDay: Tallies;
+  failuresToday: { kind: string; status: number | null; count: number }[];
+} {
+  const today = parisDay(now);
+  const previous = previousParisDay(today);
+  const totals = { today: emptyTallies(), previousDay: emptyTallies() };
+  const rows = database.all<HourRow>(
+    `SELECT paris_day, ${tallies.map((tally) => `SUM(${columns[tally]}) AS ${columns[tally]}`).join(", ")} FROM usage_hours WHERE hour_start >= ? GROUP BY paris_day`,
+    Math.floor(now / hour) * hour - 50 * hour,
+  );
+  for (const row of rows) {
+    const target = row.paris_day === today ? totals.today : row.paris_day === previous ? totals.previousDay : undefined;
+    for (const tally of tallies) {
+      if (target) {
+        target[tally] = Number(row[columns[tally]]);
+      }
+    }
+  }
+  const failures = new Map<string, { kind: string; status: number | null; count: number }>();
+  for (const line of database.all<{ at: number; kind: string; status: number | null }>(
+    "SELECT at, kind, status FROM error_lines WHERE at >= ?",
+    parisDayStart(now),
+  )) {
+    const key = `${line.kind} ${String(line.status)}`;
+    const failure = failures.get(key) ?? { kind: line.kind, status: line.status, count: 0 };
+    failure.count += 1;
+    failures.set(key, failure);
+  }
+  return { ...totals, failuresToday: [...failures.values()] };
+}
+
+function parisDayStart(now: number): number {
+  let start = nextParisDayStart(now - 26 * hour);
+  while (nextParisDayStart(start) <= now) {
+    start = nextParisDayStart(start);
+  }
+  return start;
+}
+
+function previousParisDay(parisDayText: string): string {
+  const [year = 0, month = 1, date = 1] = parisDayText.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, date - 1)).toISOString().slice(0, 10);
 }
 
 function forgetTheStopsOfOlderVersions(database: SqlDatabase): void {
