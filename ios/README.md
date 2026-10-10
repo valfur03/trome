@@ -63,7 +63,7 @@ To let git run it after a pull or a change of branch, run `make git-hooks` once.
 Run `make check`.
 It runs the lint, the checks of the texts and of the app icon, the build, the unit tests and the tests of the scripts, and stops at the first failure, with a message that says what to do.
 The build accepts no warning: fix its cause, and never silence it.
-When your branch changes `docs/`, `server/` or `contracts/`, `make check` checks them too, which needs Node 24 ([how to install it](../server/README.md#run-and-test-it-locally)).
+When your branch changes `docs/`, `server/`, `contracts/` or `video/`, `make check` checks them too, which needs Node 24 ([how to install it](../server/README.md#run-and-test-it-locally)).
 
 `make check` runs no end-to-end test: [Test a change to the iPhone app](guide/tests.md) says which tests your change needs, and how to write one.
 
@@ -168,12 +168,13 @@ Each part of the repo has its own folder. The root holds only the files of the w
 
 | Folder or file | What it holds |
 |---|---|
-| `README.md`, `CLAUDE.md`, `.gitignore`, `.nvmrc` | Files for the whole repo. `.nvmrc` pins the Node version of the Node parts (`docs/` and `server/`). |
+| `README.md`, `CLAUDE.md`, `.gitignore`, `.nvmrc` | Files for the whole repo. `.nvmrc` pins the Node version of the Node parts (`docs/`, `server/` and `video/`). |
 | `.claude/` | The rules of Claude Code by topic (`rules/`), and the hook that brings each rule to the work that needs it (`hooks/`). |
 | `Makefile` | Runs each `make` command in the folder of its part. It has no build logic. `make check` runs the checks of all parts. |
 | `ios/` | The iPhone app, with its own `Makefile`, `project.yml`, `.swiftlint.yml`, build settings and scripts. Its build output goes to `ios/.build/`. |
 | `docs/` | The docs site (Starlight), with its own `Makefile` and scripts. |
 | `server/` | The server (a Cloudflare Worker in TypeScript), with its own `Makefile`, scripts and `package.json` (see [server/README.md](../server/README.md)). |
+| `video/` | The source of the film of the app (Remotion), with its own `Makefile`, scripts and `package.json` (see [video/README.md](../video/README.md)). |
 | `contracts/` | The files that the app and the server both test against. Today `contracts/prim/`: the recorded PRIM answers of the unit tests. |
 
 Inside `ios/`:

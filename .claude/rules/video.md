@@ -13,7 +13,7 @@ These rules are for every change to the source of the film and every run of its 
 
 - **Node 24, through fnm:** `fnm exec --using=.nvmrc -- make video-check`, and the same for `make check` when your task changes `video/`.
   Never run `fnm use`.
-- **Install `video/node_modules` only when your task touches the film.** It takes about 830 MB (the packages and the headless browser).
+- **Install `video/node_modules` only when your task touches the film.** It takes about 1.1 GB (the packages, and 570 MB of headless browser).
   `make check` runs `make video-check` only when your branch changes `video/`.
 - **Render only with `make video-still`, `make video-clip` or `make video-check`.**
   They take the Simulator lock, use one browser tab and run at a low priority.

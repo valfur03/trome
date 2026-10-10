@@ -24,7 +24,7 @@ fnm exec --using=.nvmrc -- make video-studio
 | `make video-clip` | Renders the whole film, with its music, to `video/out/clip.mp4`. |
 | `make video-check` | The quality gate of the folder: the type check, the unit tests of the music, and the render of one frame, whose size it checks. `make check` runs it only when a branch changes `video/`. |
 
-The first command installs the packages and the headless browser that renders the frames: about 830 MB in `video/node_modules`, once per folder.
+The first command installs the packages and the headless browser that renders the frames: about 1.1 GB in `video/node_modules`, once per folder, half of it the browser.
 
 The studio listens on every network of the Mac, not only on the Mac itself, and Remotion has no setting to change this.
 So run it on a network that you trust, and stop it when you are done.
