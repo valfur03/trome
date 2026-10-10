@@ -15,6 +15,7 @@ import Checklist from '../../../../components/Checklist.astro';
 import Screenshot from '../../../../components/Screenshot.astro';
 
 This page takes you from a Mac with nothing set up to TROME on your own iPhone, built by you from its source code, with its Live Activity on your lock screen.
+At the end of this page it shows sample trains: real ones need [your own free key](/en/build/add-your-train-data-key/), which a second page adds.
 You need a Mac with Xcode, an iPhone with its cable, and a free Apple ID: no iOS experience, and nothing to pay.
 With a free Apple ID the app opens for 7 days at a time, and [installing it again](/en/build/renew-the-app/) takes about 5 minutes.
 Plan on about an hour, plus the download of Xcode if you do not have it yet.
@@ -120,7 +121,6 @@ A free Apple ID can register 10 App IDs in 7 days, and each one frees its place 
 A normal install uses 2 of the 10.
 
 So choose your name once, and keep it: a new name registers 2 new App IDs.
-The project also has test parts for people who change the code, and signing them costs more App IDs, so this page never builds them.
 When you reach the limit, Xcode says **Your maximum App ID limit has been reached** or **No profiles for … were found**.
 Then wait for a place to free up, or [reuse App IDs that you registered before](/en/build/reuse-your-app-ids/).
 
@@ -154,7 +154,7 @@ Then wait for a place to free up, or [reuse App IDs that you registered before](
    make setup
    ```
 
-   The first run takes a few minutes: it installs XcodeGen, which makes the project, and two tools for people who change the code.
+   The first run takes a few minutes, because it installs the tools that make the project.
    The last line shows your names:
 
    ```text
@@ -338,16 +338,21 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 ## What you have now
 
-TROME is on your iPhone, and its Live Activity works.
-**See an example** shows it again, from anywhere.
+TROME is on your iPhone, and **See an example** shows its Live Activity, with sample times, from anywhere.
+
+**At a real station, the app shows no train times yet.**
+The real times come from PRIM, and the app that you build needs your own free key to ask for them.
+[Add your own train data key](/en/build/add-your-train-data-key/) before you go to a station.
 
 <Aside type="danger" title="The app stops opening after 7 days">
   A free Apple ID signs the app for 7 days. After that, the app does not open, and its icon stays on your iPhone.
   [Renew the app every 7 days](/en/build/renew-the-app/) takes about 5 minutes: do it each weekend.
 </Aside>
 
+A free Apple ID also has no push notifications from a server: the app makes its own notifications and its Live Activity on the iPhone.
+
 Where to go next:
 
-- [Add your own train data key](/en/build/add-your-train-data-key/) to see live trains, and to try the app at any station without going there.
+- [Add your own train data key](/en/build/add-your-train-data-key/) to see real trains, and to try the app at any station without going there.
 - [Help](/en/support/) says how TROME decides when to show the Live Activity, and what the snooze and the pause do.
 - [Fix a problem with the install](/en/build/fix-an-install-problem/) lists what can go wrong on this page, and what to do.
