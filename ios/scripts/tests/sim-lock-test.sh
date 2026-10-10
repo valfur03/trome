@@ -382,6 +382,21 @@ expect "switch-language keeps the app, sets the language and opens the app again
 rm -f "$state/launched.$default"
 RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" language > /dev/null
 expect "language keeps the app and restarts SpringBoard in the language, with no app opened" "$(cat "$state/apps.$default") $(language_at_restart) $(cat "$state/launched.$default" 2> /dev/null || echo "not opened")" "com.example.trome.dev en en_US not opened"
+# The Live Activity renderer outlives a restart of SpringBoard, and XCTest then cannot read the Live Activity.
+renderer_restarted_after_springboard() {
+    : > "$state/calls"
+    "$@" > /dev/null
+    awk '/kickstart -k user\/foreground\/com\.apple\.SpringBoard/ { springboard = NR }
+        / terminate [^ ]+ com\.apple\.chrono\.WidgetRenderer-Activities$/ { renderer = NR }
+        END { print (springboard && renderer > springboard) ? "after SpringBoard" : "not after SpringBoard" }' "$state/calls"
+}
+expect "a job reset restarts the Live Activity renderer after SpringBoard" \
+    "$(renderer_restarted_after_springboard "$scripts/sim-lock.sh" job "$scripts/simulator.sh" reset)" "after SpringBoard"
+expect "language restarts the Live Activity renderer after SpringBoard" \
+    "$(RATP_SIM_LANGUAGE=en renderer_restarted_after_springboard "$scripts/simulator.sh" language)" "after SpringBoard"
+echo com.example.trome.dev > "$state/apps.$default"
+expect "switch-language restarts the Live Activity renderer after SpringBoard" \
+    "$(RATP_SIM_LANGUAGE=en renderer_restarted_after_springboard "$scripts/simulator.sh" switch-language "$state/TROME.app")" "after SpringBoard"
 echo 1 > "$state/global.$default.AppleICUForce24HourTime"
 echo 1 > "$state/global.$default.AppleICUForce12HourTime"
 echo false > "$state/global.$default.AppleMetricUnits"

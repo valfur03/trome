@@ -200,10 +200,19 @@ set_language() {
     fi
 }
 
+# A restart of SpringBoard leaves the process that draws the Live Activities (a renderer of chronod) running.
+# The new SpringBoard shows the Live Activities of that old renderer, but XCTest cannot read them: the
+# Live Activity holds only a RemotePlaceholder, and XCTest logs kAXErrorServerNotFound, so a test finds none
+# of its texts. So after each restart of SpringBoard, stop the renderer too: iOS starts a new one at once.
+restart_live_activity_renderer() {
+    xcrun simctl terminate "$1" com.apple.chrono.WidgetRenderer-Activities 2> /dev/null || true
+}
+
 restart_springboard_in_language() {
     set_language "$1"
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.SpringBoard
     wait_for_springboard "$1"
+    restart_live_activity_renderer "$1"
     wait_for_widget_host "$1"
 }
 
@@ -235,6 +244,7 @@ reset_device() {
     xcrun simctl spawn "$1" launchctl kickstart -k user/foreground/com.apple.locationd
     xcrun simctl location "$1" clear
     wait_for_springboard "$1"
+    restart_live_activity_renderer "$1"
     if ! remembered=$("$scripts/simulator-notifications.py" remembered "$data"); then
         echo "The Simulator still keeps the notification setting of $remembered after the reset, so the app would get no notification question." >&2
         exit 1
@@ -335,6 +345,7 @@ case "$command" in
         set_language "$udid"
         xcrun simctl spawn "$udid" launchctl kickstart -k user/foreground/com.apple.SpringBoard
         wait_for_springboard "$udid"
+        restart_live_activity_renderer "$udid"
         xcrun simctl launch "$udid" "$bundle_id"
         ;;
     uninstall)
