@@ -15,7 +15,7 @@ These rules are for every change to the source of the film and every run of its 
   Never run `fnm use`.
 - **Install `video/node_modules` only when your task touches the film.** It takes about 1.1 GB (the packages, and 570 MB of headless browser).
   `make check` runs `make video-check` only when your branch changes `video/`.
-- **Render only with `make video-still`, `make video-clip` or `make video-check`.**
+- **Render only with `make video-still`, `make video-stills`, `make video-clip` or `make video-check`.**
   They take the Simulator lock, use one browser tab and run at a low priority.
   Never run `npx remotion render` or `npx remotion still` yourself, and never use the Render button of the studio: they skip the lock.
   Why: a render takes about 1.6 cores, and next to a Simulator job its first frame timed out (TASK-307); the lock keeps one heavy job at a time on the Mac.

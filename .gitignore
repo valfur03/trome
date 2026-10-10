@@ -19,6 +19,7 @@ docs/dist/
 docs/.astro/
 video/out/
 video/public/music.wav
+video/public/app/
 
 __pycache__/
 server/.wrangler/
