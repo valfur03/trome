@@ -19,7 +19,8 @@ The change that makes a new asset adds its row here: what it shows, and its comm
 
 ## The store screenshots
 
-`make store-screenshots` takes the captures on the shared Simulator, in English and in French, then composes the pictures at 1320 x 2868 pixels, the 6.9-inch size of App Store Connect, with no alpha channel.
+`make store-screenshots` takes the captures on the shared Simulator, in English and in French, then composes the pictures at 1320 x 2868 pixels, a size of the class "iPhone with Dynamic Island (large display)" (6.9-inch) of App Store Connect, with no alpha channel.
+App Store Connect makes the smaller sizes from them, the required medium display included.
 It needs no key: the trains are fake.
 `make store-screenshots-compose` composes them again from the last captures, with no Simulator, for example after a change of a headline.
 `STORE_STOPS=dots` draws plain dots on the stops of the line instead of the small drawings.
@@ -34,7 +35,7 @@ Its licence forbids copies, so the repo does not hold it, and each maintainer pl
 The command measures the screen of the bezel, and uses it only when it has the shape of the captures and keeps the Live Activity at nine tenths of its size or more.
 Otherwise, or with no bezel file, it says why, and the cuts have rounded corners and no frame.
 
-To publish them, drag the pictures of each language, in the order of their names, to the 6.9-inch display of the version in App Store Connect.
+To publish them, drag the pictures of each language, in the order of their names, to the large display with Dynamic Island (6.9-inch) of the version in App Store Connect.
 
 ## The store video
 
