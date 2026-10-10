@@ -13,6 +13,7 @@ E2E_TARGET := TROMEUITests
 E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
 DOCS_SCHEME := TROMEDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
+WALLPAPER_RESULT := $(BUILD_DIR)/simulator-wallpaper.xcresult
 RENDER_SCHEME := TROMERenderCheck
 RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
@@ -92,7 +93,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old clean clean-shared-cache docs-screenshots live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper clean clean-shared-cache docs-screenshots live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -128,6 +129,7 @@ help:
 	@echo "make simulator-times     How long the Simulator jobs waited for the Simulator and held it, by kind (merge, e2e, run...), and how long builds waited for a test run; SINCE=2026-10-08 for a part (records in ~/Library/Logs/TROME/)"
 	@echo "make simulator-delete    Delete the shared Simulators, also those of a second-slot trial (waits until no other Simulator job runs)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
+	@echo "make simulator-wallpaper  Set the wallpaper of the pictures (ios/DocsScreenshots/Wallpaper.swift) on the shared Simulator, once: it keeps it (takes the Simulator lock; does nothing when it is already set)"
 	@echo "make clean               Delete the build folder and the Xcode project"
 	@echo "make clean-shared-cache  Delete the build cache that all folders share (waits for the builds that use it)"
 	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock); a failed run keeps its evidence, as make e2e does"
@@ -285,7 +287,15 @@ live-activity-render: project
 		$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -collect-test-diagnostics never test-without-building
 	@./scripts/live-activity-render.sh report $(RENDER_OUT)
 
+simulator-wallpaper: project
+	@./scripts/wallpaper.sh check 2> /dev/null && echo "Wallpaper $$(./scripts/wallpaper.sh id): already set, nothing to do" && exit 0; \
+		$(BUILD_GATE) $(QUIET) $(LOGS)/simulator-wallpaper-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing \
+		&& RATP_SIM_KIND=simulator-wallpaper $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
+		$(QUIET) $(LOGS)/simulator-wallpaper.log '^Wallpaper ' ./scripts/wallpaper.sh set $(WALLPAPER_RESULT) \
+		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -parallel-testing-enabled NO -collect-test-diagnostics never
+
 docs-screenshots: project
+	@./scripts/wallpaper.sh check
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/docs-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
 	@RATP_SIM_KIND=docs-screenshots $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/docs-screenshots.log '^Saved ' ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) $(LOGS)/docs-screenshots.log "$(APP_PATH)" \

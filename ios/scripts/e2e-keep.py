@@ -155,7 +155,8 @@ def keep_simulator_log(folder, bundle_id, executable, start, end):
         return f"simulator.log (log show ended with exit {status}: see its end)"
     return (
         f"simulator.log (the lines of {executable}, every line of iOS that names {bundle_id}, "
-        "and the path of the Live Activity buttons: the taps of chronod and iOS's intent runner)"
+        "the path of the Live Activity buttons: the taps of chronod and iOS's intent runner, "
+        "and the queue of the widget host (chronod), which holds back a new Live Activity)"
     )
 
 
@@ -164,6 +165,9 @@ def simulator_log_predicate(bundle_id, executable):
         f'process == "{executable}"',
         f'eventMessage CONTAINS "{bundle_id}"',
         '(process == "chronod" AND category == "interactions")',
+        # The queue of the widget host, and a card that iOS draws empty while it waits: a Live Activity that never shows.
+        '(process == "chronod" AND category == "taskservice")',
+        'eventMessage CONTAINS "LiveActivity will be empty"',
         f'process == "{INTENT_RUNNER}"',
         f'(process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned {INTENT_RUNNER}[")',
     ])

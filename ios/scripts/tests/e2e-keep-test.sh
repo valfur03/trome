@@ -81,7 +81,7 @@ window_start=$(date -r "$((start - 5))" "+%Y-%m-%d %H:%M:%S")
 window_end=$(date -r "$((start + 105))" "+%Y-%m-%d %H:%M:%S")
 expect "the Simulator log covers the run, with 5 s on each side" "$(grep -c -- "--start $window_start --end $window_end" "$state/log-show-args")" "1"
 expect "the Simulator log has the lines of the app, and every line of iOS that names it" "$(grep -c 'process == "TROME" OR eventMessage CONTAINS "com.example.trome.dev" OR ' "$state/log-show-args")" "1"
-expect "it also has the path of a tap on a Live Activity button: the taps of chronod, and the intent runner with its launch" "$(grep -c 'OR (process == "chronod" AND category == "interactions") OR process == "BackgroundShortcutRunner" OR (process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned BackgroundShortcutRunner\[")$' "$state/log-show-args")" "1"
+expect "it also has the path of a tap on a Live Activity button: the taps of chronod, and the intent runner with its launch" "$(grep -c 'OR (process == "chronod" AND category == "interactions") OR (process == "chronod" AND category == "taskservice") OR eventMessage CONTAINS "LiveActivity will be empty" OR process == "BackgroundShortcutRunner" OR (process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned BackgroundShortcutRunner\[")$' "$state/log-show-args")" "1"
 expect "with no tap in the Simulator log, the context says so" "$(grep '^Taps' "$kept/context.txt")" "Taps on a Live Activity button: none in the Simulator log"
 expect "it keeps the crash report of the app written during the run" "$(has "$kept/TROME-today.ips")" "yes"
 expect "it does not keep an older crash report" "$(has "$kept/TROME-old.ips")" "no"

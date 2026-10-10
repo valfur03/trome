@@ -36,7 +36,10 @@ fake_position=48.8584,2.2945
 screenshot_width=900
 pngquant_quality=85-100
 budget_kb=500
+target=TROMEDocsScreenshots
 udid=$("$scripts/simulator.sh" boot)
+# The Live Activity pictures show the wallpaper that the Simulator keeps: stop before any picture when it is not there.
+"$scripts/wallpaper.sh" check "$udid"
 exported="$root/.build/docs-screenshots"
 shown_language=en
 
@@ -80,7 +83,8 @@ override_status_bar
 for language in $languages; do
     [ "$language" = "$shown_language" ] || show_language "$language"
     language_result=$(result_of "$language")
-    TEST_RUNNER_DOCS_LANGUAGE=$language "$@" -resultBundlePath "$language_result" test-without-building \
+    TEST_RUNNER_DOCS_LANGUAGE=$language "$@" -resultBundlePath "$language_result" \
+        -only-testing:"$target/DocsScreenshotTests" test-without-building \
         || {
             status=$?
             "$scripts/e2e-failures.py" "$language_result"
