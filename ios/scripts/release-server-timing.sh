@@ -124,7 +124,8 @@ echo "Connection to Cloudflare (DNS, TCP, TLS): $handshake ms, only on a new con
 echo "Worker alone (health): $worker ms."
 echo "Hop to the server object (held answer minus health): $((held - worker)) ms."
 if [ "$first_asked" = yes ]; then
-    echo "Wait for PRIM (first trains minus held answer): $((first_trains - held)) ms."
+    # A server object that slept wakes for this call too: no call of the app token reaches it without PRIM.
+    echo "Wait for PRIM and the wake of the server object (first trains minus held answer): $((first_trains - held)) ms."
 else
     echo "Wait for PRIM: not measured, the server already held an answer; run this again in 2 minutes."
 fi

@@ -128,9 +128,10 @@ It prints a line per call, with the Cloudflare data center that answered, then t
 | The connection to Cloudflare | DNS, TCP and TLS, which the app pays only on a new connection |
 | The Worker alone | The wait for `/health`, which never reaches the server object: one network round trip and the Worker |
 | The hop to the server object | The wait for a held answer, minus the wait for `/health` |
-| The wait for PRIM | The first call, when it made the server ask PRIM, minus the wait for a held answer |
+| The wait for PRIM | The first call, when it made the server ask PRIM, minus the wait for a held answer; it also holds the wake of a server object that slept, which no other call can split |
 
 Run it once after a quiet time, when no app has asked the server for 5 minutes, for the first call of a rider; then at once again, for a warm server.
+Its last lines say whether the server still held its answer 30 seconds later: when it forgot it, each refresh of the app costs a PRIM call.
 Each call also pays the network of the computer that runs it: run it on the network that your riders use, for example your phone's connection shared with the computer.
 
 ## Find a problem

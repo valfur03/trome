@@ -32,8 +32,8 @@ expect() {
     fi
 }
 
-# The fake server. Each token is a server of its own: "keeps" holds its answer, "forgets" loses it between calls
-# that are a second apart, "held" already holds one from 30 s ago, and any other token is refused.
+# The fake server. Each token is a server of its own: "keeps" holds its answer, "forgets" loses it after a quiet
+# time of 0.9 s or more (the wait of a rider, 1 s here), "held" already holds one from 30 s ago, and any other token is refused.
 # It writes one line per request (the path, and which token it got), never the token.
 cat > "$work/server.py" <<'PY'
 import email.utils, http.server, sys, time
@@ -41,6 +41,7 @@ contracts, port_file, log_file, keeps, forgets, held = sys.argv[1:7]
 with open(f"{contracts}/prim/stop-monitoring-abbesses-stop-area.json", "rb") as f:
     times = f.read()
 answers = {}
+last_call = {}
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         auth = self.headers.get("Authorization")
@@ -52,8 +53,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             status, body = 200, b'{"status":"ok"}'
         elif which in ("keeps", "forgets", "held"):
             now = int(time.time())
+            quiet = time.monotonic() - last_call.get(which, time.monotonic())
+            last_call[which] = time.monotonic()
             kept = answers.get(which, now - 30 if which == "held" else None)
-            if kept is None or (which == "forgets" and kept < now):
+            if kept is None or (which == "forgets" and quiet >= 0.9):
                 time.sleep(0.3)
                 kept = int(time.time())
             answers[which] = kept
