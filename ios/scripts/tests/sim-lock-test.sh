@@ -362,6 +362,12 @@ expect "a job runs at once when the widget host has emptied its queue" "$(wait_f
 { chronod_idle; chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.trome.dev::com.example.trome.dev.widget>.84AB4E5B; pendingTasks.count = 12"; } > "$state/chronod-log.$default"
 chronod_line "[84AB4E5B]: starting pended task descriptor<com.example.trome.dev::com.example.trome.dev.widget>.84AB4E5B; pendingTasks.count = 0" > "$state/chronod-log.$default.next"
 expect "a job waits while the widget host has tasks queued, then runs" "$(wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host"
+{ chronod_line "[84AB4E5B]: task session started. created 0.000127s ago."; chronod_line "[84AB4E5B]: starting pended task descriptor<com.apple.news::com.apple.news.tag>.84AB4E5B; pendingTasks.count = 0"; } > "$state/chronod-log.$default"
+{ cat "$state/chronod-log.$default"; chronod_idle; } > "$state/chronod-log.$default.next"
+expect "a job waits while the widget host runs a task with none queued, as before it queues the rest of its work at boot, then runs" "$(wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host"
+echo "2026-10-01 15:31:19.389 Df chronod[28175:eb6459] [com.apple.chrono:keepalive] Added: com.apple.chrono.startup" > "$state/chronod-log.$default"
+{ cat "$state/chronod-log.$default"; echo "2026-10-01 15:31:39.389 Df chronod[28175:eb6459] [com.apple.chrono:keepalive] Removed: com.apple.chrono.startup"; } > "$state/chronod-log.$default.next"
+expect "a job waits while the widget host starts, before it queues its first task, then runs" "$(wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host"
 chronod_line "Would pop task, but all extensions are busy, namely [com.example.trome.dev::com.example.trome.dev.widget]" > "$state/chronod-log.$default"
 expect "a job says that it waits for the widget host before it goes on at the limit, also when the limit is reached at the first check" "$(TROME_WIDGET_HOST_WAIT_SECONDS=0 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
 

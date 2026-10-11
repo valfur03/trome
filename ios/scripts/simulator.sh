@@ -154,13 +154,25 @@ wait_for_springboard() {
     done
 }
 
+# Prints busy while chronod starts, or while its task queue has tasks that wait or tasks that run. Why not only the
+# tasks that wait: after a cold boot, chronod can wait for iOS for seconds before it queues any task, or run a few tasks
+# with none waiting, then queue the rest of its boot work 20 s later; a job that starts in such a lull meets the busy
+# queue at once.
 widget_host_state() {
     xcrun simctl spawn "$1" log show --style compact --last "${widget_host_log_seconds}s" \
-        --predicate 'process == "chronod" AND category == "taskservice"' 2> /dev/null \
+        --predicate 'process == "chronod" AND (category == "taskservice" OR (category == "keepalive" AND eventMessage CONTAINS "com.apple.chrono.startup"))' 2> /dev/null \
         | awk '
+            /Added: com\.apple\.chrono\.startup/ { starting = 1 }
+            /Removed: com\.apple\.chrono\.startup/ { starting = 0 }
+            match($0, /\[[0-9A-F]+\]: task session started/) { running[substr($0, RSTART, 10)] = 1 }
+            match($0, /\[[0-9A-F]+\]: task session completed/) { delete running[substr($0, RSTART, 10)] }
             /No tasks pending/ || /pendingTasks\.count = 0([^0-9]|$)/ { state = "idle"; next }
             /No available queue to process pending tasks/ || /all extensions are busy/ || /pendingTasks\.count = [1-9]/ { state = "busy" }
-            END { print (state == "busy" ? "busy" : "idle") }
+            END {
+                for (session in running) state = "busy"
+                if (starting) state = "busy"
+                print (state == "busy" ? "busy" : "idle")
+            }
         '
 }
 
@@ -168,7 +180,7 @@ widget_host_state() {
 # Live Activities) first works through a queue of tasks for all the system widgets, for minutes on a busy Mac.
 # Until it reads the widget of the new install, at the end of that queue, a Live Activity that the app starts
 # shows nowhere, and the first test of a run that looks for one fails. So the jobs wait until its log says that
-# the queue is empty. A newer iOS may change these log messages: then the jobs no longer wait.
+# it has started and its queue is empty. A newer iOS may change these log messages: then the jobs no longer wait.
 wait_for_widget_host() {
     deadline=$(($(date +%s) + widget_host_wait_seconds))
     waited=
