@@ -62,7 +62,7 @@ Check that each one is ready before you start the step that needs it, so that yo
   [The App Store text of TROME 1.0](/en/maintain/store-text/) holds them all, ready to paste.
   The name on the home screen stays TROME, whatever store title you get.
 - **For step 3: nothing.** The repo signs the release build with the team of `ios/Config/Signing.xcconfig`, a file that git ignores and that you make in step 3, and with no other team.
-- **For step 4: the build checks in the repo.** The version is 1.0.0 and the build number is 1, the app has its icon, its privacy manifest and its answer on encryption, and `make check` passes.
+- **For step 4: the build checks in the repo.** The version is 1.0.0 and the build number is the one of the next upload, the app has its icon, its privacy manifest and its answer on encryption, and `make check` passes.
 - **For step 4: the production server.** You set its secrets in your own terminal with `make server-secrets`, which asks for each value at a hidden prompt, then you run `make server-deploy`, and its `/health` address answers `{"status":"ok"}`.
   Never put a secret in a file or in a message: a file can end up in git, and git keeps it for good.
 - **For step 4: the server address and the app token in the release build.** The release build reads them from `ios/Config/Server.xcconfig`, a file that git ignores, never from a file of the repo, and you make it in step 4.
@@ -269,9 +269,9 @@ Apple's help, read on 3 October 2026: [Distributing your app for beta testing an
 [App build statuses](https://developer.apple.com/help/app-store-connect/reference/app-uploads/app-build-statuses/), [Overview of export compliance](https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/),
 [Describing use of required reason API](https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api).
 
-The version that riders see and the build number are in `ios/Config/Base.xcconfig`: `MARKETING_VERSION` (1.0.0 for the first release) and `CURRENT_PROJECT_VERSION` (the build number, 1 for the first upload).
+The version that riders see and the build number are in `ios/Config/Base.xcconfig`: `MARKETING_VERSION` (1.0.0 for the first release) and `CURRENT_PROJECT_VERSION` (the build number of the next upload).
 App Store Connect accepts each build number of a version only once.
-So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` by 1 and commit it.
+So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit it (step 11): `main` always holds the number of the next upload, and the commit that you archive holds the number that it uploads.
 
 <Checklist id="release-upload">
 
@@ -342,7 +342,7 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
 
 9. Read every email that Apple sends about this upload.
    A message about a missing API declaration (code ITMS-91053) means that the privacy manifest does not give a reason for an API that the app uses: Apple refuses such builds.
-   Fix it in the repo, raise the build number, and upload again.
+   Fix it in the repo, raise the build number by 1 in the same commit, and upload again: a build that Apple refuses reaches no rider, so it gets no tag and no row.
 
 10. Write down the build number that App Store Connect shows.
     Before any new commit, on `main`, tag the commit that you archived with the version and that number, here 1.0.0 and 3, and push the tag:
@@ -352,7 +352,7 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
     git push origin builds/1.0.0/3
     ```
 
-11. In one commit, add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold), and make the build number of the repo higher than the one of App Store Connect, for the next upload.
+11. In one commit, add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold), and set `CURRENT_PROJECT_VERSION` to one more than the build number that App Store Connect shows, for the next upload; push it.
     That commit will also record the set of promises of the build: what it reads from the server, kept until its row is retired.
     The repo does not record these sets yet, so for now there is nothing to add.
 
@@ -605,7 +605,7 @@ A refusal is a message, not a penalty, and each round usually costs a day.
 
 4. If only the store page is wrong, fix the text or the picture, and resubmit the same build.
 
-5. If the build is wrong, fix it in the repo, raise the build number, and upload it as in [step 4](#4-build-upload-and-check-the-first-build).
+5. If the build is wrong, fix it in the repo, and upload it as in [step 4](#4-build-upload-and-check-the-first-build).
    Then, in the version, replace the build with the new one, and click **Resubmit to App Review**.
 
 6. If you are sure that TROME follows the rules, you can appeal to the App Review Board, once for each refusal, from the [App Review page](https://developer.apple.com/distribute/app-review/).
@@ -677,7 +677,8 @@ Apple's help, read on 11 October 2026: [TestFlight overview](https://developer.a
 | 1.0.0 (1) | 11 October 2026 | `ca169af` | TestFlight, internal testers, until 9 January 2027 | In the field |
 | 1.0.0 (2) | 11 October 2026 | `9d83a8d` | TestFlight, until 9 January 2027 | In the field |
 
-Builds 1 and 2 were tagged after their upload, on the commit that the clone held at the time of each archive.
+Builds 1 and 2 were tagged after their upload, from the history and the time of each archive.
+Build 2 was archived with its build number not yet committed, so its tag is on the commit of that number, made just after the archive with no other change.
 The app files of build 1 are the same in every commit from `dcf1d8d` to `dd59fdd`, so its tag holds the right app code whichever of them was checked out.
 
 ### Retire a build
