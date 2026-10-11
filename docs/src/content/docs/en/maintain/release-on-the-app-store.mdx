@@ -239,10 +239,11 @@ With your paid team in it, Xcode signs the release build automatically, and make
 
    Its last line shows the IDs of your Debug build, `<your prefix>.trome.dev` and `<your prefix>.trome.dev.widget`: they differ from the App Store ID, so your Debug build and the TestFlight build can both be on your iPhone.
 
-5. Make your signing file from its example, then open it:
+5. Make your signing file from its example, then open it.
+   You do this once: on a later release the file is already there, so check its line and go on to the next step.
 
    ```sh
-   cp ios/Config/Signing.example.xcconfig ios/Config/Signing.xcconfig
+   cp -n ios/Config/Signing.example.xcconfig ios/Config/Signing.xcconfig
    open -e ios/Config/Signing.xcconfig
    ```
 
