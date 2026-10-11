@@ -649,6 +649,7 @@ For the first week, look at these once a day:
 
 If the server must stop, for example when it uses too many PRIM calls or answers wrong times, turn off its address.
 Riders then get no new times until you turn it on again.
+Never leave it off for good: every build calls this address ([Keep the address of the server](#keep-the-address-of-the-server)).
 
 <Checklist id="release-pause-server">
 
@@ -686,6 +687,20 @@ Apple's help, read on 11 October 2026: [TestFlight overview](https://developer.a
 Builds 1 and 2 were tagged after their upload, from the history and the time of each archive.
 Build 2 was archived with its build number not yet committed, so its tag is on the commit of that number, made just after the archive with no other change.
 The app files of build 1 are the same in every commit from `dcf1d8d` to `dd59fdd`, so its tag holds the right app code whichever of them was checked out.
+
+### Keep the address of the server
+
+Every build in the table holds the address of the production server, `trome-server.<your subdomain>.workers.dev`, for good.
+So while the table has a build in the field, never do any of these in your Cloudflare account:
+
+- Rename the subdomain of the account (**Workers & Pages**, **Your subdomain**).
+- Rename or delete the production Worker, `trome-server`.
+- Leave its workers.dev address off.
+- Move production to another account.
+
+Each of them cuts every build in the field from its times, and no message can reach those builds.
+[Keep the address of the server](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#keep-the-address-of-the-server) says what each costs and the only way back.
+A new address is only ever added next to the old one, and the old one stays until every build that holds it is retired.
 
 ### Retire a build
 

@@ -1,7 +1,7 @@
 # Deploy the server
 
 This page is for the maintainer, who holds the Cloudflare account of the server and its secrets: a contributor needs none of it, and starts at [server/README.md](../README.md).
-It shows how to deploy the server, set its secrets, connect the app to it, read its counts of requests and PRIM calls, and find a problem without keeping the stops of riders.
+It shows how to deploy the server, set its secrets, connect the app to it, read its counts of requests and PRIM calls, find a problem without keeping the stops of riders, and keep the address that every build of the app holds.
 Run the commands from the root of the repo, with Node 24 active ([server/README.md](../README.md)).
 
 | Command | What it does |
@@ -41,6 +41,7 @@ When a new secret joins the table, set it with `make server-secret` on each Work
 4. Run `make server-secrets STAGING=1`, and paste each value that it names.
    After the first one, answer `y` when wrangler asks whether to create the Worker "trome-server-staging".
 5. Run `make server-deploy-staging`, and note the address that wrangler shows, `https://trome-server-staging.<your subdomain>.workers.dev` (it asks you to choose a subdomain the first time).
+   Choose the subdomain with care: every build of the app will hold it for good ([Keep the address of the server](#keep-the-address-of-the-server)).
 6. Open that address with `/health`: it shows `{"status":"ok"}`.
    Then check the PRIM key with one stop, which costs one PRIM call; the answer has times:
 
@@ -188,3 +189,26 @@ To find a problem, use these ways, which keep nothing at Cloudflare:
 - `npx wrangler tail` in `server/` (`npx wrangler tail --env staging` for the staging Worker), after `make server-login`: it shows each request and the lines of the server live, and Cloudflare keeps none of it.
   It shows the request URL, so the stop, on your screen: never save its output in a file, and stop it as soon as you have seen the problem.
 - A test that makes the failure again: the tests fake PRIM with recorded answers (`contracts/prim/`), so a new test can play the answer that failed, with no rider and no PRIM call ([server/README.md](../README.md)).
+
+## Keep the address of the server
+
+Every build of the app holds the address of the production Worker, `trome-server.<your subdomain>.workers.dev`, from its archive, for good.
+A rider updates when they choose, so a build of [the builds that riders may hold](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-builds-that-riders-may-hold) can call this address for years.
+So while that table has a build in the field, never do any of these in the Cloudflare account of production (Cloudflare's docs, read on 11 October 2026: [workers.dev](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/)):
+
+| Never | Where |
+|---|---|
+| Rename the subdomain of the account, the part of the address after `trome-server.` | **Workers & Pages**, **Change** next to **Your subdomain** |
+| Rename or delete the production Worker, `trome-server` | **Workers & Pages**, the Worker, **Settings** |
+| Leave its workers.dev address off | **Workers & Pages**, the Worker, **Settings > Domains & Routes** |
+| Move production to another account, even with the same names | Any other account: its subdomain differs, so the address does too |
+
+Each of them costs the same: every build that holds the address shows no times, and no message reaches it, because that address is its only way to the server.
+The only way back is to put back what changed: the subdomain, the name of the Worker, its workers.dev address, or production on its old account.
+Do it at once: every build works again as soon as the address answers, with no update.
+
+Turning workers.dev off for a short pause, as in [Stop the server for a while](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#stop-the-server-for-a-while), is fine, as long as you turn it on again.
+`make server-check`, and so both deploy commands, fails when `server/wrangler.jsonc` changes the name of the production Worker or turns its `workers_dev` off, until every build of the table is retired.
+
+A new address, for example a name on a domain, is only ever added next to the old one.
+The old one stays until the table says that no build holds it.
