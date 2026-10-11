@@ -47,7 +47,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         auth = self.headers.get("Authorization", "")
         which = {f"Bearer {good}": "good", f"Bearer {out}": "out"}.get(auth, "other")
-        status, body = example({"good": "departures-times.json", "out": "departures-out-budget.json"}.get(which, "departures-unauthorized.json"))
+        # Answers that do not come from the train server: a Worker that throws, Cloudflare busy, another site.
+        for word, status, text in (("crash", 500, "error code: 1101"), ("busy", 503, "<html>Service Unavailable</html>"), ("elsewhere", 404, "<html>Not Found</html>")):
+            if word in auth:
+                which, answer = word, (status, text.encode())
+        if which in ("good", "out", "other"):
+            answer = example({"good": "departures-times.json", "out": "departures-out-budget.json"}.get(which, "departures-unauthorized.json"))
+        status, body = answer
         with open(log_file, "a") as f:
             f.write(f"{self.headers.get('Host')} {self.path} {which}\n")
         self.send_response(status)
@@ -165,6 +171,21 @@ write_config trome-server.example.workers.dev "$good"
 printf 'TRAIN_SERVER_APP_TOKEN = %s\n' "$wrong" >> "$config"
 run
 expect "the last line of a setting wins, as in Xcode" "$(starts 'Refused: ')" "Refused: "
+
+for case in "crash 500" "busy 503"; do
+    word=${case% *}
+    write_config trome-server.example.workers.dev "${word}token$$abcdef"
+    run
+    expect "a server that fails (HTTP ${case#* }): one line that says it cannot tell, never OK" \
+        "$(starts 'The server at TRAIN_SERVER_HOST of ios/Config/Server.xcconfig fails (HTTP')$(lines) $(outcome)" \
+        "The server at TRAIN_SERVER_HOST of ios/Config/Server.xcconfig fails (HTTP1 status 1"
+done
+
+write_config trome-server.example.workers.dev "elsewhere$$abcdef"
+run
+expect "a host that is another site: one line that says to check the host" \
+    "$(starts 'The host in TRAIN_SERVER_HOST of ios/Config/Server.xcconfig answers, but not as the train server')$(lines) $(outcome)" \
+    "The host in TRAIN_SERVER_HOST of ios/Config/Server.xcconfig answers, but not as the train server1 status 1"
 
 write_config trome-server.example.workers.dev "$good"
 run 127.0.0.1:1

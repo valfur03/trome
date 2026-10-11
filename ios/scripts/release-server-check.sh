@@ -62,7 +62,11 @@ case $status in
     401)
         say "Refused: the server does not accept TRAIN_SERVER_APP_TOKEN of $file: put the APP_TOKEN that you set for the production server, then run this again." ;;
     503)
+        # Only the server's own "out" answer, which comes after the token check, proves the token; a 503 of Cloudflare does not.
         reason=$(printf '%s\n' "$answer" | sed -n 's/.*"reason"[[:space:]]*:[[:space:]]*"\([a-z-]*\)".*/\1/p' | head -n 1)
-        say "OK: the production server accepts the host and the app token of $file, but has no trains right now (${reason:-out}); if it lasts, read Find a problem in server/guide/deploy.md." 0 ;;
+        [ -z "$reason" ] || say "OK: the production server accepts the host and the app token of $file, but has no trains right now ($reason); if it lasts, read Find a problem in server/guide/deploy.md." 0 ;;
+esac
+case $status in
+    5??) say "The server at TRAIN_SERVER_HOST of $file fails (HTTP $status), so this cannot tell if it accepts the token: run this again later; if it lasts, read Find a problem in server/guide/deploy.md." ;;
 esac
 say "The host in TRAIN_SERVER_HOST of $file answers, but not as the train server (HTTP $status): check the host against the one that make server-deploy printed."
