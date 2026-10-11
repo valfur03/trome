@@ -1,8 +1,8 @@
 import CoreGraphics
 
 /// Measures a drawn line badge in an image with a clear background: the box of the badge (every pixel that is not
-/// clear), the box of the ink of its number or letter (the pixels far from the badge colour), the colour of that
-/// ink, and how near the ink comes to the edge of the badge.
+/// clear), the box of the ink of its number or letter (the pixels far from the badge colour), the centre of the
+/// weight of that ink (what the eye reads as its middle), the colour of the ink, and how near it comes to the edge.
 struct BadgeInk {
     struct RGB {
         let red: Double
@@ -17,6 +17,10 @@ struct BadgeInk {
     /// The badge box and the ink box, in points.
     let badge: CGRect
     let ink: CGRect
+    /// The centre of the badge, from all that it covers (the badge is symmetric), and the centre of the weight of
+    /// the ink, each pixel counted by how much of it the ink covers; within a small part of a pixel, in points.
+    let badgeCentre: CGPoint
+    let weightCentre: CGPoint
     /// The colour of the ink as drawn, from the pixels at its core (away from the smoothed edges).
     let inkColour: RGB
     /// The smallest distance from the ink to the edge of the badge, in points.
@@ -24,6 +28,11 @@ struct BadgeInk {
 
     var gap: CGVector {
         CGVector(dx: ink.midX - badge.midX, dy: ink.midY - badge.midY)
+    }
+
+    /// How far the centre of the weight of the ink is from the centre of the badge, across.
+    var weightGap: CGFloat {
+        weightCentre.x - badgeCentre.x
     }
 
     init?(image: CGImage, scale: CGFloat, fill: RGB) {
@@ -43,6 +52,13 @@ struct BadgeInk {
         var inkBox = PixelBox()
         var core = (red: 0.0, green: 0.0, blue: 0.0, count: 0.0)
         var isInk = [Bool](repeating: false, count: width * height)
+        var weight = (total: 0.0, x: 0.0, y: 0.0)
+        for index in 0..<(width * height) where measure.distances[index] > 0 {
+            let share = min(1, measure.distances[index] / measure.farthest)
+            weight.total += share
+            weight.x += share * (Double(index % width) + 0.5)
+            weight.y += share * (Double(index / width) + 0.5)
+        }
         for index in 0..<(width * height) where measure.distances[index] >= measure.farthest / 2 {
             inkBox.add(index % width, index / width)
             isInk[index] = true
@@ -57,9 +73,27 @@ struct BadgeInk {
         guard let inkRect = inkBox.rect(scale: scale) else { return nil }
         badge = badgeRect
         ink = inkRect
+        badgeCentre = Self.centre(of: pixels, width: width, height: height, scale: scale)
+        weightCentre = CGPoint(x: weight.x / weight.total / scale, y: weight.y / weight.total / scale)
         inkColour = RGB(red: core.red / core.count, green: core.green / core.count, blue: core.blue / core.count)
         let inside = measure.distances.map { $0 >= 0 }
         margin = Self.margin(of: isInk, inside: inside, width: width, height: height) / scale
+    }
+
+    /// The centre of all that is drawn, each pixel counted by its opacity.
+    private static func centre(of pixels: [UInt8], width: Int, height: Int, scale: CGFloat) -> CGPoint {
+        var total = 0.0
+        var sumX = 0.0
+        var sumY = 0.0
+        for row in 0..<height {
+            for column in 0..<width {
+                let alpha = Double(pixels[(row * width + column) * 4 + 3])
+                total += alpha
+                sumX += alpha * (Double(column) + 0.5)
+                sumY += alpha * (Double(row) + 0.5)
+            }
+        }
+        return CGPoint(x: sumX / total / scale, y: sumY / total / scale)
     }
 
     /// The distance of each pixel from the badge colour: -1 outside the badge, 0 on its smoothed edge.

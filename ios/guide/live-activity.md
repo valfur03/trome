@@ -54,6 +54,9 @@ So has a place with several stations: Châtelet, Châtelet - Les Halles and Les 
   The app does not use the RATP or Île-de-France Mobilités pictograms, which it may not share.
   One view, `LineBadgeView` in the `TROMEBadge` module, draws them on the lock screen, in the Dynamic Island and on the app screen, each at its own size.
   It draws the number or letter as the outlines of the bold system font, and centres what it draws, not the box of a text, which would put a digit off the centre by the room that a font keeps for accents and descenders.
+  Across, a metro number goes by the weight of its ink, measured on its filled drawing, because the eye reads the weight: the flag of a 1 widens the box of a 11 to the left with little ink, so a 11 centred by its box looks off to the right.
+  Down, every label goes by its box, so that all digits keep one cap height, and an RER letter goes by its box both ways, as on the signs.
+  The digits keep one size, and a number shrinks only when its ink would come within 5% of the diameter from the edge of the circle; no line does today.
 
 ### Which direction a train goes in
 

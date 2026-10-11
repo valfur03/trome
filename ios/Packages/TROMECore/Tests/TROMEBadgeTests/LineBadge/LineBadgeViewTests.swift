@@ -4,12 +4,19 @@ import Testing
 import TROMECore
 @testable import TROMEBadge
 
-/// Draws the badge of every metro and RER line, at the size of each surface, and measures what is drawn: the ink of
-/// the number or letter must be at the centre of the badge, a metro badge must be a circle, the ink must keep off the
-/// edge, and it must have the text colour of the line.
+/// Draws the badge of every metro and RER line, at the size of each surface, and measures what is drawn: the number
+/// or letter must look centred in the badge, a metro badge must be a circle, the ink must keep off the edge, and it
+/// must have the text colour of the line.
+///
+/// Looks centred: across, the weight of the ink of a metro number is on the centre (the eye reads the weight, and the
+/// box of a 11 is centred while its bars sit to the right), and the box of an RER letter is; down, the box of every
+/// label is, so that the digits keep their cap height.
 @MainActor
 struct LineBadgeViewTests {
+    /// The largest gap of a box from the centre, in points.
     static let largestGap: CGFloat = 0.5
+    /// The largest gap of the weight of a metro number from the centre, as a share of the diameter.
+    static let largestWeightGap: CGFloat = 0.005
 
     /// The scale of a drawing: one pixel is a sixth of a point, or a third for the biggest badges, so that the test
     /// stays fast; the centre of a box is then within half a pixel, a twelfth or a sixth of a point.
@@ -59,14 +66,7 @@ struct LineBadgeViewTests {
             "\(name): no number or letter drawn"
         )
         let pixel = 1 / scale
-        #expect(
-            abs(ink.gap.dx) <= Self.largestGap,
-            "\(name): the ink is \(format(ink.gap.dx)) pt off the centre of the badge, across"
-        )
-        #expect(
-            abs(ink.gap.dy) <= Self.largestGap,
-            "\(name): the ink is \(format(ink.gap.dy)) pt off the centre of the badge, down"
-        )
+        checkCentre(of: ink, line: line, diameter: diameter, name: name)
         #expect(
             abs(ink.badge.width - diameter) <= 2 * pixel && abs(ink.badge.height - diameter) <= 2 * pixel,
             "\(name): the badge is \(format(ink.badge.width)) x \(format(ink.badge.height)) pt"
@@ -87,6 +87,27 @@ struct LineBadgeViewTests {
         #expect(
             colourGap <= 0.06,
             "\(name): the ink is #\(ink.inkColour.hex), the text colour of the line is #\(line.color?.text ?? "")"
+        )
+    }
+
+    /// Across, the weight of a metro number and the box of an RER letter; down, the box of every label.
+    private func checkCentre(of ink: BadgeInk, line: TransitLine, diameter: CGFloat, name: String) {
+        switch line.mode {
+        case .metro:
+            let percent = format(100 * ink.weightGap / diameter)
+            #expect(
+                abs(ink.weightGap) <= Self.largestWeightGap * diameter,
+                "\(name): the weight of the ink is \(percent)% of the diameter off the centre, across"
+            )
+        case .rer:
+            #expect(
+                abs(ink.gap.dx) <= Self.largestGap,
+                "\(name): the ink is \(format(ink.gap.dx)) pt off the centre of the badge, across"
+            )
+        }
+        #expect(
+            abs(ink.gap.dy) <= Self.largestGap,
+            "\(name): the ink is \(format(ink.gap.dy)) pt off the centre of the badge, down"
         )
     }
 
