@@ -67,6 +67,7 @@ Check that each one is ready before you start the step that needs it, so that yo
   Never put a secret in a file or in a message: a file can end up in git, and git keeps it for good.
 - **For step 4: the server address and the app token in the release build.** The release build reads them from `ios/Config/Server.xcconfig`, a file that git ignores, never from a file of the repo, and you make it in step 4.
   Have two values at hand: the host of the production server (for example `trome-server.<your subdomain>.workers.dev`), and the app token that you set with `make server-secrets`.
+  Keep a copy of the token in your password manager when you set it: Cloudflare never shows a secret again.
   The archive fails with no host or no token in that file.
 - **For steps 4 and 5: the privacy page and the help page online,** with your legal name, your city and your contact address filled in: [Confidentialité](/fr/privacy/), [Privacy](/en/privacy/), [Aide](/fr/support/) and [Help](/en/support/).
   The app opens the same two pages from its screen, and the build of step 4 must already have these addresses.
@@ -286,17 +287,19 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
    Among other checks, it builds the Release app and fails with a message when the app has no privacy manifest, no answer on encryption, or a version that is not three numbers such as 1.0.0.
    It also fails when the code of the app or of its Live Activity calls an API of Apple's list of APIs that need a reason, and the privacy manifest gives no reason for it.
 
-2. Make your server file from its example, then open it:
+2. Make your server file from its example, then open it.
+   You do this once: on a later archive the file is already there, so check its two lines and go on to the next step.
 
    ```sh
-   cp ios/Config/Server.example.xcconfig ios/Config/Server.xcconfig
+   cp -n ios/Config/Server.example.xcconfig ios/Config/Server.xcconfig
    open -e ios/Config/Server.xcconfig
    ```
 
    Put the host of the production server after `TRAIN_SERVER_HOST =`: only the host, with no `https://` and no path.
    Put the app token that you set with `make server-secrets` after `TRAIN_SERVER_APP_TOKEN =`, and save the file.
    Git ignores this file, and the token goes nowhere else: never into a page, a message or a commit.
-   If you no longer have the token, make a new one with `openssl rand -hex 32` and set it with `make server-secret NAME=APP_TOKEN`: no installed app holds the old one yet.
+   If you no longer have the token and this is your first upload, make a new one with `openssl rand -hex 32` and set it with `make server-secret NAME=APP_TOKEN`: no installed app holds the old one yet.
+   After your first build is on a phone, never do this to get a token back: the server takes one token at a time, so a new one cuts off every installed app.
    Make it with `-hex`: a token with `//` in it would be cut, because `//` starts a comment in this file.
 
    `make check` passes without this file, because it builds with stand-in values, so only the archive shows a missing one.
