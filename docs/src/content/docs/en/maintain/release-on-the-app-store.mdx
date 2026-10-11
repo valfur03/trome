@@ -690,7 +690,7 @@ A build leaves the field only for one of these reasons, written in its row with 
   They count only the riders who share analytics with Apple, so they show that a build is rare, never that it is gone.
 
 A server change is never a reason: a change that would break a build waits until that build is retired.
-The one exception is a new app token: it cuts off every build until its rider updates, so change it only when the old one leaked.
+A new app token is no exception: it joins the server's list, and a token leaves the list only once every build that holds it is retired ([Change the app token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#change-the-app-token)).
 Once a build is retired, a server change may drop what only that build read.
 The row stays in the table, with the status **Retired on `<date>`: `<reason>`**.
 
