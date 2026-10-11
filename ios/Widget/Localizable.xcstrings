@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ Update the app" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Mettez à jour l’app"
+          }
+        }
+      }
+    },
     "%@, %@" : {
       "localizations" : {
         "en" : {
@@ -373,6 +383,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aujourd’hui"
+          }
+        }
+      }
+    },
+    "Update the app to get the times." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettez à jour l’app pour avoir les horaires."
           }
         }
       }

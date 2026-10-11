@@ -37,7 +37,7 @@ public enum BackgroundTrainsRefresh {
 
     public static func shouldAskAgain(after state: NextTrainsState) -> Bool {
         switch state {
-        case .missingKey, .failed(.keyRejected), .failed(.quotaExceeded):
+        case .missingKey, .failed(.keyRejected), .failed(.quotaExceeded), .failed(.appTokenRefused):
             false
         default:
             true

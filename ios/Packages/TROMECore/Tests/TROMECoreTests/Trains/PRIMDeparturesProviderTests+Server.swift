@@ -136,8 +136,8 @@ extension PRIMDeparturesProviderTests {
     }
 
     @Test(arguments: [
-        (401, NextTrainsError.keyRejected),
-        (403, .keyRejected),
+        (401, NextTrainsError.serviceFailure),
+        (403, .serviceFailure),
         (400, .serviceFailure),
         (429, .serviceFailure),
         (500, .serviceFailure),
@@ -147,6 +147,16 @@ extension PRIMDeparturesProviderTests {
         let (provider, _) = serverProvider { _ in .init(body: Data("{}".utf8), status: status, headers: [:]) }
 
         await #expect(throws: error) {
+            try await provider.departures(at: [abbesses])
+        }
+    }
+
+    @Test func saysTheServerRefusedTheAppTokenOnlyForItsOwnRefusal() async {
+        let (provider, _) = serverProvider { _ in
+            .init(body: Data(#"{"error":"unauthorized"}"#.utf8), status: 401, headers: [:])
+        }
+
+        await #expect(throws: NextTrainsError.appTokenRefused) {
             try await provider.departures(at: [abbesses])
         }
     }

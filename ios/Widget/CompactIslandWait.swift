@@ -38,6 +38,8 @@ struct CompactIslandWait: View {
                 .frame(width: Self.noTrainsWidth)
         case .stale, .loading, .noData, .timesUnavailable:
             IslandNumber(value: .dash, drawnAt: drawnAt)
+        case .updateTheApp:
+            IslandNumber(value: .updateTheApp, drawnAt: drawnAt)
         }
     }
 

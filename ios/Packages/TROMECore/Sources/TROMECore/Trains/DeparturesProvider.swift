@@ -6,6 +6,9 @@ public enum NextTrainsError: Error, Equatable, Sendable {
     case quotaExceeded
     case serviceFailure
     case serverOut(retryAt: Date)
+    /// The server of the app refused the app token of this build (`AppTokenRefusal`): only a newer build can
+    /// call it again, so the rider is told to update the app, and the app stops asking until it is opened.
+    case appTokenRefused
 }
 
 public struct DeparturesAnswer: Equatable, Sendable {

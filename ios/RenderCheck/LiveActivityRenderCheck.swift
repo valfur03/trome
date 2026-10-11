@@ -167,6 +167,10 @@ final class LiveActivityRenderCheck: XCTestCase {
             let pageNumber = Self.firstServerOutStatesPage + page
             rows += try drawEveryVariant(of: sample.state, at: sample.station, page: pageNumber, into: outDir)
         }
+        for (page, sample) in Self.updateTheAppStates(from: samples).enumerated() {
+            let pageNumber = Self.firstUpdateTheAppStatesPage + page
+            rows += try drawEveryVariant(of: sample.state, at: sample.station, page: pageNumber, into: outDir)
+        }
         return rows + (try await drawTheNoAnswerStates(of: catalog, fake: fake, into: outDir))
     }
 

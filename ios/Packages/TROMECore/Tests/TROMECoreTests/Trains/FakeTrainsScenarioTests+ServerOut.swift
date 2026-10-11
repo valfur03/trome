@@ -29,6 +29,17 @@ extension FakeTrainsScenarioTests {
         #expect(try await !departures(.serverOut, at: start, afterMinutes: 8).isEmpty)
     }
 
+    @Test func givesTimesThenRefusesTheAppTokenFromOneMinuteAfterTheLaunch() async throws {
+        let start = Fixture.date("2026-10-02T08:30:00Z")
+
+        #expect(try await !departures(.appTokenRefused, at: start, afterMinutes: 0.9).isEmpty)
+        for minutes in [1.0, 8, 60] {
+            await #expect(throws: NextTrainsError.appTokenRefused) {
+                try await departures(.appTokenRefused, at: start, afterMinutes: minutes)
+            }
+        }
+    }
+
     @Test func saysTheServerIsOutFromTheLaunchUntilJustAfterMidnight() {
         let start = Fixture.date("2026-10-02T20:30:00Z")
         let retryAt = Fixture.date("2026-10-02T22:00:40Z")

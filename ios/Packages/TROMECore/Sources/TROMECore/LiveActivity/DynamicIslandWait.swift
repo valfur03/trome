@@ -11,12 +11,14 @@ public struct DynamicIslandWait: Hashable, Sendable {
         case loading
         case noData
         case timesUnavailable
+        case updateTheApp
     }
 
     public enum MinimalWait: Hashable, Sendable {
         case minutes(LineDirection.Train)
         case zero
         case dash
+        case updateTheApp
     }
 
     public var line: TransitLine?
@@ -32,6 +34,7 @@ public struct DynamicIslandWait: Hashable, Sendable {
         case .minutes(let train): .minutes(train)
         case .approaching, .atPlatform: .zero
         case .overAnHour, .noTrain, .stale, .loading, .noData, .timesUnavailable: .dash
+        case .updateTheApp: .updateTheApp
         }
     }
 }
@@ -39,7 +42,10 @@ public struct DynamicIslandWait: Hashable, Sendable {
 extension StationActivityAttributes.ContentState {
     public func dynamicIslandWait(isStale: Bool) -> DynamicIslandWait {
         var island = shownDynamicIslandWait(isStale: isStale)
-        if serverIsOut, island.wait == .stale || island.wait == .noData {
+        guard island.wait == .stale || island.wait == .noData else { return island }
+        if appNeedsUpdate {
+            island.wait = .updateTheApp
+        } else if serverIsOut {
             island.wait = .timesUnavailable
         }
         return island

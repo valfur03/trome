@@ -70,7 +70,7 @@ struct FakeTrainsScenarioTests {
     }
 
     static let scenariosWithTimes = FakeTrainsScenario.allCases.filter {
-        ![.serverOut, .serverOutUntilTomorrow].contains($0)
+        ![.serverOut, .serverOutUntilTomorrow, .appTokenRefused].contains($0)
     }
 
     @Test(arguments: scenariosWithTimes)

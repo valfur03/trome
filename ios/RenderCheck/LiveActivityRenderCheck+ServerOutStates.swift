@@ -5,6 +5,7 @@ extension LiveActivityRenderCheck {
     static let serverOutHubStation = "Saint-Lazare"
     static let serverOutNoDataStation = "Abbesses"
     static let firstServerOutStatesPage = 110
+    static let firstUpdateTheAppStatesPage = 140
 
     static func serverOutStates(
         at catalog: StationCatalog,
@@ -35,6 +36,17 @@ extension LiveActivityRenderCheck {
         return samples.map { station, state in
             var state = state
             state.serverIsOut = true
+            return (station, state)
+        }
+    }
+
+    /// The same pages when the server refused the app token: "Update the app", with its icon, in place of the
+    /// words of a server that is out.
+    static func updateTheAppStates(from serverOutStates: [StationState]) -> [StationState] {
+        serverOutStates.map { station, state in
+            var state = state
+            state.serverIsOut = false
+            state.appNeedsUpdate = true
             return (station, state)
         }
     }

@@ -114,7 +114,7 @@ struct TrainServerContractTests {
             #expect(answer.answeredAt != nil)
             #expect(answer.departures == (try await PRIMDeparturesProvider.departuresOfRecorded(body, at: abbesses)))
         case 401:
-            await #expect(throws: NextTrainsError.keyRejected) { try await provider.departures(at: [abbesses]) }
+            await #expect(throws: NextTrainsError.appTokenRefused) { try await provider.departures(at: [abbesses]) }
         default:
             await #expect(throws: NextTrainsError.serviceFailure) { try await provider.departures(at: [abbesses]) }
         }

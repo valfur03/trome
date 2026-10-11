@@ -166,6 +166,11 @@ private struct TrainsSummary: View {
                         .foregroundStyle(.secondary)
                         .accessibilityLabel(Text("Loading the next trains…"))
                 }
+            case .noData where state.appNeedsUpdate:
+                Text.updateTheApp
+                    .font(.subheadline.bold())
+                    .minimumScaleFactor(0.8)
+                    .accessibilityLabel(Text.spokenUpdateTheApp)
             case .noData:
                 Text.timesUnavailable
                     .font(.subheadline.bold())
@@ -203,7 +208,7 @@ private struct TrainsSummary: View {
     }
 
     private var saysTimesAreUnavailable: Bool {
-        state.trains == .noData && state.serverIsOut
+        state.trains == .noData && (state.serverIsOut || state.appNeedsUpdate)
     }
 }
 

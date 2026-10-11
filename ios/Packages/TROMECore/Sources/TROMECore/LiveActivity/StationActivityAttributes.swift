@@ -6,6 +6,8 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
         public var trains: Trains
         public var updatedAt: Date
         public var serverIsOut: Bool
+        /// The server refused the app token of this build: only an update of the app brings the times back.
+        public var appNeedsUpdate: Bool
         /// Set by the app on the times that it kept after a failed call, once their stale date has passed.
         /// iOS marks a content stale no sooner than 2 minutes after the last update (seen in the log of
         /// `liveactivitiesd`), so a running app says it itself, and the widget draws the stale look at once.
@@ -16,12 +18,14 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
             trains: Trains,
             updatedAt: Date,
             serverIsOut: Bool = false,
+            appNeedsUpdate: Bool = false,
             isMarkedStale: Bool = false
         ) {
             self.stationName = stationName
             self.trains = trains
             self.updatedAt = updatedAt
             self.serverIsOut = serverIsOut
+            self.appNeedsUpdate = appNeedsUpdate
             self.isMarkedStale = isMarkedStale
         }
 
@@ -31,6 +35,7 @@ public struct StationActivityAttributes: Codable, Hashable, Sendable {
             trains = try container.decode(Trains.self, forKey: .trains)
             updatedAt = try container.decode(Date.self, forKey: .updatedAt)
             serverIsOut = try container.decodeIfPresent(Bool.self, forKey: .serverIsOut) ?? false
+            appNeedsUpdate = try container.decodeIfPresent(Bool.self, forKey: .appNeedsUpdate) ?? false
             isMarkedStale = try container.decodeIfPresent(Bool.self, forKey: .isMarkedStale) ?? false
         }
 
@@ -54,6 +59,7 @@ private enum ContentStateKey: String, CodingKey {
     case trains
     case updatedAt
     case serverIsOut
+    case appNeedsUpdate
     case isMarkedStale
 }
 
@@ -65,13 +71,15 @@ extension StationActivityAttributes.ContentState {
         trains: NextTrainsState,
         now: Date,
         firstLineIndex: Int = 0,
-        serverIsOut: Bool? = nil
+        serverIsOut: Bool? = nil,
+        appNeedsUpdate: Bool? = nil
     ) {
         self.init(
             stationName: station.name,
             trains: .init(trains, at: station, now: now, firstLineIndex: firstLineIndex),
             updatedAt: now,
-            serverIsOut: serverIsOut ?? (trains.serverRetryAt != nil)
+            serverIsOut: serverIsOut ?? (trains.serverRetryAt != nil),
+            appNeedsUpdate: appNeedsUpdate ?? trains.refusesTheAppToken
         )
     }
 

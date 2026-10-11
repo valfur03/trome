@@ -20,6 +20,8 @@ extension DynamicIslandWait {
             Text("Loading the next trains…")
         case .noData, .timesUnavailable:
             .spokenTimesUnavailable
+        case .updateTheApp:
+            .spokenUpdateTheApp
         }
     }
 

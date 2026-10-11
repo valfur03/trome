@@ -25,6 +25,7 @@ struct ContentView: View {
                         .accessibilityIdentifier("appTitle")
                         .padding(.horizontal, 4)
                     ServerOutSection()
+                    UpdateTheAppSection()
                     LiveActivityStateSection()
                     ExampleRow()
                     AutomaticModeSection()

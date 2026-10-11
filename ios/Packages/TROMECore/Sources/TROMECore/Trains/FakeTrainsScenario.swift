@@ -11,11 +11,13 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
     case forkEndOverAnHour = "fork-end-over-an-hour"
     case serverOut = "server-out"
     case serverOutUntilTomorrow = "server-out-tomorrow"
+    case appTokenRefused = "app-token-refused"
 
     static let stopSeconds: TimeInterval = 30
     static let laterTrainMinutes: Double = 70
     static let serverOutMinutes: ClosedRange<Double> = 1...8
     static let serverRetrySecond: TimeInterval = 40
+    static let appTokenRefusedAfter: TimeInterval = 60
 
     struct Train: Equatable {
         var index: Int
@@ -35,7 +37,7 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
             [arriving(leavesAt: 6), arriving(leavesAt: 12)]
         case .forkEndWithOneTrain, .forkEndWithNoTrain, .forkEndOverAnHour:
             [arriving(leavesAt: 4), arriving(leavesAt: 8)]
-        case .serverOut, .serverOutUntilTomorrow:
+        case .serverOut, .serverOutUntilTomorrow, .appTokenRefused:
             [arriving(leavesAt: 3), arriving(leavesAt: 7)]
         }
     }
@@ -51,7 +53,8 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
             return train.index == 1 ? 1 : 0
         case .forkEndWithNoTrain, .forkEndOverAnHour:
             return 0
-        case .atPlatform, .atPlatformSecond, .atPlatformBoth, .tenToNine, .serverOut, .serverOutUntilTomorrow:
+        case .atPlatform, .atPlatformSecond, .atPlatformBoth, .tenToNine, .serverOut, .serverOutUntilTomorrow,
+             .appTokenRefused:
             return train.index % count
         }
     }
@@ -69,9 +72,15 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
             let retryAt = tomorrow.addingTimeInterval(Self.serverRetrySecond)
             return now < retryAt ? retryAt : nil
         case .atPlatform, .atPlatformSecond, .atPlatformBoth, .tenToNine, .forkEndWithOneTrain, .forkEndWithNoTrain,
-             .forkEndOverAnHour:
+             .forkEndOverAnHour, .appTokenRefused:
             return nil
         }
+    }
+
+    /// Whether the fake server refuses the app token: from 1 minute after the launch, as after a change of the
+    /// token on the server, so that the Live Activity first shows times.
+    func refusesTheAppToken(from start: Date, now: Date) -> Bool {
+        self == .appTokenRefused && now.timeIntervalSince(start) >= Self.appTokenRefusedAfter
     }
 
     func laterTrainEndIndex(amongEnds count: Int) -> Int? {

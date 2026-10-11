@@ -91,6 +91,8 @@ public final class AutoLiveActivityModel {
 
     public func appDidBecomeActive() async {
         guard appIsActive else { return }
+        inputs.screenTrains.askAgainAfterARefusal()
+        inputs.liveActivityTrains.askAgainAfterARefusal()
         syncWithSystem()
         if liveActivity.isShowing, !showsExample {
             services.locationKeeper.begin()
@@ -134,11 +136,6 @@ public final class AutoLiveActivityModel {
         state.openArrivalStationId = nil
         inputs.automaticMode.snooze(for: duration)
         await stopByHand()
-    }
-
-    public func screenTrainsChanged(for station: Station) async {
-        guard shownStation?.id == station.id else { return }
-        await liveActivity.update(station: station, trains: inputs.screenTrains.state(for: station))
     }
 
     private func observePosition() {
@@ -231,6 +228,9 @@ public final class AutoLiveActivityModel {
     }
 
     private func show(_ station: Station) async {
+        if !liveActivity.isShowing {
+            inputs.liveActivityTrains.askAgainAfterARefusal()
+        }
         await liveActivity.start(station: station, trains: trains(for: station))
         guard liveActivity.isShowing else {
             forgetShownLiveActivity()
@@ -341,13 +341,6 @@ private extension AutoLiveActivityModel {
             await notifier.requestAuthorization()
             self?.hasAskedNotificationQuestion = true
         }
-    }
-
-    func trains(for station: Station) -> NextTrainsState {
-        if inputs.screenTrains.updatingStationId == station.id {
-            return inputs.screenTrains.state(for: station)
-        }
-        return inputs.liveActivityTrains.state(for: station)
     }
 }
 

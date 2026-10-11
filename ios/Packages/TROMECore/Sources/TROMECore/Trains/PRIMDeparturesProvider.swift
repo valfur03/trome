@@ -220,6 +220,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         try waitForTheRetryTime(of: monitoringRef)
         let (data, httpResponse) = try await answer(at: monitoringRef)
         try keepTheRetryTime(of: monitoringRef, from: httpResponse, body: data)
+        try AppTokenRefusal.throwIfRefused(httpResponse, body: data, from: source)
         if let error = Self.error(ofStatus: httpResponse?.statusCode, from: source) {
             throw error
         }
@@ -275,7 +276,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         switch (statusCode, source) {
         case (.some(200..<300), _):
             nil
-        case (.some(401), _), (.some(403), _):
+        case (.some(401), .prim), (.some(403), .prim):
             .keyRejected
         case (.some(429), .prim):
             .quotaExceeded

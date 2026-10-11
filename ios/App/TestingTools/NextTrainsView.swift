@@ -37,6 +37,11 @@ struct NextTrainsView: View {
                 "The train data service refused the key. Check the train data key.",
                 identifier: "keyRejectedMessage"
             )
+        case .appTokenRefused:
+            message(
+                "The server refused the app token. Update the app.",
+                identifier: "appTokenRefusedMessage"
+            )
         case .quotaExceeded:
             message(
                 "The train data service received too many requests today. Try again later.",

@@ -14,6 +14,11 @@ public enum NextTrainsState: Equatable, Sendable {
         return error.serverRetryAt
     }
 
+    /// Whether the server refused the app token: the rider must update the app to get times again.
+    public var refusesTheAppToken: Bool {
+        self == .failed(.appTokenRefused)
+    }
+
     func refreshDelay(normally interval: Duration, now: Date) -> Duration {
         guard let serverRetryAt, serverRetryAt > now else { return interval }
         return .seconds(serverRetryAt.timeIntervalSince(now).rounded(.up))
@@ -28,6 +33,9 @@ extension NextTrainsError {
 }
 
 /// The next trains of one station, as the last call gave them; `keepUpdated(for:)` asks again every 30 seconds.
+///
+/// Once the server refuses the app token, it makes no call, for any station, until `askAgainAfterARefusal()`:
+/// the token is part of the build, so asking again in a loop could not help, and only costs the rider's battery.
 ///
 /// The app makes two of them: one for the next trains screen of the Testing tools, one for the Live Activity.
 /// `updatingStationId` says which station the screen keeps up to date, so that the Live Activity
@@ -48,6 +56,7 @@ public final class NextTrainsModel {
     private var shownStationId: String?
     private var lastBoard: DepartureBoard?
     private var updateCount = 0
+    private var appTokenWasRefused = false
 
     public init(
         provider: (any DeparturesProvider)?,
@@ -68,6 +77,12 @@ public final class NextTrainsModel {
 
     public func state(for station: Station) -> NextTrainsState {
         provider == nil || shownStationId == station.id ? state : .loading
+    }
+
+    /// Lets the next refresh call the server again after a refusal of the app token: the rider opened the app,
+    /// or a new Live Activity starts. The server may accept the token again, for example after a rotation.
+    public func askAgainAfterARefusal() {
+        appTokenWasRefused = false
     }
 
     public func keepUpdated(for station: Station) async {
@@ -100,6 +115,10 @@ public final class NextTrainsModel {
             lastBoard = nil
             state = .loading
         }
+        guard !appTokenWasRefused else {
+            state = .failed(.appTokenRefused)
+            return
+        }
         let stations = catalog?.hubStations(of: station) ?? [station]
         let result: Result<DeparturesAnswer, NextTrainsError>
         do {
@@ -108,6 +127,9 @@ public final class NextTrainsModel {
             result = .failure(error)
         } catch {
             result = .failure(.serviceFailure)
+        }
+        if case .failure(.appTokenRefused) = result {
+            appTokenWasRefused = true
         }
         guard !Task.isCancelled, shownStationId == station.id else { return }
         switch result {

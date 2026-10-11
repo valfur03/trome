@@ -387,6 +387,26 @@
         }
       }
     },
+    "Update the app" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettez à jour l’app"
+          }
+        }
+      }
+    },
+    "Update the app to get the times." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettez à jour l’app pour avoir les horaires."
+          }
+        }
+      }
+    },
     "While Using the App" : {
       "localizations" : {
         "fr" : {

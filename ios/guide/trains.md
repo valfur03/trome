@@ -56,6 +56,10 @@ When the server is out because PRIM failed (`"prim-failure"`, a minute), the app
 It asks again when the Live Activity switches station or the app comes back to the screen.
 Any other failure, such as no network or a time-out, fails this call only.
 
+When the server refuses the app token (401 with `{"error": "unauthorized"}`), the app makes no more call, for any station, in the background or on screen, until you open the app or a new Live Activity starts.
+The token is part of the build, so asking again could not help: the rider reads **Update the app**.
+A 401 with another body, or a 403, is not this refusal (a network that asks to sign in can answer it), and fails this call only.
+
 ## What a failed call does to the Live Activity
 
 | Before the call, the Live Activity shows | After it |
@@ -64,6 +68,7 @@ Any other failure, such as no network or a time-out, fails this call only.
 | **No trains** | **Times unavailable**, because **No trains** never gets old on its own |
 | No times yet | **Times unavailable** |
 | Any of these, and the server is out because its budget of PRIM calls is used up (`"budget"`, or `"prim-limit"`: PRIM said "too many requests") | **Times unavailable**, in place of **Open the app**: opening the app would not help |
+| Any of these, and the server refused the app token | **Update the app**, after an orange icon, in place of **Times unavailable** or **Open the app** |
 
 The next call that works shows its times at once.
 To see what PRIM answered, train by train, [read the logs](../README.md#read-the-logs).

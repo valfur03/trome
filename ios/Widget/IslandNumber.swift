@@ -18,6 +18,9 @@ struct IslandNumber: View {
                     .foregroundStyle(PanamStrip.amber)
             case .dash:
                 WaitDash()
+            case .updateTheApp:
+                Image.updateTheApp
+                    .foregroundStyle(Color.updateTheApp)
             }
         }
         .font(Self.font)

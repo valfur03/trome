@@ -89,6 +89,9 @@ import WidgetKit
     )
     StationActivityAttributes.ContentState(stationName: "Abbesses", trains: .noData, updatedAt: .now)
     StationActivityAttributes.ContentState(stationName: "Abbesses", trains: .noData, updatedAt: .now, serverIsOut: true)
+    StationActivityAttributes.ContentState(
+        stationName: "Abbesses", trains: .noData, updatedAt: .now, appNeedsUpdate: true
+    )
 }
 
 private extension TransitLine {

@@ -143,4 +143,16 @@ extension AutoLiveActivityModel {
         }
         await liveActivity.update(station: station, trains: state)
     }
+
+    public func screenTrainsChanged(for station: Station) async {
+        guard shownStation?.id == station.id else { return }
+        await liveActivity.update(station: station, trains: inputs.screenTrains.state(for: station))
+    }
+
+    func trains(for station: Station) -> NextTrainsState {
+        if inputs.screenTrains.updatingStationId == station.id {
+            return inputs.screenTrains.state(for: station)
+        }
+        return inputs.liveActivityTrains.state(for: station)
+    }
 }

@@ -29,6 +29,7 @@ public final class StationLiveActivityModel {
     public private(set) var areActivitiesEnabled: Bool
     public private(set) var content: StationActivityAttributes.ContentState?
     public private(set) var serverRetryAt: Date?
+    public private(set) var appNeedsUpdate = false
 
     private let client: any StationLiveActivityClient
     private let store: StationLiveActivityInputsStore?
@@ -36,7 +37,7 @@ public final class StationLiveActivityModel {
     private var inputs: StationLiveActivityInputs?
     private var firstLineIndex: Int
     private var keptTimesStaleDate: Date?
-    @ObservationIgnored private var lastSystemCall: Task<Void, Never>?
+    @ObservationIgnored private let systemCalls = InOrderCalls()
     @ObservationIgnored private var startCount = 0
 
     public init(
@@ -59,7 +60,7 @@ public final class StationLiveActivityModel {
     }
 
     public func start(station: Station, trains: NextTrainsState) async {
-        await waitForTheSystemCallsInProgress()
+        await systemCalls.waitForTheCallsInProgress()
         if client.isShowing, keepShownTimesIfFailed(trains, at: station) {
             startError = nil
             isShowing = true
@@ -69,7 +70,7 @@ public final class StationLiveActivityModel {
         if !client.isShowing || switchesStation(to: station) {
             firstLineIndex = 0
         }
-        let content = makeContent(station: station, trains: trains, serverIsOut: trains.serverRetryAt != nil)
+        let content = makeContent(station: station, trains: trains)
         if client.isShowing {
             await send(content)
         } else {
@@ -89,6 +90,7 @@ public final class StationLiveActivityModel {
         startCount += 1
         keptTimesStaleDate = nil
         serverRetryAt = trains.serverRetryAt
+        appNeedsUpdate = trains.refusesTheAppToken
         remember(StationLiveActivityInputs(station: station, trains: trains))
         self.content = content
     }
@@ -101,6 +103,7 @@ public final class StationLiveActivityModel {
         }
         keptTimesStaleDate = nil
         serverRetryAt = trains.serverRetryAt
+        appNeedsUpdate = trains.refusesTheAppToken
         await show(station: station, trains: trains)
     }
 
@@ -152,8 +155,7 @@ public final class StationLiveActivityModel {
     func redrawLosesATrain() -> Bool {
         guard isShowing, !keptTimesAreStale(at: now()), let inputs,
               let shown = (content ?? client.shownContent)?.trains.linesPage,
-              let redrawn = makeContent(station: inputs.station, trains: inputs.trains, serverIsOut: false)
-                .trains.linesPage
+              let redrawn = makeContent(station: inputs.station, trains: inputs.trains).trains.linesPage
         else { return false }
         return redrawn.showsFewerTrainsInARow(than: shown)
     }
@@ -162,7 +164,7 @@ public final class StationLiveActivityModel {
         isShowing = false
         forgetShownContent()
         let startsBeforeTheEnd = startCount
-        await inOrder { [client] in await client.end() }
+        await systemCalls.run { [client] in await client.end() }
         if startCount == startsBeforeTheEnd {
             isShowing = false
         }
@@ -185,13 +187,16 @@ public final class StationLiveActivityModel {
         firstLineIndex = 0
         keptTimesStaleDate = nil
         serverRetryAt = nil
+        appNeedsUpdate = false
     }
 
     private func sayWhetherTheServerIsOut(_ trains: NextTrainsState) async {
         serverRetryAt = trains.serverRetryAt
+        appNeedsUpdate = trains.refusesTheAppToken
         guard let shown = content ?? client.shownContent else { return }
         var kept = markedStaleIfTheKeptTimesAreOld(shown)
         kept.serverIsOut = serverRetryAt != nil
+        kept.appNeedsUpdate = appNeedsUpdate
         await sendIfChanged(kept, from: shown)
     }
 
@@ -222,7 +227,12 @@ public final class StationLiveActivityModel {
         if switchesStation(to: station) {
             firstLineIndex = 0
         }
-        let content = makeContent(station: station, trains: trains, serverIsOut: serverRetryAt != nil)
+        let content = makeContent(
+            station: station,
+            trains: trains,
+            serverIsOut: serverRetryAt != nil,
+            appNeedsUpdate: appNeedsUpdate
+        )
         remember(StationLiveActivityInputs(station: station, trains: trains))
         self.content = content
         await send(content)
@@ -254,29 +264,7 @@ public final class StationLiveActivityModel {
     }
 
     private func send(_ content: StationActivityAttributes.ContentState) async {
-        await inOrder { [client] in await client.update(content) }
-    }
-
-    private func waitForTheSystemCallsInProgress() async {
-        while let pending = lastSystemCall {
-            await pending.value
-            if lastSystemCall == pending {
-                lastSystemCall = nil
-            }
-        }
-    }
-
-    private func inOrder(_ call: @escaping @MainActor () async -> Void) async {
-        let previous = lastSystemCall
-        let next = Task {
-            await previous?.value
-            await call()
-        }
-        lastSystemCall = next
-        await next.value
-        if lastSystemCall == next {
-            lastSystemCall = nil
-        }
+        await systemCalls.run { [client] in await client.update(content) }
     }
 
     private static func logPager(_ event: String) {
@@ -292,14 +280,16 @@ public final class StationLiveActivityModel {
     private func makeContent(
         station: Station,
         trains: NextTrainsState,
-        serverIsOut: Bool
+        serverIsOut: Bool? = nil,
+        appNeedsUpdate: Bool? = nil
     ) -> StationActivityAttributes.ContentState {
         StationActivityAttributes.ContentState(
             station: station,
             trains: trains,
             now: now(),
             firstLineIndex: firstLineIndex,
-            serverIsOut: serverIsOut
+            serverIsOut: serverIsOut,
+            appNeedsUpdate: appNeedsUpdate
         )
     }
 }

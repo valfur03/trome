@@ -30,6 +30,9 @@ public struct FakeDeparturesProvider: DeparturesProvider {
         if let retryAt = scenario?.serverRetryAt(from: start, now: now) {
             throw NextTrainsError.serverOut(retryAt: retryAt)
         }
+        if scenario?.refusesTheAppToken(from: start, now: now) == true {
+            throw NextTrainsError.appTokenRefused
+        }
         return stations.flatMap { station in
             station.lines.flatMap { line in
                 guard let scenario else { return Self.departures(of: line, at: station, from: now) }

@@ -22,7 +22,12 @@ struct BackgroundTrainsRefreshTests {
         #expect(BackgroundTrainsRefresh.delay(untilStale: staleDate, now: now) == BackgroundTrainsRefresh.maximumDelay)
     }
 
-    @Test(arguments: [NextTrainsState.missingKey, .failed(.keyRejected), .failed(.quotaExceeded)])
+    @Test(arguments: [
+        NextTrainsState.missingKey,
+        .failed(.keyRejected),
+        .failed(.quotaExceeded),
+        .failed(.appTokenRefused)
+    ])
     func stopsAskingWhenAskingAgainCannotHelp(state: NextTrainsState) {
         #expect(BackgroundTrainsRefresh.shouldAskAgain(after: state) == false)
     }
