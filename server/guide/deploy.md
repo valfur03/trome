@@ -54,12 +54,13 @@ When a new secret joins the table, set it with `make server-secret` on each Work
 
 A Release build of the app reads the server from `ios/Config/Server.xcconfig`, a copy of `ios/Config/Server.example.xcconfig` that git ignores.
 Put the host of the production Worker in `TRAIN_SERVER_HOST`, with no `https://`, and its app token in `TRAIN_SERVER_APP_TOKEN`.
+Then run `make release-server-check` in the main folder of your clone: it asks the production Worker once for the trains of one stop, and says in one line, with neither value in it, whether the Worker accepts them.
 
 ## Change the app token
 
 The server takes one app token at a time, and every installed app holds the old one.
 So a new token cuts off every installed app until its rider installs a version with the new token: change it only when the old one leaked.
-Then set the new one with `make server-secret NAME=APP_TOKEN`, put it in `ios/Config/Server.xcconfig`, and release a new version of the app.
+Then set the new one with `make server-secret NAME=APP_TOKEN`, put it in `ios/Config/Server.xcconfig`, check it with `make release-server-check`, and release a new version of the app.
 
 ## Read the counts
 

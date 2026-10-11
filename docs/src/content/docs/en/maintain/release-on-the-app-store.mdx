@@ -289,7 +289,7 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
    It also fails when the code of the app or of its Live Activity calls an API of Apple's list of APIs that need a reason, and the privacy manifest gives no reason for it.
 
 2. Make your server file from its example, then open it.
-   You do this once: on a later archive the file is already there, so check its two lines and go on to the next step.
+   You do this once: on a later archive the file is already there, so only run the check at the end of this step.
 
    ```sh
    cp -n ios/Config/Server.example.xcconfig ios/Config/Server.xcconfig
@@ -302,6 +302,17 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
    If you no longer have the token and this is your first upload, make a new one with `openssl rand -hex 32` and set it with `make server-secret NAME=APP_TOKEN`: no installed app holds the old one yet.
    After your first build is on a phone, never do this to get a token back: the server takes one token at a time, so a new one cuts off every installed app.
    Make it with `-hex`: a token with `//` in it would be cut, because `//` starts a comment in this file.
+
+   Then check the two values with the production server, before each archive:
+
+   ```sh
+   make release-server-check
+   ```
+
+   It asks the server for the trains of one stop, as the app does, and prints one line that shows neither value.
+   A line that starts with **OK** means that the server accepts them.
+   Any other line says what is wrong and what to do: fix the file, and run the check again.
+   A typo here would ship a build that shows no times at any station, and nothing else shows it before your testers do.
 
    `make check` passes without this file, because it builds with stand-in values, so only the archive shows a missing one.
    The archive then fails with an error that starts with **No train server host** or **No app token for the train server**, and names this file.
