@@ -287,6 +287,7 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
 
    Among other checks, it builds the Release app and fails with a message when the app has no privacy manifest, no answer on encryption, or a version that is not three numbers such as 1.0.0.
    It also fails when the code of the app or of its Live Activity calls an API of Apple's list of APIs that need a reason, and the privacy manifest gives no reason for it.
+   Then `git status --short` must print nothing: the tag of step 11 names one commit, so the archive must hold no change outside it.
 
 2. Make your server file from its example, then open it.
    You do this once: on a later archive the file is already there, so only run the check at the end of this step.
@@ -343,7 +344,18 @@ So before each new upload of the same version, raise `CURRENT_PROJECT_VERSION` b
    A message about a missing API declaration (code ITMS-91053) means that the privacy manifest does not give a reason for an API that the app uses: Apple refuses such builds.
    Fix it in the repo, raise the build number, and upload again.
 
-10. Write down the build number that App Store Connect shows, and make the build number of the repo higher than it before the next upload.
+10. Write down the build number that App Store Connect shows.
+    Before any new commit, tag the commit that you archived with the version and that number, here 1.0.0 and 3, and push the tag:
+
+    ```sh
+    git tag -a builds/1.0.0/3 -m "TROME 1.0.0 (3)"
+    git push origin builds/1.0.0/3
+    ```
+
+11. Add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold).
+    In the same commit, record the set of promises of the build: what it reads from the server, so that a server change cannot break it unseen; a set leaves only with a retired row.
+    The repo has no sets of promises yet: until it does, skip that part.
+    Then make the build number of the repo higher than the one of App Store Connect, for the next upload.
 
 </Steps>
 
@@ -646,6 +658,36 @@ Riders then get no new times until you turn it on again.
 </Steps>
 
 </Checklist>
+
+## The builds that riders may hold
+
+Apple's help, read on 11 October 2026: [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/), [Stop testing a build](https://developer.apple.com/help/app-store-connect/test-a-beta-version/stop-testing-a-build).
+
+Every build uploaded to Apple is a row of this table, from its upload on, and keeps its row for ever.
+A server change keeps every build in the field working: the server adds what a new build needs next to what the older ones read, and never swaps it.
+Why: a rider updates when they choose, so an old build can call the server for years.
+
+Each build has the git tag `builds/<version>/<build>` on its commit, from [step 4](#4-build-upload-and-check-the-first-build).
+A TestFlight build becomes unavailable to testers after 90 days: the table counts them from the upload, and App Store Connect shows the days left on the build, so trust it when the two differ.
+A build that reaches the store never stops working, so its row then says App Store, with no date.
+
+| Version (build) | Uploaded | Commit | Where, and until when | Status |
+|---|---|---|---|---|
+| 1.0.0 (1) | 11 October 2026 | `ca169af` | TestFlight, internal testers, until 9 January 2027 | In the field |
+| 1.0.0 (2) | 11 October 2026 | `9d83a8d` | TestFlight, until 9 January 2027 | In the field |
+
+Builds 1 and 2 were tagged after their upload, from the history and the time of each archive.
+The app files of build 1 are the same in every commit from `dcf1d8d` to `dd59fdd`.
+
+### Retire a build
+
+A build leaves the field only for a reason written in its row, with the date, for example:
+
+- No rider can still open it: its TestFlight date has passed, you expired it in App Store Connect, or the App Store Connect figures by version show no session of it for weeks (they count only the riders who share analytics with Apple).
+- Every rider who holds it was told to update, and the figures show that they did.
+
+A server change is never a reason: a change that would break a build waits until that build is retired.
+The row stays in the table, with the status **Retired on `<date>`: `<reason>`**.
 
 ## Fix this page
 
