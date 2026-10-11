@@ -156,6 +156,7 @@ A walk with a fake position also has, with the Map icon, the line "No region wat
 Such a log says nothing about a closed app: tap **Use the real GPS**, then walk again.
 With the real GPS, a Map line "Watching" some stations (often "Watching 18 stations") shows once the phone has a position; when it does not show, leave the app and open it again.
 The line "Region watch on: iOS keeps N regions for the app" is no proof either way: it counts the areas when the app starts, before the app chooses them, so it can say 0 with the real GPS, and more than 0 with a fake position.
+A line "iOS keeps N areas for the app, the plan has M" is a problem: iOS does not keep the areas that the app just chose, and past 20 areas iOS refuses new ones, so a station near you may not wake the app.
 For a first walk, stand about 2 minutes within 150 meters of a station, because iOS can take a few seconds to a few minutes to report that you entered the area ([the arrival notification](#with-the-app-in-the-background-the-arrival-notification)).
 **Share** sends the log as text, and **Clear** empties it.
 Release builds record nothing.
