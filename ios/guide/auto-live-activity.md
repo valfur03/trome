@@ -127,7 +127,8 @@ The app needs the location "Always" to start the Live Activity while it is close
 1. The location, **While Using the App**, at the first launch.
 2. The location, **Always**, right after the answer.
    iOS does not say when the rider taps **Keep Only While Using**, so the app waits until it is active again.
-   When iOS shows no second question (after **Allow Once**, it ignores it), the app waits at most 20 seconds.
+   When iOS shows no second question (after **Allow Once**, it ignores it), the app waits at most 20 seconds, from the moment it is active again.
+   So the notifications question shows about 21 to 23 seconds after **Allow Once**, or at once when iOS takes the app out of the active state and back for the ignored question.
 3. The notifications, only after the second answer.
 
 With **While Using the App** only, the Live Activity starts by itself only while the app is open.
