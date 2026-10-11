@@ -18,6 +18,8 @@ export default defineConfig({
       title: 'TROME',
       description:
         'TROME montre les prochains métros et RER de la station la plus proche sur l’écran verrouillé de l’iPhone.',
+      // The icon of the browser tab is the app icon, made smaller: ios/guide/assets.md says how to make it again.
+      favicon: '/favicon.png',
       defaultLocale: 'fr',
       locales: {
         fr: { label: 'Français', lang: 'fr' },

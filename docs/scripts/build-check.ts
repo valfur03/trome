@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { checkWarnings } from './build-warnings.ts';
 import { knownBuildWarnings } from './known-build-warnings.ts';
+import { missingIcons } from './site-icon.ts';
 
 const listFile = 'docs/scripts/known-build-warnings.ts';
 
@@ -30,6 +31,12 @@ build.on('close', (code) => {
   if (stale.length > 0) {
     console.error(`\nThe docs build no longer prints these known warnings, so remove them from ${listFile}:`);
     stale.forEach(({ text, upstream }) => console.error(`  ${text} (${upstream})`));
+    failed = true;
+  }
+  const noIcon = missingIcons('dist');
+  if (noIcon.length > 0) {
+    console.error(`\n${noIcon.length} page(s) of the site link to no icon file, so the browser tab shows a blank icon. Set favicon in docs/astro.config.mjs to a file of docs/public/:`);
+    noIcon.forEach((line) => console.error(`  ${line}`));
     failed = true;
   }
   if (failed) {
