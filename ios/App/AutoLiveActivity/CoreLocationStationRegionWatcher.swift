@@ -16,7 +16,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     private var session: CLServiceSession?
     private var monitorTask: Task<CLMonitor, Never>?
     private var eventsTask: Task<Void, Never>?
-    private var watched: [String: WatchedRegion]?
+    private var sync: StationRegionSync?
     private var hasLoggedNoAlways = false
     private var firstStates = RegionFirstStates()
     private var firstStatesFlush: Task<Void, Never>?
@@ -27,28 +27,16 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
 
     func watch(_ regions: [WatchedRegion]) async {
         guard let monitor = await startedMonitor() else { return }
-        let previous = watched ?? [:]
-        let existingIds: Set<String>
-        if let watched {
-            existingIds = Set(watched.keys)
-        } else {
-            existingIds = Set(await monitor.identifiers)
-        }
-        let newIds = Set(regions.map(\.id))
-        watched = Dictionary(uniqueKeysWithValues: regions.map { ($0.id, $0) })
-        for id in existingIds.subtracting(newIds) {
-            await monitor.remove(id)
-        }
-        let added = regions.filter { previous[$0.id] != $0 }
-        expectFirstStates(of: Set(added.map(\.id)))
-        for region in added {
-            let condition = CLMonitor.CircularGeographicCondition(
-                center: CLLocationCoordinate2D(latitude: region.center.latitude, longitude: region.center.longitude),
-                radius: region.radiusMeters
-            )
-            let assumed: CLMonitor.Event.State = region.startsInside ? .satisfied : .unsatisfied
-            await monitor.add(condition, identifier: region.id, assuming: assumed)
-        }
+        let sync = self.sync ?? makeSync(of: monitor)
+        await sync.watch(regions)
+    }
+
+    private func makeSync(of monitor: CLMonitor) -> StationRegionSync {
+        let sync = StationRegionSync(monitor: CoreLocationRegionMonitor(monitor))
+        sync.wakeLog = wakeLog
+        sync.onAdding = { [weak self] ids in self?.expectFirstStates(of: ids) }
+        self.sync = sync
+        return sync
     }
 
     private func startedMonitor() async -> CLMonitor? {

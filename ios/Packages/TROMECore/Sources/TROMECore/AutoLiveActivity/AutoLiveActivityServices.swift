@@ -12,6 +12,14 @@ public protocol StationRegionWatcher: AnyObject {
     func watch(_ regions: [WatchedRegion]) async
 }
 
+/// The areas that iOS watches for the app: the identifiers that iOS keeps, also the ones it refused to watch.
+@MainActor
+public protocol RegionMonitor: AnyObject {
+    var identifiers: [String] { get async }
+    func add(_ region: WatchedRegion) async
+    func remove(_ id: String) async
+}
+
 @MainActor
 public protocol BackgroundLocationKeeper: AnyObject {
     func begin()
