@@ -81,10 +81,11 @@ Do each step on the staging Worker first, with its own tokens, then on the produ
 
    Both answers have times.
    A `{"error":"unauthorized"}` answer means that the list lost a token: set it again, with every token.
+   If both answers are `{"error":"unauthorized"}`, the Worker may still run a server from before the list: do step 1 again before you go on.
 5. Run `make server-secret NAME=APP_TOKEN`, and paste the production list with the new token in the same way.
 6. In the main folder of your clone, run `make release-server-check`: `ios/Config/Server.xcconfig` still holds the old token, so the check proves that the installed builds keep their times.
-   If it fails, set the list of before again at once with `make server-secret NAME=APP_TOKEN`, then find the cause.
-   Then put the new token in `TRAIN_SERVER_APP_TOKEN` of that file, and run `make release-server-check` again: the next build that you upload holds it.
+   If it fails, run `make server-secret NAME=APP_TOKEN` at once and paste the old list again, with no new token; then find the cause.
+   When it passes, put the new token in `TRAIN_SERVER_APP_TOKEN` of that file, and run `make release-server-check` again: the next build that you upload holds it.
 
 ### Retire a token
 
