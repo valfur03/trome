@@ -101,7 +101,7 @@ Prometheus only makes outgoing calls, so nothing opens at your home.
        credentials_file: /run/secrets/trome_owner_token
    ```
 
-4. Add `--storage.tsdb.retention.time=395d` to the command of Prometheus: 13 months, the time that the privacy page gives, as its default of 15 days is shorter than the server's 30 days.
+4. Add `--storage.tsdb.retention.time=395d` to the command of Prometheus: 13 months, as its default of 15 days is shorter than the server's 30 days.
 5. Recreate Prometheus, so that it takes the new mount, flag and job: with Docker Compose, run `docker compose up -d`, with `--build` when your image copies `prometheus.yml`.
    `docker compose restart` applies neither the new mount nor the new flag, and it does not rebuild an image.
    Then open its Targets page: the `trome` job shows `UP`.

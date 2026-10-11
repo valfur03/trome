@@ -15,7 +15,7 @@ import Contact from '../../../components/Contact.astro';
 Dernière mise à jour : <Placeholder>date</Placeholder>.
 
 TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
-Au sens d’Apple, TROME ne collecte aucune donnée sur vous : ce qui arrive au serveur sert à répondre, puis n’est pas conservé.
+Selon la définition d’Apple, TROME ne collecte aucune donnée sur vous : ce qui arrive au serveur sert à répondre, puis n’est pas conservé.
 Cette page explique ce que l’app TROME pour iPhone fait de vos données, ce que le serveur stocke, qui les reçoit, et quels sont vos droits.
 
 ## En bref
@@ -24,7 +24,7 @@ Cette page explique ce que l’app TROME pour iPhone fait de vos données, ce qu
 - L’app ne mesure rien de ce que vous faites : le serveur compte seulement combien de requêtes il reçoit, jamais qui les envoie.
 - Votre position reste sur votre iPhone : l’app ne l’envoie à personne.
 - Pour afficher les horaires, l’app envoie au serveur l’identifiant de la station près de laquelle vous êtes, mais ni votre position, ni aucun identifiant qui vous soit propre.
-- Le serveur n’enregistre nulle part quelle station a été demandée, ni quand, ni par qui.
+- Le serveur ne garde aucun historique des stations demandées, ni de qui les demande.
   Cloudflare, qui héberge le serveur, voit passer chaque requête, [comme l’explique la suite](#cloudflare-et-la-source-des-horaires).
 - La fiche de l’App Store dit la même chose : données non collectées.
   Ce que fournit Apple, comme le nombre de téléchargements, ou vos données si vous testez TROME avec TestFlight, est expliqué [plus bas](#ce-que-fournit-apple).
@@ -50,11 +50,11 @@ Le serveur ne les lit pas et ne les conserve pas.
 
 ## Pourquoi ces données sont utilisées, et sur quelle base légale
 
-La base légale est la même pour chacun des usages ci-dessous : l’intérêt légitime (RGPD, article 6, paragraphe 1, point f).
+La base légale est la même pour chacun des usages ci-dessous : l’intérêt légitime (article 6, paragraphe 1, point f, du RGPD).
 Voici à quoi sert chaque donnée :
 
 - **L’identifiant de la station, et l’adresse IP qui l’accompagne** : vous donner les horaires demandés, et rien d’autre.
-  Pour le RGPD, utiliser une donnée le temps d’une requête, c’est déjà la traiter, même si rien n’est conservé.
+  Au sens du RGPD, utiliser une donnée le temps d’une requête, c’est déjà la traiter, même si rien n’est conservé.
   L’intérêt est légitime ici : TROME ne peut pas fonctionner sans ces données, le traitement est très bref, et rien qui vous identifie n’est conservé.
 - **Les compteurs du serveur, et leur copie** : surveiller la limite quotidienne d’appels à la source des horaires, et suivre l’usage de TROME.
   Ils ne contiennent ni station ni adresse IP.
@@ -64,20 +64,21 @@ Voici à quoi sert chaque donnée :
 
 ## Ce qui est stocké sur le serveur
 
-Après avoir répondu, le serveur n’enregistre aucune station demandée : ni dans ses compteurs, ni dans ses erreurs, ni dans ses journaux.
+Le serveur n’inscrit aucune station demandée dans ses compteurs, dans ses erreurs ni dans ses journaux.
 Il ne stocke que :
 
 - **des compteurs** : le nombre de requêtes reçues chaque heure et chaque jour, le nombre d’appels à la source des horaires, et le nombre d’erreurs.
   Ces compteurs ne portent sur aucune station ni sur aucune personne.
-  Une copie est envoyée à un outil de suivi privé, qu’aucun tiers n’héberge, et personne d’autre ne la reçoit.
+  Une copie va dans un outil de suivi privé, qu’aucun tiers n’héberge : personne d’autre ne la reçoit.
   Les compteurs et leur copie sont conservés tant qu’ils restent utiles pour [les usages indiqués plus haut](#pourquoi-ces-données-sont-utilisées-et-sur-quelle-base-légale) ;
 - **une liste d’erreurs** : l’heure, le type d’erreur et son code.
   Elle ne contient pas de station non plus.
   Elle n’est conservée que le temps de trouver et de corriger la cause d’une erreur ;
-- **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la renvoyer à quiconque demande la même station.
-  Elle reste dans la mémoire du serveur, sans jamais être enregistrée, et le serveur l’efface après une dizaine de minutes au plus.
+- **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la renvoyer à toute personne qui demande la même station.
+  Elle reste dans la mémoire du serveur, sans jamais être enregistrée, et le serveur l’efface à sa première requête après une dizaine de minutes.
   Elle ne dit pas qui a demandé la station ;
-- **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire et pendant quelques minutes au plus : le serveur ne rappelle pas la source aussitôt.
+- **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, jusqu’à la première requête du serveur après une minute : le serveur ne rappelle pas la source aussitôt ;
+- **l’heure jusqu’à laquelle le serveur attend**, quand la source refuse un appel : il ne la rappelle pas avant.
 
 Le serveur ne conserve aucune adresse IP, aucun identifiant de vous ou de votre iPhone, et aucune position.
 Aucun journal des requêtes n’est activé chez son hébergeur.
@@ -85,13 +86,13 @@ Aucun journal des requêtes n’est activé chez son hébergeur.
 ## Cloudflare et la source des horaires
 
 Le serveur fonctionne sur Cloudflare.
-Cloudflare reçoit chaque requête avant le serveur : il voit donc l’adresse de la requête, avec l’identifiant de la station, et les informations réseau qui accompagnent toute requête web, comme votre adresse IP et le lieu approximatif qu’il en déduit.
-Tous les journaux que Cloudflare pourrait conserver pour TROME sont désactivés, et le serveur n’en conserve rien.
+Cloudflare reçoit chaque requête avant le serveur : elle voit donc l’adresse web demandée, qui contient l’identifiant de la station, et les informations réseau qui accompagnent toute requête web, comme votre adresse IP et le lieu approximatif qu’elle en déduit.
+Tous les journaux que Cloudflare pourrait conserver pour TROME sont désactivés.
 Cloudflare traite cette requête pour le compte de TROME, en tant que sous-traitant, selon son [accord de traitement des données](https://www.cloudflare.com/cloudflare-customer-dpa/) (en anglais) et sa [politique de confidentialité](https://www.cloudflare.com/fr-fr/privacypolicy/).
-Cloudflare est une société américaine : il peut donc traiter une requête hors de l’Union européenne, notamment aux États-Unis.
-Pour protéger vos données là-bas, il s’appuie sur le cadre de protection des données UE–États-Unis et sur les clauses contractuelles types de la Commission européenne, que son accord inclut.
+Cloudflare est une société américaine : elle peut donc traiter une requête hors de l’Union européenne, notamment aux États-Unis.
+Pour protéger vos données là-bas, elle s’appuie sur le cadre de protection des données UE–États-Unis (Data Privacy Framework) et sur les clauses contractuelles types de la Commission européenne, que son accord inclut.
 
-Le serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de la station et la clé de TROME.
+Le serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de la station et la clé d’accès de TROME.
 PRIM ne reçoit rien qui vienne de vous.
 
 ## Ce qui reste sur votre iPhone
@@ -117,11 +118,11 @@ Ces informations servent uniquement à corriger et à améliorer TROME et à sui
 ## Vos droits : consulter, corriger ou supprimer vos données
 
 Le serveur ne stocke rien qui permette de vous retrouver : il n’y a donc rien à consulter ni à supprimer sur celui-ci.
-Les seules données sur une personne sont celles qu’Apple fournit si elle teste TROME avec TestFlight, et les messages qu’elle écrit.
+Les seules données personnelles qui me parviennent sont celles qu’Apple fournit si vous testez TROME avec TestFlight, et les messages que vous m’écrivez.
 Un message est conservé le temps de vous répondre et de régler le problème, puis supprimé, ou plus tôt si vous le demandez.
 Le nom et l’adresse e-mail d’un testeur sont conservés pendant la durée du test, puis retirés de la liste des testeurs.
 
-Vous pouvez demander à consulter ces données, à les supprimer, à les corriger ou à en limiter l’usage, et vous pouvez vous opposer à leur utilisation.
+Vous pouvez demander l’accès à ces données, leur rectification, leur effacement ou la limitation de leur traitement, et vous opposer à leur utilisation.
 Je réponds dans un délai d’un mois au plus.
 
 Pour poser une question ou faire l’une de ces demandes, écrivez à <Contact />.

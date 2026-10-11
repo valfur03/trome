@@ -15,16 +15,16 @@ import Contact from '../../../components/Contact.astro';
 Last updated: <Placeholder>date</Placeholder>.
 
 TROME needs to know which station you are near, not who you are.
-In Apple’s sense, TROME collects no data about you: what reaches the server is used to answer, then not kept.
+By Apple’s definition, TROME collects no data about you: what reaches the server is used to answer, then not kept.
 This page says what the TROME iPhone app does with your data, what the server stores, who receives it, and what your rights are.
 
 ## In short
 
 - TROME has no account and shows no ads.
-- The app measures nothing of what you do: the server only counts how many requests it receives, never who makes them.
+- The app does not measure what you do: the server only counts how many requests it receives, never who makes them.
 - Your position stays on your iPhone: the app sends it to nobody.
 - To show the train times, the app sends the server the identifier of the station you are near, but not your position, and nothing that the app adds to identify you.
-- The server writes down nowhere which station was asked for, when, or by whom.
+- The server keeps no history of the stations asked for, or of who asks for them.
   Cloudflare, which runs the server, sees each request while it passes, [as explained below](#cloudflare-and-the-source-of-the-times).
 - The App Store page says the same: Data Not Collected.
   What Apple provides, such as the number of downloads, or your data if you test TROME with TestFlight, is explained [below](#what-apple-provides).
@@ -43,7 +43,7 @@ Without your position, TROME cannot find the nearest station.
 To show the next trains, the app asks TROME’s server for the times.
 It sends the identifier of the station (for example the one of Châtelet) and a code that every copy of the app shares, which says nothing about you.
 It sends neither your position, nor an identifier of your iPhone, nor anything that the app adds to identify you.
-The station that the app asks for shows which station you are near at that moment.
+So the request shows which station you are near at that moment.
 
 Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and iOS.
 The server does not read them and does not store them.
@@ -64,7 +64,7 @@ Here is what each piece of data is for:
 
 ## What is stored on the server
 
-Once it has answered, the server writes down no station that was asked for: not in its totals, not in its errors, not in its logs.
+The server writes no station that was asked for in its totals, its errors or its logs.
 It stores only:
 
 - **totals**: how many requests it receives each hour and each day, how many calls it makes to the source of the times, and how many errors.
@@ -75,9 +75,10 @@ It stores only:
   It has no station either.
   It is kept only while it helps to find and fix the cause of an error;
 - **the latest answer of the source of the times for each station**, as the source gave it, to give it to everyone who asks.
-  It stays in the memory of the server, never written down, and the server erases it after about 10 minutes at most.
+  It stays in the memory of the server, never written down, and the server erases it at its next request after 10 minutes.
   It does not say who asked for the station;
-- **the station for which the source just failed**, with the time of the failure, in the same memory, for a few minutes at most: the server does not call the source again at once.
+- **the station for which the source just failed**, with the time of the failure, in the same memory, until the server’s next request after one minute: the server does not call the source again at once;
+- **the time until which the server waits**, after the source refuses a call: it does not call the source before then.
 
 The server stores no IP address, no identifier of you or of your iPhone, and no position.
 No request log is turned on at its host.
@@ -85,8 +86,8 @@ No request log is turned on at its host.
 ## Cloudflare and the source of the times
 
 The server runs on Cloudflare.
-Cloudflare gets each request before the server does, so it sees the address of the request, with the identifier of the station, and the network details that come with any web request, such as your IP address and the approximate place that it finds from it.
-Every log that Cloudflare could keep for TROME is turned off, and the server stores none of it.
+Cloudflare gets each request before the server does, so it sees the address that was requested, which holds the identifier of the station, and the network details that come with any web request, such as your IP address and the approximate location that it works out from it.
+Every log that Cloudflare could keep for TROME is turned off.
 Cloudflare handles this request on behalf of TROME, as its processor, under its [data processing addendum](https://www.cloudflare.com/cloudflare-customer-dpa/) and its [privacy policy](https://www.cloudflare.com/privacypolicy/).
 Cloudflare is a US company, so it may handle a request outside the European Union, in particular in the United States.
 To protect your data there, it relies on the EU-US Data Privacy Framework and on the standard contractual clauses of the European Commission, which its addendum includes.
@@ -117,7 +118,7 @@ This information is used only to fix TROME, to improve it and to follow how much
 ## Your rights: see, correct or delete your data
 
 The server stores nothing that could lead back to you, so there is nothing to see or delete on it.
-The only data about a person is what Apple provides if they test TROME with TestFlight, and the messages they write.
+The only personal data that reaches me is what Apple provides if you test TROME with TestFlight, and the messages you write.
 A message is kept for as long as it takes to answer and fix the problem, then deleted, and sooner if you ask.
 The name and email address of a tester are kept for the length of the test, then removed from the list of testers.
 
