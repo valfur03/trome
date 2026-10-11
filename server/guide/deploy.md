@@ -199,9 +199,9 @@ So while that table has a build in the field, never do any of these in the Cloud
 | Never | Where | The way back |
 |---|---|---|
 | Rename the subdomain of the account, the part of the address after `trome-server.` | **Workers & Pages**, **Change** next to **Your subdomain** | Change it back to the old name, in the same place. |
-| Rename or delete the production Worker, `trome-server` | **Workers & Pages**, the Worker, **Settings** | Renamed: give it back the name `trome-server`, in the same place. Deleted: run `make server-secrets` with the same values as before, since a build has only its own app token, then `make server-deploy`; the counts of the deleted Worker are lost. |
-| Leave its workers.dev address off | **Workers & Pages**, the Worker, **Settings > Domains & Routes** | Click **Enable** in the same place, or run `make server-deploy`. |
-| Move production to another account, even with the same names | Any other account: its subdomain differs, so the address does too | The builds still call the Worker of the old account: keep it there. If it is gone, run `make server-login` with the old account, then deploy it again as for a deleted Worker. |
+| Rename or delete the production Worker, `trome-server` | **Workers & Pages**, the Worker, **Settings** | Renamed: give it back the name `trome-server`, in the same place. Deleted: run `make server-secrets` with the same values as before, from your password manager, since a build has only its own app token, then `make server-deploy`. The counts of the deleted Worker are lost, with its count of the day's PRIM calls, so the key may reach its PRIM quota that day. |
+| Leave its workers.dev address off | **Workers & Pages**, the Worker, **Settings > Domains & Routes** | Run `make server-deploy`: a deploy turns it on again, since `server/wrangler.jsonc` has `workers_dev` on. |
+| Move production to another account, even with the same names | Any other account: its subdomain differs, so the address does too | The builds still call the Worker of the old account: keep it there. If that Worker is gone, run `make server-login` with the old account (choose it when wrangler asks for an account), then deploy it again as for a deleted Worker. |
 
 Each of them costs the same: every build that holds the address shows no times, and no message reaches it, because that address is its only way to the server.
 The only way back is to put back what changed, as the last column says.
