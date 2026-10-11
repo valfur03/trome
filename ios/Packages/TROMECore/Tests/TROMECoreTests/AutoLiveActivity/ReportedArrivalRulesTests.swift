@@ -40,6 +40,13 @@ struct ReportedArrivalRulesTests {
         #expect(!ReportedArrivalRules.settles(nil, now: now))
     }
 
+    @Test func onlyATrustedPositionOfTheLast15SecondsMakesARefusalFinal() {
+        #expect(ReportedArrivalRules.isFinal(refusalWith: fix(at: outsideTheStopArea, secondsAgo: 15), now: now))
+        #expect(!ReportedArrivalRules.isFinal(refusalWith: fix(at: outsideTheStopArea, secondsAgo: 100), now: now))
+        #expect(!ReportedArrivalRules.isFinal(refusalWith: fix(at: insideTheArea, accuracy: 500), now: now))
+        #expect(!ReportedArrivalRules.isFinal(refusalWith: nil, now: now))
+    }
+
     @Test func saysWhyAReportIsNoArrival() {
         let refusal = { (known: PositionFix?) in
             ReportedArrivalRules.refusal(at: station, position: known, now: now)

@@ -26,18 +26,27 @@ enum ReportedArrivalRules {
         fix.map { AutoLiveActivityRules.trusts($0, now: now) } ?? false
     }
 
+    /// A refusal is final when a trusted position of the last 15 seconds puts the phone far from the station.
+    /// With no such position, the phone may still be there, or have come since: the app gives the report
+    /// a second chance (`ArrivalSecondChance`).
+    static func isFinal(refusalWith fix: PositionFix?, now: Date) -> Bool {
+        settles(fix, now: now)
+    }
+
     /// The line of the wake log that says why a report is not an arrival.
     static func refusal(at station: Station, position fix: PositionFix?, now: Date) -> String {
-        let reason: String
+        "No arrival at \(station.name): \(reason(at: station, position: fix, now: now))"
+    }
+
+    static func reason(at station: Station, position fix: PositionFix?, now: Date) -> String {
         if let fix, isTrusted(fix, now: now) {
-            reason = "the position is \(Int(fix.coordinate.distance(to: station.coordinate))) m away"
-        } else if let fix {
-            let age = Int(now.timeIntervalSince(fix.timestamp))
-            reason = "the position is ±\(Int(fix.accuracyMeters)) m and \(age) s old"
-        } else {
-            reason = "iOS gave no position"
+            return "the position is \(Int(fix.coordinate.distance(to: station.coordinate))) m away"
         }
-        return "No arrival at \(station.name): \(reason)"
+        if let fix {
+            let age = Int(now.timeIntervalSince(fix.timestamp))
+            return "the position is ±\(Int(fix.accuracyMeters)) m and \(age) s old"
+        }
+        return "iOS gave no position"
     }
 
     private static func isTrusted(_ fix: PositionFix, now: Date) -> Bool {

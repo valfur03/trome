@@ -13,6 +13,18 @@ enum ArrivalOutcome: Equatable, Sendable {
     case left(Station)
     case noStationNear(NearbyStation?)
 
+    /// The station that the outcome is about, if any.
+    var station: Station? {
+        switch self {
+        case .notified(let station), .started(let station), .switched(let station), .liveActivitiesOff(let station),
+             .waitsForTheApp(let station), .automaticStartOff(let station), .paused(let station, _),
+             .alreadyShown(let station), .alreadyArrived(let station), .left(let station):
+            station
+        case .noStationNear:
+            nil
+        }
+    }
+
     var logKey: String {
         guard case .noStationNear(let nearest) = self else { return summary }
         return "noStationNear:\(nearest?.station.id ?? "")"

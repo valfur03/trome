@@ -58,7 +58,11 @@ A fake position is always trusted.
 
 Each arrival gives at most one notification and one automatic start.
 When iOS wakes the app because the phone entered the area of a station, the app does not take that as an arrival: iOS also says so when it is wrong, for example for many stations at once after the phone restarts.
-It decides on its last position, or asks iOS for a new one and waits up to 10 seconds for it; with no trusted position within 150 meters (250 meters for the station of that area), nothing comes, and the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) says why.
+It decides on its last position, or asks iOS for a new one and waits up to 10 seconds for it; with no trusted position within 150 meters (250 meters for the station of that area), nothing comes at once, and the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) says why.
+When a trusted position of the last 15 seconds puts the phone farther than that, nothing comes for this visit.
+When it has no such position (a rough first position, an older one, or none), it asks iOS again every 5 seconds, for up to 2 minutes after the report, with the background location on, and notifies once if a trusted position puts the phone within 150 meters of the station.
+It stops sooner when a trusted position puts the phone more than 250 meters away, or when iOS says that the phone left the area.
+Why 2 minutes: a rider crosses the 150-meter area in about that time, and is then often underground, with no GPS.
 For its next arrival, a station counts as left when a trusted position is more than 250 meters from it, or when iOS says that the phone left its stop area, even with no position.
 An arrival that waits behind a system popup is not done until the app acts on it: if iOS closes the app first, the notification or the start comes once, when the app runs again at that station.
 A Live Activity that you start by hand ([Testing tools](testing-tools.md#show-or-stop-the-live-activity-by-hand)) follows the same stop rules, and the 45 minutes apply to every Live Activity.
@@ -161,6 +165,7 @@ While a Live Activity shows, the app must go on getting the position, to switch 
   Without it, iOS pauses the new positions when the phone stands still, and suspends the app about 15 seconds after it leaves the screen.
   With the location "Always", the app hides the blue location indicator; with **While Using the App**, it needs a `CLBackgroundActivitySession`, and iOS then always shows the indicator while the Live Activity shows.
   This costs battery for at most 45 minutes.
+  The same runs for at most 2 minutes after iOS reports a station area that no trusted position confirms yet (see [Start, switch and stop](#start-switch-and-stop)).
 - **The trains.** [When the app asks again](trains.md#when-the-app-asks-again) says when it asks PRIM in the background.
 - **A closed app.**
   iOS wakes it with region monitoring (`CLMonitor`), at most 20 regions for each app.

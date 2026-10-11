@@ -6,6 +6,7 @@ extension AutoLiveActivityModel {
             services.wakeLog?.record(.decision, "Ignored: a fake position is on")
             return
         }
+        endSecondChance(leaving: event)
         if let stationId = event.leftStopStationId {
             await apply(
                 configuration.rules.leaveStopArea(of: stationId, state: state, catalog: catalog),

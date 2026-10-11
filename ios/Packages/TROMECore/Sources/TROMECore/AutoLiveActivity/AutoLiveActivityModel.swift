@@ -33,6 +33,8 @@ public final class AutoLiveActivityModel {
     @ObservationIgnored var pauseTimerTask: Task<Void, Never>?
     @ObservationIgnored var removedOutsideTheApp: AutoLiveActivityState.Shown?
     @ObservationIgnored var lastLoggedOutcomeKey: String?
+    @ObservationIgnored var secondChances: [String: ArrivalSecondChance] = [:]
+    @ObservationIgnored var secondChanceTask: Task<Void, Never>?
 
     public init(
         catalog: StationCatalog,
@@ -71,6 +73,7 @@ public final class AutoLiveActivityModel {
         timerTask?.cancel()
         feedTask?.cancel()
         pauseTimerTask?.cancel()
+        secondChanceTask?.cancel()
     }
 
     public func setAppPhase(_ phase: AppPhase) {
@@ -206,6 +209,7 @@ public final class AutoLiveActivityModel {
         for action in decision.actions {
             await perform(action)
         }
+        endSecondChances(on: decision.arrival)
     }
 
     func perform(_ action: AutoLiveActivityRules.Action) async {

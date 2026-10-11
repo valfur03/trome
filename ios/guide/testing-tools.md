@@ -150,6 +150,8 @@ Only a line "iOS: entered" a station after it, or "inside" a station in a "first
 Other area lines can follow any launch: iOS can send the state of each area when the app starts ("left", "not watched"), and "area around you" and "stop area" are not stations.
 iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
+A line "No arrival at" a station with a rough position or none is followed by "Second chance at" that station: "asks iOS for a position", then its result: "notified after N s", or "gave up" or "ended" after N s, with the reason.
+When the result line never comes, iOS suspended or closed the app before the end of the 2 minutes.
 After a walk, do not read **Phone now** to know the position of the walk: it shows the state when you opened the screen.
 Read the line "App launched" (Power icon) of the walk instead, which says "Position: fake" with a place name, or "Position: real GPS", as it was at that launch.
 A walk with a fake position also has, with the Map icon, the line "No region watched: a fake position is on".
