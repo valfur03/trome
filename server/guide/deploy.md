@@ -60,8 +60,8 @@ Then run `make release-server-check` in the main folder of your clone: it asks t
 
 The server takes one app token at a time, and every installed app holds the old one.
 So a new token cuts off every installed app until its rider installs a version with the new token: change it only when the old one leaked.
-[The release guide lists the builds that riders may hold](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-builds-that-riders-may-hold): a server change keeps each of them working.
 Then set the new one with `make server-secret NAME=APP_TOKEN`, put it in `ios/Config/Server.xcconfig`, check it with `make release-server-check`, and release a new version of the app.
+A new token is the one server change that breaks [the builds that riders may hold](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-builds-that-riders-may-hold): every other server change keeps each of them working.
 
 An installed app with the old token then shows **Update the app**, with an orange icon, in place of the times on its Live Activity and its main screen ([each state of the Live Activity](../../ios/guide/live-activity.md#when-it-cannot-show-times)).
 Updating is all that its rider can do, so release the new version as close as you can to the change of the token.
