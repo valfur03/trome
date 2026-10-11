@@ -185,6 +185,7 @@ public final class AutoLiveActivityModel {
                 self.observeAutomaticMode()
                 if !self.inputs.automaticMode.allowsAutomaticStart {
                     self.services.notifier.withdraw()
+                    self.endSecondChancesIfAutomaticStartIsOff()
                 }
                 if self.inputs.automaticMode.mode == .turnedOff {
                     await self.automaticModeTurnedOff()

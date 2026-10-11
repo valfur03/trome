@@ -166,6 +166,35 @@ extension AutoLiveActivityModelTests {
         ) })
     }
 
+    @Test(arguments: [false, true])
+    func endsTheSecondChanceAndTheBackgroundLocationWhenTheRiderSnoozesOrTurnsOff(turnsOff: Bool) async {
+        let model = makeModel()
+        roughPositionsAtA()
+
+        await enteredA(model)
+        #expect(keeper.isKeeping)
+        let asksBefore = gps.currentFixRequestCount
+        if turnsOff {
+            automaticMode.setOn(false)
+        } else {
+            automaticMode.snooze(for: .oneHour)
+        }
+        await waitForTheEnd(of: model)
+        let asks = gps.currentFixRequestCount
+        gps.currentFixAccuracyMeters = 10
+        try? await Task.sleep(for: .milliseconds(100))
+
+        #expect(model.secondChances.isEmpty)
+        #expect(gps.currentFixRequestCount == asks)
+        #expect(asks <= asksBefore + 1)
+        #expect(notifier.notified.isEmpty)
+        #expect(!keeper.isKeeping)
+        #expect(decisionLines.contains {
+            $0.hasPrefix("Second chance at Station A: gave up after ")
+                && $0.hasSuffix(" s: the automatic start is snoozed or off")
+        })
+    }
+
     @Test func givesNoSecondChanceWhenAutomaticStartIsSnoozed() async {
         let model = makeModel()
         roughPositionsAtA()

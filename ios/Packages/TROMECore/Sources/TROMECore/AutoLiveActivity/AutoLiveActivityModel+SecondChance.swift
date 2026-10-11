@@ -39,11 +39,19 @@ extension AutoLiveActivityModel {
         end(chance, .left)
     }
 
+    /// A snooze or the automatic mode turned off ends every second chance at once,
+    /// so that the background location does not stay on for a start that cannot come.
+    func endSecondChancesIfAutomaticStartIsOff() {
+        guard !inputs.automaticMode.allowsAutomaticStart else { return }
+        openChances.forEach { end($0, .automaticStartOff) }
+    }
+
     private func takeASecondLook() async {
         guard inputs.locationService.source == .realGPS else {
             openChances.forEach { end($0, .fakePosition) }
             return
         }
+        endSecondChancesIfAutomaticStartIsOff()
         for chance in openChances where chance.isOver(now: configuration.now()) {
             end(chance, .limit(lastPosition: inputs.locationService.fix))
         }

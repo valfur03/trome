@@ -59,5 +59,7 @@ struct ArrivalSecondChanceTests {
             == "Second chance at S: gave up after 42 s: iOS gave no position")
         #expect(chance.line(for: .fakePosition, now: now)
             == "Second chance at S: gave up after 42 s: a fake position is on")
+        #expect(chance.line(for: .automaticStartOff, now: now)
+            == "Second chance at S: gave up after 42 s: the automatic start is snoozed or off")
     }
 }

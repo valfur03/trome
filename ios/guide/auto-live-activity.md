@@ -63,7 +63,7 @@ When iOS wakes the app because the phone entered the area of a station, the app 
 It decides on its last position, or asks iOS for a new one and waits up to 10 seconds for it; with no trusted position within 150 meters (250 meters for the station of that area), nothing comes at once, and the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) says why.
 When a trusted position of the last 15 seconds puts the phone farther than that, nothing comes for this visit.
 When it has no such position (a rough first position, an older one, or none), it asks iOS again every 5 seconds, for up to 2 minutes after the report, with the background location on, and notifies once if a trusted position puts the phone within 150 meters of the station.
-It stops sooner when a trusted position puts the phone more than 250 meters away, or when iOS says that the phone left the area.
+It stops sooner when a trusted position puts the phone more than 250 meters away, when iOS says that the phone left the area, or when the rider snoozes or turns off the automatic mode.
 Why 2 minutes: a rider crosses the 150-meter area in about that time, and is then often underground, with no GPS.
 For its next arrival, a station counts as left when a trusted position is more than 250 meters from it, or when iOS says that the phone left its stop area, even with no position.
 An arrival that waits behind a system popup is not done until the app acts on it: if iOS closes the app first, the notification or the start comes once, when the app runs again at that station.

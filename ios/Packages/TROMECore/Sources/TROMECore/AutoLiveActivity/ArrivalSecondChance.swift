@@ -25,6 +25,7 @@ struct ArrivalSecondChance: Equatable {
         case left
         case limit(lastPosition: PositionFix?)
         case fakePosition
+        case automaticStartOff
     }
 
     let station: Station
@@ -64,6 +65,7 @@ struct ArrivalSecondChance: Equatable {
         case .left: "gave up \(after): iOS says the phone left its area"
         case .limit(let fix): "gave up \(after): \(ReportedArrivalRules.reason(at: station, position: fix, now: now))"
         case .fakePosition: "gave up \(after): a fake position is on"
+        case .automaticStartOff: "gave up \(after): the automatic start is snoozed or off"
         }
         return "Second chance at \(station.name): \(result)"
     }
