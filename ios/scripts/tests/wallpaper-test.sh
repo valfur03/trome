@@ -87,6 +87,19 @@ status=0
 expect "the check fails on another wallpaper" "$status" "1"
 expect "with one line that names the command that sets it" "$(cat "$state/err")" "The Simulator does not show the wallpaper of the pictures (com.apple.MercuryPoster:fluidity.three): run make simulator-wallpaper"
 
+# A wallpaper that an earlier run left: in use, it would show in the pictures, so the check stops the command;
+# not in use, no picture shows it (the original wallpaper also stays, not in use), so the check passes.
+poster "$added" fluidity.three PRPosterRoleLockScreen
+stray=B7166B3C-0000-0000-0000-000000000000
+poster "$stray" celosia.hero PRPosterRoleLockScreen
+select_poster "$stray"
+status=0
+"$scripts/wallpaper.sh" check "$udid" 2> "$state/err" || status=$?
+expect "the check fails on a wallpaper left in use by an earlier run, with the line that says what to do" "$status:$(cat "$state/err")" \
+    "1:The Simulator does not show the wallpaper of the pictures (com.apple.MercuryPoster:fluidity.three): run make simulator-wallpaper"
+select_poster "$added"
+expect "the check passes when the left wallpaper is not in use" "$("$scripts/wallpaper.sh" check "$udid" && echo passed)" "passed"
+
 rm -rf "$state/devices"
 status=0
 "$scripts/wallpaper.sh" check "$udid" 2> "$state/err" || status=$?

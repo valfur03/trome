@@ -14,6 +14,8 @@ scripts=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$scripts/../.." && pwd)
 simulator="$scripts/simulator.sh"
 watch_seconds=${RATP_SIM_WATCH_SECONDS:-10}
+# How long a stopped job has to end (a test run cancels, a script puts the Simulator back) before it is killed.
+stop_seconds=${RATP_SIM_STOP_SECONDS:-60}
 watcher_version=4
 held_slots=
 # Each Simulator job adds one line here when it frees the Simulator: when it asked, how long it waited, how long it held it.
@@ -462,6 +464,52 @@ reopen_simulator() {
     "$simulator" udid > "$lock/udid"
 }
 
+# A stopped job must leave nothing running with the Simulator once the lock is free: a script stopped by a signal
+# leaves its children running, and a signal to make or to this script does not reach the job by itself.
+# So the job runs in its own session (one process group, whose processes stay in it when their parent is gone),
+# a signal to this script goes to the whole group, and the lock is freed only when no process of the group is left.
+run_job() {
+    job_signal=
+    trap 'stop_job HUP 129' HUP
+    trap 'stop_job INT 130' INT
+    trap 'stop_job TERM 143' TERM
+    perl -MPOSIX -e 'setsid(); exec { $ARGV[0] } @ARGV; print STDERR "$ARGV[0]: $!\n"; exit 127' -- "$@" 0<&0 &
+    job=$!
+    while :; do
+        job_status=0
+        wait "$job" || job_status=$?
+        # A signal ends the wait while the job still runs: wait again.
+        kill -0 "$job" 2> /dev/null || break
+    done
+    end_job_group
+    return "${job_signal:-$job_status}"
+}
+
+stop_job() {
+    if [ -z "$job_signal" ]; then
+        kill -"$1" -- "-$job" 2> /dev/null || kill -"$1" "$job" 2> /dev/null || true
+    fi
+    job_signal=$2
+}
+
+# The processes that the job left when its first process ended. A stopped job has had its signal once:
+# a second one would cut short the script that puts the Simulator back.
+end_job_group() {
+    if [ -z "$job_signal" ]; then
+        kill -TERM -- "-$job" 2> /dev/null || return 0
+        echo "Stopping what the Simulator job left running; the lock is freed when it has ended." >&2
+    fi
+    waited=0
+    while kill -0 -- "-$job" 2> /dev/null; do
+        if [ "$waited" -eq "$stop_seconds" ]; then
+            echo "The Simulator job still runs $stop_seconds s after it was stopped: killing it." >&2
+            kill -KILL -- "-$job" 2> /dev/null || true
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+}
+
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
@@ -477,7 +525,7 @@ case "$command" in
         fi
         enter job
         trap on_exit EXIT
-        "$@"
+        run_job "$@"
         ;;
     open)
         [ $# -gt 0 ] || usage

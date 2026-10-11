@@ -73,6 +73,9 @@ Do not stop them, and do not delete the lock.
 The wait can be long, so run these commands in the background.
 
 - `make e2e` frees the lock when the tests end, pass or fail.
+- A stopped job leaves no work and no state behind: TERM (or INT, HUP) to its `make`, to `sim-lock.sh` or to any script of the job stops every process of the job, and the lock is freed only when the last one has ended (after 60 s, `RATP_SIM_STOP_SECONDS`, the rest is killed).
+  A job script that changes the Simulator puts it back when it is stopped, as `ios/scripts/docs-screenshots.sh` does, and `ios/scripts/tests/sim-lock-stop-test.sh` proves it; stop a job with TERM, never with KILL, which nothing can pass on.
+  Why: a stopped `make docs-screenshots` once went on outside the lock and left a wallpaper on the shared Simulator (TASK-347).
 - `make run` keeps the lock.
   You can then check the app by hand, or run `make e2e`.
   Free it with `make simulator-shutdown` as soon as your check is done (see "Hold the Simulator only while you use it").

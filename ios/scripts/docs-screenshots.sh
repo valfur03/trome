@@ -71,6 +71,8 @@ show_language() {
 }
 
 cleanup() {
+    # A second signal must not cut short the steps that put the Simulator back; the commands below inherit this.
+    trap '' HUP INT TERM
     if [ "$shown_language" != en ]; then
         RATP_SIM_LANGUAGE=en "$scripts/simulator.sh" language > /dev/null 2>&1 || true
     fi
@@ -78,7 +80,21 @@ cleanup() {
     xcrun simctl location "$udid" clear 2> /dev/null || true
     rm -rf "$exported" "$picked"
 }
-trap cleanup EXIT INT TERM
+# A stopped run stops: it stops its test run, waits for it to end, and puts the Simulator back (cleanup).
+# The test run runs in the background, so that the signal does not wait for its end.
+test_run=
+stop() {
+    trap '' HUP INT TERM
+    if [ -n "$test_run" ]; then
+        kill -TERM "$test_run" 2> /dev/null || true
+        wait "$test_run" || true
+    fi
+    exit "$1"
+}
+trap cleanup EXIT
+trap 'stop 129' HUP
+trap 'stop 130' INT
+trap 'stop 143' TERM
 
 rm -rf "$exported" "$picked"
 for language in $languages; do
@@ -90,13 +106,16 @@ for language in $languages; do
     [ "$language" = "$shown_language" ] || show_language "$language"
     language_result=$(result_of "$language")
     TEST_RUNNER_DOCS_LANGUAGE=$language "$@" -resultBundlePath "$language_result" \
-        -only-testing:"$target/DocsScreenshotTests" test-without-building \
+        -only-testing:"$target/DocsScreenshotTests" test-without-building 0<&0 &
+    test_run=$!
+    wait "$test_run" \
         || {
             status=$?
             "$scripts/e2e-failures.py" "$language_result"
             "$scripts/e2e-keep.py" "$language_result" "$log" "$app"
             exit $status
         }
+    test_run=
     mkdir -p "$exported/$language"
     xcrun xcresulttool export attachments --path "$language_result" --output-path "$exported/$language" \
         --filter "*.png" > /dev/null
