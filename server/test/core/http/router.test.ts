@@ -22,7 +22,10 @@ const report: CountsReport = {
 const zero = { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0 };
 const snapshot: MetricsSnapshot = { today: { ...zero, appCalls: 3 }, previousDay: zero, dailyCap: 800, failuresToday: [] };
 
-function server(answer: RelayAnswer = { kind: "times", body: '{"Siri":{}}', primAnsweredAt: Date.parse("2026-10-02T08:29:30.000Z") }) {
+function server(
+  answer: RelayAnswer = { kind: "times", body: '{"Siri":{}}', primAnsweredAt: Date.parse("2026-10-02T08:29:30.000Z") },
+  appTokens: readonly string[] = [appToken],
+) {
   const lines: string[] = [];
   const asked: string[] = [];
   let countsRead = 0;
@@ -42,9 +45,9 @@ function server(answer: RelayAnswer = { kind: "times", body: '{"Siri":{}}', prim
   };
   const send = (request: Request) =>
     route(request, {
-      logger: createLogger([appToken, ownerToken], (line) => lines.push(line)),
+      logger: createLogger([...appTokens, ownerToken], (line) => lines.push(line)),
       clock: FakeClock.at("2026-10-02T08:30:00.000Z"),
-      tokens: { app: appToken, owner: ownerToken },
+      tokens: { app: appTokens, owner: ownerToken },
       relay,
     });
   return { send, lines, asked, countsRead: () => countsRead };
@@ -123,6 +126,35 @@ describe("route: departures", () => {
       expect(await response.json()).toEqual({ error: "unauthorized" });
       expect(asked).toEqual([]);
     }
+  });
+
+  it("answers each token of a list of two, so a new token is added while the builds with the old one keep their times", async () => {
+    for (const token of ["old-app-token", "new-app-token"]) {
+      const { send, asked } = server(undefined, ["old-app-token", "new-app-token"]);
+      const response = await send(withToken(departuresUrl, token));
+
+      expect(response.status, token).toBe(200);
+      expect(asked).toEqual([stopRef]);
+    }
+  });
+
+  it("refuses a token once it leaves the list, a wrong one and the owner token, with no call to the relay", async () => {
+    for (const token of ["old-app-token", "wrong", ownerToken]) {
+      const { send, asked } = server(undefined, ["new-app-token"]);
+      const response = await send(withToken(departuresUrl, token));
+
+      expect(response.status, token).toBe(401);
+      expect(await response.json()).toEqual({ error: "unauthorized" });
+      expect(asked).toEqual([]);
+    }
+  });
+
+  it("refuses every request when the list is empty", async () => {
+    const { send, asked } = server(undefined, []);
+    const response = await send(withToken(departuresUrl, appToken));
+
+    expect(response.status).toBe(401);
+    expect(asked).toEqual([]);
   });
 
   it("refuses a bad stop reference, with no call to the relay", async () => {

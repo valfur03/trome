@@ -1,12 +1,21 @@
 const prefix = "Bearer ";
 const encoder = new TextEncoder();
 
-export function hasBearerToken(headers: Headers, expected: string): boolean {
+/**
+ * Whether the request carries one of the accepted tokens, exactly: same case, no space around it.
+ * It compares the given token with every accepted one, so the time of the answer does not say which one matched.
+ */
+export function hasBearerToken(headers: Headers, accepted: string | readonly string[]): boolean {
   const header = headers.get("authorization");
-  if (expected.length === 0 || header?.startsWith(prefix) !== true) {
+  if (header?.startsWith(prefix) !== true) {
     return false;
   }
-  return sameBytes(encoder.encode(header.slice(prefix.length)), encoder.encode(expected));
+  const given = encoder.encode(header.slice(prefix.length));
+  let found = false;
+  for (const token of typeof accepted === "string" ? [accepted] : accepted) {
+    found = (token.length > 0 && sameBytes(given, encoder.encode(token))) || found;
+  }
+  return found;
 }
 
 function sameBytes(given: Uint8Array, expected: Uint8Array): boolean {

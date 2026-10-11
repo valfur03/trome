@@ -29,6 +29,10 @@ describe("secrets", () => {
     expect(secretValues({ PRIM_API_KEY: "prim", APP_TOKEN: "token" })).toEqual(["prim", "token"]);
   });
 
+  it("gives each token of a list of app tokens on its own, so that the logs hide each of them", () => {
+    expect(secretValues({ APP_TOKEN: "old-token, new-token", OWNER_TOKEN: "owner" })).toEqual(["old-token", "new-token", "owner"]);
+  });
+
   it("leaves out a secret that is missing or empty", () => {
     expect(secretValues({ APP_TOKEN: "" })).toEqual([]);
   });

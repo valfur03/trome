@@ -10,7 +10,7 @@ Each address answers `GET` and `HEAD` only, and the tokens go in the header `Aut
 | Request | Token | Answer |
 |---|---|---|
 | `GET /health` | none | `{"status":"ok"}` |
-| `GET /v1/stops/{stopRef}/departures` | the app token, which each copy of the app holds | The PRIM answer of that stop, as PRIM gave it, so that the app keeps its own PRIM parser; `Last-Modified` is the time when PRIM gave it. |
+| `GET /v1/stops/{stopRef}/departures` | an app token of the server's list: each build of the app holds one, and a new token joins the list without cutting off the builds that hold an older one ([Change the app token](deploy.md#change-the-app-token)) | The PRIM answer of that stop, as PRIM gave it, so that the app keeps its own PRIM parser; `Last-Modified` is the time when PRIM gave it. |
 | `GET /v1/owner/counts` | the owner token, which only the maintainer holds | The counts of the server ([Read the counts](deploy.md#read-the-counts)). |
 | `GET /metrics` | the owner token | The same totals in the Prometheus text format ([Send the totals to your Prometheus](deploy.md#send-the-totals-to-your-prometheus)). |
 

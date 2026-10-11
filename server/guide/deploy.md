@@ -23,7 +23,7 @@ Both deploy commands stop when a secret of their Worker is not set, and say whic
 | Secret | Its value |
 |---|---|
 | `PRIM_API_KEY` | Your PRIM key ([how to get one](../../ios/README.md#the-train-data-key-prim)). |
-| `APP_TOKEN` | A new token for each Worker, made with `openssl rand -hex 32` (not `-base64`: in `ios/Config/Server.xcconfig`, where the app reads it, `//` starts a comment). The server answers only requests that carry it. It keeps casual traffic out, but anyone who takes the app apart can read it: the daily cap of PRIM calls is what protects the quota of the key ([How the server works](how-it-works.md#how-the-server-shares-the-prim-quota)). |
+| `APP_TOKEN` | The list of the app tokens that the Worker accepts, separated by commas. At first it holds one token, new for each Worker, made with `openssl rand -hex 32` (not `-base64`: in `ios/Config/Server.xcconfig`, where the app reads it, `//` starts a comment). The server answers only requests that carry a token of the list. It keeps casual traffic out, but anyone who takes the app apart can read it: the daily cap of PRIM calls is what protects the quota of the key ([How the server works](how-it-works.md#how-the-server-shares-the-prim-quota)). |
 | `OWNER_TOKEN` | A new token for each Worker, made with `openssl rand -base64 32`, to read the counts. The app never holds it. |
 
 Keep the tokens in your password manager.
@@ -58,13 +58,39 @@ Then run `make release-server-check` in the main folder of your clone: it asks t
 
 ## Change the app token
 
-The server takes one app token at a time, and every installed app holds the old one.
-So a new token cuts off every installed app until its rider installs a version with the new token: change it only when the old one leaked.
-Then set the new one with `make server-secret NAME=APP_TOKEN`, put it in `ios/Config/Server.xcconfig`, check it with `make release-server-check`, and release a new version of the app.
-A new token is the one server change that breaks [the builds that riders may hold](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-builds-that-riders-may-hold): every other server change keeps each of them working.
+Each build of the app holds the app token that it was built with, and its riders may keep that build for months.
+So the server takes a list of app tokens: a new token joins the list, and the old one stays.
+Never swap the old token for a new one: every build that holds the old one would lose its times until its rider updates.
 
-An installed app with the old token then shows **Update the app**, with an orange icon, in place of the times on its Live Activity and its main screen ([each state of the Live Activity](../../ios/guide/live-activity.md#when-it-cannot-show-times)).
-Updating is all that its rider can do, so release the new version as close as you can to the change of the token.
+### Add a token
+
+Do it for the builds to come, for example when the old token leaked: the daily cap of PRIM calls still bounds what a leaked token can cost.
+Do each step on the staging Worker first, with its own tokens, then on the production Worker.
+Each Worker must run a server that reads the list: deploy `main` to it first if its last deploy is older than the list, because an older server reads `<old token>,<new token>` as one token and refuses every app.
+
+1. Make the new token with `openssl rand -hex 32`, and keep it in your password manager next to the old one, with the builds that hold each.
+2. Run `make server-secret NAME=APP_TOKEN STAGING=1`, and paste every token of the list, then the new one, separated by commas: `<old token>,<new token>`.
+   The value replaces the whole list, so a token that you leave out is cut off at once.
+3. Check that the staging Worker answers both tokens: run the command below once for each, type `Authorization: Bearer <token>`, then press Return and Control-D.
+   Curl reads the header as you type it, so the token stays out of your shell history; the two requests cost at most two PRIM calls.
+
+   ```sh
+   curl --header @- "https://trome-server-staging.<your subdomain>.workers.dev/v1/stops/STIF:StopArea:SP:42155:/departures"
+   ```
+
+   Both answers have times.
+   A `{"error":"unauthorized"}` answer means that the list lost a token: set it again, with every token.
+4. Run `make server-secret NAME=APP_TOKEN`, and paste the production list with the new token in the same way.
+5. In the main folder of your clone, run `make release-server-check`: `ios/Config/Server.xcconfig` still holds the old token, so the check proves that the installed builds keep their times.
+   Then put the new token in `TRAIN_SERVER_APP_TOKEN` of that file, and run `make release-server-check` again: the next build that you upload holds it.
+
+### Retire a token
+
+A token leaves the list only when no build that riders may hold has it: the table of [the builds that riders may hold](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-builds-that-riders-may-hold) says when each build stops being available.
+Write the reason next to the token in your password manager, then take it out as in the steps above, on staging first: paste the list with every token but that one, and check that the staging Worker refuses it and still answers the others.
+
+An installed app whose token is not on the list shows **Update the app**, with an orange icon, in place of the times on its Live Activity and its main screen ([each state of the Live Activity](../../ios/guide/live-activity.md#when-it-cannot-show-times)).
+Updating is all that its rider can do.
 That app asks the server again only when its rider opens it or a new Live Activity starts, so the old apps do not call in a loop.
 
 ## Read the counts

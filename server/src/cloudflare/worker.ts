@@ -1,3 +1,4 @@
+import { appTokens } from "../core/auth/app-tokens";
 import { secretValues } from "../core/config/secrets";
 import { route } from "../core/http/router";
 import { createLogger } from "../core/logging/logger";
@@ -14,7 +15,7 @@ export default {
     return route(request, {
       logger,
       clock: { now: () => Date.now() },
-      tokens: { app: env.APP_TOKEN, owner: env.OWNER_TOKEN },
+      tokens: { app: appTokens(env.APP_TOKEN), owner: env.OWNER_TOKEN },
       relay: {
         departures: (stopRef) => relay.departures(stopRef),
         counts: () => relay.counts(),

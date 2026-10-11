@@ -72,7 +72,7 @@ describe("the API examples of contracts/api/", () => {
       const answered = await route(new Request(`https://server.test${request.path}`, { method: request.method, headers }), {
         logger: createLogger([], () => undefined),
         clock: harness.clock,
-        tokens: { app: appToken, owner: "owner-token-of-the-test" },
+        tokens: { app: [appToken], owner: "owner-token-of-the-test" },
         relay: { departures: (stopRef) => harness.relay.departures(stopRef), counts: () => Promise.resolve(harness.relay.counts()),
           metrics: () => Promise.resolve(harness.relay.metrics()),
         },

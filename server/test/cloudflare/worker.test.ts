@@ -2,6 +2,7 @@ import { env, exports } from "cloudflare:workers";
 import { abortAllDurableObjects, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
+import worker from "../../src/cloudflare/worker";
 import { everyStoredRow } from "./every-stored-row";
 import { secretNames } from "../../src/core/config/secrets";
 import { fakePrim } from "./fake-prim";
@@ -13,6 +14,14 @@ afterEach(async () => {
   await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
   await abortAllDurableObjects();
 });
+
+const oldAppToken = "0a1b2c3d4e5f60718293a4b5c6d7e8f9";
+const newAppToken = "f9e8d7c6b5a4938271605f4e3d2c1b0a";
+
+function fetchWithAppTokens(secret: string, authorization: string): Promise<Response> {
+  const request = new Request<unknown, IncomingRequestCfProperties>(departuresUrl, { headers: { authorization } });
+  return Promise.resolve(worker.fetch(request, { ...env, APP_TOKEN: secret }));
+}
 
 function captureLogLines(): string[] {
   const lines: string[] = [];
@@ -73,6 +82,30 @@ describe("the Worker", () => {
     });
     const report: { days: { appCalls: number }[] } = await counts.json();
     expect(report.days.map((day) => day.appCalls)).toEqual(report.days.map(() => 0));
+  });
+
+  it("adds a token and retires the old one as two steps of the secret, with no build cut off at the add", async () => {
+    const prim = fakePrim();
+    const lines = captureLogLines();
+
+    for (const token of [oldAppToken, newAppToken]) {
+      const added = await fetchWithAppTokens(`${oldAppToken},${newAppToken}`, `Bearer ${token}`);
+      expect(added.status, token).toBe(200);
+    }
+    const retired = await fetchWithAppTokens(newAppToken, `Bearer ${oldAppToken}`);
+    const kept = await fetchWithAppTokens(newAppToken, `Bearer ${newAppToken}`);
+    const upperCase = await fetchWithAppTokens(`${oldAppToken},${newAppToken}`, `Bearer ${newAppToken.toUpperCase()}`);
+
+    expect(retired.status).toBe(401);
+    expect(await retired.json()).toEqual({ error: "unauthorized" });
+    expect(kept.status).toBe(200);
+    expect(upperCase.status).toBe(401);
+    expect(prim.calls).toHaveLength(1);
+    expect(lines.length).toBeGreaterThanOrEqual(5);
+    for (const line of lines) {
+      expect(line).not.toContain(oldAppToken);
+      expect(line).not.toContain(newAppToken);
+    }
   });
 
   it("stores and logs nothing of a rider: no stop, position, device, account, push token, IP, user agent or body", async () => {

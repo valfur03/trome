@@ -15,7 +15,7 @@ export interface RelayService {
 export interface RouterDependencies {
   logger: Logger;
   clock: Clock;
-  tokens: { app: string; owner: string };
+  tokens: { app: readonly string[]; owner: string };
   relay: RelayService;
 }
 
@@ -84,8 +84,8 @@ function onlyGet(request: Request): Response | undefined {
   return errorResponse(405, "method not allowed", { allow: "GET, HEAD" });
 }
 
-function refuseWithout(request: Request, token: string): Response | undefined {
-  if (hasBearerToken(request.headers, token)) {
+function refuseWithout(request: Request, accepted: string | readonly string[]): Response | undefined {
+  if (hasBearerToken(request.headers, accepted)) {
     return undefined;
   }
   return errorResponse(401, "unauthorized", { "www-authenticate": "Bearer" });
