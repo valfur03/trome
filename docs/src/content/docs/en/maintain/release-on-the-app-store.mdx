@@ -321,15 +321,19 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    Any other line says what is wrong and what to do: fix the file, and run the check again.
    A typo here would ship a build that shows no times at any station, and nothing else shows it before your testers do.
 
-   Then check that the server still accepts the token of every build that riders may hold, as [their tokens](#the-app-token-of-each-build) says:
+   `make check` passes without this file, because it builds with stand-in values, so only the archive shows a missing one.
+   The archive then fails with an error that starts with **No train server host** or **No app token for the train server**, and names this file.
+   An error that says **is not a host name** means that `TRAIN_SERVER_HOST` holds more than the host.
+
+   Last, check that the production server still accepts the app token of each build that riders may hold, not only the newest one:
 
    ```sh
    make release-tokens-check
    ```
 
-   `make check` passes without this file, because it builds with stand-in values, so only the archive shows a missing one.
-   The archive then fails with an error that starts with **No train server host** or **No app token for the train server**, and names this file.
-   An error that says **is not a host name** means that `TRAIN_SERVER_HOST` holds more than the host.
+   The first time, make `ios/Config/BuildTokens.txt` first, as [The app token of each build](#the-app-token-of-each-build) says: until then the check stops and tells you so.
+   Its lines are **accepted** or **refused**, and that section says what to do with a **refused** one.
+   Do not archive before every build in the field is **accepted**.
 
 3. Run `make generate`, then open `ios/TROME.xcodeproj` in Xcode.
 
@@ -367,7 +371,8 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
 11. In one commit, add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold), and set `CURRENT_PROJECT_VERSION` to one more than the build number that App Store Connect shows, for the next upload; push it.
     That commit will also record the set of promises of the build: what it reads from the server, kept until its row is retired.
     The repo does not record these sets yet, so for now there is nothing to add.
-    Then add the line of the build to `ios/Config/BuildTokens.txt`, here `3 = <token>`, with the token of `ios/Config/Server.xcconfig`, and run `make release-tokens-check`: its line must say **accepted**.
+    Then add the line of the build to `ios/Config/BuildTokens.txt`, here `3 = <token>`, with the app token of `ios/Config/Server.xcconfig` that this build holds, and run `make release-tokens-check`: the line of the new build must say **accepted**.
+    That file is not in git, so it is not in the commit.
 
 </Steps>
 
@@ -712,6 +717,7 @@ A new address is only ever added next to the old one, and the old one stays unti
 ### The app token of each build
 
 Each build holds the app token that it was built with, and the server must accept it until the build is retired.
+The server keeps a list of tokens for this reason: a new token joins the list, and no build that holds an older one loses its times ([Change the app token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#change-the-app-token)).
 Keep these tokens in `ios/Config/BuildTokens.txt`, a file that git ignores, one line per build: its build number, `=`, and its token.
 Make the file once from its example, and add a line for each build in the field, from your password manager:
 
@@ -726,17 +732,32 @@ open -e ios/Config/BuildTokens.txt
 2 = <the app token of build 2>
 ```
 
-Then ask the production server about each of them:
+If you no longer have the token of a build, take it from the archive of that build, as [step 2 of the upload](#4-build-upload-and-check-the-first-build) says for the last one.
+
+Then ask the production server about each build in the field of the table above:
 
 ```sh
 make release-tokens-check
 ```
 
-It asks the server once per build in the field, as the app does, and prints one line per build, **accepted** or **refused**, with no token in it.
-It reads the builds from the table above, so a build with no line in the file, an empty file or no file stops it, with a line that says what to add.
+It uses the host of `ios/Config/Server.xcconfig`, sends the token of each build as the app does, and prints no token.
 Run it before every upload, and after every deploy or change of a secret of the production server.
-A **refused** build shows no times to its riders: if its line matches your password manager, put its token back on the server at once, as [Change the app token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#change-the-app-token) says.
-It makes at most one PRIM call per build, and stops when the server has no PRIM calls left this hour: run it again an hour later.
+Each line is the name of a build, then what the server did with its token:
+
+- **accepted:** the server accepts the token, so the riders of this build see times.
+- **refused:** the server refuses it, so the riders of this build see **Update the app** in place of times.
+- **not asked:** the check stopped before this build, as the last line says.
+
+The last line says how it ended:
+
+- **OK:** every build in the field is accepted, and the check is done.
+- **Refused:** at least one build is refused.
+  Look at its line in `ios/Config/BuildTokens.txt` first: a typo is the likeliest cause, so fix it and run the check again.
+  If the line matches your password manager, the production list lost that token: set the whole list again, with the token of every build in the field and the newest one, as [Add a token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#add-a-token) says.
+  The new value replaces the whole list, so leave no token out, and run the check again.
+- **Not finished:** the server has no PRIM calls left this hour, and the builds that say **not asked** wait: run it again an hour later.
+  The check makes at most one PRIM call per build.
+- Any other line says what is missing or wrong, for example a build with no line in the file, or a host that does not answer: the check stopped, so do what it says and run it again.
 
 ### Retire a build
 
