@@ -47,6 +47,7 @@ udid=$("$scripts/simulator.sh" boot)
 "$scripts/wallpaper.sh" check "$udid"
 exported="$root/.build/docs-screenshots"
 picked="$root/.build/docs-screenshots-picked"
+wrong_clock="$root/.build/docs-screenshots-wrong-clock"
 shown_language=en
 
 result_of() {
@@ -58,8 +59,7 @@ result_of() {
 }
 
 override_status_bar() {
-    xcrun simctl status_bar "$udid" override --time 9:41 --operatorName '' --batteryState charged --batteryLevel 100 \
-        --cellularMode active --cellularBars 4 --wifiBars 3
+    "$scripts/simulator.sh" status-bar
 }
 
 show_language() {
@@ -98,12 +98,13 @@ trap 'stop 129' HUP
 trap 'stop 130' INT
 trap 'stop 143' TERM
 
-rm -rf "$exported" "$picked"
+rm -rf "$exported" "$picked" "$wrong_clock"
 for language in $languages; do
     rm -rf "$(result_of "$language")"
 done
-xcrun simctl location "$udid" set "$fake_position"
+# First, as it may boot the Simulator again.
 override_status_bar
+xcrun simctl location "$udid" set "$fake_position"
 for language in $languages; do
     [ "$language" = "$shown_language" ] || show_language "$language"
     language_result=$(result_of "$language")
@@ -153,10 +154,15 @@ for name in names:
     shutil.copyfile(folder / attachment["exportedFileName"], picked / f"{name}.png")
 PYTHON
 
-# The lock screen sometimes draws the real time and date instead of the 9:41 of the status bar override,
-# with no error and no known cause, so two runs would give other pictures: read the clock of each picture,
-# and change no picture of the docs when one is wrong.
-"$scripts/lock-screen-clock-check.sh" "$picked" $lock_screen_pictures
+# The lock screen can draw the real time and date instead of the 9:41 of the status bar override, with no error
+# (simulator.sh status-bar boots the Simulator again for the one known cause), so two runs would give other pictures:
+# read the clock of each picture, change no picture of the docs when one is wrong, and keep the pictures of the run.
+if ! "$scripts/lock-screen-clock-check.sh" "$picked" $lock_screen_pictures; then
+    rm -rf "$wrong_clock"
+    cp -R "$picked" "$wrong_clock"
+    echo "The pictures of this run are in $wrong_clock" >&2
+    exit 1
+fi
 
 mkdir -p "$screenshots"
 for name in $names; do

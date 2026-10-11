@@ -41,8 +41,7 @@ capture() {
         echo "${result%.xcresult}-$1.xcresult"
     }
     override_status_bar() {
-        xcrun simctl status_bar "$udid" override --time 9:41 --operatorName '' --batteryState charged --batteryLevel 100 \
-            --cellularMode active --cellularBars 4 --wifiBars 3
+        "$scripts/simulator.sh" status-bar
     }
     show_language() {
         xcrun simctl status_bar "$udid" clear

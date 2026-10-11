@@ -123,8 +123,8 @@ make docs-screenshots
 It builds the app with no train data key, gives the Simulator a fixed position (near Champ de Mars Tour Eiffel), a fixed clock and metres, and saves each picture in [`src/assets/screenshots/`](src/assets/screenshots/), under a fixed name.
 The lock screen shows the wallpaper of [`Wallpaper.swift`](../ios/DocsScreenshots/Wallpaper.swift), the one file that names the wallpaper of every picture of the app.
 The Simulator keeps it: when the command stops at once and asks for it, run `make simulator-wallpaper` once, then run the command again.
-The lock screen sometimes draws the real time instead of the fixed 9:41, for no known reason.
-So the command reads the clock of each lock screen picture, and when one is not 9:41, it stops and changes no picture.
+When the Simulator booted with a 24-hour clock (in French, for example), the lock screen draws the real time instead of the fixed 9:41, until the next boot.
+So the command boots the Simulator again when it sees that clock, and it reads the clock of each lock screen picture: when one is not 9:41, it stops and changes no picture.
 The pictures of the app screens are in English.
 The pictures of the Live Activity use the fake trains of the app, at three stations (a metro line with one end in each direction, a metro line with a branch, and an RER line), and exist in English and in French: `live-activity-<case>-en.png` and `live-activity-<case>-fr.png`.
 A French page shows the French picture, and an English page the English one.

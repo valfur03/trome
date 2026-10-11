@@ -231,6 +231,35 @@ restart_springboard_in_language() {
     wait_for_widget_host "$1"
 }
 
+set_status_bar() {
+    xcrun simctl status_bar "$1" override --time 9:41 --operatorName '' --batteryState charged --batteryLevel 100 \
+        --cellularMode active --cellularBars 4 --wifiBars 3
+}
+
+# iOS writes the time of the override with the clock of the language that the Simulator had when it booted:
+# a restart of SpringBoard does not change it. A Simulator booted in French (a 24-hour clock) shows 09:41
+# in the status bar, and the lock screen then draws the real time.
+status_bar_has_24_hour_time() {
+    xcrun simctl status_bar "$1" list | grep -q '^Time: 0'
+}
+
+# The status bar of the pictures: 9:41, a full battery and signal. When the Simulator booted with a 24-hour clock,
+# it boots it again once, in the language that it has now.
+override_status_bar() {
+    set_status_bar "$1"
+    status_bar_has_24_hour_time "$1" || return 0
+    echo "The Simulator booted with a 24-hour clock, so its pictures would not show 9:41: booting it again" >&2
+    xcrun simctl shutdown "$1"
+    boot_device > /dev/null
+    wait_for_springboard "$1"
+    wait_for_widget_host "$1"
+    set_status_bar "$1"
+    if status_bar_has_24_hour_time "$1"; then
+        echo "The status bar still shows 09:41 after a new boot, not 9:41: check the clock of the language ('defaults read -g' in the Simulator)" >&2
+        exit 1
+    fi
+}
+
 reset_display() {
     xcrun simctl ui "$1" content_size large
     xcrun simctl ui "$1" appearance light
@@ -348,6 +377,9 @@ case "$command" in
     language)
         restart_springboard_in_language "$(boot_device)"
         ;;
+    status-bar)
+        override_status_bar "$(boot_device)"
+        ;;
     switch-language)
         app=${1:?Usage: $0 switch-language <app path>}
         udid=$(boot_device)
@@ -392,9 +424,10 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|status-bar|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch', 'language' and 'switch-language'); the default is English (en)" >&2
+        echo "'status-bar' sets the status bar of the pictures (9:41, full battery and signal), and boots the Simulator again once when it booted with a 24-hour clock" >&2
         echo "TROME_SIM_CLOCK=12 forces a 12-hour clock (with 'language'), so that the lock screen shows the time of the status bar override; every other command sets the clock of the language" >&2
         echo "RATP_SIM_SIZE=small uses the small shared Simulator of the slot (an iPhone SE) instead of its iPhone 17" >&2
         exit 1

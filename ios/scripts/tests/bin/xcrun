@@ -39,7 +39,36 @@ case "$command" in
         echo "$2" > "$state/type.$udid"
         echo "$udid"
         ;;
-    bootstatus) set_state "$1" Booted ;;
+    bootstatus)
+        read -r name old_state < "$state/device.$1"
+        if [ "$old_state" != Booted ]; then
+            # iOS keeps the clock of the language that the Simulator has when it boots, for the status bar override.
+            if [ -n "${FAKE_BOOT_CLOCK_24:-}" ] || { [ "$(cat "$state/global.$1.AppleLocale" 2> /dev/null)" = fr_FR ] \
+                && [ ! -e "$state/global.$1.AppleICUForce12HourTime" ]; }; then
+                echo 24 > "$state/boot-clock.$1"
+            else
+                echo 12 > "$state/boot-clock.$1"
+            fi
+        fi
+        set_state "$1" Booted
+        ;;
+    status_bar)
+        case "$2" in
+            override)
+                if [ "$(cat "$state/boot-clock.$1" 2> /dev/null)" = 24 ]; then
+                    echo "09:41" > "$state/status-bar.$1"
+                else
+                    printf '9:41\342\200\257\n' > "$state/status-bar.$1"
+                fi
+                ;;
+            list)
+                echo "Current Status Bar Overrides:"
+                echo "============================="
+                [ ! -e "$state/status-bar.$1" ] || echo "Time: $(cat "$state/status-bar.$1")"
+                ;;
+            clear) rm -f "$state/status-bar.$1" ;;
+        esac
+        ;;
     shutdown) [ -z "${FAKE_SHUTDOWN_FAILS:-}" ] || exit 1; set_state "$1" Shutdown ;;
     listapps)
         touch "$state/apps.$1"
