@@ -1,0 +1,5 @@
+// Copy this file to ios/Config/BuildTokens.txt, then add one line per build that riders may hold:
+// its build number, =, and the app token that it was built with, for example: 2 = 0123abcd...
+// The builds are the rows of "The builds that riders may hold" in the release guide that are not retired.
+// ios/Config/BuildTokens.txt is ignored by git. Never commit an app token.
+// make release-tokens-check asks the production server whether it still accepts each token.

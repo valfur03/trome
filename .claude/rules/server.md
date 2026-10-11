@@ -4,7 +4,7 @@ paths:
   - "contracts/**"
 commands:
   - '^(\S*/)?make\b.*\sserver-[a-z-]+(\s|$)'
-  - '^(\S*/)?make\b.*\srelease-server-(check|timing)(\s|$)'
+  - '^(\S*/)?make\b.*\s(release-server-(check|timing)|release-tokens-check)(\s|$)'
   - '^curl\b.*(localhost|127\.0\.0\.1):[0-9]+/'
 ---
 # Code structure of the server
@@ -46,9 +46,9 @@ The reviewer checks them, as for the iOS app.
 - **Fake secrets only.** `make server-dev` creates `server/.dev.vars` (ignored by git) from `server/.dev.vars.example`, with fake values.
   Never put a real key in it, and never commit it (`make server-check` fails when git tracks a `.dev.vars` or `.env` file of `server/`, or when such a file is new and git does not ignore it).
 - **No deploy and no account** (a rule of `CLAUDE.md`).
-- **`make release-server-check` and `make release-server-timing` are the prompter's.** They read the real app token of `ios/Config/Server.xcconfig` and call the production server; the timing makes up to 2 PRIM calls.
+- **`make release-server-check`, `make release-server-timing` and `make release-tokens-check` are the prompter's.** They read the real app tokens of `ios/Config/Server.xcconfig` or `ios/Config/BuildTokens.txt` and call the production server; the timing makes up to 2 PRIM calls, the tokens check one per build in the field.
   An agent never runs them in the main folder; in a worktree, which has no such file, they only say that the file is missing.
-  Check a change of them with `ios/scripts/tests/release-server-check-test.sh` and `release-server-timing-test.sh`, which use a fake server and fake files.
+  Check a change of them with `ios/scripts/tests/release-server-check-test.sh`, `release-server-timing-test.sh` and `release-tokens-check-test.sh`, which use a fake server and fake files.
 - **No PRIM call from `make server-dev`.** The dev server calls the real PRIM, with the fake key, as soon as a departures request has the right app token.
   So an agent never sends `GET /v1/stops/.../departures` with the app token of `server/.dev.vars` to it: check those answers in the tests, which fake PRIM.
   Requests that never reach PRIM are fine (`/health`, a missing or wrong token, a bad stop reference, `make server-counts` with the fake owner token).

@@ -321,6 +321,12 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    Any other line says what is wrong and what to do: fix the file, and run the check again.
    A typo here would ship a build that shows no times at any station, and nothing else shows it before your testers do.
 
+   Then check that the server still accepts the token of every build that riders may hold, as [their tokens](#the-app-token-of-each-build) says:
+
+   ```sh
+   make release-tokens-check
+   ```
+
    `make check` passes without this file, because it builds with stand-in values, so only the archive shows a missing one.
    The archive then fails with an error that starts with **No train server host** or **No app token for the train server**, and names this file.
    An error that says **is not a host name** means that `TRAIN_SERVER_HOST` holds more than the host.
@@ -361,6 +367,7 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
 11. In one commit, add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold), and set `CURRENT_PROJECT_VERSION` to one more than the build number that App Store Connect shows, for the next upload; push it.
     That commit will also record the set of promises of the build: what it reads from the server, kept until its row is retired.
     The repo does not record these sets yet, so for now there is nothing to add.
+    Then add the line of the build to `ios/Config/BuildTokens.txt`, here `3 = <token>`, with the token of `ios/Config/Server.xcconfig`, and run `make release-tokens-check`: its line must say **accepted**.
 
 </Steps>
 
@@ -701,6 +708,35 @@ So while the table has a build in the field, never do any of these in your Cloud
 Each of them cuts every build in the field from its times, and no message can reach those builds.
 [Keep the address of the server](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#keep-the-address-of-the-server) says what each costs and the only way back.
 A new address is only ever added next to the old one, and the old one stays until every build that holds it is retired.
+
+### The app token of each build
+
+Each build holds the app token that it was built with, and the server must accept it until the build is retired.
+Keep these tokens in `ios/Config/BuildTokens.txt`, a file that git ignores, one line per build: its build number, `=`, and its token.
+Make the file once from its example, and add a line for each build in the field, from your password manager:
+
+```sh
+cp -n ios/Config/BuildTokens.example.txt ios/Config/BuildTokens.txt
+open -e ios/Config/BuildTokens.txt
+```
+
+```text
+// The app token of each build that riders may hold.
+1 = <the app token of build 1>
+2 = <the app token of build 2>
+```
+
+Then ask the production server about each of them:
+
+```sh
+make release-tokens-check
+```
+
+It asks the server once per build in the field, as the app does, and prints one line per build, **accepted** or **refused**, with no token in it.
+It reads the builds from the table above, so a build with no line in the file, an empty file or no file stops it, with a line that says what to add.
+Run it before every upload, and after every deploy or change of a secret of the production server.
+A **refused** build shows no times to its riders: if its line matches your password manager, put its token back on the server at once, as [Change the app token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#change-the-app-token) says.
+It makes at most one PRIM call per build, and stops when the server has no PRIM calls left this hour: run it again an hour later.
 
 ### Retire a build
 

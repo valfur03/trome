@@ -1,6 +1,7 @@
 # Reads the host and the app token of the production server from Server.xcconfig, for the scripts that call it.
 # Source it after setting config to the path of the file and defining say <line> [status], which prints the line
 # and exits; it sets host and token, or says what is wrong with the file. It prints neither value.
+# A script that takes its tokens from elsewhere sets server_config_host_only=1: then the file needs no token.
 
 file=ios/Config/Server.xcconfig
 
@@ -21,4 +22,4 @@ case $host in
     *staging*)
         say "TRAIN_SERVER_HOST in $file is the staging server: put the host of the production server, then run this again." ;;
 esac
-[ -n "$token" ] || say "No app token in $file: put the APP_TOKEN of the production server after TRAIN_SERVER_APP_TOKEN =, then run this again."
+[ -n "$token" ] || [ "${server_config_host_only:-0}" = 1 ] || say "No app token in $file: put the APP_TOKEN of the production server after TRAIN_SERVER_APP_TOKEN =, then run this again."

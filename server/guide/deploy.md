@@ -28,9 +28,10 @@ Both deploy commands stop when a secret of their Worker is not set, and say whic
 
 Keep the tokens in your password manager.
 Never put a secret of the server in a file, and never use `wrangler deploy --secrets-file`, even when wrangler suggests it.
-The one exception is the app token, which a Release build of the app must hold ([Connect the app](#connect-the-app-to-the-server)).
+The one exception is the app token: a Release build of the app must hold it ([Connect the app](#connect-the-app-to-the-server)), and `ios/Config/BuildTokens.txt` keeps the token of each build that riders may hold.
 The logs of the server replace each secret with `[secret]`.
 When a new secret joins the table, set it with `make server-secret` on each Worker before you deploy the change.
+After every deploy and every change of a secret of the production Worker, run `make release-tokens-check` in the main folder of your clone: it says, one line per build that riders may hold, whether the Worker still accepts its app token ([their tokens](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-app-token-of-each-build)).
 
 ## Deploy for the first time
 
