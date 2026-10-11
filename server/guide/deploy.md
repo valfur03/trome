@@ -66,7 +66,7 @@ Never swap the old token for a new one: every build that holds the old one would
 
 Do it for the builds to come, for example when the old token leaked: the daily cap of PRIM calls still bounds what a leaked token can cost.
 Do each step on the staging Worker first, with its own tokens, then on the production Worker.
-Each Worker must run a server that reads the list: deploy `main` to it first if its last deploy is older than the list, because an older server reads `<old token>,<new token>` as one token and refuses every app.
+Before the first list of two tokens on a Worker, deploy `main` to it: a server from before the list reads `<old token>,<new token>` as one token, and refuses every app.
 
 1. Make the new token with `openssl rand -hex 32`, and keep it in your password manager next to the old one, with the builds that hold each.
 2. Run `make server-secret NAME=APP_TOKEN STAGING=1`, and paste every token of the list, then the new one, separated by commas: `<old token>,<new token>`.
