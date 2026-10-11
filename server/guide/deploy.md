@@ -71,6 +71,7 @@ Do each step on the staging Worker first, with its own tokens, then on the produ
    Never skip this step: a server from before the list reads `<old token>,<new token>` as one token, and refuses every app.
 2. Make one new token for each Worker with `openssl rand -hex 32`, and keep them in your password manager next to the old ones, with the builds that hold each production token.
    If you no longer have an old production token, take it back from the archive of a build that holds it ([Release on the App Store, step 4](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#4-build-upload-and-check-the-first-build)): never set a list without it.
+   If you no longer have the old staging token, make one more new token and use it as the old one in steps 3 and 4: no build that riders hold calls the staging Worker.
 3. Run `make server-secret NAME=APP_TOKEN STAGING=1`, and paste every token of the staging list, then its new one, separated by commas: `<old token>,<new token>`.
    The value replaces the whole list, so a token that you leave out is cut off at once.
 4. Check that the staging Worker answers both tokens: run the command below once for each, type `Authorization: Bearer <token>`, then press Return and Control-D.
