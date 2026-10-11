@@ -31,7 +31,7 @@ The times are rough estimates of your own work, not Apple's figures.
 |---|---|---|
 | [1. Join the Apple Developer Program](#1-join-the-apple-developer-program) | 30 minutes | Apple's confirmation email: Apple says to contact them if it has not come 24 hours after you pay |
 | [2. Create the app in App Store Connect](#2-create-the-app-in-app-store-connect) | 20 minutes | nothing |
-| [3. Sign the release build with your paid team](#3-sign-the-release-build-with-your-paid-team) | 15 minutes | nothing, once the change of the repo that it needs is on `main` |
+| [3. Sign the release build with your paid team](#3-sign-the-release-build-with-your-paid-team) | 15 minutes | nothing |
 | [4. Build, upload and check the first build](#4-build-upload-and-check-the-first-build) | 1 hour | Apple's email that the build is processed |
 | [5. Test with TestFlight: your iPhone first, then a small group](#5-test-with-testflight-your-iphone-first-then-a-small-group) | 30 minutes, then days of use | the beta review of the first external build |
 | [6. Fill in the store page](#6-fill-in-the-store-page) | 1 to 2 hours | nothing |
@@ -61,8 +61,7 @@ Check that each one is ready before you start the step that needs it, so that yo
 - **For steps 2 and 6: the store text,** in French and in English: three store titles in order of preference, the subtitle, the promotional text, the description, the keywords, the category, the answers of the age rating questionnaire, and the copyright line.
   [The App Store text of TROME 1.0](/en/maintain/store-text/) holds them all, ready to paste.
   The name on the home screen stays TROME, whatever store title you get.
-- **For step 3: the change of the repo that signs the release build with your paid team,** and with no other team.
-  It can only be made after step 1.
+- **For step 3: nothing.** The repo signs the release build with the team of `ios/Config/Signing.xcconfig`, a file that git ignores and that you make in step 3, and with no other team.
 - **For step 4: the build checks in the repo.** The version is 1.0.0 and the build number is 1, the app has its icon, its privacy manifest and its answer on encryption, and `make check` passes.
 - **For step 4: the production server.** You set its secrets in your own terminal with `make server-secrets`, which asks for each value at a hidden prompt, then you run `make server-deploy`, and its `/health` address answers `{"status":"ok"}`.
   Never put a secret in a file or in a message: a file can end up in git, and git keeps it for good.
@@ -201,15 +200,16 @@ Then you create the app record, which is the page of TROME in App Store Connect.
 <Badge text="Not checked on an account" variant="caution" />
 
 Apple's help, read on 3 October 2026: [Preparing your app for distribution](https://developer.apple.com/documentation/xcode/preparing-your-app-for-distribution), [Team ID](https://developer.apple.com/help/glossary/team-id/).
+Read on 11 October 2026: [Distributing your app for beta testing and releases](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases).
 
-The release build of TROME signs by hand, on purpose: so a free Personal Team that tries to sign it gets an error, and can never register the App Store ID.
-Now that the paid team owns these IDs, a change of the repo lets the release build sign with your paid team, and with no other team.
-That change can only be made after step 1, and it is ready before you start this step.
+The release build of TROME signs with the team of `ios/Config/Signing.xcconfig`, your own file, which git ignores, and with no other team.
+With no team in that file, the release build signs by hand, on purpose: so a free Personal Team that tries to sign it gets an error, and can never register the App Store ID.
+With your paid team in it, Xcode signs the release build automatically, and makes the certificates and profiles that it needs by itself.
 
 <Aside type="danger" title="Never on a free team">
   Never turn on **Automatically manage signing** for Release while the team in Xcode is a **Personal Team**.
   Xcode would register `io.github.valfur03.trome` to the free team, and your paid account could then not register it for a week or more.
-  If Xcode shows a red signing error for Release before the change of the repo is on `main`, leave it.
+  Xcode shows **"TROME" requires a provisioning profile** for Release when `ios/Config/Signing.xcconfig` has no team: leave it, and fill in the file (below).
 </Aside>
 
 <Checklist id="release-signing">
@@ -226,7 +226,7 @@ That change can only be made after step 1, and it is ready before you start this
    If the file still sets `TROME_DEBUG_APP_BUNDLE_ID` or `TROME_DEBUG_WIDGET_BUNDLE_ID`, the IDs of your old Debug builds, delete those lines.
    Save the file.
 
-4. Get the latest `main`, which has the change of the repo that signs the release build with your paid team, then make the Xcode project again:
+4. Get the latest `main`, then make the Xcode project again:
 
    ```sh
    git switch main
@@ -236,7 +236,17 @@ That change can only be made after step 1, and it is ready before you start this
 
    Its last line shows the IDs of your Debug build, `<your prefix>.trome.dev` and `<your prefix>.trome.dev.widget`: they differ from the App Store ID, so your Debug build and the TestFlight build can both be on your iPhone.
 
-5. Click **Run** in Xcode once, with your iPhone connected, to check that the Debug build still installs.
+5. Make your signing file from its example, then open it:
+
+   ```sh
+   cp ios/Config/Signing.example.xcconfig ios/Config/Signing.xcconfig
+   open -e ios/Config/Signing.xcconfig
+   ```
+
+   Put the Team ID of the paid team after `TROME_RELEASE_TEAM =`, never the ID of your **Personal Team**, and save the file.
+   If the archive of step 4 shows **"TROME" requires a provisioning profile**, this value is empty: the release build is still signed by hand.
+
+6. Click **Run** in Xcode once, with your iPhone connected, to check that the Debug build still installs.
    If Xcode says that a Debug ID is not available, your free team still holds it.
    Set `TROME_BUNDLE_ID_PREFIX` in `ios/Config/Local.xcconfig` to a prefix that your free team never used, then run `make generate` and **Run** again.
    Or wait about a week after your last build with the free team, [as for the App Store ID](#2-create-the-app-in-app-store-connect), and try again.

@@ -7,7 +7,9 @@ TROME_BUNDLE_ID_PREFIX = com.example
 PRIM_API_KEY =
 TRAIN_SERVER_HOST =
 TRAIN_SERVER_APP_TOKEN =
+TROME_RELEASE_TEAM =
 
 #include? "Local.xcconfig"
 #include? "Secrets.xcconfig"
 #include? "Server.xcconfig"
+#include? "Signing.xcconfig"

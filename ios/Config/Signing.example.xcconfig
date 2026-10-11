@@ -1,0 +1,9 @@
+// Copy this file to ios/Config/Signing.xcconfig to sign the App Store build (an archive for TestFlight or the App Store).
+// ios/Config/Signing.xcconfig is ignored by git. Only the owner of the paid Apple Developer Program account of the app needs it.
+// Only Release builds read it: with a team here, Xcode signs the Release build automatically with that team.
+// With no team here, the Release build signs by hand with no team, so Xcode refuses to sign it and registers nothing.
+
+// The Team ID of the paid team that owns io.github.valfur03.trome (10 letters and digits).
+// Never put a free Personal Team here: Xcode would register io.github.valfur03.trome to it, and the paid account could not take it for a week or more.
+// Your own builds on your iPhone use DEVELOPMENT_TEAM in ios/Config/Local.xcconfig instead.
+TROME_RELEASE_TEAM =

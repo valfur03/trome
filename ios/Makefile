@@ -95,7 +95,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -119,7 +119,8 @@ help:
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key, that a new key replaces the old one, that a Release build holds the app token of the server but never the PRIM key, that a Release build with no server host or no app token fails, and that the Release app passes the upload checks of App Store Connect: an icon of 1024 x 1024 pixels with no transparent pixel, a privacy manifest with a reason for each required reason API that its code uses, the answer on encryption, a version such as 1.0.0, no placeholder address (uses fake values)"
 	@echo "make app-icon-check      Fail when the app has no store icon of 1024 x 1024 pixels, or when its icon has an alpha channel"
-	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID (also with the Debug IDs of Local.xcconfig set), or when a Release build is signed automatically"
+	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID (also with the Debug IDs of Local.xcconfig set), or when a Release build is signed automatically with no TROME_RELEASE_TEAM"
+	@echo "make release-signing-check  Fail when Xcode would sign a Release build with no TROME_RELEASE_TEAM, or would not sign it automatically with one (no compile, no Apple account)"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
@@ -215,10 +216,14 @@ test-scripts:
 	done; \
 	echo "test-scripts: OK ($$count script tests)"
 
-check: lint prose-check public-text-check bundle-id-check app-icon-check recommended-settings-check live-key-check build strings-check test test-scripts
+check: lint prose-check public-text-check bundle-id-check release-signing-check app-icon-check recommended-settings-check live-key-check build strings-check test test-scripts
 
 bundle-id-check: project
 	@./scripts/bundle-id-check.sh $(PROJECT)
+
+# Not through the build gate: each build stops at the signing check, before any compile, in a few seconds.
+release-signing-check: project
+	@./scripts/release-signing-check.sh $(PROJECT) $(BUILD_DIR)/release-signing-check
 
 app-icon-check:
 	@./scripts/app-icon-check.py App/Assets.xcassets/AppIcon.appiconset

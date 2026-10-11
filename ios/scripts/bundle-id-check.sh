@@ -142,7 +142,8 @@ check_override_used() {
 check_release() {
     label=$1
     shift
-    release=$(settings -configuration Release "$@")
+    # TROME_RELEASE_TEAM empty: the Release build of anyone with no ios/Config/Signing.xcconfig (release-signing-check.sh checks a set team).
+    release=$(settings -configuration Release TROME_RELEASE_TEAM= "$@")
     [ -n "$release" ] || { fail "could not read the Release build settings ($label)"; return; }
     [ "$(id_of "$release" "$app_target")" = "$shipping_app" ] \
         || fail "the Release ID of the app is $(id_of "$release" "$app_target"), not $shipping_app ($label)"
@@ -150,7 +151,7 @@ check_release() {
         || fail "the Release ID of the extension is $(id_of "$release" "$widget_target"), not $shipping_widget ($label)"
     for target in "$app_target" "$widget_target"; do
         [ "$(style_of "$release" "$target")" = Manual ] \
-            || fail "Release signs $target automatically: Xcode would register the shipping ID with the team of whoever archives it ($label)"
+            || fail "Release signs $target automatically with no TROME_RELEASE_TEAM: Xcode would register the shipping ID with the team of whoever archives it ($label)"
     done
 }
 
@@ -178,4 +179,4 @@ check_release "the IDs set in ios/Config"
 check_release "Debug IDs set" "$app_override=$sample_app" "$widget_override=$sample_widget"
 
 [ "$failed" -eq 0 ] || exit 1
-echo "bundle-id-check: OK (Debug builds never carry $shipping_app, also with Debug IDs set; Release carries it and is not signed automatically)"
+echo "bundle-id-check: OK (Debug builds never carry $shipping_app, also with Debug IDs set; Release carries it and is not signed automatically with no TROME_RELEASE_TEAM)"

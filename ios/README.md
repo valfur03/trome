@@ -145,9 +145,9 @@ With a free Apple ID, the app stops after 7 days: run `make generate` again, the
 Your build gets the bundle ID `<prefix>.trome.dev`, and its Live Activity gets `<prefix>.trome.dev.widget`.
 These IDs end with `.dev`, so they are never the App Store ID of the app, `io.github.valfur03.trome`, whatever your prefix.
 Why: when a free Apple ID signs a build, Apple registers its bundle ID to that Apple ID for good, and the paid account of the app could then never take it.
-Only the Release builds (for the App Store) carry `io.github.valfur03.trome` and `io.github.valfur03.trome.widget`, and Xcode never signs them automatically.
+Only the Release builds (for the App Store) carry `io.github.valfur03.trome` and `io.github.valfur03.trome.widget`, and Xcode signs them automatically only with the team of `ios/Config/Signing.xcconfig`, which only the owner of the paid account of the app makes.
 So Xcode can show an error for Release in Signing & Capabilities: leave it, and never turn on "Automatically manage signing" for Release, or Xcode registers the App Store ID to your Apple ID.
-`make bundle-id-check` (part of `make check`) checks both.
+`make bundle-id-check` and `make release-signing-check` (part of `make check`) check both.
 A free Apple ID registers at most 10 bundle IDs in 7 days, and each one expires after 7 days.
 When Xcode says "Your maximum App ID limit has been reached" or "No profiles for ... were found", wait, or reuse two bundle IDs that Xcode already registered on your Mac: the page "Reuse the App IDs that your Mac already has" of the docs site shows the command that lists them, with the date when each one expires.
 To reuse them, set `TROME_DEBUG_APP_BUNDLE_ID` and `TROME_DEBUG_WIDGET_BUNDLE_ID` in `ios/Config/Local.xcconfig` (see `ios/Config/Local.example.xcconfig`), then run `make generate`.
