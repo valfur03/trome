@@ -64,6 +64,8 @@ override_status_bar() {
 
 show_language() {
     xcrun simctl status_bar "$udid" clear
+    # Not known until the switch ends: a run stopped during it puts the English back.
+    shown_language=
     # A 12-hour clock: with the 24-hour clock of French, the lock screen shows the real time, not 9:41.
     TROME_SIM_CLOCK=12 RATP_SIM_LANGUAGE=$1 "$scripts/simulator.sh" language
     shown_language=$1

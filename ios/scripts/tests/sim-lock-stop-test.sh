@@ -143,27 +143,33 @@ last_call() {
     grep -E "^simctl $1 $udid" "$state/calls" | tail -n 1 | cut -d ' ' -f 4
 }
 
-# $1: the command (docs-screenshots or live-activity-render); $2: whom TERM goes to (make, sim-lock, quiet, script, all).
+# $1: the command (docs-screenshots or live-activity-render); $2: whom the signal goes to (make, sim-lock, quiet, script,
+# all, or terminal: the process group of make, as Ctrl-C in a terminal does); $3: the case; $4: the signal (TERM by default).
+# make runs in its own process group, with INT at its default, as in a terminal: a command that this script starts in the
+# background would ignore INT.
 stop_a_run() {
     command=$1
     target=$2
     case=$3
+    signal=${4:-TERM}
     rm -f "$state/test-run.pid" "$state/lock-at-test-end" "$state/calls"
-    (cd "$state/ios" && exec make --no-print-directory -f "$state/Makefile" "root-$command") > "$state/run.log" 2>&1 &
+    (cd "$state/ios" && exec perl -MPOSIX -e 'setsid(); $SIG{INT} = "DEFAULT"; exec @ARGV' \
+        make --no-print-directory -f "$state/Makefile" "root-$command") > "$state/run.log" 2>&1 &
     run=$!
     wait_for test -s "$state/test-run.pid"
     expect "$case: the test run started" "$(test -s "$state/test-run.pid" && echo yes)" "yes"
     case "$target" in
         make) pids=$run ;;
+        terminal) pids=-$run ;;
         sim-lock) pids=$(pgrep -f "^/bin/sh [^ ]*scripts/sim-lock.sh job .*$state" || true) ;;
         quiet) pids=$(pgrep -f "^/bin/sh [^ ]*scripts/quiet.sh $state" || true) ;;
         script) pids=$(pgrep -f "^/bin/sh [^ ]*scripts/$command.sh .*$state" || true) ;;
         all) pids=$(run_processes) ;;
     esac
-    expect "$case: TERM goes to $([ "$target" = all ] && echo "every process" || echo "one process")" \
+    expect "$case: $signal goes to $([ "$target" = all ] && echo "every process" || echo "one process or group")" \
         "$(echo $pids | wc -w | tr -d ' ')" "$([ "$target" = all ] && echo $pids | wc -w | tr -d ' ' || echo 1)"
     # shellcheck disable=SC2086
-    kill -TERM $pids
+    kill -"$signal" -- $pids
     wait_for lock_is_freed
     left=$(run_processes)
     expect "$case: the lock is freed" "$(lock_is_freed && echo yes)" "yes"
@@ -194,6 +200,11 @@ for target in make quiet script sim-lock all; do
 done
 for target in make quiet script; do
     stop_a_run live-activity-render "$target" "live-activity-render, TERM to $target"
+done
+# Ctrl-C in a terminal: INT to make, the make it runs and sim-lock.sh, but not to the job, which has its own session.
+for target in terminal sim-lock; do
+    stop_a_run docs-screenshots "$target" "docs-screenshots, INT to $target" INT
+    expect "docs-screenshots, INT to $target: the status bar override is cleared" "$(last_call status_bar)" "clear"
 done
 
 # A test run that does not stop on TERM is killed after RATP_SIM_STOP_SECONDS, and only then is the lock freed.

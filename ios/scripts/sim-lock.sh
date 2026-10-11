@@ -468,13 +468,21 @@ reopen_simulator() {
 # leaves its children running, and a signal to make or to this script does not reach the job by itself.
 # So the job runs in its own session (one process group, whose processes stay in it when their parent is gone),
 # a signal to this script goes to the whole group, and the lock is freed only when no process of the group is left.
+# A command that this script starts in the background ignores INT and QUIT (the shell does so with no job control),
+# so the job puts them back to their default, or an INT (Ctrl-C) would not reach it.
 run_job() {
+    job=
     job_signal=
     trap 'stop_job HUP 129' HUP
     trap 'stop_job INT 130' INT
     trap 'stop_job TERM 143' TERM
-    perl -MPOSIX -e 'setsid(); exec { $ARGV[0] } @ARGV; print STDERR "$ARGV[0]: $!\n"; exit 127' -- "$@" 0<&0 &
+    perl -MPOSIX -e 'setsid(); $SIG{INT} = $SIG{QUIT} = "DEFAULT"; exec { $ARGV[0] } @ARGV; print STDERR "$ARGV[0]: $!\n"; exit 127' \
+        -- "$@" 0<&0 &
     job=$!
+    # A signal that came before the job had its PID: pass it on now.
+    if [ -n "$job_signal" ]; then
+        kill -"$job_signal_name" -- "-$job" 2> /dev/null || kill -"$job_signal_name" "$job" 2> /dev/null || true
+    fi
     while :; do
         job_status=0
         wait "$job" || job_status=$?
@@ -486,10 +494,11 @@ run_job() {
 }
 
 stop_job() {
-    if [ -z "$job_signal" ]; then
+    if [ -z "$job_signal" ] && [ -n "$job" ]; then
         kill -"$1" -- "-$job" 2> /dev/null || kill -"$1" "$job" 2> /dev/null || true
     fi
     job_signal=$2
+    job_signal_name=$1
 }
 
 # The processes that the job left when its first process ended. A stopped job has had its signal once:
