@@ -13,6 +13,7 @@ The code is in `ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity/`, and
 |---|---|---|
 | Arrival, switch, stop, the 45 minutes | `AutoLiveActivityRules.decide`; `AutoLiveActivityModel` applies the answer | `AutoLiveActivityRulesTests*`, `AutoLiveActivityModelTests` |
 | A wake by iOS for the area of a station | `ReportedArrivalRules`, `AutoLiveActivityModel+ReportedArrival` | `ReportedArrivalRulesTests`, `AutoLiveActivityRestartTests` |
+| Its second chance, after a refusal for lack of a trusted position | `ArrivalSecondChance`, `AutoLiveActivityModel+SecondChance` | `ArrivalSecondChanceTests`, `AutoLiveActivitySecondChanceTests` |
 | Snooze, the switch, the buttons | `AutomaticMode`, `AutomaticModeModel`, `SnoozeLiveActivityIntent` | `AutomaticMode*Tests`, `AutoLiveActivitySnoozeTests` |
 | The pause after a swipe | `AutoLiveActivityRules.outcome(of:shown:now:)`, `StationPause`, `AutoLiveActivityModel+Pause`; `ActivityKitStationLiveActivityClient` (`ios/App/LiveActivity/`) reports each end, and whether the app ended it | `AutoLiveActivityRemovalRulesTests`, `AutoLiveActivityPauseTests` |
 | The position of a resume | `ResumePositionRules`, `AutoLiveActivityModel+Resume` | `ResumePositionRulesTests`, `AutoLiveActivityRiderResumeTests` |
@@ -32,6 +33,7 @@ The values that a change often needs are constants:
 | 30 minutes, 1 hour and the rest of the day of a snooze | `SnoozeDuration` |
 | 5 seconds of wait for a position when the rider resumes | `ResumePositionRules.maximumWait` |
 | 10 seconds of wait for a position when iOS says that the phone entered the area of a station | `ReportedArrivalRules.maximumWait` |
+| 2 minutes of second chance, one ask every 5 seconds | `ArrivalSecondChance.limit`, `interval` |
 | 20 seconds of wait for the second location question | `LocationQuestionsRules.alwaysQuestionTimeout` |
 | 20 regions, 100 meters before the app chooses them again | `StationRegionPlan.maximumRegions`, `replanDistanceMeters` |
 
