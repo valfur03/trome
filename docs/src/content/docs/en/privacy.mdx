@@ -1,6 +1,6 @@
 ---
 title: Privacy policy
-description: What TROME does with your position, what the app sends to my server and why, what the server keeps and for how long, who else gets it, your rights, and how to write to me.
+description: What TROME does with your position, what the app sends to the server and why, what the server stores, who else receives it, your rights, and how to write to me.
 sidebar:
   label: Privacy
   order: 2
@@ -12,88 +12,86 @@ import Contact from '../../../components/Contact.astro';
 
 <DraftNotice />
 
-Updated: <Placeholder>date</Placeholder>.
+Last updated: <Placeholder>date</Placeholder>.
 
 TROME needs to know which station you are near, not who you are.
-In Apple’s sense, TROME collects no data about you: what reaches my server is used to answer, then not kept.
-Here is what the TROME iPhone app does with your data, what my server keeps, who gets it, and what your rights are.
+In Apple’s sense, TROME collects no data about you: what reaches the server is used to answer, then not kept.
+This page says what the TROME iPhone app does with your data, what the server stores, who receives it, and what your rights are.
 
 ## In short
 
 - TROME has no account and shows no ads.
-- The app measures nothing of what you do: I only count how many requests my server gets, never who makes them.
+- The app measures nothing of what you do: the server only counts how many requests it receives, never who makes them.
 - Your position stays on your iPhone: the app sends it to nobody.
-- To show the train times, the app sends my server the identifier of the station you are near, but not your position, and nothing that the app adds to identify you.
-- My server writes down nowhere which station was asked for, when, or by whom.
-  My host, Cloudflare, sees each request while it passes, [as explained below](#what-my-host-and-the-source-of-the-times-see).
+- To show the train times, the app sends the server the identifier of the station you are near, but not your position, and nothing that the app adds to identify you.
+- The server writes down nowhere which station was asked for, when, or by whom.
+  Cloudflare, which runs the server, sees each request while it passes, [as explained below](#cloudflare-and-the-source-of-the-times).
 - The App Store page says the same: Data Not Collected.
-  What Apple gives me, such as the number of downloads, or your data if you test TROME with TestFlight, is explained [below](#what-apple-gives-me).
+  What Apple provides, such as the number of downloads, or your data if you test TROME with TestFlight, is explained [below](#what-apple-provides).
 
 ## Your position
 
 TROME uses your position, on the iPhone, to find the nearest station, and to show or remove the Live Activity when you come near a station or move away from it.
 With **Always** access, iOS tells TROME when you come near a station, even when the app is closed.
 
-The app sends your position to nobody: not to me, and not to anyone else.
+The app sends your position to nobody, not even to the server.
 You can change this access at any time in **Settings > Apps > TROME > Location**.
 Without your position, TROME cannot find the nearest station.
 
-## What the app sends to my server
+## What the app sends to the server
 
-To show the next trains, the app asks my server for the times.
-It sends the identifier of the stop (for example the one of Châtelet station) and a code that every copy of the app shares, which says nothing about you.
+To show the next trains, the app asks TROME’s server for the times.
+It sends the identifier of the station (for example the one of Châtelet) and a code that every copy of the app shares, which says nothing about you.
 It sends neither your position, nor an identifier of your iPhone, nor anything that the app adds to identify you.
-The stop that the app asks for shows which station you are near at that moment.
+The station that the app asks for shows which station you are near at that moment.
 
-Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and of iOS.
-My server does not read them and does not keep them.
+Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and iOS.
+The server does not read them and does not store them.
 
-## Why I use this data, and on what legal basis
+## Why this data is used, and on what legal basis
 
-My legal basis is the same for each use below: my legitimate interest (GDPR, article 6(1)(f)), which is a reason that the law accepts.
+The legal basis is the same for each use below: legitimate interest (GDPR, article 6(1)(f)).
 Here is what each piece of data is for:
 
-- **The identifier of the stop, and the IP address that comes with it**: to give you the times that you ask for, and nothing else.
-  Under the GDPR, using data for the length of one request already counts as processing, even if nothing is kept.
-  My interest is legitimate here because TROME cannot work without this data, the processing is very short, and it keeps nothing that identifies you.
-- **The totals of my server, and their copy on my own computer**: to watch the daily limit of calls to the source of the times, and to see whether anyone uses TROME.
-  My server keeps the totals for about 30 days, and I keep the copy for up to 13 months.
-  They have no stop and no IP address.
-- **The list of errors of my server**: to see why it did not get the times from the source, and to fix what is wrong.
+- **The identifier of the station, and the IP address that comes with it**: to give you the times that you ask for, and nothing else.
+  Under the GDPR, using data for the length of one request already counts as processing, even if nothing is stored.
+  The interest is legitimate here because TROME cannot work without this data, the processing is very short, and nothing that identifies you is stored.
+- **The server’s totals, and their copy**: to watch the daily limit of calls to the source of the times, and to follow how much TROME is used.
+  They have no station and no IP address.
+- **The server’s list of errors**: to see why it did not get the times from the source, and to fix what is wrong.
 - **Your messages**: to answer you and to fix TROME.
-- **TestFlight data and the numbers that Apple gives me**: to fix TROME, to improve it and to see whether anyone uses it.
+- **TestFlight data and the numbers that Apple provides**: to fix TROME, to improve it and to follow how much it is used.
 
-## What my server keeps, and for how long
+## What is stored on the server
 
-After it answers, my server writes down no stop that was asked for: not in its totals, not in its errors, not in its logs.
-It keeps only:
+Once it has answered, the server writes down no station that was asked for: not in its totals, not in its errors, not in its logs.
+It stores only:
 
-- **totals**, for about 30 days: how many requests it gets each hour and each day, how many calls it makes to the source of the times, and how many errors.
-  These totals have no stop and no person.
-  I also copy them to my own computer at home, and I keep the copy for up to 13 months.
-  The copy has no stop, no IP address and nothing about you, and nobody else gets it.
-  I keep the totals, and the copy, for [the reasons given above](#why-i-use-this-data-and-on-what-legal-basis);
-- **a list of errors**, for about 7 days: the time, the kind of error and its code.
-  It has no stop either.
-  I keep it for [the reason given above](#why-i-use-this-data-and-on-what-legal-basis);
-- **the latest answer of the source of the times for each stop**, as the source gave it, to give it to everyone who asks.
-  It stays in the memory of my server, never written down, and the server erases it after about 10 minutes at most.
-  It does not say who asked for the stop;
-- **the stop for which the source just failed**, with the time of the failure, in the same memory, for a few minutes at most: the server does not call the source again at once.
+- **totals**: how many requests it receives each hour and each day, how many calls it makes to the source of the times, and how many errors.
+  These totals have no station and no person.
+  A copy goes to a private monitoring tool that no third party hosts, and nobody else receives it.
+  The totals and their copy are kept for as long as they serve [the purposes given above](#why-this-data-is-used-and-on-what-legal-basis);
+- **a list of errors**: the time, the kind of error and its code.
+  It has no station either.
+  It is kept only while it helps to find and fix the cause of an error;
+- **the latest answer of the source of the times for each station**, as the source gave it, to give it to everyone who asks.
+  It stays in the memory of the server, never written down, and the server erases it after about 10 minutes at most.
+  It does not say who asked for the station;
+- **the station for which the source just failed**, with the time of the failure, in the same memory, for a few minutes at most: the server does not call the source again at once.
 
-My server keeps no IP address, no identifier of you or of your iPhone, and no position.
-No request log is turned on at my host.
+The server stores no IP address, no identifier of you or of your iPhone, and no position.
+No request log is turned on at its host.
 
-## What my host and the source of the times see
+## Cloudflare and the source of the times
 
-My server runs on Cloudflare.
-Cloudflare gets each request before my server does, so it sees the address of the request, with the identifier of the stop, and the network details that come with any web request, such as your IP address and the approximate place that it finds from it.
-I turned off every log that Cloudflare could keep for me, and my server keeps none of it.
-Cloudflare handles this request for me, as my processor, under its [data processing addendum](https://www.cloudflare.com/cloudflare-customer-dpa/) and its [privacy policy](https://www.cloudflare.com/privacypolicy/).
+The server runs on Cloudflare.
+Cloudflare gets each request before the server does, so it sees the address of the request, with the identifier of the station, and the network details that come with any web request, such as your IP address and the approximate place that it finds from it.
+Every log that Cloudflare could keep for TROME is turned off, and the server stores none of it.
+Cloudflare handles this request on behalf of TROME, as its processor, under its [data processing addendum](https://www.cloudflare.com/cloudflare-customer-dpa/) and its [privacy policy](https://www.cloudflare.com/privacypolicy/).
 Cloudflare is a US company, so it may handle a request outside the European Union, in particular in the United States.
 To protect your data there, it relies on the EU-US Data Privacy Framework and on the standard contractual clauses of the European Commission, which its addendum includes.
 
-My server asks Île-de-France Mobilités (PRIM) for the times with the identifier of the stop and the key of TROME only.
+The server asks Île-de-France Mobilités (PRIM) for the times with the identifier of the station and TROME’s key only.
 PRIM gets nothing that comes from you.
 
 ## What stays on your iPhone
@@ -102,52 +100,47 @@ TROME keeps your settings (the automatic mode, the snooze and the pauses), the l
 The app sends them nowhere, but they are part of the backups of your iPhone, like the data of every app.
 Deleting the app deletes them.
 
-## Where the notifications come from
+## What Apple provides
 
-In this version, TROME makes its notifications on your iPhone, when you come near a station.
-I send none from a server, and the app asks for no notification identifier.
+For TROME on the App Store, Apple reports how many times TROME was shown, how many times its page was opened and how many times the app was downloaded, but never by whom.
 
-## What Apple gives me
-
-For TROME on the App Store, Apple tells me how many times TROME was shown, how many times its page was opened and how many times the app was downloaded, but never by whom.
-
-If you share analytics with app developers (**Settings > Privacy & Security > Analytics & Improvements > Share With App Developers**), Apple gives me crash reports and usage statistics, with nothing that says who you are.
+If you share analytics with app developers (**Settings > Privacy & Security > Analytics & Improvements > Share With App Developers**), Apple provides crash reports and usage statistics, with nothing that says who you are.
 Apple explains it in [Share analytics, diagnostics, and usage information with Apple](https://support.apple.com/en-us/108971).
 These usage statistics come only from people who share: the others do not count in them.
 
-If you test TROME with TestFlight, Apple gives me your crash reports, usage data, and the feedback that you send.
+If you test TROME with TestFlight, Apple provides your crash reports, usage data, and the feedback that you send.
 If you were invited by email, they come with your name and email address, but not if you joined the test through a public link.
 Apple explains it in [TestFlight & Privacy](https://www.apple.com/legal/privacy/data/en/test-flight/).
 
-I use this information only to fix TROME, to improve it and to see whether anyone uses it, and I share it with nobody.
+This information is used only to fix TROME, to improve it and to follow how much it is used, and it is shared with nobody.
 
-## See, correct or delete what I have about you
+## Your rights: see, correct or delete your data
 
-My server keeps nothing that could lead back to you, so there is nothing to see or delete there.
-All I have about a person is what Apple gives me if they test TROME with TestFlight, and the messages they write to me.
-I keep a message for as long as it takes to answer you and fix the problem, then I delete it, and sooner if you ask.
-I keep the name and email address of a tester for the length of the test, then I remove them from my list of testers.
+The server stores nothing that could lead back to you, so there is nothing to see or delete on it.
+The only data about a person is what Apple provides if they test TROME with TestFlight, and the messages they write.
+A message is kept for as long as it takes to answer and fix the problem, then deleted, and sooner if you ask.
+The name and email address of a tester are kept for the length of the test, then removed from the list of testers.
 
-You can ask me to show you this data, to delete it, to correct it, or to limit how I use it, and you can object to my using it.
+You can ask to see this data, to delete it, to correct it, or to limit how it is used, and you can object to its use.
 I answer within one month at most.
 
 To ask a question, or to make one of these requests, write to <Contact />.
-If you were invited to TestFlight by email and you want me to delete your data or to remove you from the testers, write from the address of the invitation: it is what lets me find your name.
+If you were invited to TestFlight by email and you want your data deleted or your name removed from the testers, write from the address that received the invitation: it is what lets me find your name.
 An issue on GitHub with [the question form](https://github.com/valfur03/trome/issues/new?template=question.yml) works too for a question, but an issue is public and GitHub keeps it under its own [privacy policy](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement): do not write your name, your email address, or anything personal in it.
-You can also complain to the [CNIL](https://www.cnil.fr/en), the French data protection authority, or to the one of your own country.
+You can also complain to the [CNIL](https://www.cnil.fr/en), the French data protection authority, or to the one in your own country.
 
-## Who I am
+## Who is responsible for your data
 
-I am Valentin Furmanek.
-I make TROME on my own, and I am the person responsible for the data that this page describes (the “controller”, in the GDPR).
+I am Valentin Furmanek, and I make TROME on my own.
+I am the person responsible for the data that this page describes (the “controller”, in the GDPR).
 To reach me, write to <Contact />.
 
 ## What GitHub sees when you open this page
 
 This page is hosted by GitHub Pages.
 GitHub logs the IP address of whoever opens it, for its own security, under its [privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
-I have no visit statistics and no cookies on this site.
+This site has no visit statistics and no cookies.
 
 ## When this page changes
 
-When this page changes, I change its date, at the top of the page.
+Each time this page changes, the date at the top of the page changes too.

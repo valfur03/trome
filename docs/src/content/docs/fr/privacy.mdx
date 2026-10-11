@@ -1,6 +1,6 @@
 ---
 title: Politique de confidentialité
-description: Ce que TROME fait de votre position, ce que l’app envoie à mon serveur et pourquoi, ce que le serveur garde et combien de temps, qui d’autre les reçoit, vos droits, et comment m’écrire.
+description: Ce que TROME fait de votre position, ce que l’app envoie au serveur et pourquoi, ce que le serveur stocke, qui d’autre reçoit ces données, vos droits, et comment m’écrire.
 sidebar:
   label: Confidentialité
   order: 2
@@ -12,143 +12,136 @@ import Contact from '../../../components/Contact.astro';
 
 <DraftNotice />
 
-Mise à jour : <Placeholder>date</Placeholder>.
+Dernière mise à jour : <Placeholder>date</Placeholder>.
 
 TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
-Au sens d’Apple, TROME ne collecte aucune donnée sur vous : ce qui arrive à mon serveur sert à répondre, puis n’est pas gardé.
-Voici ce que l’app TROME pour iPhone fait de vos données, ce que mon serveur garde, qui les reçoit, et quels sont vos droits.
+Au sens d’Apple, TROME ne collecte aucune donnée sur vous : ce qui arrive au serveur sert à répondre, puis n’est pas conservé.
+Cette page explique ce que l’app TROME pour iPhone fait de vos données, ce que le serveur stocke, qui les reçoit, et quels sont vos droits.
 
 ## En bref
 
 - TROME n’a pas de compte et n’affiche pas de publicité.
-- L’app ne mesure rien de ce que vous faites : je compte seulement combien de demandes mon serveur reçoit, jamais qui les fait.
+- L’app ne mesure rien de ce que vous faites : le serveur compte seulement combien de requêtes il reçoit, jamais qui les envoie.
 - Votre position reste sur votre iPhone : l’app ne l’envoie à personne.
-- Pour afficher les horaires, l’app envoie à mon serveur l’identifiant de la station près de laquelle vous êtes, mais ni votre position, ni rien que l’app ajoute pour vous identifier.
-- Mon serveur n’écrit nulle part quelle station a été demandée, ni quand, ni par qui.
-  Mon hébergeur, Cloudflare, voit chaque demande pendant qu’elle passe, comme [l’explique la suite](#ce-que-voient-mon-hébergeur-et-la-source-des-horaires).
+- Pour afficher les horaires, l’app envoie au serveur l’identifiant de la station près de laquelle vous êtes, mais ni votre position, ni aucun identifiant qui vous soit propre.
+- Le serveur n’enregistre nulle part quelle station a été demandée, ni quand, ni par qui.
+  Cloudflare, qui héberge le serveur, voit passer chaque requête, [comme l’explique la suite](#cloudflare-et-la-source-des-horaires).
 - La fiche de l’App Store dit la même chose : données non collectées.
-  Ce qu’Apple me transmet, comme le nombre de téléchargements, ou vos données si vous testez TROME avec TestFlight, est expliqué [plus bas](#ce-quapple-me-transmet).
+  Ce que fournit Apple, comme le nombre de téléchargements, ou vos données si vous testez TROME avec TestFlight, est expliqué [plus bas](#ce-que-fournit-apple).
 
 ## Votre position
 
 TROME utilise votre position, sur l’iPhone, pour trouver la station la plus proche, et pour afficher ou retirer l’activité en direct quand vous arrivez près d’une station ou que vous vous en éloignez.
 Avec l’accès **Toujours**, iOS prévient TROME quand vous arrivez près d’une station, même quand l’app est fermée.
 
-L’app n’envoie votre position à personne : ni à moi, ni à qui que ce soit d’autre.
-Vous pouvez changer cet accès à tout moment dans **Réglages > Apps > TROME > Position**.
+L’app n’envoie votre position à personne, pas même au serveur.
+Vous pouvez modifier cet accès à tout moment dans **Réglages > Apps > TROME > Position**.
 Sans votre position, TROME ne peut pas trouver la station la plus proche.
 
-## Ce que l’app envoie à mon serveur
+## Ce que l’app envoie au serveur
 
-Pour afficher les prochains passages, l’app demande les horaires à mon serveur.
-Elle lui envoie l’identifiant de l’arrêt (par exemple celui de la station Châtelet) et un code commun à toutes les copies de l’app, qui ne dit rien de vous.
-Elle n’envoie ni votre position, ni un identifiant de votre iPhone, ni rien que l’app ajoute pour vous identifier.
-L’arrêt demandé montre près de quelle station vous êtes à ce moment-là.
+Pour afficher les prochains passages, l’app demande les horaires au serveur de TROME.
+Elle lui transmet l’identifiant de la station (par exemple celui de Châtelet) et un code identique pour toutes les copies de l’app, qui ne dit rien de vous.
+Elle ne transmet ni votre position, ni un identifiant de votre iPhone, ni aucun autre identifiant qui vous soit propre.
+Cette requête indique donc près de quelle station vous êtes à ce moment-là.
 
-Comme toute connexion à internet, la demande arrive avec l’adresse IP de votre iPhone et des informations techniques, comme les versions de l’app et d’iOS.
-Mon serveur ne les lit pas et ne les garde pas.
+Comme toute connexion à internet, la requête arrive avec l’adresse IP de votre iPhone et des informations techniques, comme les versions de l’app et d’iOS.
+Le serveur ne les lit pas et ne les conserve pas.
 
-## Pourquoi j’utilise ces données, et sur quelle base légale
+## Pourquoi ces données sont utilisées, et sur quelle base légale
 
-Ma base légale est la même pour chaque usage ci-dessous : mon intérêt légitime (RGPD, article 6, paragraphe 1, point f), c’est-à-dire une raison que la loi accepte.
+La base légale est la même pour chacun des usages ci-dessous : l’intérêt légitime (RGPD, article 6, paragraphe 1, point f).
 Voici à quoi sert chaque donnée :
 
-- **L’identifiant de la station, et l’adresse IP qui arrive avec** : vous donner les horaires que vous demandez, et rien d’autre.
-  Pour le RGPD, utiliser une donnée le temps d’une demande, c’est déjà la traiter, même si rien n’en est gardé.
-  Mon intérêt est légitime ici parce que TROME ne marche pas sans ces données, que le traitement est très court, et qu’il ne garde rien qui vous identifie.
-- **Les totaux de mon serveur, et leur copie sur mon propre ordinateur** : surveiller la limite quotidienne d’appels à la source des horaires, et voir si quelqu’un utilise TROME.
-  Mon serveur garde les totaux environ 30 jours, et je garde la copie jusqu’à 13 mois.
-  Ils n’ont ni station ni adresse IP.
-- **La liste d’erreurs de mon serveur** : voir pourquoi il n’a pas obtenu les horaires de la source, et corriger ce qui ne va pas.
+- **L’identifiant de la station, et l’adresse IP qui l’accompagne** : vous donner les horaires demandés, et rien d’autre.
+  Pour le RGPD, utiliser une donnée le temps d’une requête, c’est déjà la traiter, même si rien n’est conservé.
+  L’intérêt est légitime ici : TROME ne peut pas fonctionner sans ces données, le traitement est très bref, et rien qui vous identifie n’est conservé.
+- **Les compteurs du serveur, et leur copie** : surveiller la limite quotidienne d’appels à la source des horaires, et suivre l’usage de TROME.
+  Ils ne contiennent ni station ni adresse IP.
+- **La liste d’erreurs du serveur** : comprendre pourquoi il n’a pas obtenu les horaires de la source, et corriger le problème.
 - **Vos messages** : vous répondre et corriger TROME.
-- **Les données de TestFlight et les chiffres qu’Apple me transmet** : corriger TROME, l’améliorer et voir si quelqu’un l’utilise.
+- **Les données de TestFlight et les chiffres fournis par Apple** : corriger et améliorer TROME, et suivre son usage.
 
-## Ce que mon serveur garde, et combien de temps
+## Ce qui est stocké sur le serveur
 
-Après sa réponse, mon serveur n’écrit aucune station demandée : ni dans ses totaux, ni dans ses erreurs, ni dans ses journaux.
-Il garde seulement :
+Après avoir répondu, le serveur n’enregistre aucune station demandée : ni dans ses compteurs, ni dans ses erreurs, ni dans ses journaux.
+Il ne stocke que :
 
-- **des totaux**, pendant environ 30 jours : combien de demandes il reçoit chaque heure et chaque jour, combien d’appels il fait à la source des horaires, et combien d’erreurs.
-  Ces totaux n’ont ni station ni personne.
-  Je les copie aussi sur mon propre ordinateur, chez moi, et je garde cette copie jusqu’à 13 mois.
-  La copie n’a ni station, ni adresse IP, ni rien sur vous, et personne d’autre ne la reçoit.
-  Je garde les totaux, et la copie, pour [les raisons données plus haut](#pourquoi-jutilise-ces-données-et-sur-quelle-base-légale) ;
-- **une liste d’erreurs**, pendant environ 7 jours : l’heure, le type d’erreur et son code.
-  Elle n’a pas de station non plus.
-  Je la garde pour [la raison donnée plus haut](#pourquoi-jutilise-ces-données-et-sur-quelle-base-légale) ;
-- **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la donner à tous ceux qui la demandent.
-  Elle reste dans la mémoire de mon serveur, sans jamais être écrite, et il l’efface après une dizaine de minutes au plus.
+- **des compteurs** : le nombre de requêtes reçues chaque heure et chaque jour, le nombre d’appels à la source des horaires, et le nombre d’erreurs.
+  Ces compteurs ne portent sur aucune station ni sur aucune personne.
+  Une copie est envoyée à un outil de suivi privé, qu’aucun tiers n’héberge, et personne d’autre ne la reçoit.
+  Les compteurs et leur copie sont conservés tant qu’ils restent utiles pour [les usages indiqués plus haut](#pourquoi-ces-données-sont-utilisées-et-sur-quelle-base-légale) ;
+- **une liste d’erreurs** : l’heure, le type d’erreur et son code.
+  Elle ne contient pas de station non plus.
+  Elle n’est conservée que le temps de trouver et de corriger la cause d’une erreur ;
+- **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la renvoyer à quiconque demande la même station.
+  Elle reste dans la mémoire du serveur, sans jamais être enregistrée, et le serveur l’efface après une dizaine de minutes au plus.
   Elle ne dit pas qui a demandé la station ;
-- **la station dont la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, pendant quelques minutes au plus : le serveur ne rappelle pas la source tout de suite.
+- **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire et pendant quelques minutes au plus : le serveur ne rappelle pas la source aussitôt.
 
-Mon serveur ne garde ni adresse IP, ni identifiant de vous ou de votre iPhone, ni votre position.
-Aucun journal des demandes n’est activé chez mon hébergeur.
+Le serveur ne conserve aucune adresse IP, aucun identifiant de vous ou de votre iPhone, et aucune position.
+Aucun journal des requêtes n’est activé chez son hébergeur.
 
-## Ce que voient mon hébergeur et la source des horaires
+## Cloudflare et la source des horaires
 
-Mon serveur fonctionne chez Cloudflare.
-Cloudflare reçoit chaque demande avant mon serveur : il voit donc l’adresse de la demande, avec l’identifiant de l’arrêt, et les informations réseau qui accompagnent toute demande web, comme votre adresse IP et le lieu approximatif qu’il en déduit.
-J’ai désactivé tous les journaux que Cloudflare pourrait garder pour moi, et mon serveur n’en garde rien.
-Cloudflare traite cette demande pour moi, comme mon sous-traitant, selon son [accord de traitement des données](https://www.cloudflare.com/cloudflare-customer-dpa/) (en anglais) et sa [politique de confidentialité](https://www.cloudflare.com/fr-fr/privacypolicy/).
-Cloudflare est une société américaine : il peut donc traiter une demande hors de l’Union européenne, notamment aux États-Unis.
+Le serveur fonctionne sur Cloudflare.
+Cloudflare reçoit chaque requête avant le serveur : il voit donc l’adresse de la requête, avec l’identifiant de la station, et les informations réseau qui accompagnent toute requête web, comme votre adresse IP et le lieu approximatif qu’il en déduit.
+Tous les journaux que Cloudflare pourrait conserver pour TROME sont désactivés, et le serveur n’en conserve rien.
+Cloudflare traite cette requête pour le compte de TROME, en tant que sous-traitant, selon son [accord de traitement des données](https://www.cloudflare.com/cloudflare-customer-dpa/) (en anglais) et sa [politique de confidentialité](https://www.cloudflare.com/fr-fr/privacypolicy/).
+Cloudflare est une société américaine : il peut donc traiter une requête hors de l’Union européenne, notamment aux États-Unis.
 Pour protéger vos données là-bas, il s’appuie sur le cadre de protection des données UE–États-Unis et sur les clauses contractuelles types de la Commission européenne, que son accord inclut.
 
-Mon serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de l’arrêt et la clé de TROME.
+Le serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de la station et la clé de TROME.
 PRIM ne reçoit rien qui vienne de vous.
 
 ## Ce qui reste sur votre iPhone
 
-TROME garde sur votre iPhone vos réglages (le mode automatique, la pause et les sourdines), la dernière station affichée, et les derniers horaires reçus.
+TROME conserve sur votre iPhone vos réglages (le mode automatique, la pause et les sourdines), la dernière station affichée et les derniers horaires reçus.
 L’app ne les envoie nulle part, mais ils font partie des sauvegardes de votre iPhone, comme les données de toutes les apps.
-Supprimer l’app les supprime.
+Ils disparaissent si vous supprimez l’app.
 
-## D’où viennent les notifications
+## Ce que fournit Apple
 
-Dans cette version, les notifications de TROME sont créées sur votre iPhone, quand vous arrivez près d’une station.
-Je n’en envoie aucune depuis un serveur, et l’app ne demande pas d’identifiant de notification.
+Pour TROME sur l’App Store, Apple indique combien de fois TROME a été affichée, combien de fois sa fiche a été ouverte et combien de fois l’app a été téléchargée, mais jamais par qui.
 
-## Ce qu’Apple me transmet
-
-Pour TROME sur l’App Store, Apple me dit combien de fois TROME a été montrée, combien de fois sa fiche a été ouverte et combien de fois l’app a été téléchargée, mais jamais par qui.
-
-Si vous partagez les analyses avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple me transmet des rapports de plantage et des statistiques d’usage, sans rien qui dise qui vous êtes.
+Si vous partagez les données d’analyse avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple fournit des rapports de plantage et des statistiques d’usage, sans rien qui dise qui vous êtes.
 Apple l’explique dans [Partager des informations relatives à l’analyse, au diagnostic et à l’utilisation avec Apple](https://support.apple.com/fr-fr/108971).
-Ces statistiques d’usage viennent seulement des personnes qui partagent : les autres n’y comptent pas.
+Ces statistiques d’usage ne viennent que des personnes qui partagent : les autres n’y figurent pas.
 
-Si vous testez TROME avec TestFlight, Apple me transmet vos rapports de plantage, des données d’usage et les commentaires que vous envoyez.
+Si vous testez TROME avec TestFlight, Apple fournit vos rapports de plantage, des données d’usage et les commentaires que vous envoyez.
 Si vous avez été invité par e-mail, ils arrivent avec votre nom et votre adresse e-mail, mais pas si vous avez rejoint le test par un lien public.
 Apple l’explique dans [TestFlight et confidentialité](https://www.apple.com/legal/privacy/data/fr/test-flight/).
 
-J’utilise ces informations seulement pour corriger TROME, l’améliorer et voir si quelqu’un l’utilise, et je ne les partage avec personne.
+Ces informations servent uniquement à corriger et à améliorer TROME et à suivre son usage, et ne sont partagées avec personne.
 
-## Voir, corriger ou supprimer ce que j’ai sur vous
+## Vos droits : consulter, corriger ou supprimer vos données
 
-Mon serveur ne garde rien qui permette de vous retrouver : il n’y a donc rien à consulter ni à supprimer chez lui.
-Je n’ai sur une personne que ce qu’Apple me transmet, si elle teste TROME avec TestFlight, et les messages qu’elle m’écrit.
-Je garde un message le temps de vous répondre et de régler le problème, puis je le supprime, et plus tôt si vous le demandez.
-Je garde le nom et l’adresse e-mail d’un testeur le temps du test, puis je le retire de ma liste de testeurs.
+Le serveur ne stocke rien qui permette de vous retrouver : il n’y a donc rien à consulter ni à supprimer sur celui-ci.
+Les seules données sur une personne sont celles qu’Apple fournit si elle teste TROME avec TestFlight, et les messages qu’elle écrit.
+Un message est conservé le temps de vous répondre et de régler le problème, puis supprimé, ou plus tôt si vous le demandez.
+Le nom et l’adresse e-mail d’un testeur sont conservés pendant la durée du test, puis retirés de la liste des testeurs.
 
-Vous pouvez me demander de vous montrer ces données, de les supprimer, de les corriger ou d’en limiter l’usage, et vous pouvez vous opposer à leur usage.
-Je réponds dans un mois au plus.
+Vous pouvez demander à consulter ces données, à les supprimer, à les corriger ou à en limiter l’usage, et vous pouvez vous opposer à leur utilisation.
+Je réponds dans un délai d’un mois au plus.
 
-Pour poser une question, ou pour faire l’une de ces demandes, écrivez à <Contact />.
-Si vous avez été invité à TestFlight par e-mail et que vous voulez que je supprime vos données ou que je vous retire des testeurs, écrivez depuis l’adresse de l’invitation : c’est elle qui me permet de retrouver votre nom.
-Une issue GitHub avec [le formulaire de question](https://github.com/valfur03/trome/issues/new?template=question.yml) marche aussi pour une question, mais une issue est publique et GitHub la garde selon sa [politique de confidentialité](https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement) :
+Pour poser une question ou faire l’une de ces demandes, écrivez à <Contact />.
+Si vous avez été invité à TestFlight par e-mail et que vous voulez que vos données soient supprimées ou que votre nom soit retiré des testeurs, écrivez depuis l’adresse qui a reçu l’invitation : elle me permet de retrouver votre nom.
+Pour une simple question, vous pouvez aussi ouvrir une issue GitHub avec [le formulaire de question](https://github.com/valfur03/trome/issues/new?template=question.yml), mais une issue est publique et GitHub la conserve selon sa [politique de confidentialité](https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement) :
 n’y mettez ni votre nom, ni votre adresse e-mail, ni rien de personnel.
-Vous pouvez aussi adresser une réclamation à la [CNIL](https://www.cnil.fr/fr/plaintes), ou à l’autorité de protection des données de votre pays.
+Vous pouvez aussi déposer une réclamation auprès de la [CNIL](https://www.cnil.fr/fr/plaintes) ou de l’autorité de protection des données de votre pays.
 
-## Qui je suis
+## Qui est responsable de vos données
 
-Je suis Valentin Furmanek.
-Je développe TROME seul, et je suis le responsable des données que cette page décrit (le « responsable du traitement », dans le RGPD).
+Je suis Valentin Furmanek, et je développe TROME seul.
+Je suis le responsable des données que décrit cette page (le « responsable du traitement », dans le RGPD).
 Pour me joindre, écrivez à <Contact />.
 
 ## Ce que GitHub voit quand vous ouvrez cette page
 
 Cette page est hébergée par GitHub Pages.
-GitHub enregistre l’adresse IP de qui l’ouvre, pour sa propre sécurité, selon sa [politique de confidentialité](https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement).
-Je n’ai ni statistiques de visite ni cookies sur ce site.
+GitHub enregistre l’adresse IP de toute personne qui l’ouvre, pour sa propre sécurité, selon sa [politique de confidentialité](https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement).
+Ce site n’a ni statistiques de visite ni cookies.
 
 ## Quand cette page change
 
-Quand cette page change, je change sa date, en haut de la page.
+À chaque modification de cette page, la date en haut de la page est mise à jour.
