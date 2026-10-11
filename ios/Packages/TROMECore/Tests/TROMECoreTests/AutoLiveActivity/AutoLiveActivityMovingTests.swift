@@ -50,7 +50,11 @@ extension AutoLiveActivityModelTests {
         await waitUntil { !notifier.notified.isEmpty }
 
         #expect(notifier.notified == [Places.stationB])
-        #expect(decisionLines.suffix(2) == ["Live Activity ended: 400 m from Station A", "Notified: Station B"])
+        #expect(decisionLines.suffix(3) == [
+            "Live Activity ended: 400 m from Station A",
+            "No station within 150 m: nearest is Station A, 400 m",
+            "Notified: Station B"
+        ])
     }
 
     @Test func logsTheEndOfTheLiveActivityAfterTheTimeLimit() async {
@@ -61,5 +65,16 @@ extension AutoLiveActivityModelTests {
         await waitUntil { client.endCount == 1 }
 
         #expect(decisionLines.last == "Live Activity ended: 45 min after it started")
+    }
+
+    @Test func logsTheEndAtTheTimeLimitBeforeTheNotificationOfTheNextStation() async {
+        let model = makeModel()
+        await showAInTheBackground(model)
+        clock.advance(by: 45 * 60)
+
+        await model.handle(Places.atB)
+
+        #expect(notifier.notified == [Places.stationB])
+        #expect(decisionLines.suffix(2) == ["Live Activity ended: 45 min after it started", "Notified: Station B"])
     }
 }

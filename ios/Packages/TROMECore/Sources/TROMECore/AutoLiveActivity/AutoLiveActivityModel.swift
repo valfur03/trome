@@ -205,8 +205,8 @@ public final class AutoLiveActivityModel {
     }
 
     func apply(_ decision: AutoLiveActivityRules.Decision, logsEveryOutcome: Bool) async {
-        log(decision.arrival, everyOutcome: logsEveryOutcome)
         log(decision.ending)
+        log(decision.arrival, everyOutcome: logsEveryOutcome)
         state = decision.state
         for action in decision.actions {
             await perform(action)
