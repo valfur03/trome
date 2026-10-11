@@ -87,14 +87,15 @@ Do each step on the staging Worker first, with its own tokens, then on the produ
    A `{"error":"unauthorized"}` answer means that the list lost a token: set it again, with every token.
    If both answers are `{"error":"unauthorized"}`, the Worker may still run a server from before the list: do step 1 again before you go on.
 5. Run `make server-secret NAME=APP_TOKEN`, and paste every token of the production list, then its new one, in the same way.
-6. In the main folder of your clone, run `make release-server-check`: `ios/Config/Server.xcconfig` still holds the old token, so the check proves that the installed builds keep their times.
-   If it fails, run `make server-secret NAME=APP_TOKEN` at once and paste the old list again, with no new token; then find the cause.
-   When it passes, put the new production token in `TRAIN_SERVER_APP_TOKEN` of that file, and run `make release-server-check` again: the next build that you upload holds it.
+6. In the main folder of your clone, run `make release-tokens-check`: it asks the production Worker for the token of each build that riders may hold, and every line must say **accepted**.
+   If a line says **refused**, run `make server-secret NAME=APP_TOKEN` at once and paste the old list again, with no new token; then find the cause.
+   When every line says **accepted**, put the new production token in `TRAIN_SERVER_APP_TOKEN` of `ios/Config/Server.xcconfig`, and run `make release-server-check`: the next build that you upload holds that token.
 
 ### Retire a token
 
 A token leaves the list only when no build that riders may hold has it: the table of [the builds that riders may hold](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-builds-that-riders-may-hold) says when each build stops being available.
 Write the reason next to the token in your password manager, then take it out as in the steps above, on staging first: paste the list with every token but that one, and check that the staging Worker refuses it and still answers the others.
+Then run `make release-tokens-check` in the main folder of your clone: every build in the field must still say **accepted** on the production Worker.
 
 An installed app whose token is not on the list shows **Update the app**, with an orange icon, in place of the times on its Live Activity and its main screen ([each state of the Live Activity](../../ios/guide/live-activity.md#when-it-cannot-show-times)).
 Updating is all that its rider can do.
