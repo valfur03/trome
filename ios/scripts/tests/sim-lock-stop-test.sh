@@ -26,6 +26,15 @@ run_processes() {
     pgrep -f "$state" | grep -vx "$watcher" | tr '\n' ' ' || true
 }
 
+# The processes of the job, which has its own process group: make, sim-lock.sh and what sim-lock.sh runs after the
+# lock is freed stay in the group of make ($run), and end just after the lock is freed.
+job_processes() {
+    for pid in $(run_processes); do
+        group=$(ps -o pgid= -p "$pid" 2> /dev/null) || continue
+        [ "$group" -eq "$run" ] || printf '%s ' "$pid"
+    done
+}
+
 cleanup() {
     kill "$watcher" 2> /dev/null || true
     for pid in $(run_processes); do
@@ -171,9 +180,9 @@ stop_a_run() {
     # shellcheck disable=SC2086
     kill -"$signal" -- $pids
     wait_for lock_is_freed
-    left=$(run_processes)
+    left=$(job_processes)
     expect "$case: the lock is freed" "$(lock_is_freed && echo yes)" "yes"
-    expect "$case: no process of the run is left when the lock is freed" "$left" ""
+    expect "$case: no process of the job is left when the lock is freed" "$left" ""
     expect "$case: the test run ended while the lock was still held" "$(cat "$state/lock-at-test-end" 2> /dev/null)" \
         "${expected_lock_at_test_end-held}"
     wait_for run_has_ended
@@ -206,6 +215,30 @@ for target in terminal sim-lock; do
     stop_a_run docs-screenshots "$target" "docs-screenshots, INT to $target" INT
     expect "docs-screenshots, INT to $target: the status bar override is cleared" "$(last_call status_bar)" "clear"
 done
+
+# INT that comes while the job's perl still starts (before it puts INT back and opens its session) stops the job too.
+# The perl of the job loads a module that waits 2 s first, so the signal comes in that moment.
+mkdir -p "$state/perl"
+echo 'package SlowStart; sleep 2; 1;' > "$state/perl/SlowStart.pm"
+printf '#!/bin/sh\nsleep 60\n' > "$state/bin/long-job"
+chmod +x "$state/bin/long-job"
+perl -MPOSIX -e 'setsid(); $SIG{INT} = "DEFAULT"; exec @ARGV' env PERL5LIB="$state/perl" PERL5OPT=-MSlowStart \
+    RATP_SIM_KIND=e2e "$scripts/sim-lock.sh" job "$state/bin/long-job" > "$state/run.log" 2>&1 &
+run=$!
+starting_job() {
+    pgrep -f "^perl -MPOSIX -e .SIG.INT. = .SIG.QUIT. = .* -- $state/bin/long-job" > /dev/null
+}
+wait_for starting_job
+expect "INT while the job starts: the job is starting" "$(starting_job && echo yes)" "yes"
+kill -INT "$run"
+wait_for lock_is_freed
+expect "INT while the job starts: the lock is freed" "$(lock_is_freed && echo yes)" "yes"
+wait_for no_run_process
+expect "INT while the job starts: no process of the run goes on" "$(run_processes)" ""
+status=0
+wait "$run" || status=$?
+expect "INT while the job starts: sim-lock.sh ends with the status of INT" "$status" "130"
+rm -rf "$RATP_SIM_LOCK"
 
 # A test run that does not stop on TERM is killed after RATP_SIM_STOP_SECONDS, and only then is the lock freed.
 expected_lock_at_test_end=
