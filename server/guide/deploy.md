@@ -196,15 +196,15 @@ Every build of the app holds the address of the production Worker, `trome-server
 A rider updates when they choose, so a build of [the builds that riders may hold](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-builds-that-riders-may-hold) can call this address for years.
 So while that table has a build in the field, never do any of these in the Cloudflare account of production (Cloudflare's docs, read on 11 October 2026: [workers.dev](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/)):
 
-| Never | Where |
-|---|---|
-| Rename the subdomain of the account, the part of the address after `trome-server.` | **Workers & Pages**, **Change** next to **Your subdomain** |
-| Rename or delete the production Worker, `trome-server` | **Workers & Pages**, the Worker, **Settings** |
-| Leave its workers.dev address off | **Workers & Pages**, the Worker, **Settings > Domains & Routes** |
-| Move production to another account, even with the same names | Any other account: its subdomain differs, so the address does too |
+| Never | Where | The way back |
+|---|---|---|
+| Rename the subdomain of the account, the part of the address after `trome-server.` | **Workers & Pages**, **Change** next to **Your subdomain** | Change it back to the old name, in the same place. |
+| Rename or delete the production Worker, `trome-server` | **Workers & Pages**, the Worker, **Settings** | Renamed: give it back the name `trome-server`, in the same place. Deleted: run `make server-secrets` with the same values as before, since a build has only its own app token, then `make server-deploy`; the counts of the deleted Worker are lost. |
+| Leave its workers.dev address off | **Workers & Pages**, the Worker, **Settings > Domains & Routes** | Click **Enable** in the same place, or run `make server-deploy`. |
+| Move production to another account, even with the same names | Any other account: its subdomain differs, so the address does too | The builds still call the Worker of the old account: keep it there. If it is gone, run `make server-login` with the old account, then deploy it again as for a deleted Worker. |
 
 Each of them costs the same: every build that holds the address shows no times, and no message reaches it, because that address is its only way to the server.
-The only way back is to put back what changed: the subdomain, the name of the Worker, its workers.dev address, or production on its old account.
+The only way back is to put back what changed, as the last column says.
 Do it at once: every build works again as soon as the address answers, with no update.
 
 Turning workers.dev off for a short pause, as in [Stop the server for a while](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#stop-the-server-for-a-while), is fine, as long as you turn it on again.
