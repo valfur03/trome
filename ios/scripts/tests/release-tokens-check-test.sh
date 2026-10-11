@@ -17,6 +17,7 @@ budget="budgettoken$$abcdef"
 primlimit="primlimittoken$$abcdef"
 primfail="primfailtoken$$abcdef"
 crash="crashtoken$$abcdef"
+blocked="blockedtoken$$abcdef"
 failures=0
 server_pid=
 
@@ -59,6 +60,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         which = tokens.get(auth.removeprefix("Bearer "), "other")
         if which == "crash":
             status, body = 500, b"error code: 1101"
+        elif which == "blocked":
+            status, body = 403, b"error code: 1020"
         else:
             status, body = example(examples.get(which, "departures-times.json"))
         with open(log_file, "a") as f:
@@ -75,7 +78,7 @@ with open(port_file, "w") as f:
 server.serve_forever()
 PY
 python3 -I "$work/server.py" "$contracts" "$work/port" "$work/requests" \
-    "$one=one" "$two=two" "$old=old" "$budget=budget" "$primlimit=primlimit" "$primfail=primfail" "$crash=crash" &
+    "$one=one" "$two=two" "$old=old" "$budget=budget" "$primlimit=primlimit" "$primfail=primfail" "$crash=crash" "$blocked=blocked" &
 server_pid=$!
 tries=0
 until [ -s "$work/port" ]; do
@@ -205,6 +208,12 @@ run
 expect "a server that fails: one line that says it cannot tell, and the check stops at once" \
     "$(starts 1 'The server at TRAIN_SERVER_HOST of ios/Config/Server.xcconfig fails (HTTP 500)')$(output | wc -l | tr -d ' ') $(requests) $(outcome)" \
     "The server at TRAIN_SERVER_HOST of ios/Config/Server.xcconfig fails (HTTP 500)1 1 status 1"
+
+write_tokens 2 "$blocked" 3 "$two"
+run
+expect "a 403 of Cloudflare: not a refusal of the token, one line that says the host does not answer as the train server, and the check stops" \
+    "$(starts 1 'The host in TRAIN_SERVER_HOST of ios/Config/Server.xcconfig answers, but not as the train server (HTTP 403)')$(output | wc -l | tr -d ' ') $(requests) $(outcome)" \
+    "The host in TRAIN_SERVER_HOST of ios/Config/Server.xcconfig answers, but not as the train server (HTTP 403)1 1 status 1"
 
 write_tokens 2 "$one" 3 "$two"
 run 127.0.0.1:1

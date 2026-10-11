@@ -89,7 +89,8 @@ while IFS='|' read -r name number state; do
                 *'"Siri"'*) echo "$name: accepted" ;;
                 *) say_server_problem ;;
             esac ;;
-        401 | 403)
+        # Only 401 is the server's refusal of a token; a 403 comes from Cloudflare, before the server, and says nothing of it.
+        401)
             echo "$name: refused"
             refused=$((refused + 1)) ;;
         503)
@@ -103,7 +104,7 @@ done <<EOF
 $field
 EOF
 
-[ "$refused" -eq 0 ] || echo "Refused: the production server refuses the token of $refused of the $total builds in the field. If its line in $tokens_file matches your password manager, put that token back on the server at once, as Change the app token in server/guide/deploy.md says."
+[ "$refused" -eq 0 ] || echo "Refused: the production server refuses the token of $refused of the $total builds in the field. If its line in $tokens_file matches your password manager, the production list lost that token: set the whole list again at once, with the token of every build in the field and the newest one, as Add a token in server/guide/deploy.md says."
 [ -z "$left" ] || say "Not finished: the production server has no PRIM calls left this hour ($left), so the builds marked not asked wait: run this again in an hour."
 [ "$refused" -ne 0 ] || say "OK: the production server accepts the app token of each build in the field ($numbers)." 0
 exit 1
