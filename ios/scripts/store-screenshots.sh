@@ -18,7 +18,7 @@ out=${STORE_SCREENSHOTS_OUT:-"$root/.build/store-screenshots"}
 captures="$out/captures"
 languages="en fr"
 pictures="1-metro 2-fork 3-rer 4-app"
-captured="app app-example-row island-metro lock-metro island-fork lock-fork island-rer lock-rer"
+captured="app app-help-row island-metro lock-metro island-fork lock-fork island-rer lock-rer"
 # Apple's iPhone bezel stays out of git: its licence forbids copies. ios/guide/assets.md says how to place it.
 bezel=${STORE_BEZEL:-"$HOME/Library/Application Support/TROME/store-bezel.png"}
 # The stops of the line: "pictograms" (a small drawing on each stop) or "dots" (plain white dots).

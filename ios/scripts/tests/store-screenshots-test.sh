@@ -23,7 +23,7 @@ for language in en fr; do
     for name in app island-metro lock-metro island-fork lock-fork island-rer lock-rer; do
         "$tests/make-png.py" "$out/captures/$name-$language.png" 1206 2622 opaque
     done
-    echo "730 952" > "$out/captures/app-example-row-$language.txt"
+    echo "1900 2000" > "$out/captures/app-help-row-$language.txt"
 done
 
 compose() {   # compose <bezel path>: the output of the command, and its status in $state/status
@@ -43,6 +43,8 @@ expect "it saves the 8 pictures, with the language and the order in their names"
     "en-1-metro.png en-2-fork.png en-3-rer.png en-4-app.png fr-1-metro.png fr-2-fork.png fr-3-rer.png fr-4-app.png "
 expect "each is 1320 x 2868 with no alpha channel" \
     "$(sips -g pixelWidth -g pixelHeight -g hasAlpha "$out"/*-*.png | grep -c -E 'pixelWidth: 1320|pixelHeight: 2868|hasAlpha: no')" "24"
+expect "the app picture shows the top of the phone, cut by the bottom edge just under the link Help and feedback" \
+    "$(grep -c '^app rows 0-2064 off the bottom edge, the phone starts at y 804, headline centre 402$' "$state/output")" "2"
 cp "$out/en-1-metro.png" "$state/pictograms.png"
 
 STORE_STOPS=dots STORE_SCREENSHOTS_OUT=$out STORE_BEZEL="$state/no-bezel.png" "$scripts/store-screenshots.sh" compose "$state/compose" > "$state/output"
@@ -53,13 +55,22 @@ expect "it says which stops it drew" "$(grep -c '^Headlines: SF bold [0-9]*; sto
 "$tests/make-png.py" "$state/bezel.png" 1320 2742 frame 57 60
 compose "$state/bezel.png"
 expect "a bezel that fits frames the cuts at scale 1" \
-    "$(grep -c "^Frame: the bezel $state/bezel.png (1320 x 2742, screen 1206 x 2622), at scale 1.000; captures at scale 1.000$" "$state/output")" "2"
+    "$(grep -c "^Frame: the bezel $state/bezel.png (1320 x 2742, screen 1206 x 2622, corners 0), at scale 1.000; captures at scale 1.000$" "$state/output")" "2"
+expect "the whole top of the bezel shows above the app screen, the headline centred above it" \
+    "$(grep -c '^app rows 0-2064 off the bottom edge, the phone starts at y 744, headline centre 372$' "$state/output")" "2"
+
+# Apple's bezel has round corners: the corner of the screen box is outside the body, and the captures are cut to the
+# round screen, so their square corners never show past the frame.
+"$tests/make-png.py" "$state/round.png" 1320 2742 frame 57 60 230 177
+compose "$state/round.png"
+expect "a bezel with round corners cuts the captures to its round screen" \
+    "$(grep -c "^Frame: the bezel $state/round.png (1320 x 2742, screen 1206 x 2622, corners 167), at scale 1.000; captures at scale 1.000$" "$state/output")" "2"
 
 # A body wider than the picture: the bezel is scaled down so that its whole width shows.
 "$tests/make-png.py" "$state/wide.png" 1380 2742 frame 87 60
 compose "$state/wide.png"
 expect "a wider bezel is scaled down to the width of the picture" \
-    "$(grep -c "^Frame: the bezel $state/wide.png (1380 x 2742, screen 1206 x 2622), at scale 0.957; captures at scale 0.957$" "$state/output")" "2"
+    "$(grep -c "^Frame: the bezel $state/wide.png (1380 x 2742, screen 1206 x 2622, corners 0), at scale 0.957; captures at scale 0.957$" "$state/output")" "2"
 
 # Under 0.9, the card would shrink too much: no frame.
 "$tests/make-png.py" "$state/too-wide.png" 1600 2742 frame 197 60
@@ -73,6 +84,16 @@ compose "$state/other.png"
 expect "a bezel of another iPhone is not used" \
     "$(grep -c '^Frame: none, because the screen of the bezel is 1206 x 2280, not the shape of the captures' "$state/output")" "2"
 expect "it still makes the pictures" "$(cat "$state/status")" "0"
+
+echo "2400 2500" > "$out/captures/app-help-row-fr.txt"
+compose "$state/no-bezel.png"
+expect "an app screen too tall for the headline above it fails" "$(cat "$state/status")" "1"
+expect "and says why" "$(grep -c '^The app screen leaves no room for the headline: the phone starts at y 304$' "$state/output")" "1"
+rm "$out/captures/app-help-row-fr.txt"
+compose "$state/no-bezel.png"
+expect "a missing row of the link Help and feedback fails, and names its file" \
+    "$(grep -c "^Cannot read $out/captures/app-help-row-fr.txt$" "$state/output")" "1"
+echo "1900 2000" > "$out/captures/app-help-row-fr.txt"
 
 rm "$out/captures/lock-rer-fr.png"
 compose "$state/no-bezel.png"

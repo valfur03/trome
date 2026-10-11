@@ -4,10 +4,13 @@
 // The first three pictures are one panorama, cut in three: one lit field, one line drawing whose stroke takes the
 // colour of the next line at each border, like a transfer. Each has the lock screen cut off the top edge (the
 // Live Activity card, the home bar), a headline, the line, and the Dynamic Island cut by the bottom edge.
-// The fourth goes on with the same field and line, under the main screen of the app.
-// The captures are real: drawn whole in their pixels, at one scale, never stretched, never redrawn.
+// The fourth goes on with the same field, but its phone is cut by the bottom edge instead: the app screen is shorter
+// than the phone, so its top (the name, the rows, the two links) is the part that shows, under the headline, and the
+// picture ends just under the link Help and feedback, before the footer. The line goes behind that phone.
+// The captures are real: drawn in their pixels, at one scale, never stretched, never redrawn.
 // With a bezel file (Apple's iPhone bezel, a PNG with a transparent screen), each cut is in it, straight and
-// unchanged; with none, or one that does not fit the captures, the cuts have rounded corners and no frame.
+// unchanged, and the square corners of the captures are cut to its round screen; with none, or one that does not
+// fit the captures, the cuts have rounded corners and no frame.
 import AppKit
 import CoreGraphics
 import CoreText
@@ -32,7 +35,7 @@ func fail(_ message: String) -> Never {
 // MARK: The set
 
 enum Pictogram: CaseIterable {
-    case coffee, headphones, book, bag, umbrella, music, bike, sun, briefcase, camera, glasses, gift, dumbbell, flower
+    case coffee, headphones, book, bag, umbrella, music, bike, sun, briefcase, camera, glasses
 }
 
 struct Picture {
@@ -42,7 +45,7 @@ struct Picture {
     let square: Bool           // RER: a rounded square; metro: round
     let badgeInk: UInt32
     let headlines: [String: String]
-    let stops: [Pictogram]     // the stops of the line, left to right
+    let stops: [Pictogram]     // the stops of the line, left to right; none on the picture of the app
 }
 
 let pictures = [
@@ -57,9 +60,10 @@ let pictures = [
             stops: [.briefcase, .camera, .glasses]),
     Picture(name: "app", line: 0x2A3BC0, badge: nil, square: false, badgeInk: 0xFFFFFF,
             headlines: ["en": "One screen, set once.", "fr": "Un seul écran, réglé une fois."],
-            stops: [.gift, .dumbbell, .flower]),
+            stops: []),
 ]
 let branchStops: [Pictogram] = [.bike, .sun]   // the two stops of the branch of the fork
+let linePictures = 3   // the line runs across the first three; it goes behind the phone of the app, so none of it shows there
 
 // MARK: Sizes (pixels of a picture of 1320 x 2868, the 6.9-inch size of the store)
 
@@ -70,8 +74,8 @@ let lockBottom: CGFloat = 1489     // where the lock screen cut ends (the bottom
 let textTop: CGFloat = 1689, lineY: CGFloat = 2194
 let islandRows: CGFloat = 230      // the rows of the capture that the island cut shows: the status bar and the island
 let islandTop: CGFloat = 2414      // with no bezel: the strip floats over the field
-let appTextTop: CGFloat = 2344     // the picture of the app: its headline under the line
-let appRowMargin: CGFloat = 40     // the rows of the app screen shown above the row "See an example"
+let appCutMargin: CGFloat = 64     // the rows of the app screen shown under the link Help and feedback: its card ends
+let appTextGap: CGFloat = 80       // the least room above and under the headline of the app picture
 let side: CGFloat = 57, corner: CGFloat = 64
 let maxFontSize: CGFloat = 132, lineStep: CGFloat = 1.08, textWidth: CGFloat = 1220
 let night: UInt32 = 0x05060D
@@ -135,11 +139,14 @@ func capture(_ name: String) -> CGImage {
     }
     return image
 }
-func exampleRowTop() -> CGFloat {
-    let path = "\(capturesDir)/app-example-row-\(language).txt"
+/// The last row of the capture that the link Help and feedback covers.
+func helpRowBottom() -> CGFloat {
+    let path = "\(capturesDir)/app-help-row-\(language).txt"
     guard let text = try? String(contentsOfFile: path, encoding: .utf8),
-          let top = text.split(separator: " ").first.flatMap({ Double($0) }) else { fail("Cannot read \(path)") }
-    return CGFloat(top)
+          let bottom = text.split(whereSeparator: \.isWhitespace).dropFirst().first.flatMap({ Double($0) }) else {
+        fail("Cannot read \(path)")
+    }
+    return CGFloat(bottom)
 }
 func write(_ image: CGImage, _ path: String) {
     guard let destination = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL,
@@ -157,6 +164,7 @@ struct Bezel {
     let image: CGImage
     let body: CGRect      // the opaque pixels, in the pixels of the file
     let screen: CGRect    // the transparent screen
+    let screenCorner: CGFloat   // the radius of its corners, a little short, so the frame always covers the capture
     let scale: CGFloat    // the scale of the file in the picture: 1, or less so that the whole body width shows
     var captureScale: CGFloat { scale * screen.width / captureSize.width }
 
@@ -167,6 +175,10 @@ struct Bezel {
     }
     var bottom: CGFloat { (body.maxY - screen.maxY) * scale }   // from the screen to the bottom of the body
     var top: CGFloat { (screen.minY - body.minY) * scale }      // from the top of the body to the screen
+    /// The capture, cut to the screen: its square corners would show past the round corners of the frame.
+    func screenShape(_ screenRect: CGRect) -> CGPath {
+        CGPath(roundedRect: screenRect, cornerWidth: screenCorner * scale, cornerHeight: screenCorner * scale, transform: nil)
+    }
 }
 
 enum BezelResult { case fits(Bezel), none(String) }
@@ -200,13 +212,18 @@ func measureBezel(_ path: String) -> BezelResult {
     while top > 0, alpha(quarterX, top - 1) < 128 { top -= 1 }
     while bottom < h - 1, alpha(quarterX, bottom + 1) < 128 { bottom += 1 }
     let screen = CGRect(x: left, y: top, width: right - left + 1, height: bottom - top + 1)
+    // The corner: on the diagonal in from the top-left corner of the screen box, the screen starts after the last
+    // opaque pixel of the frame (the box corner itself is outside the round body). On a round corner of radius r,
+    // that is r (1 - 1/√2) from the corner on each side.
+    let diagonal = ((0..<Int(screen.width / 4)).last { alpha(left + $0, top + $0) >= 128 }).map { $0 + 1 } ?? 0
+    let screenCorner = CGFloat(max(0, diagonal - 3)) / (1 - 1 / 2.squareRoot())
     let ratio = (screen.height / screen.width) / (captureSize.height / captureSize.width)
     guard abs(ratio - 1) < 0.015 else {
         return .none(String(format: "the screen of the bezel is %d x %d, not the shape of the captures (1206 x 2622)",
                             Int(screen.width), Int(screen.height)))
     }
     let scale = min(1, pic.width / body.width)
-    let bezel = Bezel(image: image, body: body, screen: screen, scale: scale)
+    let bezel = Bezel(image: image, body: body, screen: screen, screenCorner: screenCorner, scale: scale)
     guard bezel.captureScale >= 0.9, bezel.captureScale <= 1.15 else {
         return .none(String(format: "with the whole bezel in the width, the captures would be at scale %.3f (0.9 to 1.15 allowed)",
                             bezel.captureScale))
@@ -217,6 +234,16 @@ func measureBezel(_ path: String) -> BezelResult {
 let bezelResult = measureBezel(bezelPath)
 let bezel: Bezel? = if case .fits(let b) = bezelResult { b } else { nil }
 let captureScale = bezel?.captureScale ?? 1
+
+// MARK: The layout of the app picture: the phone cut by the bottom edge, the headline centred above it
+
+let appLastRow = min(helpRowBottom() + appCutMargin, captureSize.height)   // the last row of the capture shown
+let appScreenTop = H - appLastRow * captureScale
+let appPhoneTop = appScreenTop - (bezel?.top ?? 0)
+let appTextCentre = appPhoneTop / 2
+guard appPhoneTop >= 2 * (maxFontSize * lineStep + appTextGap) else {
+    fail("The app screen leaves no room for the headline: the phone starts at y \(Int(appPhoneTop))")
+}
 
 // MARK: The context: top-left origin, as the captures
 
@@ -278,13 +305,13 @@ do {
     context.saveGState()
     context.setBlendMode(.screen)
     for (i, p) in palettes.enumerated() {
-        let centre = CGPoint(x: pic.width * (CGFloat(i) + 0.5), y: i == 3 ? appTextTop + maxFontSize * lineStep : textCentre)
+        let centre = CGPoint(x: pic.width * (CGFloat(i) + 0.5), y: i == 3 ? appTextCentre : textCentre)
         let light = CGGradient(colorsSpace: space, colors: [cg(p.glow, 0.9), cg(p.glow, 0.36), cg(p.glow, 0)] as CFArray,
                                locations: [0, 0.45, 1])!
         context.drawRadialGradient(light, startCenter: centre, startRadius: 0, endCenter: centre, endRadius: 1350, options: [])
     }
     // The soft band of light along the line.
-    for (i, p) in palettes.enumerated() {
+    for (i, p) in palettes.prefix(linePictures).enumerated() {
         let band = CGGradient(colorsSpace: space, colors: [cg(p.glow, 0.45), cg(p.glow, 0)] as CFArray, locations: [0, 1])!
         context.saveGState()
         context.translateBy(x: pic.width * (CGFloat(i) + 0.5), y: lineY)
@@ -300,9 +327,8 @@ do {
 let strokeWidth: CGFloat = 40, dotRadius: CGFloat = 14, stopRadius: CGFloat = 40, pictogramSize: CGFloat = 52
 let transferRadius: CGFloat = 46, transferRing: CGFloat = 13, badgeSize: CGFloat = 130
 let badgeX: [CGFloat] = [150, pic.width + 250, 2 * pic.width + 250]
-let stopX: [[CGFloat]] = [[470, 790, 1110], [560, 860, 1160], [560, 860, 1160], [300, 620, 940]]
-let appTerminus = 3 * pic.width + 1180
-let trailHeads: [CGFloat] = [1000, 720, 1010, 800]
+let stopX: [[CGFloat]] = [[470, 790, 1110], [560, 860, 1160], [560, 860, 1160]]
+let trailHeads: [CGFloat] = [1000, 720, 1010]
 
 func strokeLine(from x0: CGFloat, to x1: CGFloat, colour: RGB) {
     context.setStrokeColor(cg(colour))
@@ -323,9 +349,8 @@ do {
     context.addPath(p); context.setStrokeColor(cg(palettes[1].stroke)); context.setLineWidth(strokeWidth)
     context.setLineJoin(.round); context.setLineCap(.butt); context.strokePath()
 }
-for (i, p) in palettes.enumerated() {
-    let start = i == 0 ? badgeX[0] : pic.width * CGFloat(i)
-    strokeLine(from: start, to: i == 3 ? appTerminus : pic.width * CGFloat(i + 1), colour: p.stroke)
+for (i, p) in palettes.prefix(linePictures).enumerated() {
+    strokeLine(from: i == 0 ? badgeX[0] : pic.width * CGFloat(i), to: pic.width * CGFloat(i + 1), colour: p.stroke)
 }
 // The light trail of a train going forward, with its small halo.
 for (i, head) in trailHeads.enumerated() {
@@ -346,7 +371,6 @@ func terminus(at x: CGFloat, y: CGFloat) {   // a white bar across the stroke, a
     context.fill(CGRect(x: x - 8, y: y - strokeWidth / 2 - 10, width: 16, height: strokeWidth + 20))
 }
 terminus(at: forkEnd, y: lineY + forkDrop)
-terminus(at: appTerminus, y: lineY)
 
 // MARK: The pictograms: flat, drawn here in a box of 100 x 100, in one colour on the white stop
 
@@ -438,26 +462,6 @@ func drawPictogram(_ pictogram: Pictogram, centre: CGPoint, ink: RGB) {
         stroke(arc(50, 58, 7, from: 180, to: 360), 7)
         stroke(polyline([(12, 54), (6, 36)]), 7)
         stroke(polyline([(88, 54), (94, 36)]), 7)
-    case .gift:
-        fill(rounded(14, 44, 72, 44, 5))
-        fill(rounded(8, 30, 84, 16, 4))
-        knockOut(polyline([(50, 30), (50, 88)]), 9)
-        stroke(CGPath(ellipseIn: CGRect(x: 28, y: 12, width: 20, height: 16), transform: nil), 6)
-        stroke(CGPath(ellipseIn: CGRect(x: 52, y: 12, width: 20, height: 16), transform: nil), 6)
-    case .dumbbell:
-        stroke(polyline([(20, 50), (80, 50)]), 9)
-        fill(rounded(8, 26, 16, 48, 5))
-        fill(rounded(76, 26, 16, 48, 5))
-        fill(rounded(24, 34, 9, 32, 3))
-        fill(rounded(67, 34, 9, 32, 3))
-    case .flower:
-        for k in 0..<5 {
-            let a = CGFloat(k) * 2 * .pi / 5 - .pi / 2
-            fill(circle(50 + 17 * cos(a), 38 + 17 * sin(a), 13))
-        }
-        knockOut(circle(50, 38, 8))
-        stroke(polyline([(50, 58), (50, 94)]), 7)
-        fill(CGPath(ellipseIn: CGRect(x: 52, y: 70, width: 22, height: 12), transform: nil))
     }
     context.restoreGState()
 }
@@ -479,13 +483,17 @@ for (i, xs) in stopX.enumerated() {
 for (k, x) in branchStopX.enumerated() {
     drawStop(at: CGPoint(x: x, y: lineY + forkDrop), pictogram: branchStops[k], palette: palettes[1])
 }
-for k in 1..<pictures.count {   // the transfers, on the borders: half in each picture
+// The transfers, on the borders: half in each picture. The last one is half of a transfer, before the phone of the app.
+context.saveGState()
+context.clip(to: CGRect(x: 0, y: 0, width: pic.width * CGFloat(linePictures), height: H))
+for k in 1...linePictures {
     let c = CGPoint(x: pic.width * CGFloat(k), y: lineY), r = transferRadius, inner = r - transferRing
     context.setFillColor(cg(base))
     context.fillEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
     context.setFillColor(cg(white))
     context.fillEllipse(in: CGRect(x: c.x - inner, y: c.y - inner, width: 2 * inner, height: 2 * inner))
 }
+context.restoreGState()
 
 func drawBadge(_ p: Picture, centre: CGPoint) {
     guard let text = p.badge else { return }
@@ -540,7 +548,7 @@ func draw(_ image: CGImage, in target: CGRect, clip: CGPath? = nil) {
 /// With none: only the rows `visible` of the screen, with rounded corners where the screen ends, and a shadow.
 func phone(_ image: CGImage, screen: CGRect, visible: ClosedRange<CGFloat>, corners: Corners) {
     if let bezel {
-        draw(image, in: screen)
+        draw(image, in: screen, clip: bezel.screenShape(screen))
         draw(bezel.image, in: bezel.frame(around: screen))
         return
     }
@@ -573,8 +581,10 @@ for i in 0..<3 {
     let island = capture("island-\(pictures[i].name)")
     let strip = island.cropping(to: CGRect(x: 0, y: 0, width: island.width, height: Int(islandRows)))!
     if let bezel {
-        draw(strip, in: CGRect(x: ox, y: islandScreenTop, width: screenWidth, height: islandRows * captureScale))
-        draw(bezel.image, in: bezel.frame(around: CGRect(x: ox, y: islandScreenTop, width: screenWidth, height: screenHeight)))
+        let screen = CGRect(x: ox, y: islandScreenTop, width: screenWidth, height: screenHeight)
+        draw(strip, in: CGRect(x: ox, y: islandScreenTop, width: screenWidth, height: islandRows * captureScale),
+             clip: bezel.screenShape(screen))
+        draw(bezel.image, in: bezel.frame(around: screen))
     } else {
         phone(strip, screen: CGRect(x: ox, y: islandScreenTop, width: screenWidth, height: islandRows),
               visible: islandScreenTop...(islandScreenTop + islandRows), corners: [.top, .bottom])
@@ -582,20 +592,16 @@ for i in 0..<3 {
     context.restoreGState()
     drawText(headlines[i], palette: palettes[i], originX: pic.width * CGFloat(i), top: textTop)
 }
-do {   // The app: its screen from just above the row "See an example", off the top edge.
+do {   // The app: the whole top of the phone, its screen cut by the bottom edge just under the link Help and feedback.
     let ox = 3 * pic.width + screenX
     context.saveGState()
     context.clip(to: CGRect(x: 3 * pic.width, y: 0, width: pic.width, height: H))
-    let firstRow = exampleRowTop() - appRowMargin
-    let screenTop = -firstRow * captureScale
-    let screenBottom = screenTop + screenHeight
-    phone(capture("app"), screen: CGRect(x: ox, y: screenTop, width: screenWidth, height: screenHeight),
-          visible: 0...screenBottom, corners: .bottom)
+    phone(capture("app"), screen: CGRect(x: ox, y: appScreenTop, width: screenWidth, height: screenHeight),
+          visible: appScreenTop...H, corners: .top)
     context.restoreGState()
-    let phoneBottom = screenBottom + (bezel?.bottom ?? 0)
-    guard phoneBottom < lineY - 120 else { fail("The app screen comes down to the line: \(Int(phoneBottom)) for a line at \(Int(lineY))") }
-    drawText(headlines[3], palette: palettes[3], originX: 3 * pic.width, top: appTextTop)
-    recipe.append("app rows \(Int(firstRow))-2622 off the top edge, the phone ends at y \(Int(phoneBottom)), headline top \(Int(appTextTop))")
+    let textTop = appTextCentre - maxFontSize * lineStep
+    drawText(headlines[3], palette: palettes[3], originX: 3 * pic.width, top: textTop)
+    recipe.append("app rows 0-\(Int(appLastRow)) off the bottom edge, the phone starts at y \(Int(appPhoneTop)), headline centre \(Int(appTextCentre))")
 }
 
 // MARK: Cut the panorama into the pictures
@@ -607,8 +613,9 @@ for (i, p) in pictures.enumerated() {
 }
 switch bezelResult {
 case .fits(let b):
-    print(String(format: "Frame: the bezel %@ (%d x %d, screen %d x %d), at scale %.3f; captures at scale %.3f",
-                 bezelPath, b.image.width, b.image.height, Int(b.screen.width), Int(b.screen.height), b.scale, b.captureScale))
+    print(String(format: "Frame: the bezel %@ (%d x %d, screen %d x %d, corners %d), at scale %.3f; captures at scale %.3f",
+                 bezelPath, b.image.width, b.image.height, Int(b.screen.width), Int(b.screen.height), Int(b.screenCorner),
+                 b.scale, b.captureScale))
 case .none(let reason):
     print("Frame: none, because \(reason); the cuts have rounded corners, at scale 1.0")
 }

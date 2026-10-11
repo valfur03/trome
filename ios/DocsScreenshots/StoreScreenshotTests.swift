@@ -69,9 +69,12 @@ final class StoreScreenshotTests: XCTestCase {
         steps.turnOnTheAutomaticMode(in: app)
         XCTAssertTrue(app.buttons["seeAnExample"].isEnabled, "The row See an example is not enabled")
         XCTAssertFalse(app.buttons["testingTools"].exists, "The link to the Testing tools shows")
+        let helpLink = app.descendants(matching: .any)["helpLink"].firstMatch
+        XCTAssertTrue(helpLink.isHittable, "The link Help and feedback is not on the screen")
         let screen = steps.stillScreenshot()
         save(screen, named: "app")
-        saveTheRows(of: app.buttons["seeAnExample"], in: screen, named: "app-example-row")
+        // The store picture of the app ends just under this link: the rows of the caption show, the footer not.
+        saveTheRows(of: helpLink, in: screen, named: "app-help-row")
 
         for stop in Self.stops {
             steps.showTheLiveActivity(of: stop.station, at: stop.position, in: app)

@@ -5,8 +5,8 @@ import zlib
 
 USAGE = (
     "Usage: make-png.py <file> <width> <height> <opaque|alpha|clear|trns>\n"
-    "       make-png.py <file> <width> <height> frame <side> <top>: an opaque frame around a clear middle,"
-    " as a phone bezel"
+    "       make-png.py <file> <width> <height> frame <side> <top> [<outer radius> <inner radius>]: an opaque frame"
+    " around a clear middle, as a phone bezel, with round corners when the radii are given"
 )
 
 KINDS = {
@@ -21,18 +21,37 @@ def chunk(kind, data):
     return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
 
 
-def frame_rows(width, height, side, top):
+def inside(x, y, left, top, right, bottom, radius):
+    """Whether the centre of pixel (x, y) is in the rounded rect [left, right) x [top, bottom)."""
+    px, py = x + 0.5, y + 0.5
+    if not (left <= px < right and top <= py < bottom):
+        return False
+    cx = min(max(px, left + radius), right - radius)
+    cy = min(max(py, top + radius), bottom - radius)
+    return (px - cx) ** 2 + (py - cy) ** 2 <= radius ** 2
+
+
+def frame_rows(width, height, side, top, outer=0, inner=0):
     opaque, clear = b"\x00\x00\x00\xff", b"\x00\x00\x00\x00"
-    full = b"\x00" + opaque * width
-    middle = b"\x00" + opaque * side + clear * (width - 2 * side) + opaque * side
-    return full * top + middle * (height - 2 * top) + full * top
+
+    def row(y):
+        return b"\x00" + b"".join(
+            opaque if inside(x, y, 0, 0, width, height, outer)
+            and not inside(x, y, side, top, width - side, height - top, inner) else clear
+            for x in range(width)
+        )
+
+    corner_rows = max(outer, top + inner)
+    middle = row(corner_rows)
+    rows = [row(y) if y < corner_rows or y >= height - corner_rows else middle for y in range(height)]
+    return b"".join(rows)
 
 
 def main(arguments):
-    if len(arguments) == 6 and arguments[3] == "frame":
+    if len(arguments) in (6, 8) and arguments[3] == "frame":
         path, width, height = arguments[0], int(arguments[1]), int(arguments[2])
         color_type, transparent = 6, b""
-        rows = frame_rows(width, height, int(arguments[4]), int(arguments[5]))
+        rows = frame_rows(width, height, *(int(a) for a in arguments[4:]))
     elif len(arguments) == 4 and arguments[3] in KINDS:
         path, width, height, kind = arguments[0], int(arguments[1]), int(arguments[2]), arguments[3]
         color_type, pixel, transparent = KINDS[kind]
