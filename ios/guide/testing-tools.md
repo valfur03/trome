@@ -141,7 +141,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Power | Each launch of the app, then the settings of the phone at that launch; each time the app comes on screen or leaves it |
 | Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports; one line for the first state of the new areas |
 | Map | Each time the app chooses again the stations that iOS watches |
-| Branch | Each arrival that the app decides, with its reason: notified, started, or why not |
+| Branch | Each arrival that the app decides, with its reason: notified, started, switched, or why not; each end of the Live Activity by its distance or time limit |
 | Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
 
 "App launched" is written at the start of the launch.
@@ -152,6 +152,7 @@ iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
 A line "No arrival at" a station with a rough position or none is followed by "Second chance at" that station: "asks iOS for a position", then its result: "notified after N s", or "gave up" or "ended" after N s, with the reason.
 When the result line never comes, iOS suspended or closed the app before the end of the 2 minutes.
+A line "Live Activity ended: N m from" a station, before a line "Notified", says that the rider left that station before reaching the next one, so the next one notified instead of a switch.
 After a walk, do not read **Phone now** to know the position of the walk: it shows the state when you opened the screen.
 Read the line "App launched" (Power icon) of the walk instead, which says "Position: fake" with a place name, or "Position: real GPS", as it was at that launch.
 A walk with a fake position also has, with the Map icon, the line "No region watched: a fake position is on".

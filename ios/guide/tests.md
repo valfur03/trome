@@ -58,7 +58,7 @@ A failed `make docs-screenshots` keeps its evidence in the same folder.
 |---|---|
 | `LiveActivityTests` | The real location popups, then a Live Activity that starts with the app open at a station and that "Snooze" ends. |
 | `AutoLiveActivityTests` | A position from iOS starts, switches and ends the Live Activity, also with the app in the background. |
-| `ArrivalNotificationTests` | The arrival notification, its tap and its **Not for 1 h** action, and the app opened at the station. |
+| `ArrivalNotificationTests` | The arrival notification, its tap and its **Not for 1 h** action, the app opened at the station, and the notification of the next station, which replaces the one not opened. |
 | `SwipeAwayTests` | A swipe of the Live Activity pauses its station only, and cancelling the pause brings it back. |
 | `SnoozeTests` | The widget draws the trains on the real Live Activity, and its buttons run in the app. |
 

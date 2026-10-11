@@ -9,6 +9,11 @@ extension AutoLiveActivityModel {
         wakeLog.record(.decision, outcome.summary)
     }
 
+    func log(_ ending: LiveActivityEnding?) {
+        guard let ending else { return }
+        services.wakeLog?.record(.decision, ending.summary)
+    }
+
     func logScreenChange(from oldPhase: AppPhase, to newPhase: AppPhase) {
         switch (oldPhase, newPhase) {
         case (.background, .active), (.background, .inactive):

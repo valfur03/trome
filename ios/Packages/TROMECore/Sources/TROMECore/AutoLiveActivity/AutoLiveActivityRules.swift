@@ -89,6 +89,7 @@ public struct AutoLiveActivityRules: Sendable {
         public var state: AutoLiveActivityState
         public var actions: [Action]
         var arrival: ArrivalOutcome?
+        var ending: LiveActivityEnding?
     }
 
     public let maximumDuration: TimeInterval
@@ -151,7 +152,7 @@ public struct AutoLiveActivityRules: Sendable {
     ) -> Decision {
         var decision = Decision(state: state, actions: [])
         if let shown = state.shown, now.timeIntervalSince(shown.startedAt) >= maximumDuration {
-            decision.end()
+            decision.end(because: .maximumDuration(maximumDuration))
         }
         if let position {
             decision.detectArrival(at: position, now: now, response: response, catalog: catalog)
@@ -175,9 +176,10 @@ extension AutoLiveActivityRules.Decision {
 }
 
 private extension AutoLiveActivityRules.Decision {
-    mutating func end() {
+    mutating func end(because ending: LiveActivityEnding) {
         state.shown = nil
         actions.append(.end)
+        self.ending = ending
     }
 
     mutating func detectArrival(
@@ -269,10 +271,11 @@ private extension AutoLiveActivityRules.Decision {
 
     mutating func checkDistanceToShownStation(from position: Coordinate, catalog: StationCatalog) {
         guard let shown = state.shown, let station = catalog.station(withId: shown.stationId) else { return }
-        if position.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters {
+        let distance = position.distance(to: station.coordinate)
+        if distance <= AutoLiveActivityRules.stopRadiusMeters {
             state.shown?.hasBeenNear = true
         } else if shown.hasBeenNear {
-            end()
+            end(because: .farFrom(station, distanceMeters: distance))
         }
     }
 }

@@ -53,12 +53,13 @@ A fake position is always trusted.
 | The same, but a system popup covers the app (a permission question) | It waits, and starts when the app is active again; if the app goes to the background first, the notification comes instead |
 | The same, with the app in the background or closed | One notification, with the station name alone as its title ("Abbesses") and no body, also when Live Activities are off. A tap opens the app and starts the Live Activity |
 | The rider opens the app at that station without tapping the notification | The Live Activity starts, and the notification goes away, also when notifications are off |
-| A Live Activity shows, and the rider comes within 150 meters of another station | It switches to the new station: no second Live Activity, no second notification |
-| The rider moves more than 250 meters from the station of the Live Activity | It ends, once the rider has been within 250 meters of it |
+| A Live Activity shows, and the rider comes within 150 meters of another station | It switches to the new station, with the app open, in the background or closed: no second Live Activity, no notification |
+| The rider moves more than 250 meters from the station of the Live Activity | It ends, once the rider has been within 250 meters of it. So a rider reaches a next station more than 400 meters away with no Live Activity: with the app in the background or closed, that station notifies |
 | 45 minutes after the Live Activity started | It ends. A switch does not start the count again |
 | The same station again | Nothing, until the rider leaves the station and comes back |
 
 Each arrival gives at most one notification and one automatic start.
+The rider sees one arrival notification at a time: the notification of a new station replaces the one that the rider did not open, and it goes away when the rider leaves its station.
 When iOS wakes the app because the phone entered the area of a station, the app does not take that as an arrival: iOS also says so when it is wrong, for example for many stations at once after the phone restarts.
 It decides on its last position, or asks iOS for a new one and waits up to 10 seconds for it; with no trusted position within 150 meters (250 meters for the station of that area), nothing comes at once, and the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) says why.
 When a trusted position of the last 15 seconds puts the phone farther than that, nothing comes for this visit.

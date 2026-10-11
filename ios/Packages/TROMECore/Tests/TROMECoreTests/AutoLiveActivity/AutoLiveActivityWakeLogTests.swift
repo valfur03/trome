@@ -66,6 +66,7 @@ extension AutoLiveActivityModelTests {
         await model.handle(Places.fourHundredMetersFromA)
 
         #expect(decisions == [
+            "Live Activity ended: 400 m from Station A",
             "No station within 150 m: nearest is Station A, 200 m",
             "No notification at Station A: its Live Activity shows",
             "Live Activity started: Station A"

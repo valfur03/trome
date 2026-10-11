@@ -2,6 +2,7 @@
 // and the rider then sees the real Live Activity of that station in the Notification Center.
 // A long press shows its actions, and iOS runs the chosen action in the app without opening it.
 // A rider who does not tap it and opens the app at the station gets the Live Activity, and the notification goes.
+// The notification of the next station replaces one that the rider did not open: only iOS keeps the list.
 // Why not cheaper: unit tests fake the notifier, the tap and the action; only iOS delivers the notification,
 // shows its actions, tells the tap from an action, opens the app (or not) from it, and draws the Live Activity.
 // Only iOS brings the app from the background to the front, and sends no new position while the phone stands still.
@@ -93,6 +94,41 @@ final class ArrivalNotificationTests: E2ETestCase {
         XCTAssertTrue(waitFor(liveActivityStation("Jules Joffrin")))
         XCTAssertTrue(waitForNo(notification), "The arrival notification stayed after the Live Activity started")
         closeNotificationCenter()
+    }
+
+    @MainActor
+    func testTheArrivalNotificationOfTheNextStationReplacesTheOneNotOpened() {
+        let app = makeApp()
+        app.launchArguments.append("--keep-running-in-background")
+        launch(app)
+        waitUntilTheLaunchEndedTheLiveActivity(in: app)
+
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
+        moveThePhone(to: Self.chateauRouge)
+        XCTAssertTrue(waitFor(arrivalNotification(titled: "Château Rouge")))
+        moveThePhone(to: Self.julesJoffrin)
+        XCTAssertTrue(waitFor(arrivalNotification(titled: "Jules Joffrin")))
+        XCTAssertTrue(waitForNo(arrivalNotification(titled: "Jules Joffrin")), "The banner still covers the top")
+
+        openNotificationCenter(over: springboard, expectingALiveActivity: false)
+        XCTAssertTrue(waitFor(arrivalNotification(titled: "Jules Joffrin")))
+        XCTAssertFalse(groupedArrivalNotifications.exists, "iOS keeps more than one arrival notification, in a stack")
+        XCTAssertTrue(
+            waitForNo(arrivalNotification(titled: "Château Rouge")),
+            "The notification of the station left behind stayed in the Notification Center"
+        )
+        closeNotificationCenter()
+    }
+
+    /// A stack of notifications of the app: iOS shows only the newest, and says "Grouped" in its label.
+    @MainActor
+    private var groupedArrivalNotifications: XCUIElement {
+        springboard.descendants(matching: .any)
+            .matching(NSPredicate(
+                format: "identifier == %@ AND label BEGINSWITH %@", "NotificationShortLookView", "TROME, Grouped"
+            ))
+            .firstMatch
     }
 
     @MainActor
