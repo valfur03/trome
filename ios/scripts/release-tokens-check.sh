@@ -95,7 +95,7 @@ while IFS='|' read -r name number state; do
         503)
             [ -n "$reason" ] || say_server_problem
             echo "$name: accepted"
-            # No PRIM call is left this hour: the next requests would only wait for it, so they wait for the next run.
+            # The server has no PRIM call left: stop, so that this check never asks a server whose budget is spent.
             case $reason in budget | prim-limit) left=$reason ;; esac ;;
         *) say_server_problem ;;
     esac
@@ -104,6 +104,6 @@ $field
 EOF
 
 [ "$refused" -eq 0 ] || echo "Refused: the production server refuses the token of $refused of the $total builds in the field. If its line in $tokens_file matches your password manager, put that token back on the server at once, as Change the app token in server/guide/deploy.md says."
-[ -z "$left" ] || say "Not finished: the production server has no PRIM calls left right now ($left), so it was not asked for the builds marked not asked: run this again in an hour."
+[ -z "$left" ] || say "Not finished: the production server has no PRIM calls left this hour ($left), so the builds marked not asked wait: run this again in an hour."
 [ "$refused" -ne 0 ] || say "OK: the production server accepts the app token of each build in the field ($numbers)." 0
 exit 1

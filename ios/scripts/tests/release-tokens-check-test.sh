@@ -191,8 +191,8 @@ for case in "$budget budget budget" "$primlimit primlimit prim-limit"; do
     expect "no PRIM call left ($3): the token is accepted, and the next build is not asked" "$(line 1)|$(line 2) $(asked)" \
         "1.0.0 (2): accepted|1.0.1 (3): not asked $2"
     expect "no PRIM call left ($3): a last line that says to run it again, and the check fails" \
-        "$(starts 3 'Not finished: the production server has no PRIM calls left right now ('"$3"')') $(outcome)" \
-        "Not finished: the production server has no PRIM calls left right now ($3) status 1"
+        "$(starts 3 'Not finished: the production server has no PRIM calls left this hour ('"$3"')') $(outcome)" \
+        "Not finished: the production server has no PRIM calls left this hour ($3) status 1"
 done
 
 write_tokens 2 "$primfail" 3 "$two"
