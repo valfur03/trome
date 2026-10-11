@@ -561,7 +561,7 @@ The store has no tester limit, so release only when the PRIM quota has been rais
 6. When the status is **Pending Developer Release**, check that the PRIM quota has been raised, that the server answers, and that the What's new page has the 1.0 lines.
    Then click **Release This Version**, and **Confirm**.
    TROME can take up to 24 hours to show on the App Store.
-   When it shows, write App Store, with no date, in the row of the build in [the builds that riders may hold](#the-builds-that-riders-may-hold).
+   When it shows, write App Store, with no date, in the **Where** cell of the row of the build in [the builds that riders may hold](#the-builds-that-riders-may-hold).
 
 </Steps>
 
@@ -666,9 +666,9 @@ A server change keeps every build in the field working: the server adds what a n
 Why: a rider updates when they choose, so an old build can call the server for years.
 The table does not yet say what each build reads from the server: until the repo records it, read the code at the tag of the build.
 
-Each build has the git tag `builds/<version>/<build>` on its commit, from [step 4](#4-build-upload-and-check-the-first-build).
+Each build has the git tag `builds/<version>/<build>` on its commit, which you add at the end of the upload in [step 4](#4-build-upload-and-check-the-first-build).
 A TestFlight build becomes unavailable to testers after 90 days: the table counts them from the upload, and App Store Connect shows the days left on the build, so trust it when the two differ.
-A build released on the store stays installed and keeps working, so when you release it in step 8, its row says App Store, with no date.
+A build released on the store stays installed and keeps working, so when you release it in step 8, you write App Store, with no date, in the **Where** cell of its row.
 
 Apple's help, read on 11 October 2026: [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/).
 
@@ -678,7 +678,7 @@ Apple's help, read on 11 October 2026: [TestFlight overview](https://developer.a
 | 1.0.0 (2) | 11 October 2026 | `9d83a8d` | TestFlight, until 9 January 2027 | In the field |
 
 Builds 1 and 2 were tagged after their upload, on the commit that the clone held at the time of each archive.
-The app files of build 1 are the same in every commit from `dcf1d8d` to `dd59fdd`.
+The app files of build 1 are the same in every commit from `dcf1d8d` to `dd59fdd`, so its tag holds the right app code whichever of them was checked out.
 
 ### Retire a build
 
@@ -689,6 +689,7 @@ A build leaves the field only for one of these reasons, written in its row with 
   They count only the riders who share analytics with Apple, so they show that a build is rare, never that it is gone.
 
 A server change is never a reason: a change that would break a build waits until that build is retired.
+The one exception is a new app token: it cuts off every build until its rider updates, so change it only when the old one leaked.
 Once a build is retired, a server change may drop what only that build read.
 The row stays in the table, with the status **Retired on `<date>`: `<reason>`**.
 
