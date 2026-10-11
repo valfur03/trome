@@ -69,8 +69,9 @@ Do each step on the staging Worker first, with its own tokens, then on the produ
 
 1. In the main folder of your clone, on `main`, run `make server-deploy-staging`, then `make server-deploy`.
    Never skip this step: a server from before the list reads `<old token>,<new token>` as one token, and refuses every app.
-2. Make the new token with `openssl rand -hex 32`, and keep it in your password manager next to the old one, with the builds that hold each.
-3. Run `make server-secret NAME=APP_TOKEN STAGING=1`, and paste every token of the list, then the new one, separated by commas: `<old token>,<new token>`.
+2. Make one new token for each Worker with `openssl rand -hex 32`, and keep them in your password manager next to the old ones, with the builds that hold each production token.
+   If you no longer have an old production token, take it back from the archive of a build that holds it ([Release on the App Store, step 4](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#4-build-upload-and-check-the-first-build)): never set a list without it.
+3. Run `make server-secret NAME=APP_TOKEN STAGING=1`, and paste every token of the staging list, then its new one, separated by commas: `<old token>,<new token>`.
    The value replaces the whole list, so a token that you leave out is cut off at once.
 4. Check that the staging Worker answers both tokens: run the command below once for each, type `Authorization: Bearer <token>`, then press Return and Control-D.
    Curl reads the header as you type it, so the token stays out of your shell history; the two requests cost at most two PRIM calls.
@@ -82,10 +83,10 @@ Do each step on the staging Worker first, with its own tokens, then on the produ
    Both answers have times.
    A `{"error":"unauthorized"}` answer means that the list lost a token: set it again, with every token.
    If both answers are `{"error":"unauthorized"}`, the Worker may still run a server from before the list: do step 1 again before you go on.
-5. Run `make server-secret NAME=APP_TOKEN`, and paste the production list with the new token in the same way.
+5. Run `make server-secret NAME=APP_TOKEN`, and paste every token of the production list, then its new one, in the same way.
 6. In the main folder of your clone, run `make release-server-check`: `ios/Config/Server.xcconfig` still holds the old token, so the check proves that the installed builds keep their times.
    If it fails, run `make server-secret NAME=APP_TOKEN` at once and paste the old list again, with no new token; then find the cause.
-   When it passes, put the new token in `TRAIN_SERVER_APP_TOKEN` of that file, and run `make release-server-check` again: the next build that you upload holds it.
+   When it passes, put the new production token in `TRAIN_SERVER_APP_TOKEN` of that file, and run `make release-server-check` again: the next build that you upload holds it.
 
 ### Retire a token
 

@@ -298,11 +298,17 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    ```
 
    Put the host of the production server after `TRAIN_SERVER_HOST =`: only the host, with no `https://` and no path.
-   Put the app token that you set with `make server-secrets` after `TRAIN_SERVER_APP_TOKEN =`, and save the file.
+   Put the newest app token of the production server's list after `TRAIN_SERVER_APP_TOKEN =`: the one that you set with `make server-secrets`, or the last one that you added.
+   Save the file.
    Git ignores this file, and the token goes nowhere else: never into a page, a message or a commit.
    If you no longer have the token and this is your first upload, make a new one with `openssl rand -hex 32` and set it with `make server-secret NAME=APP_TOKEN`: no installed app holds the old one yet.
-   After your first build is on a phone, never do this to get a token back: a token set alone replaces the server's list, and cuts off every installed app; add a new token to the list instead, as [Change the app token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#change-the-app-token) says.
    Make it with `-hex`: a token with `//` in it would be cut, because `//` starts a comment in this file.
+   After your first build is on a phone, never do this to get a token back: a token set alone replaces the server's list, and cuts off every installed app.
+   Take the token back from the archive of your last upload instead.
+   In the **Organizer** window of Xcode (**Window > Organizer**), right-click that archive and choose **Show in Finder**, then right-click the archive in Finder and choose **Show Package Contents**.
+   In `Products/Applications`, choose **Show Package Contents** on the app, and open `Info.plist`: the token is the value of `TrainServerAppToken`.
+   To give the next builds a new token, add it to the server's list with this one, as [Change the app token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#change-the-app-token) says.
+   With no archive left, the token is lost, and no step keeps the installed apps working: a new token cuts them off until their riders update.
 
    Then check the two values with the production server, before each archive:
 
