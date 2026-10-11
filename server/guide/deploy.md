@@ -112,6 +112,27 @@ The `_total` counters count since 00:00 in Paris and start again from 0 there, w
 To cut the access, give the server a new owner token with `make server-secret NAME=OWNER_TOKEN`, then write it in your file.
 The Metrics page of the Worker in the Cloudflare dashboard is a free extra: it counts every request, refused ones and these scrapes too, so it is never the source of the totals.
 
+## Measure the time of a call
+
+```sh
+make release-server-timing
+```
+
+Run it in the main folder of your clone, which holds `ios/Config/Server.xcconfig` ([Connect the app to the server](#connect-the-app-to-the-server)).
+It asks the production Worker for the trains of one stop as a rider who opens it and waits 30 seconds, each call on a new connection, and prints neither the host nor the token.
+It makes at most 2 PRIM calls, as that rider would: one for the first call, and one 30 seconds later if the server forgot its answer.
+It prints a line per call, with the Cloudflare data center that answered, then the parts of a call:
+
+| Part | How it is measured |
+|---|---|
+| The connection to Cloudflare | DNS, TCP and TLS, which the app pays only on a new connection |
+| The Worker alone | The wait for `/health`, which never reaches the server object: one network round trip and the Worker |
+| The hop to the server object | The wait for a held answer, minus the wait for `/health` |
+| The wait for PRIM | The first call, when it made the server ask PRIM, minus the wait for a held answer |
+
+Run it once after a quiet time, when no app has asked the server for 5 minutes, for the first call of a rider; then at once again, for a warm server.
+Each call also pays the network of the computer that runs it: run it on the network that your riders use, for example your phone's connection shared with the computer.
+
 ## Find a problem
 
 The app promises that the server keeps no stop of a rider: its App Store privacy label says "Data Not Collected", and its privacy policy says the same.
