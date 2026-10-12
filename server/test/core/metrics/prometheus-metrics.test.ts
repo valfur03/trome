@@ -5,9 +5,9 @@ import { UsageCounts } from "../../../src/core/usage/usage-counts";
 import { NodeSqliteDatabase } from "../storage/node-sqlite-database";
 import { parseMetrics } from "./parse-metrics";
 
-const zero = { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0 };
+const zero = { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0, unreadableAnswers: 0 };
 const snapshot: MetricsSnapshot = {
-  today: { appCalls: 12, cacheHits: 7, heldAnswers: 1, outAnswers: 2, primCalls: 5, errors: 3 },
+  today: { appCalls: 12, cacheHits: 7, heldAnswers: 1, outAnswers: 2, primCalls: 5, errors: 3, unreadableAnswers: 4 },
   previousDay: { ...zero, appCalls: 40 },
   dailyCap: 800,
   failuresToday: [
@@ -88,7 +88,9 @@ describe("metricsText", () => {
     expect(values.get("trome_out_answers_total")).toBe(2);
     expect(values.get("trome_prim_calls_total")).toBe(5);
     expect(values.get("trome_errors_total")).toBe(3);
+    expect(values.get("trome_unreadable_answers_total")).toBe(4);
     expect(values.get("trome_app_calls_previous_day")).toBe(40);
+    expect(values.get("trome_unreadable_answers_previous_day")).toBe(0);
     expect(values.get("trome_out_answers_previous_day")).toBe(0);
     expect(values.get("trome_prim_daily_cap")).toBe(800);
   });

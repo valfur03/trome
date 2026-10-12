@@ -90,6 +90,23 @@ describe("UsageCounts", () => {
     ]);
   });
 
+  it("adds the tallies of a newer version to the hours that an older version wrote, at 0, and keeps their counts", () => {
+    const database = new NodeSqliteDatabase();
+    const start = at("2026-10-02T08:00:00.000Z");
+    database.run(
+      "CREATE TABLE usage_hours (hour_start INTEGER PRIMARY KEY, paris_day TEXT NOT NULL, app_calls INTEGER NOT NULL, cache_hits INTEGER NOT NULL, held_answers INTEGER NOT NULL, out_answers INTEGER NOT NULL, prim_calls INTEGER NOT NULL, errors INTEGER NOT NULL)",
+    );
+    database.run("INSERT INTO usage_hours VALUES (?, '2026-10-02', 5, 1, 1, 2, 3, 2)", start);
+
+    const usage = new UsageCounts(database, () => undefined);
+    new UsageCounts(database, () => undefined);
+    usage.count("unreadableAnswers", start + 10 * 60_000);
+
+    const [today] = usage.report().days;
+    expect(today).toMatchObject({ appCalls: 5, primCalls: 3, errors: 2, unreadableAnswers: 1 });
+    expect(usage.metricsTotals(start + hour).today).toMatchObject({ appCalls: 5, unreadableAnswers: 1 });
+  });
+
   it("deletes the PRIM calls of each stop and the stop of each error line that an older version stored, and keeps the rest", () => {
     const database = new NodeSqliteDatabase();
     const failedAt = at("2026-10-02T08:31:00.000Z");

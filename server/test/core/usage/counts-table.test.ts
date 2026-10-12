@@ -3,12 +3,12 @@ import type { DayCounts, HourCounts } from "../../../src/core/usage/usage-counts
 import { countsTable } from "../../../src/core/usage/counts-table";
 
 function hourOf(parisHour: string, appCalls: number): HourCounts {
-  return { start: "", parisHour, appCalls, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0 };
+  return { start: "", parisHour, appCalls, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0, unreadableAnswers: 0 };
 }
 
 function dayOf(day: string, hours: HourCounts[], extra: Partial<DayCounts> = {}): DayCounts {
   const appCalls = hours.reduce((sum, hour) => sum + hour.appCalls, 0);
-  return { day, appCalls, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0, hours, ...extra };
+  return { day, appCalls, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0, unreadableAnswers: 0, hours, ...extra };
 }
 
 function linesOf(table: string): string[] {
@@ -77,6 +77,33 @@ describe("the counts table", () => {
       "Wed 2026-10-07          1           0            0       0  08:00 (1 call)",
       "No total before Wed 2026-10-07, so the table starts there.",
     ]);
+  });
+
+  it("names the days with PRIM answers that the builds cannot read under the table, and where to look", () => {
+    const lines = linesOf(
+      countsTable({
+        today: "2026-10-10",
+        days: [
+          dayOf("2026-10-10", [hourOf("08:00", 3)], { unreadableAnswers: 4 }),
+          dayOf("2026-10-09", [hourOf("08:00", 1)]),
+          dayOf("2026-10-08", [hourOf("08:00", 1)], { unreadableAnswers: 1 }),
+        ],
+      }),
+    );
+
+    expect(lines.slice(-2)).toEqual([
+      "Unreadable PRIM answers: Today (so far) 4, Thu 2026-10-08 1.",
+      "See server/guide/how-it-works.md, section Unreadable PRIM answers.",
+    ]);
+    expect(lines[0]).toBe("Paris day       App calls  PRIM calls  Out answers  Errors  Busiest hour");
+  });
+
+  it("reads the report of a server older than the count of unreadable answers", () => {
+    const olderDay: Partial<DayCounts> = dayOf("2026-10-10", [hourOf("08:00", 3)]);
+    delete olderDay.unreadableAnswers;
+    const table = countsTable({ today: "2026-10-10", days: [olderDay as DayCounts] });
+
+    expect(table).not.toContain("Unreadable");
   });
 
   it("shows only today when the server has no total yet", () => {

@@ -12,6 +12,7 @@ interface Line {
   primCalls: number;
   outAnswers: number;
   errors: number;
+  unreadableAnswers: number;
   busiestHour: string;
 }
 
@@ -26,6 +27,7 @@ const numberColumns = [
  * The owner's one-step read of the totals: today so far, then each Paris day of the last 14 days, newest first.
  * A day with no row in the report had no call, so it is a line of zeros.
  * The table starts at the oldest day that the report holds, when that day is in the window, and says so.
+ * PRIM answers that the builds cannot read get a line under the table only on the days that had some, as they need the owner's action; the table keeps its 80 columns.
  */
 export function countsTable(report: Pick<CountsReport, "today" | "days">): string {
   const byDay = new Map(report.days.map((dayCounts) => [dayCounts.day, dayCounts]));
@@ -49,6 +51,7 @@ export function countsTable(report: Pick<CountsReport, "today" | "days">): strin
       primCalls: dayCounts?.primCalls ?? 0,
       outAnswers: dayCounts?.outAnswers ?? 0,
       errors: dayCounts?.errors ?? 0,
+      unreadableAnswers: dayCounts?.unreadableAnswers ?? 0,
       busiestHour: busiest ? `${busiest.parisHour} (${calls(busiest.appCalls)})` : "-",
     });
   }
@@ -73,6 +76,13 @@ export function countsTable(report: Pick<CountsReport, "today" | "days">): strin
   ];
   if (start > firstShown) {
     output.push(`No total before ${weekday(start)} ${start}, so the table starts there.`);
+  }
+  const unreadable = lines.filter(({ unreadableAnswers }) => unreadableAnswers > 0);
+  if (unreadable.length > 0) {
+    output.push(
+      `Unreadable PRIM answers: ${unreadable.map(({ label, unreadableAnswers }) => `${label} ${String(unreadableAnswers)}`).join(", ")}.`,
+      "See server/guide/how-it-works.md, section Unreadable PRIM answers.",
+    );
   }
   return `${output.join("\n")}\n`;
 }

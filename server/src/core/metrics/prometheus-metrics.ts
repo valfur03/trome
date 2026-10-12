@@ -23,9 +23,10 @@ const names: Record<Tally, { name: string; help: string }> = {
   outAnswers: { name: "out_answers", help: "App calls answered 503 out, with no times" },
   primCalls: { name: "prim_calls", help: "Calls of the server to PRIM" },
   errors: { name: "errors", help: "Failed PRIM calls" },
+  unreadableAnswers: { name: "unreadable_answers", help: "PRIM answers with a 2xx status that lack the shape that the builds read" },
 };
 
-const order: Tally[] = ["appCalls", "cacheHits", "heldAnswers", "outAnswers", "primCalls", "errors"];
+const order: Tally[] = ["appCalls", "cacheHits", "heldAnswers", "outAnswers", "primCalls", "errors", "unreadableAnswers"];
 
 /**
  * The totals in the Prometheus text format, version 0.0.4.

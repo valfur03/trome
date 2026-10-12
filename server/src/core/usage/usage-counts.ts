@@ -2,7 +2,7 @@ import type { SqlDatabase } from "../storage/sql-database";
 import { day, hour } from "../time/clock";
 import { nextParisDayStart, parisDay, parisHour } from "../time/paris-time";
 
-export const tallies = ["appCalls", "cacheHits", "heldAnswers", "outAnswers", "primCalls", "errors"] as const;
+export const tallies = ["appCalls", "cacheHits", "heldAnswers", "outAnswers", "primCalls", "errors", "unreadableAnswers"] as const;
 
 export type Tally = (typeof tallies)[number];
 
@@ -40,6 +40,7 @@ const columns: Record<Tally, string> = {
   outAnswers: "out_answers",
   primCalls: "prim_calls",
   errors: "errors",
+  unreadableAnswers: "unreadable_answers",
 };
 
 type HourRow = Record<string, number | string>;
@@ -63,6 +64,7 @@ export class UsageCounts {
     // So that `/metrics` reads only the error lines of today, not those of 7 days.
     database.run("CREATE INDEX IF NOT EXISTS error_lines_at ON error_lines (at, kind, status)");
     forgetTheStopsOfOlderVersions(database);
+    addTheTalliesOfNewerVersions(database);
   }
 
   count(tally: Tally, at: number): void {
@@ -206,8 +208,18 @@ function forgetTheStopsOfOlderVersions(database: SqlDatabase): void {
   }
 }
 
+/** A table of an older version has no column for a newer tally: its hours get 0 for it, and keep their other counts. */
+function addTheTalliesOfNewerVersions(database: SqlDatabase): void {
+  const present = new Set(database.all<{ name: string }>("SELECT name FROM pragma_table_info('usage_hours')").map(({ name }) => name));
+  for (const tally of tallies) {
+    if (!present.has(columns[tally])) {
+      database.run(`ALTER TABLE usage_hours ADD COLUMN ${columns[tally]} INTEGER NOT NULL DEFAULT 0`);
+    }
+  }
+}
+
 function emptyTallies(): Tallies {
-  return { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0 };
+  return { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0, unreadableAnswers: 0 };
 }
 
 function hourCounts(row: HourRow): { day: string; counts: HourCounts } {

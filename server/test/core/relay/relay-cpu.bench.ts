@@ -2,7 +2,7 @@ import { bench, describe } from "vitest";
 import { hasBearerToken } from "../../../src/core/auth/bearer-token";
 import { departuresResponse } from "../../../src/core/http/relay-responses";
 import { AnswerStore } from "../../../src/core/relay/answer-store";
-import { isTimesAnswer } from "../../../src/core/relay/prim-answer";
+import { readPrimAnswer } from "../../../src/core/relay/prim-answer";
 import { NodeSqliteDatabase } from "../storage/node-sqlite-database";
 import { primFixture } from "./prim-fixtures";
 
@@ -38,8 +38,8 @@ for (const [name, body] of Object.entries(answers)) {
   describe(name, () => {
     const store = new AnswerStore(new NodeSqliteDatabase());
 
-    bench("object: check and keep a new PRIM answer, then answer", async () => {
-      if (!isTimesAnswer(body)) {
+    bench("object: read a new PRIM answer (times and the shape of the builds), keep it, then answer", async () => {
+      if (!readPrimAnswer(body).isTimes) {
         throw new Error("not a times answer");
       }
       store.keep("STIF:StopArea:SP:462374:", { body, primAnsweredAt: 1 });

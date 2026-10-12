@@ -3,7 +3,7 @@ import type { RelayAnswer } from "../../../src/core/relay/relay";
 import { hour, minute } from "../../../src/core/time/clock";
 import { peakDayShape } from "../budget/peak-day-shape";
 import { answer } from "./fake-prim-client";
-import { primFixture } from "./prim-fixtures";
+import { everyRecordedPrimAnswer, primFixture } from "./prim-fixtures";
 import { relayHarness as relayHarnessOf } from "./relay-harness";
 import { retrySpread } from "../../../src/core/relay/retry-spread";
 import { everyStoredRow } from "../storage/every-stored-row";
@@ -452,6 +452,7 @@ describe("Relay: what it counts", () => {
         outAnswers: 2,
         primCalls: 3,
         errors: 2,
+        unreadableAnswers: 0,
         hours: [
           {
             start: "2026-10-02T08:00:00.000Z",
@@ -462,6 +463,7 @@ describe("Relay: what it counts", () => {
             outAnswers: 2,
             primCalls: 3,
             errors: 2,
+            unreadableAnswers: 0,
           },
         ],
       },
@@ -478,6 +480,33 @@ describe("Relay: what it counts", () => {
     await relay.departures(abbesses);
 
     expect(relay.counts().limitPauseUntil).toBe("2026-10-02T09:30:00.000Z");
+  });
+
+  it("counts the PRIM answers that lack the shape that the builds read: none of the recorded ones, and one where PRIM renamed the line", async () => {
+    const { relay, prim, clock } = relayHarness();
+    const recorded = everyRecordedPrimAnswer();
+    expect(recorded.length).toBeGreaterThanOrEqual(19);
+    for (const [index, { body }] of recorded.entries()) {
+      prim.answerWith(() => answer(200, body));
+      await relay.departures(stop(index));
+    }
+    prim.answerWith(() => answer(500, "<html>Bad gateway</html>"));
+    await relay.departures(stop(recorded.length));
+
+    expect(prim.calls).toHaveLength(recorded.length + 1);
+    expect(relay.counts().days[0]?.unreadableAnswers).toBe(0);
+
+    const renamed = abbessesAnswer.replaceAll('"LineRef"', '"LineReference"');
+    prim.answerWith(() => answer(200, renamed));
+    clock.advance(minute);
+
+    expect(await relay.departures(abbesses)).toEqual(times(renamed, clock.now()));
+    expect(relay.counts().days[0]?.unreadableAnswers).toBe(1);
+
+    prim.answerWith(() => answer(200, '{"message":"Service moved"}'));
+    expect((await relay.departures(chatelet)).kind).toBe("out");
+    expect(relay.counts().days[0]?.unreadableAnswers).toBe(2);
+    expect(relay.metrics().today.unreadableAnswers).toBe(2);
   });
 
   it("logs a failed PRIM call with the kind and the status only, with no stop", async () => {

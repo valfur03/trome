@@ -55,6 +55,25 @@ Why: a set that a server change could edit to match itself would protect no ride
 When the check fails, change the server by adding: a new path, header or field next to the old one, which only the new builds read.
 A situation that a set names and the test cannot yet bring about gets its scenario in `build-promises.test.ts`, never an edit of the set.
 
+## Unreadable PRIM answers
+
+Each build parses the PRIM answer itself, so a change of PRIM's format can make the builds in the field show no train while trains run, and the server still sends times.
+To see it the same day, the server counts each PRIM answer with a `2xx` status that lacks the shape that the builds read ([`build-shape.ts`](../src/core/relay/build-shape.ts)):
+
+- it has no service delivery (`Siri.ServiceDelivery`);
+- a field that the builds read has another type, so they cannot read the whole answer;
+- it has visits, and none of them gives a line, a time and a destination.
+
+One visit with no time or no destination is normal PRIM data, so it does not count.
+The count is a number for each hour, with no stop and no answer: `unreadableAnswers` in the counts, `trome_unreadable_answers_total` and `trome_unreadable_answers_previous_day` in `/metrics`, and a line under the table of `make server-counts` for each day that has some.
+
+When it is not 0:
+
+1. Watch it for an hour: one unreadable answer can be a short fault of PRIM, but a count that grows with the PRIM calls is a change of format.
+2. Ask PRIM for one stop with [your own key](../../ios/README.md#the-train-data-key-prim), as a Debug build does, and compare its answer with a recorded one of [`contracts/prim/`](../../contracts/prim/).
+3. Record the new answer in `contracts/prim/`, and fix the parser of the app in a new build.
+   The builds in the field keep their parser: until their riders update, only a server change can help them, and it changes by adding, as [the promise to the builds in the field](#the-promise-to-the-builds-in-the-field) says.
+
 ## How the server shares the PRIM quota
 
 A PRIM key has a quota of 1,000 calls a day, from 00:00 UTC.

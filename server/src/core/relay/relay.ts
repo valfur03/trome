@@ -6,7 +6,7 @@ import { parisDay } from "../time/paris-time";
 import type { MetricsSnapshot } from "../metrics/prometheus-metrics";
 import type { UsageCounts, UsageReport } from "../usage/usage-counts";
 import type { AnswerStore, StoredAnswer } from "./answer-store";
-import { isTimesAnswer } from "./prim-answer";
+import { readPrimAnswer } from "./prim-answer";
 import type { PrimClient, PrimReply } from "./prim-client";
 import { retrySpread } from "./retry-spread";
 
@@ -160,7 +160,12 @@ export class Relay {
     );
     const at = clock.now();
 
-    if (reply.kind === "answer" && reply.status >= 200 && reply.status < 300 && isTimesAnswer(reply.body)) {
+    const reading = reply.kind === "answer" && reply.status >= 200 && reply.status < 300 ? readPrimAnswer(reply.body) : undefined;
+    if (reading && !reading.hasBuildShape) {
+      usage.count("unreadableAnswers", at);
+    }
+
+    if (reply.kind === "answer" && reading?.isTimes) {
       const answer = { body: reply.body, primAnsweredAt: at };
       answers.keep(stopRef, answer);
       this.lastFailureAt.delete(stopRef);
