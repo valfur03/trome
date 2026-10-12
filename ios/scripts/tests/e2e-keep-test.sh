@@ -90,13 +90,23 @@ expect "the context names the crash report" "$(grep '^Crash reports' "$kept/cont
 expect "the context gives the load of the Mac" "$(grep -c '^Load of the Mac at the end of the run: .* (1, 5 and 15 min averages) on [0-9]* cores$' "$kept/context.txt")" "1"
 expect "the context lists the tests in the order they ran, with their result" "$(sed -n '/^Tests, in the order they ran:$/,$p' "$kept/context.txt" | tr '\n' '|')" "Tests, in the order they ran:|  AutoLiveActivityTests/testAuto(): Passed, 41 s|  LiveActivityTests/testLaunch(): Failed, 4 s|"
 expect "the context says that the full suite ran" "$(grep '^Only' "$kept/context.txt")" "Only these tests: no (the full suite)"
+expect "with no load written by make e2e, the context says so" "$(grep '^Load of the Mac during' "$kept/context.txt")" "Load of the Mac during the run: not recorded (no mac-load.log next to the log)"
+expect "with no draw of the Live Activity in the Simulator log, the context says so" "$(grep '^Draws' "$kept/context.txt")" "Draws of the Live Activity by iOS: none in the Simulator log"
 
 rm "$state/home/Library/Logs/DiagnosticReports/TROME-today.ips"
+cat > "$state/build/mac-load.log" << 'EOF'
+19:36:10 load 21.40 | xcodebuild 60.1%, SpringBoard 30.0%, chronod 12.0%, WindowServer 10.0%, launchd_sim 4.0%
+19:36:20 load 47.58 | node 380.2%, chronod 95.0%, SpringBoard 40.1%, WindowServer 18.0%, xcodebuild 9.0%
+19:36:30 load 33.12 | node 120.0%, SpringBoard 30.0%, chronod 12.0%, WindowServer 10.0%, launchd_sim 4.0%
+EOF
 TROME_E2E_EVIDENCE_NOTE="$state/note"
 export TROME_E2E_EVIDENCE_NOTE
 keep > /dev/null
 unset TROME_E2E_EVIDENCE_NOTE
 second=$(cat "$state/note")
+expect "it keeps the load that make e2e wrote during the run" "$(has "$second/mac-load.log")" "yes"
+expect "the context names the busiest moment of the Mac, with its processes" "$(grep '^Load of the Mac during' "$second/context.txt")" "Load of the Mac during the run: mac-load.log (every 10 s, with the busiest processes); the highest: 19:36:20 load 47.58 | node 380.2%, chronod 95.0%, SpringBoard 40.1%, WindowServer 18.0%, xcodebuild 9.0%"
+touch -t 202001010000 "$state/build/mac-load.log"
 expect "a second run in the same second gets a folder of its own" "$(ls "$state/kept" | wc -l | tr -d ' ') $([ "$second" != "$kept" ] && echo distinct)" "2 distinct"
 expect "it writes the folder of the run in the file of TROME_E2E_EVIDENCE_NOTE" "$(has "$second/context.txt")" "yes"
 expect "with no crash report, the context says so" "$(grep -c '^Crash reports of the app: none: no TROME-\*.ips' "$second/context.txt")" "1"
@@ -110,6 +120,7 @@ third=$(cat "$state/note")
 expect "it then keeps the log" "$(has "$third/e2e.log") $(has "$third/e2e.xcresult")" "yes no"
 expect "it then reads the last 15 min of the Simulator log" "$(grep -c -- "--last 900s" "$state/log-show-args")" "1"
 expect "the context says that there is no result bundle" "$(grep '^Result bundle' "$third/context.txt")" "Result bundle: none (the run ended before it wrote one)"
+expect "it does not take the load of an older run for the load of this run" "$(grep '^Load of the Mac during' "$third/context.txt") $(has "$third/mac-load.log")" "Load of the Mac during the run: not recorded during this run (no new mac-load.log) no"
 
 # The lines of a real run (2026-10-08) where a tap took too long, after a tap that ran, shortened.
 cat > "$state/simulator.log" << 'EOF'
@@ -149,6 +160,37 @@ export TROME_E2E_EVIDENCE_NOTE
 keep > /dev/null
 unset TROME_E2E_EVIDENCE_NOTE
 expect "a slow tap is not given the intent runner of a later tap" "$(grep '^Taps' "$(cat "$state/note")/context.txt")" "Taps on a Live Activity button: 2 ran, the longest in 6.5 s; the tap on ShowNextLinesIntent at 09:08:00, and it had not ended at the end of the log"
+
+# The lines of a real run (2026-10-12) where iOS stopped the widget process twice before it drew a switch, shortened.
+cat > "$state/simulator.log" << 'EOF'
+2026-10-12 19:36:10.488 Df chronod[90616:ab89e9] [com.apple.chrono:taskservice] [E817CE27]: task submitted activity<[com.example.trome.dev::com.example.trome.dev.widget:Attributes type: StationActivityAttributes:6AA5EAA8]>.E817CE27
+2026-10-12 19:36:10.513 Df runningboardd[90516:ab88d5] [com.apple.runningboard:general] Full encoding handle [extension<com.example.trome.dev.widget[config:350B3FF7]((null):90616)>[uuid:AF672717]:93404], with data f72c7fcc00016cdc, and pid 93404
+2026-10-12 19:36:10.802 Df runningboardd[90516:ab899b] [com.apple.runningboard:connection] Setting client for [extension<com.example.trome.dev.widget[config:350B3FF7]((null):90616)>[uuid:AF672717]:93404] as ready
+2026-10-12 19:36:11.361 Df chronod[90616:ab8b04] [com.apple.chrono:taskservice] [E817CE27]: task session completed in 0.870162s. time since creation: 0.870229s
+2026-10-12 19:36:12.000 Df chronod[90616:ab8b04] [com.apple.chrono:taskservice] [0D0D0D0D]: task submitted activity<[com.apple.other::com.apple.other.widget:Other]>.0D0D0D0D
+2026-10-12 19:36:13.000 Df chronod[90616:ab8b04] [com.apple.chrono:taskservice] [0D0D0D0D]: task session completed in 30.000000s. time since creation: 30.000000s
+2026-10-12 19:36:15.579 Df chronod[90616:ab8b07] [com.apple.chrono:taskservice] [E14C0189]: task submitted activity<[com.example.trome.dev::com.example.trome.dev.widget:Attributes type: StationActivityAttributes:6AA5EAA8]>.E14C0189
+2026-10-12 19:36:26.592 Df runningboardd[90516:ab8d2c] [com.apple.runningboard:process] [extension<com.example.trome.dev.widget[config:350B3FF7]((null):90616)>[uuid:AF672717]:93404] Terminating with context: <RBSTerminateContext| domain:20 code:0x000003E9 explanation:ChronodWidgetExtensionWatchdog reportType:None maxTerminationResistance:Interactive>
+2026-10-12 19:36:26.850 Df chronod[90616:ab8b04] [com.apple.chrono:taskservice] [E14C0189]: task session completed in 11.244976s. time since creation: 11.245004s
+2026-10-12 19:36:26.851 Df chronod[90616:ab8b04] [com.apple.chrono:taskservice] [8E4B5BC8]: task submitted activity<[com.example.trome.dev::com.example.trome.dev.widget:Attributes type: StationActivityAttributes:6AA5EAA8]>.8E4B5BC8
+2026-10-12 19:36:27.283 Df runningboardd[90516:ab7d55] [com.apple.runningboard:general] Full encoding handle [extension<com.example.trome.dev.widget[config:350B3FF7]((null):90616)>[uuid:AF672717]:93539], with data f4a4b77500016d63, and pid 93539
+2026-10-12 19:36:34.463 Df runningboardd[90516:ab8d2c] [com.apple.runningboard:connection] Setting client for [extension<com.example.trome.dev.widget[config:350B3FF7]((null):90616)>[uuid:AF672717]:93539] as ready
+2026-10-12 19:36:37.659 Df runningboardd[90516:ab899b] [com.apple.runningboard:process] [extension<com.example.trome.dev.widget[config:350B3FF7]((null):90616)>[uuid:AF672717]:93539] Terminating with context: <RBSTerminateContext| domain:20 code:0x000003E9 explanation:ChronodWidgetExtensionWatchdog reportType:None maxTerminationResistance:Interactive>
+2026-10-12 19:36:37.712 Df chronod[90616:ab8ef8] [com.apple.chrono:taskservice] [8E4B5BC8]: task session completed in 10.862467s. time since creation: 10.862502s
+EOF
+stopped="3 ran, the longest in 11.2 s; the widget process took up to 7.2 s to start; iOS stopped the widget process before it drew, at its watchdog, at 19:36:26, 19:36:37"
+TROME_E2E_EVIDENCE_NOTE="$state/note"
+export TROME_E2E_EVIDENCE_NOTE
+keep > /dev/null
+unset TROME_E2E_EVIDENCE_NOTE
+expect "the context says how long iOS took to draw the Live Activity, how long its widget process took to start, and when iOS stopped it" "$(grep '^Draws' "$(cat "$state/note")/context.txt")" "Draws of the Live Activity by iOS: $stopped"
+expect "it also prints the draws that iOS stopped, before the folder" "$(head -1 "$state/out")" "Draws of the Live Activity by iOS: $stopped."
+grep -v "Terminating" "$state/simulator.log" > "$state/cut.log" && mv "$state/cut.log" "$state/simulator.log"
+TROME_E2E_EVIDENCE_NOTE="$state/note"
+export TROME_E2E_EVIDENCE_NOTE
+keep > /dev/null
+unset TROME_E2E_EVIDENCE_NOTE
+expect "with no draw stopped, it prints only the folder" "$(grep -c '^Draws' "$state/out")" "0"
 rm "$state/simulator.log"
 
 for old in $(seq 1 25); do

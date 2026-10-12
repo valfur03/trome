@@ -17,6 +17,9 @@ NO_SUMMARY_LOG_SECONDS = 900
 # host (chronod) logs a watchdog when the intent has not ended after this time.
 LIVE_ACTIVITY_TAP_LIMIT_SECONDS = 30
 INTENT_RUNNER = "BackgroundShortcutRunner"
+# make e2e writes the load of the Mac and its busiest processes in this file of its log folder (mac-load-log.sh).
+MAC_LOAD_LOG = "mac-load.log"
+MAC_LOAD_SAMPLE = re.compile(r"^\d\d:\d\d:\d\d load ([0-9.]+) \|")
 LOG_LINE = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+) +\S+ +(\S+?)\[(\d+):")
 
 
@@ -229,6 +232,64 @@ def live_activity_taps(simulator_log):
     return "; ".join(parts)
 
 
+def live_activity_renders(simulator_log, bundle_id):
+    """Says how long iOS took to draw each content of the Live Activity in the widget process, how long that process
+    took to start, and when iOS stopped it at its watchdog (chronod waits about 10 s): a content that iOS never draws
+    never shows, and the Live Activity keeps the last one it drew."""
+    try:
+        lines = simulator_log.read_text(errors="replace").splitlines()
+    except OSError:
+        return None
+    widget = f"[extension<{bundle_id}.widget["
+    ours, renders, launched, starts, stopped = set(), [], {}, [], []
+    for line in lines:
+        match = LOG_LINE.match(line)
+        if not match:
+            continue
+        at, process = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S.%f"), match.group(2)
+        if process == "chronod":
+            submitted = re.search(rf"\[(\w+)\]: task submitted activity<\[{re.escape(bundle_id)}::", line)
+            completed = re.search(r"\[(\w+)\]: task session completed in ([0-9.]+)s", line)
+            if submitted:
+                ours.add(submitted.group(1))
+            elif completed and completed.group(1) in ours:
+                renders.append(float(completed.group(2)))
+        elif process == "runningboardd" and widget in line:
+            pid = re.search(r"\]:(\d+)\]", line)
+            pid = pid.group(1) if pid else None
+            if "Full encoding handle" in line:
+                launched[pid] = at
+            elif "as ready" in line and pid in launched:
+                starts.append((at - launched.pop(pid)).total_seconds())
+            elif "explanation:ChronodWidgetExtensionWatchdog" in line:
+                stopped.append(at)
+    if not renders:
+        return "none in the Simulator log"
+    parts = [f"{len(renders)} ran, the longest in {max(renders):.1f} s"]
+    if starts:
+        parts.append(f"the widget process took up to {max(starts):.1f} s to start")
+    if stopped:
+        times = ", ".join(f"{at:%H:%M:%S}" for at in stopped)
+        parts.append(f"iOS stopped the widget process before it drew, at its watchdog, at {times}")
+    return "; ".join(parts)
+
+
+def keep_mac_load(log, folder, since):
+    """Keeps the load of the Mac that make e2e wrote during this run, and names its busiest moment."""
+    path = log.parent / MAC_LOAD_LOG
+    try:
+        if path.stat().st_mtime < since:
+            return f"not recorded during this run (no new {MAC_LOAD_LOG})"
+        shutil.copy2(path, folder / path.name)
+        samples = [line for line in path.read_text(errors="replace").splitlines() if MAC_LOAD_SAMPLE.match(line)]
+    except OSError:
+        return f"not recorded (no {MAC_LOAD_LOG} next to the log)"
+    if not samples:
+        return f"{MAC_LOAD_LOG} (no sample)"
+    busiest = max(samples, key=lambda line: float(MAC_LOAD_SAMPLE.match(line).group(1)))
+    return f"{MAC_LOAD_LOG} (every 10 s, with the busiest processes); the highest: {busiest}"
+
+
 def prune(root, folder):
     runs = sorted((run for run in root.iterdir() if run.is_dir()), key=lambda run: run.stat().st_mtime, reverse=True)
     for old in runs[KEPT_RUNS:]:
@@ -259,6 +320,8 @@ def main():
     crash_reports = keep_crash_reports(folder, executable, start if start is not None else time.time() - NO_SUMMARY_LOG_SECONDS)
     simulator_log = keep_simulator_log(folder, bundle_id, executable, start, end)
     taps = live_activity_taps(folder / "simulator.log")
+    renders = live_activity_renders(folder / "simulator.log", bundle_id) if bundle_id else None
+    mac_load = keep_mac_load(log, folder, start if start is not None else time.time() - NO_SUMMARY_LOG_SECONDS)
 
     context = [
         f"Failed E2E run, kept at {now.strftime('%Y-%m-%d %H:%M:%S')}",
@@ -266,9 +329,11 @@ def main():
         f"Folder: {(output_of(['git', 'rev-parse', '--show-toplevel']) or os.getcwd()).strip()}",
         f"Only these tests: {os.environ.get('ONLY') or 'no (the full suite)'}",
         f"Load of the Mac at the end of the run: {load_of_the_mac()}",
+        f"Load of the Mac during the run: {mac_load}",
         f"Crash reports of the app: {crash_reports}",
         f"Simulator log: {simulator_log}",
         f"Taps on a Live Activity button: {taps or 'unknown (no Simulator log)'}",
+        f"Draws of the Live Activity by iOS: {renders or 'unknown (no Simulator log)'}",
         f"Result bundle: {bundle.name if bundle.exists() else 'none (the run ended before it wrote one)'}",
         f"Log: {log.name if log.exists() else 'none'}",
         "Tests, in the order they ran:",
@@ -282,6 +347,8 @@ def main():
         Path(note).write_text(f"{folder}\n")
     if taps and "the tap on" in taps:
         print(f"Taps on a Live Activity button: {taps}.")
+    if renders and "iOS stopped" in renders:
+        print(f"Draws of the Live Activity by iOS: {renders}.")
     print(f"E2E evidence: the log, the result bundle, the Simulator log and the context of this failed run are kept in {folder}")
 
 
