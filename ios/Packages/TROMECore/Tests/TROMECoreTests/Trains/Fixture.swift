@@ -17,6 +17,13 @@ enum Fixture {
         try Data(contentsOf: contractsFolder("api").appending(path: "\(name).json"))
     }
 
+    /// The folders of the recorded sets of promises, one per set of builds in the field.
+    static func buildPromiseSetFolders() throws -> [URL] {
+        try FileManager.default
+            .contentsOfDirectory(at: contractsFolder("builds"), includingPropertiesForKeys: [.isDirectoryKey])
+            .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+    }
+
     private static func contractsFolder(_ part: String, from file: String = #filePath) throws -> URL {
         var folder = URL(filePath: file).deletingLastPathComponent()
         while folder.pathComponents.count > 1 {

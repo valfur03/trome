@@ -216,7 +216,9 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
             .appending(path: "departures")
     }
 
-    private func stopAnswer(at monitoringRef: String) async throws -> StopAnswer {
+    /// One call for one stop, as the server of the app sees it: the request, the wait for a retry time, and the
+    /// reading of the answer. `BuildPromisesTests` judges it against the newest recorded set of promises.
+    func stopAnswer(at monitoringRef: String) async throws -> StopAnswer {
         try waitForTheRetryTime(of: monitoringRef)
         let (data, httpResponse) = try await answer(at: monitoringRef)
         try keepTheRetryTime(of: monitoringRef, from: httpResponse, body: data)

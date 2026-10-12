@@ -371,7 +371,8 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
 11. In one commit, add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold), and set `CURRENT_PROJECT_VERSION` to one more than the build number that App Store Connect shows, for the next upload; push it.
     The same commit records the set of promises of the build in `contracts/builds/<version>-<build>/`, here `contracts/builds/1.0.0-3/`: what the build sends to the server and how it reads each answer, kept until its row is retired.
     Copy the folder of the newest set, and in its `promises.json` write the new build alone in `builds`, as its row names it, here `"1.0.0 (3)"`.
-    If the app code that asks the server changed since the build of that set (`git diff builds/<old version>/<old build> builds/1.0.0/3 -- ios/Packages/TROMECore/Sources/TROMECore/Trains`), make the copy say what the new code reads, and run `make server-check`.
+    If the app code that asks the server changed since the build of that set (`git diff builds/<old version>/<old build> builds/1.0.0/3 -- ios/Packages/TROMECore/Sources/TROMECore/Trains`), make the copy say what the new code reads, and run `make test` and `make server-check`.
+    `make test` fails when the app code does not send and read what the newest set says, and `make server-check` when the server does not keep it.
     Never edit an older set: `make server-check` fails on it, and fails too when a build of the table has no set.
     Then add the line of the build to `ios/Config/BuildTokens.txt`, here `3 = <token>`, with the app token of `ios/Config/Server.xcconfig` that this build holds, and run `make release-tokens-check`: the line of the new build must say **accepted**.
     That file is not in git, so it is not in the commit.

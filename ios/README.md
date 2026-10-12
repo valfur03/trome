@@ -177,7 +177,7 @@ Each part of the repo has its own folder. The root holds only the files of the w
 | `docs/` | The docs site (Starlight), with its own `Makefile` and scripts. |
 | `server/` | The server (a Cloudflare Worker in TypeScript), with its own `Makefile`, scripts and `package.json` (see [server/README.md](../server/README.md)). |
 | `video/` | The source of the film of the app (Remotion), with its own `Makefile`, scripts and `package.json` (see [video/README.md](../video/README.md)). |
-| `contracts/` | The files that the app and the server both test against. Today `contracts/prim/`: the recorded PRIM answers of the unit tests. |
+| `contracts/` | The files that the app and the server both test against: the recorded PRIM answers (`contracts/prim/`), the examples of the server API (`contracts/api/`), and what each build in the field sends and reads (`contracts/builds/`), which the unit tests check against the app code for the newest build. |
 
 Inside `ios/`:
 
