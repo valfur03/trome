@@ -49,12 +49,24 @@ struct BuildPromiseSet: Decodable {
 
     /// The set of the newest build that riders may hold: the next upload copies it, and the app code must still
     /// send and read as it says.
+    /// Only the builds of the other sets are read: they never change, so this reader may need keys that they lack.
     static func newest() throws -> BuildPromiseSet {
-        let sets = try Fixture.buildPromiseSetFolders().map(read)
-        guard let newest = sets.max(by: { $0.newestBuild < $1.newestBuild }) else {
+        let folders = try Fixture.buildPromiseSetFolders().map { folder in
+            let data = try Data(contentsOf: folder.appending(path: "promises.json"))
+            return (folder: folder, newestBuild: try JSONDecoder().decode(Builds.self, from: data).newestBuild)
+        }
+        guard let newest = folders.max(by: { $0.newestBuild < $1.newestBuild }) else {
             throw BuildPromiseSetError.noSet
         }
-        return newest
+        return try read(newest.folder)
+    }
+
+    private struct Builds: Decodable {
+        let builds: [String]
+
+        var newestBuild: BuildNumber {
+            BuildNumber.newest(of: builds)
+        }
     }
 
     static func read(_ folder: URL) throws -> BuildPromiseSet {
@@ -70,10 +82,6 @@ struct BuildPromiseSet: Decodable {
 
     var name: String {
         folder.lastPathComponent
-    }
-
-    var newestBuild: BuildNumber {
-        builds.compactMap(BuildNumber.init).max() ?? BuildNumber(version: [], build: 0)
     }
 
     func data(of file: String) throws -> Data {
@@ -124,6 +132,10 @@ struct BuildNumber: Comparable {
         let version = parts[0].split(separator: ".").compactMap { Int($0) }
         guard !version.isEmpty, version.count == parts[0].split(separator: ".").count else { return nil }
         self.init(version: version, build: build)
+    }
+
+    static func newest(of builds: [String]) -> BuildNumber {
+        builds.compactMap(BuildNumber.init).max() ?? BuildNumber(version: [], build: 0)
     }
 
     static func < (lhs: BuildNumber, rhs: BuildNumber) -> Bool {
