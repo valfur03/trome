@@ -1,5 +1,6 @@
 // Composes the four store pictures of one language from the captures of the Simulator.
 // Usage: store-screenshots-compose <captures dir> <out dir> <language> <bezel png or ""> <pictograms|dots>
+// It builds with LabelInk.swift of the app (make store-screenshots-compose), so that its line badge follows the same rule.
 //
 // The first three pictures are one panorama, cut in three: one lit field, one line drawing whose stroke takes the
 // colour of the next line at each border, like a transfer. Each has the lock screen cut off the top edge (the
@@ -327,6 +328,9 @@ do {
 let strokeWidth: CGFloat = 40, dotRadius: CGFloat = 14, stopRadius: CGFloat = 40, pictogramSize: CGFloat = 52
 let transferRadius: CGFloat = 46, transferRing: CGFloat = 13, badgeSize: CGFloat = 130
 let badgeX: [CGFloat] = [150, pic.width + 250, 2 * pic.width + 250]
+/// The least room between the ink of a metro number and the edge of its badge, as a share of the diameter, as in
+/// the app.
+let badgeEdgeMargin: CGFloat = 0.05
 let stopX: [[CGFloat]] = [[470, 790, 1110], [560, 860, 1160], [560, 860, 1160]]
 let trailHeads: [CGFloat] = [1000, 720, 1010]
 
@@ -505,19 +509,45 @@ func drawBadge(_ p: Picture, centre: CGPoint) {
     }
     context.addPath(shape(outer, rim)); context.setFillColor(cg(white)); context.fillPath()
     context.addPath(shape(inner, 0)); context.setFillColor(cg(rgb(p.line))); context.fillPath()
-    // The number or letter, centred on its own glyph bounds.
+    let font = NSFont.systemFont(ofSize: text.count > 1 ? 66 : 78, weight: .bold)
     let attributed = NSAttributedString(string: text, attributes: [
-        NSAttributedString.Key(kCTFontAttributeName as String): NSFont.systemFont(ofSize: text.count > 1 ? 66 : 78, weight: .bold),
+        NSAttributedString.Key(kCTFontAttributeName as String): font,
         NSAttributedString.Key(kCTForegroundColorAttributeName as String): cg(rgb(p.badgeInk))])
     let line = CTLineCreateWithAttributedString(attributed)
-    let bounds = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
     context.saveGState()
     context.translateBy(x: centre.x, y: centre.y)
     context.scaleBy(x: 1, y: -1)
-    context.textMatrix = .identity
-    context.textPosition = CGPoint(x: -bounds.midX, y: -bounds.midY)
-    CTLineDraw(line, context)
+    if p.square {
+        // An RER letter: centred on its own glyph bounds, which already looks centred, as on the signs.
+        let bounds = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+        context.textMatrix = .identity
+        context.textPosition = CGPoint(x: -bounds.midX, y: -bounds.midY)
+        CTLineDraw(line, context)
+    } else if let glyphs = outlines(of: line, font: font), let ink = LabelInk(of: glyphs) {
+        // A metro number: by the rule of the badge of the app (LabelInk), the weight of its ink across and its box
+        // down, a little smaller when its weight would bring its ink nearer the edge than the margin. It is filled
+        // from the outlines that were measured, so that its ink is where the measure says.
+        let scale = min(1, s * (0.5 - badgeEdgeMargin) / ink.reach)
+        context.scaleBy(x: scale, y: scale)
+        context.translateBy(x: -ink.anchor.x, y: -ink.anchor.y)
+        context.addPath(glyphs); context.setFillColor(cg(rgb(p.badgeInk))); context.fillPath()
+    }
     context.restoreGState()
+}
+/// The outlines of a line of text, as CoreText lays out its glyphs (y up, the baseline at 0).
+func outlines(of line: CTLine, font: CTFont) -> CGPath? {
+    let path = CGMutablePath()
+    for run in CTLineGetGlyphRuns(line) as? [CTRun] ?? [] {
+        let count = CTRunGetGlyphCount(run)
+        var glyphs = [CGGlyph](repeating: 0, count: count), positions = [CGPoint](repeating: .zero, count: count)
+        CTRunGetGlyphs(run, CFRange(location: 0, length: count), &glyphs)
+        CTRunGetPositions(run, CFRange(location: 0, length: count), &positions)
+        for k in 0..<count {
+            guard let outline = CTFontCreatePathForGlyph(font, glyphs[k], nil) else { continue }
+            path.addPath(outline, transform: CGAffineTransform(translationX: positions[k].x, y: positions[k].y))
+        }
+    }
+    return path.isEmpty ? nil : path
 }
 for i in 0..<3 { drawBadge(pictures[i], centre: CGPoint(x: badgeX[i], y: lineY)) }
 

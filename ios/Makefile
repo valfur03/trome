@@ -16,6 +16,8 @@ DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
 WALLPAPER_RESULT := $(BUILD_DIR)/simulator-wallpaper.xcresult
 STORE_SCREENSHOTS_RESULT := $(BUILD_DIR)/store-screenshots.xcresult
 STORE_COMPOSER := $(BUILD_DIR)/store-screenshots-compose
+# The composer places the line badge by the rule of the app's badge, so it builds with that file of the app.
+STORE_COMPOSER_SOURCES := scripts/store-screenshots-compose/main.swift Packages/TROMECore/Sources/TROMEBadge/LineBadge/LabelInk.swift
 RENDER_SCHEME := TROMERenderCheck
 RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
@@ -316,7 +318,7 @@ store-screenshots: project
 
 store-screenshots-compose:
 	@mkdir -p $(LOGS)
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/store-screenshots-composer-build.log '' swiftc -O scripts/store-screenshots-compose.swift -o $(STORE_COMPOSER)
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/store-screenshots-composer-build.log '' swiftc -O $(STORE_COMPOSER_SOURCES) -o $(STORE_COMPOSER)
 	@./scripts/store-screenshots.sh compose $(STORE_COMPOSER)
 
 live-activity-render: project

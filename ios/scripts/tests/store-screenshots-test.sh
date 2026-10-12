@@ -16,7 +16,9 @@ expect() {
     fi
 }
 
-swiftc "$scripts/store-screenshots-compose.swift" -o "$state/compose"
+swiftc "$scripts/store-screenshots-compose/main.swift" "$scripts/../Packages/TROMECore/Sources/TROMEBadge/LineBadge/LabelInk.swift" \
+    -o "$state/compose"
+swiftc "$tests/badge-centre.swift" -o "$state/badge-centre"
 out="$state/out"
 mkdir -p "$out/captures"
 for language in en fr; do
@@ -45,6 +47,11 @@ expect "each is 1320 x 2868 with no alpha channel" \
     "$(sips -g pixelWidth -g pixelHeight -g hasAlpha "$out"/*-*.png | grep -c -E 'pixelWidth: 1320|pixelHeight: 2868|hasAlpha: no')" "24"
 expect "the app picture shows the top of the phone, cut by the bottom edge just under the link Help and feedback" \
     "$(grep -c '^app rows 0-2064 off the bottom edge, the phone starts at y 804, headline centre 402$' "$state/output")" "2"
+# The 11 of picture 1 (its badge of 130 px at x 150, y 2194, white on brown) is centred across by the weight of its
+# ink, as in the app: centred by its box, its two bars sat 2.7 percent of the diameter to the right.
+expect "the 11 of picture 1 is centred by the weight of its ink, within 0.5 percent of the diameter" \
+    "$("$state/badge-centre" "$out/en-1-metro.png" 150 2194 130 FFFFFF \
+        | awk '{ print ($5 >= -0.5 && $5 <= 0.5) ? "centred" : "off by " $5 " percent" }')" "centred"
 cp "$out/en-1-metro.png" "$state/pictograms.png"
 
 STORE_STOPS=dots STORE_SCREENSHOTS_OUT=$out STORE_BEZEL="$state/no-bezel.png" "$scripts/store-screenshots.sh" compose "$state/compose" > "$state/output"

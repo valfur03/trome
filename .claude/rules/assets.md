@@ -8,7 +8,7 @@ paths:
   - "ios/DocsScreenshots/**"
   - "ios/scripts/docs-screenshots.sh"
   - "ios/scripts/store-screenshots.sh"
-  - "ios/scripts/store-screenshots-compose.swift"
+  - "ios/scripts/store-screenshots-compose/**"
   - "ios/guide/assets.md"
   - "docs/src/content/**"
   - "docs/src/assets/**"
