@@ -26,6 +26,7 @@ It needs no key: the trains are fake.
 `make store-screenshots-compose` composes them again from the last captures, with no Simulator, for example after a change of a headline.
 The line across the first three pictures is drawn as on a line map, with round ends and bends: a white dot for each stop, and a white circle with a dark ring only where the line changes, at the borders of the pictures.
 The line badge of the pictures places its label by the rule of the badge of the app, from the same code ([`LabelInk.swift`](../Packages/TROMECore/Sources/TROMEBadge/LineBadge/LabelInk.swift)): a metro number by the weight of its ink across and by its box down, an RER letter by its box.
+The fourth picture shows the app screen at the station of the third, while its Live Activity shows: the status row tells that station on the lock screen, as for a rider at a station, not the app at rest.
 
 The cuts of the screen can sit in Apple's iPhone bezel.
 Its licence forbids copies, so the repo does not hold it, and each maintainer places it once:

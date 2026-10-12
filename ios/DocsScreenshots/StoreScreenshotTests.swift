@@ -1,9 +1,10 @@
 import CoreLocation
 import XCTest
 
-/// Takes the captures of the store pictures, in the language of the Simulator: the main screen of the app,
-/// then, for each station of the set, the Dynamic Island on the Home Screen and the Live Activity on the
-/// lock screen, with the fake trains. `ios/scripts/store-screenshots.sh` runs it and composes the pictures.
+/// Takes the captures of the store pictures, in the language of the Simulator: for each station of the set,
+/// the Live Activity on the lock screen and the Dynamic Island on the Home Screen, with the fake trains; and,
+/// at the last station, the main screen of the app.
+/// `ios/scripts/store-screenshots.sh` runs it and composes the pictures.
 final class StoreScreenshotTests: XCTestCase {
     private struct Stop {
         let name: String
@@ -69,12 +70,6 @@ final class StoreScreenshotTests: XCTestCase {
         steps.turnOnTheAutomaticMode(in: app)
         XCTAssertTrue(app.buttons["seeAnExample"].isEnabled, "The row See an example is not enabled")
         XCTAssertFalse(app.buttons["testingTools"].exists, "The link to the Testing tools shows")
-        let helpLink = app.descendants(matching: .any)["helpLink"].firstMatch
-        XCTAssertTrue(helpLink.isHittable, "The link Help and feedback is not on the screen")
-        let screen = steps.stillScreenshot()
-        save(screen, named: "app")
-        // The store picture of the app ends just under this link: the rows of the caption show, the footer not.
-        saveTheRows(of: helpLink, in: screen, named: "app-help-row")
 
         for stop in Self.stops {
             steps.showTheLiveActivity(of: stop.station, at: stop.position, in: app)
@@ -92,8 +87,28 @@ final class StoreScreenshotTests: XCTestCase {
             sleep(2)
             save(steps.stillScreenshot(), named: "island-\(stop.name)")
             app.activate()
+            if stop.name == Self.stops.last?.name {
+                saveTheAppScreen(of: app, showing: stop.station)
+            }
             steps.stopTheLiveActivity(in: app)
         }
+    }
+
+    /// The app screen, taken at the station of the last picture while its Live Activity shows: the status row
+    /// then shows the station on the lock screen, as for a rider at a station, and the set tells one story.
+    @MainActor
+    private func saveTheAppScreen(of app: XCUIApplication, showing station: String) {
+        let shown = steps.shownStation(in: app)
+        XCTAssertTrue(
+            steps.waitUntil { shown.label.contains(station) && !shown.label.contains("(") },
+            "The status row does not show \(station) on the lock screen, with no (example): \(shown.label)"
+        )
+        let helpLink = app.descendants(matching: .any)["helpLink"].firstMatch
+        XCTAssertTrue(helpLink.isHittable, "The link Help and feedback is not on the screen")
+        let screen = steps.stillScreenshot()
+        save(screen, named: "app")
+        // The store picture of the app ends just under this link: the rows of the caption show, the footer not.
+        saveTheRows(of: helpLink, in: screen, named: "app-help-row")
     }
 
     /// Answers the questions of iOS that show (the first run on a reset Simulator), then checks that the

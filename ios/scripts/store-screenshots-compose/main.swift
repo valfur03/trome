@@ -51,7 +51,7 @@ let pictures = [
     Picture(name: "rer", line: 0x5091CB, badge: "B", square: true, badgeInk: 0xFFFFFF,
             headlines: ["en": "Your RER, minute by minute.", "fr": "Votre RER, minute par minute."]),
     Picture(name: "app", line: 0x2A3BC0, badge: nil, square: false, badgeInk: 0xFFFFFF,
-            headlines: ["en": "One screen, set once.", "fr": "Un seul écran, réglé une fois."]),
+            headlines: ["en": "Without a tap, your trains show up.", "fr": "Sans rien ouvrir, vos trains s’affichent."]),
 ]
 let linePictures = 3   // the line runs across the first three; it goes behind the phone of the app, so none of it shows there
 
