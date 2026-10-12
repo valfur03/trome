@@ -110,30 +110,49 @@ const primAnswers: Situation = ({ set, stop, primAnswer, prim }) => {
   return ask(set, stop);
 };
 
-// Each "when" of a recorded set, as the server is brought to it. A recorded "when" with no situation here fails the check.
-const situations: Record<string, Situation> = {
-  "PRIM answers": primAnswers,
-  "PRIM answers with no train": primAnswers,
-  "the calls of the hour are spent, and the server holds a recent answer of the stop": async ({ set, stop, primAnswer, prim }) => {
-    prim.reply = () => new Response(primAnswer);
-    await ask(set, stop);
-    await spendTheCallsOfTheHour(set, prim);
-    return ask(set, stop);
+// Each "when" of a recorded set, in each way that the server meets it, as the server is brought to it.
+// A recorded "when" with no situation here fails the check. A way is added when the server gets a new path to the same answer.
+const situations: Record<string, Record<string, Situation>> = {
+  "PRIM answers": { "with the recorded answer": primAnswers },
+  "PRIM answers with no train": { "with the recorded answer": primAnswers },
+  "the calls of the hour are spent, and the server holds a recent answer of the stop": {
+    "after an answer of the stop": async ({ set, stop, primAnswer, prim }) => {
+      prim.reply = () => new Response(primAnswer);
+      await ask(set, stop);
+      await spendTheCallsOfTheHour(set, prim);
+      return ask(set, stop);
+    },
   },
-  "the calls of the hour are spent": async ({ set, stop, primAnswer, prim }) => {
-    prim.reply = () => new Response(primAnswer);
-    await spendTheCallsOfTheHour(set, prim);
-    return ask(set, stop);
+  "the calls of the hour are spent": {
+    "with no answer of the stop": async ({ set, stop, primAnswer, prim }) => {
+      prim.reply = () => new Response(primAnswer);
+      await spendTheCallsOfTheHour(set, prim);
+      return ask(set, stop);
+    },
   },
-  "PRIM answered 429": ({ set, stop, prim }) => {
-    prim.reply = () => new Response('{"message":"Too many requests"}', { status: 429 });
-    return ask(set, stop);
+  "PRIM answered 429": {
+    "with status 429": ({ set, stop, prim }) => {
+      prim.reply = () => new Response('{"message":"Too many requests"}', { status: 429 });
+      return ask(set, stop);
+    },
   },
-  "PRIM fails": ({ set, stop, prim }) => {
-    prim.reply = () => new Response('{"message":"Internal error"}', { status: 500 });
-    return ask(set, stop);
+  "PRIM fails": {
+    "with status 500": ({ set, stop, prim }) => {
+      prim.reply = () => new Response('{"message":"Internal error"}', { status: 500 });
+      return ask(set, stop);
+    },
+    "with no connection": ({ set, stop, prim }) => {
+      prim.reply = () => "unreachable";
+      return ask(set, stop);
+    },
+    "with status 200 and no times": ({ set, stop, prim }) => {
+      prim.reply = () => new Response("<html>Bad gateway</html>");
+      return ask(set, stop);
+    },
   },
-  "the server does not accept the app token": ({ set, stop, promise }) => ask(set, stop, promise.requestHeaders),
+  "the server does not accept the app token": {
+    "with a token it does not know": ({ set, stop, promise }) => ask(set, stop, promise.requestHeaders),
+  },
 };
 
 async function forgetEverything(): Promise<void> {
@@ -165,16 +184,17 @@ describe("the recorded sets of promises of contracts/builds/", () => {
         expect(stops.length, `${builds}: askFor "${promise.askFor}" names no stop`).toBeGreaterThan(0);
 
         for (const { stop, prim: recording } of stops) {
-          const prim = fakePrim();
-          const primAnswer = file(promise.prim ?? recording);
-          const answered = await situation?.({ set, promise, stop, primAnswer, prim });
-          const problems = answered === undefined ? ["no answer"] : brokenPromises(promise, answered, primAnswer);
-          expect(
-            problems,
-            `The server breaks a promise to builds ${builds} (contracts/builds/${folder}/promises.json): when ${promise.when}, for ${stop}, ` +
-              `they read ${promise.reads}. Riders of these builds still use them: change the server by adding, never by changing what they read.`,
-          ).toEqual([]);
-          await forgetEverything();
+          for (const [way, bring] of Object.entries(situation ?? {})) {
+            const prim = fakePrim();
+            const primAnswer = file(promise.prim ?? recording);
+            const answered = await bring({ set, promise, stop, primAnswer, prim });
+            expect(
+              brokenPromises(promise, answered, primAnswer),
+              `The server breaks a promise to builds ${builds} (contracts/builds/${folder}/promises.json): when ${promise.when} (${way}), for ${stop}, ` +
+                `they read ${promise.reads}. Riders of these builds still use them: change the server by adding, never by changing what they read.`,
+            ).toEqual([]);
+            await forgetEverything();
+          }
         }
       });
     }
