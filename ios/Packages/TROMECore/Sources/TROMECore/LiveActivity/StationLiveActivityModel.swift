@@ -37,11 +37,17 @@ public final class StationLiveActivityModel {
     private var inputs: StationLiveActivityInputs?
     private var firstLineIndex: Int
     private var keptTimesStaleDate: Date?
+    /// How long the app holds back an update that iOS would draw as the last one sent. iOS draws each update in
+    /// the widget process, and an update that comes during a draw cancels it; on a busy iPhone, iOS gives a draw
+    /// about 10 s and tries it twice. Past that time, the same update is sent again, as the trains refresh does
+    /// every 30 s: if iOS failed to draw the last one, the Live Activity still shows the content before it.
+    static let sameDrawingWait: TimeInterval = 25
+
     @ObservationIgnored private let systemCalls = InOrderCalls()
     @ObservationIgnored private var startCount = 0
-    /// The last content that the app gave iOS, in the order of the system calls: an update that iOS would draw
-    /// the same is not sent (`ContentState.drawsTheSame(as:)`).
-    @ObservationIgnored private var sentContent: StationActivityAttributes.ContentState?
+    /// The last content that the app gave iOS, in the order of the system calls, and when: an update that iOS
+    /// would draw the same is not sent while iOS may still draw the last one (`send(_:afterATap:)`).
+    @ObservationIgnored private var lastSend: (content: StationActivityAttributes.ContentState, at: Date)?
 
     public init(
         client: any StationLiveActivityClient,
@@ -55,7 +61,6 @@ public final class StationLiveActivityModel {
         self.areActivitiesEnabled = client.areActivitiesEnabled
         let shown = client.shownContent
         self.firstLineIndex = shown?.trains.linesPage?.firstIndex ?? 0
-        self.sentContent = client.isShowing ? shown : nil
         if client.isShowing, let shown, shown.trains.linesPage != nil,
            let saved = store?.load(), saved.station.name == shown.stationName {
             inputs = saved
@@ -80,7 +85,7 @@ public final class StationLiveActivityModel {
         } else {
             do {
                 try client.start(content)
-                sentContent = content
+                lastSend = (content, now())
             } catch let error as StationLiveActivityError {
                 startError = error
                 areActivitiesEnabled = client.areActivitiesEnabled
@@ -168,7 +173,7 @@ public final class StationLiveActivityModel {
     public func stop() async {
         isShowing = false
         forgetShownContent()
-        sentContent = nil
+        lastSend = nil
         let startsBeforeTheEnd = startCount
         await systemCalls.run { [client] in await client.end() }
         if startCount == startsBeforeTheEnd {
@@ -184,7 +189,7 @@ public final class StationLiveActivityModel {
         }
         if !isShowing {
             forgetShownContent()
-            sentContent = nil
+            lastSend = nil
         }
     }
 
@@ -270,14 +275,16 @@ public final class StationLiveActivityModel {
         keptTimesStaleDate.map { date >= $0 } ?? false
     }
 
-    /// Sends the content to iOS, unless iOS would draw it as it draws the last one. After a tap on the Live
-    /// Activity, the content is always sent: iOS dims the rows of the trains (`invalidatableContent()`) until
-    /// the next update.
+    /// Sends the content to iOS, unless iOS would draw it as it draws the last one, sent less than
+    /// `sameDrawingWait` ago. After a tap on the Live Activity, the content is always sent: iOS dims the rows
+    /// of the trains (`invalidatableContent()`) until the next update.
     private func send(_ content: StationActivityAttributes.ContentState, afterATap: Bool = false) async {
-        if !afterATap, let sentContent, content.drawsTheSame(as: sentContent) {
+        let date = now()
+        if !afterATap, let lastSend, date.timeIntervalSince(lastSend.at) < Self.sameDrawingWait,
+           content.drawsTheSame(as: lastSend.content) {
             return
         }
-        sentContent = content
+        lastSend = (content, date)
         await systemCalls.run { [client] in await client.update(content) }
     }
 

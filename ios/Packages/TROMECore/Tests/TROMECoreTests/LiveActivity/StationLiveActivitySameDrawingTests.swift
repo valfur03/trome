@@ -38,6 +38,19 @@ struct StationLiveActivitySameDrawingTests {
         #expect(model.content?.updatedAt == clock.now)
     }
 
+    /// If iOS failed to draw the last update, the Live Activity still shows the station before it: the next
+    /// refresh sends it again.
+    @Test func sendsTheSameStationWithNoTimesAgainOnceIOSHadTheTimeToDrawIt() async {
+        let model = makeModel()
+        await model.start(station: pigalle, trains: .missingKey)
+        await model.update(station: anvers, trains: .missingKey)
+
+        clock.advance(by: StationLiveActivityModel.sameDrawingWait)
+        await model.update(station: anvers, trains: .missingKey)
+
+        #expect(client.updates.map(\.stationName) == ["Anvers", "Anvers"])
+    }
+
     @Test func sendsOneUpdateForASwitchToAStationWithNoTimes() async {
         let model = makeModel()
         await model.start(station: pigalle, trains: .missingKey)
