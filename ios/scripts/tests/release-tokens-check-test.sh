@@ -1,7 +1,7 @@
 #!/bin/sh
 # Tests release-tokens-check.sh against a fake server that answers with the examples of contracts/api/,
 # and a fake release guide and token file. It proves the line of each build, one request per build in the field,
-# the stop on a spent budget, the lines of a missing, empty or incomplete file, that it reads the table of the
+# the stop on a spent budget, the lines of a missing, empty or incomplete file or of a placeholder, that it reads the table of the
 # real release guide, and that no token is in the output, on the command line of a process, or in a file.
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
@@ -184,6 +184,8 @@ run
 expect "a refused token: its build says refused, the next build is still asked" "$(line 1)|$(line 2)" "1.0.0 (2): refused|1.0.1 (3): accepted"
 expect "a refused token: a last line that says refused and what to do" "$(starts 3 'Refused: the production server refuses the token of 1 of the 2 builds')" \
     "Refused: the production server refuses the token of 1 of the 2 builds"
+expect "a refused token: the last line gives the remedy of Add a token, and its step 6 apart" "$(line 3 | sed 's/.*Add a token in server/Add a token in server/')" \
+    "Add a token in server/guide/deploy.md says; at its step 6, paste the old list again instead, as that step says."
 expect "a refused token: the check fails, after one request per build" "$(outcome) $(requests)" "status 1 2"
 expect "a refused token: no token is anywhere" "$(leaks)" "no"
 
@@ -225,7 +227,7 @@ expect "a server that cannot be reached: no token is anywhere" "$(leaks)" "no"
 rm -f "$tokens"
 run
 expect "a missing file: one line that names it, how to make it, and the builds to add" \
-    "$(output | grep -c '^No ios/Config/BuildTokens.txt: make it with cp -n ios/Config/BuildTokens.example.txt ios/Config/BuildTokens.txt, add the app token of each build in the field (2, 3)')$(output | wc -l | tr -d ' ')" "11"
+    "$(output | grep -c '^No ios/Config/BuildTokens.txt: make it with cp -n ios/Config/BuildTokens.example.txt ios/Config/BuildTokens.txt, add the app token of each build in the field (2, 3) as "The app token of each build" in the release guide says, then run this again.$')$(output | wc -l | tr -d ' ')" "11"
 expect "a missing file: the check fails, with no request" "$(outcome) $(requests)" "status 1 0"
 expect "a missing file: nothing is written" "$(leaks)" "no"
 
@@ -252,6 +254,14 @@ run
 expect "a line that is not <build> = <token>: its number, never its text, and no request" \
     "$(output) $(outcome) $(requests) $(leaks)" \
     "Line 4 of ios/Config/BuildTokens.txt is not \"<build> = <its app token>\": write the build number, =, and its token, then run this again. status 1 0 no"
+
+for placeholder in '<token>' '<the app token of build 3>'; do
+    write_tokens 2 "$one"
+    printf '3 = %s\n' "$placeholder" >> "$tokens"
+    run
+    expect "a placeholder of the guide ($placeholder): its line number, and no request" "$(output) $(outcome) $(requests)" \
+        "Line 3 of ios/Config/BuildTokens.txt still holds a placeholder in < >: put the app token of that build in its place, from your password manager, then run this again. status 1 0"
+done
 
 write_tokens 2 "$one" 3 "$two"
 printf '\r\n' >> "$tokens"

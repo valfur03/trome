@@ -41,10 +41,13 @@ field=$(printf '%s\n' "$builds" | grep '|field$')
 numbers=$(printf '%s\n' "$field" | cut -d '|' -f 2 | tr '\n' ' ' | sed 's/ $//; s/ /, /g')
 
 # The file: one line per build, "<build number> = <its app token>"; // starts a comment, as in Server.xcconfig.
-[ -f "$tokens" ] || say "No $tokens_file: make it with cp -n ios/Config/BuildTokens.example.txt $tokens_file, add the app token of each build in the field ($numbers) as \"$section\" in the release guide says, then run this again."
+[ -f "$tokens" ] || say "No $tokens_file: make it with cp -n ios/Config/BuildTokens.example.txt $tokens_file, add the app token of each build in the field ($numbers) as \"The app token of each build\" in the release guide says, then run this again."
 lines() { sed -e 's/\r$//' -e 's|//.*||' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$tokens"; }
 lines | grep -q . ||
     say "$tokens_file has no token: add one line \"<build> = <its app token>\" for each build in the field ($numbers), from your password manager, then run this again."
+# The number of a line that still holds a placeholder of the guide, as "3 = <token>": an app token is hex, so it has no < or >.
+placeholder=$(lines | grep -n '[<>]' | cut -d : -f 1 | head -n 1)
+[ -z "$placeholder" ] || say "Line $placeholder of $tokens_file still holds a placeholder in < >: put the app token of that build in its place, from your password manager, then run this again."
 # The number of a line that is not "<build> = <token>": cut keeps the rest of the line, and so any token, out of the variable.
 bad=$(lines | grep -nv '^$' | grep -Ev '^[0-9]+:[0-9]+[[:space:]]*=[[:space:]]*[^[:space:]]+$' | cut -d : -f 1 | head -n 1)
 [ -z "$bad" ] || say "Line $bad of $tokens_file is not \"<build> = <its app token>\": write the build number, =, and its token, then run this again."
@@ -104,7 +107,7 @@ done <<EOF
 $field
 EOF
 
-[ "$refused" -eq 0 ] || echo "Refused: the production server refuses the token of $refused of the $total builds in the field. If its line in $tokens_file matches your password manager, the production list lost that token: set the whole list again at once, with the token of every build in the field and the newest one, as Add a token in server/guide/deploy.md says."
+[ "$refused" -eq 0 ] || echo "Refused: the production server refuses the token of $refused of the $total builds in the field. If its line in $tokens_file matches your password manager, the production list lost that token: set the whole list again at once, with the token of every build in the field and the newest one, as Add a token in server/guide/deploy.md says; at its step 6, paste the old list again instead, as that step says."
 [ -z "$left" ] || say "Not finished: the production server has no PRIM calls left this hour ($left), so the builds marked not asked wait: run this again in an hour."
 [ "$refused" -ne 0 ] || say "OK: the production server accepts the app token of each build in the field ($numbers)." 0
 exit 1
