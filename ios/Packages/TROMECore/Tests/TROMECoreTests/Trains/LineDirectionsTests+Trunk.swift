@@ -41,7 +41,7 @@ extension LineDirectionsTests {
         let lines = try #require(content.trains.linesPage?.lines)
         return lines.flatMap(\.directions).map { direction in
             ShownDirection(label: direction.label, trains: direction.trains.map { train in
-                ShownTrain(destination: train.destination, minutes: train.countdownMinutes(at: now))
+                ShownTrain(destination: train.destination, minutes: train.countdownMinutes(at: now, on: .rer))
             })
         }
     }

@@ -34,7 +34,7 @@ enum FakeTrainsScenario: String, Codable, CaseIterable, Sendable {
         case .atPlatformBoth:
             [waiting(leavesAt: 5), waiting(leavesAt: 7)]
         case .tenToNine:
-            [arriving(leavesAt: 6), arriving(leavesAt: 12)]
+            [arriving(leavesAt: 7), arriving(leavesAt: 13)]
         case .forkEndWithOneTrain, .forkEndWithNoTrain, .forkEndOverAnHour:
             [arriving(leavesAt: 4), arriving(leavesAt: 8)]
         case .serverOut, .serverOutUntilTomorrow, .appTokenRefused:

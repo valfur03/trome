@@ -56,7 +56,7 @@ extension StationActivityContentTests {
 
         #expect(trains.map(\.destination) == ["Saint-Germain-en-Laye", "Boissy-Saint-Léger"])
         #expect(trains.map(\.status) == [nil, nil])
-        #expect(trains.map { $0.countdownMinutes(at: now) } == [3, 2])
+        #expect(trains.map { $0.countdownMinutes(at: now, on: .rer) } == [3, 2])
     }
 
     @Test func saysAnRERTrainThatLeavesInLessThanOneMinuteIsApproaching() throws {

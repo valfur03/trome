@@ -14,12 +14,30 @@ public struct LineDirection: Codable, Hashable, Sendable {
             self.arrivalTime = arrivalTime
         }
 
-        public var roundedUpCountdownEnd: Date {
-            time.addingTimeInterval(60)
+        /// The moment when the wait of this train reaches "0" on the Live Activity, which shows the whole minutes left
+        /// until it (rounded down), and holds "0" after it.
+        ///
+        /// A metro wait counts down to the train time, so it reads 3, 2, 1, 0 like the platform screens of the metro,
+        /// and its "0" (under a minute) agrees with the status "approaching" (arrival under 60 s), as PRIM gives a
+        /// metro train the same arrival and departure. So it is never more than the real wait.
+        /// An RER wait counts down to the train time + 60 s, so it reads the minutes rounded up and never "0" while the
+        /// train has not left: an RER row says "Approaching" in its last minute, a word that only the app can draw,
+        /// and a closed app cannot draw it in time.
+        public func countdownEnd(on mode: TransitMode) -> Date {
+            switch mode {
+            case .metro: time
+            case .rer: time.addingTimeInterval(60)
+            }
         }
 
-        public func countdownMinutes(at now: Date) -> Int {
-            max(1, Int((roundedUpCountdownEnd.timeIntervalSince(now) / 60).rounded(.down)))
+        /// The number that the wait of this train reads at `now`: the whole minutes left until its countdown end.
+        /// An RER wait never reads 0 (see `countdownEnd(on:)`).
+        public func countdownMinutes(at now: Date, on mode: TransitMode) -> Int {
+            let minutes = DepartureTime.minutes(until: countdownEnd(on: mode), from: now)
+            return switch mode {
+            case .metro: minutes
+            case .rer: max(1, minutes)
+            }
         }
     }
 

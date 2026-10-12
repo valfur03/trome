@@ -3,12 +3,17 @@ import SwiftUI
 
 struct PanamMinutes: View {
     private static let textWidth: CGFloat = 400
+    /// The timer of iOS shows a second until it is wholly gone (179.5 s left reads "3:00"), so its minutes would read
+    /// one more than the rule of `countdownMinutes(at:on:)` in the last second of each minute, and one more than the
+    /// spoken wait. Counting to just under a second before the end makes them agree to the millisecond.
+    private static let secondShownUntilGone: TimeInterval = 0.999
 
     let train: LineDirection.Train
+    let mode: TransitMode
     let drawnAt: Date
 
     var body: some View {
-        let digits = String(train.countdownMinutes(at: drawnAt)).count
+        let digits = String(train.countdownMinutes(at: drawnAt, on: mode)).count
         Text(verbatim: String(repeating: "0", count: digits))
             .hidden()
             .overlay {
@@ -58,7 +63,7 @@ struct PanamMinutes: View {
     }
 
     private var countdown: ClosedRange<Date> {
-        let end = train.roundedUpCountdownEnd
+        let end = train.countdownEnd(on: mode).addingTimeInterval(-Self.secondShownUntilGone)
         return min(drawnAt, end)...end
     }
 }

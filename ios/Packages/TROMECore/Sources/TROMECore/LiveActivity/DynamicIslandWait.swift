@@ -2,7 +2,7 @@ import Foundation
 
 public struct DynamicIslandWait: Hashable, Sendable {
     public enum Wait: Hashable, Sendable {
-        case minutes(LineDirection.Train)
+        case minutes(LineDirection.Train, TransitMode)
         case approaching
         case atPlatform
         case overAnHour
@@ -15,7 +15,7 @@ public struct DynamicIslandWait: Hashable, Sendable {
     }
 
     public enum MinimalWait: Hashable, Sendable {
-        case minutes(LineDirection.Train)
+        case minutes(LineDirection.Train, TransitMode)
         case zero
         case dash
         case updateTheApp
@@ -31,7 +31,7 @@ public struct DynamicIslandWait: Hashable, Sendable {
 
     public var minimalWait: MinimalWait {
         switch wait {
-        case .minutes(let train): .minutes(train)
+        case .minutes(let train, let mode): .minutes(train, mode)
         case .approaching, .atPlatform: .zero
         case .overAnHour, .noTrain, .stale, .loading, .noData, .timesUnavailable: .dash
         case .updateTheApp: .updateTheApp
@@ -71,7 +71,7 @@ private extension LinesPage {
             let wait: DynamicIslandWait.Wait = switch train.status {
             case .approaching: .approaching
             case .atPlatform: .atPlatform
-            case nil: .minutes(train)
+            case nil: .minutes(train, soonest.line.mode)
             }
             return DynamicIslandWait(line: soonest.line, wait: wait)
         }

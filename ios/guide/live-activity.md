@@ -86,7 +86,7 @@ The page decides which look draws it, in `LinesPage.panamStripsLine` and `LinesP
 
 | State of a train | Metro strip, fork row | RER row |
 |---|---|---|
-| In 1 minute or more, within the hour | The minutes, rounded up, as a bare number: "4" means 4 minutes | The same |
+| In 1 minute or more, within the hour | The whole minutes left, rounded down, as a bare number: "4" means 4 minutes and some seconds | The minutes, rounded up: "4" means 3 minutes and some seconds, up to 4 minutes |
 | Less than a minute away | "0" | "Approaching" ("À l'approche") |
 | At the platform: PRIM says `VehicleAtStop`, or the time is between the arrival and the departure | "At the platform" ("À quai") on one line; at a smaller size when it does not fit, then on two lines | "At the platform" ("À quai") |
 | Next train over 60 minutes away | "> 1 h", across both columns | The same, in the box |
@@ -98,8 +98,14 @@ The page decides which look draws it, in `LinesPage.panamStripsLine` and `LinesP
   Why: a metro platform holds one train of a direction, and trains do not pass each other there, so "At the platform" behind a train still on its way is wrong, and a rider could run for a train that is minutes away.
   Each platform counts alone: at a fork station where each branch has its own platform, the train of one branch may be at its platform while the other branch waits for its train.
   RER rows keep what PRIM says, as an RER station can have several tracks for one direction.
+- A metro wait is rounded down, so it reads 3, 2, 1, 0, like the platform screens of the metro, which write "1", and "0" under a minute.
+  Why: a rider compares the box with the platform screen, and a wait rounded up read one minute more than the screen.
+  Its "0" starts at the same second as "Less than a minute away", because PRIM gives a metro train the same arrival and departure, and the box is never more than the real wait.
+  A wait rounded to the nearest minute would read "1" in a part of the minute where the state reads "0".
+- An RER wait is rounded up, so it never reads "0" before the train leaves.
+  Why: its last minute is the word "Approaching", which only the app can draw, and a closed app cannot draw it in time; no source says how the RER screens round.
 - The number counts down by itself, also with the app closed, because it is a timer of iOS.
-  Counting never reaches "0": "0" is the state of the last minute.
+  It stops at "0" and holds it after the train time, until the app draws the page again or iOS hides the waits ([the stale rule](#the-stale-rule)): a train that has left never reads a number that goes up.
 - An RER row never says "0", and draws no other status than the two words: PRIM gives none that a rider can trust.
   The two words share one size, the largest at which the longer one fits the box.
 - At a station with one line, the header of a strip page says "1st" and "2nd" ("1er", "2e") above the two columns.
@@ -177,8 +183,10 @@ So the app sends a new content in these cases:
 Between two updates the numbers count down by themselves.
 Only a few formats do that, so use one of these:
 
-- For "4 minutes", the SwiftUI style `.offset`.
-- For a bare number, `PanamMinutes`: the timer of iOS, rounded up like `.offset`, in a box as wide as its digits.
+- For "4 minutes", `Text(minutesLeftUntil:)`: a timer style of SwiftUI, rounded down, that holds "0 minutes" after its end.
+  Never `.offset` for a wait: it counts up again after its end, so a train that has left would read "1 minute" while the app is suspended.
+- For a bare number, `PanamMinutes`: the timer of iOS, which stops at "0", in a box as wide as its digits.
+- Both count to `LineDirection.Train.countdownEnd(on:)`: the train time for a metro wait, rounded down, and the train time plus 60 seconds for an RER wait, rounded up.
 - Never `Date.ComponentsFormatStyle`, which freezes until the next update, and never a format style of your own, which makes iOS draw the whole Live Activity as a grey placeholder.
 
 ### The stale rule
@@ -216,7 +224,7 @@ The app has no timetable, so it cannot tell a line that stopped for the night fr
 
 ## VoiceOver
 
-Each strip and each row is one element that reads the end of line and its waits in minutes ("Mairie d'Issy, 4 minutes, then 8 minutes"), or "Approaching", "At the platform", never "zero".
+Each strip and each row is one element that reads the end of line and its waits in minutes ("Mairie d'Issy, 4 minutes, then 8 minutes"), or "Approaching", "At the platform": the same number as the box.
 The header reads the line and the station (or "walk to" another station), then "Show the next line" and the number of other lines.
 In the compact view the badge reads the line and the number reads the wait; the minimal view reads both.
 The short words of the rare states read in full: "> 1 h" reads "In over 1 hour", "Loading…" reads "Loading the next trains…", "Open the app" reads "Open the app for new times.", "Times unavailable" reads "Times unavailable for now", and "Update the app" reads "Update the app to get the times.".

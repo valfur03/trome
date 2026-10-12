@@ -90,7 +90,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             let pageNumber = Self.firstForkStatesPage + page
             rows += try drawEveryVariant(of: state, at: forkStation, page: pageNumber, into: outDir)
         }
-        rows += try drawTheRERStates(of: catalog, into: outDir)
+        rows += try drawTheGoneTrainStates(at: stripStation, into: outDir) + drawTheRERStates(of: catalog, into: outDir)
         rows += try await drawTheServerOutStates(of: catalog, fake: fake, into: outDir)
         rows += try drawTheNoTimesStates(of: catalog, into: outDir)
         try rows.joined(separator: "\n").write(

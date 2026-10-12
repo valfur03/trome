@@ -57,12 +57,13 @@ struct DynamicIslandWaitTests {
         let island = try abbesses(at: recordedAt)
 
         #expect(island.line?.name == "12")
-        guard case .minutes(let train) = island.wait else {
+        guard case .minutes(let train, let mode) = island.wait else {
             Issue.record("Expected minutes, got \(island.wait)")
             return
         }
         #expect(train.time == Fixture.date("2026-09-26T10:02:30Z"))
-        #expect(train.countdownMinutes(at: recordedAt) == 3)
+        #expect(mode == .metro)
+        #expect(train.countdownMinutes(at: recordedAt, on: mode) == 2)
     }
 
     @Test func readsZeroWhenTheNextTrainIsApproachingThenAtThePlatformFromARecordedAnswer() throws {
@@ -91,11 +92,12 @@ struct DynamicIslandWaitTests {
 
         #expect(island.line?.mode == .rer)
         #expect(island.line?.name == "A")
-        guard case .minutes(let train) = island.wait else {
+        guard case .minutes(let train, let mode) = island.wait else {
             Issue.record("Expected minutes, got \(island.wait)")
             return
         }
         #expect(train.time == Fixture.date("2026-09-27T08:02:00Z"))
+        #expect(mode == .rer)
     }
 
     @Test func leadsWithTheLineWhoseTrainComesFirstAlsoWhenItIsNotTheFirstLineOrOnThePage() {
@@ -107,7 +109,7 @@ struct DynamicIslandWaitTests {
         let island = content(lines).dynamicIslandWait(isStale: false)
 
         #expect(island.line == line14)
-        #expect(island.wait == .minutes(train(inSeconds: 100)))
+        #expect(island.wait == .minutes(train(inSeconds: 100), .metro))
     }
 
     @Test func leadsWithAnotherLineByItselfWhenTheSoonestTrainHasLeft() {
@@ -138,7 +140,8 @@ struct DynamicIslandWaitTests {
 
         let island = content([fork]).dynamicIslandWait(isStale: false)
 
-        #expect(island == DynamicIslandWait(line: line13, wait: .minutes(train(inSeconds: 120, to: "Les Courtilles"))))
+        let wait = DynamicIslandWait.Wait.minutes(train(inSeconds: 120, to: "Les Courtilles"), .metro)
+        #expect(island == DynamicIslandWait(line: line13, wait: wait))
     }
 
     @Test func readsTheSoonestTrainOfALiveActivityWhoseOlderAppSentTheMarkOfItsEnd() throws {
@@ -224,7 +227,7 @@ struct DynamicIslandWaitTests {
         )
         let older = ContentState(stationName: "Station", trains: .lines(page), updatedAt: now)
 
-        guard case .minutes(let train) = older.dynamicIslandWait(isStale: false).wait else {
+        guard case .minutes(let train, _) = older.dynamicIslandWait(isStale: false).wait else {
             Issue.record("Expected minutes")
             return
         }
@@ -234,6 +237,6 @@ struct DynamicIslandWaitTests {
     @Test func showsTheMinutesInTheMinimalViewToo() {
         let lines = [LineTrains(line: line13, directions: [direction("Châtillon", [train(inSeconds: 100)])])]
 
-        #expect(content(lines).dynamicIslandWait(isStale: false).minimalWait == .minutes(train(inSeconds: 100)))
+        #expect(content(lines).dynamicIslandWait(isStale: false).minimalWait == .minutes(train(inSeconds: 100), .metro))
     }
 }

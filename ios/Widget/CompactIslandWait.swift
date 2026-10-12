@@ -20,8 +20,8 @@ struct CompactIslandWait: View {
 
     @ViewBuilder private var wait: some View {
         switch island.wait {
-        case .minutes(let train):
-            IslandNumber(value: .minutes(train), drawnAt: drawnAt)
+        case .minutes(let train, let mode):
+            IslandNumber(value: .minutes(train, mode), drawnAt: drawnAt)
         case .approaching:
             IslandNumber(value: .zero, drawnAt: drawnAt)
         case .atPlatform:

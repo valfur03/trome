@@ -81,11 +81,8 @@ private struct PanamWait: View {
     let isNext: Bool
     let isCompact: Bool
 
-    private static let widestMinutes = SystemFormatStyle.DateOffset(
-        to: Date(timeIntervalSinceReferenceDate: 59 * 60 + 30),
-        allowedFields: [.minute],
-        sign: .never
-    ).format(Date(timeIntervalSinceReferenceDate: 0))
+    private static let widestMinutes = Text.minutesLeft(until: Date(timeIntervalSinceReferenceDate: 59 * 60 + 30))
+        .format(Date(timeIntervalSinceReferenceDate: 0))
 
     var body: some View {
         label
@@ -108,10 +105,7 @@ private struct PanamWait: View {
             Text(Self.widestMinutes)
                 .hidden()
                 .overlay {
-                    Text(
-                        .currentDate,
-                        format: .offset(to: train.roundedUpCountdownEnd, allowedFields: [.minute], sign: .never)
-                    )
+                    Text(minutesLeftUntil: train.countdownEnd(on: .metro))
                 }
         }
     }

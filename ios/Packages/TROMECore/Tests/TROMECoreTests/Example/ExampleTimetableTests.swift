@@ -73,9 +73,9 @@ struct ExampleTimetableTests {
     }
 
     @Test(arguments: [
-        (minute: 1, laDefense: [5, 8], vincennes: [7, 10]),
-        (minute: 3, laDefense: [3, 6], vincennes: [5, 8]),
-        (minute: 5, laDefense: [1, 4], vincennes: [3, 6])
+        (minute: 1, laDefense: [4, 7], vincennes: [6, 9]),
+        (minute: 3, laDefense: [2, 5], vincennes: [4, 7]),
+        (minute: 5, laDefense: [0, 3], vincennes: [2, 5])
     ])
     func theLockScreenCountsDownWhileTheAppIsSuspended(
         minute: Int,
@@ -87,7 +87,7 @@ struct ExampleTimetableTests {
         let page = try #require(lastUpdate.trains.linesPage)
         let line = try #require(page.lines.first)
         let shown = Dictionary(uniqueKeysWithValues: line.directions.map { direction in
-            (direction.label, direction.trains.map { $0.countdownMinutes(at: now) })
+            (direction.label, direction.trains.map { $0.countdownMinutes(at: now, on: .metro) })
         })
 
         #expect(line.line.name == "1")

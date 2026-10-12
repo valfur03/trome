@@ -4,8 +4,8 @@ import SwiftUI
 extension DynamicIslandWait {
     var spokenWait: Text {
         switch wait {
-        case .minutes(let train):
-            Text(.currentDate, format: .offset(to: train.roundedUpCountdownEnd, allowedFields: [.minute], sign: .never))
+        case .minutes(let train, let mode):
+            Text(minutesLeftUntil: train.countdownEnd(on: mode))
         case .approaching:
             Text("Approaching")
         case .atPlatform:

@@ -97,17 +97,20 @@ struct FakeTrainsScenarioTests {
     func countsTheSecondTrainOfTheForkDirectionFromTenToNineSoonAfterTheLaunchThenEverySixMinutes(
         station: String
     ) async throws {
-        for drawnAfter in [0.0, 7.1] {
+        let atTheLaunch = try await page(at: station, .tenToNine, afterMinutes: 0)
+        let firstFork = try #require(atTheLaunch.lines[0].directions.first { $0.branchEnds != nil })
+        let firstTrainLeaves = try #require(firstFork.trains.first).time.timeIntervalSince(start) / 60
+        for drawnAfter in [0.0, firstTrainLeaves + 0.1] {
             let drawnAt = start.addingTimeInterval(drawnAfter * 60)
             let page = try await page(at: station, .tenToNine, afterMinutes: drawnAfter)
             let fork = try #require(page.lines[0].directions.first { $0.branchEnds != nil })
             let first = try #require(fork.trains.first)
             let second = try #require(fork.trains.dropFirst().first)
-            let countsToNine = second.time.addingTimeInterval(-9 * 60 + 1)
+            let countsToNine = second.time.addingTimeInterval(-10 * 60 + 1)
 
-            #expect(first.countdownMinutes(at: drawnAt) < 10)
-            #expect(second.countdownMinutes(at: drawnAt) >= 10)
-            #expect(second.countdownMinutes(at: countsToNine) == 9)
+            #expect(first.countdownMinutes(at: drawnAt, on: .metro) < 10)
+            #expect(second.countdownMinutes(at: drawnAt, on: .metro) >= 10)
+            #expect(second.countdownMinutes(at: countsToNine, on: .metro) == 9)
             #expect((60...5 * 60).contains(countsToNine.timeIntervalSince(drawnAt)))
             #expect(Set([first.destination, second.destination]) == Set(fork.branchEnds ?? []))
         }

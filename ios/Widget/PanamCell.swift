@@ -17,7 +17,7 @@ struct PanamCell: View {
                 PanamAtPlatformText()
             case nil:
                 if let train {
-                    PanamMinutes(train: train, drawnAt: drawnAt)
+                    PanamMinutes(train: train, mode: .metro, drawnAt: drawnAt)
                         .font(numberFont)
                 }
             }
@@ -34,7 +34,7 @@ struct PanamCell: View {
         case .atPlatform:
             Text("At the platform")
         case nil:
-            Text(.currentDate, format: .offset(to: train.roundedUpCountdownEnd, allowedFields: [.minute], sign: .never))
+            Text(minutesLeftUntil: train.countdownEnd(on: .metro))
         }
     }
 }

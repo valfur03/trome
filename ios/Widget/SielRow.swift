@@ -50,7 +50,7 @@ struct SielWait: View {
             case .atPlatform:
                 SielWord(word: "At the platform")
             case nil:
-                PanamMinutes(train: train, drawnAt: drawnAt)
+                PanamMinutes(train: train, mode: .rer, drawnAt: drawnAt)
                     .font(.subheadline.bold())
                     .monospacedDigit()
             }
@@ -65,7 +65,7 @@ struct SielWait: View {
         case .atPlatform:
             Text("At the platform")
         case nil:
-            Text(.currentDate, format: .offset(to: train.roundedUpCountdownEnd, allowedFields: [.minute], sign: .never))
+            Text(minutesLeftUntil: train.countdownEnd(on: .rer))
         }
     }
 }

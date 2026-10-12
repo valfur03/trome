@@ -10,8 +10,8 @@ struct IslandNumber: View {
     var body: some View {
         Group {
             switch value {
-            case .minutes(let train):
-                PanamMinutes(train: train, drawnAt: drawnAt)
+            case .minutes(let train, let mode):
+                PanamMinutes(train: train, mode: mode, drawnAt: drawnAt)
                     .foregroundStyle(PanamStrip.amber)
             case .zero:
                 Text(verbatim: "0")
