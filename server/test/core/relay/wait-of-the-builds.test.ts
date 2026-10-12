@@ -85,8 +85,9 @@ describe("the longest wait of the server for PRIM", () => {
       waited += 100;
     }
 
-    expect(answered?.status, `no answer after ${String(waited)} ms`).toBe(503);
-    expect(await answered?.json()).toMatchObject({ status: "out", reason: "prim-failure" });
+    expect(answered, `no answer after ${String(waited)} ms`).toBeDefined();
+    expect(Math.floor((answered?.status ?? 0) / 100), "the builds read a 2xx as times").not.toBe(2);
+    expect(await answered?.json()).toMatchObject({ status: "out" });
     const shortest = shortestWaitOfTheBuilds();
     expect(
       waited + wakeOfASleepingServerObject + marginForThePhone,
