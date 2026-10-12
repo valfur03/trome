@@ -66,6 +66,7 @@ To see it the same day, the server counts each PRIM answer with a `2xx` status t
 - it has visits, and none of them gives a line, a time and a destination.
 
 One visit with no time or no destination is normal PRIM data, so it does not count.
+A change of a value that keeps the shape, for example a new form of line id, does not count either: only riders' reports show it.
 The count is a number for each hour, with no stop and no answer: `unreadableAnswers` in the counts, `trome_unreadable_answers_total` and `trome_unreadable_answers_previous_day` in `/metrics`, and a line under the table of `make server-counts` for each day that has some.
 
 When it is not 0:
