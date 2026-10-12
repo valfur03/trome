@@ -24,7 +24,7 @@ The change that makes a new asset adds its row here: what it shows, and its comm
 App Store Connect makes the smaller sizes from them, the required medium display included.
 It needs no key: the trains are fake.
 `make store-screenshots-compose` composes them again from the last captures, with no Simulator, for example after a change of a headline.
-`STORE_STOPS=dots` draws plain dots on the stops of the line instead of the small drawings.
+The line across the first three pictures is drawn as on a line map, with round ends and bends: a white dot for each stop, and a white circle with a dark ring only where the line changes, at the borders of the pictures.
 The line badge of the pictures places its label by the rule of the badge of the app, from the same code ([`LabelInk.swift`](../Packages/TROMECore/Sources/TROMEBadge/LineBadge/LabelInk.swift)): a metro number by the weight of its ink across and by its box down, an RER letter by its box.
 
 The cuts of the screen can sit in Apple's iPhone bezel.
