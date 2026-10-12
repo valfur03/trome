@@ -2,6 +2,7 @@ import { env, exports } from "cloudflare:workers";
 import { abortAllDurableObjects, evictDurableObject, listDurableObjectIds, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
+import { parisDay } from "../../src/core/time/paris-time";
 import { everyStoredRow } from "./every-stored-row";
 import { fakePrim, recordedAnswer } from "./fake-prim";
 
@@ -157,6 +158,27 @@ describe("RelayObject", () => {
     expect(stored).not.toContain("42155");
     expect(stored).not.toContain('"answers"');
     expect(stored).not.toContain('"usage_stops"');
+  });
+
+  it("keeps, when the new version starts, the counts of an older version's table, with 0 for a newer tally, and counts on in it", async () => {
+    const hourStart = Math.floor(Date.now() / 3_600_000) * 3_600_000;
+    await runInDurableObject(relayObject(env), (_object, state) => {
+      const sql = state.storage.sql;
+      sql.exec("DROP TABLE IF EXISTS usage_hours");
+      sql.exec(
+        "CREATE TABLE usage_hours (hour_start INTEGER PRIMARY KEY, paris_day TEXT NOT NULL, app_calls INTEGER NOT NULL, cache_hits INTEGER NOT NULL, held_answers INTEGER NOT NULL, out_answers INTEGER NOT NULL, prim_calls INTEGER NOT NULL, errors INTEGER NOT NULL)",
+      );
+      sql.exec("INSERT INTO usage_hours VALUES (?, ?, 5, 3, 0, 0, 2, 0)", hourStart, parisDay(hourStart));
+    });
+
+    await evictDurableObject(relayObject(env));
+    fakePrim();
+    await departures(abbesses);
+    const response = await exports.default.fetch("https://server.test/v1/owner/counts", {
+      headers: { authorization: `Bearer ${env.OWNER_TOKEN}` },
+    });
+
+    expect(await response.json()).toMatchObject({ days: [{ cacheHits: 3, primCalls: 3, unreadableAnswers: 0 }] });
   });
 
   it("uses SQLite storage", async () => {
