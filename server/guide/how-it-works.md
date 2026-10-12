@@ -61,6 +61,7 @@ Each build parses the PRIM answer itself, so a change of PRIM's format can make 
 To see it the same day, the server counts each PRIM answer with a `2xx` status that lacks the shape that the builds read ([`build-shape.ts`](../src/core/relay/build-shape.ts)):
 
 - it has no service delivery (`Siri.ServiceDelivery`);
+- it has no list of deliveries, or a delivery with no list of visits (`MonitoredStopVisit`) that is not an error of PRIM for the stop: the builds would show no train at every stop, while an empty list only says that no train comes;
 - a field that the builds read has another type, so they cannot read the whole answer;
 - it has visits, and none of them gives a line, a time and a destination.
 

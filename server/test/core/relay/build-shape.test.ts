@@ -42,6 +42,18 @@ describe("hasTheShapeThatBuildsRead", () => {
     }
   });
 
+  it("refuses an answer whose list of deliveries or of visits is missing, as the builds then show no train at every stop", () => {
+    const recorded = primFixture("stop-monitoring-abbesses.json");
+    const changes = {
+      "renamed visits": recorded.replaceAll('"MonitoredStopVisit"', '"MonitoredStopVisits"'),
+      "renamed deliveries": recorded.replaceAll('"StopMonitoringDelivery"', '"StopMonitoringDeliveries"'),
+      "no delivery": '{"Siri":{"ServiceDelivery":{"StopMonitoringDelivery":[]}}}',
+    };
+    for (const [name, body] of Object.entries(changes)) {
+      expect(hasTheShapeThatBuildsRead(JSON.parse(body)), name).toBe(false);
+    }
+  });
+
   it("refuses an answer whose visits all lack the line, the time or the destination", () => {
     const changes: Record<string, (visit: Visit) => void> = {
       "renamed line": (visit) => {
