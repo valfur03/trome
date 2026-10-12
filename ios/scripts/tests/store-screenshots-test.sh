@@ -19,6 +19,7 @@ expect() {
 swiftc "$scripts/store-screenshots-compose/main.swift" "$scripts/../Packages/TROMECore/Sources/TROMEBadge/LineBadge/LabelInk.swift" \
     -o "$state/compose"
 swiftc "$tests/badge-centre.swift" -o "$state/badge-centre"
+swiftc "$tests/pixel-colours.swift" -o "$state/pixel-colours"
 out="$state/out"
 mkdir -p "$out/captures"
 for language in en fr; do
@@ -52,11 +53,53 @@ expect "the app picture shows the top of the phone, cut by the bottom edge just 
 expect "the 11 of picture 1 is centred by the weight of its ink, within 0.5 percent of the diameter" \
     "$("$state/badge-centre" "$out/en-1-metro.png" 150 2194 130 FFFFFF \
         | awk '{ print ($5 >= -0.5 && $5 <= 0.5) ? "centred" : "off by " $5 " percent" }')" "centred"
-cp "$out/en-1-metro.png" "$state/pictograms.png"
 
-STORE_STOPS=dots STORE_SCREENSHOTS_OUT=$out STORE_BEZEL="$state/no-bezel.png" "$scripts/store-screenshots.sh" compose "$state/compose" > "$state/output"
-expect "the plain dots are another picture" "$(cmp -s "$out/en-1-metro.png" "$state/pictograms.png" && echo same || echo different)" "different"
-expect "it says which stops it drew" "$(grep -c '^Headlines: SF bold [0-9]*; stops: dots$' "$state/output")" "2"
+# The line is drawn as on a line map (y 2194, the branch of the fork at y 2298). Each stop is a white dot, with no
+# drawing in it, in a ring of the colour of the line, also under the light of the train; only the borders, where the
+# line changes, have a white circle with a dark ring.
+colours() {   # colours <picture> <x,y>...: the colours of these pixels, on one line
+    picture=$1
+    shift
+    "$state/pixel-colours" "$out/$picture" "$@" | tr '\n' ' '
+}
+stops() {   # stops <picture> <the colour of the line> <x,y>...: "plain" when each stop is a plain white dot in its ring
+    picture=$1
+    stroke=$2
+    shift 2
+    for c in "$@"; do
+        x=${c%,*}
+        y=${c#*,}
+        # Near, not equal: the soft shadow of the Dynamic Island cut reaches the stops of the branch a little.
+        result=$(colours "$picture" "$c" "$((x - 9)),$y" "$((x + 9)),$y" "$x,$((y - 9))" "$x,$((y + 9))" \
+            "$((x - 16)),$y" "$((x + 16)),$y" "$x,$((y - 16))" "$x,$((y + 16))" | awk -v s="$stroke" '
+            function channel(hex, k) { return index("0123456789ABCDEF", substr(hex, 2 * k - 1, 1)) * 16 \
+                + index("0123456789ABCDEF", substr(hex, 2 * k, 1)) }
+            function near(a, b,   k) { for (k = 1; k <= 3; k++) if (channel(a, k) - channel(b, k) > 6 || channel(b, k) - channel(a, k) > 6) return 0; return 1 }
+            { for (i = 1; i <= 5; i++) if (!near($i, "FFFFFF")) { print "a dot that is not white: " $0; exit }
+              for (i = 6; i <= 9; i++) if (!near($i, s)) { print "a ring that is not the line: " $0; exit }
+              print "plain" }')
+        if [ "$result" != "plain" ]; then
+            echo "the stop at $c has $result"
+            return
+        fi
+    done
+    echo "plain"
+}
+stroke1=$(colours en-1-metro.png 300,2194 | tr -d " ")
+stroke2=$(colours en-2-fork.png 100,2194 | tr -d " ")
+stroke3=$(colours en-3-rer.png 100,2194 | tr -d " ")
+expect "the stops of line 11 are white dots in a ring of its colour, also the one under the light" \
+    "$(stops en-1-metro.png "$stroke1" 470,2194 790,2194 1110,2194)" "plain"
+expect "the stops of line 7, the fork and the branch included, are white dots in a ring of its colour" \
+    "$(stops en-2-fork.png "$stroke2" 560,2194 860,2194 1160,2194 860,2298 1080,2298 1200,2298)" "plain"
+expect "the stops of the RER B are white dots in a ring of its colour" \
+    "$(stops en-3-rer.png "$stroke3" 560,2194 860,2194 1160,2194)" "plain"
+expect "each border, where the line changes, has a white circle in a dark ring" \
+    "$(colours en-1-metro.png 1319,2194 1319,2154; colours en-2-fork.png 0,2194 0,2154; colours en-3-rer.png 0,2194 0,2154 1319,2194 1319,2154)" \
+    "FFFFFF 05060D FFFFFF 05060D FFFFFF 05060D FFFFFF 05060D "
+expect "the branch of the fork has a round end" \
+    "$(colours en-2-fork.png 1215,2298 1215,2281 | awk -v s="$stroke2" '{ print ($1 == s && $2 != s) ? "round" : "square: " $0 }')" \
+    "round"
 
 # A bezel whose screen is the capture at scale 1, in a body of 1320 x 2742: the whole width shows at scale 1.
 "$tests/make-png.py" "$state/bezel.png" 1320 2742 frame 57 60

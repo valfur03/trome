@@ -1,5 +1,5 @@
 // Composes the four store pictures of one language from the captures of the Simulator.
-// Usage: store-screenshots-compose <captures dir> <out dir> <language> <bezel png or ""> <pictograms|dots>
+// Usage: store-screenshots-compose <captures dir> <out dir> <language> <bezel png or "">
 // It builds with LabelInk.swift of the app (make store-screenshots-compose), so that its line badge follows the same rule.
 //
 // The first three pictures are one panorama, cut in three: one lit field, one line drawing whose stroke takes the
@@ -19,14 +19,13 @@ import ImageIO
 import UniformTypeIdentifiers
 
 let arguments = CommandLine.arguments
-guard arguments.count == 6, ["pictograms", "dots"].contains(arguments[5]) else {
+guard arguments.count == 5 else {
     FileHandle.standardError.write(Data(
-        "Usage: store-screenshots-compose <captures dir> <out dir> <language> <bezel png or \"\"> <pictograms|dots>\n".utf8
+        "Usage: store-screenshots-compose <captures dir> <out dir> <language> <bezel png or \"\">\n".utf8
     ))
     exit(2)
 }
 let capturesDir = arguments[1], outDir = arguments[2], language = arguments[3], bezelPath = arguments[4]
-let showsPictograms = arguments[5] == "pictograms"
 
 func fail(_ message: String) -> Never {
     FileHandle.standardError.write(Data("\(message)\n".utf8))
@@ -35,10 +34,6 @@ func fail(_ message: String) -> Never {
 
 // MARK: The set
 
-enum Pictogram: CaseIterable {
-    case coffee, headphones, book, bag, umbrella, music, bike, sun, briefcase, camera, glasses
-}
-
 struct Picture {
     let name: String
     let line: UInt32           // the official colour of the line
@@ -46,24 +41,18 @@ struct Picture {
     let square: Bool           // RER: a rounded square; metro: round
     let badgeInk: UInt32
     let headlines: [String: String]
-    let stops: [Pictogram]     // the stops of the line, left to right; none on the picture of the app
 }
 
 let pictures = [
     Picture(name: "metro", line: 0x6E491E, badge: "11", square: false, badgeInk: 0xFFFFFF,
-            headlines: ["en": "Your next trains, on your lock screen.", "fr": "Vos prochains trains, sur l’écran verrouillé."],
-            stops: [.coffee, .headphones, .book]),
+            headlines: ["en": "Your next trains, on your lock screen.", "fr": "Vos prochains trains, sur l’écran verrouillé."]),
     Picture(name: "fork", line: 0xFF82B4, badge: "7", square: false, badgeInk: 0x000000,
-            headlines: ["en": "Every direction, even at a fork.", "fr": "Toutes les directions, même à une bifurcation."],
-            stops: [.bag, .umbrella, .music]),
+            headlines: ["en": "Every direction, even at a fork.", "fr": "Toutes les directions, même à une bifurcation."]),
     Picture(name: "rer", line: 0x5091CB, badge: "B", square: true, badgeInk: 0xFFFFFF,
-            headlines: ["en": "Your RER, minute by minute.", "fr": "Votre RER, minute par minute."],
-            stops: [.briefcase, .camera, .glasses]),
+            headlines: ["en": "Your RER, minute by minute.", "fr": "Votre RER, minute par minute."]),
     Picture(name: "app", line: 0x2A3BC0, badge: nil, square: false, badgeInk: 0xFFFFFF,
-            headlines: ["en": "One screen, set once.", "fr": "Un seul écran, réglé une fois."],
-            stops: []),
+            headlines: ["en": "One screen, set once.", "fr": "Un seul écran, réglé une fois."]),
 ]
-let branchStops: [Pictogram] = [.bike, .sun]   // the two stops of the branch of the fork
 let linePictures = 3   // the line runs across the first three; it goes behind the phone of the app, so none of it shows there
 
 // MARK: Sizes (pixels of a picture of 1320 x 2868, the 6.9-inch size of the store)
@@ -113,15 +102,14 @@ func hsl(_ c: RGB, saturation: CGFloat, lightness: CGFloat) -> RGB {
     }
     return RGB(r: r + m, g: g + m, b: b + m)
 }
-struct Palette { let line, field, glow, stroke, accent, ink: RGB }
+struct Palette { let line, field, glow, stroke, accent: RGB }
 let palettes = pictures.map { p -> Palette in
     let l = rgb(p.line)
     return Palette(line: l,
                    field: hsl(l, saturation: 0.70, lightness: 0.25),   // the lit field
                    glow: hsl(l, saturation: 0.78, lightness: 0.52),    // the light behind the headline
                    stroke: hsl(l, saturation: 0.90, lightness: 0.62),  // the line drawing
-                   accent: hsl(l, saturation: 0.90, lightness: 0.80),  // the headline after the comma
-                   ink: hsl(l, saturation: 0.85, lightness: 0.40))     // the pictograms, on white
+                   accent: hsl(l, saturation: 0.90, lightness: 0.80))  // the headline after the comma
 }
 let base = rgb(night), white = RGB(r: 1, g: 1, b: 1)
 
@@ -325,7 +313,7 @@ do {
 
 // MARK: The line drawing (x in the panorama)
 
-let strokeWidth: CGFloat = 40, dotRadius: CGFloat = 14, stopRadius: CGFloat = 40, pictogramSize: CGFloat = 52
+let strokeWidth: CGFloat = 40, stopDot: CGFloat = 13, stopRing: CGFloat = 6, elbowRadius: CGFloat = 110
 let transferRadius: CGFloat = 46, transferRing: CGFloat = 13, badgeSize: CGFloat = 130
 let badgeX: [CGFloat] = [150, pic.width + 250, 2 * pic.width + 250]
 /// The least room between the ink of a metro number and the edge of its badge, as a share of the diameter, as in
@@ -342,160 +330,66 @@ func strokeLine(from x0: CGFloat, to x1: CGFloat, colour: RGB) {
     context.addLine(to: CGPoint(x: x1, y: lineY))
     context.strokePath()
 }
-// The fork of picture 2: after its first station, a branch peels off at 45 degrees and ends at a terminus.
+// The line is drawn as on a line map: round ends and bends, a round light for the train, white dots for the stops,
+// and a white circle with a dark ring only where the line changes. No stop holds a drawing: on a map, a stop is a dot.
+// The fork of picture 2: after its first station, a branch bends 45 degrees down, then back, and ends at a stop.
 let forkFrom = pic.width + 560, forkDrop: CGFloat = 104, forkEnd = pic.width + 1200
 let branchStopX: [CGFloat] = [pic.width + 860, pic.width + 1080]
 do {
-    let p = CGMutablePath()
-    p.move(to: CGPoint(x: forkFrom, y: lineY))
-    p.addLine(to: CGPoint(x: forkFrom + forkDrop, y: lineY + forkDrop))
-    p.addLine(to: CGPoint(x: forkEnd, y: lineY + forkDrop))
-    context.addPath(p); context.setStrokeColor(cg(palettes[1].stroke)); context.setLineWidth(strokeWidth)
-    context.setLineJoin(.round); context.setLineCap(.butt); context.strokePath()
+    let bendLength = elbowRadius * tan(CGFloat.pi / 8)   // a 45-degree bend starts this far before its corner
+    let corner1 = CGPoint(x: forkFrom + bendLength, y: lineY)
+    let corner2 = CGPoint(x: corner1.x + forkDrop, y: lineY + forkDrop)
+    let end = CGPoint(x: forkEnd, y: lineY + forkDrop)
+    let branch = CGMutablePath()
+    branch.move(to: CGPoint(x: forkFrom - 1, y: lineY))
+    branch.addArc(tangent1End: corner1, tangent2End: corner2, radius: elbowRadius)
+    branch.addArc(tangent1End: corner2, tangent2End: end, radius: elbowRadius)
+    branch.addLine(to: end)
+    context.addPath(branch); context.setStrokeColor(cg(palettes[1].stroke)); context.setLineWidth(strokeWidth)
+    context.setLineJoin(.round); context.setLineCap(.round); context.strokePath()
 }
+// The ends of the main line are under the first badge and under the last change, so they need no cap.
 for (i, p) in palettes.prefix(linePictures).enumerated() {
     strokeLine(from: i == 0 ? badgeX[0] : pic.width * CGFloat(i), to: pic.width * CGFloat(i + 1), colour: p.stroke)
 }
-// The light trail of a train going forward, with its small halo.
+// The train: a light that fades in behind it, with a round head and a soft halo on that head.
 for (i, head) in trailHeads.enumerated() {
-    let hx = pic.width * CGFloat(i) + head, tail = hx - 520
+    let half = strokeWidth / 2, hx = pic.width * CGFloat(i) + head, tail = hx - 520
     context.saveGState()
-    context.addRect(CGRect(x: tail, y: lineY - strokeWidth / 2, width: hx - tail, height: strokeWidth))
+    context.addPath(CGPath(roundedRect: CGRect(x: tail, y: lineY - half, width: hx - tail, height: strokeWidth),
+                           cornerWidth: half, cornerHeight: half, transform: nil))
     context.clip()
-    let trail = CGGradient(colorsSpace: space, colors: [cg(white, 0), cg(white, 0.85)] as CFArray, locations: [0, 1])!
+    let trail = CGGradient(colorsSpace: space, colors: [cg(white, 0), cg(white, 0.35), cg(white, 0.9)] as CFArray,
+                           locations: [0, 0.55, 1])!
     context.drawLinearGradient(trail, start: CGPoint(x: tail, y: lineY), end: CGPoint(x: hx, y: lineY), options: [])
     context.restoreGState()
-    let halo = CGGradient(colorsSpace: space, colors: [cg(white, 0.9), cg(palettes[i].glow, 0.35), cg(palettes[i].glow, 0)] as CFArray,
-                          locations: [0, 0.3, 1])!
-    context.drawRadialGradient(halo, startCenter: CGPoint(x: hx, y: lineY), startRadius: 0,
-                               endCenter: CGPoint(x: hx, y: lineY), endRadius: 70, options: [])
+    let c = CGPoint(x: hx - half, y: lineY)
+    let halo = CGGradient(colorsSpace: space,
+                          colors: [cg(white, 0.75), cg(palettes[i].glow, 0.3), cg(palettes[i].glow, 0)] as CFArray,
+                          locations: [0, 0.35, 1])!
+    context.drawRadialGradient(halo, startCenter: c, startRadius: 0, endCenter: c, endRadius: 80, options: [])
 }
-func terminus(at x: CGFloat, y: CGFloat) {   // a white bar across the stroke, as the end of a line on a map
-    context.setFillColor(cg(white))
-    context.fill(CGRect(x: x - 8, y: y - strokeWidth / 2 - 10, width: 16, height: strokeWidth + 20))
+func dot(_ c: CGPoint, _ r: CGFloat, _ colour: RGB) {
+    context.setFillColor(cg(colour))
+    context.fillEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
 }
-terminus(at: forkEnd, y: lineY + forkDrop)
-
-// MARK: The pictograms: flat, drawn here in a box of 100 x 100, in one colour on the white stop
-
-func drawPictogram(_ pictogram: Pictogram, centre: CGPoint, ink: RGB) {
-    context.saveGState()
-    context.translateBy(x: centre.x - pictogramSize / 2, y: centre.y - pictogramSize / 2)
-    context.scaleBy(x: pictogramSize / 100, y: pictogramSize / 100)
-    context.setFillColor(cg(ink)); context.setStrokeColor(cg(ink))
-    context.setLineCap(.round); context.setLineJoin(.round)
-    func fill(_ path: CGPath) { context.addPath(path); context.fillPath() }
-    func stroke(_ path: CGPath, _ width: CGFloat) { context.setLineWidth(width); context.addPath(path); context.strokePath() }
-    func knockOut(_ path: CGPath, _ width: CGFloat = 0) {   // white over the ink, as a gap
-        context.saveGState(); context.setFillColor(cg(white)); context.setStrokeColor(cg(white))
-        if width > 0 { stroke(path, width) } else { fill(path) }
-        context.restoreGState()
-    }
-    func rounded(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat, _ r: CGFloat) -> CGPath {
-        CGPath(roundedRect: CGRect(x: x, y: y, width: w, height: h), cornerWidth: r, cornerHeight: r, transform: nil)
-    }
-    func circle(_ x: CGFloat, _ y: CGFloat, _ r: CGFloat) -> CGPath {
-        CGPath(ellipseIn: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r), transform: nil)
-    }
-    func polyline(_ points: [(CGFloat, CGFloat)], closed: Bool = false) -> CGPath {
-        let p = CGMutablePath()
-        p.addLines(between: points.map { CGPoint(x: $0.0, y: $0.1) })
-        if closed { p.closeSubpath() }
-        return p
-    }
-    func arc(_ x: CGFloat, _ y: CGFloat, _ r: CGFloat, from a: CGFloat, to b: CGFloat) -> CGPath {
-        let p = CGMutablePath()
-        p.addArc(center: CGPoint(x: x, y: y), radius: r, startAngle: a * .pi / 180, endAngle: b * .pi / 180, clockwise: false)
-        return p
-    }
-    switch pictogram {
-    case .coffee:
-        fill(rounded(16, 34, 52, 46, 12))
-        stroke(circle(70, 52, 11), 8)
-        fill(rounded(10, 84, 70, 8, 4))
-        stroke(polyline([(32, 24), (32, 10)]), 7)
-        stroke(polyline([(50, 24), (50, 10)]), 7)
-    case .headphones:
-        stroke(arc(50, 56, 34, from: 180, to: 360), 9)
-        fill(rounded(10, 50, 20, 36, 8))
-        fill(rounded(70, 50, 20, 36, 8))
-    case .book:
-        fill(polyline([(48, 26), (10, 18), (10, 78), (48, 86)], closed: true))
-        fill(polyline([(52, 26), (90, 18), (90, 78), (52, 86)], closed: true))
-    case .bag:
-        fill(rounded(16, 38, 68, 52, 8))
-        stroke(arc(50, 38, 15, from: 180, to: 360), 8)
-    case .umbrella:
-        let canopy = CGMutablePath()
-        canopy.addArc(center: CGPoint(x: 50, y: 52), radius: 42, startAngle: .pi, endAngle: 2 * .pi, clockwise: false)
-        canopy.closeSubpath()
-        fill(canopy)
-        stroke(polyline([(50, 50), (50, 82)]), 8)
-        stroke(arc(41, 82, 9, from: 0, to: 180), 8)
-    case .music:
-        fill(CGPath(ellipseIn: CGRect(x: 14, y: 66, width: 28, height: 22), transform: nil))
-        fill(CGPath(ellipseIn: CGRect(x: 56, y: 58, width: 28, height: 22), transform: nil))
-        stroke(polyline([(38, 76), (38, 22)]), 7)
-        stroke(polyline([(80, 68), (80, 14)]), 7)
-        fill(polyline([(35, 18), (83, 8), (83, 24), (35, 34)], closed: true))
-    case .bike:
-        stroke(circle(24, 66, 17), 7)
-        stroke(circle(76, 66, 17), 7)
-        stroke(polyline([(24, 66), (40, 40), (64, 40), (76, 66)]), 7)
-        stroke(polyline([(40, 40), (50, 66), (64, 40)]), 7)
-        stroke(polyline([(32, 30), (46, 30)]), 7)
-        stroke(polyline([(64, 40), (60, 26), (70, 26)]), 7)
-    case .sun:
-        fill(circle(50, 50, 19))
-        for k in 0..<8 {
-            let a = CGFloat(k) * .pi / 4
-            stroke(polyline([(50 + 29 * cos(a), 50 + 29 * sin(a)), (50 + 42 * cos(a), 50 + 42 * sin(a))]), 8)
-        }
-    case .briefcase:
-        stroke(rounded(36, 20, 28, 20, 6), 8)
-        fill(rounded(10, 32, 80, 54, 9))
-        knockOut(polyline([(10, 54), (90, 54)]), 5)
-    case .camera:
-        fill(rounded(34, 20, 32, 16, 5))
-        fill(rounded(8, 30, 84, 56, 11))
-        knockOut(circle(50, 58, 19))
-        fill(circle(50, 58, 11))
-    case .glasses:
-        stroke(circle(28, 58, 16), 8)
-        stroke(circle(72, 58, 16), 8)
-        stroke(arc(50, 58, 7, from: 180, to: 360), 7)
-        stroke(polyline([(12, 54), (6, 36)]), 7)
-        stroke(polyline([(88, 54), (94, 36)]), 7)
-    }
-    context.restoreGState()
-}
-
-func drawStop(at centre: CGPoint, pictogram: Pictogram, palette: Palette) {
-    context.setFillColor(cg(white))
-    if showsPictograms {
-        context.fillEllipse(in: CGRect(x: centre.x - stopRadius, y: centre.y - stopRadius, width: 2 * stopRadius, height: 2 * stopRadius))
-        drawPictogram(pictogram, centre: centre, ink: palette.ink)
-    } else {
-        context.fillEllipse(in: CGRect(x: centre.x - dotRadius, y: centre.y - dotRadius, width: 2 * dotRadius, height: 2 * dotRadius))
-    }
+// A stop: a white dot inside the stroke, in a ring of the line colour, so that a stop under the light still shows.
+func stop(_ c: CGPoint, _ p: Palette) {
+    dot(c, stopDot + stopRing, p.stroke)
+    dot(c, stopDot, white)
 }
 for (i, xs) in stopX.enumerated() {
-    for (k, local) in xs.enumerated() {
-        drawStop(at: CGPoint(x: pic.width * CGFloat(i) + local, y: lineY), pictogram: pictures[i].stops[k], palette: palettes[i])
-    }
+    for x in xs { stop(CGPoint(x: pic.width * CGFloat(i) + x, y: lineY), palettes[i]) }
 }
-for (k, x) in branchStopX.enumerated() {
-    drawStop(at: CGPoint(x: x, y: lineY + forkDrop), pictogram: branchStops[k], palette: palettes[1])
-}
-// The transfers, on the borders: half in each picture. The last one is half of a transfer, before the phone of the app.
+for x in branchStopX + [forkEnd] { stop(CGPoint(x: x, y: lineY + forkDrop), palettes[1]) }
+// The changes, on the borders where the line changes: half in each picture. The last one is half of a change,
+// before the phone of the app.
 context.saveGState()
 context.clip(to: CGRect(x: 0, y: 0, width: pic.width * CGFloat(linePictures), height: H))
 for k in 1...linePictures {
-    let c = CGPoint(x: pic.width * CGFloat(k), y: lineY), r = transferRadius, inner = r - transferRing
-    context.setFillColor(cg(base))
-    context.fillEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
-    context.setFillColor(cg(white))
-    context.fillEllipse(in: CGRect(x: c.x - inner, y: c.y - inner, width: 2 * inner, height: 2 * inner))
+    let c = CGPoint(x: pic.width * CGFloat(k), y: lineY)
+    dot(c, transferRadius, base)
+    dot(c, transferRadius - transferRing, white)
 }
 context.restoreGState()
 
@@ -649,5 +543,5 @@ case .fits(let b):
 case .none(let reason):
     print("Frame: none, because \(reason); the cuts have rounded corners, at scale 1.0")
 }
-print(String(format: "Headlines: SF bold %.0f; stops: %@", fontSize, showsPictograms ? "pictograms" : "dots"))
+print(String(format: "Headlines: SF bold %.0f", fontSize))
 for line in recipe { print(line) }
