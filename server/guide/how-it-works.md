@@ -72,9 +72,31 @@ The count is a number for each hour, with no stop and no answer: `unreadableAnsw
 When it is not 0:
 
 1. Watch it for an hour: one unreadable answer can be a short fault of PRIM, but a count that grows with the PRIM calls is a change of format.
-2. Ask PRIM for one stop with [your own key](../../ios/README.md#the-train-data-key-prim), as a Debug build does, and compare its answer with a recorded one of [`contracts/prim/`](../../contracts/prim/).
-3. Record the new answer in `contracts/prim/`, and fix the parser of the app in a new build.
-   The builds in the field keep their parser: until their riders update, only a server change can help them, and it changes by adding, as [the promise to the builds in the field](#the-promise-to-the-builds-in-the-field) says.
+2. Ask PRIM for the answer of Abbesses, the stop of a recorded answer, with [your own key](../../ios/README.md#the-train-data-key-prim).
+   From the root of your clone, run:
+
+   ```sh
+   sed -n 's/^PRIM_API_KEY *= *\([^ ]*\).*/apikey: \1/p' ios/Config/Secrets.xcconfig \
+     | curl -sS --get -H @- -H "accept: application/json" --data-urlencode "MonitoringRef=STIF:StopArea:SP:42155:" \
+       -o /tmp/prim-answer.json -w "%{http_code}\n" https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring
+   ```
+
+   `sed` reads the key from the key file, and `curl` reads the header from its input, so the key is never in the command, the shell history or the output.
+   The command prints the HTTP status: `200` is an answer, `401` a wrong key.
+   It spends one call of the key's day ([The day of the PRIM key](#the-day-of-the-prim-key)).
+   Another stop works too: each `promises.json` of [`contracts/builds/`](../../contracts/builds/) names a stop and its recorded answer.
+3. List the fields of the recorded answer and of the new one, and compare them:
+
+   ```sh
+   fields() { node -e 'const walk = (v, at) => v !== null && typeof v === "object" ? Object.entries(v).flatMap(([key, child]) => walk(child, Array.isArray(v) ? `${at}[]` : `${at}.${key}`)) : [`${at}: ${v === null ? "null" : typeof v}`]; console.log([...new Set(walk(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")), ""))].sort().join("\n"))' "$1"; }
+   diff <(fields contracts/prim/stop-monitoring-abbesses-stop-area.json) <(fields /tmp/prim-answer.json)
+   ```
+
+   Each line is a field and its type.
+   Some fields come and go with the trains, such as `ArrivalStatus` or `JourneyNote`: look for a field that the builds read that has gone, has a new name or has a new type: `LineRef`, `DestinationName`, `DestinationDisplay`, and the times of `MonitoredCall`.
+4. Fix the parser of the app for the new format in a new build, and test it with the new answer.
+   Do not add the new answer to `contracts/prim/` while builds that cannot read it are in the field: the server tests check that every recorded answer has the shape that they read.
+   Those builds keep their parser: until their riders update, only a server change can help them, and it changes by adding, as [the promise to the builds in the field](#the-promise-to-the-builds-in-the-field) says.
 
 ## How the server shares the PRIM quota
 
