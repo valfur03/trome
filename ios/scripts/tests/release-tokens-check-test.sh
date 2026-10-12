@@ -282,11 +282,13 @@ expect "a guide with no table of the builds: one line that says so, and the chec
     "The release guide has no table \"The builds that riders may hold\" status 1 0"
 write_guide
 
-# The real guide: the check finds its table and at least one build in the field.
+# The real guide: the check finds its table and at least one build in the field, and the guide has the section that the check names.
 rm -f "$tokens"
 run "$fake" "$real_guide"
 expect "the release guide of the repo: its table names builds in the field" \
     "$(output | grep -c '^No ios/Config/BuildTokens.txt: .*each build in the field ([0-9][0-9, ]*)')" "1"
+expect "the release guide of the repo: it has the section that the missing-file line names" \
+    "$(grep -c '^### The app token of each build$' "$real_guide")" "1"
 
 [ "$failures" -eq 0 ] || { echo "$failures failures"; exit 1; }
 echo "release-tokens-check: all tests passed"

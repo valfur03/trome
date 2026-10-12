@@ -756,8 +756,8 @@ The last line says how it ended:
 - **Refused:** at least one build is refused.
   Look at its line in `ios/Config/BuildTokens.txt` first: a typo is the likeliest cause, so fix it and run the check again.
   If the line matches your password manager, the production list lost that token: set the whole list again, with the token of every build in the field and the newest one, as [Add a token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#add-a-token) says.
-  At step 6 of Add a token, paste the old list again instead, as that step says.
   The new value replaces the whole list, so leave no token out, and run the check again.
+  At step 6 of Add a token, paste the old list again instead, as that step says.
 - **Not finished:** the server has no PRIM calls left this hour, and the builds that say **not asked** wait: run it again an hour later.
   The check makes at most one PRIM call per build.
 - Any other line says what is missing or wrong, for example a build with no line in the file, or a host that does not answer: the check stopped, so do what it says and run it again.
