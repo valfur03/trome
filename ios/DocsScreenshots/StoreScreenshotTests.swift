@@ -100,8 +100,8 @@ final class StoreScreenshotTests: XCTestCase {
     private func saveTheAppScreen(of app: XCUIApplication, showing station: String) {
         let shown = steps.shownStation(in: app)
         XCTAssertTrue(
-            steps.waitUntil { shown.label.contains(station) && !shown.label.contains("(") },
-            "The status row does not show \(station) on the lock screen, with no (example): \(shown.label)"
+            steps.waitUntil { shown.exists && shown.label.contains(station) && !shown.label.contains("(") },
+            "The status row does not show \(station) on the lock screen, with no (example)"
         )
         let helpLink = app.descendants(matching: .any)["helpLink"].firstMatch
         XCTAssertTrue(helpLink.isHittable, "The link Help and feedback is not on the screen")
