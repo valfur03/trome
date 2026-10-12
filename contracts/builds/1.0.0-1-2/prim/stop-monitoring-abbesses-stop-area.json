@@ -1,0 +1,212 @@
+{
+  "Siri": {
+    "ServiceDelivery": {
+      "ResponseTimestamp": "2026-09-26T10:00:00.412Z",
+      "ProducerRef": "IVTR_HET",
+      "ResponseMessageIdentifier": "IVTR_HET:ResponseMessage::3a1f6d5e-1c1d-4f7a-9d0e-5b4ab7f0c1aa:LOC:",
+      "StopMonitoringDelivery": [
+        {
+          "ResponseTimestamp": "2026-09-26T10:00:00.412Z",
+          "Version": "2.0",
+          "Status": "true",
+          "MonitoredStopVisit": [
+            {
+              "RecordedAtTime": "2026-09-26T09:59:48.201Z",
+              "ItemIdentifier": "RATP-SIV:Item::1.12.A.463116:LOC",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:463116:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01382:"
+                },
+                "OperatorRef": {
+                  "value": "RATP-SIV:Operator::RATP.OCTAVE:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::M12.R.1003:LOC"
+                },
+                "DirectionName": [
+                  {
+                    "value": "Mairie d'Issy"
+                  }
+                ],
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463108:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Mairie d'Issy"
+                  }
+                ],
+                "JourneyNote": [],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Abbesses"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Mairie d'Issy"
+                    }
+                  ],
+                  "ExpectedArrivalTime": "2026-09-26T10:02:10.000Z",
+                  "ExpectedDepartureTime": "2026-09-26T10:02:30.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-09-26T09:59:48.201Z",
+              "ItemIdentifier": "RATP-SIV:Item::1.12.R.22059:LOC",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:22059:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01382:"
+                },
+                "OperatorRef": {
+                  "value": "RATP-SIV:Operator::RATP.OCTAVE:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::M12.A.2002:LOC"
+                },
+                "DirectionName": [
+                  {
+                    "value": "Mairie d'Aubervilliers"
+                  }
+                ],
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:483903:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Mairie d'Aubervilliers"
+                  }
+                ],
+                "JourneyNote": [],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Abbesses"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Mairie d'Aubervilliers"
+                    }
+                  ],
+                  "ExpectedArrivalTime": "2026-09-26T10:03:40.000Z",
+                  "ExpectedDepartureTime": "2026-09-26T10:04:00.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-09-26T09:59:48.201Z",
+              "ItemIdentifier": "RATP-SIV:Item::1.12.A.463116.2:LOC",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:463116:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01382:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::M12.R.1007:LOC"
+                },
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:463108:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Mairie d'Issy"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Abbesses"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Mairie d'Issy"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-09-26T10:07:00Z",
+                  "DepartureStatus": "onTime"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-09-26T09:59:48.201Z",
+              "ItemIdentifier": "RATP-SIV:Item::1.12.R.22059.2:LOC",
+              "MonitoringRef": {
+                "value": "STIF:StopPoint:Q:22059:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01382:"
+                },
+                "OperatorRef": {
+                  "value": "RATP-SIV:Operator::RATP.OCTAVE:"
+                },
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "RATP-SIV:VehicleJourney::M12.A.2006:LOC"
+                },
+                "DirectionName": [
+                  {
+                    "value": "Mairie d'Aubervilliers"
+                  }
+                ],
+                "DestinationRef": {
+                  "value": "STIF:StopPoint:Q:483903:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Mairie d'Aubervilliers"
+                  }
+                ],
+                "JourneyNote": [],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "Abbesses"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Mairie d'Aubervilliers"
+                    }
+                  ],
+                  "ExpectedArrivalTime": "2026-09-26T10:09:10.000Z",
+                  "ExpectedDepartureTime": "2026-09-26T10:09:30.000Z",
+                  "DepartureStatus": "onTime"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,182 @@
+import { env, exports } from "cloudflare:workers";
+import { abortAllDurableObjects, runInDurableObject } from "cloudflare:test";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { relayObject } from "../../src/cloudflare/relay-object";
+import { appTokens } from "../../src/core/auth/app-tokens";
+import { primEndpoint } from "../../src/core/relay/prim-client";
+import { brokenPromises, type Answered, type PromisedAnswer, type PromiseSet } from "./build-promises";
+
+// Every recorded set of contracts/builds/ is asked to the whole Worker (the router, the server object, its storage and its
+// PRIM client), with PRIM faked by the recorded answers of the set, and each answer is judged as the builds of the set read it.
+// Why: a build that riders hold never changes, so the server keeps every answer of its set until the release guide retires it.
+
+const files = import.meta.glob<string>("../../../contracts/builds/*/**/*.json", { eager: true, query: "?raw", import: "default" });
+const setFolder = /^\.\.\/\.\.\/\.\.\/contracts\/builds\/([^/]+)\//;
+
+interface RecordedSet {
+  folder: string;
+  set: PromiseSet;
+  file: (path: string) => string;
+}
+
+function recordedSets(): RecordedSet[] {
+  const folders = [...new Set(Object.keys(files).map((path) => setFolder.exec(path)?.[1] ?? ""))].filter(Boolean).sort();
+  return folders.map((folder) => {
+    const file = (path: string): string => {
+      const text = files[`../../../contracts/builds/${folder}/${path}`];
+      if (text === undefined) {
+        throw new Error(`contracts/builds/${folder}/ has no ${path}`);
+      }
+      return text;
+    };
+    return { folder, set: JSON.parse(file("promises.json")) as PromiseSet, file };
+  });
+}
+
+type PrimReply = Response | "unreachable";
+
+interface FakePrim {
+  reply: (stopRef: string) => PrimReply;
+  calls: string[];
+}
+
+function fakePrim(): FakePrim {
+  vi.spyOn(console, "log").mockImplementation(() => undefined);
+  // 02:30 in Paris: the day has given few calls yet, so a dozen stops spend them, and every run asks at the same time.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-02T00:30:00.000Z"));
+  const prim: FakePrim = { reply: () => new Response("{}"), calls: [] };
+  vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    if (`${url.origin}${url.pathname}` !== primEndpoint) {
+      return Promise.reject(new Error(`No network in the tests: ${url.origin}`));
+    }
+    const stopRef = url.searchParams.get("MonitoringRef") ?? "";
+    prim.calls.push(stopRef);
+    const reply = prim.reply(stopRef);
+    return reply === "unreachable" ? Promise.reject(new TypeError("Network connection lost.")) : Promise.resolve(reply);
+  });
+  return prim;
+}
+
+const placeholders: Record<string, string> = {
+  "<APP_TOKEN>": appTokens(env.APP_TOKEN)[0] ?? "",
+  "<A_TOKEN_THAT_THE_SERVER_DOES_NOT_ACCEPT>": "0f0e0d0c0b0a09080706050403020100",
+};
+
+function filled(text: string): string {
+  return text.replace(/<[A-Z_]+>/g, (placeholder) => {
+    const value = placeholders[placeholder];
+    if (value === undefined) {
+      throw new Error(`the set has a placeholder this check does not know: ${placeholder}`);
+    }
+    return value;
+  });
+}
+
+async function ask(set: PromiseSet, stop: string, requestHeaders: Record<string, string> = {}): Promise<Answered> {
+  const headers = Object.fromEntries(
+    Object.entries({ ...set.request.headers, ...requestHeaders }).map(([name, value]) => [name, filled(value)]),
+  );
+  const response = await exports.default.fetch(`https://server.test${set.request.path.replace("<STOP>", stop)}`, {
+    method: set.request.method,
+    headers,
+  });
+  return { status: response.status, headers: response.headers, text: await response.text() };
+}
+
+// Spends the PRIM calls of this hour on other stops, until a new stop gets no PRIM call.
+async function spendTheCallsOfTheHour(set: PromiseSet, prim: { calls: string[] }): Promise<void> {
+  for (let index = 1; index <= 1000; index += 1) {
+    const callsBefore = prim.calls.length;
+    await ask(set, `STIF:StopArea:SP:${String(index)}:`);
+    if (prim.calls.length === callsBefore) {
+      return;
+    }
+  }
+  throw new Error("the server still asked PRIM after 1000 stops: the calls of the hour never ran out");
+}
+
+type Situation = (context: {
+  set: PromiseSet;
+  promise: PromisedAnswer;
+  stop: string;
+  primAnswer: string;
+  prim: FakePrim;
+}) => Promise<Answered>;
+
+const primAnswers: Situation = ({ set, stop, primAnswer, prim }) => {
+  prim.reply = () => new Response(primAnswer);
+  return ask(set, stop);
+};
+
+// Each "when" of a recorded set, as the server is brought to it. A recorded "when" with no situation here fails the check.
+const situations: Record<string, Situation> = {
+  "PRIM answers": primAnswers,
+  "PRIM answers with no train": primAnswers,
+  "the calls of the hour are spent, and the server holds a recent answer of the stop": async ({ set, stop, primAnswer, prim }) => {
+    prim.reply = () => new Response(primAnswer);
+    await ask(set, stop);
+    await spendTheCallsOfTheHour(set, prim);
+    return ask(set, stop);
+  },
+  "the calls of the hour are spent": async ({ set, stop, primAnswer, prim }) => {
+    prim.reply = () => new Response(primAnswer);
+    await spendTheCallsOfTheHour(set, prim);
+    return ask(set, stop);
+  },
+  "PRIM answered 429": ({ set, stop, prim }) => {
+    prim.reply = () => new Response('{"message":"Too many requests"}', { status: 429 });
+    return ask(set, stop);
+  },
+  "PRIM fails": ({ set, stop, prim }) => {
+    prim.reply = () => new Response('{"message":"Internal error"}', { status: 500 });
+    return ask(set, stop);
+  },
+  "the server does not accept the app token": ({ set, stop, promise }) => ask(set, stop, promise.requestHeaders),
+};
+
+async function forgetEverything(): Promise<void> {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
+  await abortAllDurableObjects();
+}
+
+afterEach(forgetEverything);
+
+describe("the recorded sets of promises of contracts/builds/", () => {
+  const sets = recordedSets();
+
+  it("are read: at least the set of the first builds", () => {
+    expect(sets.map(({ set }) => set.builds).flat()).toContain("1.0.0 (1)");
+  });
+
+  for (const { folder, set, file } of sets) {
+    for (const promise of set.answers) {
+      const builds = set.builds.join(", ");
+      it(`${builds}: when ${promise.when}, the server gives what they read`, async () => {
+        const situation = situations[promise.when];
+        expect(
+          situation,
+          `${builds} (contracts/builds/${folder}/): the server tests have no situation for "${promise.when}". Add it to server/test/cloudflare/build-promises.test.ts; never edit the set.`,
+        ).toBeDefined();
+        const stops = promise.askFor === "every stop" ? set.stops : promise.askFor === "the first stop" ? set.stops.slice(0, 1) : [];
+        expect(stops.length, `${builds}: askFor "${promise.askFor}" names no stop`).toBeGreaterThan(0);
+
+        for (const { stop, prim: recording } of stops) {
+          const prim = fakePrim();
+          const primAnswer = file(promise.prim ?? recording);
+          const answered = await situation?.({ set, promise, stop, primAnswer, prim });
+          const problems = answered === undefined ? ["no answer"] : brokenPromises(promise, answered, primAnswer);
+          expect(
+            problems,
+            `The server breaks a promise to builds ${builds} (contracts/builds/${folder}/promises.json): when ${promise.when}, for ${stop}, ` +
+              `they read ${promise.reads}. Riders of these builds still use them: change the server by adding, never by changing what they read.`,
+          ).toEqual([]);
+          await forgetEverything();
+        }
+      });
+    }
+  }
+});

@@ -27,6 +27,12 @@ The reviewer checks them, as for the iOS app.
   Tests of the scripts: `server/scripts/tests/<name>-test.sh`.
   The server tests read the recorded PRIM answers of `contracts/prim/` (no copy).
   No real PRIM call and no real secret in a test: `fetch` to PRIM is faked with the recorded answers.
+- **The server changes by adding.** Every build that riders may hold has a recorded set of promises in `contracts/builds/<set>/`: what it sends, how it reads each answer, how long it waits (decision-93, decision-94).
+  `make server-check` judges the server against every set (`server/test/cloudflare/build-promises.test.ts`), and fails when a recorded file changes or goes while a build of its set is in the field (`server/scripts/build-promises-check.ts`).
+  Never edit, move or delete a recorded set to make the check pass, and never change the app code together with the server to get round it: add the new path, header or field next to the old one, which only new builds read.
+  A set leaves only when the table "The builds that riders may hold" of the release guide retires all its builds, with a reason; a server change is never that reason.
+  Why: a build in the field never changes, so a record that a server change could edit to match itself would protect no rider; editing the example to match the server was the careless fix that let every break through (TASK-400).
+  A new situation of a set gets its scenario in `build-promises.test.ts`; the matchers of `build-promises.ts` only grow.
 - **Folders by feature** inside `core/` (`http/`, `logging/`, `config/`, `storage/`, `time/`, `auth/`, `relay/`, `budget/`, `usage/`), with the same names in `test/core/`.
   The fakes of the tests go in the folder of what they replace (`test/core/time/fake-clock.ts`, `test/core/relay/fake-prim-client.ts`).
   Files in kebab case, one main export each.

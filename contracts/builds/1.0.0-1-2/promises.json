@@ -1,0 +1,139 @@
+{
+  "description": "What builds 1.0.0 (1) and 1.0.0 (2) send to the server and how they read each answer, recorded from their app code at the tags builds/1.0.0/1 and builds/1.0.0/2, which read the server the same way. The server must keep giving every answer below as these builds read it, until the release guide retires both builds. Never edit this folder: the server changes by adding, and make server-check fails on an edit.",
+  "builds": ["1.0.0 (1)", "1.0.0 (2)"],
+  "app": {
+    "waitForOneAnswerSeconds": 15,
+    "askEverySeconds": 30,
+    "shortestWaitAfterAnOutAnswerSeconds": 30
+  },
+  "request": {
+    "method": "GET",
+    "path": "/v1/stops/<STOP>/departures",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>",
+      "accept": "application/json"
+    }
+  },
+  "stops": [
+    {
+      "stop": "STIF:StopArea:SP:42155:",
+      "shape": "a stop area with a number of 5 digits, as a metro or RER line of the station list asks",
+      "prim": "prim/stop-monitoring-abbesses-stop-area.json"
+    },
+    {
+      "stop": "STIF:StopArea:SP:470549:",
+      "shape": "a stop area with a number of 6 digits",
+      "prim": "prim/stop-monitoring-la-defense-rer-a-at-stop.json"
+    },
+    {
+      "stop": "STIF:StopPoint:Q:463116:",
+      "shape": "a quay, as a metro line with no stop area asks",
+      "prim": "prim/stop-monitoring-abbesses.json"
+    }
+  ],
+  "answers": [
+    {
+      "when": "PRIM answers",
+      "askFor": "every stop",
+      "reads": "the times: any 2xx status, Last-Modified in the one form that the build parses, and the PRIM answer as PRIM gave it; no-store keeps the system cache of the phone from giving an old answer again",
+      "status": { "class": "2xx" },
+      "headers": {
+        "last-modified": { "form": "^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$" },
+        "cache-control": { "form": "(^|,)[ ]*no-store[ ]*(,|$)" }
+      },
+      "body": { "primAnswer": true }
+    },
+    {
+      "when": "PRIM answers with no train",
+      "askFor": "the first stop",
+      "prim": "prim/stop-monitoring-empty.json",
+      "reads": "the times, with no train",
+      "status": { "class": "2xx" },
+      "headers": {
+        "last-modified": { "form": "^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$" },
+        "cache-control": { "form": "(^|,)[ ]*no-store[ ]*(,|$)" }
+      },
+      "body": { "primAnswer": true }
+    },
+    {
+      "when": "the calls of the hour are spent, and the server holds a recent answer of the stop",
+      "askFor": "the first stop",
+      "reads": "the times, as above",
+      "status": { "class": "2xx" },
+      "headers": {
+        "last-modified": { "form": "^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$" },
+        "cache-control": { "form": "(^|,)[ ]*no-store[ ]*(,|$)" }
+      },
+      "body": { "primAnswer": true }
+    },
+    {
+      "when": "the calls of the hour are spent",
+      "askFor": "the first stop",
+      "reads": "the server is out: the build shows no live times until the retry time, and asks again only then",
+      "status": { "notClass": "2xx" },
+      "retryTime": {
+        "header": "retry-after",
+        "headerForm": "^[ \t]*[0-9]+([.][0-9]+)?[ \t]*$",
+        "orBodyKey": "retryAt",
+        "bodyKeyForm": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+      },
+      "body": {
+        "json": {
+          "status": { "is": "out" },
+          "reason": { "oneOf": ["budget"] },
+          "retryAt": { "type": "string", "optional": true }
+        }
+      }
+    },
+    {
+      "when": "PRIM answered 429",
+      "askFor": "the first stop",
+      "reads": "the server is out, as above",
+      "status": { "notClass": "2xx" },
+      "retryTime": {
+        "header": "retry-after",
+        "headerForm": "^[ \t]*[0-9]+([.][0-9]+)?[ \t]*$",
+        "orBodyKey": "retryAt",
+        "bodyKeyForm": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+      },
+      "body": {
+        "json": {
+          "status": { "is": "out" },
+          "reason": { "oneOf": ["prim-limit"] },
+          "retryAt": { "type": "string", "optional": true }
+        }
+      }
+    },
+    {
+      "when": "PRIM fails",
+      "askFor": "the first stop",
+      "reads": "a failure of this stop: the build shows Times unavailable, and asks this stop again only after the retry time; any reason but budget and prim-limit reads this way",
+      "status": { "notClass": "2xx" },
+      "retryTime": {
+        "header": "retry-after",
+        "headerForm": "^[ \t]*[0-9]+([.][0-9]+)?[ \t]*$",
+        "orBodyKey": "retryAt",
+        "bodyKeyForm": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+      },
+      "body": {
+        "json": {
+          "status": { "is": "out" },
+          "reason": { "type": "string", "noneOf": ["budget", "prim-limit"], "optional": true },
+          "retryAt": { "type": "string", "optional": true }
+        }
+      }
+    },
+    {
+      "when": "the server does not accept the app token",
+      "askFor": "the first stop",
+      "requestHeaders": { "authorization": "Bearer <A_TOKEN_THAT_THE_SERVER_DOES_NOT_ACCEPT>" },
+      "reads": "the refusal: these builds read the status 401 alone, and stop their background refresh; a later build reads the status and the error together as Update the app, so the body is kept too, and other keys may join it",
+      "status": { "is": 401 },
+      "body": {
+        "json": {
+          "error": { "is": "unauthorized" }
+        }
+      }
+    }
+  ]
+}

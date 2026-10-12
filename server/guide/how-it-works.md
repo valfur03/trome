@@ -30,6 +30,31 @@ Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` a
 It never gives an older answer, or a failed one, as times.
 After `budget` or `prim-limit`, it adds 0 to 59 seconds to `retryAt`, from the stop, so that the apps of different stops do not all ask at the same second.
 
+## The promise to the builds in the field
+
+A rider updates the app when they choose, so a build can call the server for years after its upload, and it never changes.
+So a server change keeps every build that riders may hold working: the server adds what a new build needs next to what the older ones read, and never swaps it.
+The builds that riders may hold are the rows of a table in the [release guide](../../docs/src/content/docs/en/maintain/release-on-the-app-store.mdx), section "The builds that riders may hold".
+
+Each of them has a recorded set of promises in [`contracts/builds/`](../../contracts/builds/), one folder per set, written at its upload from the app code at its tag.
+Its `promises.json` holds the request that the build sends (the path, the shapes of stop reference, the headers and the token scheme), how it reads each answer, how long it waits for one answer and how often it asks.
+Its `prim/` folder holds its own copy of the PRIM answers that the server passes through, so that a new recording elsewhere changes nothing for it.
+
+`make server-check` judges the server against every set, as the build reads each answer, in [`build-promises.test.ts`](../test/cloudflare/build-promises.test.ts):
+
+- The PRIM answer must come back byte for byte, since the build parses it itself.
+- Everything else is judged by what the build reads: the class of the status (any `2xx` is times), the headers that it reads and their exact form, the keys and values of the `out` answer, and the reasons that it knows.
+  So a change that the build reads the same way passes: another retry time, another age of a held answer, another status that is not `2xx` for `out`.
+- The longest wait of the server for PRIM, with room for the wake of a server object and for the phone, stays under the shortest wait of a build ([`wait-of-the-builds.test.ts`](../test/core/relay/wait-of-the-builds.test.ts)).
+
+A set is never edited: [`build-promises-check.ts`](../scripts/build-promises-check.ts) compares each of its files with the version that git first recorded, and fails on any change or deletion.
+Only a retirement frees a set: when every build of the set has the status **Retired on `<date>`: `<reason>`** in the table, its folder may change or go.
+The check also fails when a build in the field has no set, or two.
+Why: a set that a server change could edit to match itself would protect no rider, and editing the example to match the server is the easiest mistake to make.
+
+When the check fails, change the server by adding: a new path, header or field next to the old one, which only the new builds read.
+A situation that a set names and the test cannot yet bring about gets its scenario in `build-promises.test.ts`, never an edit of the set.
+
 ## How the server shares the PRIM quota
 
 A PRIM key has a quota of 1,000 calls a day, from 00:00 UTC.

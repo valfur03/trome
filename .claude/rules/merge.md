@@ -73,6 +73,9 @@ Why one command, with the lock all along:
   Its fast-forward is never refused because another merge landed during its run.
 - **A full E2E run is never repeated.** Before, another merge could land between the end of a full run and the fast-forward.
   The fast-forward was then refused, and the full suite had to run again after a new rebase.
+- **A recorded set of promises is never part of a conflict fix.** In a rebase, a conflict in `contracts/builds/` is solved by taking the version of `main`, never by a mix or an edit; a branch that edits or deletes a recorded set is sent back, unless the release guide retires every build of that set in the same branch.
+  `make merge` runs `make server-check` for a change of `server/` or `contracts/`, which fails on such an edit and on a server change that breaks a set as its builds read it.
+  Why: riders hold those builds and they never change, so the server changes by adding (decision-93, decision-94; `.claude/rules/server.md`).
 - **History stays linear, and `main` stays green.** `main` moves only by fast-forward, to the exact commit that passed the gate and the E2E suite.
   No merge commit: a merge is always a rebase, then a fast-forward.
 

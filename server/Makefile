@@ -9,7 +9,7 @@ export WRANGLER_SEND_METRICS := false
 
 help:
 	@echo "make server-setup        Install the packages of the server (server/node_modules), when they are missing or old"
-	@echo "make server-check        Server quality gate: no local secrets file that git tracks or does not ignore + no request log at Cloudflare in wrangler.jsonc + the production Worker name and workers.dev kept while a build is in the field + generated types up to date + type check + lint + unit tests + script tests"
+	@echo "make server-check        Server quality gate: no local secrets file that git tracks or does not ignore + no request log at Cloudflare in wrangler.jsonc + the production Worker name and workers.dev kept while a build is in the field + each build in the field has its recorded set of promises, never edited + generated types up to date + type check + lint + unit tests, which judge the server against every recorded set + script tests"
 	@echo "make server-dev          Run the server on this folder's own port ($(PORT); PORT=<n> for another one), with the fake secrets of server/.dev.vars"
 	@echo "make server-stop         Stop the server of this folder (make server-dev)"
 	@echo "make server-login        Log in to your Cloudflare account (once, before a deploy or a secret); it opens the default browser (LINK=1: it shows a link to open in another browser; CODE=1: a code to type on a Cloudflare page)"
@@ -31,6 +31,7 @@ server-check: server-setup
 	@./scripts/dev-vars-check.sh
 	@node scripts/request-log-check.ts
 	@node scripts/worker-address-check.ts
+	@node scripts/build-promises-check.ts
 	@$(QUIET) $(LOGS)/server-types-check.log '' npm run --silent types:check
 	@$(QUIET) $(LOGS)/server-typecheck.log '' npm run --silent typecheck
 	@$(QUIET) $(LOGS)/server-lint.log '' npm run --silent lint

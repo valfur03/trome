@@ -18,7 +18,8 @@ make server-dev
 ```
 
 `make server-check` installs the packages (about 300 MB, in `server/node_modules`), checks that `server/wrangler.jsonc` keeps no request log at Cloudflare ([Find a problem](guide/deploy.md#find-a-problem)) and keeps the address of the production Worker ([Keep the address of the server](guide/deploy.md#keep-the-address-of-the-server)),
-then runs the type check, the lint, the unit tests and the tests of the scripts.
+checks that each build in the field has its recorded set of promises, never edited ([The promise to the builds in the field](guide/how-it-works.md#the-promise-to-the-builds-in-the-field)),
+then runs the type check, the lint, the unit tests, which judge the server against every recorded set, and the tests of the scripts.
 `make server-dev` runs the server locally, at the address that it prints, where `/health` answers `{"status":"ok"}`; `make server-stop` stops it.
 Neither needs a Cloudflare account.
 
@@ -32,6 +33,7 @@ So it never gets real trains: PRIM refuses its fake key, and you check the answe
 - `server/test/core/<feature>/` tests the logic on Node, `server/test/cloudflare/` tests the Worker in the Cloudflare runtime, and `server/scripts/tests/` tests the scripts.
   To run one folder while you work: `cd server && npx vitest run test/core/relay`.
 - `contracts/prim/` holds recorded PRIM answers, which the tests of the app read too, and `contracts/api/` holds an example of each answer of the server, which a test checks.
+- `contracts/builds/` holds what each build that riders may hold sends and reads: the server keeps every answer of it, and nobody edits it ([The promise to the builds in the field](guide/how-it-works.md#the-promise-to-the-builds-in-the-field)).
 - `server/src/core/config/relay-settings.ts` holds the settings of the quota.
 
 ## The guides

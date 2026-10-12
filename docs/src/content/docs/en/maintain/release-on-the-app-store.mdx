@@ -369,8 +369,10 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
     ```
 
 11. In one commit, add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold), and set `CURRENT_PROJECT_VERSION` to one more than the build number that App Store Connect shows, for the next upload; push it.
-    That commit will also record the set of promises of the build: what it reads from the server, kept until its row is retired.
-    The repo does not record these sets yet, so for now there is nothing to add.
+    The same commit records the set of promises of the build in `contracts/builds/<version>-<build>/`, here `contracts/builds/1.0.0-3/`: what the build sends to the server and how it reads each answer, kept until its row is retired.
+    Copy the folder of the newest set, and in its `promises.json` write the new build alone in `builds`, as its row names it, here `"1.0.0 (3)"`.
+    If the app code that asks the server changed since the build of that set (`git diff builds/<old version>/<old build> builds/1.0.0/3 -- ios/Packages/TROMECore/Sources/TROMECore/Trains`), make the copy say what the new code reads, and run `make server-check`.
+    Never edit an older set: `make server-check` fails on it, and fails too when a build of the table has no set.
     Then add the line of the build to `ios/Config/BuildTokens.txt`, here `3 = <token>`, with the app token of `ios/Config/Server.xcconfig` that this build holds, and run `make release-tokens-check`: the line of the new build must say **accepted**.
     That file is not in git, so it is not in the commit.
 
@@ -683,7 +685,7 @@ Never leave it off for good: every build calls this address ([Keep the address o
 Every build uploaded to Apple is a row of this table, from its upload on, and keeps its row forever.
 A server change keeps every build in the field working: the server adds what a new build needs next to what the older ones read, and never swaps it.
 Why: a rider updates when they choose, so an old build can call the server for years.
-The table does not yet say what each build reads from the server: until the repo records it, read the code at the tag of the build.
+What each build sends to the server and how it reads each answer is its recorded set of promises in [`contracts/builds/`](https://github.com/valfur03/trome/tree/main/contracts/builds), which the server is checked against ([The promise to the builds in the field](https://github.com/valfur03/trome/blob/main/server/guide/how-it-works.md#the-promise-to-the-builds-in-the-field)).
 
 Each build has the git tag `builds/<version>/<build>` on its commit, which you add at the end of the upload in [step 4](#4-build-upload-and-check-the-first-build).
 A TestFlight build becomes unavailable to testers after 90 days: the table counts them from the upload, and App Store Connect shows the days left on the build, so trust it when the two differ.
@@ -769,7 +771,7 @@ A build leaves the field only for one of these reasons, written in its row with 
 
 A server change is never a reason: a change that would break a build waits until that build is retired.
 A new app token is no exception: it joins the server's list, and a token leaves the list only once every build that holds it is retired ([Change the app token](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#change-the-app-token)).
-Once a build is retired, a server change may drop what only that build read.
+Once a build is retired, a server change may drop what only that build read, and the set of promises of the build may go once every build of its set is retired.
 The row stays in the table, with the status **Retired on `<date>`: `<reason>`**.
 
 ## Fix this page

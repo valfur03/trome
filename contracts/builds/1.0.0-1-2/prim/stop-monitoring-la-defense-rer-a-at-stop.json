@@ -1,0 +1,185 @@
+{
+  "Siri": {
+    "ServiceDelivery": {
+      "ResponseTimestamp": "2026-10-01T10:31:50.412Z",
+      "ProducerRef": "IVTR_HET",
+      "StopMonitoringDelivery": [
+        {
+          "ResponseTimestamp": "2026-10-01T10:31:50.412Z",
+          "Version": "2.0",
+          "Status": "true",
+          "MonitoredStopVisit": [
+            {
+              "RecordedAtTime": "2026-10-01T10:31:50.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470549-1:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:470549:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::made-1:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:900001:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Saint-Germain-en-Laye"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "La Défense"
+                    }
+                  ],
+                  "VehicleAtStop": true,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Saint-Germain-en-Laye"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-01T10:32:00.000Z",
+                  "DepartureStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:90011:"
+                    }
+                  },
+                  "DeparturePlatformName": {
+                    "value": "1"
+                  },
+                  "DepartureStatus": "onTime",
+                  "ArrivalStatus": "arrived",
+                  "ExpectedArrivalTime": "2026-10-01T10:31:40.000Z"
+                },
+                "DirectionRef": {
+                  "value": "Retour"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-10-01T10:31:50.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470549-2:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:470549:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::made-2:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:900002:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Poissy"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "La Défense"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Poissy"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-01T10:45:00.000Z",
+                  "DepartureStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:90011:"
+                    }
+                  },
+                  "DeparturePlatformName": {
+                    "value": "1"
+                  },
+                  "DepartureStatus": "onTime",
+                  "ArrivalStatus": "onTime",
+                  "ExpectedArrivalTime": "2026-10-01T10:44:40.000Z"
+                },
+                "DirectionRef": {
+                  "value": "Retour"
+                }
+              }
+            },
+            {
+              "RecordedAtTime": "2026-10-01T10:31:50.000Z",
+              "ItemIdentifier": "SNCF_MAGENTA_PRD:Item::470549-3:",
+              "MonitoringRef": {
+                "value": "STIF:StopArea:SP:470549:"
+              },
+              "MonitoredVehicleJourney": {
+                "LineRef": {
+                  "value": "STIF:Line::C01742:"
+                },
+                "OperatorRef": {},
+                "FramedVehicleJourneyRef": {
+                  "DataFrameRef": {
+                    "value": "any"
+                  },
+                  "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::made-3:LOC"
+                },
+                "DirectionName": [],
+                "DestinationRef": {
+                  "value": "STIF:StopArea:SP:900003:"
+                },
+                "DestinationName": [
+                  {
+                    "value": "Boissy-Saint-Léger"
+                  }
+                ],
+                "MonitoredCall": {
+                  "StopPointName": [
+                    {
+                      "value": "La Défense"
+                    }
+                  ],
+                  "VehicleAtStop": false,
+                  "DestinationDisplay": [
+                    {
+                      "value": "Boissy-Saint-Léger"
+                    }
+                  ],
+                  "ExpectedDepartureTime": "2026-10-01T10:35:00.000Z",
+                  "DepartureStopAssignment": {
+                    "ExpectedQuayRef": {
+                      "value": "STIF:StopPoint:Q:90012:"
+                    }
+                  },
+                  "DeparturePlatformName": {
+                    "value": "2"
+                  },
+                  "DepartureStatus": "onTime",
+                  "ArrivalStatus": "onTime",
+                  "ExpectedArrivalTime": "2026-10-01T10:34:40.000Z"
+                },
+                "DirectionRef": {
+                  "value": "Aller"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
