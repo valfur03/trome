@@ -39,6 +39,9 @@ public final class StationLiveActivityModel {
     private var keptTimesStaleDate: Date?
     @ObservationIgnored private let systemCalls = InOrderCalls()
     @ObservationIgnored private var startCount = 0
+    /// The last content that the app gave iOS, in the order of the system calls: an update that iOS would draw
+    /// the same is not sent (`ContentState.drawsTheSame(as:)`).
+    @ObservationIgnored private var sentContent: StationActivityAttributes.ContentState?
 
     public init(
         client: any StationLiveActivityClient,
@@ -52,6 +55,7 @@ public final class StationLiveActivityModel {
         self.areActivitiesEnabled = client.areActivitiesEnabled
         let shown = client.shownContent
         self.firstLineIndex = shown?.trains.linesPage?.firstIndex ?? 0
+        self.sentContent = client.isShowing ? shown : nil
         if client.isShowing, let shown, shown.trains.linesPage != nil,
            let saved = store?.load(), saved.station.name == shown.stationName {
             inputs = saved
@@ -76,6 +80,7 @@ public final class StationLiveActivityModel {
         } else {
             do {
                 try client.start(content)
+                sentContent = content
             } catch let error as StationLiveActivityError {
                 startError = error
                 areActivitiesEnabled = client.areActivitiesEnabled
@@ -119,10 +124,10 @@ public final class StationLiveActivityModel {
             if kept != shown {
                 content = kept
             }
-            await send(kept)
+            await send(kept, afterATap: true)
             return
         }
-        await show(station: inputs.station, trains: inputs.trains)
+        await show(station: inputs.station, trains: inputs.trains, afterATap: true)
     }
 
     func redraw() async {
@@ -163,6 +168,7 @@ public final class StationLiveActivityModel {
     public func stop() async {
         isShowing = false
         forgetShownContent()
+        sentContent = nil
         let startsBeforeTheEnd = startCount
         await systemCalls.run { [client] in await client.end() }
         if startCount == startsBeforeTheEnd {
@@ -178,6 +184,7 @@ public final class StationLiveActivityModel {
         }
         if !isShowing {
             forgetShownContent()
+            sentContent = nil
         }
     }
 
@@ -223,7 +230,7 @@ public final class StationLiveActivityModel {
         return marked
     }
 
-    private func show(station: Station, trains: NextTrainsState) async {
+    private func show(station: Station, trains: NextTrainsState, afterATap: Bool = false) async {
         if switchesStation(to: station) {
             firstLineIndex = 0
         }
@@ -235,7 +242,7 @@ public final class StationLiveActivityModel {
         )
         remember(StationLiveActivityInputs(station: station, trains: trains))
         self.content = content
-        await send(content)
+        await send(content, afterATap: afterATap)
     }
 
     private func remember(_ newInputs: StationLiveActivityInputs?) {
@@ -263,7 +270,14 @@ public final class StationLiveActivityModel {
         keptTimesStaleDate.map { date >= $0 } ?? false
     }
 
-    private func send(_ content: StationActivityAttributes.ContentState) async {
+    /// Sends the content to iOS, unless iOS would draw it as it draws the last one. After a tap on the Live
+    /// Activity, the content is always sent: iOS dims the rows of the trains (`invalidatableContent()`) until
+    /// the next update.
+    private func send(_ content: StationActivityAttributes.ContentState, afterATap: Bool = false) async {
+        if !afterATap, let sentContent, content.drawsTheSame(as: sentContent) {
+            return
+        }
+        sentContent = content
         await systemCalls.run { [client] in await client.update(content) }
     }
 

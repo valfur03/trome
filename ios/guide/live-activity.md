@@ -18,7 +18,7 @@ Put a rule in `TROMECore` (`ios/Packages/TROMECore/Sources/TROMECore/`), with a 
 | What the compact and minimal views show | the rules in `DynamicIslandWait`; the views `CompactIslandWait`, `MinimalIslandWait`, `IslandNumber` | `DynamicIslandWaitTests` |
 | The look of a metro strip, a fork group, an RER row or a header | `PanamStrip`, `PanamBranchEndRows`, `SielRowsView`, `PanamStripsHeader` in `ios/Widget/`; `StationLiveActivity.swift` holds the entry views | [the render check](render-check.md) |
 | The header and its tap | `LinesPagerButton`, `ShowNextLinesIntent`, `StationLiveActivityModel.showNextLines()` | `StationLiveActivityModelTests` |
-| When the Live Activity is drawn again | `LinesPage.nextRedrawDate`, `StationLiveActivityModel.redraw()`; `BackgroundTrainsRefresh.asksInsteadOfRedrawing`, when a row would lose a train | `LinesPageTests+Redraw`, `StationLiveActivityRedrawTests`, `AutoLiveActivityFeedTests+ForkEnds` |
+| When the Live Activity is drawn again | `LinesPage.nextRedrawDate`, `StationLiveActivityModel.redraw()`; `BackgroundTrainsRefresh.asksInsteadOfRedrawing`, when a row would lose a train; never for an update that draws the same, except after a tap (`ContentState.drawsTheSame(as:)`) | `LinesPageTests+Redraw`, `StationLiveActivityRedrawTests`, `StationLiveActivitySameDrawingTests`, `AutoLiveActivityFeedTests+ForkEnds` |
 | How the app starts, updates and ends the Live Activity in iOS | `StationLiveActivityModel` and its protocol `StationLiveActivityClient`; the adapter `ActivityKitStationLiveActivityClient` and the start error `LiveActivityStartError`, in `ios/App/LiveActivity/` | `StationLiveActivityModelTests` |
 
 The values that a change often needs are constants:

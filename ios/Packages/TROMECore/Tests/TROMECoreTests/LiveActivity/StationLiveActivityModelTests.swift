@@ -252,7 +252,7 @@ struct StationLiveActivityModelTests {
         client.shownContent = StationActivityAttributes.ContentState(
             station: chatelet,
             trains: chateletTrains,
-            now: now,
+            now: now.addingTimeInterval(-30),
             firstLineIndex: 2
         )
         let model = makeModel()
