@@ -55,7 +55,7 @@ jobs:
       contents: read
     # One deploy at a time; a newer run waits for the one that deploys, and is never cancelled while it deploys.
     concurrency:
-      group: release
+      group: server-deploy
       cancel-in-progress: false
     steps:
       - name: Check out the repo

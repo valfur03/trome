@@ -45,8 +45,8 @@ Only a person with write access to the repo can start it.
 
 ### The staging token
 
-The run deploys with a Cloudflare **Account API token** that may only edit the staging Worker: the role **Editor** on `trome-server-staging` (or on the Workers product, when Cloudflare refuses one Worker).
-It cannot create or delete a Worker.
+The run deploys with a Cloudflare **Account API token** with the role **Editor** on the one Worker `trome-server-staging`: it may edit and deploy that Worker only, and cannot create or delete a Worker.
+When Cloudflare refuses one Worker, the fallback is the role **Editor** on the Workers product, and then a leak of the token also lets someone deploy the production Worker, `trome-server`.
 It has no expiry, so revoking it is the only answer to a leak.
 It lives in the GitHub environment `server-staging`, whose branch rule lets only `main` read it, with no reviewer:
 
