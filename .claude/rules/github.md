@@ -7,7 +7,6 @@ commands:
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+workflow\s+(run|enable|disable)(\s|$)'
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+run\s+rerun(\s|$)'
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+api\s.*(environments|pending_deployments|deployment_protection_rules|secrets|variables|dispatches|rerun|rulesets|protection)'
-  - '^(\S*/)?make\b.*\smerge(\s|$)'
 ---
 # GitHub: secrets, environments, release and deploy workflows
 
@@ -21,6 +20,7 @@ Until a technical wall exists (option C of doc-11, not chosen), these rules are 
 A **release or deploy workflow** is a workflow of `.github/` that reads a secret other than `secrets.GITHUB_TOKEN` (the run's own token).
 The app's TestFlight and App Store run and the server's deploy are such workflows.
 The checks of the app, which hold no secret, and the docs site (`docs-site.yml`) are not.
+The task that gives a secret to a script of a workflow adds that script to the `paths:` list of this rule, so that every edit and every diff of it brings this rule.
 
 - **Never start a release or deploy workflow by hand**: no `gh workflow run`, no `gh run rerun`, no dispatch through `gh api`, no button of the web page.
   The manager's push of `main` is the only way an agent starts one.
@@ -28,6 +28,7 @@ The checks of the app, which hold no secret, and the docs site (`docs-site.yml`)
   An agent may start a workflow that holds no secret (the checks), when its task needs a real run.
 - **Never approve or reject a waiting deployment** (`gh api .../pending_deployments`, the web page).
   Why: the approval of the app's signing environment is the prompter's click on the first three App Store releases (decision-108 point 4), and GitHub cannot tell an agent from him.
+  The server's deploy has no required reviewer (decision-108 point 1), so it has no deployment to answer.
 - **Never set, change or delete a secret or a variable**, of the repo or of an environment (`gh secret`, `gh variable`, `gh api .../secrets` or `.../variables`).
   Only the prompter sets them, from his own terminal.
   Why: the value would pass through the agent's context, and its logs.
@@ -37,13 +38,18 @@ The checks of the app, which hold no secret, and the docs site (`docs-site.yml`)
   A secret goes only to the steps that need it, never to a step that installs packages or runs tests.
   Why: GitHub hides only the exact value in a log; a part or an encoding of it is public at once.
 
-## A change that waits for the prompter's yes
+## The review of a release or deploy workflow
 
-A change of a release or deploy workflow, or of a script that such a workflow runs with a secret, waits for the prompter's yes before its merge.
-How you know that a change is one: `git diff main...task/<id>` shows a file of `.github/` whose text, before or after the change, names `secrets` other than `secrets.GITHUB_TOKEN` (`grep -n secrets` on both versions); or it shows a file of the `paths:` list of this rule outside `.github/`.
-The task that gives a secret to a script of a workflow adds that script to the `paths:` list, so that every diff of it brings this rule.
+A change of a release or deploy workflow, or of a script that such a workflow runs with a secret, merges with no yes from the prompter.
+The team's review is the only guard, so the reviewer checks it, file by file (the prompter's order of 2026-10-14, doc-3).
+How you know that a change is one: `git diff main...task/<id>` shows a file of `.github/` whose text, before or after the change, names `secrets.` other than `secrets.GITHUB_TOKEN` (`grep -n 'secrets\.'` on both versions), or a file of the `paths:` list of this rule outside `.github/`.
 
-- The implementer says it in the notes: what the change does to the workflow, and that the merge waits for the yes.
-- The reviewer who passes such a change adds a comment that asks the prompter for his yes, with the command that shows the diff of those files, and adds the label `needs-prompter`.
-  QA may go on.
-- The manager never runs `make merge` for such a change until the yes is written in the task, or in a decision that names this change (as decision-108 point 3 does for the first server workflow).
+- **Each secret reaches only the steps that use it** (sign, upload, deploy): in the `env:` or `with:` of those steps, never of the job or the workflow, never in a step that installs packages or runs tests, and never printed (the clause above).
+- **No new secret**: each name of `secrets.` in the diff is one that the task names; a new one is a finding, since only the prompter can set it.
+- **Only `main` gets a secret**: the job that holds one names its `environment:` (whose branch rule is `main` only) and has an `if:` on `github.ref == 'refs/heads/main'`, and the workflow has no `pull_request` or `pull_request_target` trigger.
+  Why: a manual start can run any branch, and a branch can hold changed code.
+- **The App Store click stays**: the release job keeps the environment of the signing, and no step or token can answer a waiting deployment.
+- **Third-party actions are pinned**: in a job that holds a secret, each `uses:` that is not `actions/...` names a full commit SHA.
+  Why: a tag can be moved to new code, which then runs with the secret.
+
+The reviewer writes one line per check in the task notes, with what it saw; a failed check is a high finding.

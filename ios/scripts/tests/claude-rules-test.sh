@@ -71,7 +71,7 @@ expect "the same command again goes through" "$(run "$e2e" | delivered)" "none"
 expect "make -C and a variable bring the rules of each command" \
     "$(run "$(bash_event "make -C $worktree run LIVE=1 LANGUAGE=fr" '' s5)" | delivered)" "deny assets live-data qa simulator"
 expect "make merge through fnm exec, after cd, brings the merge and Simulator rules" \
-    "$(run "$(bash_event "cd $worktree && fnm exec --using=.nvmrc -- make merge" '' s6)" | delivered)" "deny github merge simulator"
+    "$(run "$(bash_event "cd $worktree && fnm exec --using=.nvmrc -- make merge" '' s6)" | delivered)" "deny merge simulator"
 expect "a docs command through fnm exec brings the docs rules" \
     "$(run "$(bash_event 'fnm exec --using=.nvmrc -- make docs-check' '' s6b)" | delivered)" "deny docs-site"
 expect "a server command through fnm exec, with a separate version, brings the server rules" \
@@ -87,7 +87,7 @@ expect "a server command brings the server rules" \
 expect "a variable before make, that make reads from the environment, brings its rules" \
     "$(run "$(bash_event 'LIVE=1 make run' '' s15)" | delivered)" "deny assets live-data qa simulator"
 expect "make merge behind caffeinate and its options brings its rules" \
-    "$(run "$(bash_event 'caffeinate -i make merge' '' s16)" | delivered)" "deny github merge simulator"
+    "$(run "$(bash_event 'caffeinate -i make merge' '' s16)" | delivered)" "deny merge simulator"
 expect "make e2e behind timeout and its duration brings its rules" \
     "$(run "$(bash_event 'timeout 900 make e2e' '' s17)" | delivered)" "deny simulator tests"
 expect "make e2e behind nice brings its rules" \
