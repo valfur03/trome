@@ -42,7 +42,7 @@ expect() {
 # The fake server: each token gets the example of its name; any other token a refusal.
 # It writes one line per request (the Host header, the path, and which token it got), never the token.
 cat > "$work/server.py" <<'PY'
-import http.server, json, sys
+import http.server, json, socketserver, sys
 contracts, port_file, log_file = sys.argv[1:4]
 tokens = dict(arg.split("=", 1) for arg in sys.argv[4:])
 examples = {"budget": "departures-out-budget.json", "primlimit": "departures-out-prim-limit.json",
@@ -72,7 +72,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
     def log_message(self, *args):
         pass
-server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+class Server(http.server.HTTPServer):
+    # HTTPServer looks up a name for its address when it binds. On a Mac whose network has no answer for it
+    # (GitHub's Mac), that lookup takes more than 30 s, and the fake server never needs the name.
+    def server_bind(self):
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+server = Server(("127.0.0.1", 0), Handler)
 with open(port_file, "w") as f:
     f.write(str(server.server_address[1]))
 server.serve_forever()
