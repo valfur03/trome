@@ -31,3 +31,29 @@ extension WatchedRegion {
             """
     }
 }
+
+#if DEBUG
+extension WatchedRegion {
+    /// The label of a station area with where the phone was when iOS sent its event: how far from the centre
+    /// of the station (the point that the arrival rules measure from), and how accurate and how old the position
+    /// that iOS had then was. A walk reads from it how far from the station, and how late, iOS woke the app.
+    /// Only the Wake log of debug builds uses it.
+    public static func wakeLabel(
+        ofId id: String, phoneAt fix: PositionFix?, now: Date, catalog: StationCatalog
+    ) -> String {
+        let label = label(ofId: id, catalog: catalog)
+        guard let station = stationId(inRegionId: id).flatMap(catalog.station(withId:)) else { return label }
+        guard let fix else { return "\(label) (iOS gave no position)" }
+        let distance = Int(fix.coordinate.distance(to: station.coordinate))
+        let age = max(0, Int(now.timeIntervalSince(fix.timestamp)))
+        return "\(label) (phone \(distance) m away, ±\(Int(fix.accuracyMeters)) m, \(age) s old)"
+    }
+
+    private static func stationId(inRegionId id: String) -> String? {
+        if let stationId = arrivalStationId(inRegionId: id) {
+            return stationId
+        }
+        return id.hasPrefix(stopPrefix) ? String(id.dropFirst(stopPrefix.count)) : nil
+    }
+}
+#endif

@@ -10,7 +10,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
 
     var onWake: (@MainActor (_ event: RegionEvent, _ lastKnownFix: PositionFix?) async -> Void)?
     var wakeLog: WakeLog?
-    var regionLabel: (String) -> String = { $0 }
+    var catalog: StationCatalog?
 
     private let manager = CLLocationManager()
     private var session: CLServiceSession?
@@ -75,9 +75,13 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         eventsTask = Task { [weak self] in
             do {
                 for try await event in await monitor.events {
+                    let lastKnownFix = self?.manager.location.flatMap(PositionFix.init)
+                    let regionEvent = Self.regionEvent(of: event)
                     Self.log(event)
-                    self?.record(event)
-                    await self?.handle(identifier: event.identifier, state: event.state)
+                    self?.record(event, as: regionEvent, phoneAt: lastKnownFix)
+                    if let regionEvent {
+                        await self?.handle(regionEvent, lastKnownFix: lastKnownFix)
+                    }
                 }
             } catch {
                 return
@@ -85,15 +89,17 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         }
     }
 
-    private func handle(identifier: String, state: CLMonitor.Event.State) async {
-        let event: RegionEvent
-        switch state {
-        case .satisfied: event = .entered(regionId: identifier)
-        case .unsatisfied: event = .left(regionId: identifier)
-        default: return
+    nonisolated private static func regionEvent(of event: CLMonitor.Event) -> RegionEvent? {
+        switch event.state {
+        case .satisfied: .entered(regionId: event.identifier)
+        case .unsatisfied: .left(regionId: event.identifier)
+        default: nil
         }
+    }
+
+    private func handle(_ event: RegionEvent, lastKnownFix: PositionFix?) async {
         let wakeTime = RegionWakeTime()
-        await onWake?(event, manager.location.flatMap(PositionFix.init))
+        await onWake?(event, lastKnownFix)
         wakeTime.end()
     }
 }
@@ -157,10 +163,15 @@ extension CoreLocationStationRegionWatcher {
         #endif
     }
 
-    private func record(_ event: CLMonitor.Event) {
+    /// Writes the event before the app decides on it, with the position that the app decides on,
+    /// so that a wake says where the phone was even when the app then decides nothing.
+    private func record(_ event: CLMonitor.Event, as regionEvent: RegionEvent?, phoneAt fix: PositionFix?) {
         #if DEBUG
-        guard let wakeLog else { return }
-        let region = regionLabel(event.identifier)
+        guard let wakeLog, let catalog else { return }
+        let now = Date()
+        let region = regionEvent == nil
+            ? WatchedRegion.label(ofId: event.identifier, catalog: catalog)
+            : WatchedRegion.wakeLabel(ofId: event.identifier, phoneAt: fix, now: now, catalog: catalog)
         let problems = Self.diagnostics(of: event)
         let state = Self.firstState(of: event)
         if firstStates.take(id: event.identifier, label: region, state: state, problems: problems) {
@@ -169,7 +180,8 @@ extension CoreLocationStationRegionWatcher {
             }
             return
         }
-        let what = Self.line(of: event, region: region)
+        let what = regionEvent?.wakeLine(phoneAt: fix, now: now, catalog: catalog)
+            ?? Self.line(of: event, region: region)
         wakeLog.record(.system, problems.isEmpty ? what : "\(what) [\(problems)]")
         #endif
     }
@@ -185,11 +197,9 @@ extension CoreLocationStationRegionWatcher {
 
     nonisolated private static func line(of event: CLMonitor.Event, region: String) -> String {
         switch event.state {
-        case .satisfied: "iOS: entered \(region)"
-        case .unsatisfied: "iOS: left \(region)"
         case .unknown: "iOS: \(region) is unknown"
         case .unmonitored: "iOS: \(region) is not watched"
-        @unknown default: "iOS: \(region), state \(event.state.rawValue)"
+        default: "iOS: \(region), state \(event.state.rawValue)"
         }
     }
 

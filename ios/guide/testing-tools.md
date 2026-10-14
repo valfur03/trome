@@ -140,7 +140,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Icon | A line for |
 |---|---|
 | Power | Each launch of the app, then the settings of the phone at that launch; each time the app comes on screen or leaves it |
-| Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports; one line for the first state of the new areas |
+| Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports, with where the phone was for a station area; one line for the first state of the new areas |
 | Map | Each time the app chooses again the stations that iOS watches |
 | Branch | Each arrival that the app decides, with its reason: notified, started, switched, or why not; each end of the Live Activity by its distance or time limit |
 | Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
@@ -148,6 +148,10 @@ the app keeps a fake position across launches, and with it the app watches no ar
 "App launched" is written at the start of the launch.
 When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.
 Only a line "iOS: entered" a station after it, or "inside" a station in a "first state" line, says that iOS woke the app near that station.
+After a station, in an "entered" or "left" line or after "inside" in a "first state" line, the brackets say where the phone was when iOS sent the event, for example "(phone 85 m away, ±12 m, 4 s old)": the distance from the centre of the station, the accuracy, and the age of the last position that iOS had.
+The time of the line is when iOS woke the app: the gap from the time when you crossed the edge of the area is how late iOS was.
+The app writes this line before it decides, so it is there even when no decision line follows, and "(iOS gave no position)" means that iOS had none to give.
+The decision line after it rests on that position, with one exception: after "entered", a position that does not settle the arrival makes the app ask iOS for a new one, for up to 10 seconds, and the decision then rests on the new one.
 Other area lines can follow any launch: iOS can send the state of each area when the app starts ("left", "not watched"), and "area around you" and "stop area" are not stations.
 iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.

@@ -180,7 +180,7 @@ struct TROMEApp: App {
         let wakeLog = WakeLog(storage: UserDefaults.standard)
         wakeLog.recordLaunch(locationSource: locationService.source)
         regionWatcher.wakeLog = wakeLog
-        regionWatcher.regionLabel = { WatchedRegion.label(ofId: $0, catalog: catalog) }
+        regionWatcher.catalog = catalog
         #endif
         return regionWatcher
     }
