@@ -39,4 +39,4 @@ So it never gets real trains: PRIM refuses its fake key, and you check the answe
 ## The guides
 
 - [How the server works](guide/how-it-works.md): its API, how it shares the PRIM quota, and what it keeps about riders.
-- [Deploy the server](guide/deploy.md), for the maintainer: the Cloudflare account, the secrets, the deploy, the list of app tokens, which keeps every installed build working when a new token comes, the counts, the totals for your Prometheus and the logs.
+- [Deploy the server](guide/deploy.md), for the maintainer: the Cloudflare account, the secrets, the deploy, which a push to `main` makes on the staging Worker, the list of app tokens, which keeps every installed build working when a new token comes, the counts, the totals for your Prometheus and the logs.

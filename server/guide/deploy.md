@@ -1,7 +1,7 @@
 # Deploy the server
 
 This page is for the maintainer, who holds the Cloudflare account of the server and its secrets: a contributor needs none of it, and starts at [server/README.md](../README.md).
-It shows how to deploy the server, set its secrets, connect the app to it, read its counts of requests and PRIM calls, find a problem without keeping the stops of riders, and keep the address that every build of the app holds.
+It shows how the server is deployed, set its secrets, connect the app to it, read its counts of requests and PRIM calls, find a problem without keeping the stops of riders, and keep the address that every build of the app holds.
 Run the commands from the root of the repo, with Node 24 active ([server/README.md](../README.md)).
 
 | Command | What it does |
@@ -9,12 +9,78 @@ Run the commands from the root of the repo, with Node 24 active ([server/README.
 | `make server-login` | Logs in to your Cloudflare account, once on this Mac. |
 | `make server-secrets` | Sets each secret of the production Worker, `trome-server`, asking for each value, so that none is in your shell history or in a file. |
 | `make server-secret NAME=<name>` | Changes one secret, at once, with no new deploy. |
-| `make server-deploy-staging` | Runs `make server-check`, then deploys your folder, also changes that are not committed, to the staging Worker, `trome-server-staging`. |
+| `make server-deploy-staging` | Runs `make server-check`, then deploys your folder, also changes that are not committed, to the staging Worker, `trome-server-staging`. A push to `main` also deploys it ([How a deploy happens](#how-a-deploy-happens)). |
 | `make server-deploy` | Runs `make server-check`, then deploys `main` to the production Worker. It refuses another branch and changes that are not committed. |
 | `make server-counts URL=<address>` | Shows the requests and the PRIM calls of the server, a line per day of the last 14 days (`FULL=1`: the whole report), and asks for the owner token. |
 
 Add `STAGING=1` to `make server-secrets` or `make server-secret` for the staging Worker.
 Both deploy commands stop when a secret of their Worker is not set, and say which command sets it.
+
+## How a deploy happens
+
+A push to `main` that changes `server/` or `contracts/` starts the GitHub workflow **Server deploy** (`.github/workflows/server-deploy.yml`), and nobody types a command:
+
+1. It runs `make server-check` on that commit.
+2. It deploys the commit to the staging Worker, with the commit as the tag and the message of the new version, which the Worker's **Deployments** page of the Cloudflare dashboard shows.
+3. It checks that staging answers: `/health`, then the trains of one stop with the staging app token, which costs at most one PRIM call of the staging cap.
+
+A push that changes neither starts nothing.
+The production Worker is still deployed by hand, with `make server-deploy`.
+
+Before the deploy, the run refuses, and deploys nothing:
+
+- when `main` has moved on to a commit that changes `server/` or `contracts/`: the run of that newer commit deploys it, so an old run never puts older code back;
+- when a secret that `server/wrangler.jsonc` requires is not set on the staging Worker: the run names it.
+
+When a run is red, its failed step says why:
+
+- **A secret is not set**: set it with `make server-secret NAME=<name> STAGING=1`, then open the run on GitHub and press **Re-run failed jobs**.
+- **wrangler aborts because of conflicts**: someone changed a setting of the Worker in the Cloudflare dashboard, and the run never overrides it with no person to answer.
+  Put the setting in `server/wrangler.jsonc`, or undo it in the dashboard, then re-run.
+- **The check of staging failed**: the step says which check, and the HTTP status of the answer.
+  The new version is live on staging: fix it with a new commit on `main`.
+
+To deploy `main` to staging again with no new commit, open **Actions** > **Server deploy** > **Run workflow** on GitHub, on `main`.
+Only a person with write access to the repo can start it.
+
+### The staging token
+
+The run deploys with a Cloudflare **Account API token** that may only edit the staging Worker: the role **Editor** on `trome-server-staging` (or on the Workers product, when Cloudflare refuses one Worker).
+It cannot create or delete a Worker.
+It has no expiry, so revoking it is the only answer to a leak.
+It lives in the GitHub environment `server-staging`, whose branch rule lets only `main` read it, with no reviewer:
+
+| Secret of `server-staging` | Its value |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | The token. |
+| `CLOUDFLARE_ACCOUNT_ID` | The account ID: in the Cloudflare dashboard, **Workers & Pages**, then the copy button next to **Account ID**. It is a secret, not a variable, so that the public log of a run hides it. |
+| `STAGING_APP_TOKEN` | One token of the `APP_TOKEN` list of the staging Worker, for the check of step 3. Before you take that token out of the list, set another one here. |
+
+Set each one from your own terminal, in your clone: `gh secret set <name> --env server-staging`.
+It asks for the value and hides it, so the value is in no file and not in your shell history.
+Never put one in a file, a chat or a workflow.
+
+Make the token, once:
+
+1. In the Cloudflare dashboard, open **Manage account** > **Account API tokens**, and select **Create Token**, with no template.
+2. Give it the role **Editor** on the one Worker `trome-server-staging`, and nothing else.
+   If the form refuses one Worker, give the role **Editor** on the Workers product.
+3. Leave **Client IP Address Filtering** empty, and give **TTL** no end date.
+4. Select **Continue to summary**, then **Create Token**: Cloudflare shows the token only once.
+5. Run `gh secret set CLOUDFLARE_API_TOKEN --env server-staging`, and paste it.
+
+The environment, once: on GitHub, **Settings** > **Environments** > **New environment**, named `server-staging`.
+Give it no reviewer, choose **Selected branches and tags** for its deployment branches with the one branch `main`, and untick **Allow administrators to bypass configured protection rules**.
+Then set its three secrets as above.
+
+Revoke the token in a minute, when it leaked:
+
+1. In the Cloudflare dashboard, open **Manage account** > **Account API tokens**.
+2. Next to the token, select the three dot icon > **Roll**, then **Confirm**: the old token stops working at once, and Cloudflare shows a new one with the same access.
+   When the menu has no **Roll**, delete the token from it, and make a new one as above.
+3. Run `gh secret set CLOUDFLARE_API_TOKEN --env server-staging`, and paste the new token.
+
+To stop every deploy of the run instead, delete the token and make no new one: each run then fails at its deploy step, and deploys nothing.
 
 ## The secrets
 
@@ -57,6 +123,7 @@ After every deploy and every change of a secret of the production Worker, run `m
    ```
 
 7. For production, run `make server-secrets` with other tokens, answer `y` for "trome-server", then run `make server-deploy` in the main folder of your clone, on `main`, and check it in the same way.
+8. Make the staging token and the environment `server-staging` ([The staging token](#the-staging-token)): from then on, each push to `main` that changes the server deploys it to staging.
 
 ## Connect the app to the server
 

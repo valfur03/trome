@@ -74,7 +74,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
   Two checks now protect the Mac, so the prompter set it back to 3 (2026-09-26).
   The factory starts a new agent only when at least 25% of the CPU is idle.
   The Simulator lock and the shared Simulator keep the Simulator jobs to one at a time.
-- **Never read, print, copy or commit the PRIM key.** The real key is in the main repo folder only, in `ios/Config/Secrets.xcconfig` (or at its old place, `Config/Secrets.xcconfig`, until the prompter moves it).
+- **Never read, print, copy or commit the PRIM key.** The real key is in the main repo folder only, in `ios/Config/Secrets.xcconfig`.
   Worktrees do not have it.
   Do not open `ios/Config/Secrets.xcconfig` or `Config/Secrets.xcconfig`.
   Do not copy it into a worktree.
@@ -82,8 +82,8 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
   Only QA uses `make run LIVE=1`; Software Engineers and the quality gate never do (`.claude/rules/live-data.md`).
 - **Never run `make git-hooks` or `make git-hooks-off`.** They change `core.hooksPath` in the git config, and all the worktrees share it with the prompter's main folder.
   Only the prompter turns the hooks on or off.
-- **No deploy and no account.** Only the prompter runs `make server-login`, `make server-secrets`, `make server-secret`, `make server-deploy-staging`, `make server-deploy` and `make server-counts` on a deployed server, with his Cloudflare account and his owner token.
-  An agent never runs them, never logs in to Cloudflare, and never reads the real secrets.
+- **No deploy and no account for an agent.** The server deploys from its GitHub workflow on `main`, with a token limited to its Worker that only the prompter makes, or by his command.
+  He alone runs `make server-login`, `server-secrets`, `server-secret`, `server-deploy-staging`, `server-deploy`, `server-counts` on a deployed server, and `wrangler rollback`; an agent never runs them, never logs in to Cloudflare, and never reads the real secrets.
 - **The shared build cache.** Only the prompter runs `make clean-shared-cache`.
   Never delete `~/Library/Caches/TROME/` by hand: a build that runs at that moment fails.
 - **The prompter's main folder.** No agent commits, stashes or discards the changes of the prompter's main folder without the prompter.

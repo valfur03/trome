@@ -2,6 +2,7 @@
 paths:
   - "server/**"
   - "contracts/**"
+  - ".github/workflows/server-deploy.yml"
 commands:
   - '^(\S*/)?make\b.*\sserver-[a-z-]+(\s|$)'
   - '^(\S*/)?make\b.*\s(release-server-(check|timing)|release-tokens-check)(\s|$)'
@@ -52,6 +53,10 @@ The reviewer checks them, as for the iOS app.
 - **Fake secrets only.** `make server-dev` creates `server/.dev.vars` (ignored by git) from `server/.dev.vars.example`, with fake values.
   Never put a real key in it, and never commit it (`make server-check` fails when git tracks a `.dev.vars` or `.env` file of `server/`, or when such a file is new and git does not ignore it).
 - **No deploy and no account** (a rule of `CLAUDE.md`).
+  The workflow `.github/workflows/server-deploy.yml` deploys `server/` from `main` to the staging Worker: `make server-check`, then the deploy, then a check that staging answers (`server/guide/deploy.md`).
+  The production Worker is still deployed only by the prompter, with `make server-deploy`.
+  In a run, wrangler answers its own questions "yes": the run passes `--strict` to `wrangler deploy`, and a workflow step never calls a wrangler command that can ask one (`rollback`, `delete`, `secret put` or `secret delete`).
+  Never give the Cloudflare token or the app token to a step that installs packages or runs tests (`.claude/rules/github.md`).
 - **`make release-server-check`, `make release-server-timing` and `make release-tokens-check` are the prompter's.** They read the real app tokens of `ios/Config/Server.xcconfig` or `ios/Config/BuildTokens.txt` and call the production server; the timing makes up to 2 PRIM calls, the tokens check one per build in the field.
   An agent never runs them in the main folder; in a worktree, which has no such file, they only say that the file is missing.
   Check a change of them with `ios/scripts/tests/release-server-check-test.sh`, `release-server-timing-test.sh` and `release-tokens-check-test.sh`, which use a fake server and fake files.

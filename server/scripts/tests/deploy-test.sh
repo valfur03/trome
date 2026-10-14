@@ -131,4 +131,51 @@ expect "it does not deploy then either" "$(deployed production)" "not deployed"
 
 expect "an unknown target refuses" "$(deploy prod)" "refuses"
 
+# The run of the GitHub workflow: deploy.sh <target> <commit>.
+git -C "$repo" switch -q main
+git init -q --bare "$state/origin.git"
+git -C "$repo" remote add origin "$state/origin.git"
+git -C "$repo" push -q origin main
+commit=$(git -C "$repo" rev-parse HEAD)
+rm -f "$cloudflare/staging/deployed"
+
+expect "run: the commit at the tip of main deploys" "$(deploy staging "$commit")" "deploys"
+expect "run: the deploy carries the commit as its tag and message, with --strict" "$(deployed staging)" "deploy --env=staging --config wrangler.jsonc --strict --tag $commit --message main $commit"
+
+other=$(mktemp -d)
+git clone -q "$state/origin.git" "$other/clone"
+git -C "$other/clone" -c user.email=test@example.com -c user.name=test commit -q --allow-empty -m "a change outside server/"
+git -C "$other/clone" push -q origin main
+rm "$cloudflare/staging/deployed"
+expect "run: main has moved on with no change of server/ or contracts/: the commit still deploys" "$(deploy staging "$commit")" "deploys"
+
+echo '{"b":1}' > "$other/clone/contracts/a.json"
+git -C "$other/clone" -c user.email=test@example.com -c user.name=test commit -q -am "a change of contracts/"
+git -C "$other/clone" push -q origin main
+tip=$(git -C "$other/clone" rev-parse HEAD)
+rm "$cloudflare/staging/deployed"
+expect "run: main has moved on with a change of contracts/: the old commit refuses" "$(deploy staging "$commit")" "refuses"
+expect "run: it deploys nothing then" "$(deployed staging)" "not deployed"
+expect "run: the message names both commits" "$(contains "$state/out" "This run deploys $commit, but main is now at $tip")" "yes"
+
+git -C "$repo" fetch -q origin main
+git -C "$repo" reset -q --hard FETCH_HEAD
+expect "run: a commit that is not the one of this folder refuses" "$(deploy staging "$commit")" "refuses"
+expect "run: the message says that nothing was deployed" "$(contains "$state/out" "not at $commit: nothing was deployed")" "yes"
+rm -rf "$other"
+
+rm "$cloudflare/staging/secret-OWNER_TOKEN"
+expect "run: a missing secret refuses" "$(deploy staging "$tip")" "refuses"
+expect "run: it deploys nothing then" "$(deployed staging)" "not deployed"
+expect "run: the message names the missing secret" "$(contains "$state/out" "yet (or it does not exist yet): OWNER_TOKEN.")" "yes"
+expect "run: the message says how to set it, then to re-run" "$(contains "$state/out" "Set each one from your computer with 'make server-secret NAME=<name> STAGING=1' (server/guide/deploy.md). Then open this run on GitHub and press 'Re-run failed jobs'.")" "yes"
+expect "run: the message warns never to use a secrets file" "$(contains "$state/out" "Never use a secrets file")" "yes"
+printf 'owner-value\n' | "$repo/server/node_modules/.bin/wrangler" secret put OWNER_TOKEN --env=staging
+expect "run: once the secret is set, the re-run deploys" "$(deploy staging "$tip")" "deploys"
+
+rm -rf "$cloudflare/staging"
+expect "run: when wrangler cannot list the secrets, the deploy checks them itself, and refuses" "$(deploy staging "$tip")" "refuses"
+expect "run: it says that it could not list them" "$(contains "$state/out" "wrangler could not list the secrets of the staging Worker")" "yes"
+expect "run: it says how to set a secret, then to re-run" "$(contains "$state/out" "set each one from your computer with 'make server-secret NAME=<name> STAGING=1'. Then open this run on GitHub and press 'Re-run failed jobs'.")" "yes"
+
 [ "$failures" -eq 0 ]

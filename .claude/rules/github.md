@@ -2,6 +2,8 @@
 paths:
   - ".github/workflows/**"
   - ".github/actions/**"
+  - "server/scripts/deploy.sh"
+  - "server/scripts/deploy-check.ts"
 commands:
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+(secret|variable)(\s|$)'
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+workflow\s+(run|enable|disable)(\s|$)'

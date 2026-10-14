@@ -1,0 +1,92 @@
+name: Server deploy
+
+# Deploys the server to its staging Worker after each push to main that changes server/ or contracts/,
+# once make server-check passed on that commit (server/guide/deploy.md, "How a deploy happens").
+# The maintainer may start it by hand on main, to deploy again: Actions > Server deploy > Run workflow.
+# The repo is public, so its logs are public: no step prints the Cloudflare token, the account ID, the app token
+# or a secret of the Worker, and the run uploads no artifact.
+# Each secret goes only to the step that uses it: never to a step that installs packages or runs tests.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "contracts/**"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    name: make server-check
+    if: github.ref == 'refs/heads/main'
+    # A Mac, as the computers where make server-check is run and checked today.
+    runs-on: macos-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The whole history: the check of the recorded promise sets reads each set as git first recorded it.
+          fetch-depth: 0
+
+      - name: Install the Node of .nvmrc
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: make server-check
+        run: make server-check
+
+  staging:
+    name: Deploy staging
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    timeout-minutes: 20
+    # Its branch rule lets only main use its secrets.
+    environment: server-staging
+    permissions:
+      contents: read
+    # One deploy at a time; a newer run waits for the one that deploys, and is never cancelled while it deploys.
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the Node of .nvmrc
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      # With no secret: the packages and their install scripts never see a token.
+      - name: Install the packages of the server
+        run: make server-setup
+
+      # The only step with the Cloudflare token. It refuses a commit that is no longer the server of the tip of main,
+      # and a Worker with a required secret not set; wrangler deploy runs with --strict, the commit as its tag and message.
+      - name: Deploy the staging Worker
+        working-directory: server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: "false"
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.json
+        run: ./scripts/deploy.sh staging "$GITHUB_SHA"
+
+      # The only step with the app token: /health, then the trains of one stop (one PRIM call at most).
+      - name: Check that staging answers
+        working-directory: server
+        env:
+          APP_TOKEN_FOR_CHECK: ${{ secrets.STAGING_APP_TOKEN }}
+        run: node scripts/deploy-check.ts "$RUNNER_TEMP/wrangler-output.json"
