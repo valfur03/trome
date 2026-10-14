@@ -5,7 +5,7 @@ import { relayObject } from "../../src/cloudflare/relay-object";
 import worker from "../../src/cloudflare/worker";
 import { everyStoredRow } from "./every-stored-row";
 import { secretNames } from "../../src/core/config/secrets";
-import { fakePrim } from "./fake-prim";
+import { fakePrim, recordedAnswer } from "./fake-prim";
 
 const departuresUrl = "https://server.test/v1/stops/STIF:StopArea:SP:42155:/departures";
 
@@ -145,7 +145,12 @@ describe("the Worker", () => {
     expect([...(prim.calls[0]?.searchParams.keys() ?? [])]).toEqual(["MonitoringRef"]);
     const stored = await everyStoredRow();
     expect(stored).toContain('"app_calls":1');
-    for (const value of [...Object.values(rider), env.APP_TOKEN, "42155"]) {
+    const copies = await runInDurableObject(relayObject(env), (_object, state) => state.storage.sql.exec("SELECT * FROM shared_answers").toArray());
+    expect(copies).toEqual([
+      { stop_ref: "STIF:StopArea:SP:42155:", body: recordedAnswer("stop-monitoring-abbesses-stop-area.json"), prim_answered_at: expect.any(Number) as number },
+    ]);
+    expect(stored.split("42155"), "the stop is only the key of the shared copy of its answer").toHaveLength(2);
+    for (const value of [...Object.values(rider), env.APP_TOKEN]) {
       expect(stored, value).not.toContain(value);
       for (const line of lines) {
         expect(line, value).not.toContain(value);

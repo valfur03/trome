@@ -9,7 +9,17 @@ const at = (iso: string) => Date.parse(iso);
 function usageCounts() {
   const database = new NodeSqliteDatabase();
   const flushTimes: number[] = [];
-  return { database, flushTimes, usage: new UsageCounts(database, (time) => flushTimes.push(time)) };
+  const cancels: number[] = [];
+  return {
+    database,
+    flushTimes,
+    cancels,
+    usage: new UsageCounts(
+      database,
+      (time) => flushTimes.push(time),
+      () => cancels.push(flushTimes.length),
+    ),
+  };
 }
 
 function hoursInStorage(database: NodeSqliteDatabase) {
@@ -17,21 +27,36 @@ function hoursInStorage(database: NodeSqliteDatabase) {
 }
 
 describe("UsageCounts", () => {
-  it("keeps the counts of app calls in memory, and asks for one flush 30 s after the first one", () => {
-    const { database, flushTimes, usage } = usageCounts();
+  it("keeps the counts of app calls in memory, and asks for one flush 10 s after the first one", () => {
+    const { database, flushTimes, cancels, usage } = usageCounts();
 
     usage.count("appCalls", at("2026-10-02T08:30:00.000Z"));
-    usage.count("cacheHits", at("2026-10-02T08:30:10.000Z"));
-    usage.count("appCalls", at("2026-10-02T08:30:20.000Z"));
+    usage.count("cacheHits", at("2026-10-02T08:30:04.000Z"));
+    usage.count("appCalls", at("2026-10-02T08:30:08.000Z"));
 
     expect(hoursInStorage(database)).toEqual([]);
-    expect(flushTimes).toEqual([at("2026-10-02T08:30:30.000Z")]);
+    expect(flushTimes).toEqual([at("2026-10-02T08:30:10.000Z")]);
 
-    usage.flushFromAlarm();
+    usage.flushWhenDue();
     expect(hoursInStorage(database)).toEqual([{ hour_start: at("2026-10-02T08:00:00.000Z"), app_calls: 2, cache_hits: 1 }]);
 
     usage.count("appCalls", at("2026-10-02T08:31:00.000Z"));
-    expect(flushTimes).toEqual([at("2026-10-02T08:30:30.000Z"), at("2026-10-02T08:31:30.000Z")]);
+    expect(flushTimes).toEqual([at("2026-10-02T08:30:10.000Z"), at("2026-10-02T08:31:10.000Z")]);
+    expect(cancels).toEqual([]);
+  });
+
+  it("cancels its flush when a PRIM call writes the counts first, so that nothing keeps the server awake for them", () => {
+    const { database, flushTimes, cancels, usage } = usageCounts();
+
+    usage.count("appCalls", at("2026-10-02T08:30:00.000Z"));
+    usage.countPrimCall(at("2026-10-02T08:30:00.000Z"));
+
+    expect(flushTimes).toEqual([at("2026-10-02T08:30:10.000Z")]);
+    expect(cancels).toEqual([1]);
+    expect(hoursInStorage(database)).toEqual([{ hour_start: at("2026-10-02T08:00:00.000Z"), app_calls: 1, cache_hits: 0 }]);
+
+    usage.count("cacheHits", at("2026-10-02T08:30:05.000Z"));
+    expect(flushTimes).toEqual([at("2026-10-02T08:30:10.000Z"), at("2026-10-02T08:30:15.000Z")]);
   });
 
   it("writes the counts at each PRIM call, and adds them to the counts already written", () => {

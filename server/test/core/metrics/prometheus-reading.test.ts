@@ -68,7 +68,7 @@ describe("what Prometheus reads from /metrics", () => {
     for (let at = start; at <= end; at += 1000) {
       if (at >= flushAt) {
         flushAt = Number.POSITIVE_INFINITY;
-        usage.flushFromAlarm();
+        usage.flushWhenDue();
       }
       // A rider's app call about every 7 seconds, more in the day; a restart loses the counts still in memory.
       if (at % 7000 === 0 || at % 3000 === 0) {
@@ -99,7 +99,7 @@ describe("what Prometheus reads from /metrics", () => {
       }
     }
 
-    usage.flushFromAlarm();
+    usage.flushWhenDue();
     const dayOfServerCounts = usage.report().days.find(({ day: shown }) => shown === "2026-10-25");
     const total = dayOfServerCounts?.appCalls ?? 0;
     expect(total).toBeGreaterThan(20_000);

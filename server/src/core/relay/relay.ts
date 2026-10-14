@@ -85,6 +85,7 @@ export class Relay {
 
   counts(): CountsReport {
     const { answers, budget, usage, clock } = this.dependencies;
+    this.forgetStopsPastUse(clock.now());
     const today = parisDay(clock.now());
     const limitPauseUntil = answers.limitPauseUntil();
     return {
@@ -98,7 +99,31 @@ export class Relay {
 
   metrics(): MetricsSnapshot {
     const { usage, budget, clock } = this.dependencies;
+    this.forgetStopsPastUse(clock.now());
     return { ...usage.metricsTotals(clock.now()), dailyCap: budget.dailyCap };
+  }
+
+  /** Forgets the answers, their copies and the failures that are past their use: the server object calls it at its own timers, when no request comes. */
+  forgetPastUse(): void {
+    this.forgetStopsPastUse(this.dependencies.clock.now());
+  }
+
+  /** When the next answer in memory or copy in storage is past its use, so that the server object wakes then to forget it. */
+  nextAnswerForgetAt(): number | undefined {
+    const { answers, settings } = this.dependencies;
+    const oldest = answers.oldestAnswers();
+    const times = [
+      oldest.inMemory === undefined ? undefined : oldest.inMemory + settings.startAge,
+      oldest.copy === undefined ? undefined : oldest.copy + longestAnswerAge(settings),
+    ].filter((time) => time !== undefined);
+    return times.length > 0 ? Math.min(...times) : undefined;
+  }
+
+  /** When the pause of the next failed stop ends: the server object stays awake until then, so that a sleep does not end the pause early. */
+  nextFailurePauseEnd(): number | undefined {
+    const { settings } = this.dependencies;
+    const ends = [...this.lastFailureAt.values()].map((failedAt) => failedAt + settings.pauseAfterFailure);
+    return ends.length > 0 ? Math.min(...ends) : undefined;
   }
 
   stopsInMemory(): string[] {
@@ -109,6 +134,7 @@ export class Relay {
   private forgetStopsPastUse(now: number): void {
     const { answers, settings } = this.dependencies;
     answers.forgetAnswersGivenBy(now - settings.startAge);
+    answers.forgetCopiesGivenBy(now - longestAnswerAge(settings));
     for (const [stopRef, failedAt] of this.lastFailureAt) {
       if (failedAt + settings.pauseAfterFailure <= now) {
         this.lastFailureAt.delete(stopRef);
@@ -198,6 +224,11 @@ export class Relay {
     usage.forgetOldCounts(now);
     budget.forgetDaysBefore(today);
   }
+}
+
+/** A copy in storage lives no longer than the oldest answer that the server gives: 5 minutes, as the privacy page says. */
+function longestAnswerAge(settings: RelaySettings): number {
+  return Math.max(settings.freshAge, settings.heldAge, ...settings.agedAnswers.map((step) => step.age));
 }
 
 function times(answer: StoredAnswer): RelayAnswer {

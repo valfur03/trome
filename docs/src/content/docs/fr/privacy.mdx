@@ -71,9 +71,10 @@ Il ne stocke que :
   Elle ne contient pas de station non plus.
   Elle n’est conservée que le temps de trouver et de corriger la cause d’une erreur ;
 - **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la renvoyer à toute personne qui demande la même station.
-  Elle reste dans la mémoire du serveur, sans jamais être enregistrée, et le serveur l’efface à sa première requête après une dizaine de minutes.
+  Elle reste dans la mémoire du serveur 10 minutes au plus.
+  Une copie est enregistrée dans le stockage du serveur, pour que la réponse serve encore après une pause du serveur, et le serveur l’efface 5 minutes après la réponse de la source.
   Elle ne dit pas qui a demandé la station ;
-- **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, jusqu’à la première requête du serveur après une minute : le serveur ne rappelle pas la source aussitôt ;
+- **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, pendant une minute : le serveur ne rappelle pas la source aussitôt ;
 - **l’heure jusqu’à laquelle le serveur attend**, quand la source refuse un appel : il ne la rappelle pas avant.
 
 Le serveur ne conserve aucune adresse IP, aucun identifiant de vous ou de votre iPhone, et aucune position.

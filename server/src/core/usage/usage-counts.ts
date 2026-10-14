@@ -31,7 +31,11 @@ export interface UsageReport {
 
 export const countsKeptFor = 30 * day;
 export const errorLinesKeptFor = 7 * day;
-export const flushDelay = 30_000;
+/**
+ * The counts of app calls wait in memory at most this long before one write, so that a busy hour writes a row every 10 s, not one for each app call.
+ * The server object waits for this write with a timer, which keeps it awake: an object that sleeps loses its memory.
+ */
+export const flushDelay = 10_000;
 
 const columns: Record<Tally, string> = {
   appCalls: "app_calls",
@@ -52,6 +56,7 @@ export class UsageCounts {
   constructor(
     private readonly database: SqlDatabase,
     private readonly scheduleFlush: (at: number) => void,
+    private readonly cancelFlush: () => void = () => undefined,
   ) {
     database.run(
       `CREATE TABLE IF NOT EXISTS usage_hours (hour_start INTEGER PRIMARY KEY, paris_day TEXT NOT NULL, ${tallies
@@ -94,7 +99,7 @@ export class UsageCounts {
     this.flush();
   }
 
-  flushFromAlarm(): void {
+  flushWhenDue(): void {
     this.flushScheduled = false;
     this.flush();
   }
@@ -113,6 +118,10 @@ export class UsageCounts {
       );
     }
     this.pending.clear();
+    if (this.flushScheduled) {
+      this.flushScheduled = false;
+      this.cancelFlush();
+    }
   }
 
   forgetOldCounts(now: number): void {

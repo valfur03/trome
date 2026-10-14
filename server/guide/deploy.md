@@ -116,7 +116,8 @@ App calls are the requests for times with the right app token: a wrong token, `/
 
 Add `FULL=1` for the whole report, as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls, errors and unreadable PRIM answers, hour by hour (`parisHour`), with no stop.
 Its `errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
-The counts of app calls and cache hits are written at most every 30 seconds, to stay far below the writes that the Free plan allows each day.
+The counts of app calls and cache hits are written at most every 10 seconds, to stay far below the writes that the Free plan allows each day.
+A timer keeps the server awake until they are written, so that a sleep of the server loses none; the timer stays short, because an object awake all day would use about 11,000 of the 13,000 GB-s that the Free plan allows each day.
 
 ## Send the totals to your Prometheus
 
