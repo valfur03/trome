@@ -326,7 +326,7 @@ live-activity-render: project
 	@RATP_SIM_KIND=live-activity-render $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/live-activity-render.log '^Simulator time' ./scripts/live-activity-render.sh render $(RENDER_OUT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -collect-test-diagnostics never test-without-building
-	@./scripts/live-activity-render.sh report $(RENDER_OUT)
+	@$(BUILD_GATE) ./scripts/live-activity-render.sh report $(RENDER_OUT)
 
 simulator-wallpaper: project
 	@if ./scripts/wallpaper.sh check 2> /dev/null; then echo "Wallpaper $$(./scripts/wallpaper.sh id): already set, nothing to do"; \

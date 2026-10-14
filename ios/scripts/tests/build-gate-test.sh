@@ -116,4 +116,21 @@ expect "every build of ios/Makefile goes through the gate" \
     "$(grep -E '^XCODEBUILD :=|swift test|build-for-testing|\$\(QUIET\) \$\(LOGS\)/build\.log|EXPORT_STRINGS\)$' "$makefile" \
         | grep -cvE '^XCODEBUILD := \$\(BUILD_GATE\) |^	@\$\(BUILD_GATE\) ')" "0"
 
+# A script that runs 'swift <file>' or 'swiftc' compiles, itself or through a script that it runs, so it loads the Mac as a build does.
+compiles_swift() {
+    grep -qE '(^|[[:space:]|(;&])(xcrun )?swiftc? ' "$1" && return 0
+    for called in $(grep -oE '"\$scripts/[A-Za-z0-9_.-]+"' "$1" | tr -d '"' | sed 's|^\$scripts/||' | sort -u); do
+        [ "$tests/../$called" != "$1" ] && [ -f "$tests/../$called" ] && compiles_swift "$tests/../$called" && return 0
+    done
+    return 1
+}
+ungated=""
+# Each command of a recipe, with its continuation lines joined, that runs such a script outside both gates.
+for called in $(awk '/\\$/ { sub(/\\$/, ""); line = line $0; next } { print line $0; line = "" }' "$makefile" \
+    | grep -E '^	' | grep -vF '$(BUILD_GATE)' | grep -vF '$(TEST_RUN_GATE)' \
+    | grep -oE '\./scripts/[A-Za-z0-9_.-]+' | sed 's|^\./scripts/||' | sort -u); do
+    [ -f "$tests/../$called" ] && compiles_swift "$tests/../$called" && ungated="$ungated $called"
+done
+expect "every script of ios/Makefile that compiles Swift goes through a gate" "$ungated" ""
+
 [ "$failures" -eq 0 ]

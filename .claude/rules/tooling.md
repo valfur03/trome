@@ -27,7 +27,7 @@ Why: on 2026-10-08 (TASK-324, TASK-330), the `swift test` of another worktree's 
 iOS then took 33 s instead of 2 s to start the process that runs the intent of a Live Activity button, so its own watchdog gave up on the tap at 30 s, and `SnoozeTests` failed.
 No wait in a test can fix that: iOS itself drops the tap.
 
-- A new heavy command (a compile, a test build, the unit tests) runs through `$(BUILD_GATE)`, outside `$(QUIET)`, so its wait message shows.
+- A new heavy command (a compile, a test build, the unit tests, a script that runs `swift <file>`) runs through `$(BUILD_GATE)`, outside `$(QUIET)`, so its wait message shows.
   `$(XCODEBUILD)` already holds it, for a build that a script runs.
 - A new Simulator test run puts `$(TEST_RUN_GATE)` right after `$(SIM_LOCK) job`.
   A command inside a held gate runs at once, so the build steps of a test run never wait for themselves.
