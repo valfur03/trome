@@ -1,0 +1,121 @@
+name: Release checks
+
+# The checks of a release, on GitHub's Mac, with the Xcode that ios/project.yml asks.
+# Started by hand only: Actions > Release checks > Run workflow, or gh workflow run release-checks.yml --ref <branch>.
+# It holds no secret, signs nothing and uploads nothing. The repo is public, so its logs are public:
+# no step prints Info.plist or the build settings, and the archive is never uploaded as an artifact.
+# The summary of the run gives the Xcode build, the image, the wait for the runner, and the outcome and minutes of each check.
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release-checks-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Release checks
+    # The standard size of the Xcode 27 image: free in a public repo. The larger xcode-27-xlarge is paid.
+    runs-on: xcode-27
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      # Reads the times of this job, for the wait before a runner took it.
+      actions: read
+    env:
+      # The build of Xcode of the Mac that the project is made on. Its path comes from options.xcodeVersion of ios/project.yml.
+      XCODE_BUILD: 27A266a
+      XCODEGEN_VERSION: 2.46.0
+      XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+      SWIFTLINT_VERSION: 0.65.1
+      SWIFTLINT_SHA256: c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0
+    steps:
+      - name: Note the start of the job
+        run: date +%s > "$RUNNER_TEMP/release-checks-start"
+
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The whole history: make check compares the branch with main to know if docs/, server/ or video/ changed.
+          fetch-depth: 0
+
+      - name: Select the Xcode of ios/project.yml by its path, never the default of the image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n -E 's/^  xcodeVersion: "?([0-9.]+)"?$/\1/p' ios/project.yml)
+          xcode="/Applications/Xcode_${version}.app"
+          if [ -z "$version" ] || [ ! -d "$xcode" ]; then
+            echo "::error::The image has no ${xcode}: ios/project.yml asks Xcode ${version}"
+            exit 1
+          fi
+          export DEVELOPER_DIR="$xcode/Contents/Developer"
+          echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
+          build=$(xcodebuild -version | sed -n 's/^Build version //p')
+          runtime=$(xcrun simctl list runtimes available | grep '^iOS ' | tail -n 1 | sed -E 's/ - com\.apple.*//')
+          wait=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" \
+            --jq '.jobs[0] | ((.started_at | fromdateiso8601) - (.created_at | fromdateiso8601)) / 60 * 10 | round / 10' \
+            2> /dev/null || echo "unknown")
+          {
+            echo "## Release checks of ${GITHUB_SHA:0:7} ($GITHUB_REF_NAME)"
+            echo ""
+            echo "- Xcode $version, build $build, at $xcode (wanted: build $XCODE_BUILD)"
+            echo "- Image: $ImageOS $ImageVersion, label xcode-27, macOS $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
+            echo "- Simulator: $runtime"
+            echo "- Waited $wait minutes for a runner"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$build" != "$XCODE_BUILD" ]; then
+            echo "::error::$xcode is build $build, not build $XCODE_BUILD: the checks would not run with the Xcode of the project"
+            exit 1
+          fi
+          echo "Xcode $version ($build), $runtime, waited $wait minutes"
+
+      - name: Install XcodeGen and SwiftLint, pinned by version and checksum
+        run: |
+          tools="$RUNNER_TEMP/tools"
+          mkdir -p "$tools/swiftlint"
+          curl -fsSL -o "$tools/xcodegen.zip" "https://github.com/yonaskolb/XcodeGen/releases/download/$XCODEGEN_VERSION/xcodegen.zip"
+          curl -fsSL -o "$tools/swiftlint.zip" "https://github.com/realm/SwiftLint/releases/download/$SWIFTLINT_VERSION/portable_swiftlint.zip"
+          printf '%s  %s\n' "$XCODEGEN_SHA256" "$tools/xcodegen.zip" "$SWIFTLINT_SHA256" "$tools/swiftlint.zip" | shasum -a 256 -c -
+          unzip -q "$tools/xcodegen.zip" -d "$tools"
+          unzip -q "$tools/swiftlint.zip" -d "$tools/swiftlint"
+          echo "$tools/xcodegen/bin" >> "$GITHUB_PATH"
+          echo "$tools/swiftlint" >> "$GITHUB_PATH"
+          echo "- XcodeGen $("$tools/xcodegen/bin/xcodegen" --version | sed 's/^Version: //'), SwiftLint $("$tools/swiftlint/swiftlint" version), Node $(node --version)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: make check
+        id: check
+        run: ios/scripts/release-checks-summary.sh run "make check" make check
+
+      - name: make server-check
+        id: server
+        run: ios/scripts/release-checks-summary.sh run "make server-check" make server-check
+
+      - name: Unsigned Release archive of the app and its widget
+        id: archive
+        run: ios/scripts/release-checks-summary.sh run "make release-archive-check" make release-archive-check
+
+      - name: Render check of the Live Activity
+        id: render
+        run: ios/scripts/release-checks-summary.sh run "make live-activity-render" make live-activity-render
+
+      - name: make e2e
+        id: e2e
+        run: ios/scripts/release-checks-summary.sh run "make e2e" make e2e
+
+      - name: Say which checks did not run, and the minutes of the job
+        if: always()
+        env:
+          CHECK: ${{ steps.check.outcome }}
+          SERVER: ${{ steps.server.outcome }}
+          ARCHIVE: ${{ steps.archive.outcome }}
+          RENDER: ${{ steps.render.outcome }}
+          E2E: ${{ steps.e2e.outcome }}
+        run: >-
+          ios/scripts/release-checks-summary.sh end
+          "make check=$CHECK" "make server-check=$SERVER" "make release-archive-check=$ARCHIVE"
+          "make live-activity-render=$RENDER" "make e2e=$E2E"

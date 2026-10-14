@@ -1,4 +1,4 @@
-IOS_TARGETS := setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check app-icon-check test test-scripts live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator \
+IOS_TARGETS := setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check release-archive-check app-icon-check test test-scripts live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator \
 	simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
 DOCS_TARGETS := docs docs-dev docs-stop docs-check docs-check-if-changed
 VIDEO_TARGETS := video-setup video-studio video-still video-stills video-clip video-check video-check-if-changed

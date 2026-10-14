@@ -21,6 +21,9 @@ STORE_COMPOSER_SOURCES := scripts/store-screenshots-compose/main.swift Packages/
 RENDER_SCHEME := TROMERenderCheck
 RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
+RELEASE_ARCHIVE_DIR := $(BUILD_DIR)/release-archive-check
+RELEASE_ARCHIVE := $(RELEASE_ARCHIVE_DIR)/$(APP_NAME).xcarchive
+RELEASE_ARCHIVE_RESULT := $(RELEASE_ARCHIVE_DIR)/archive.xcresult
 SIMULATOR := ./scripts/simulator.sh
 SIM_LOCK := ./scripts/sim-lock.sh
 # What the record of a 'make run' says besides its kind (sim-lock.sh, make simulator-times).
@@ -97,7 +100,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -126,6 +129,7 @@ help:
 	@echo "make release-server-check  Before an archive: say in one line whether the production server accepts the host and the app token of ios/Config/Server.xcconfig (one request for the trains of one stop; prints neither)"
 	@echo "make release-server-timing  Split the time of a call to the production server of ios/Config/Server.xcconfig: connection, Worker, server object, PRIM (5 calls of one rider in 35 s, at most 2 PRIM calls; prints neither)"
 	@echo "make release-tokens-check  After every change of a secret of the production server, and before every upload: say, one line per build that riders may hold, whether the production server accepts its app token of ios/Config/BuildTokens.txt (one request per build; prints no token)"
+	@echo "make release-archive-check  Build an unsigned Release archive of the app and its widget for an iPhone, with stand-in server values: shows that the store build compiles, with no account and no secret (not in make check)"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
@@ -241,6 +245,18 @@ release-server-timing:
 # Not in make check: it calls the production server with the tokens of the maintainer's own file.
 release-tokens-check:
 	@./scripts/release-tokens-check.sh Config/BuildTokens.txt Config/Server.xcconfig ../docs/src/content/docs/en/maintain/release-on-the-app-store.mdx
+
+# Not in make check: a Release build for an iPhone takes minutes. The release checks workflow on GitHub runs it.
+# Unsigned, with the stand-in server values of Config/ReleaseRun.xcconfig: it never holds a real token, and it cannot ship.
+release-archive-check: project
+	@rm -rf $(RELEASE_ARCHIVE_DIR)
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/release-archive.log '' $(XCODEBUILD) -scheme $(APP_SCHEME) -configuration Release \
+		-destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO -xcconfig Config/ReleaseRun.xcconfig \
+		-archivePath $(RELEASE_ARCHIVE) -resultBundlePath $(RELEASE_ARCHIVE_RESULT) archive
+	@xcrun xcresulttool get build-results --path $(RELEASE_ARCHIVE_RESULT) | ./scripts/build-warnings.py
+	@test -d "$(RELEASE_ARCHIVE)/Products/Applications/$(APP_NAME).app/PlugIns/$(APP_NAME)Widget.appex" \
+		|| { echo "release-archive-check: FAILED: the archive has no $(APP_NAME).app with its widget $(APP_NAME)Widget.appex" >&2; exit 1; }
+	@echo "release-archive-check: OK ($(APP_NAME).app with its widget, unsigned, in ios/$(RELEASE_ARCHIVE))"
 
 app-icon-check:
 	@./scripts/app-icon-check.py App/Assets.xcassets/AppIcon.appiconset
