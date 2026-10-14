@@ -1,10 +1,12 @@
 #!/bin/sh
 # The summary of the release checks workflow (.github/workflows/release-checks.yml): one row per check, with its
-# outcome, its minutes and the last line that it printed, so a failed check shows at the top of the run, by its name.
+# outcome, its minutes and the last line that it printed, so a failed check shows at the top of the run, with its cause.
 set -u
 
 usage() {
     echo "Usage: $0 run <check> <command...>    Run the command as it is, add the row of the check, exit with its status" >&2
+    echo "       $0 report <check> <pattern> <command...>    The same, for a check that is a report: it fails only when it cannot run;" >&2
+    echo "                                                  its row says so, and gives its lines that match the pattern (grep -E), not its last line" >&2
     echo "       $0 end <check>=<outcome>...    Add a row for each check that did not run (outcome skipped or cancelled), then the minutes of the job" >&2
     echo "       The summary is the file of GITHUB_STEP_SUMMARY; the start of the job is in RUNNER_TEMP/release-checks-start (seconds since 1970)." >&2
     exit 2
@@ -18,7 +20,7 @@ job_start="$temp/release-checks-start"
 
 row() {
     if [ ! -f "$table_started" ]; then
-        printf '\n| Check | Outcome | Minutes | Last line |\n|---|---|---|---|\n' >> "$summary"
+        printf '\n| Check | Outcome | Minutes | Detail |\n|---|---|---|---|\n' >> "$summary"
         : > "$table_started"
     fi
     printf '| %s | %s | %s | %s |\n' "$1" "$2" "$3" "$4" >> "$summary"
@@ -28,9 +30,19 @@ minutes() {
     awk -v seconds="$1" 'BEGIN { printf "%.1f", seconds / 60 }'
 }
 
-# A table cell is one line: no |, no backquote, at most 200 characters.
+esc=$(printf '\033')
+
+# The lines of the output, with no colour code (Node tools print them on GitHub), and with no line of make itself:
+# each check is a root make that runs make again in its part, so on a failure the last line is always
+# "make: *** [check] Error 2", never the cause.
+lines() {
+    sed -e "s/$esc\\[[0-9;?]*[A-Za-z]//g" -e "s/$esc//g" "$1" | tr -d '\r' \
+        | grep -v -E '^[[:space:]]*$|^g?make(\[[0-9]+\])?: '
+}
+
+# A table cell is one line: no |, no backquote, at most 300 characters.
 cell() {
-    tr -d '\r`' | sed 's/|/\//g' | cut -c 1-200
+    tr -d '`' | sed 's/|/\//g' | cut -c 1-300
 }
 
 [ $# -ge 1 ] || usage
@@ -38,22 +50,31 @@ mode=$1
 shift
 
 case "$mode" in
-    run)
+    run | report)
         [ $# -ge 2 ] || usage
         check=$1
         shift
+        if [ "$mode" = report ]; then
+            [ $# -ge 2 ] || usage
+            pattern=$1
+            shift
+        fi
         output=$(mktemp "$temp/release-check.XXXXXX")
         start=$(date +%s)
         { "$@"; echo "$?" > "$output.status"; } 2>&1 | tee "$output"
         status=$(cat "$output.status" 2> /dev/null || echo 1)
         seconds=$(($(date +%s) - start))
-        last=$(grep -v '^[[:space:]]*$' "$output" | tail -n 1 | cell)
-        rm -f "$output" "$output.status"
-        if [ "$status" -eq 0 ]; then
-            row "$check" "passed" "$(minutes "$seconds")" "$last"
+        if [ "$status" -eq 0 ] && [ "$mode" = report ]; then
+            outcome="ran: a report, not a gate"
+            last=$(lines "$output" | grep -E -- "$pattern" | sed -E 's/ \(list: [^)]*\)//' \
+                | awk 'NR > 1 { printf "; " } { printf "%s", $0 }' | cell)
         else
-            row "$check" "**FAILED** (exit $status)" "$(minutes "$seconds")" "$last"
+            outcome="passed"
+            [ "$status" -eq 0 ] || outcome="**FAILED** (exit $status)"
+            last=$(lines "$output" | tail -n 1 | cell)
         fi
+        rm -f "$output" "$output.status"
+        row "$check" "$outcome" "$(minutes "$seconds")" "$last"
         exit "$status"
         ;;
     end)

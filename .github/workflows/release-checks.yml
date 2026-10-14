@@ -108,7 +108,10 @@ jobs:
 
       - name: Render check of the Live Activity
         id: render
-        run: ios/scripts/release-checks-summary.sh run "make live-activity-render" make live-activity-render
+        # A report, not a gate: it fails only when it cannot run. Its row says so, and gives its counts.
+        run: >-
+          ios/scripts/release-checks-summary.sh report "make live-activity-render"
+          '^(Too tall|Cut texts|Breaches of the cut rules)' make live-activity-render
 
       - name: make e2e
         id: e2e
