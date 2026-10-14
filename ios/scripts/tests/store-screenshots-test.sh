@@ -3,6 +3,8 @@
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
 scripts=$(cd "$tests/.." && pwd)
+# It compiles Swift, which loads the Mac as a build does, so it runs through the build gate, never next to a Simulator test run.
+[ -n "${RATP_BUILD_GATE_HELD:-}" ] || exec "$scripts/build-gate.py" build "$0" "$@"
 state=$(mktemp -d)
 failures=0
 trap 'rm -rf "$state"' EXIT

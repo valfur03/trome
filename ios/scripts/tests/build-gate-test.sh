@@ -133,4 +133,28 @@ for called in $(awk '/\\$/ { sub(/\\$/, ""); line = line $0; next } { print line
 done
 expect "every script of ios/Makefile that compiles Swift goes through a gate" "$ungated" ""
 
+# The guard of make test-scripts: a swift or swiftc of a script test runs only inside the gate.
+guard="$tests/gate-guard"
+mkdir -p "$state/real"
+printf '#!/bin/sh\necho "real $(basename "$0") $*"\n' > "$state/real/swift"
+chmod +x "$state/real/swift"
+ln -s swift "$state/real/swiftc"
+guarded() {   # guarded <command...>: runs it with the guard first on PATH and the real tools after it
+    PATH="$guard:$state/real:$PATH" RATP_SWIFT_GUARD_LOG="$state/guard.log" "$@"
+}
+expect "outside the gate, swift fails" "$(guarded swift a.swift 2> /dev/null && echo passes || echo $?)" "97"
+expect "outside the gate, swiftc fails" "$(guarded swiftc -o b b.swift 2> /dev/null && echo passes || echo $?)" "97"
+expect "it writes each call to the log that make test-scripts reads" "$(cat "$state/guard.log")" "swift a.swift
+swiftc -o b b.swift"
+expect "it says to run the test through the gate" \
+    "$(guarded swift a.swift 2>&1 | grep -c 'outside the build gate: run the test through ios/scripts/build-gate.py build')" "1"
+: > "$state/guard.log"
+expect "inside the gate, swift runs the real tool" "$(guarded "$script" build swift a.swift)" "real swift a.swift"
+expect "inside the gate, swiftc runs the real tool" "$(guarded "$script" build swiftc -o b b.swift)" "real swiftc -o b b.swift"
+expect "inside the gate, it writes nothing to the log" "$(cat "$state/guard.log")" ""
+recipe=$(awk '/^test-scripts:/ { on = 1; next } on && /^[^\t]/ { exit } on' "$makefile")
+expect "make test-scripts runs each test with the guard first on PATH" \
+    "$(echo "$recipe" | grep -cF 'PATH="$(CURDIR)/scripts/tests/gate-guard:$$PATH" RATP_SWIFT_GUARD_LOG=$$guard_log $$test ')" "1"
+expect "and fails when the guard wrote a call" "$(echo "$recipe" | grep -cF '[ ! -s $$guard_log ] || {')" "1"
+
 [ "$failures" -eq 0 ]

@@ -98,6 +98,7 @@ Run it before and after a change to these views, and compare: it reports, and ne
 ## Script tests
 
 `make test-scripts` runs `ios/scripts/tests/<name>-test.sh`; the tests of the Simulator scripts use a fake `xcrun`, so they need no Simulator.
+A script test that runs `swift` or `swiftc` runs itself through the build gate, as the first lines of `store-screenshots-test.sh` do: a Swift compile slows a Simulator test run of the same Mac, so `make test-scripts` fails on a compile outside the gate.
 The server has [its own tests](../../server/README.md).
 
 ## When a test fails only sometimes

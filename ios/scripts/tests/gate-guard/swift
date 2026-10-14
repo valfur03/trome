@@ -1,0 +1,19 @@
+#!/bin/sh
+# make test-scripts puts this folder first on PATH, as swift and swiftc.
+# A Swift compile loads the Mac as a build does, so a script test must run it through the build gate:
+# next to a Simulator test run of another worktree, it slows iOS until iOS drops a tap of the test.
+# Outside the gate, this call fails and writes its name to RATP_SWIFT_GUARD_LOG, which make test-scripts reads after each test.
+# Inside the gate, it runs the real tool.
+name=$(basename "$0")
+if [ -n "${RATP_SWIFT_GUARD_IN:-}" ]; then
+    echo "$name: the guard found itself again on PATH, not the real tool" >&2
+    exit 98
+fi
+if [ -z "${RATP_BUILD_GATE_HELD:-}" ]; then
+    [ -z "${RATP_SWIFT_GUARD_LOG:-}" ] || echo "$name $*" >> "$RATP_SWIFT_GUARD_LOG"
+    echo "$name runs outside the build gate: run the test through ios/scripts/build-gate.py build" >&2
+    exit 97
+fi
+guard=$(cd "$(dirname "$0")" && pwd -P)
+PATH=$(printf '%s\n' "$PATH" | tr ':' '\n' | grep -vxF "$guard" | paste -sd: -)
+RATP_SWIFT_GUARD_IN=1 exec "$name" "$@"

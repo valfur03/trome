@@ -34,6 +34,8 @@ No wait in a test can fix that: iOS itself drops the tap.
 - A test run waits at most 20 minutes for the builds, and a build at most 30 minutes for a test run; then each runs anyway and says so.
   Why: a hung `swift test` or a hung test run must not freeze every build and every Simulator job of every worktree.
 - `make run` takes no gate: a QA session holds the Simulator for many minutes, and the builds of the other worktrees must go on.
+- A script test that runs `swift` or `swiftc` runs itself through the gate (its first lines, as in `store-screenshots-test.sh`).
+  `make test-scripts` puts `ios/scripts/tests/gate-guard/` first on `PATH`, so a Swift compile outside the gate fails the test (TASK-438).
 - `ios/scripts/tests/build-gate-test.sh` checks the gate and this wiring of `ios/Makefile`.
 
 ## The git hooks
