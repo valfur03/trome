@@ -12,9 +12,8 @@ const chatelet = "STIF:StopArea:SP:417675:";
 const abbessesAnswer = primFixture("stop-monitoring-abbesses-stop-area.json");
 const chateletAnswer = primFixture("stop-monitoring-chatelet-rer.json");
 
-/** Cloudflare's lifecycle page: an idle object with no timer sleeps 10 s after its last request, and one that a timer keeps awake ends 70 s or more after its last request. */
+/** Cloudflare's lifecycle page: an idle object with no timer sleeps 10 s after its last request, and a pending timer holds off eviction for up to 15 minutes from its start (the timers here last 5 minutes at most). */
 const sleepAfterNoTimer = 10_000;
-const endAfterNoRequest = 70_000;
 
 /**
  * Waits, then sleeps if Cloudflare may have put the object to sleep by then: the object keeps a timer to the next use end of the relay and, for 10 s, one to write the counts.
@@ -24,7 +23,7 @@ function waitAndSleepIfIdle(harness: RelayHarness, milliseconds: number): { harn
   const lastRequest = harness.clock.now();
   const useEnd = harness.relay.nextUseEnd() ?? lastRequest;
   harness.clock.advance(milliseconds);
-  const sleepsAt = Math.min(lastRequest + endAfterNoRequest, Math.max(lastRequest + flushDelay, useEnd) + sleepAfterNoTimer);
+  const sleepsAt = Math.max(lastRequest + flushDelay, useEnd) + sleepAfterNoTimer;
   if (harness.clock.now() < sleepsAt) {
     return { harness, slept: false };
   }
@@ -125,16 +124,34 @@ describe("Relay: a server that Cloudflare may put to sleep between requests", ()
     }
   });
 
-  it("loses no count when it sleeps between riders who come every 90 s", async () => {
-    const visits = [...every(abbesses, 0, 90_000, 30 * minute), ...every(chatelet, 10_000, 90_000, 30 * minute)];
+  it("loses no count when it sleeps between riders who come every 6 minutes", async () => {
+    const visits = [...every(abbesses, 0, 6 * minute, 60 * minute), ...every(chatelet, 10_000, 6 * minute, 60 * minute)];
     const reply = (_at: number, stopRef: string) => answer(200, stopRef === abbesses ? abbessesAnswer : chateletAnswer);
 
     const awake = await ride(visits, reply, false);
     const sleeping = await ride(visits, reply, true);
 
-    expect(sleeping.sleepCount, "a sleep before each visit that comes 80 s after the one before it").toBe(20);
+    expect(sleeping.sleepCount, "a sleep before each visit that comes more than 5 minutes after the latest answer").toBe(10);
     expect(sleeping.totals).toEqual(awake.totals);
     expect(awake.totals.days[0]).toMatchObject({ appCalls: visits.length, primCalls: visits.length });
+  });
+
+  it("forgets an answer 10 minutes old at its own timer while another answer keeps it awake, and keeps no timer past the 5 minutes of the latest answer", async () => {
+    const { relay, prim, clock } = relayHarness();
+    const startedAt = clock.now();
+    prim.answerWith((stopRef) => answer(200, stopRef === abbesses ? abbessesAnswer : chateletAnswer));
+    await relay.departures(abbesses);
+    clock.advance(9 * minute);
+    await relay.departures(chatelet);
+
+    expect(relay.nextUseEnd(), "the end of the 10 minutes of the first answer").toBe(startedAt + 10 * minute);
+    clock.advance(minute);
+    relay.forgetPastUse();
+    expect(relay.stopsInMemory()).toEqual([chatelet]);
+    expect(relay.nextUseEnd(), "the end of the 5 minutes of the latest answer").toBe(startedAt + 14 * minute);
+    clock.advance(4 * minute);
+    relay.forgetPastUse();
+    expect(relay.nextUseEnd(), "no timer: the 10 minutes of the latest answer would keep the object awake").toBeUndefined();
   });
 
   const forgetters: [string, (relay: Relay) => void][] = [

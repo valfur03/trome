@@ -111,16 +111,25 @@ export class Relay {
   /**
    * The next time at which something in memory stops being of use: an answer reaches the oldest age at which the server gives it (5 minutes), or a failed stop ends its pause.
    * Until then, a sleep of the server object, which empties its memory, would cost a PRIM call or end a pause early: so the object keeps a timer to this time, and asks again then.
+   * While that timer keeps the object awake anyway, it also comes at the end of the 10 minutes of each answer, so that no answer stays in memory longer.
    * Undefined when a sleep loses nothing that the server still uses.
    */
   nextUseEnd(): number | undefined {
     const { answers, clock, settings } = this.dependencies;
     const now = clock.now();
-    const ends = [
+    const useEnds = [
       ...answers.answeredTimes().map((answeredAt) => answeredAt + longestAnswerAge(settings)),
       ...[...this.lastFailureAt.values()].map((failedAt) => failedAt + settings.pauseAfterFailure),
     ].filter((end) => end > now);
-    return ends.length > 0 ? Math.min(...ends) : undefined;
+    if (useEnds.length === 0) {
+      return undefined;
+    }
+    const awakeUntil = Math.max(...useEnds);
+    const forgetTimes = answers
+      .answeredTimes()
+      .map((answeredAt) => answeredAt + settings.startAge)
+      .filter((end) => end > now && end < awakeUntil);
+    return Math.min(...useEnds, ...forgetTimes);
   }
 
   stopsInMemory(): string[] {

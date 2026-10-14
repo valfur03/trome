@@ -157,6 +157,6 @@ Only its memory holds a stop, and only to serve the next requests: the stop of a
 An answer never goes to storage, even for a minute: Cloudflare keeps every write to the storage of a server object restorable for 30 days, so the stops written would stay as a history of the stops asked for.
 Cloudflare puts an idle server object to sleep about 10 seconds after its last request when no timer of it waits, and the sleep empties its memory.
 So the server keeps a timer while it holds an answer younger than 5 minutes, the oldest age at which it gives one, and while a failed stop is in its pause: the refresh of a lone rider 30 seconds later gets the held answer, with no PRIM call.
-Cloudflare still empties the memory of an object that a timer keeps awake 70 to 140 seconds after its last request: a rider who comes back later than that gets a new PRIM answer.
-Each second awake counts against the 13,000 GB-s that the Free plan allows each day, and an object awake all day uses about 11,000: so each timer ends as soon as what it keeps is of no more use.
+A pending timer also keeps Cloudflare from evicting the object, for up to 15 minutes from its start, and each timer of the server ends at most 5 minutes after its latest PRIM answer: with no rider, the object still sleeps.
+Each second awake counts against the 13,000 GB-s that the Free plan allows each day to all the server objects of the account, staging included, and an object awake all day uses about 11,000 (128 MB for 86,400 seconds): so each timer ends as soon as what it keeps is of no more use.
 The server drops each stop at its first request or timer after its time, or when it sleeps.

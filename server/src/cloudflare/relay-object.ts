@@ -17,7 +17,7 @@ export const relayObjectName = "relay";
  * Memory holds what storage must not: the answers of the stops and the failed stops, which a storage write would keep restorable for 30 days.
  * So the object keeps a timer while memory holds something of use, and stays awake through it: the counts not yet written (at most 10 s),
  * an answer until the oldest age at which it is given (5 minutes), and a failed stop until the end of its pause.
- * Cloudflare still ends an awake object after 70 to 140 s with no request, so a timer keeps an answer through the 30 s between the refreshes of a rider, not through a quiet night.
+ * A pending timer holds off eviction for up to 15 minutes from its start, and each timer here ends at most 5 minutes after the latest PRIM answer, so the object still sleeps through a quiet night.
  */
 export class RelayObject extends DurableObject<Env> {
   private readonly relay: Relay;
