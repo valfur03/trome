@@ -36,7 +36,7 @@ expect() {
 # time of 0.9 s or more (the wait of a rider, 1 s here), "held" already holds one from 30 s ago, and any other token is refused.
 # It writes one line per request (the path, and which token it got), never the token.
 cat > "$work/server.py" <<'PY'
-import email.utils, http.server, sys, time
+import email.utils, http.server, socketserver, sys, time
 contracts, port_file, log_file, keeps, forgets, held = sys.argv[1:7]
 with open(f"{contracts}/prim/stop-monitoring-abbesses-stop-area.json", "rb") as f:
     times = f.read()
@@ -71,7 +71,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
     def log_message(self, *args):
         pass
-server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+class Server(http.server.ThreadingHTTPServer):
+    # HTTPServer looks up a name for its address when it binds. On a Mac whose network has no answer for it
+    # (GitHub's Mac), that lookup takes more than 30 s, and the fake server never needs the name.
+    def server_bind(self):
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+server = Server(("127.0.0.1", 0), Handler)
 with open(port_file, "w") as f:
     f.write(str(server.server_address[1]))
 server.serve_forever()
