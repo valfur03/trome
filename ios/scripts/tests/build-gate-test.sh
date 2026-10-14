@@ -138,7 +138,7 @@ guard="$tests/gate-guard"
 mkdir -p "$state/real"
 printf '#!/bin/sh\necho "real $(basename "$0") $*"\n' > "$state/real/swift"
 chmod +x "$state/real/swift"
-ln -s swift "$state/real/swiftc"
+for tool in swiftc xcrun xcodebuild; do ln -s swift "$state/real/$tool"; done
 guarded() {   # guarded <command...>: runs it with the guard first on PATH and the real tools after it
     PATH="$guard:$state/real:$PATH" RATP_SWIFT_GUARD_LOG="$state/guard.log" "$@"
 }
@@ -152,6 +152,15 @@ expect "it says to run the test through the gate" \
 expect "inside the gate, swift runs the real tool" "$(guarded "$script" build swift a.swift)" "real swift a.swift"
 expect "inside the gate, swiftc runs the real tool" "$(guarded "$script" build swiftc -o b b.swift)" "real swiftc -o b b.swift"
 expect "inside the gate, it writes nothing to the log" "$(cat "$state/guard.log")" ""
+expect "outside the gate, xcrun swiftc and xcodebuild fail" \
+    "$(for call in 'xcrun swiftc b.swift' 'xcrun --sdk macosx swift a.swift' 'xcrun xcodebuild build' 'xcodebuild build'; do
+        guarded $call 2> /dev/null && echo passes || echo $?; done | tr '\n' ' ')" "97 97 97 97 "
+expect "an xcrun of another tool or a lookup runs the real xcrun" \
+    "$(guarded xcrun clang -o c c.m; guarded xcrun --sdk macosx --find swiftc)" "real xcrun clang -o c c.m
+real xcrun --sdk macosx --find swiftc"
+expect "inside the gate, xcrun swiftc runs the real xcrun" "$(guarded "$script" build xcrun swiftc b.swift)" "real xcrun swiftc b.swift"
+expect "no script calls swift, swiftc or xcodebuild by an absolute path, which skips the guard" \
+    "$(grep -rlE '/usr/bin/(swift|swiftc|xcodebuild)([^a-z-]|$)' "$tests/.." | grep -v -e '/tests/build-gate-test.sh$' -e '/tests/gate-guard/' || true)" ""
 recipe=$(awk '/^test-scripts:/ { on = 1; next } on && /^[^\t]/ { exit } on' "$makefile")
 expect "make test-scripts runs each test with the guard first on PATH" \
     "$(echo "$recipe" | grep -cF 'PATH="$(CURDIR)/scripts/tests/gate-guard:$$PATH" RATP_SWIFT_GUARD_LOG=$$guard_log $$test ')" "1"

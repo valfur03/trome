@@ -1,17 +1,36 @@
 #!/bin/sh
-# make test-scripts puts this folder first on PATH, as swift and swiftc.
-# A Swift compile loads the Mac as a build does, so a script test must run it through the build gate:
+# make test-scripts puts this folder first on PATH, as swift, swiftc, xcodebuild and xcrun.
+# A compile loads the Mac as a build does, so a script test must run it through the build gate:
 # next to a Simulator test run of another worktree, it slows iOS until iOS drops a tap of the test.
-# Outside the gate, this call fails and writes its name to RATP_SWIFT_GUARD_LOG, which make test-scripts reads after each test.
-# Inside the gate, it runs the real tool.
+# Outside the gate, a compile fails and writes its call to RATP_SWIFT_GUARD_LOG, which make test-scripts reads after each test.
+# Inside the gate, it runs the real tool, and so does an xcrun of another tool (a lookup, a small clang or actool run).
+# A call by an absolute path (/usr/bin/swift) skips PATH: build-gate-test.sh refuses one in ios/scripts.
 name=$(basename "$0")
 if [ -n "${RATP_SWIFT_GUARD_IN:-}" ]; then
     echo "$name: the guard found itself again on PATH, not the real tool" >&2
     exit 98
 fi
-if [ -z "${RATP_BUILD_GATE_HELD:-}" ]; then
+call=$name
+if [ "$name" = xcrun ]; then
+    call=
+    value=
+    for arg do
+        if [ -n "$value" ]; then value=; continue; fi
+        case $arg in
+            -sdk | --sdk | -toolchain | --toolchain) value=yes ;;
+            -f | --find | --show-* | -h | --help | --version) break ;;
+            -*) ;;
+            *) call=$arg; break ;;
+        esac
+    done
+    case $call in
+        swift | swiftc | swift-frontend | xcodebuild) call="xcrun $call" ;;
+        *) call= ;;
+    esac
+fi
+if [ -n "$call" ] && [ -z "${RATP_BUILD_GATE_HELD:-}" ]; then
     [ -z "${RATP_SWIFT_GUARD_LOG:-}" ] || echo "$name $*" >> "$RATP_SWIFT_GUARD_LOG"
-    echo "$name runs outside the build gate: run the test through ios/scripts/build-gate.py build" >&2
+    echo "$call runs outside the build gate: run the test through ios/scripts/build-gate.py build" >&2
     exit 97
 fi
 guard=$(cd "$(dirname "$0")" && pwd -P)
