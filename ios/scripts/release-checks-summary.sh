@@ -7,7 +7,8 @@ usage() {
     echo "Usage: $0 run <check> <command...>    Run the command as it is, add the row of the check, exit with its status" >&2
     echo "       $0 report <check> <pattern> <command...>    The same, for a check that is a report: it fails only when it cannot run;" >&2
     echo "                                                  its row says so, and gives its lines that match the pattern (grep -E), not its last line" >&2
-    echo "       $0 end <check>=<outcome>...    Add a row for each check that did not run (outcome skipped or cancelled), then the minutes of the job" >&2
+    echo "       $0 end <check>=<outcome>...    Add a row for each check that did not run (outcome skipped or cancelled)," >&2
+    echo "                                      the row of the E2E suite, which never runs here, then the minutes of the job" >&2
     echo "       The summary is the file of GITHUB_STEP_SUMMARY; the start of the job is in RUNNER_TEMP/release-checks-start (seconds since 1970)." >&2
     exit 2
 }
@@ -85,6 +86,9 @@ case "$mode" in
                 cancelled) row "$check" "**cancelled**" "" "" ;;
             esac
         done
+        # A fixed row, never a pass: the E2E suite runs on the Mac at make merge, as GitHub's Mac is too slow for it.
+        row "make e2e" "not run here: runs on the Mac at make merge" "" \
+            "too slow on GitHub's Mac for the Live Activity buttons: iOS stops their code at 30 s"
         if [ -f "$job_start" ]; then
             printf '\nThe job took %s minutes, from its start on the runner to this line.\n' \
                 "$(minutes $(($(date +%s) - $(cat "$job_start"))))" >> "$summary"
