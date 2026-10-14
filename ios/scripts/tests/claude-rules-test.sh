@@ -18,13 +18,14 @@ expect() {
 
 project="$state/main"
 worktree="$state/worktree-1"
-mkdir -p "$project/.git" "$project/ios/App" "$worktree/.git" "$worktree/ios/App" "$worktree/docs/src/content" "$worktree/server/src" "$worktree/video/src"
+mkdir -p "$project/.git" "$project/ios/App" "$worktree/.git" "$worktree/ios/App" "$worktree/docs/src/content" "$worktree/server/src" "$worktree/video/src" "$worktree/.github/workflows"
 cp -R "$root/.claude" "$project/.claude"
 echo "let x = 1" > "$project/ios/App/X.swift"
 echo "let x = 1" > "$worktree/ios/App/X.swift"
 echo "A page." > "$worktree/docs/page.mdx"
 echo "A Help page." > "$worktree/docs/src/content/support.mdx"
 echo "export const Film = 1;" > "$worktree/video/src/Film.tsx"
+echo "name: Release" > "$worktree/.github/workflows/release.yml"
 
 run() {
     printf '%s' "$1" | CLAUDE_PROJECT_DIR="$project" TMPDIR="$state" python3 "$hook" > "$state/out"
@@ -70,7 +71,7 @@ expect "the same command again goes through" "$(run "$e2e" | delivered)" "none"
 expect "make -C and a variable bring the rules of each command" \
     "$(run "$(bash_event "make -C $worktree run LIVE=1 LANGUAGE=fr" '' s5)" | delivered)" "deny assets live-data qa simulator"
 expect "make merge through fnm exec, after cd, brings the merge and Simulator rules" \
-    "$(run "$(bash_event "cd $worktree && fnm exec --using=.nvmrc -- make merge" '' s6)" | delivered)" "deny merge simulator"
+    "$(run "$(bash_event "cd $worktree && fnm exec --using=.nvmrc -- make merge" '' s6)" | delivered)" "deny github merge simulator"
 expect "a docs command through fnm exec brings the docs rules" \
     "$(run "$(bash_event 'fnm exec --using=.nvmrc -- make docs-check' '' s6b)" | delivered)" "deny docs-site"
 expect "a server command through fnm exec, with a separate version, brings the server rules" \
@@ -86,7 +87,7 @@ expect "a server command brings the server rules" \
 expect "a variable before make, that make reads from the environment, brings its rules" \
     "$(run "$(bash_event 'LIVE=1 make run' '' s15)" | delivered)" "deny assets live-data qa simulator"
 expect "make merge behind caffeinate and its options brings its rules" \
-    "$(run "$(bash_event 'caffeinate -i make merge' '' s16)" | delivered)" "deny merge simulator"
+    "$(run "$(bash_event 'caffeinate -i make merge' '' s16)" | delivered)" "deny github merge simulator"
 expect "make e2e behind timeout and its duration brings its rules" \
     "$(run "$(bash_event 'timeout 900 make e2e' '' s17)" | delivered)" "deny simulator tests"
 expect "make e2e behind nice brings its rules" \
@@ -115,6 +116,21 @@ expect "a film command through fnm exec brings the film rules" \
     "$(run "$(bash_event 'fnm exec --using=.nvmrc -- make video-clip' '' s26)" | delivered)" "deny video"
 expect "a render that skips make brings the film rules" \
     "$(run "$(bash_event 'cd video && npx remotion render Film out/x.mp4' '' s27)" | delivered)" "deny video"
+
+expect "a read of a workflow brings the GitHub rules" \
+    "$(run "$(read_event "$worktree/.github/workflows/release.yml" '' s28)" | delivered)" "context github"
+expect "a workflow started by hand is stopped once, with the GitHub rules" \
+    "$(run "$(bash_event 'gh workflow run release.yml --ref main' '' s29)" | delivered)" "deny github"
+expect "a secret set with a repo option is stopped once, with the GitHub rules" \
+    "$(run "$(bash_event 'gh -R owner/repo secret set APP_KEY --env app-store' '' s30)" | delivered)" "deny github"
+expect "a rerun of a run brings the GitHub rules" \
+    "$(run "$(bash_event 'gh run rerun 123 --failed' '' s31)" | delivered)" "deny github"
+expect "the approval of a waiting deployment through the API brings the GitHub rules" \
+    "$(run "$(bash_event 'gh api -X POST repos/owner/repo/actions/runs/1/pending_deployments -f state=approved' '' s32)" | delivered)" "deny github"
+expect "a change of an environment through the API brings the GitHub rules" \
+    "$(run "$(bash_event 'gh api --method PUT repos/owner/repo/environments/app-store' '' s33)" | delivered)" "deny github"
+expect "a gh command that only names a secret in its text, or reads a log, brings nothing" \
+    "$(run "$(bash_event 'gh pr comment 1 --body "the secret workflow run"; gh run view 1 --log-failed' '' s34)" | delivered)" "none"
 
 qa_subagent=$(event '{"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"subagent_type":"qa-tester","prompt":"QA of a task"}}' s13)
 expect "the start of a QA subagent is stopped once, with the live data rules" "$(run "$qa_subagent" | delivered)" "deny live-data"

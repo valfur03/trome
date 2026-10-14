@@ -7,7 +7,7 @@ The front page, `README.md`, is for a stranger who lands on the repo: it holds n
 ## Where to start
 
 Read only the part of the docs that your job needs, never a whole long page: every file that you read stays in the context of each later call.
-The guides of `ios/guide/` are long (up to 16 KB): read one only when your job needs it.
+The guides of `ios/guide/` are long: read one only when your job needs it.
 `make help` lists every `make` command, with one line each.
 
 | Job | Start with | Size |
@@ -16,8 +16,8 @@ The guides of `ios/guide/` are long (up to 16 KB): read one only when your job n
 | Add or change a test of the app | `ios/guide/tests.md` | 7.2 KB |
 | Change the server | `server/README.md`; `server/guide/how-it-works.md` when the API or the quota changes | 2.5 KB; 6.6 KB |
 | Review a change | the start file of the part that the diff touches, as above | as above |
-| QA | `ios/README.md`, to the end of its index "The guides"; then the guide of the feature of the task | 5 KB, then 3 to 16 KB |
-| Write or review a docs page | `docs/README.md`, section "Write a page" (to write) or "Review a page" (to review) | 10.4 KB or 4.1 KB |
+| QA | as for "Change the iPhone app" | as above |
+| Write or review a docs page | `docs/README.md`, section "Write a page" or "Review a page" | 10.4 KB or 4.1 KB |
 | Product Owner, manager | nothing in the repo: this file, the backlog, and the rules that your commands bring | none |
 | An outside contributor's view | `CONTRIBUTING.md` | 5.2 KB |
 
@@ -49,6 +49,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 | `live-data.md` | Live train data: who uses `LIVE=1`, the PRIM budget of a QA run | run a `make` command with `LIVE=1`; start a QA agent; touch `ios/Config/`, `ios/scripts/live-key-check.sh` |
 | `render-check.md` | The Live Activity render check | run `make live-activity-render`; touch `ios/Widget/`, `ios/RenderCheck/`, the Live Activity code of `TROMECore`, the line badge (`TROMEBadge`), the render scripts |
 | `merge.md` | Merge a task into `main` | run `make merge`, `git rebase`, `git merge`, `git pull`; touch `ios/scripts/merge.sh` |
+| `github.md` | GitHub secrets, environments, release workflows | touch a workflow; run `gh` on them, `make merge` |
 | `tooling.md` | The shared build cache, the git hooks | touch `ios/scripts/`, the `Makefile` files |
 | `server.md` | Code structure of the server, the server and its commands | touch `server/`, `contracts/`; run `make server-...` |
 | `docs-site.md` | The docs site: Node 24, port, screenshots | touch `docs/`; run `make docs...` |
