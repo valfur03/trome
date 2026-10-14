@@ -577,7 +577,7 @@ describe("Relay: what it keeps of a stop after a request", () => {
     expect(relay.stopsInMemory()).toEqual([chatelet]);
   });
 
-  it("holds no stop in memory after a restart, and keeps in storage only the copy of an answer, never a failed stop", async () => {
+  it("holds no stop after a restart: the answers live in memory only", async () => {
     const harness = relayHarness();
     await harness.relay.departures(abbesses);
     harness.prim.answerWith(() => answer(500, ""));
@@ -585,9 +585,5 @@ describe("Relay: what it keeps of a stop after a request", () => {
     expect(harness.relay.stopsInMemory()).toEqual([abbesses, chatelet]);
 
     expect(harness.restart().relay.stopsInMemory()).toEqual([]);
-    const stored = JSON.stringify(everyStoredRow(harness.database));
-    expect(stored.split(abbesses)).toHaveLength(2);
-    expect(harness.database.all("SELECT stop_ref FROM shared_answers")).toEqual([{ stop_ref: abbesses }]);
-    expect(stored).not.toContain(chatelet);
   });
 });

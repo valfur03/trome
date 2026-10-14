@@ -103,26 +103,23 @@ export class Relay {
     return { ...usage.metricsTotals(clock.now()), dailyCap: budget.dailyCap };
   }
 
-  /** Forgets the answers, their copies and the failures that are past their use: the server object calls it at its own timers, when no request comes. */
+  /** Forgets the answers and the failures that are past their use: the server object calls it at its own timer, when no request comes. */
   forgetPastUse(): void {
     this.forgetStopsPastUse(this.dependencies.clock.now());
   }
 
-  /** When the next answer in memory or copy in storage is past its use, so that the server object wakes then to forget it. */
-  nextAnswerForgetAt(): number | undefined {
-    const { answers, settings } = this.dependencies;
-    const oldest = answers.oldestAnswers();
-    const times = [
-      oldest.inMemory === undefined ? undefined : oldest.inMemory + settings.startAge,
-      oldest.copy === undefined ? undefined : oldest.copy + longestAnswerAge(settings),
-    ].filter((time) => time !== undefined);
-    return times.length > 0 ? Math.min(...times) : undefined;
-  }
-
-  /** When the pause of the next failed stop ends: the server object stays awake until then, so that a sleep does not end the pause early. */
-  nextFailurePauseEnd(): number | undefined {
-    const { settings } = this.dependencies;
-    const ends = [...this.lastFailureAt.values()].map((failedAt) => failedAt + settings.pauseAfterFailure);
+  /**
+   * The next time at which something in memory stops being of use: an answer reaches the oldest age at which the server gives it (5 minutes), or a failed stop ends its pause.
+   * Until then, a sleep of the server object, which empties its memory, would cost a PRIM call or end a pause early: so the object keeps a timer to this time, and asks again then.
+   * Undefined when a sleep loses nothing that the server still uses.
+   */
+  nextUseEnd(): number | undefined {
+    const { answers, clock, settings } = this.dependencies;
+    const now = clock.now();
+    const ends = [
+      ...answers.answeredTimes().map((answeredAt) => answeredAt + longestAnswerAge(settings)),
+      ...[...this.lastFailureAt.values()].map((failedAt) => failedAt + settings.pauseAfterFailure),
+    ].filter((end) => end > now);
     return ends.length > 0 ? Math.min(...ends) : undefined;
   }
 
@@ -134,7 +131,6 @@ export class Relay {
   private forgetStopsPastUse(now: number): void {
     const { answers, settings } = this.dependencies;
     answers.forgetAnswersGivenBy(now - settings.startAge);
-    answers.forgetCopiesGivenBy(now - longestAnswerAge(settings));
     for (const [stopRef, failedAt] of this.lastFailureAt) {
       if (failedAt + settings.pauseAfterFailure <= now) {
         this.lastFailureAt.delete(stopRef);
@@ -226,7 +222,7 @@ export class Relay {
   }
 }
 
-/** A copy in storage lives no longer than the oldest answer that the server gives: 5 minutes, as the privacy page says. */
+/** The oldest age at which the server gives an answer: 5 minutes, when PRIM fails or the budget is short. */
 function longestAnswerAge(settings: RelaySettings): number {
   return Math.max(settings.freshAge, settings.heldAge, ...settings.agedAnswers.map((step) => step.age));
 }

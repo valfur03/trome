@@ -13,16 +13,16 @@ import { DurableObjectSqlDatabase } from "./durable-object-sql-database";
 export const relayObjectName = "relay";
 
 /**
- * The one server object. Cloudflare puts an idle object to sleep after about 10 s with no request, no open call and no timer, and a sleep empties its memory.
- * So the object keeps in storage what must outlive a sleep (the copy of each answer, the counts), and keeps a timer only while memory holds what storage must not:
- * the counts not yet written (at most 10 s), and the failed stops during their pause.
- * A storage alarm, which does not keep it awake, wakes it to delete each answer and copy at the end of its life.
+ * The one server object. Cloudflare puts an idle object to sleep about 10 s after its last request when no timer and no call is open, and a sleep empties its memory.
+ * Memory holds what storage must not: the answers of the stops and the failed stops, which a storage write would keep restorable for 30 days.
+ * So the object keeps a timer while memory holds something of use, and stays awake through it: the counts not yet written (at most 10 s),
+ * an answer until the oldest age at which it is given (5 minutes), and a failed stop until the end of its pause.
+ * Cloudflare still ends an awake object after 70 to 140 s with no request, so a timer keeps an answer through the 30 s between the refreshes of a rider, not through a quiet night.
  */
 export class RelayObject extends DurableObject<Env> {
   private readonly relay: Relay;
   private readonly usage: UsageCounts;
-  private alarmAt: number | undefined;
-  private failureTimerAt: number | undefined;
+  private useTimer: { at: number; handle: ReturnType<typeof setTimeout> } | undefined;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -65,43 +65,42 @@ export class RelayObject extends DurableObject<Env> {
     try {
       return await this.relay.departures(stopRef);
     } finally {
-      this.planForget();
+      this.planUseTimer();
     }
   }
 
   counts(): CountsReport {
     const report = this.relay.counts();
-    this.planForget();
+    this.planUseTimer();
     return report;
   }
 
   metrics(): MetricsSnapshot {
     const snapshot = this.relay.metrics();
-    this.planForget();
+    this.planUseTimer();
     return snapshot;
   }
 
+  /** The older version set a storage alarm to write the counts: one may still come after a deploy, and it only tidies the memory. */
   override alarm(): void {
-    this.alarmAt = undefined;
     this.relay.forgetPastUse();
-    this.planForget();
+    this.planUseTimer();
   }
 
-  private planForget(): void {
-    const forgetAt = this.relay.nextAnswerForgetAt();
-    if (forgetAt !== undefined && (this.alarmAt === undefined || forgetAt < this.alarmAt)) {
-      this.alarmAt = forgetAt;
-      void this.ctx.storage.setAlarm(forgetAt);
+  private planUseTimer(): void {
+    const useEnd = this.relay.nextUseEnd();
+    if (useEnd === undefined || (this.useTimer !== undefined && this.useTimer.at <= useEnd)) {
+      return;
     }
-    const pauseEnd = this.relay.nextFailurePauseEnd();
-    if (pauseEnd !== undefined && (this.failureTimerAt === undefined || pauseEnd < this.failureTimerAt)) {
-      this.failureTimerAt = pauseEnd;
-      setTimeout(() => {
-        this.failureTimerAt = undefined;
-        this.relay.forgetPastUse();
-        this.planForget();
-      }, pauseEnd - Date.now());
+    if (this.useTimer !== undefined) {
+      clearTimeout(this.useTimer.handle);
     }
+    const handle = setTimeout(() => {
+      this.useTimer = undefined;
+      this.relay.forgetPastUse();
+      this.planUseTimer();
+    }, useEnd - Date.now());
+    this.useTimer = { at: useEnd, handle };
   }
 }
 

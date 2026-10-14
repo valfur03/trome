@@ -152,8 +152,11 @@ When you change a cap, change this table in the same commit, and keep the total 
 Nothing.
 A request holds only a stop and the app token, and the server reads nothing else of it: no position, no device or account identifier, no push token, no IP address, no user agent, no body.
 A test sends all of these, and checks that none is stored or logged.
-After the request, the server keeps no stop in its log lines, its counts or its error lines.
-Its memory holds a stop only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, and a stop whose PRIM call failed for its 60 s pause.
-Its storage holds a stop in one place only: a copy of the latest PRIM answer of the stop, with the time of that answer, which the next answer replaces, and which the server deletes 5 minutes after PRIM gave it, the oldest age at which it gives an answer.
-Cloudflare puts an idle server object to sleep about 10 seconds after its last request, and the sleep empties its memory: the copy keeps the answer through that sleep, so that the refresh of a lone rider 30 seconds later costs no PRIM call.
-The server drops each one at its next request after its time, and at a timer of its own when no request comes: a storage alarm for the answers and their copies, and for a failed stop a timer that keeps the server awake through the pause, so that a sleep does not end the pause early.
+After the request, the server keeps no stop in its storage or its log lines: the counts and the error lines have none.
+Only its memory holds a stop, and only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, and a stop whose PRIM call failed for its 60 s pause.
+An answer never goes to storage, even for a minute: Cloudflare keeps every write to the storage of a server object restorable for 30 days, so the stops written would stay as a history of the stops asked for.
+Cloudflare puts an idle server object to sleep about 10 seconds after its last request when no timer of it waits, and the sleep empties its memory.
+So the server keeps a timer while it holds an answer younger than 5 minutes, the oldest age at which it gives one, and while a failed stop is in its pause: the refresh of a lone rider 30 seconds later gets the held answer, with no PRIM call.
+Cloudflare still empties the memory of an object that a timer keeps awake 70 to 140 seconds after its last request: a rider who comes back later than that gets a new PRIM answer.
+Each second awake counts against the 13,000 GB-s that the Free plan allows each day, and an object awake all day uses about 11,000: so each timer ends as soon as what it keeps is of no more use.
+The server drops each stop at its first request or timer after its time, or when it sleeps.

@@ -41,7 +41,7 @@ async function sleepWhenIdle(): Promise<void> {
   await evictDurableObject(relayObject(env));
 }
 
-/** A fake clock from half past the hour, a day ahead of the real one: the alarms that the object sets are then in the future for Cloudflare too, and run only when the test runs them. */
+/** A fake clock from half past the hour, a day ahead of the real one, so that the timers of the object run only when the test moves the clock. */
 function useFakeTime(): void {
   vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"], now: Math.ceil(Date.now() / hour) * hour + day + 30 * minute });
 }
@@ -79,7 +79,7 @@ describe("RelayObject", () => {
 
   it("never passes its cap of 800 with many simultaneous requests for many stops, and keeps its count when it restarts", async () => {
     expect(env.PRIM_DAILY_CAP).toBe("800");
-    vi.useFakeTimers({ toFake: ["Date"], now: Date.parse("2026-10-02T21:30:00.000Z") });
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"], now: Date.parse("2026-10-02T21:30:00.000Z") });
     const prim = fakePrim(undefined, { wait: true });
 
     const answers = Array.from({ length: 900 }, (_, index) => departures(stop(index)));
@@ -89,7 +89,7 @@ describe("RelayObject", () => {
     expect(statuses.filter((status) => status === 200)).toHaveLength(800);
     expect(statuses.filter((status) => status === 503)).toHaveLength(100);
 
-    await evictDurableObject(relayObject(env));
+    await sleepWhenIdle();
 
     const afterRestart = await Promise.all(Array.from({ length: 50 }, (_, index) => departures(stop(1000 + index))));
     expect(afterRestart.map((response) => response.status)).toEqual(Array.from({ length: 50 }, () => 503));
@@ -122,11 +122,11 @@ describe("RelayObject", () => {
         state.storage.sql.exec<{ app_calls: number; cache_hits: number }>("SELECT app_calls, cache_hits FROM usage_hours").toArray(),
       );
     expect(await stored()).toEqual([{ app_calls: 1, cache_hits: 0 }]);
-    expect(vi.getTimerCount()).toBe(1);
+    expect(vi.getTimerCount(), "the timer of the counts, and the one of the answer").toBe(2);
 
     await passTime(flushDelay);
     expect(await stored()).toEqual([{ app_calls: 3, cache_hits: 2 }]);
-    expect(vi.getTimerCount()).toBe(0);
+    expect(vi.getTimerCount(), "the timer of the answer").toBe(1);
 
     await sleepWhenIdle();
     expect(await (await ownerCounts()).json()).toMatchObject({ days: [{ appCalls: 3, cacheHits: 2, primCalls: 1 }] });
@@ -148,54 +148,56 @@ describe("RelayObject", () => {
     });
   });
 
-  it("gives the answer that it holds after it slept, with no new PRIM call, to the requests of the next 60 s, with the same headers", async () => {
+  it("keeps a timer through the 30 s between two refreshes, so that Cloudflare does not put it to sleep, and gives the held answer with no new PRIM call for 60 s, with the same headers", async () => {
     useFakeTime();
     const prim = fakePrim();
     const first = await departures(abbesses);
     const body = await first.text();
 
-    await sleepWhenIdle();
     await passTime(30_000);
-    const afterSleep = await departures(abbesses);
-    await sleepWhenIdle();
-    await passTime(19_000);
+    expect(vi.getTimerCount(), "the timer of the answer").toBe(1);
+    const afterIdle = await departures(abbesses);
+    await passTime(29_000);
+    expect(vi.getTimerCount(), "the timer of the answer").toBeGreaterThan(0);
     const later = await departures(abbesses);
 
     expect(prim.calls).toHaveLength(1);
-    for (const response of [afterSleep, later]) {
+    for (const response of [afterIdle, later]) {
       expect(response.status).toBe(200);
       expect(await response.text()).toBe(body);
       expect(Object.fromEntries(response.headers)).toEqual(Object.fromEntries(first.headers));
     }
 
-    await sleepWhenIdle();
-    await passTime(11_000);
+    await passTime(1_000);
     expect((await departures(abbesses)).status).toBe(200);
     expect(prim.calls).toHaveLength(2);
   });
 
-  it("counts the app calls, cache hits, held answers and PRIM calls of a sleep the same as with no sleep", async () => {
+  it("has no timer left 5 minutes after its last answer, so that Cloudflare may put it to sleep", async () => {
     useFakeTime();
-    let calls = 0;
-    fakePrim(() => {
-      calls += 1;
-      return calls === 2 ? new Response("Too many requests", { status: 429 }) : new Response(recordedAnswer("stop-monitoring-abbesses-stop-area.json"));
-    });
+    fakePrim();
+    await departures(abbesses);
+
+    await passTime(5 * minute - 1);
+    expect(vi.getTimerCount()).toBe(1);
+    await passTime(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("loses no app call, cache hit or PRIM call when it sleeps between the requests", async () => {
+    useFakeTime();
+    fakePrim();
 
     await departures(abbesses);
-    await sleepWhenIdle();
-    await passTime(30_000);
     await departures(abbesses);
     await sleepWhenIdle();
-    await passTime(40_000);
     await departures(abbesses);
     await sleepWhenIdle();
-    await passTime(30_000);
     await departures(abbesses);
     await sleepWhenIdle();
 
     expect(await (await ownerCounts()).json()).toMatchObject({
-      days: [{ appCalls: 4, cacheHits: 1, heldAnswers: 2, outAnswers: 0, primCalls: 2, errors: 1 }],
+      days: [{ appCalls: 4, cacheHits: 1, heldAnswers: 0, outAnswers: 0, primCalls: 3, errors: 0 }],
     });
   });
 
@@ -217,9 +219,7 @@ describe("RelayObject", () => {
     expect(stopsInMemory).toEqual([]);
   });
 
-  it("keeps a stop in storage only in the copy of its answer, with no rider data, and deletes it at its alarm 5 minutes after PRIM answered", async () => {
-    useFakeTime();
-    const answeredAt = Date.now();
+  it("keeps no stop in storage after an answer and a failed PRIM call, and an alarm of the older version changes nothing", async () => {
     let calls = 0;
     fakePrim(() => {
       calls += 1;
@@ -227,23 +227,15 @@ describe("RelayObject", () => {
     });
     await departures(abbesses);
     expect((await departures(stop(1))).status).toBe(503);
-
-    const copies = await runInDurableObject(relayObject(env), (_object, state) => state.storage.sql.exec("SELECT * FROM shared_answers").toArray());
-    expect(copies).toEqual([
-      { stop_ref: abbesses, body: recordedAnswer("stop-monitoring-abbesses-stop-area.json"), prim_answered_at: answeredAt },
-    ]);
-    const stored = await everyStoredRow();
-    expect(stored).toContain('"kind":"prim-http-error"');
-    expect(stored.split("42155")).toHaveLength(2);
-    expect(stored).not.toContain(stop(1));
-    expect(await runInDurableObject(relayObject(env), (_object, state) => state.storage.getAlarm())).toBe(answeredAt + 5 * minute);
-
-    await passTime(5 * minute);
+    await runInDurableObject(relayObject(env), (_object, state) => state.storage.setAlarm(Date.now() + day));
     expect(await runDurableObjectAlarm(relayObject(env))).toBe(true);
 
-    const afterAlarm = await everyStoredRow();
-    expect(afterAlarm).not.toContain("42155");
-    expect(afterAlarm).not.toContain(stop(1));
+    const stored = await everyStoredRow();
+    expect(stored).toContain('"kind":"prim-http-error"');
+    expect(stored).not.toContain("42155");
+    expect(stored).not.toContain(stop(1));
+    expect((await departures(abbesses)).status).toBe(200);
+    expect(calls).toBe(2);
   });
 
   it("deletes, when the new version starts, the answers, the PRIM calls of each stop and the stop of each error line that an older version stored", async () => {

@@ -8,7 +8,7 @@ sidebar:
 
 import Contact from '../../../components/Contact.astro';
 
-Dernière mise à jour : 11 octobre 2026.
+Dernière mise à jour : 14 octobre 2026.
 
 TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
 Selon la définition d’Apple, TROME ne collecte aucune donnée sur vous : ce qui arrive au serveur sert à répondre, puis n’est pas conservé.
@@ -71,8 +71,7 @@ Il ne stocke que :
   Elle ne contient pas de station non plus.
   Elle n’est conservée que le temps de trouver et de corriger la cause d’une erreur ;
 - **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la renvoyer à toute personne qui demande la même station.
-  Elle reste dans la mémoire du serveur 10 minutes au plus.
-  Une copie est enregistrée dans le stockage du serveur, pour que la réponse serve encore après une pause du serveur, et le serveur l’efface 5 minutes après la réponse de la source.
+  Elle reste dans la mémoire du serveur 10 minutes au plus, sans jamais être enregistrée.
   Elle ne dit pas qui a demandé la station ;
 - **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, pendant une minute : le serveur ne rappelle pas la source aussitôt ;
 - **l’heure jusqu’à laquelle le serveur attend**, quand la source refuse un appel : il ne la rappelle pas avant.
