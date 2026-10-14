@@ -49,7 +49,7 @@ extension WatchedRegion {
         return "\(label) (phone \(distance) m away, ±\(Int(fix.accuracyMeters)) m, \(age) s old)"
     }
 
-    private static func stationId(inRegionId id: String) -> String? {
+    static func stationId(inRegionId id: String) -> String? {
         if let stationId = arrivalStationId(inRegionId: id) {
             return stationId
         }

@@ -21,6 +21,11 @@ public struct RegionFirstStates: Sendable {
         pending.isEmpty
     }
 
+    /// Takes a first state that gets its own line, out of the summary.
+    public mutating func release(id: String) -> Bool {
+        pending.remove(id) != nil
+    }
+
     public mutating func take(id: String, label: String, state: State, problems: String) -> Bool {
         guard pending.remove(id) != nil else { return false }
         switch (state, problems.isEmpty) {

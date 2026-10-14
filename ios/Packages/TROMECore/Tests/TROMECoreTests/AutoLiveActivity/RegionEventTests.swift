@@ -52,16 +52,35 @@ struct RegionEventTests {
         #expect(line(.entered(regionId: "arrival:unknown"), nil) == "iOS: entered arrival:unknown")
     }
 
-    @Test func givesTheFirstStateInsideANewAreaThePositionToo() {
-        let label = WatchedRegion.wakeLabel(
-            ofId: "arrival:b", phoneAt: fix(at: AutoTestPlaces.atB, age: 2), now: now, catalog: AutoTestPlaces.catalog
-        )
-        var firstStates = RegionFirstStates(expecting: ["arrival:b"])
-        _ = firstStates.take(id: "arrival:b", label: label, state: .inside, problems: "")
+    @Test func givesAFirstStateInsideAStationItsOwnLineWithThePosition() {
+        let atB = fix(at: AutoTestPlaces.atB, age: 2)
 
-        #expect(
-            firstStates.summary == "iOS: first state of 1 new areas: inside Station B (phone 0 m away, ±12 m, 2 s old)"
-        )
+        let line = RegionEvent.entered(regionId: "arrival:b")
+            .firstStateLine(phoneAt: atB, now: now, catalog: AutoTestPlaces.catalog)
+
+        #expect(line == "iOS: first state of a new area: inside Station B (phone 0 m away, ±12 m, 2 s old)")
+    }
+
+    @Test func leavesTheFirstStateOfAnAreaThatIsNotAStationToTheSummary() {
+        let catalog = AutoTestPlaces.catalog
+        let refresh = RegionEvent.entered(regionId: "refresh")
+        let exit = RegionEvent.left(regionId: "arrival:a")
+
+        #expect(refresh.firstStateLine(phoneAt: nil, now: now, catalog: catalog) == nil)
+        #expect(exit.firstStateLine(phoneAt: nil, now: now, catalog: catalog) == nil)
+    }
+
+    @Test func takesAReleasedFirstStateOutOfTheSummary() {
+        var firstStates = RegionFirstStates(expecting: ["arrival:b", "arrival:a"])
+
+        let first = firstStates.release(id: "arrival:b")
+        let second = firstStates.release(id: "arrival:b")
+        #expect(first)
+        #expect(!second)
+        _ = firstStates.take(id: "arrival:a", label: "Station A", state: .outside, problems: "")
+
+        #expect(firstStates.isComplete)
+        #expect(firstStates.summary == "iOS: first state of 1 new areas: 1 outside")
     }
 
     @Test func neverCountsAPositionFromTheFutureAsOld() {
