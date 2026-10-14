@@ -64,7 +64,8 @@ Run `make check`.
 It runs the lint, the checks of the texts and of the app icon, the build, the unit tests and the tests of the scripts, and stops at the first failure, with a message that says what to do.
 The build accepts no warning: fix its cause, and never silence it.
 When your branch changes `docs/`, `server/`, `contracts/` or `video/`, `make check` checks them too, which needs Node 24 ([how to install it](../server/README.md#run-and-test-it-locally)).
-On GitHub, a maintainer can start the same checks by hand on a Mac of GitHub, with the end-to-end tests, the render check and an unsigned Release archive (`make release-archive-check`): the workflow **Release checks**, in the **Actions** tab.
+On GitHub, a maintainer can start the same checks by hand on a Mac of GitHub, with the render check and an unsigned Release archive (`make release-archive-check`): the workflow **Release checks**, in the **Actions** tab.
+The end-to-end tests are not part of it, as that Mac is too slow for the Live Activity buttons: they run on a Mac, at `make merge`.
 
 `make check` runs no end-to-end test: [Test a change to the iPhone app](guide/tests.md) says which tests your change needs, and how to write one.
 

@@ -5,6 +5,8 @@ name: Release checks
 # It holds no secret, signs nothing and uploads nothing. The repo is public, so its logs are public:
 # no step prints Info.plist or the build settings, and the archive is never uploaded as an artifact.
 # The summary of the run gives the Xcode build, the image, the wait for the runner, and the outcome and minutes of each check.
+# The E2E suite does not run here: GitHub's Mac is too slow for the Live Activity buttons (iOS stops their code at 30 s),
+# so it stays a gate of every release on the Mac, at make merge. The summary says so in a fixed row, never a pass.
 
 on:
   workflow_dispatch:
@@ -20,7 +22,7 @@ jobs:
     name: Release checks
     # The standard size of the Xcode 27 image: free in a public repo. The larger xcode-27-xlarge is paid.
     runs-on: xcode-27
-    timeout-minutes: 150
+    timeout-minutes: 90
     permissions:
       contents: read
       # Reads the times of this job, for the wait before a runner took it.
@@ -113,19 +115,14 @@ jobs:
           ios/scripts/release-checks-summary.sh report "make live-activity-render"
           '^(Too tall|Cut texts|Breaches of the cut rules)' make live-activity-render
 
-      - name: make e2e
-        id: e2e
-        run: ios/scripts/release-checks-summary.sh run "make e2e" make e2e
-
-      - name: Say which checks did not run, and the minutes of the job
+      - name: Say which checks did not run, that the E2E suite runs on the Mac, and the minutes of the job
         if: always()
         env:
           CHECK: ${{ steps.check.outcome }}
           SERVER: ${{ steps.server.outcome }}
           ARCHIVE: ${{ steps.archive.outcome }}
           RENDER: ${{ steps.render.outcome }}
-          E2E: ${{ steps.e2e.outcome }}
         run: >-
           ios/scripts/release-checks-summary.sh end
           "make check=$CHECK" "make server-check=$SERVER" "make release-archive-check=$ARCHIVE"
-          "make live-activity-render=$RENDER" "make e2e=$E2E"
+          "make live-activity-render=$RENDER"
