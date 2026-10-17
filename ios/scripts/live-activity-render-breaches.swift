@@ -1,5 +1,4 @@
 import AppKit
-import CoreML
 import Foundation
 import Vision
 
@@ -173,29 +172,14 @@ enum Recognition {
         return context.makeImage()
     }
 
-    // On the devices that Vision picks; on the CPU alone when that fails, as on a Mac in a virtual machine.
-    // It throws when both fail: an empty text would be named a destination cut to nothing, a false breach.
+    // It throws when the text recognition fails: an empty text would be named a destination cut to nothing, a false breach.
     static func recognized(_ image: CGImage) throws -> String {
-        func run(onCPU: Bool) throws -> [VNRecognizedTextObservation] {
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = false
-            request.recognitionLanguages = ["fr-FR", "en-US"]
-            if onCPU, let cpu = MLComputeDevice.allComputeDevices.first(where: { if case .cpu = $0 { true } else { false } }) {
-                for stage in try request.supportedComputeStageDevices.keys {
-                    request.setComputeDevice(cpu, for: stage)
-                }
-            }
-            try VNImageRequestHandler(cgImage: image).perform([request])
-            return request.results ?? []
-        }
-        let observations: [VNRecognizedTextObservation]
-        do {
-            observations = try run(onCPU: false)
-        } catch {
-            observations = try run(onCPU: true)
-        }
-        return observations
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = false
+        request.recognitionLanguages = ["fr-FR", "en-US"]
+        try VNImageRequestHandler(cgImage: image).perform([request])
+        return (request.results ?? [])
             .sorted { $0.boundingBox.maxY > $1.boundingBox.maxY }
             .compactMap { $0.topCandidates(1).first?.string }
             .joined(separator: " ")
