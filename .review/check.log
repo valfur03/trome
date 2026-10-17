@@ -1,0 +1,17 @@
+lint: OK (1 s)
+prose-check: OK (54 files, no line of prose longer than 400 characters)
+public-text-check: OK (737 files: no backlog id, no word of the team's own process, no personal email address, no local path, no old name of the app, of the project, of its module, of a setting or of a tool, no team's voice in the prose)
+bundle-id-check: OK (Debug builds never carry io.github.valfur03.trome, also with Debug IDs set; Release carries it and is not signed automatically with no TROME_RELEASE_TEAM)
+release-signing-check: OK (with no TROME_RELEASE_TEAM, Xcode refuses to sign a Release build; with one, it signs automatically)
+app-icon-check: OK (AppIcon.png is 1024 x 1024, with no alpha channel)
+recommended-settings-check: OK (the project settings were checked with Xcode 27.0)
+upload-check: OK (TROME.app 1.0.0 has its icon, its privacy manifest, its answer on encryption, a reason for each required reason API that its code and its extensions use, and no placeholder address)
+live-key-check: OK (a LIVE=1 build puts the key in the app only, a new key replaces the old one, a build without LIVE=1 removes it, a Release build holds the app token and never the key, a Release build with no server host or no app token fails, the Release build passes the upload checks of upload-check.py, and no build output or log shows the key or the token)
+build: OK (5 s)
+strings-check: OK (a build in Xcode changes no String Catalog)
+unit-tests: OK (59 s): ✔ Test run with 904 tests in 64 suites passed after 8.982 seconds.; ✔ Test run with 6 tests in 2 suites passed after 8.773 seconds.
+test-scripts: OK (34 script tests)
+docs/ has no change since main: skipping make docs-check
+server/ and contracts/ have no change since main: skipping make server-check
+video/ has no change since main: skipping make video-check
+exit 0

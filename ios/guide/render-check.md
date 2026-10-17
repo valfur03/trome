@@ -70,7 +70,7 @@ The check lists a text that cuts more than that, in four kinds of breach:
 It finds them in two steps.
 The render test records SwiftUI's own layout of each text (`Text.LayoutKey`): where it is, whether it is cut, and how many characters show.
 Then, on the Mac, text recognition reads each cut text in its part of the image, and the command compares it with the texts of the drawn state to know whether it is a time, a destination, a label or the station name.
-When the text recognition fails, also on the processor alone (a Mac in a virtual machine may have no other device for it), the report stops with an error: an empty reading would count as a destination cut to nothing.
+When the text recognition fails, as on GitHub's Mac (a virtual machine), the report stops with an error: an empty reading would count as a destination cut to nothing.
 Cut texts that are none of these, for example "Horaires indisponibles", are counted as other cut texts, and a person reads them.
 It looks at the images only, so at the stations that have one, and the summary says how many stations that is.
 
