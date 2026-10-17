@@ -32,8 +32,13 @@ report() {
     head -1 "$csv" > "$over"
     grep ',true$' "$csv" >> "$over" || true
     cuts="$dir/cut-texts.txt"
-    find "$dir" -name '*.png' -print0 | xargs -0 swift "$scripts/live-activity-render-ocr.swift" \
-        | grep -E '(…|\.\.\.)$' | sort > "$cuts" || true
+    ocr="$dir/ocr.txt"
+    # A failed text recognition stops the report: its lists would be empty and read as "nothing cut".
+    if ! find "$dir" -name '*.png' -print0 | xargs -0 swift "$scripts/live-activity-render-ocr.swift" > "$ocr"; then
+        echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2
+        exit 1
+    fi
+    { grep -E '(…|\.\.\.)$' "$ocr" || true; } | sort > "$cuts"
     images=$(find "$dir" -name '*.png' | wc -l | tr -d ' ')
     echo "== Language: $2"
     echo "Renders: $renders (every station and page). Images: $images, in $dir"
