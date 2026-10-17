@@ -157,9 +157,10 @@ echo 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60
     | base64 -d > "$out/fr/Opéra-p2-lock17-XXXL.png"
 failed=$(PATH="$state/failing-ocr:$PATH" "$scripts/live-activity-render.sh" report "$out" 2>&1 && echo passes || echo fails)
 rm "$out/fr/Opéra-p2-lock17-XXXL.png"
-expect "the report fails when the text recognition fails, and says why, before any count of cut texts" \
-    "$(echo "$failed" | grep -E '^(Cut texts|The text recognition|fails)')" \
-    "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed
+expect "the report fails when the text recognition fails, after the too tall renders, and says why, with no count of cut texts or breaches" \
+    "$(echo "$failed" | grep -E '^(Too tall|Cut texts|Breaches|The text recognition|fails)' | sed "s|$out|OUT|")" \
+    "Too tall for their text size: 1 (list: OUT/fr/too-tall.csv)
+The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed
 fails"
 
 rm -rf "$out/en"

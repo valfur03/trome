@@ -31,19 +31,20 @@ report() {
     over="$dir/too-tall.csv"
     head -1 "$csv" > "$over"
     grep ',true$' "$csv" >> "$over" || true
-    cuts="$dir/cut-texts.txt"
-    ocr="$dir/ocr.txt"
-    # A failed text recognition stops the report: its lists would be empty and read as "nothing cut".
-    if ! find "$dir" -name '*.png' -print0 | xargs -0 swift "$scripts/live-activity-render-ocr.swift" > "$ocr"; then
-        echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2
-        exit 1
-    fi
-    { grep -E '(…|\.\.\.)$' "$ocr" || true; } | sort > "$cuts"
     images=$(find "$dir" -name '*.png' | wc -l | tr -d ' ')
     echo "== Language: $2"
     echo "Renders: $renders (every station and page). Images: $images, in $dir"
     echo "Too tall for their text size: $(($(wc -l < "$over") - 1)) (list: $over)"
     sed 1d "$over" | awk -F, '{ print "  " $(NF-4) " " $(NF-3) " (limit " $(NF-1) " pt)" }' | sort | uniq -c
+    cuts="$dir/cut-texts.txt"
+    ocr="$dir/ocr.txt"
+    # A failed text recognition stops the report after the too tall renders, which need no reading:
+    # the lists of cut texts and breaches would be empty and read as "nothing cut".
+    if ! find "$dir" -name '*.png' -print0 | xargs -0 swift "$scripts/live-activity-render-ocr.swift" > "$ocr"; then
+        echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2
+        exit 1
+    fi
+    { grep -E '(…|\.\.\.)$' "$ocr" || true; } | sort > "$cuts"
     echo "Cut texts in the images (OCR, for a person to read): $(wc -l < "$cuts" | tr -d ' ') (list: $cuts)"
     head -40 "$cuts"
     swift "$scripts/live-activity-render-breaches.swift" "$dir"
