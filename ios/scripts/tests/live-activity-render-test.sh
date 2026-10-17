@@ -99,9 +99,9 @@ report=$("$scripts/live-activity-render.sh" report "$out")
 expect "the report gives the too tall renders of each language" \
     "$(echo "$report" | grep -E '^(== Language|Too tall)' | sed "s|$out|OUT|")" \
     "== Language: fr
-Too tall for their text size: 1 (list: OUT/fr/too-tall.csv)
+Too tall for their text size, in fr: 1 (list: OUT/fr/too-tall.csv)
 == Language: en
-Too tall for their text size: 0 (list: OUT/en/too-tall.csv)"
+Too tall for their text size, in en: 0 (list: OUT/en/too-tall.csv)"
 
 expect "the report counts each kind of breach of the cut rules, for each phone, surface and size, 0 included" \
     "$(echo "$report" | grep -E '^(Breaches|  iPhone)' | sed "s|$out|OUT|")" \
@@ -155,11 +155,16 @@ FAKE
 chmod +x "$state/failing-ocr/swift"
 echo 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' \
     | base64 -d > "$out/fr/Opéra-p2-lock17-XXXL.png"
+cp "$out/fr/Opéra-p2-lock17-XXXL.png" "$out/en/"
 failed=$(PATH="$state/failing-ocr:$PATH" "$scripts/live-activity-render.sh" report "$out" 2>&1 && echo passes || echo fails)
-rm "$out/fr/Opéra-p2-lock17-XXXL.png"
-expect "the report fails when the text recognition fails, after the too tall renders, and says why, with no count of cut texts or breaches" \
-    "$(echo "$failed" | grep -E '^(Too tall|Cut texts|Breaches|The text recognition|fails)' | sed "s|$out|OUT|")" \
-    "Too tall for their text size: 1 (list: OUT/fr/too-tall.csv)
+rm "$out/fr/Opéra-p2-lock17-XXXL.png" "$out/en/Opéra-p2-lock17-XXXL.png"
+expect "the named failure is the last line of the report, where the summary of GitHub's run looks for it" \
+    "$(echo "$failed" | sed '$d' | tail -n 1)" \
+    "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed"
+expect "the report fails when the text recognition fails, after the too tall renders of every language, and says why last, with no count of cut texts or breaches" \
+    "$(echo "$failed" | grep -E '^(Too tall|Cut texts|Breaches|The text recognition of this Mac failed,|fails)' | sed "s|$out|OUT|")" \
+    "Too tall for their text size, in fr: 1 (list: OUT/fr/too-tall.csv)
+Too tall for their text size, in en: 0 (list: OUT/en/too-tall.csv)
 The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed
 fails"
 

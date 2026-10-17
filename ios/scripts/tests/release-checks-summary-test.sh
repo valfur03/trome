@@ -51,9 +51,11 @@ check:
 live-activity-render:
 	@if [ "$$RENDER_FAKE" = no-drawing ]; then echo "live-activity-render: FAILED (exit 65, 30 s)"; exit 1; fi
 	@echo "Renders: 120 (every station and page). Images: 240, in /tmp/render/fr"
-	@echo "Too tall for their text size: 3 (list: /tmp/render/fr/too-tall.csv)"
+	@echo "Too tall for their text size, in fr: 3 (list: /tmp/render/fr/too-tall.csv)"
 	@echo "  4 sp p1 (limit 160 pt)"
 	@if [ "$$RENDER_FAKE" = no-reading ]; then echo "The text recognition of this Mac failed on a.png: nilError" >&2; \
+		echo "Too tall for their text size, in en: 0 (list: /tmp/render/en/too-tall.csv)"; \
+		echo "Simulator time of the render: 12 s"; \
 		echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2; exit 1; fi
 	@if [ "$$RENDER_FAKE" = no-reading-then-error ]; then \
 		echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2; \
@@ -77,7 +79,7 @@ expect "its row has no colour code" "$(row "root server-check" | sed -E 's/\| [0
     "| root server-check | **FAILED** (exit 2) | M | FAIL test/core/time/paris-time.test.ts > parisDay |"
 expect "a report that runs passes" "$(in_repo report "root render" '^(Too tall|Cut texts|Breaches)' make live-activity-render)" "exit 0"
 expect "its row says it ran as a report, with its counts" "$(row "root render" | sed -E 's/\| [0-9.]+ \|/| M |/')" \
-    "| root render | ran: a report, not a gate | M | Too tall for their text size: 3; Cut texts in the images (OCR, for a person to read): 12; Breaches of the cut rules (texts cut too much), in the images of 40 stations: 2 |"
+    "| root render | ran: a report, not a gate | M | Too tall for their text size, in fr: 3; Cut texts in the images (OCR, for a person to read): 12; Breaches of the cut rules (texts cut too much), in the images of 40 stations: 2 |"
 expect "a report that cannot run fails, with its cause" "$(in_repo report "root render, no target" '^Too tall' make no-such-target)" "exit 2"
 expect "its row says FAILED" "$(row "root render, no target" | cut -d '|' -f 3)" " **FAILED** (exit 2) "
 
@@ -88,9 +90,9 @@ mac_only() {
         "cut texts and breaches: read only on the Mac" make live-activity-render
 }
 expect "a report whose reading fails by its named failure passes" "$(mac_only no-reading "render, no reading")" "exit 0"
-expect "its row says it ran in part, with the too tall count and the fixed text, never a pass, and no count of cut texts" \
+expect "its row says it ran in part, with the too tall count of each language and the fixed text, never a pass, and no count of cut texts" \
     "$(row "render, no reading" | sed -E 's/\| [0-9.]+ \|/| M |/')" \
-    "| render, no reading | ran in part: a report, not a gate | M | Too tall for their text size: 3; cut texts and breaches: read only on the Mac |"
+    "| render, no reading | ran in part: a report, not a gate | M | Too tall for their text size, in fr: 3; Too tall for their text size, in en: 0; cut texts and breaches: read only on the Mac |"
 expect "a drawing that fails still fails, with its cause" "$(mac_only no-drawing "render, no drawing")" "exit 2"
 expect "its row says FAILED with the cause of the drawing" "$(row "render, no drawing" | sed -E 's/\| [0-9.]+ \|/| M |/')" \
     "| render, no drawing | **FAILED** (exit 2) | M | live-activity-render: FAILED (exit 65, 30 s) |"

@@ -34,15 +34,15 @@ report() {
     images=$(find "$dir" -name '*.png' | wc -l | tr -d ' ')
     echo "== Language: $2"
     echo "Renders: $renders (every station and page). Images: $images, in $dir"
-    echo "Too tall for their text size: $(($(wc -l < "$over") - 1)) (list: $over)"
+    echo "Too tall for their text size, in $2: $(($(wc -l < "$over") - 1)) (list: $over)"
     sed 1d "$over" | awk -F, '{ print "  " $(NF-4) " " $(NF-3) " (limit " $(NF-1) " pt)" }' | sort | uniq -c
     cuts="$dir/cut-texts.txt"
     ocr="$dir/ocr.txt"
-    # A failed text recognition stops the report after the too tall renders, which need no reading:
-    # the lists of cut texts and breaches would be empty and read as "nothing cut".
+    # A failed text recognition skips the cut texts and the breaches of this language, which would be empty
+    # and read as "nothing cut"; the next language still gives its too tall renders, and the report fails at its end.
     if ! find "$dir" -name '*.png' -print0 | xargs -0 swift "$scripts/live-activity-render-ocr.swift" > "$ocr"; then
-        echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2
-        exit 1
+        reading_failed=1
+        return 0
     fi
     { grep -E '(…|\.\.\.)$' "$ocr" || true; } | sort > "$cuts"
     echo "Cut texts in the images (OCR, for a person to read): $(wc -l < "$cuts" | tr -d ' ') (list: $cuts)"
@@ -66,10 +66,15 @@ case "$mode" in
         echo "Simulator time of the render: $((end - start)) s" | tee "$out/simulator-seconds.txt"
         ;;
     report)
+        reading_failed=0
         for language in $languages; do
             report "$out/$language" "$language"
         done
         cat "$out/simulator-seconds.txt" 2> /dev/null || true
+        if [ "$reading_failed" -eq 1 ]; then
+            echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2
+            exit 1
+        fi
         ;;
     *)
         usage
