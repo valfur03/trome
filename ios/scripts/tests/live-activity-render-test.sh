@@ -142,6 +142,26 @@ expect "the report fails when it cannot read an image of texts.json" \
     "$("$scripts/live-activity-render.sh" report "$out" > /dev/null 2>&1 && echo passes || echo fails)" "fails"
 cp "$FAKE_TEXTS" "$out/fr/texts.json"
 
+# A Mac whose text recognition fails (as in a virtual machine with no device for it) must not report "0 cut texts".
+mkdir -p "$state/failing-ocr"
+real_swift=$(command -v swift)
+cat > "$state/failing-ocr/swift" <<FAKE
+#!/bin/sh
+case "\$1" in
+    *live-activity-render-ocr.swift) echo "Error raised at top level: nilError" >&2; exit 1 ;;
+    *) exec "$real_swift" "\$@" ;;
+esac
+FAKE
+chmod +x "$state/failing-ocr/swift"
+echo 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' \
+    | base64 -d > "$out/fr/Opéra-p2-lock17-XXXL.png"
+failed=$(PATH="$state/failing-ocr:$PATH" "$scripts/live-activity-render.sh" report "$out" 2>&1 && echo passes || echo fails)
+rm "$out/fr/Opéra-p2-lock17-XXXL.png"
+expect "the report fails when the text recognition fails, and says why, before any count of cut texts" \
+    "$(echo "$failed" | grep -E '^(Cut texts|The text recognition|fails)')" \
+    "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed
+fails"
+
 rm -rf "$out/en"
 expect "the report fails when a language was not drawn" \
     "$("$scripts/live-activity-render.sh" report "$out" > /dev/null 2>&1 && echo passes || echo fails)" "fails"

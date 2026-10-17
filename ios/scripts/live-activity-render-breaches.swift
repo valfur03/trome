@@ -1,4 +1,5 @@
 import AppKit
+import CoreML
 import Foundation
 import Vision
 
@@ -140,7 +141,7 @@ enum Recognition {
     static let margin: CGFloat = 3
     static let padding = 24
 
-    static func texts(in render: ImageTexts, folder: URL) -> [String]? {
+    static func texts(in render: ImageTexts, folder: URL) throws -> [String]? {
         let cuts = render.drawn.filter(\.isTruncated)
         if cuts.allSatisfy({ $0.ocr != nil }) { return cuts.map { $0.ocr ?? "" } }
         guard let image = NSImage(contentsOf: folder.appendingPathComponent(render.image)),
@@ -148,14 +149,14 @@ enum Recognition {
             return nil
         }
         let scale = CGFloat(cgImage.height) / render.height
-        return cuts.map { text in
+        return try cuts.map { text in
             let frame = CGRect(x: text.left, y: text.top, width: text.width, height: text.height)
                 .insetBy(dx: -margin, dy: -margin)
             let pixels = CGRect(
                 x: frame.minX * scale, y: frame.minY * scale, width: frame.width * scale, height: frame.height * scale
             ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
             guard let crop = cgImage.cropping(to: pixels), let padded = padded(crop) else { return "" }
-            return recognized(padded)
+            return try recognized(padded)
         }
     }
 
@@ -172,13 +173,29 @@ enum Recognition {
         return context.makeImage()
     }
 
-    static func recognized(_ image: CGImage) -> String {
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = false
-        request.recognitionLanguages = ["fr-FR", "en-US"]
-        try? VNImageRequestHandler(cgImage: image).perform([request])
-        return (request.results ?? [])
+    // On the devices that Vision picks; on the CPU alone when that fails, as on a Mac in a virtual machine.
+    // It throws when both fail: an empty text would be named a destination cut to nothing, a false breach.
+    static func recognized(_ image: CGImage) throws -> String {
+        func run(onCPU: Bool) throws -> [VNRecognizedTextObservation] {
+            let request = VNRecognizeTextRequest()
+            request.recognitionLevel = .accurate
+            request.usesLanguageCorrection = false
+            request.recognitionLanguages = ["fr-FR", "en-US"]
+            if onCPU, let cpu = MLComputeDevice.allComputeDevices.first(where: { if case .cpu = $0 { true } else { false } }) {
+                for stage in try request.supportedComputeStageDevices.keys {
+                    request.setComputeDevice(cpu, for: stage)
+                }
+            }
+            try VNImageRequestHandler(cgImage: image).perform([request])
+            return request.results ?? []
+        }
+        let observations: [VNRecognizedTextObservation]
+        do {
+            observations = try run(onCPU: false)
+        } catch {
+            observations = try run(onCPU: true)
+        }
+        return observations
             .sorted { $0.boundingBox.maxY > $1.boundingBox.maxY }
             .compactMap { $0.topCandidates(1).first?.string }
             .joined(separator: " ")
@@ -279,10 +296,19 @@ do {
 }
 
 var recognized = [[String]?](repeating: nil, count: renders.count)
+var failure: (image: String, error: Error)?
 let lock = NSLock()
 DispatchQueue.concurrentPerform(iterations: renders.count) { index in
-    let texts = Recognition.texts(in: renders[index], folder: folder)
-    lock.withLock { recognized[index] = texts }
+    do {
+        let texts = try Recognition.texts(in: renders[index], folder: folder)
+        lock.withLock { recognized[index] = texts }
+    } catch {
+        lock.withLock { failure = failure ?? (renders[index].image, error) }
+    }
+}
+if let failure {
+    FileHandle.standardError.write(Data("The text recognition of this Mac failed on \(failure.image): \(failure.error)\n".utf8))
+    exit(1)
 }
 let unreadable = zip(renders, recognized).filter { $0.1 == nil }.map(\.0.image)
 guard unreadable.isEmpty else {
