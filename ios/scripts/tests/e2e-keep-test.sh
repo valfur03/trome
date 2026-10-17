@@ -81,7 +81,7 @@ window_start=$(date -r "$((start - 5))" "+%Y-%m-%d %H:%M:%S")
 window_end=$(date -r "$((start + 105))" "+%Y-%m-%d %H:%M:%S")
 expect "the Simulator log covers the run, with 5 s on each side" "$(grep -c -- "--start $window_start --end $window_end" "$state/log-show-args")" "1"
 expect "the Simulator log has the lines of the app, and every line of iOS that names it" "$(grep -c 'process == "TROME" OR eventMessage CONTAINS "com.example.trome.dev" OR ' "$state/log-show-args")" "1"
-expect "it also has the path of a tap on a Live Activity button: the taps of chronod, and the intent runner with its launch" "$(grep -c 'OR (process == "chronod" AND category == "interactions") OR (process == "chronod" AND category == "taskservice") OR eventMessage CONTAINS "LiveActivity will be empty" OR process == "BackgroundShortcutRunner" OR (process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned BackgroundShortcutRunner\[")$' "$state/log-show-args")" "1"
+expect "it also has the path of a tap on a Live Activity button: the taps of chronod, and the intent runner with its launch" "$(grep -c 'OR (process == "chronod" AND category == "interactions") OR (process == "chronod" AND category == "taskservice") OR eventMessage CONTAINS "LiveActivity will be empty" OR process == "BackgroundShortcutRunner" OR (process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned BackgroundShortcutRunner\[") OR ' "$state/log-show-args")" "1"
 expect "with no tap in the Simulator log, the context says so" "$(grep '^Taps' "$kept/context.txt")" "Taps on a Live Activity button: none in the Simulator log"
 expect "it keeps the crash report of the app written during the run" "$(has "$kept/TROME-today.ips")" "yes"
 expect "it does not keep an older crash report" "$(has "$kept/TROME-old.ips")" "no"
@@ -191,6 +191,22 @@ export TROME_E2E_EVIDENCE_NOTE
 keep > /dev/null
 unset TROME_E2E_EVIDENCE_NOTE
 expect "with no draw stopped, it prints only the folder" "$(grep -c '^Draws' "$state/out")" "0"
+expect "with no background task of iOS in the Simulator log, the context says so" "$(grep '^Heavy' "$(cat "$state/note")/context.txt")" "Heavy background tasks of iOS: none in the Simulator log"
+expect "the Simulator log has the heavy background tasks of iOS" "$(grep -c 'OR (process == "dasd" AND category == "lifecycle" AND eventMessage CONTAINS "Intensive: " AND (eventMessage BEGINSWITH "STARTED <" OR eventMessage BEGINSWITH "COMPLETED <"))' "$state/log-show-args")" "1"
+
+# The lines of a real run (2026-10-17) where the daily update of the wallpapers ran next to the tests, shortened.
+cat > "$state/simulator.log" << 'EOF'
+2026-10-17 10:26:30.338 Df dasd[93643:2e941a] [com.apple.duetactivityscheduler:lifecycle] STARTED <_DASActivity: "com.apple.springboard.iconlabelcache.overnight:5D1E2A", Utility, 60s, [10/17/26, 5:35:18 AM - 10/17/26, 10:23:18 AM], Started at 10/17/26, 10:26:30 AM, Group: com.apple.dasd.defaultIntensive, Intensive: CPU Memory, PID: 94841>
+2026-10-17 10:26:47.776 Df dasd[93643:2ea2db] [com.apple.duetactivityscheduler:lifecycle] STARTED <_DASActivity: "com.apple.springboard.posterboardupdate.overnight:6471FC", Utility, 60s, [10/17/26, 5:35:18 AM - 10/17/26, 10:23:18 AM], Started at 10/17/26, 10:26:47 AM, Group: com.apple.dasd.defaultIntensive, Intensive: CPU Memory Disk GPU, PID: 94841>
+2026-10-17 10:28:41.878 Df dasd[93643:2ec68b] [com.apple.duetactivityscheduler:lifecycle] COMPLETED <_DASActivity: "com.apple.springboard.posterboardupdate.overnight:6471FC", Utility, 60s, [10/17/26, 5:35:18 AM - 10/17/26, 10:23:18 AM], Started at 10/17/26, 10:26:47 AM, Group: com.apple.dasd.defaultIntensive, InternalGroups: {(
+EOF
+TROME_E2E_EVIDENCE_NOTE="$state/note"
+export TROME_E2E_EVIDENCE_NOTE
+keep > /dev/null
+unset TROME_E2E_EVIDENCE_NOTE
+background="com.apple.springboard.iconlabelcache.overnight from 10:26:30 to the end of the log; the daily update of the wallpapers from 10:26:47 to 10:28:41"
+expect "the context names the heavy background tasks of iOS during the run, with their start and end" "$(grep '^Heavy' "$(cat "$state/note")/context.txt")" "Heavy background tasks of iOS: $background"
+expect "it also prints them when the daily update of the wallpapers ran, before the folder" "$(head -1 "$state/out")" "Heavy background tasks of iOS: $background."
 rm "$state/simulator.log"
 
 for old in $(seq 1 25); do

@@ -6,6 +6,9 @@ shared_name_pattern='RATP-Shared(-Small)?(-[0-9]+)?'
 springboard_wait_seconds=${TROME_SPRINGBOARD_WAIT_SECONDS:-60}
 widget_host_wait_seconds=${TROME_WIDGET_HOST_WAIT_SECONDS:-240}
 widget_host_log_seconds=60
+wallpaper_update_wait_seconds=${TROME_WALLPAPER_UPDATE_WAIT_SECONDS:-600}
+wallpaper_update_log_seconds=300
+wallpaper_update_task=com.apple.springboard.posterboardupdate.overnight
 slot=${RATP_SIM_SLOT:-1}
 
 case "$slot" in
@@ -197,6 +200,58 @@ wait_for_widget_host() {
     done
 }
 
+# Prints due, running or idle for the daily update of the wallpapers of iOS, from the log of its scheduler (dasd) since
+# $2. SpringBoard submits the task at each of its starts, with the time from which it is due.
+wallpaper_update_state() {
+    state=$(xcrun simctl spawn "$1" log show --style compact --start "$2" \
+        --predicate "process == \"dasd\" AND eventMessage CONTAINS \"$wallpaper_update_task\"" 2> /dev/null \
+        | awk -v task="$wallpaper_update_task" '
+            index($0, "SUBMITTED " task ":") && match($0, /with interval [0-9]+ \([^-(]+ - /) {
+                due = substr($0, RSTART, RLENGTH)
+                sub(/^with interval [0-9]+ \(/, "", due)
+                sub(/ - $/, "", due)
+                gsub(/ +/, " ", due)
+                state = "submitted " due
+            }
+            index($0, "STARTED <_DASActivity: \"" task ":") { state = "running" }
+            index($0, "COMPLETED <_DASActivity: \"" task ":") { state = "idle" }
+            END { print (state == "" ? "idle" : state) }
+        ')
+    case $state in
+        "submitted "*)
+            due=$(LC_ALL=C date -j -f '%a %b %d %H:%M:%S %Y' "${state#submitted }" +%s 2> /dev/null) || due=
+            if [ -n "$due" ] && [ "$due" -le "$(date +%s)" ]; then echo due; else echo idle; fi
+            ;;
+        *) echo "$state" ;;
+    esac
+}
+
+# Once a day, iOS updates the wallpaper gallery of the lock screen: a background task of SpringBoard, which the
+# scheduler of iOS starts a few minutes after it is due, often in the first job of the day. PosterBoard then runs about
+# 15 wallpaper extensions at once for 2 minutes, which took the Mac to a load of 215 (2026-10-17). The widget host of
+# the Simulator then stopped each draw of the Live Activity at its watchdog, then gave up, and a test that looked for
+# the Live Activity failed. So, when the task is due or runs, the jobs wait until iOS has run it. A newer iOS may
+# change these log messages: then the jobs no longer wait.
+wait_for_wallpaper_update() {
+    since=$(date -v-"${wallpaper_update_log_seconds}"S '+%Y-%m-%d %H:%M:%S')
+    started=$(date +%s)
+    waited=
+    while state=$(wallpaper_update_state "$1" "$since") && [ "$state" != idle ]; do
+        if [ -z "$waited" ]; then
+            echo "Waiting for the daily update of the wallpapers of iOS ($state), which keeps the Mac busy for minutes" >&2
+            waited=yes
+        fi
+        if [ "$(date +%s)" -ge $((started + wallpaper_update_wait_seconds)) ]; then
+            echo "The daily update of the wallpapers of iOS was still $state after $wallpaper_update_wait_seconds s; going on" >&2
+            return 0
+        fi
+        sleep 5
+    done
+    if [ -n "$waited" ]; then
+        echo "The daily update of the wallpapers of iOS ended after $(($(date +%s) - started)) s" >&2
+    fi
+}
+
 set_language() {
     xcrun simctl spawn "$1" defaults write -g AppleLanguages -array "$language"
     xcrun simctl spawn "$1" defaults write -g AppleLocale -string "$locale"
@@ -350,6 +405,12 @@ case "$command" in
             exec "$@"
         fi
         ;;
+    wait-for-wallpaper-update)
+        wait_for_wallpaper_update "$(boot_device)"
+        if [ $# -gt 0 ]; then
+            exec "$@"
+        fi
+        ;;
     wait-for-widget-host)
         wait_for_widget_host "$(boot_device)"
         if [ $# -gt 0 ]; then
@@ -424,7 +485,7 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|status-bar|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-wallpaper-update [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|status-bar|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch', 'language' and 'switch-language'); the default is English (en)" >&2
         echo "'status-bar' sets the status bar of the pictures (9:41, full battery and signal), and boots the Simulator again once when it booted with a 24-hour clock" >&2

@@ -371,6 +371,38 @@ expect "a job waits while the widget host starts, before it queues its first tas
 chronod_line "Would pop task, but all extensions are busy, namely [com.example.trome.dev::com.example.trome.dev.widget]" > "$state/chronod-log.$default"
 expect "a job says that it waits for the widget host before it goes on at the limit, also when the limit is reached at the first check" "$(TROME_WIDGET_HOST_WAIT_SECONDS=0 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
 
+dasd_line() {
+    echo "2026-10-17 10:23:18.911 Df dasd[93643:2e482f] [com.apple.duetactivityscheduler:lifecycle] $1"
+}
+wallpaper_update_submitted() {
+    dasd_line "SUBMITTED com.apple.springboard.posterboardupdate.overnight:6471FC at priority 30 with interval 86400 ($1 - Sat Oct 17 10:23:18 2026)"
+}
+wallpaper_update_started() {
+    dasd_line 'STARTED <_DASActivity: "com.apple.springboard.posterboardupdate.overnight:6471FC", Utility, 60s, [10/17/26, 5:35:18 AM - 10/17/26, 10:23:18 AM], Started at 10/17/26, 10:26:47 AM, Group: com.apple.dasd.defaultIntensive, Intensive: CPU Memory Disk GPU, PID: 94841>'
+}
+wallpaper_update_completed() {
+    dasd_line 'COMPLETED <_DASActivity: "com.apple.springboard.posterboardupdate.overnight:6471FC", Utility, 60s, [10/17/26, 5:35:18 AM - 10/17/26, 10:23:18 AM], Started at 10/17/26, 10:26:47 AM, Group: com.apple.dasd.defaultIntensive, InternalGroups: {('
+    wallpaper_update_submitted "Sun Oct 18 05:38:47 2099"
+}
+wait_for_wallpaper_update() {
+    "$scripts/sim-lock.sh" job "$scripts/simulator.sh" wait-for-wallpaper-update sh -c 'echo ran > "$FAKE_SIM_STATE/after-wallpaper-update"' 2> "$state/wallpaper-update.err" > /dev/null
+    cat "$state/after-wallpaper-update" 2> /dev/null || echo "did not run"
+    rm -f "$state/after-wallpaper-update" "$state/dasd-log.$default" "$state/dasd-log.$default.next"
+}
+wallpaper_update_message() {
+    sed -n -E 's/.*(Waiting for the daily update|was still [a-z]+|ended after).*/\1/p' "$state/wallpaper-update.err" | paste -s -d ' ' -
+}
+expect "a job runs at once when the scheduler of iOS logs nothing of the daily wallpaper update" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
+wallpaper_update_submitted "Sun Oct 18 05:38:47 2099" > "$state/dasd-log.$default"
+expect "a job runs at once when the daily wallpaper update is not due yet" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
+{ wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; wallpaper_update_started; wallpaper_update_completed; } > "$state/dasd-log.$default"
+expect "a job runs at once when the daily wallpaper update has run" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
+wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
+{ wallpaper_update_submitted "Sat Oct  3 05:35:18 2026"; wallpaper_update_started; wallpaper_update_completed; } > "$state/dasd-log.$default.next"
+expect "a job waits while the daily wallpaper update is due, until iOS has run it, then runs" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update ended after"
+{ wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; wallpaper_update_started; } > "$state/dasd-log.$default"
+expect "a job says that it waits for a running daily wallpaper update before it goes on at the limit" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still running"
+
 language_at_restart() {
     cat "$state/language-at-springboard-restart.$default" 2> /dev/null || echo "no restart"
 }

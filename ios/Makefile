@@ -290,7 +290,7 @@ e2e: project
 	done
 	@rm -rf $(E2E_RESULT)
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@RATP_SIM_KIND=e2e RATP_SIM_DETAIL="$(ONLY)" $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
+	@RATP_SIM_KIND=e2e RATP_SIM_DETAIL="$(ONLY)" $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-wallpaper-update $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
 		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E tests: ' \
 		sh -c './scripts/mac-load-log.sh $(LOGS)/mac-load.log & load_log=$$!; "$$@"; status=$$?; kill $$load_log 2>/dev/null; ./scripts/e2e-failures.py $(E2E_RESULT); [ $$status -eq 0 ] || ./scripts/e2e-keep.py $(E2E_RESULT) $(LOGS)/e2e.log "$(APP_PATH)"; exit $$status' e2e \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
@@ -328,7 +328,7 @@ merge:
 store-screenshots: project
 	@./scripts/wallpaper.sh check
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/store-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@RATP_SIM_KIND=store-screenshots $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
+	@RATP_SIM_KIND=store-screenshots $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-wallpaper-update $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/store-screenshots.log '^Captured ' ./scripts/store-screenshots.sh capture $(STORE_SCREENSHOTS_RESULT) $(LOGS)/store-screenshots.log "$(APP_PATH)" \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
@@ -361,7 +361,7 @@ simulator-wallpaper-set:
 docs-screenshots: project
 	@./scripts/wallpaper.sh check
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/docs-screenshots-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
-	@RATP_SIM_KIND=docs-screenshots $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
+	@RATP_SIM_KIND=docs-screenshots $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-wallpaper-update $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/docs-screenshots.log '^Saved ' ./scripts/docs-screenshots.sh $(DOCS_SCREENSHOTS_RESULT) $(LOGS)/docs-screenshots.log "$(APP_PATH)" \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \

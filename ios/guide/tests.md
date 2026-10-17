@@ -49,6 +49,7 @@ make e2e ONLY="SnoozeTests LiveActivityTests"
 ```
 
 `make e2e` alone runs them all, in a few minutes.
+Once a day, a run may first wait a few minutes for iOS to update its wallpapers, which keeps the Simulator so busy that a test next to it can fail.
 The tests have no train data key, so the Live Activity says "Times unavailable" unless a test asks for fake trains.
 On a pass, `make e2e` prints the counts of the tests and their time.
 On a failure, `make e2e` prints the file, the line and the message; open `ios/.build/e2e.xcresult` in Xcode for the full results.
@@ -111,4 +112,5 @@ If it does not, open an issue with the name of the test, how often it failed, an
 The folder that the failed run printed (in `~/Library/Logs/TROME/e2e-failures/`) holds the evidence: its `simulator.log` shows what iOS did around the failure, such as a launch or an end of the app.
 Its `context.txt` also says how long iOS took to run each tap on a Live Activity button, and names a tap that took more than 30 s: iOS starts a new process for each tap before the app gets it, and a busy Mac can delay that start past the wait of a test.
 It also says how long iOS took to draw the Live Activity, and names each draw that iOS stopped at its watchdog of about 10 s: the Live Activity then keeps the last content that iOS drew.
+It also names the heavy background tasks that iOS ran during the run, such as its daily update of the wallpapers.
 `mac-load.log` holds the load of the Mac and its 5 busiest processes every 10 s of the run, so that it shows what kept the Mac busy at the moment of the failure.

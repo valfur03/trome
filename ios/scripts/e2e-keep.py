@@ -20,6 +20,10 @@ INTENT_RUNNER = "BackgroundShortcutRunner"
 # make e2e writes the load of the Mac and its busiest processes in this file of its log folder (mac-load-log.sh).
 MAC_LOAD_LOG = "mac-load.log"
 MAC_LOAD_SAMPLE = re.compile(r"^\d\d:\d\d:\d\d load ([0-9.]+) \|")
+# The daily update of the wallpapers of iOS: about 15 wallpaper extensions at once, for minutes (simulator.sh waits
+# for it before a run, when it is due).
+WALLPAPER_UPDATE = "com.apple.springboard.posterboardupdate.overnight"
+BACKGROUND_TASK = re.compile(r'\] (STARTED|COMPLETED) <_DASActivity: "([^"]+?)(?::\w+)?"')
 LOG_LINE = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+) +\S+ +(\S+?)\[(\d+):")
 
 
@@ -159,7 +163,8 @@ def keep_simulator_log(folder, bundle_id, executable, start, end):
     return (
         f"simulator.log (the lines of {executable}, every line of iOS that names {bundle_id}, "
         "the path of the Live Activity buttons: the taps of chronod and iOS's intent runner, "
-        "and the queue of the widget host (chronod), which holds back a new Live Activity)"
+        "the queue of the widget host (chronod), which holds back a new Live Activity, "
+        "and the heavy background tasks of iOS)"
     )
 
 
@@ -173,6 +178,9 @@ def simulator_log_predicate(bundle_id, executable):
         'eventMessage CONTAINS "LiveActivity will be empty"',
         f'process == "{INTENT_RUNNER}"',
         f'(process == "launchd_sim" AND eventMessage CONTAINS "Successfully spawned {INTENT_RUNNER}[")',
+        # The heavy background tasks that the scheduler of iOS (dasd) runs, such as the daily update of the wallpapers.
+        '(process == "dasd" AND category == "lifecycle" AND eventMessage CONTAINS "Intensive: "'
+        ' AND (eventMessage BEGINSWITH "STARTED <" OR eventMessage BEGINSWITH "COMPLETED <"))',
     ])
 
 
@@ -274,6 +282,34 @@ def live_activity_renders(simulator_log, bundle_id):
     return "; ".join(parts)
 
 
+def background_tasks(simulator_log):
+    """Names the heavy background tasks that iOS ran during the run, with their start and end: they keep the Simulator
+    busy, and the daily update of the wallpapers starts about 15 processes at once."""
+    try:
+        lines = simulator_log.read_text(errors="replace").splitlines()
+    except OSError:
+        return None
+    tasks = {}
+    for line in lines:
+        match, task = LOG_LINE.match(line), BACKGROUND_TASK.search(line)
+        if not match or match.group(2) != "dasd" or not task:
+            continue
+        at = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S.%f")
+        name = task.group(2)
+        if task.group(1) == "STARTED":
+            tasks.setdefault(name, []).append([at, None])
+        elif name in tasks and tasks[name][-1][1] is None:
+            tasks[name][-1][1] = at
+    if not tasks:
+        return "none in the Simulator log"
+    parts = []
+    for name, runs in sorted(tasks.items(), key=lambda item: item[1][0][0]):
+        for start, end in runs:
+            label = "the daily update of the wallpapers" if name == WALLPAPER_UPDATE else name
+            parts.append(f"{label} from {start:%H:%M:%S} to {f'{end:%H:%M:%S}' if end else 'the end of the log'}")
+    return "; ".join(parts)
+
+
 def keep_mac_load(log, folder, since):
     """Keeps the load of the Mac that make e2e wrote during this run, and names its busiest moment."""
     path = log.parent / MAC_LOAD_LOG
@@ -321,6 +357,7 @@ def main():
     simulator_log = keep_simulator_log(folder, bundle_id, executable, start, end)
     taps = live_activity_taps(folder / "simulator.log")
     renders = live_activity_renders(folder / "simulator.log", bundle_id) if bundle_id else None
+    background = background_tasks(folder / "simulator.log")
     mac_load = keep_mac_load(log, folder, start if start is not None else time.time() - NO_SUMMARY_LOG_SECONDS)
 
     context = [
@@ -334,6 +371,7 @@ def main():
         f"Simulator log: {simulator_log}",
         f"Taps on a Live Activity button: {taps or 'unknown (no Simulator log)'}",
         f"Draws of the Live Activity by iOS: {renders or 'unknown (no Simulator log)'}",
+        f"Heavy background tasks of iOS: {background or 'unknown (no Simulator log)'}",
         f"Result bundle: {bundle.name if bundle.exists() else 'none (the run ended before it wrote one)'}",
         f"Log: {log.name if log.exists() else 'none'}",
         "Tests, in the order they ran:",
@@ -349,6 +387,8 @@ def main():
         print(f"Taps on a Live Activity button: {taps}.")
     if renders and "iOS stopped" in renders:
         print(f"Draws of the Live Activity by iOS: {renders}.")
+    if background and "the daily update of the wallpapers" in background:
+        print(f"Heavy background tasks of iOS: {background}.")
     print(f"E2E evidence: the log, the result bundle, the Simulator log and the context of this failed run are kept in {folder}")
 
 

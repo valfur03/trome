@@ -134,7 +134,7 @@ cat > "$state/fake-simulator" << 'EOF'
 #!/bin/sh
 case "$1" in
     job) echo "Waiting for the Simulator lock: another job holds it (fake)" >&2; shift; exec "$@" ;;
-    reset | wait-for-widget-host) shift; exec "$@" ;;
+    reset | wait-for-wallpaper-update | wait-for-widget-host) shift; exec "$@" ;;
     grant-location) shift 2; exec "$@" ;;
     with-destination) shift; exec "$@" -destination "platform=iOS Simulator,id=FAKE" ;;
 esac

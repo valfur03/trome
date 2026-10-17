@@ -119,6 +119,9 @@ case "$command" in
                 ;;
             "log show")
                 log="$state/chronod-log.$1"
+                case "$*" in
+                    *'process == "dasd"'*) log="$state/dasd-log.$1" ;;
+                esac
                 [ -e "$log" ] || exit 0
                 cat "$log"
                 if [ -e "$log.next" ]; then
