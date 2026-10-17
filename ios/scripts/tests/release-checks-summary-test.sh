@@ -30,6 +30,7 @@ expect "a check that passes passes" "$(step run "make check" sh -c 'echo "build:
 expect "its output shows in the log of the step" "$(grep -c 'build: OK' "$state/out")" "1"
 expect "its row says passed, with its last line" "$(row "make check" | sed -E 's/\| [0-9.]+ \|/| M |/')" \
     "| make check | passed | M | check: OK (2 checks) |"
+expect "the row is in the log of the step too" "$(grep -c '^Summary row: | make check | passed |' "$state/out")" "1"
 expect "the table has its head once" "$(grep -c '^| Check | Outcome' "$GITHUB_STEP_SUMMARY")" "1"
 
 expect "a check that fails fails with its own status" "$(step run "make e2e" sh -c 'echo "e2e: FAILED | see ios/.build/logs/e2e.log \`x\`"; exit 3')" "exit 3"

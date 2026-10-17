@@ -28,6 +28,8 @@ row() {
         : > "$table_started"
     fi
     printf '| %s | %s | %s | %s |\n' "$1" "$2" "$3" "$4" >> "$summary"
+    # The row in the log too: the summary page needs a login to GitHub, the log is read with gh run view --log.
+    [ "$summary" = /dev/stdout ] || printf 'Summary row: | %s | %s | %s | %s |\n' "$1" "$2" "$3" "$4"
 }
 
 minutes() {
