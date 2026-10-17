@@ -174,10 +174,10 @@ extension CoreLocationStationRegionWatcher {
             : WatchedRegion.wakeLabel(ofId: event.identifier, phoneAt: fix, now: now, catalog: catalog)
         let problems = Self.diagnostics(of: event)
         let state = Self.firstState(of: event)
-        if state == .inside, problems.isEmpty,
+        if state == .inside,
            let line = regionEvent?.firstStateLine(phoneAt: fix, now: now, catalog: catalog),
            firstStates.release(id: event.identifier) {
-            wakeLog.record(.system, line)
+            wakeLog.record(.system, problems.isEmpty ? line : "\(line) [\(problems)]")
             if firstStates.isComplete {
                 flushFirstStates()
             }
