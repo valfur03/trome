@@ -111,9 +111,14 @@ jobs:
       - name: Render check of the Live Activity
         id: render
         # A report, not a gate: it fails only when it cannot run. Its row says so, and gives its counts.
+        # The text recognition of macOS fails on GitHub's Mac, so here it draws every view and counts the too tall ones;
+        # the cut texts and the breaches are read only on the Mac. That named failure passes, with a fixed row; any other fails.
         run: >-
           ios/scripts/release-checks-summary.sh report "make live-activity-render"
-          '^(Too tall|Cut texts|Breaches of the cut rules)' make live-activity-render
+          '^(Too tall|Cut texts|Breaches of the cut rules)'
+          --mac-only '^The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed$'
+          "cut texts and breaches: read only on the Mac (make live-activity-render), as the text recognition of macOS fails here"
+          make live-activity-render
 
       - name: Say which checks did not run, that the E2E suite runs on the Mac, and the minutes of the job
         if: always()

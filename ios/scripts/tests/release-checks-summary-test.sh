@@ -48,9 +48,15 @@ check:
 	@echo "unit-tests: FAILED: LineBadgeViewTests, run make test"
 	@exit 1
 live-activity-render:
+	@if [ "$$RENDER_FAKE" = no-drawing ]; then echo "live-activity-render: FAILED (exit 65, 30 s)"; exit 1; fi
 	@echo "Renders: 120 (every station and page). Images: 240, in /tmp/render/fr"
 	@echo "Too tall for their text size: 3 (list: /tmp/render/fr/too-tall.csv)"
 	@echo "  4 sp p1 (limit 160 pt)"
+	@if [ "$$RENDER_FAKE" = no-reading ]; then echo "The text recognition of this Mac failed on a.png: nilError" >&2; \
+		echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2; exit 1; fi
+	@if [ "$$RENDER_FAKE" = no-reading-then-error ]; then \
+		echo "The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed" >&2; \
+		echo "Cannot read texts.json" >&2; exit 1; fi
 	@echo "Cut texts in the images (OCR, for a person to read): 12 (list: /tmp/render/fr/cut-texts.txt)"
 	@echo "Breaches of the cut rules (texts cut too much), in the images of 40 stations: 2 (list: /tmp/render/fr/breaches.txt)"
 	@echo "  Destination: Porte de ... | 1 p1 lock 375 | a.png"
@@ -73,6 +79,23 @@ expect "its row says it ran as a report, with its counts" "$(row "root render" |
     "| root render | ran: a report, not a gate | M | Too tall for their text size: 3; Cut texts in the images (OCR, for a person to read): 12; Breaches of the cut rules (texts cut too much), in the images of 40 stations: 2 |"
 expect "a report that cannot run fails, with its cause" "$(in_repo report "root render, no target" '^Too tall' make no-such-target)" "exit 2"
 expect "its row says FAILED" "$(row "root render, no target" | cut -d '|' -f 3)" " **FAILED** (exit 2) "
+
+# On GitHub's Mac the text recognition fails: that named failure passes, with a fixed row that says the reading is Mac-only.
+mac_only() {
+    RENDER_FAKE=$1 in_repo report "$2" '^(Too tall|Cut texts|Breaches)' \
+        --mac-only '^The text recognition of this Mac failed, so the cut texts and the breaches cannot be listed$' \
+        "cut texts and breaches: read only on the Mac" make live-activity-render
+}
+expect "a report whose reading fails by its named failure passes" "$(mac_only no-reading "render, no reading")" "exit 0"
+expect "its row says it ran in part, with the too tall count and the fixed text, never a pass, and no count of cut texts" \
+    "$(row "render, no reading" | sed -E 's/\| [0-9.]+ \|/| M |/')" \
+    "| render, no reading | ran in part: a report, not a gate | M | Too tall for their text size: 3; cut texts and breaches: read only on the Mac |"
+expect "a drawing that fails still fails, with its cause" "$(mac_only no-drawing "render, no drawing")" "exit 2"
+expect "its row says FAILED with the cause of the drawing" "$(row "render, no drawing" | sed -E 's/\| [0-9.]+ \|/| M |/')" \
+    "| render, no drawing | **FAILED** (exit 2) | M | live-activity-render: FAILED (exit 65, 30 s) |"
+expect "another failure after the named one still fails" "$(mac_only no-reading-then-error "render, other error")" "exit 2"
+expect "a report that reads its texts keeps its full row, with --mac-only too" "$(mac_only "" "render, read")" "exit 0"
+expect "its row gives every count" "$(row "render, read" | cut -d '|' -f 3)" " ran: a report, not a gate "
 
 echo 100 > "$state/release-checks-start"
 expect "the end of the job passes" "$(step end "make check=success" "make server-check=failure" "make docs=skipped" "make live-activity-render=cancelled" "make release-archive-check=")" "exit 0"

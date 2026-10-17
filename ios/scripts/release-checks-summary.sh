@@ -7,6 +7,9 @@ usage() {
     echo "Usage: $0 run <check> <command...>    Run the command as it is, add the row of the check, exit with its status" >&2
     echo "       $0 report <check> <pattern> <command...>    The same, for a check that is a report: it fails only when it cannot run;" >&2
     echo "                                                  its row says so, and gives its lines that match the pattern (grep -E), not its last line" >&2
+    echo "       $0 report <check> <pattern> --mac-only <failure> <detail> <command...>    The same, for a report whose last part cannot run here:" >&2
+    echo "                                                  when it fails with a last line that matches <failure>, the step passes, and its row" >&2
+    echo "                                                  says that it ran in part, with its counts and <detail>, a fixed text, never a pass" >&2
     echo "       $0 end <check>=<outcome>...    Add a row for each check that did not run (outcome skipped or cancelled)," >&2
     echo "                                      the row of the E2E suite, which never runs here, then the minutes of the job" >&2
     echo "       The summary is the file of GITHUB_STEP_SUMMARY; the start of the job is in RUNNER_TEMP/release-checks-start (seconds since 1970)." >&2
@@ -55,20 +58,35 @@ case "$mode" in
         [ $# -ge 2 ] || usage
         check=$1
         shift
+        mac_only=""
         if [ "$mode" = report ]; then
             [ $# -ge 2 ] || usage
             pattern=$1
             shift
+            if [ "$1" = --mac-only ]; then
+                [ $# -ge 4 ] || usage
+                mac_only=$2
+                mac_only_detail=$3
+                shift 3
+            fi
         fi
         output=$(mktemp "$temp/release-check.XXXXXX")
         start=$(date +%s)
         { "$@"; echo "$?" > "$output.status"; } 2>&1 | tee "$output"
         status=$(cat "$output.status" 2> /dev/null || echo 1)
         seconds=$(($(date +%s) - start))
+        counts() {
+            lines "$output" | grep -E -- "$pattern" | sed -E 's/ \(list: [^)]*\)//' \
+                | awk 'NR > 1 { printf "; " } { printf "%s", $0 }'
+        }
         if [ "$status" -eq 0 ] && [ "$mode" = report ]; then
             outcome="ran: a report, not a gate"
-            last=$(lines "$output" | grep -E -- "$pattern" | sed -E 's/ \(list: [^)]*\)//' \
-                | awk 'NR > 1 { printf "; " } { printf "%s", $0 }' | cell)
+            last=$(counts | cell)
+        elif [ -n "$mac_only" ] && lines "$output" | tail -n 1 | grep -q -E -- "$mac_only"; then
+            # The named failure of a part that only the Mac can run: the step passes, and the row says so, never a pass.
+            status=0
+            outcome="ran in part: a report, not a gate"
+            last=$(printf '%s; %s' "$(counts)" "$mac_only_detail" | cell)
         else
             outcome="passed"
             [ "$status" -eq 0 ] || outcome="**FAILED** (exit $status)"
