@@ -14,8 +14,9 @@
      4. Within about 4 minutes: "iOS: entered Le Parc de Saint-Maur (phone N m away, ...)".
         Within about 6 minutes: "iOS: left Le Parc de Saint-Maur (phone N m away, ...)".
      5. Xcode: Debug > Simulate Location > Don't Simulate Location. App: Clear. Xcode: Stop.
+     6. iPhone: open Maps. The blue dot is where you are. If not: restart the iPhone.
 
-     Xcode moves the phone until you pick Don't Simulate Location.
+     Xcode moves the phone until you pick Don't Simulate Location, and an iPhone can keep the fake position after it.
      -->
     <wpt lat="48.810806" lon="2.486624">
         <time>2026-10-18T12:00:00Z</time>
