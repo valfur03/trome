@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="TROME">
+    <!--
+     A walk into and out of the 150 m area of Le Parc de Saint-Maur (RER A), in 5 min 50 s,
+     to see the area lines of the Wake log on an iPhone at your desk.
+     It starts 600 m north and waits 20 s, comes to 15 m of the station, stays inside the area
+     for about 2 min 30 s, leaves to 450 m south, and waits there.
+     Every other station of the app stays more than 1 km away.
+
+     1. Run the app on the iPhone from Xcode, with the real GPS and the location set to Always.
+     2. Xcode: Debug > Simulate Location > WalkIntoLeParcDeSaintMaur.
+     3. App: Testing tools > Wake log.
+        Within about 3 minutes: "iOS: entered Le Parc de Saint-Maur (phone N m away, ...)".
+        Within about 6 minutes: "iOS: left Le Parc de Saint-Maur (phone N m away, ...)".
+     4. Xcode: Debug > Simulate Location > Don't Simulate Location. App: Clear. Xcode: Stop.
+
+     Xcode moves the phone until you pick Don't Simulate Location.
+     -->
+    <wpt lat="48.810806" lon="2.486624">
+        <time>2026-10-18T12:00:00Z</time>
+    </wpt>
+    <wpt lat="48.810806" lon="2.486624">
+        <time>2026-10-18T12:00:20Z</time>
+    </wpt>
+    <wpt lat="48.809929" lon="2.486624">
+        <time>2026-10-18T12:00:30Z</time>
+    </wpt>
+    <wpt lat="48.809052" lon="2.486624">
+        <time>2026-10-18T12:00:40Z</time>
+    </wpt>
+    <wpt lat="48.808175" lon="2.486624">
+        <time>2026-10-18T12:00:50Z</time>
+    </wpt>
+    <wpt lat="48.807299" lon="2.486624">
+        <time>2026-10-18T12:01:00Z</time>
+    </wpt>
+    <wpt lat="48.806422" lon="2.486624">
+        <time>2026-10-18T12:01:10Z</time>
+    </wpt>
+    <wpt lat="48.805545" lon="2.486624">
+        <time>2026-10-18T12:01:20Z</time>
+    </wpt>
+    <wpt lat="48.805410" lon="2.486624">
+        <time>2026-10-18T12:02:20Z</time>
+    </wpt>
+    <wpt lat="48.805275" lon="2.486624">
+        <time>2026-10-18T12:03:20Z</time>
+    </wpt>
+    <wpt lat="48.804493" lon="2.486624">
+        <time>2026-10-18T12:03:29Z</time>
+    </wpt>
+    <wpt lat="48.803710" lon="2.486624">
+        <time>2026-10-18T12:03:38Z</time>
+    </wpt>
+    <wpt lat="48.802928" lon="2.486624">
+        <time>2026-10-18T12:03:47Z</time>
+    </wpt>
+    <wpt lat="48.802145" lon="2.486624">
+        <time>2026-10-18T12:03:56Z</time>
+    </wpt>
+    <wpt lat="48.801363" lon="2.486624">
+        <time>2026-10-18T12:04:05Z</time>
+    </wpt>
+    <wpt lat="48.801363" lon="2.486624">
+        <time>2026-10-18T12:05:50Z</time>
+    </wpt>
+</gpx>
