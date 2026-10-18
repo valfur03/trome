@@ -7,7 +7,7 @@ springboard_wait_seconds=${TROME_SPRINGBOARD_WAIT_SECONDS:-60}
 widget_host_wait_seconds=${TROME_WIDGET_HOST_WAIT_SECONDS:-240}
 widget_host_log_seconds=60
 wallpaper_update_wait_seconds=${TROME_WALLPAPER_UPDATE_WAIT_SECONDS:-600}
-wallpaper_update_log_seconds=300
+wallpaper_update_run_seconds=600
 wallpaper_update_task=com.apple.springboard.posterboardupdate.overnight
 slot=${RATP_SIM_SLOT:-1}
 
@@ -200,10 +200,12 @@ wait_for_widget_host() {
     done
 }
 
-# Prints due, running or idle for the daily update of the wallpapers of iOS, from the log of its scheduler (dasd) since
-# $2. SpringBoard submits the task at each of its starts, with the time from which it is due.
+# Prints due, running or idle for the daily update of the wallpapers of iOS, from the last line of its scheduler (dasd)
+# on the task, at any age: SpringBoard submits it only at a boot of the Simulator, a restart of SpringBoard does not,
+# and after each run, with the time from which it is next due. The run of the task logs no end, but the next
+# submission ends it, about 2 minutes after its start: a start older than 10 minutes is idle.
 wallpaper_update_state() {
-    state=$(xcrun simctl spawn "$1" log show --style compact --start "$2" \
+    last=$(xcrun simctl spawn "$1" log show --style compact \
         --predicate "process == \"dasd\" AND eventMessage CONTAINS \"$wallpaper_update_task\"" 2> /dev/null \
         | awk -v task="$wallpaper_update_task" '
             index($0, "SUBMITTED " task ":") && match($0, /with interval [0-9]+ \([^-(]+ - /) {
@@ -211,18 +213,22 @@ wallpaper_update_state() {
                 sub(/^with interval [0-9]+ \(/, "", due)
                 sub(/ - $/, "", due)
                 gsub(/ +/, " ", due)
-                state = "submitted " due
+                last = "submitted " due
             }
-            index($0, "STARTED <_DASActivity: \"" task ":") { state = "running" }
-            index($0, "COMPLETED <_DASActivity: \"" task ":") { state = "idle" }
-            END { print (state == "" ? "idle" : state) }
+            index($0, "STARTED <_DASActivity: \"" task ":") { last = "started " substr($1 " " $2, 1, 19) }
+            index($0, "COMPLETED <_DASActivity: \"" task ":") { last = "" }
+            END { print last }
         ')
-    case $state in
+    case $last in
         "submitted "*)
-            due=$(LC_ALL=C date -j -f '%a %b %d %H:%M:%S %Y' "${state#submitted }" +%s 2> /dev/null) || due=
+            due=$(LC_ALL=C date -j -f '%a %b %d %H:%M:%S %Y' "${last#submitted }" +%s 2> /dev/null) || due=
             if [ -n "$due" ] && [ "$due" -le "$(date +%s)" ]; then echo due; else echo idle; fi
             ;;
-        *) echo "$state" ;;
+        "started "*)
+            started_at=$(date -j -f '%Y-%m-%d %H:%M:%S' "${last#started }" +%s 2> /dev/null) || started_at=0
+            if [ $(($(date +%s) - started_at)) -lt "$wallpaper_update_run_seconds" ]; then echo running; else echo idle; fi
+            ;;
+        *) echo idle ;;
     esac
 }
 
@@ -233,10 +239,9 @@ wallpaper_update_state() {
 # the Live Activity failed. So, when the task is due or runs, the jobs wait until iOS has run it. A newer iOS may
 # change these log messages: then the jobs no longer wait.
 wait_for_wallpaper_update() {
-    since=$(date -v-"${wallpaper_update_log_seconds}"S '+%Y-%m-%d %H:%M:%S')
     started=$(date +%s)
     waited=
-    while state=$(wallpaper_update_state "$1" "$since") && [ "$state" != idle ]; do
+    while state=$(wallpaper_update_state "$1") && [ "$state" != idle ]; do
         if [ -z "$waited" ]; then
             echo "Waiting for the daily update of the wallpapers of iOS ($state), which keeps the Mac busy for minutes" >&2
             waited=yes
