@@ -372,7 +372,7 @@ chronod_line "Would pop task, but all extensions are busy, namely [com.example.t
 expect "a job says that it waits for the widget host before it goes on at the limit, also when the limit is reached at the first check" "$(TROME_WIDGET_HOST_WAIT_SECONDS=0 wait_for_widget_host) $(widget_host_message)" "ran Waiting for the widget host still had work queued"
 
 dasd_line() {
-    echo "2026-10-17 10:23:18.911 Df dasd[93643:2e482f] [com.apple.duetactivityscheduler:lifecycle] $1"
+    echo "${dasd_time:-2026-10-17 10:23:18}.911 Df dasd[93643:2e482f] [com.apple.duetactivityscheduler:lifecycle] $1"
 }
 wallpaper_update_submitted() {
     dasd_line "SUBMITTED com.apple.springboard.posterboardupdate.overnight:6471FC at priority 30 with interval 86400 ($1 - Sat Oct 17 10:23:18 2026)"
@@ -401,6 +401,8 @@ wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$defaul
 { wallpaper_update_submitted "Sat Oct  3 05:35:18 2026"; wallpaper_update_started; wallpaper_update_completed; } > "$state/dasd-log.$default.next"
 expect "a job waits while the daily wallpaper update is due, until iOS has run it, then runs" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update ended after"
 { wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; wallpaper_update_started; } > "$state/dasd-log.$default"
+expect "a job runs at once when the daily wallpaper update started more than 10 minutes ago and its end was not logged" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
+{ wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); wallpaper_update_started); } > "$state/dasd-log.$default"
 expect "a job says that it waits for a running daily wallpaper update before it goes on at the limit" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still running"
 
 language_at_restart() {
