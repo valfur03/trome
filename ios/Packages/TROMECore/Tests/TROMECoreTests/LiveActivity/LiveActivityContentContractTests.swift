@@ -15,16 +15,9 @@ struct LiveActivityContentContractTests {
     private nonisolated static let writes = ProcessInfo.processInfo.environment["LIVE_ACTIVITY_CONTRACT_WRITE"] == "1"
 
     struct Case: Decodable {
-        struct Answer: Decodable {
-            var prim: String?
-            var answeredAt: String?
-            var out: String?
-            var retryAt: String?
-        }
-
         var station: String
         var now: String
-        var answers: [String: Answer]
+        var answers: [String: ContractAnswer]
     }
 
     nonisolated static func caseNames() throws -> [String] {
@@ -153,4 +146,12 @@ struct LiveActivityContentContractTests {
     enum ContractError: Error {
         case noAnswer(String)
     }
+}
+
+/// The answer of the server for one stop in a case: a PRIM answer and its time, or an "out" with its retry time.
+struct ContractAnswer: Decodable {
+    var prim: String?
+    var answeredAt: String?
+    var out: String?
+    var retryAt: String?
 }
