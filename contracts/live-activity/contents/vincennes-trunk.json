@@ -1,0 +1,83 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : false,
+  "stationName" : "Vincennes",
+  "trains" : {
+    "lines" : {
+      "_0" : {
+        "allLines" : [
+          {
+            "color" : {
+              "background" : "eb2132",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "A"
+          }
+        ],
+        "firstIndex" : 0,
+        "lines" : [
+          {
+            "directions" : [
+              {
+                "label" : "Saint-Germain-en-Laye \/ Cergy le Haut \/ Poissy",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "destination" : "Cergy le Haut",
+                    "time" : 812614410
+                  },
+                  {
+                    "destination" : "Saint-Germain-en-Laye",
+                    "time" : 812614650
+                  }
+                ]
+              },
+              {
+                "label" : "Boissy-Saint-Léger \/ Marne-la-Vallée - Chessy",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "destination" : "Boissy-Saint-Léger",
+                    "time" : 812614530
+                  },
+                  {
+                    "destination" : "Marne-la-Vallée - Chessy",
+                    "time" : 812614710
+                  }
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "eb2132",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "A"
+            }
+          }
+        ],
+        "nextTrainIsOverAnHourAway" : false,
+        "soonestTrain" : {
+          "line" : {
+            "color" : {
+              "background" : "eb2132",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "A"
+          },
+          "time" : 812614410,
+          "train" : {
+            "destination" : "Cergy le Haut",
+            "time" : 812614410
+          }
+        }
+      }
+    }
+  },
+  "updatedAt" : 812614350
+}

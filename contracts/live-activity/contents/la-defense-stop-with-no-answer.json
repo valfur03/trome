@@ -1,0 +1,88 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : false,
+  "stationName" : "La Défense",
+  "trains" : {
+    "lines" : {
+      "_0" : {
+        "allLines" : [
+          {
+            "color" : {
+              "background" : "ffbe00",
+              "text" : "000000"
+            },
+            "mode" : "metro",
+            "name" : "1"
+          },
+          {
+            "color" : {
+              "background" : "eb2132",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "A"
+          },
+          {
+            "color" : {
+              "background" : "b94e9a",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "E"
+          }
+        ],
+        "firstIndex" : 0,
+        "lines" : [
+          {
+            "directions" : [
+              {
+                "label" : "Château de Vincennes",
+                "nextTrainIsOverAnHourAway" : false,
+                "noAnswer" : true,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "ffbe00",
+                "text" : "000000"
+              },
+              "mode" : "metro",
+              "name" : "1"
+            }
+          }
+        ],
+        "lineWithNoAnswer" : {
+          "color" : {
+            "background" : "ffbe00",
+            "text" : "000000"
+          },
+          "mode" : "metro",
+          "name" : "1"
+        },
+        "nextTrainIsOverAnHourAway" : false,
+        "soonestTrain" : {
+          "line" : {
+            "color" : {
+              "background" : "eb2132",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "A"
+          },
+          "time" : 812543700,
+          "train" : {
+            "arrivalTime" : 812543680,
+            "destination" : "Boissy-Saint-Léger",
+            "time" : 812543700
+          }
+        }
+      }
+    }
+  },
+  "updatedAt" : 812543520
+}

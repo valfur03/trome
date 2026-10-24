@@ -1,0 +1,10 @@
+{
+  "station": "IDFM:monomodalStopPlace:58572",
+  "now": "2026-10-02T06:15:30Z",
+  "answers": {
+    "STIF:StopArea:SP:58572:": { "prim": "stop-monitoring-magenta-rer-e-0815", "answeredAt": "2026-10-02T06:15:00Z" },
+    "STIF:StopArea:SP:462941:": { "prim": "stop-monitoring-empty", "answeredAt": "2026-10-02T06:15:00Z" },
+    "STIF:StopArea:SP:462394:": { "prim": "stop-monitoring-empty", "answeredAt": "2026-10-02T06:15:00Z" },
+    "STIF:StopArea:SP:43524:": { "prim": "stop-monitoring-empty", "answeredAt": "2026-10-02T06:15:00Z" }
+  }
+}

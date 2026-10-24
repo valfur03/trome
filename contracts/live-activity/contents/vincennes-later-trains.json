@@ -1,0 +1,63 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : false,
+  "stationName" : "Vincennes",
+  "trains" : {
+    "lines" : {
+      "_0" : {
+        "allLines" : [
+          {
+            "color" : {
+              "background" : "eb2132",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "A"
+          }
+        ],
+        "firstIndex" : 0,
+        "lineOfTheTrainOverAnHourAway" : {
+          "color" : {
+            "background" : "eb2132",
+            "text" : "ffffff"
+          },
+          "mode" : "rer",
+          "name" : "A"
+        },
+        "lines" : [
+          {
+            "directions" : [
+              {
+                "label" : "Saint-Germain-en-Laye \/ Cergy le Haut \/ Poissy",
+                "nextTrainIsOverAnHourAway" : true,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Boissy-Saint-Léger \/ Marne-la-Vallée - Chessy",
+                "nextTrainIsOverAnHourAway" : true,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "eb2132",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "A"
+            }
+          }
+        ],
+        "nextTrainComesWithinTheHourAt" : 812573070,
+        "nextTrainIsOverAnHourAway" : true
+      }
+    }
+  },
+  "updatedAt" : 812571600
+}

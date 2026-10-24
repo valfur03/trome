@@ -1,0 +1,7 @@
+{
+  "station": "IDFM:monomodalStopPlace:43224",
+  "now": "2026-10-02T06:12:30Z",
+  "answers": {
+    "STIF:StopArea:SP:43224:": { "prim": "stop-monitoring-vincennes-rer-a-0812", "answeredAt": "2026-10-02T06:12:00Z" }
+  }
+}

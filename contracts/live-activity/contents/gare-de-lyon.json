@@ -1,0 +1,93 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : false,
+  "stationName" : "Gare de Lyon",
+  "trains" : {
+    "lines" : {
+      "_0" : {
+        "allLines" : [
+          {
+            "color" : {
+              "background" : "ffbe00",
+              "text" : "000000"
+            },
+            "mode" : "metro",
+            "name" : "1"
+          },
+          {
+            "color" : {
+              "background" : "640082",
+              "text" : "ffffff"
+            },
+            "mode" : "metro",
+            "name" : "14"
+          },
+          {
+            "color" : {
+              "background" : "eb2132",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "A"
+          },
+          {
+            "color" : {
+              "background" : "008b5b",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "D"
+          }
+        ],
+        "firstIndex" : 0,
+        "lines" : [
+          {
+            "directions" : [
+              {
+                "label" : "La Défense",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Château de Vincennes",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "ffbe00",
+                "text" : "000000"
+              },
+              "mode" : "metro",
+              "name" : "1"
+            }
+          }
+        ],
+        "nextTrainIsOverAnHourAway" : false,
+        "soonestTrain" : {
+          "line" : {
+            "color" : {
+              "background" : "008b5b",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "D"
+          },
+          "time" : 812614590,
+          "train" : {
+            "destination" : "Goussainville",
+            "time" : 812614590
+          }
+        }
+      }
+    }
+  },
+  "updatedAt" : 812614530
+}

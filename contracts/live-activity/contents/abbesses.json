@@ -1,0 +1,87 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : false,
+  "stationName" : "Abbesses",
+  "trains" : {
+    "lines" : {
+      "_0" : {
+        "allLines" : [
+          {
+            "color" : {
+              "background" : "00643c",
+              "text" : "ffffff"
+            },
+            "mode" : "metro",
+            "name" : "12"
+          }
+        ],
+        "firstIndex" : 0,
+        "lines" : [
+          {
+            "directions" : [
+              {
+                "label" : "Mairie d'Aubervilliers",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "arrivalTime" : 812109820,
+                    "destination" : "Mairie d'Aubervilliers",
+                    "time" : 812109840
+                  },
+                  {
+                    "arrivalTime" : 812110150,
+                    "destination" : "Mairie d'Aubervilliers",
+                    "time" : 812110170
+                  }
+                ]
+              },
+              {
+                "label" : "Mairie d'Issy",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "arrivalTime" : 812109730,
+                    "destination" : "Mairie d'Issy",
+                    "time" : 812109750
+                  },
+                  {
+                    "destination" : "Mairie d'Issy",
+                    "time" : 812110020
+                  }
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "00643c",
+                "text" : "ffffff"
+              },
+              "mode" : "metro",
+              "name" : "12"
+            }
+          }
+        ],
+        "nextTrainIsOverAnHourAway" : false,
+        "soonestTrain" : {
+          "line" : {
+            "color" : {
+              "background" : "00643c",
+              "text" : "ffffff"
+            },
+            "mode" : "metro",
+            "name" : "12"
+          },
+          "time" : 812109750,
+          "train" : {
+            "arrivalTime" : 812109730,
+            "destination" : "Mairie d'Issy",
+            "time" : 812109750
+          }
+        }
+      }
+    }
+  },
+  "updatedAt" : 812109630
+}

@@ -1,0 +1,729 @@
+{
+  "lines" : {
+    "metro-1" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "La Défense"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Château de Vincennes"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01371"
+    },
+    "metro-2" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Porte Dauphine"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Nation"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01372"
+    },
+    "metro-3" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Pont de Levallois - Bécon"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Gallieni"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01373"
+    },
+    "metro-3bis" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Gambetta"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Porte des Lilas"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01386"
+    },
+    "metro-4" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Porte de Clignancourt"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Bagneux - Lucie Aubrac"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01374"
+    },
+    "metro-5" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Bobigny - Pablo Picasso"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Place d'Italie"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01375"
+    },
+    "metro-6" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Charles de Gaulle - Étoile"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Nation"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01376"
+    },
+    "metro-7" : {
+      "ends" : {
+        "branchStations" : {
+          "Mairie d'Ivry" : [
+            "Porte d'Italie",
+            "Porte de Choisy",
+            "Porte d'Ivry",
+            "Pierre et Marie Curie"
+          ],
+          "Villejuif - Louis Aragon" : [
+            "Le Kremlin-Bicêtre",
+            "Villejuif Léo Lagrange",
+            "Villejuif Paul Vaillant-Couturier"
+          ]
+        },
+        "first" : [
+          "La Courneuve - 8 Mai 1945"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Mairie d'Ivry",
+          "Villejuif - Louis Aragon"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01377"
+    },
+    "metro-7bis" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Louis Blanc"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Pré-Saint-Gervais"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01387"
+    },
+    "metro-8" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Balard"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Pointe du Lac"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01378"
+    },
+    "metro-9" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Pont de Sèvres"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Mairie de Montreuil"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01379"
+    },
+    "metro-10" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Boulogne Pont de Saint-Cloud"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Gare d'Austerlitz"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01380"
+    },
+    "metro-11" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Châtelet"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Rosny-Bois-Perrier"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01381"
+    },
+    "metro-12" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Mairie d'Aubervilliers"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Mairie d'Issy"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01382"
+    },
+    "metro-13" : {
+      "ends" : {
+        "branchStations" : {
+          "Asnières - Gennevilliers - Les Courtilles" : [
+            "Brochant",
+            "Porte de Clichy",
+            "Mairie de Clichy",
+            "Gabriel Péri",
+            "Les Agnettes"
+          ],
+          "Saint-Denis - Université" : [
+            "Guy Môquet",
+            "Porte de Saint-Ouen",
+            "Garibaldi",
+            "Mairie de Saint-Ouen",
+            "Carrefour Pleyel",
+            "Saint-Denis - Porte de Paris",
+            "Basilique de Saint-Denis"
+          ]
+        },
+        "first" : [
+          "Saint-Denis - Université",
+          "Asnières - Gennevilliers - Les Courtilles"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Châtillon - Montrouge"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01383"
+    },
+    "metro-14" : {
+      "ends" : {
+        "branchStations" : {
+
+        },
+        "first" : [
+          "Saint-Denis - Pleyel"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Aéroport d'Orly"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01384"
+    },
+    "rer-A" : {
+      "ends" : {
+        "branchStations" : {
+          "Boissy-Saint-Léger" : [
+            "Fontenay-sous-Bois",
+            "Nogent-sur-Marne",
+            "Joinville-le-Pont",
+            "Saint-Maur - Créteil",
+            "Le Parc de Saint-Maur",
+            "Champigny",
+            "La Varenne - Chennevières",
+            "Sucy - Bonneuil"
+          ],
+          "Cergy le Haut" : [
+            "Nanterre Université",
+            "Houilles - Carrières-sur-Seine",
+            "Sartrouville",
+            "Maisons-Laffitte",
+            "Achères Ville",
+            "Conflans Fin d'Oise",
+            "Neuville - Université",
+            "Cergy Préfecture",
+            "Cergy Saint-Christophe"
+          ],
+          "Marne-la-Vallée - Chessy" : [
+            "Val de Fontenay",
+            "Neuilly-Plaisance",
+            "Bry-sur-Marne",
+            "Noisy-le-Grand - Mont d'Est",
+            "Noisy - Champs",
+            "Noisiel",
+            "Lognes",
+            "Torcy",
+            "Bussy-Saint-Georges",
+            "Val d'Europe"
+          ],
+          "Poissy" : [
+            "Nanterre Université",
+            "Houilles - Carrières-sur-Seine",
+            "Sartrouville",
+            "Maisons-Laffitte",
+            "Achères Grand Cormier"
+          ],
+          "Saint-Germain-en-Laye" : [
+            "Nanterre - Ville",
+            "Rueil-Malmaison",
+            "Chatou - Croissy",
+            "Le Vésinet - Centre",
+            "Le Vésinet - Le Pecq"
+          ]
+        },
+        "first" : [
+          "Saint-Germain-en-Laye",
+          "Cergy le Haut",
+          "Poissy"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Boissy-Saint-Léger",
+          "Marne-la-Vallée - Chessy"
+        ],
+        "trunkStations" : [
+          "Nanterre - Préfecture",
+          "La Défense",
+          "Charles de Gaulle - Étoile",
+          "Auber",
+          "Châtelet - Les Halles",
+          "Gare de Lyon",
+          "Nation",
+          "Vincennes"
+        ]
+      },
+      "primLineCode" : "C01742"
+    },
+    "rer-B" : {
+      "ends" : {
+        "branchStations" : {
+          "Aéroport Charles de Gaulle 2 TGV" : [
+            "Sevran - Beaudottes",
+            "Villepinte",
+            "Parc des Expositions",
+            "Aéroport Charles de Gaulle 1"
+          ],
+          "Mitry - Claye" : [
+            "Sevran - Livry",
+            "Vert-Galant",
+            "Villeparisis - Mitry-le-Neuf"
+          ],
+          "Robinson" : [
+            "Sceaux",
+            "Fontenay-aux-Roses"
+          ],
+          "Saint-Rémy-lès-Chevreuse" : [
+            "Parc de Sceaux",
+            "La Croix de Berny",
+            "Antony",
+            "Fontaine Michalon",
+            "Les Baconnets",
+            "Massy - Verrières",
+            "Massy - Palaiseau",
+            "Palaiseau",
+            "Palaiseau - Villebon",
+            "Lozère",
+            "Le Guichet",
+            "Orsay - Ville",
+            "Bures-sur-Yvette",
+            "La Hacquinière",
+            "Gif-sur-Yvette",
+            "Courcelle-sur-Yvette"
+          ]
+        },
+        "first" : [
+          "Aéroport Charles de Gaulle 2 TGV",
+          "Mitry - Claye"
+        ],
+        "otherNames" : {
+          "Aéroport Charles de Gaulle 2 TGV" : [
+            "Aéroport Charles de Gaulle 2"
+          ]
+        },
+        "second" : [
+          "Robinson",
+          "Saint-Rémy-lès-Chevreuse"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01743"
+    },
+    "rer-C" : {
+      "ends" : {
+        "branchStations" : {
+          "Dourdan la Forêt" : [
+            "Villeneuve-le-Roi",
+            "Ablon",
+            "Athis-Mons",
+            "Juvisy",
+            "Savigny-sur-Orge",
+            "Épinay-sur-Orge",
+            "Sainte-Geneviève-des-Bois",
+            "Saint-Michel-sur-Orge",
+            "Brétigny",
+            "La Norville - Saint-Germain-lès-Arpajon",
+            "Arpajon",
+            "Égly",
+            "Breuillet Village",
+            "Breuillet - Bruyères-le-Châtel",
+            "Saint-Chéron",
+            "Sermaise",
+            "Dourdan"
+          ],
+          "Massy - Palaiseau" : [
+            "Les Saules",
+            "Orly Ville",
+            "Pont de Rungis Aéroport d'Orly",
+            "Rungis la Fraternelle",
+            "Chemin d'Antony",
+            "Massy - Verrières"
+          ],
+          "Pontoise" : [
+            "Saint-Ouen-l'Aumône",
+            "Saint-Ouen-l'Aumône Liesse",
+            "Pierrelaye",
+            "Montigny - Beauchamp",
+            "Franconville - Le Plessis-Bouchard",
+            "Cernay",
+            "Ermont - Eaubonne",
+            "Saint-Gratien",
+            "Épinay-sur-Seine",
+            "Gennevilliers",
+            "Les Grésillons",
+            "Saint-Ouen",
+            "Porte de Clichy",
+            "Péreire Levallois",
+            "Neuilly - Porte Maillot",
+            "Avenue Foch",
+            "Avenue Henri Martin",
+            "Boulainvilliers",
+            "Avenue du Président Kennedy Maison de Radio France"
+          ],
+          "Saint-Martin d'Étampes" : [
+            "Villeneuve-le-Roi",
+            "Ablon",
+            "Athis-Mons",
+            "Juvisy",
+            "Savigny-sur-Orge",
+            "Épinay-sur-Orge",
+            "Sainte-Geneviève-des-Bois",
+            "Saint-Michel-sur-Orge",
+            "Brétigny",
+            "Marolles-en-Hurepoix",
+            "Bouray",
+            "Lardy",
+            "Gare de Chamarande",
+            "Étréchy",
+            "Étampes"
+          ],
+          "Saint-Quentin en Yvelines - Montigny-le-Bretonneux" : [
+            "Javel",
+            "Pont du Garigliano - Hôpital Européen G. Pompidou",
+            "Issy - Val de Seine",
+            "Issy",
+            "Meudon Val Fleury",
+            "Chaville - Vélizy",
+            "Viroflay Rive Gauche",
+            "Versailles Chantiers",
+            "Saint-Cyr"
+          ],
+          "Versailles Château Rive Gauche" : [
+            "Javel",
+            "Pont du Garigliano - Hôpital Européen G. Pompidou",
+            "Issy - Val de Seine",
+            "Issy",
+            "Meudon Val Fleury",
+            "Chaville - Vélizy",
+            "Viroflay Rive Gauche",
+            "Porchefontaine"
+          ]
+        },
+        "first" : [
+          "Pontoise",
+          "Versailles Château Rive Gauche",
+          "Saint-Quentin en Yvelines - Montigny-le-Bretonneux"
+        ],
+        "otherNames" : {
+          "Saint-Quentin en Yvelines - Montigny-le-Bretonneux" : [
+            "Saint-Quentin en Yvelines"
+          ]
+        },
+        "second" : [
+          "Dourdan la Forêt",
+          "Saint-Martin d'Étampes",
+          "Massy - Palaiseau"
+        ],
+        "trunkStations" : [
+
+        ]
+      },
+      "primLineCode" : "C01727"
+    },
+    "rer-D" : {
+      "ends" : {
+        "branchStations" : {
+          "Malesherbes" : [
+            "Vigneux-sur-Seine",
+            "Juvisy",
+            "Viry-Châtillon",
+            "Ris-Orangis",
+            "Grand Bourg",
+            "Évry - Val de Seine",
+            "Grigny Centre",
+            "Orangis Bois de l'Épine",
+            "Évry - Courcouronnes",
+            "Le Bras de Fer",
+            "Corbeil-Essonnes",
+            "Essonnes Robinson",
+            "Villabé",
+            "Moulin Galant",
+            "Mennecy",
+            "Ballancourt",
+            "La Ferté-Alais",
+            "Boutigny",
+            "Maisse",
+            "Buno - Gironville",
+            "Boigneville"
+          ],
+          "Melun" : [
+            "Vigneux-sur-Seine",
+            "Juvisy",
+            "Viry-Châtillon",
+            "Ris-Orangis",
+            "Grand Bourg",
+            "Évry - Val de Seine",
+            "Grigny Centre",
+            "Orangis Bois de l'Épine",
+            "Évry - Courcouronnes",
+            "Le Bras de Fer",
+            "Corbeil-Essonnes",
+            "Montgeron - Crosne",
+            "Yerres",
+            "Brunoy",
+            "Boussy-Saint-Antoine",
+            "Combs-la-Ville - Quincy",
+            "Lieusaint - Moissy",
+            "Savigny-le-Temple - Nandy",
+            "Cesson",
+            "Le Mée",
+            "Le Plessis Chenet",
+            "Le Coudray-Montceaux",
+            "Saint-Fargeau",
+            "Ponthierry - Pringy",
+            "Boissise-le-Roi",
+            "Vosves"
+          ]
+        },
+        "first" : [
+          "Creil"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Melun",
+          "Malesherbes"
+        ],
+        "trunkStations" : [
+          "Chantilly - Gouvieux",
+          "Orry-la-Ville - Coye",
+          "La Borne Blanche",
+          "Survilliers - Fosses",
+          "Louvres",
+          "Les Noues",
+          "Goussainville",
+          "Villiers-le-Bel - Gonesse - Arnouville",
+          "Garges - Sarcelles",
+          "Pierrefitte - Stains",
+          "Saint-Denis",
+          "Stade de France Saint-Denis",
+          "Gare du Nord",
+          "Châtelet - Les Halles",
+          "Gare de Lyon",
+          "Maisons-Alfort - Alfortville",
+          "Le Vert de Maisons",
+          "Créteil Pompadour",
+          "Villeneuve Triage",
+          "Villeneuve-Saint-Georges"
+        ]
+      },
+      "primLineCode" : "C01728"
+    },
+    "rer-E" : {
+      "ends" : {
+        "branchStations" : {
+          "Chelles - Gournay" : [
+            "Bondy",
+            "Le Raincy - Villemomble - Montfermeil",
+            "Gagny",
+            "Le Chénay Gagny"
+          ],
+          "Tournan" : [
+            "Rosny-Bois-Perrier",
+            "Rosny-sous-Bois",
+            "Val de Fontenay",
+            "Nogent - Le Perreux",
+            "Les Boullereaux Champigny",
+            "Villiers-sur-Marne - Le Plessis-Trévise",
+            "Les Yvris Noisy-le-Grand",
+            "Émerainville - Pontault-Combault",
+            "Roissy-en-Brie",
+            "Ozoir-la-Ferrière",
+            "Gretz-Armainvilliers"
+          ]
+        },
+        "first" : [
+          "Nanterre-La-Folie"
+        ],
+        "otherNames" : {
+
+        },
+        "second" : [
+          "Chelles - Gournay",
+          "Tournan"
+        ],
+        "trunkStations" : [
+          "La Défense",
+          "Neuilly - Porte Maillot",
+          "Haussmann Saint-Lazare",
+          "Magenta",
+          "Rosa Parks",
+          "Pantin",
+          "Noisy-le-Sec"
+        ]
+      },
+      "primLineCode" : "C01729"
+    }
+  }
+}

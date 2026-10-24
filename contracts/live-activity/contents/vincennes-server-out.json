@@ -1,0 +1,12 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : true,
+  "stationName" : "Vincennes",
+  "trains" : {
+    "noData" : {
+
+    }
+  },
+  "updatedAt" : 812614350
+}

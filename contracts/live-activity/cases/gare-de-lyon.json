@@ -1,0 +1,8 @@
+{
+  "station": "IDFM:21958",
+  "now": "2026-10-02T06:15:30Z",
+  "answers": {
+    "STIF:StopArea:SP:43153:": { "prim": "stop-monitoring-empty", "answeredAt": "2026-10-02T06:15:10Z" },
+    "STIF:StopArea:SP:470195:": { "prim": "stop-monitoring-gare-de-lyon-rer-d-0815", "answeredAt": "2026-10-02T06:15:00Z" }
+  }
+}

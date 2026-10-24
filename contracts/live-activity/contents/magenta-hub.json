@@ -1,0 +1,123 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : false,
+  "stationName" : "Magenta",
+  "trains" : {
+    "lines" : {
+      "_0" : {
+        "allLines" : [
+          {
+            "color" : {
+              "background" : "b94e9a",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "E"
+          },
+          {
+            "color" : {
+              "background" : "a0006e",
+              "text" : "ffffff"
+            },
+            "mode" : "metro",
+            "name" : "4"
+          },
+          {
+            "color" : {
+              "background" : "ff5a00",
+              "text" : "000000"
+            },
+            "mode" : "metro",
+            "name" : "5"
+          },
+          {
+            "color" : {
+              "background" : "5091cb",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "B"
+          },
+          {
+            "color" : {
+              "background" : "008b5b",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "D"
+          },
+          {
+            "color" : {
+              "background" : "0055c8",
+              "text" : "ffffff"
+            },
+            "mode" : "metro",
+            "name" : "2"
+          }
+        ],
+        "firstIndex" : 0,
+        "lines" : [
+          {
+            "directions" : [
+              {
+                "label" : "Nanterre-La-Folie",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "destination" : "Haussmann Saint-Lazare",
+                    "time" : 812614590
+                  },
+                  {
+                    "destination" : "Nanterre-La-Folie",
+                    "time" : 812614830
+                  }
+                ]
+              },
+              {
+                "label" : "Chelles - Gournay \/ Tournan",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "destination" : "Chelles - Gournay",
+                    "time" : 812614650
+                  },
+                  {
+                    "destination" : "Tournan",
+                    "time" : 812614950
+                  }
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "b94e9a",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "E"
+            }
+          }
+        ],
+        "nextTrainIsOverAnHourAway" : false,
+        "soonestTrain" : {
+          "line" : {
+            "color" : {
+              "background" : "b94e9a",
+              "text" : "ffffff"
+            },
+            "mode" : "rer",
+            "name" : "E"
+          },
+          "time" : 812614590,
+          "train" : {
+            "destination" : "Haussmann Saint-Lazare",
+            "time" : 812614590
+          }
+        }
+      }
+    }
+  },
+  "updatedAt" : 812614530
+}

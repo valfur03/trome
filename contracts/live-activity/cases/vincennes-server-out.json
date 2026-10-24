@@ -1,0 +1,7 @@
+{
+  "station": "IDFM:monomodalStopPlace:43224",
+  "now": "2026-10-02T06:12:30Z",
+  "answers": {
+    "STIF:StopArea:SP:43224:": { "out": "budget", "retryAt": "2026-10-02T07:00:20Z" }
+  }
+}

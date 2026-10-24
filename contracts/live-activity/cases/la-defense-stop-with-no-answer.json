@@ -1,0 +1,8 @@
+{
+  "station": "IDFM:22101",
+  "now": "2026-10-01T10:32:00Z",
+  "answers": {
+    "STIF:StopArea:SP:470548:": { "out": "prim-failure", "retryAt": "2026-10-01T10:33:00Z" },
+    "STIF:StopArea:SP:470549:": { "prim": "stop-monitoring-la-defense-rer-a-at-stop", "answeredAt": "2026-10-01T10:31:50Z" }
+  }
+}

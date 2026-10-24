@@ -24,7 +24,7 @@ enum Fixture {
             .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
     }
 
-    private static func contractsFolder(_ part: String, from file: String = #filePath) throws -> URL {
+    static func contractsFolder(_ part: String, from file: String = #filePath) throws -> URL {
         var folder = URL(filePath: file).deletingLastPathComponent()
         while folder.pathComponents.count > 1 {
             let candidate = folder.appending(path: "contracts/\(part)", directoryHint: .isDirectory)

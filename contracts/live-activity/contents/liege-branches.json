@@ -1,0 +1,124 @@
+{
+  "appNeedsUpdate" : false,
+  "isMarkedStale" : false,
+  "serverIsOut" : false,
+  "stationName" : "Liège",
+  "trains" : {
+    "lines" : {
+      "_0" : {
+        "allLines" : [
+          {
+            "color" : {
+              "background" : "82c8e6",
+              "text" : "000000"
+            },
+            "mode" : "metro",
+            "name" : "13"
+          }
+        ],
+        "firstIndex" : 0,
+        "lines" : [
+          {
+            "directions" : [
+              {
+                "branchEnds" : [
+                  "Saint-Denis - Université",
+                  "Asnières - Gennevilliers - Les Courtilles"
+                ],
+                "label" : "Saint-Denis - Université \/ Asnières - Gennevilliers - Les Courtilles",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "arrivalTime" : 812646064,
+                    "destination" : "Asnières - Gennevilliers - Les Courtilles",
+                    "status" : "atPlatform",
+                    "time" : 812646064
+                  },
+                  {
+                    "arrivalTime" : 812646192,
+                    "destination" : "Saint-Denis - Université",
+                    "time" : 812646192
+                  }
+                ],
+                "trainsOfEachEnd" : [
+                  {
+                    "end" : "Saint-Denis - Université",
+                    "nextTrainIsOverAnHourAway" : false,
+                    "trains" : [
+                      {
+                        "arrivalTime" : 812646192,
+                        "destination" : "Saint-Denis - Université",
+                        "time" : 812646192
+                      }
+                    ]
+                  },
+                  {
+                    "end" : "Asnières - Gennevilliers - Les Courtilles",
+                    "nextTrainIsOverAnHourAway" : false,
+                    "trains" : [
+                      {
+                        "arrivalTime" : 812646064,
+                        "destination" : "Asnières - Gennevilliers - Les Courtilles",
+                        "status" : "atPlatform",
+                        "time" : 812646064
+                      },
+                      {
+                        "arrivalTime" : 812646286,
+                        "destination" : "Asnières - Gennevilliers - Les Courtilles",
+                        "time" : 812646286
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label" : "Châtillon - Montrouge",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "arrivalTime" : 812646472,
+                    "destination" : "Châtillon - Montrouge",
+                    "time" : 812646472
+                  },
+                  {
+                    "arrivalTime" : 812646628,
+                    "destination" : "Châtillon - Montrouge",
+                    "time" : 812646628
+                  }
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "82c8e6",
+                "text" : "000000"
+              },
+              "mode" : "metro",
+              "name" : "13"
+            }
+          }
+        ],
+        "nextTrainIsOverAnHourAway" : false,
+        "soonestTrain" : {
+          "line" : {
+            "color" : {
+              "background" : "82c8e6",
+              "text" : "000000"
+            },
+            "mode" : "metro",
+            "name" : "13"
+          },
+          "time" : 812646064,
+          "train" : {
+            "arrivalTime" : 812646064,
+            "destination" : "Asnières - Gennevilliers - Les Courtilles",
+            "status" : "atPlatform",
+            "time" : 812646064
+          }
+        }
+      }
+    }
+  },
+  "updatedAt" : 812646060
+}

@@ -1,0 +1,7 @@
+{
+  "station": "IDFM:22225",
+  "now": "2026-10-02T15:01:00Z",
+  "answers": {
+    "STIF:StopArea:SP:43814:": { "prim": "stop-monitoring-liege-170043", "answeredAt": "2026-10-02T15:00:43Z" }
+  }
+}
