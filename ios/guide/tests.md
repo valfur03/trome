@@ -32,6 +32,8 @@ To write one:
 
 - Put it in `ios/Packages/TROMECore/Tests/TROMECoreTests/<Feature>/<Type>Tests.swift`, in the folder of the feature of its code (`Stations`, `Location`, `Trains`, `LiveActivity` or `AutoLiveActivity`), with `@testable import TROMECore`.
 - Read a recorded PRIM answer from `contracts/prim/` with `Fixture.data(_:)`, such as `Fixture.data("stop-monitoring-abbesses")`.
+- When a change of the app changes the content of the Live Activity or the rules of a line, `LiveActivityContentContractTests` fails: the server builds the same content for a start, from `contracts/live-activity/`.
+  Run it with `LIVE_ACTIVITY_CONTRACT_WRITE=1` to write the new contents and line data, then change the server in the same change until `make server-check` passes.
 - Give a service of iOS, such as the position or ActivityKit, a fake of the small protocol that `TROMECore` declares for it.
 - Give the test the time zone, the locale and the date it needs: the settings of your Mac are not the ones of the next Mac.
 - The tests run on macOS, so put any code that only iOS has inside `#if os(iOS)`.

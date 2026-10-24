@@ -25,11 +25,17 @@ Both deploy commands stop when a secret of their Worker is not set, and say whic
 | `PRIM_API_KEY` | Your PRIM key ([how to get one](../../ios/README.md#the-train-data-key-prim)). |
 | `APP_TOKEN` | The list of the app tokens that the Worker accepts, separated by commas. At first it holds one token, new for each Worker, made with `openssl rand -hex 32` (not `-base64`: in `ios/Config/Server.xcconfig`, where the app reads it, `//` starts a comment). The server answers only requests that carry a token of the list. It keeps casual traffic out, but anyone who takes the app apart can read it: the daily cap of PRIM calls is what protects the quota of the key ([How the server works](how-it-works.md#how-the-server-shares-the-prim-quota)). |
 | `OWNER_TOKEN` | A new token for each Worker, made with `openssl rand -base64 32`, to read the counts. The app never holds it. |
+| `APNS_TEAM_ID` | The Team ID of your Apple developer account, for the start of a Live Activity. |
+| `APNS_BUNDLE_ID` | The bundle identifier of the app, the one that its builds hold. |
+| `APNS_PRODUCTION_KEY_ID`, `APNS_PRODUCTION_KEY` | The Key ID and the text of a key of Apple's push service for the **Production** environment: TestFlight and App Store builds use it. Paste the lines between `BEGIN PRIVATE KEY` and `END PRIVATE KEY` of its `.p8` file, as one line. |
+| `APNS_SANDBOX_KEY_ID`, `APNS_SANDBOX_KEY` | The same for the **Sandbox** environment, which the builds that Xcode installs use. A key made for both environments may be set for both. |
 
 Keep the tokens in your password manager.
 Never put a secret of the server in a file, and never use `wrangler deploy --secrets-file`, even when wrangler suggests it.
 The one exception is the app token: a Release build of the app must hold it ([Connect the app](#connect-the-app-to-the-server)), and `ios/Config/BuildTokens.txt` keeps the token of each build that riders may hold.
 The logs of the server replace each secret with `[secret]`.
+The `APNS_` secrets are optional: `make server-secrets` does not ask for them and no deploy waits for them, so set each with `make server-secret NAME=<name>`; until the team, the app and a key of one environment are set, the start of a Live Activity answers `not-set-up` and calls no one ([How the server works](how-it-works.md#the-start-of-a-live-activity)).
+Make the keys in your Apple developer account, under **Certificates, Identifiers & Profiles**, **Keys**, with **Apple Push Notifications service (APNs)** and its environment.
 When a new secret joins the table, set it with `make server-secret` on each Worker before you deploy the change.
 After every deploy and every change of a secret of the production Worker, run `make release-tokens-check` in the main folder of your clone: it says, one line per build that riders may hold, whether the Worker still accepts its app token ([their tokens](https://trome.valfur.fr/en/maintain/release-on-the-app-store/#the-app-token-of-each-build)).
 

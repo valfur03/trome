@@ -5,18 +5,19 @@ This page is for a developer who changes it: what it answers, how it spends the 
 
 ## The API
 
-Each address answers `GET` and `HEAD` only, and the tokens go in the header `Authorization: Bearer <token>`.
+Each address answers `GET` and `HEAD` only, but the start of a Live Activity, which answers `POST` only; the tokens go in the header `Authorization: Bearer <token>`.
 
 | Request | Token | Answer |
 |---|---|---|
 | `GET /health` | none | `{"status":"ok"}` |
 | `GET /v1/stops/{stopRef}/departures` | an app token of the server's list: each build of the app holds one, and a new token joins the list without cutting off the builds that hold an older one ([Change the app token](deploy.md#change-the-app-token)) | The PRIM answer of that stop, as PRIM gave it, so that the app keeps its own PRIM parser; `Last-Modified` is the time when PRIM gave it. |
+| `POST /v1/stations/{stationId}/live-activity` | an app token | Starts the Live Activity of the station on the iPhone whose start token is in the body, `{"startToken":"<hex>"}` ([The start of a Live Activity](#the-start-of-a-live-activity)). |
 | `GET /v1/owner/counts` | the owner token, which only the maintainer holds | The counts of the server ([Read the counts](deploy.md#read-the-counts)). |
 | `GET /metrics` | the owner token | The same totals in the Prometheus text format ([Send the totals to your Prometheus](deploy.md#send-the-totals-to-your-prometheus)). |
 
 `{stopRef}` is `STIF:StopArea:SP:<number>:` or `STIF:StopPoint:Q:<number>:`.
 A wrong or missing token gets `401`, and another stop reference gets `400`.
-[`contracts/api/`](../../contracts/api/) holds an example of each answer.
+[`contracts/api/`](../../contracts/api/) holds an example of each answer of the departures route.
 
 When the server cannot ask PRIM, it gives the answer that it holds for the stop, if that answer is less than 5 minutes old.
 Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` and `Retry-After`:
@@ -147,13 +148,41 @@ When the key reaches 1,000 calls, PRIM answers 429, and the production server ma
 
 When you change a cap, change this table in the same commit, and keep the total of the shares at 990 or less.
 
+## The start of a Live Activity
+
+An app that is not open cannot start a Live Activity, but Apple's push service can, with the start token that ActivityKit gives the app (push to start).
+So the app, woken near a station, sends the station and that token, and the server sends the start to Apple.
+
+| Answer | Status | What happened | What the app does |
+|---|---|---|---|
+| `{"result":"started"}` | `200` | Apple took the start. | Nothing more. |
+| `{"result":"already-started"}` | `200` | The same token asked for the same station less than 45 minutes ago, and the server sent nothing. | Nothing more. |
+| `{"result":"refused","reason":"<reason>"}` | `502` | Apple refused the start with this reason (`BadDeviceToken`, `Unregistered`, `TooManyRequests`, ...), or `no-answer` when Apple did not answer. | Its own way to start. |
+| `{"result":"not-set-up"}` | `503` | The server has no key of Apple's push service ([the secrets](deploy.md#the-secrets)), and did nothing else. | Its own way to start. |
+
+`{stationId}` is the id of a station of the app's list, such as `IDFM:22059`; another id gets `400`, and a body with no start token gets `400`.
+
+- **The content.** The first content of the Live Activity is the one that the app would show: the server asks the departures of each stop of the station and of the other stations of its place as the app asks them, so it uses the same held answers and the same quota, and builds the content with the same rules.
+  [`contracts/live-activity/`](../../contracts/live-activity/) holds cases of PRIM answers and the content that the app builds from each; a test of the app and a test of the server both check them, and the server reads the stations and the line data from the files of the app.
+- **One start in 45 minutes.** iOS can give the app the same event twice, and each start is an alert on the iPhone: so the same token and station within 45 minutes, the longest outing, get `already-started`.
+  The server knows it without keeping the token: it keeps only a keyed hash of the token and the station, in memory, with a key made at random in memory.
+  It keeps the server object awake for those 45 minutes, with timers of at most 10 minutes: about 340 GB-s for a lone start, and an object awake all day stays under the daily limit (see below).
+  A sleep or a deploy forgets it, and a second ask then sends a second start.
+- **Production, then development.** Apple gives the token of a TestFlight or App Store build to its production push service, and the token of a build that Xcode installs to its development one; the token does not say which.
+  So the server sends the start to production first, and to development when production answers `BadDeviceToken`, the answer for a token of the other service.
+  It uses only a service whose key is set.
+- **The channel of the station.** The started Live Activity listens to a broadcast channel of its station, on which its updates can come.
+  The server makes the channel at the first start of the station in each service, and deletes it 45 minutes after the last start; it holds the channel id in memory only, so a sleep or a deploy leaves the channel on Apple's side, where an app may have 10,000.
+- **The alert.** The start shows the name of the station and its lines (`M12`, `RER A`), with no sound.
+
 ## What the server keeps about riders
 
 Nothing.
 A request holds only a stop and the app token, and the server reads nothing else of it: no position, no device or account identifier, no push token, no IP address, no user agent, no body.
+The one exception is the start of a Live Activity: it reads a station and the start token of the iPhone, and passes the token to Apple; after the call, the token is in no storage, no log line and no memory, which keeps only a keyed hash of the token and the station for 45 minutes, and a test checks the three.
 A test sends all of these, and checks that none is stored or logged.
 After the request, the server keeps no stop in its storage or its log lines: the counts and the error lines have none.
-Only its memory holds a stop, and only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, and a stop whose PRIM call failed for its 60 s pause.
+Only its memory holds a stop, and only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, a stop whose PRIM call failed for its 60 s pause, and the channel of a station for 45 minutes after its last start.
 An answer never goes to storage, even for a minute: Cloudflare keeps every write to the storage of a server object restorable for 30 days, so the stops written would stay as a history of the stops asked for.
 Cloudflare puts an idle server object to sleep about 10 seconds after its last request when no timer of it waits, and the sleep empties its memory.
 So the server keeps a timer while it holds an answer younger than 5 minutes, the oldest age at which it gives one, and while a failed stop is in its pause: the refresh of a lone rider 30 seconds later gets the held answer, with no PRIM call.
