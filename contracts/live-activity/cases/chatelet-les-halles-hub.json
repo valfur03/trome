@@ -3,6 +3,7 @@
   "now": "2026-10-02T06:15:30Z",
   "answers": {
     "STIF:StopArea:SP:45102:": { "prim": "stop-monitoring-chatelet-rer-d-0815", "answeredAt": "2026-10-02T06:15:00Z" },
-    "STIF:StopArea:SP:42587:": { "prim": "stop-monitoring-empty", "answeredAt": "2026-10-02T06:15:05Z" }
+    "STIF:StopArea:SP:42587:": { "prim": "stop-monitoring-empty", "answeredAt": "2026-10-02T06:15:05Z" },
+    "STIF:StopArea:SP:417675:": { "out": "prim-failure", "retryAt": "2026-10-02T06:16:00Z" }
   }
 }

@@ -51,6 +51,12 @@ struct LiveActivityContentContractTests {
             now: { now }
         )
         await model.refresh(for: station)
+        // A stop with no answer in the case would fail silently, as a stop that did not answer: each must be named.
+        let asked = Set(client.requests.compactMap { $0.url?.absoluteString.removingPercentEncoding })
+        #expect(asked.count == contractCase.answers.count, "\(name): the stops asked are not the stops of the case")
+        for ref in contractCase.answers.keys {
+            #expect(asked.contains { $0.contains("/\(ref)/") }, "\(name): \(ref) was not asked")
+        }
         let content = StationActivityAttributes.ContentState(station: station, trains: model.state, now: now)
         let encoded = try JSONEncoder().encode(content)
 
