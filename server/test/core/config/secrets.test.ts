@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { secretNames, secretValues } from "../../../src/core/config/secrets";
+import { apnsSecretNames } from "../../../src/core/push/apns-settings";
 
 interface WranglerSecrets {
   secrets?: { required?: string[] };
@@ -35,5 +36,14 @@ describe("secrets", () => {
 
   it("leaves out a secret that is missing or empty", () => {
     expect(secretValues({ APP_TOKEN: "" })).toEqual([]);
+  });
+
+  it("hides the secrets of Apple's push service, which no deploy requires, so that a deploy before they are set still works", () => {
+    const config = wranglerConfig();
+
+    expect(secretValues({ APNS_PRODUCTION_KEY: "production-key", APNS_TEAM_ID: "team" })).toEqual(["team", "production-key"]);
+    for (const name of apnsSecretNames) {
+      expect(config.secrets?.required).not.toContain(name);
+    }
   });
 });

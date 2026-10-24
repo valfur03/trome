@@ -153,3 +153,28 @@ describe("the Worker", () => {
     }
   });
 });
+
+describe("the start of a Live Activity, before the push key is set", () => {
+  const startToken = "80a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f";
+
+  it("answers not set up, calls no one, and keeps neither the token nor the station", async () => {
+    const prim = fakePrim();
+    const lines = captureLogLines();
+
+    const response = await exports.default.fetch("https://server.test/v1/stations/IDFM%3A22059/live-activity", {
+      method: "POST",
+      headers: { authorization: `Bearer ${env.APP_TOKEN}` },
+      body: JSON.stringify({ startToken }),
+    });
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ result: "not-set-up" });
+    expect(prim.calls).toEqual([]);
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    const stored = await everyStoredRow();
+    expect(stored).not.toContain(startToken);
+    expect(stored).not.toContain("22059");
+    expect(lines.join("\n")).not.toContain(startToken);
+    expect(lines.join("\n")).not.toContain("22059");
+  });
+});

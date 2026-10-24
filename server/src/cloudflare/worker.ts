@@ -21,6 +21,9 @@ export default {
         counts: () => relay.counts(),
         metrics: () => relay.metrics(),
       },
+      liveActivities: {
+        start: (stationId, startToken) => relay.startLiveActivity(stationId, startToken),
+      },
     });
   },
 } satisfies ExportedHandler<Env>;

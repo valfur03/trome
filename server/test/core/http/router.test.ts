@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { route, type RelayService } from "../../../src/core/http/router";
+import { route, type LiveActivityService, type RelayService } from "../../../src/core/http/router";
+import type { StartResult } from "../../../src/core/live-activity/live-activity-starts";
 import { createLogger } from "../../../src/core/logging/logger";
 import type { MetricsSnapshot } from "../../../src/core/metrics/prometheus-metrics";
 import type { CountsReport, RelayAnswer } from "../../../src/core/relay/relay";
@@ -25,9 +26,17 @@ const snapshot: MetricsSnapshot = { today: { ...zero, appCalls: 3 }, previousDay
 function server(
   answer: RelayAnswer = { kind: "times", body: '{"Siri":{}}', primAnsweredAt: Date.parse("2026-10-02T08:29:30.000Z") },
   appTokens: readonly string[] = [appToken],
+  startResult: StartResult = { result: "started" },
 ) {
   const lines: string[] = [];
   const asked: string[] = [];
+  const starts: { stationId: string; startToken: string }[] = [];
+  const liveActivities: LiveActivityService = {
+    start: (stationId, startToken) => {
+      starts.push({ stationId, startToken });
+      return Promise.resolve(startResult);
+    },
+  };
   let countsRead = 0;
   const relay: RelayService = {
     departures: (stop) => {
@@ -49,8 +58,9 @@ function server(
       clock: FakeClock.at("2026-10-02T08:30:00.000Z"),
       tokens: { app: appTokens, owner: ownerToken },
       relay,
+      liveActivities,
     });
-  return { send, lines, asked, countsRead: () => countsRead };
+  return { send, lines, asked, starts, countsRead: () => countsRead };
 }
 
 const withToken = (url: string, token: string, init: RequestInit = {}) =>
@@ -258,5 +268,85 @@ describe("route: metrics of the owner", () => {
     const response = await server().send(withToken("https://server.test/metrics", ownerToken, { method: "POST" }));
 
     expect(response.status).toBe(405);
+  });
+});
+
+describe("route: start of a Live Activity", () => {
+  const startToken = "80a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f";
+  const startUrl = `https://server.test/v1/stations/${encodeURIComponent("IDFM:22059")}/live-activity`;
+  const ask = (body: string = JSON.stringify({ startToken }), token = appToken, method = "POST") =>
+    withToken(startUrl, token, { method, body: method === "GET" ? null : body });
+
+  it.each<[StartResult, number, unknown]>([
+    [{ result: "started" }, 200, { result: "started" }],
+    [{ result: "already-started" }, 200, { result: "already-started" }],
+    [{ result: "refused", reason: "BadDeviceToken" }, 502, { result: "refused", reason: "BadDeviceToken" }],
+    [{ result: "not-set-up" }, 503, { result: "not-set-up" }],
+    [{ result: "unknown-station" }, 400, { error: "unknown station" }],
+  ])("answers %j with its status and its words", async (result, status, body) => {
+    const { send, starts } = server(undefined, undefined, result);
+
+    const response = await send(ask());
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual(body);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(starts).toEqual([{ stationId: "IDFM:22059", startToken }]);
+  });
+
+  it("logs the route with no station and no token", async () => {
+    const { send, lines } = server();
+
+    await send(ask());
+
+    expect(lines).toEqual([JSON.stringify({ level: "info", event: "request", method: "POST", route: "/v1/stations/{station}/live-activity", status: 200 })]);
+  });
+
+  it("refuses a wrong app token and another method, and starts nothing", async () => {
+    for (const [request, status] of [
+      [ask(undefined, "wrong"), 401],
+      [ask(undefined, appToken, "GET"), 405],
+      [ask(undefined, appToken, "PUT"), 405],
+    ] as const) {
+      const { send, starts } = server();
+
+      const response = await send(request);
+
+      expect(response.status).toBe(status);
+      expect(starts).toEqual([]);
+    }
+  });
+
+  it("refuses a body that is not a start token, and starts nothing", async () => {
+    for (const body of [
+      "",
+      "not json",
+      "{}",
+      JSON.stringify({ startToken: 12 }),
+      JSON.stringify({ startToken: "not-hex" }),
+      JSON.stringify({ startToken: "ab" }),
+      JSON.stringify({ startToken: "a".repeat(5000) }),
+    ]) {
+      const { send, starts } = server();
+
+      const response = await send(ask(body));
+
+      expect(response.status, body.slice(0, 20)).toBe(400);
+      expect(starts).toEqual([]);
+    }
+  });
+
+  it("refuses a station id that is not one", async () => {
+    const { send, starts } = server();
+
+    const response = await send(
+      withToken(`https://server.test/v1/stations/${encodeURIComponent("a b")}/live-activity`, appToken, {
+        method: "POST",
+        body: JSON.stringify({ startToken }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(starts).toEqual([]);
   });
 });
