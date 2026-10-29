@@ -144,7 +144,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Map | Each time the app chooses again the stations that iOS watches |
 | Branch | Each arrival that the app decides, with its reason: notified, started, switched, or why not; each end of the Live Activity by its distance or time limit |
 | Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
-| Radio waves | With the [silent start](auto-live-activity.md#the-silent-start-debug-builds-of-a-paid-team): the start token from iOS, each ask to the server, its answer ("started", "already started", "refused", "not set up", "no answer") or "No answer within 10 s", and the fallback to the notification |
+| Radio waves | With the [silent start](auto-live-activity.md#the-silent-start-debug-builds-of-a-paid-team): the start token from iOS, each ask to the server, its answer ("started", "already started", "refused", "not set up", "no answer") or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), and the fallback to the notification |
 
 "App launched" is written at the start of the launch.
 When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.

@@ -20,6 +20,7 @@ The code is in `ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity/`, and
 | The permission questions | `LocationQuestionsRules` (`Location/`), `CoreLocationPermission` (`ios/App/Location/`) | `LocationQuestionsRulesTests` |
 | The regions that wake the app | `StationRegionPlan`, `CoreLocationStationRegionWatcher` | `StationRegionPlanTests` |
 | The notification | `StationArrivalNotifications` | `AutoLiveActivityNotificationTests` |
+| The silent start: the start token, the ask to the server, the fallback | `SilentStart`, `ServerLiveActivityStarter`, `LiveActivityStartAnswer`, `AutoLiveActivityModel+SilentStart`; `ActivityKitPushToStartTokenSource` (`ios/App/AutoLiveActivity/`) | `AutoLiveActivitySilentStartTests`, `LiveActivityStartContractTests` |
 
 The values that a change often needs are constants:
 
@@ -33,6 +34,7 @@ The values that a change often needs are constants:
 | 30 minutes, 1 hour and the rest of the day of a snooze | `SnoozeDuration` |
 | 5 seconds of wait for a position when the rider resumes | `ResumePositionRules.maximumWait` |
 | 10 seconds of wait for a position when iOS says that the phone entered the area of a station | `ReportedArrivalRules.maximumWait` |
+| 10 seconds of wait for the start token and the answer of the server, in the silent start | `SilentStart.answerLimit` |
 | 2 minutes of second chance, one ask every 5 seconds | `ArrivalSecondChance.limit`, `interval` |
 | 20 seconds of wait for the second location question | `LocationQuestionsRules.alwaysQuestionTimeout` |
 | 20 regions, 100 meters before the app chooses them again | `StationRegionPlan.maximumRegions`, `replanDistanceMeters` |
@@ -76,10 +78,11 @@ Each one snoozes the automatic mode with no app opened, also when the phone is l
 
 ### The silent start (Debug builds of a paid team)
 
-A Debug build with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and a server in `ios/Config/Server.xcconfig` replaces the notification of a background arrival with a start through the server.
+A Debug build with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` (then run `make generate`) and a server in `ios/Config/Server.xcconfig` replaces the notification of a background arrival with a start through the server.
 It needs a paid Apple Developer Program team, because a free Apple ID cannot sign the push capability; Release builds, and builds with no such setting, keep the notification.
-The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`), and the Live Activity comes on the lock screen with no notification and no tap.
-It asks once per arrival, and never when a Live Activity already shows.
+The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`, [the server side](../../server/guide/how-it-works.md#the-start-of-a-live-activity)), and the Live Activity comes on the lock screen with no notification and no tap.
+It asks once per arrival, and never while a Live Activity that the app started shows.
+The app does not follow a Live Activity that the server started yet: it does not end it at 250 meters or after 45 minutes, and the next station starts a second one instead of a switch.
 The notification comes instead, once, when Live Activities are off, when iOS gave no start token, or when the server cannot be reached, refuses, is not set up, or gives no answer within 10 seconds: iOS gives a woken app only seconds to run.
 The [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) writes each step.
 
