@@ -239,11 +239,14 @@ describe("the updates when a stop has no train or does not answer, as the lock s
 
     const kept = sent.filter((update) => update.aps["content-state"].isMarkedStale);
     expect(kept).toHaveLength(1);
-    const [marked] = kept;
-    const before = sent[sent.indexOf(marked as Sent) - 1]?.aps ?? start;
-    expect(marked?.aps["content-state"]).toEqual({ ...before["content-state"], isMarkedStale: true });
-    expect(marked?.at).toBeGreaterThanOrEqual((before["stale-date"] ?? 0) * 1000);
-    expect(marked?.at).toBeLessThan((before["stale-date"] ?? 0) * 1000 + second);
+    const marked = kept[0];
+    if (marked === undefined) {
+      throw new Error("no times marked stale");
+    }
+    const before = sent[sent.indexOf(marked) - 1]?.aps ?? start;
+    expect(marked.aps["content-state"]).toEqual({ ...before["content-state"], isMarkedStale: true });
+    expect(marked.at).toBeGreaterThanOrEqual((before["stale-date"] ?? 0) * 1000);
+    expect(marked.at).toBeLessThan((before["stale-date"] ?? 0) * 1000 + second);
     expect(sent.at(-1)).toBe(marked);
     for (const update of sent) {
       expect(update.aps["content-state"].trains.noData).toBeUndefined();

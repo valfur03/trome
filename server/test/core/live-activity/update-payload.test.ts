@@ -4,7 +4,7 @@ import { searchKey, type Station, type TransitLine } from "../../../src/core/liv
 import { stationContent } from "../../../src/core/live-activity/station-content";
 import type { Departure } from "../../../src/core/live-activity/station-departures";
 import { broadcastSizeLimit, payloadBytes, updatePayload } from "../../../src/core/live-activity/update-payload";
-import { minute, second } from "../../../src/core/time/clock";
+import { second } from "../../../src/core/time/clock";
 import { primFixture } from "../relay/prim-fixtures";
 import { catalog, contractCase, startHarness } from "./live-activity-harness";
 
