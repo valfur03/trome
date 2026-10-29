@@ -391,7 +391,7 @@ function trunkSideOf(ends: LineEnds, destination: string, stationName: string): 
   return destinationIndex < stationIndex ? ends.first : ends.second;
 }
 
-function reachableEnds(ends: LineEnds, side: readonly string[], stationName: string): string[] {
+export function reachableEnds(ends: LineEnds, side: readonly string[], stationName: string): string[] {
   const stationKey = searchKey(stationName);
   const branchEnds = side.filter((end) => (ends.branchStations[end] ?? []).some((name) => searchKey(name) === stationKey));
   return branchEnds.length === 0 ? [...side] : branchEnds;
