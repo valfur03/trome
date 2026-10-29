@@ -21,6 +21,7 @@ The code is in `ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity/`, and
 | The regions that wake the app | `StationRegionPlan`, `CoreLocationStationRegionWatcher` | `StationRegionPlanTests` |
 | The notification | `StationArrivalNotifications` | `AutoLiveActivityNotificationTests` |
 | The silent start: the start token, the ask to the server, the fallback | `SilentStart`, `ServerLiveActivityStarter`, `LiveActivityStartAnswer`, `AutoLiveActivityModel+SilentStart`; `ActivityKitPushToStartTokenSource` (`ios/App/AutoLiveActivity/`) | `AutoLiveActivitySilentStartTests`, `LiveActivityStartContractTests` |
+| The Live Activity that the server started: the app follows it, ends it, and waits for it | `PushedStart`, `AutoLiveActivityModel+SilentStart`; `ActivityKitStationLiveActivityClient` reports each Live Activity that the app did not start | `AutoLiveActivityPushedStartTests` |
 
 The values that a change often needs are constants:
 
@@ -35,6 +36,7 @@ The values that a change often needs are constants:
 | 5 seconds of wait for a position when the rider resumes | `ResumePositionRules.maximumWait` |
 | 10 seconds of wait for a position when iOS says that the phone entered the area of a station | `ReportedArrivalRules.maximumWait` |
 | 10 seconds of wait for the start token and the answer of the server, in the silent start | `SilentStart.answerLimit` |
+| 30 seconds of wait for the Live Activity that the server started, with the app open at the station | `PushedStart.landingWait` |
 | 2 minutes of second chance, one ask every 5 seconds | `ArrivalSecondChance.limit`, `interval` |
 | 20 seconds of wait for the second location question | `LocationQuestionsRules.alwaysQuestionTimeout` |
 | 20 regions, 100 meters before the app chooses them again | `StationRegionPlan.maximumRegions`, `replanDistanceMeters` |
@@ -83,8 +85,11 @@ It needs a paid Apple Developer Program team, because a free Apple ID cannot sig
 The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`, [the server side](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
 The Live Activity then comes on the lock screen with no notification and no tap only when the push topic of the server is the bundle ID of this build.
 A real server pushes to the bundle ID of the Release build only ([`APNS_BUNDLE_ID`](../../server/guide/deploy.md#the-secrets)), so Apple refuses the start of a Debug build, the server answers refused, and the app sends the notification: a Debug build checks the ask and the fallback, not the start.
-It asks once per arrival, and never while a Live Activity that the app started shows.
-The app does not follow a Live Activity that the server started yet: it does not end it at 250 meters or after 45 minutes, and the next station starts a second one instead of a switch.
+It asks once per arrival, and never while a Live Activity that the app follows shows.
+The app follows the Live Activity that the server started as soon as it runs with it on screen: at once when it lands during the ask, otherwise when iOS next wakes the app, at the latest when the phone leaves the 250-meter area of the station.
+It then ends it as one that it started: at 250 meters, or 45 minutes after the answer of the server; a swipe pauses the station.
+It cannot switch it to the next station, as its updates come on the channel of its station: at the next station, it ends it, and that station starts its own, with the server or by the app when the app is open.
+With the app open at the station when the server answers, the app waits 30 seconds for that Live Activity, and only then starts its own.
 The notification comes instead, once, when Live Activities are off, when iOS gave no start token, or when the server cannot be reached, refuses, is not set up, or gives no answer within 10 seconds: iOS gives a woken app only seconds to run.
 The [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) writes each step.
 

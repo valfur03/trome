@@ -174,7 +174,7 @@ So the app, woken near a station, sends the station and that token, and the serv
 - **The channel of the station.** The started Live Activity listens to a broadcast channel of its station, on which its updates come.
   The server makes the channel at the first start of the station in each service, and deletes it 45 minutes after the last start; it holds the channel id in memory only, so a sleep or a deploy leaves the channel on Apple's side, where an app may have 10,000.
 - **The alert.** The start shows the name of the station and its lines (`M12`, `RER A`), with no sound.
-- **The updates.** No app runs to move the minutes, so the server sends the new content of the station on its channel, with no alert, until 20 minutes after the last start at the station: a wait at a station, with a missed train on most lines.
+- **The updates.** The app moves the minutes only while iOS lets it run, so the server sends the new content of the station on its channel, with no alert, until 20 minutes after the last start at the station: a wait at a station, with a missed train on most lines.
   A later start at the station makes the window longer, and sends an update at once, from the answers that the start has just read.
   Each push, the start included, has a stale date at the latest at the end of the window: when the updates stop, the lock screen of a rider who is still there reads old, never current.
   It asks as the app in the background asks: 5 seconds after the first train of the content leaves, but at least 30 seconds and at most 2 minutes after the last ask, and, when the server is out for every stop, at the time when it asks PRIM again.
