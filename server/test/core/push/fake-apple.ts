@@ -48,6 +48,10 @@ export class FakeApple {
   get starts(): AppleRequest[] {
     return this.requests.filter((request) => request.url.includes("/3/device/"));
   }
+
+  get broadcasts(): AppleRequest[] {
+    return this.requests.filter((request) => request.url.includes("/4/broadcasts/"));
+  }
 }
 
 type PublicKey = Awaited<ReturnType<typeof crypto.subtle.importKey>>;
