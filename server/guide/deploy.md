@@ -26,7 +26,7 @@ Both deploy commands stop when a secret of their Worker is not set, and say whic
 | `APP_TOKEN` | The list of the app tokens that the Worker accepts, separated by commas. At first it holds one token, new for each Worker, made with `openssl rand -hex 32` (not `-base64`: in `ios/Config/Server.xcconfig`, where the app reads it, `//` starts a comment). The server answers only requests that carry a token of the list. It keeps casual traffic out, but anyone who takes the app apart can read it: the daily cap of PRIM calls is what protects the quota of the key ([How the server works](how-it-works.md#how-the-server-shares-the-prim-quota)). |
 | `OWNER_TOKEN` | A new token for each Worker, made with `openssl rand -base64 32`, to read the counts. The app never holds it. |
 | `APNS_TEAM_ID` | The Team ID of your Apple developer account, for the start of a Live Activity. |
-| `APNS_BUNDLE_ID` | The bundle identifier of the app, the one that its builds hold. |
+| `APNS_BUNDLE_ID` | The bundle identifier of the Release build of the app, the one of TestFlight and the App Store. Apple starts a Live Activity only in a build with this ID: a Debug build has another one, so Apple refuses its start, and the app sends its arrival notification instead. |
 | `APNS_PRODUCTION_KEY_ID`, `APNS_PRODUCTION_KEY` | The Key ID and the text of a key of Apple's push service for the **Production** environment: TestFlight and App Store builds use it. Paste the lines between `BEGIN PRIVATE KEY` and `END PRIVATE KEY` of its `.p8` file, as one line. |
 | `APNS_SANDBOX_KEY_ID`, `APNS_SANDBOX_KEY` | The same for the **Sandbox** environment, which the builds that Xcode installs use. A key made for both environments may be set for both. |
 

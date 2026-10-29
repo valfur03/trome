@@ -78,9 +78,11 @@ Each one snoozes the automatic mode with no app opened, also when the phone is l
 
 ### The silent start (Debug builds of a paid team)
 
-A Debug build with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` (then run `make generate`) and a server in `ios/Config/Server.xcconfig` replaces the notification of a background arrival with a start through the server.
+A Debug build with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` (then run `make generate`) and a server in `ios/Config/Server.xcconfig` asks the server to start the Live Activity at a background arrival, and notifies only as the fallback.
 It needs a paid Apple Developer Program team, because a free Apple ID cannot sign the push capability; Release builds, and builds with no such setting, keep the notification.
-The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`, [the server side](../../server/guide/how-it-works.md#the-start-of-a-live-activity)), and the Live Activity comes on the lock screen with no notification and no tap.
+The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`, [the server side](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
+The Live Activity then comes on the lock screen with no notification and no tap only when the push topic of the server is the bundle ID of this build.
+A real server pushes to the bundle ID of the Release build only ([`APNS_BUNDLE_ID`](../../server/guide/deploy.md#the-secrets)), so Apple refuses the start of a Debug build, the server answers refused, and the app sends the notification: a Debug build checks the ask and the fallback, not the start.
 It asks once per arrival, and never while a Live Activity that the app started shows.
 The app does not follow a Live Activity that the server started yet: it does not end it at 250 meters or after 45 minutes, and the next station starts a second one instead of a switch.
 The notification comes instead, once, when Live Activities are off, when iOS gave no start token, or when the server cannot be reached, refuses, is not set up, or gives no answer within 10 seconds: iOS gives a woken app only seconds to run.
