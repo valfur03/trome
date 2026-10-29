@@ -34,6 +34,10 @@ TEST_RUN_GATE := ./scripts/build-gate.py tests
 LOGS := $(BUILD_DIR)/logs
 CORE_PACKAGE := Packages/TROMECore
 NO_KEY := -xcconfig Config/NoKey.xcconfig
+# make build (so make check and make run) compiles the silent start, which only Debug builds of a paid team turn on,
+# so that no check leaves its code uncompiled; NoKey.xcconfig gives it no server, so it stays off at run time.
+# The E2E builds compile the app without it.
+SILENT_START_COMPILED := TROME_SILENT_START=YES
 MAIN_FOLDER = $(shell git worktree list --porcelain | sed -n '1s/^worktree //p')
 OLD_PRIM_SECRETS = $(MAIN_FOLDER)/Config/Secrets.xcconfig
 PRIM_SECRETS ?= $(firstword $(wildcard $(MAIN_FOLDER)/ios/Config/Secrets.xcconfig $(OLD_PRIM_SECRETS)) $(MAIN_FOLDER)/ios/Config/Secrets.xcconfig)
@@ -194,7 +198,7 @@ else ifeq ($(RELEASE),1)
 	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 else
 	@rm -rf $(BUILD_RESULT)
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/build.log '' $(BUILD_APP) $(NO_KEY) -resultBundlePath $(BUILD_RESULT)
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/build.log '' $(BUILD_APP) $(NO_KEY) $(SILENT_START_COMPILED) -resultBundlePath $(BUILD_RESULT)
 	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
 endif
 

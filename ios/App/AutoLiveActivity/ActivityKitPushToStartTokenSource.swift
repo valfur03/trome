@@ -1,5 +1,6 @@
 #if SILENT_START
 import ActivityKit
+import Foundation
 import TROMECore
 
 /// The push-to-start token of the station Live Activity. ActivityKit makes it only for an app that listens to
