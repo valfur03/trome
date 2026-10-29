@@ -34,16 +34,26 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+/** How long a Live Activity asks for times, and the wait between two asks: by default, an app on screen for 6 to 14 minutes that asks every 1 to 2 minutes. */
+export interface Outing {
+  length: { from: number; to: number };
+  wait: { from: number; to: number };
+}
+
+const appOuting: Outing = { length: { from: 6 * minute, to: 14 * minute }, wait: { from: minute, to: 2 * minute } };
+
 export function riderDay({
   riders,
   parisMidnight,
   startShares,
   seed = 1,
+  outing = appOuting,
 }: {
   riders: number;
   parisMidnight: number;
   startShares: readonly number[];
   seed?: number;
+  outing?: Outing;
 }): RiderRequest[] {
   const random = seededRandom(seed);
   const uniform = (low: number, high: number) => low + random() * (high - low);
@@ -65,8 +75,8 @@ export function riderDay({
 
   const requests: RiderRequest[] = [];
   liveActivities.forEach(({ start: startAt, station: { stopRefs } }, liveActivity) => {
-    const end = Math.min(startAt + uniform(6 * minute, 14 * minute), 24 * hour);
-    for (let at = startAt; at < end; at += uniform(minute, 2 * minute)) {
+    const end = Math.min(startAt + uniform(outing.length.from, outing.length.to), 24 * hour);
+    for (let at = startAt; at < end; at += uniform(outing.wait.from, outing.wait.to)) {
       requests.push({ at: parisMidnight + Math.floor(at), liveActivity, stopRefs });
     }
   });

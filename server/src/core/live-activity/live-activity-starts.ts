@@ -8,7 +8,7 @@ import { readStation } from "./content-of-station";
 import type { StationCatalog } from "./station-catalog";
 import { stationContent } from "./station-content";
 import { startPayload } from "./start-payload";
-import { StationUpdates } from "./station-updates";
+import { StationUpdates, updateWindow } from "./station-updates";
 
 /**
  * Starts the Live Activity of a station on the iPhone of a rider, when the app, woken near the station, asks for it.
@@ -162,7 +162,7 @@ export class LiveActivityStarts {
       const now = clock.now();
       const answer = await apns.start(key, token, startPayload(station, content, channelId, now), now + startExpiration);
       if (answer.ok) {
-        this.updates.follow(station, reading, content, now + startWindow);
+        this.updates.follow(station, reading, content, now + updateWindow);
         logger.info("live-activity-start", { result: "started", environment: key.environment });
         return { result: "started" };
       }

@@ -171,9 +171,18 @@ So the app, woken near a station, sends the station and that token, and the serv
 - **Production, then development.** Apple gives the token of a TestFlight or App Store build to its production push service, and the token of a build that Xcode installs to its development one; the token does not say which.
   So the server sends the start to production first, and to development when production answers `BadDeviceToken`, the answer for a token of the other service.
   It uses only a service whose key is set.
-- **The channel of the station.** The started Live Activity listens to a broadcast channel of its station, on which its updates can come.
+- **The channel of the station.** The started Live Activity listens to a broadcast channel of its station, on which its updates come.
   The server makes the channel at the first start of the station in each service, and deletes it 45 minutes after the last start; it holds the channel id in memory only, so a sleep or a deploy leaves the channel on Apple's side, where an app may have 10,000.
 - **The alert.** The start shows the name of the station and its lines (`M12`, `RER A`), with no sound.
+- **The updates.** No app runs to move the minutes, so the server sends the new content of the station on its channel, with no alert, until 45 minutes after the last start at the station.
+  It asks as the app in the background asks: 5 seconds after the first train of the content leaves, but at least 30 seconds and at most 2 minutes after the last ask, and, when the server is out for every stop, at the time when it asks PRIM again.
+  Each ask goes through the same held answers and the same quota as an app, so a stop costs at most one PRIM call a minute, and none while its answer is younger than 60 seconds.
+  The content follows the app's rules for a failed call: the times shown stay, and are marked stale once their first train has left; "No trains" becomes "Times unavailable"; a stop that does not answer keeps the trains of its last answer.
+  It holds the first page only, as the start does, and is the same for every rider of the station: the lock screen shows one page at a time, and the content of every page of Châtelet is over Apple's 5,120 bytes for a channel.
+  An update over that size is not sent, and the log line `live-activity-update` says `too-large`; a test checks that every station of the list, at its busiest, stays under 4,096 bytes.
+  The updates go at priority 5, which Apple does not count against a budget per hour, and may group when the iPhone saves power.
+- **The cost of the updates.** Each started Live Activity costs PRIM calls for 45 minutes, not for the few minutes of an app on screen: in the model of [`relay-whole-day.test.ts`](../test/core/relay/relay-whole-day.test.ts), 15 riders with two starts a day would make 1,130 to 1,400 calls with no cap.
+  The cap still holds: past it, riders read "Times unavailable" (15 to 30 in 100 answers of that model).
 
 ## What the server keeps about riders
 
@@ -182,7 +191,7 @@ A request holds only a stop and the app token, and the server reads nothing else
 The one exception is the start of a Live Activity: it reads a station and the start token of the iPhone, and passes the token to Apple; after the call, the token is in no storage, no log line and no memory, which keeps only a keyed hash of the token and the station for 45 minutes, and a test checks the three.
 A test sends all of these, and checks that none is stored or logged.
 After the request, the server keeps no stop in its storage or its log lines: the counts and the error lines have none.
-Only its memory holds a stop, and only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, a stop whose PRIM call failed for its 60 s pause, and the channel of a station for 45 minutes after its last start.
+Only its memory holds a stop, and only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, a stop whose PRIM call failed for its 60 s pause, and the channel of a station, with the last content and trains sent on it, for 45 minutes after its last start.
 An answer never goes to storage, even for a minute: Cloudflare keeps every write to the storage of a server object restorable for 30 days, so the stops written would stay as a history of the stops asked for.
 Cloudflare puts an idle server object to sleep about 10 seconds after its last request when no timer of it waits, and the sleep empties its memory.
 So the server keeps a timer while it holds an answer younger than 5 minutes, the oldest age at which it gives one, and while a failed stop is in its pause: the refresh of a lone rider 30 seconds later gets the held answer, with no PRIM call.

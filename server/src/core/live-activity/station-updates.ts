@@ -28,6 +28,8 @@ export interface StationUpdatesDependencies {
   send: (stationId: string, payload: string) => Promise<void>;
 }
 
+/** How long the updates of a station go on after its last start: the life of its channel, and the longest outing. Each minute of it costs up to one PRIM call for each stop of the station. */
+export const updateWindow = 45 * minute;
 export const minimumDelay = 30 * second;
 export const maximumDelay = 2 * minute;
 const delayAfterDeparture = 5 * second;
