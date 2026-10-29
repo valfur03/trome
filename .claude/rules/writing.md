@@ -4,6 +4,8 @@ paths:
   - "**/*.mdx"
   - "ios/scripts/prose-check.py"
   - "ios/scripts/public-text-check.py"
+  - "ios/scripts/repo_files.py"
+  - ".gitignore"
 ---
 # Write in the repo: who writes the pages, and where a change writes its text
 
@@ -34,6 +36,10 @@ The rules for every file (keep the docs true, one sentence per line, public text
   It also fails on a team's voice ("we", "us", "our", "let's"; "nous", "notre", "nos") in the prose of every Markdown and MDX file, `CLAUDE.md` and `.claude/` included, but not in code, link addresses or double or curly quotes: one person makes TROME, so a page says "I" (doc-1, "The voice: one person, I");
   the app texts are not Markdown and the check does not read them, so their review checks the voice.
   The only files that it skips, `SKIPPED_FILES`, are the check itself (its word list), its test (the examples that it must find) and a file that a tool generates, each with its reason.
+- **The scratch folder.** Keep your scratch files (notes, logs, screenshots) in `.review/` at the root of your worktree, and nowhere else in it.
+  `.gitignore` ignores that folder, and only that one: `make public-text-check`, `make prose-check` and every check that reads the files of the repo (`ios/scripts/repo_files.py`) read the files of git and the new files that git does not ignore, so a scratch file never changes their result, and `git add -A` never commits it.
+  A new file anywhere else, a `.review/` folder inside a part of the repo included, is still checked before its first commit (`ios/scripts/tests/public-text-check-test.sh`).
+  Why: the checks read the new files so that a mistake shows before the commit, and they failed on the notes of an agent (TASK-465).
 - **Where a change writes its text.** Each text lives in one file, chosen by its reader.
   Link to the file that holds a fact, and never copy the fact.
   A text in the wrong file is asked to move in the review, like a code file in the wrong folder.

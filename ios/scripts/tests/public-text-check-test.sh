@@ -243,6 +243,24 @@ printf 'echo "the factory runs it"\n' > "$repo/ios/scripts/new.sh"
 expect "a new file that git does not track yet is checked, so a mistake in it shows before the commit" "$(check)" "fails"
 expect "it finds the word of the team in the new file" "$(hit "ios/scripts/new.sh:1: a word of the team's own process: \"factory\"")" "1"
 
+# The scratch folder of a worktree, with the real .gitignore of the repo: its notes never change the result of a check.
+reset_repo
+cp "$scripts/../../.gitignore" "$repo/.gitignore"
+git -C "$repo" add .gitignore
+file docs/page.mdx "The Simulator runs one job at a time."
+mkdir -p "$repo/.review/images"
+printf 'TASK-465: the factory agent, /Users/jane, jane.doe@company.fr. We passed.\n' > "$repo/.review/notes.md"
+printf 'doc-3 %0500d\n' 0 > "$repo/.review/images/log.md"
+expect "the notes in the scratch folder .review/ of a worktree pass" "$(check)" "passes"
+(cd "$repo/docs" && "$scripts/prose-check.py") > "$state/out" 2>&1 && result="passes" || result="fails"
+expect "the prose check skips the scratch folder too" "$result" "passes"
+printf 'echo "the factory runs it"\n' > "$repo/ios/scripts/new.sh"
+mkdir -p "$repo/docs/.review"
+printf 'Ask the prompter.\n' > "$repo/docs/.review/page.md"
+expect "with notes in the scratch folder, a new file of a part of the repo still fails" "$(check)" "fails"
+expect "it finds the new script and a .review folder inside a part of the repo, and nothing of the scratch folder" \
+    "$(hit "ios/scripts/new.sh:1: a word of the team's own process: \"factory\"") $(hit "docs/.review/page.md:1: a word of the team's own process: \"prompter\"") $(grep -c "^public-text-check: \.review/" "$state/out")" "1 1 0"
+
 (cd "$state" && "$scripts/public-text-check.py") > /dev/null 2>&1 && result="passes" || result="fails"
 expect "outside a git repo, it fails" "$result" "fails"
 

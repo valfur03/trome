@@ -1,4 +1,8 @@
 .DS_Store
+
+# The scratch folder of a worktree (notes, logs, screenshots): never committed, and no check reads it.
+/.review/
+
 .build/
 .swiftpm/
 xcuserdata/
