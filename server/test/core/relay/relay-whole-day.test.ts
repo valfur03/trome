@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RelayAnswer } from "../../../src/core/relay/relay";
+import { updateWindow } from "../../../src/core/live-activity/station-updates";
 import { minute } from "../../../src/core/time/clock";
 import { parisHourOfDay } from "../../../src/core/time/paris-time";
 import { peakDayShape } from "../budget/peak-day-shape";
@@ -11,7 +12,7 @@ import { measuredStartShares, riderDay, type RiderRequest } from "./rider-day";
 const parisMidnight = Date.parse("2026-10-05T22:00:00.000Z");
 const allowedByTheEndOf = [4, 8, 12, 16, 20, 34, 68, 142, 224, 272, 309, 346, 387, 426, 465, 509, 565, 633, 693, 734, 760, 776, 790, 800];
 const earlyHours = { from: 5, to: 7 };
-const serverUpdates = { length: { from: 45 * minute, to: 45 * minute }, wait: { from: 30_000, to: 2 * minute } };
+const serverUpdates = { length: { from: updateWindow, to: updateWindow }, wait: { from: 30_000, to: 2 * minute } };
 
 interface Figures {
   calls: number;
@@ -146,14 +147,15 @@ describe("Relay: a whole Paris day of riders of the model of the server spike (2
     });
   });
 
-  describe("riders whose Live Activities the server starts, and updates for 45 minutes every 30 s to 2 minutes, as the app in the background asks", () => {
-    // RIDER_DAY_REPORT=1 prints the day: on 2026-10-29, 15 riders would make 1,130 to 1,400 PRIM calls with no cap, and 15 to 30 in 100 answers were "out" under the cap of 800.
-    // With updates for 15 minutes, they make 390 to 490 calls, with almost no "out" answer.
-    it("keeps 15 riders within the cap and the shares of the hours", async () => {
+  describe("riders whose Live Activities the server starts, and updates for 20 minutes every 30 s to 2 minutes, as the app in the background asks", () => {
+    // RIDER_DAY_REPORT=1 prints the day: on 2026-10-29, 15 riders made 522 to 633 PRIM calls with no cap, and at most 2 in 100 answers were "out".
+    // With updates for 45 minutes, they would make 1,130 to 1,400 calls with no cap, and 15 to 30 in 100 answers would be "out" under the cap of 800.
+    it("keeps 15 riders within the cap and the shares of the hours, with almost every answer in time", async () => {
       for (const seed of [1, 2, 3, 4]) {
         const requests = riderDay({ riders: 15, parisMidnight, startShares: measuredStartShares, seed, outing: serverUpdates });
         const result = await runTheDay(requests);
         report({ starts: "server", riders: 15, seed, ...result });
+        expect(result.day.outAnswers / result.day.answers, "answers out").toBeLessThan(0.02);
 
         let spent = 0;
         result.callsByParisHour.forEach((calls, parisHour) => {

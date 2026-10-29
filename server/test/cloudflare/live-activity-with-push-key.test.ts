@@ -79,7 +79,7 @@ function timerCount(): Promise<number> {
 }
 
 describe("the updates of a started Live Activity on Cloudflare", () => {
-  it("run in the alarm through the 45 minutes, while a timer keeps the object awake, then the channel goes and nothing is left", async () => {
+  it("run in the alarm for 20 minutes, while a timer keeps the object awake, then the channel goes at 45 minutes and nothing is left", async () => {
     useFakeTime();
     const network = fakeNetwork();
     const startedAt = Date.now();
@@ -97,8 +97,8 @@ describe("the updates of a started Live Activity on Cloudflare", () => {
     }
 
     expect(Date.now() - startedAt).toBe(45 * minute);
-    expect(network.broadcasts()).toBeGreaterThanOrEqual(20);
-    expect(network.primCalls()).toBeLessThanOrEqual(46);
+    expect(network.broadcasts()).toBeGreaterThanOrEqual(8);
+    expect(network.primCalls()).toBeLessThanOrEqual(21);
     expect(network.deletes()).toBe(1);
     await runInDurableObject(relayObject(env), () => vi.runAllTimersAsync());
     expect(await timerCount()).toBe(0);

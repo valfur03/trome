@@ -14,7 +14,7 @@ import { broadcastSizeLimit, payloadBytes, updatePayload } from "./update-payloa
  *
  * - **When.** As the app in the background asks (`BackgroundTrainsRefresh`): 5 seconds after the first train of the content leaves, but at least 30 seconds and at most 2 minutes after the last ask; when the server is out for every stop, at the time when it asks PRIM again.
  *   Each ask goes through the relay, as an app's would, so it gets the same held answers and the same quota: a station asked again within 60 seconds costs no PRIM call.
- * - **How long.** Until 45 minutes after the last start at the station, the life of its channel; then the server forgets the station.
+ * - **How long.** Until 20 minutes after the last start at the station (`updateWindow`); then the server forgets the station, and each push has had that end as its latest stale date, so that the lock screen reads old when the updates stop.
  * - **What.** The content that the app would send from the same answers, with its rules for a failed call: the times shown stay after a failure, marked stale once their first train has left; "No trains" becomes "Times unavailable"; a stop that does not answer keeps the trains of its last answer.
  *   The content is the same for every rider of the station, so it holds the first page, as at the start.
  * - **Size.** An update over Apple's limit for a channel is not sent, and a log line says so: the Live Activity keeps its last content, which goes stale at its stale date.
@@ -28,8 +28,11 @@ export interface StationUpdatesDependencies {
   send: (stationId: string, payload: string) => Promise<void>;
 }
 
-/** How long the updates of a station go on after its last start: the life of its channel, and the longest outing. Each minute of it costs up to one PRIM call for each stop of the station. */
-export const updateWindow = 45 * minute;
+/**
+ * How long the updates of a station go on after its last start: a wait at a station, with a missed train on most lines.
+ * Each minute of it costs up to one PRIM call for each stop of the station, so it is shorter than the 45 minutes of the memory of a start: in the model of 15 riders, 45 minutes would reach the daily cap of PRIM calls, and a fifth of the answers at the busy hours would read "Times unavailable".
+ */
+export const updateWindow = 20 * minute;
 export const minimumDelay = 30 * second;
 export const maximumDelay = 2 * minute;
 const delayAfterDeparture = 5 * second;
@@ -51,12 +54,14 @@ export class StationUpdates {
 
   /** A start at the station: its updates go on until `until`, and the first one comes as the app's would after this content. */
   follow(station: Station, reading: StationReading, content: StationContent, until: number): void {
+    const now = this.dependencies.clock.now();
     const held = this.followed.get(station.id);
     if (held !== undefined) {
+      // The riders already there have the old end as their latest stale date: an update at once gives them the new one, from the answers that the start has just read, so with no PRIM call.
+      held.nextAt = Math.min(held.nextAt, now);
       held.until = Math.max(held.until, until);
       return;
     }
-    const now = this.dependencies.clock.now();
     this.followed.set(station.id, {
       station,
       until,
@@ -97,7 +102,7 @@ export class StationUpdates {
       if (content === undefined) {
         return;
       }
-      const payload = updatePayload(content, now);
+      const payload = updatePayload(content, now, followed.until);
       const bytes = payloadBytes(payload);
       if (bytes > broadcastSizeLimit) {
         logger.error("live-activity-update", { result: "too-large", bytes });

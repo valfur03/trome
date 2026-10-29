@@ -158,7 +158,7 @@ export class LiveActivityStarts {
         continue;
       }
       const now = clock.now();
-      const answer = await apns.start(key, token, startPayload(station, content, channelId, now), now + startExpiration);
+      const answer = await apns.start(key, token, startPayload(station, content, channelId, now, now + updateWindow), now + startExpiration);
       if (answer.ok) {
         this.updates.follow(station, reading, content, now + updateWindow);
         logger.info("live-activity-start", { result: "started", environment: key.environment });

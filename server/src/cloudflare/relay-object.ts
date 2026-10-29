@@ -27,7 +27,7 @@ const startsKeepAwake = 10 * minute;
  * So the object keeps a timer while memory holds something of use, and stays awake through it: the counts not yet written (at most 10 s),
  * an answer until the oldest age at which it is given (5 minutes), and a failed stop until the end of its pause.
  * A pending timer holds off eviction for up to 15 minutes from its start, and each timer here ends at most 5 minutes after the latest PRIM answer, so the object still sleeps through a quiet night.
- * A start of a Live Activity keeps the object awake 45 minutes more, with timers of at most 10 minutes: memory then knows the start, so that a second ask of the same rider sends no second alert, and the channel of the station, on which it sends the new minutes every 30 seconds to 2 minutes, and which it deletes at the end.
+ * A start of a Live Activity keeps the object awake 45 minutes more, with timers of at most 10 minutes: memory then knows the start, so that a second ask of the same rider sends no second alert, and the channel of the station, on which it sends the new minutes every 30 seconds to 2 minutes for the first 20 minutes, and which it deletes at the end.
  * The work of the starts that is due later (an update, the delete of a channel) runs in a storage alarm, not in a timer: each alarm is a new invocation, with its own limit of subrequests (50 on the Free plan), where a chain of timers could share the one of the request that started it.
  * The alarm holds only a time; the memory of the starts stays in memory.
  */

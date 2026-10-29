@@ -3,6 +3,7 @@ import { reachableEnds } from "../../../src/core/live-activity/line-directions";
 import { searchKey, type Station, type TransitLine } from "../../../src/core/live-activity/station-catalog";
 import { stationContent } from "../../../src/core/live-activity/station-content";
 import type { Departure } from "../../../src/core/live-activity/station-departures";
+import { updateWindow } from "../../../src/core/live-activity/station-updates";
 import { broadcastSizeLimit, payloadBytes, updatePayload } from "../../../src/core/live-activity/update-payload";
 import { second } from "../../../src/core/time/clock";
 import { primFixture } from "../relay/prim-fixtures";
@@ -40,7 +41,7 @@ function busiestUpdate(station: Station): { name: string; bytes: number; trains:
   const content = stationContent(station, stations, { kind: "departures", departures, answeredAt: now, unansweredStops: new Set() }, catalog, now);
   const page = content.trains.kind === "lines" ? content.trains.page : undefined;
   const trains = page?.lines.flatMap((line) => line.directions.flatMap((direction) => direction.trains)).length ?? 0;
-  return { name: station.name, bytes: payloadBytes(updatePayload(content, now)), trains };
+  return { name: station.name, bytes: payloadBytes(updatePayload(content, now, now + updateWindow)), trains };
 }
 
 describe("the size of an update on the channel of a station", () => {

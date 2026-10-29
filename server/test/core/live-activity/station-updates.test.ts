@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { contentOfStation } from "../../../src/core/live-activity/content-of-station";
 import { startWindow } from "../../../src/core/live-activity/live-activity-starts";
+import { updateWindow } from "../../../src/core/live-activity/station-updates";
 import { encodeContent } from "../../../src/core/live-activity/station-content";
 import type { RelayAnswer } from "../../../src/core/relay/relay";
 import type { PrimReply } from "../../../src/core/relay/prim-client";
@@ -18,6 +19,7 @@ const otherToken = "11a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d
 const abbesses = "IDFM:22059";
 const liege = "IDFM:22225";
 const chateletLesHalles = "IDFM:monomodalStopPlace:45102";
+const failure: PrimReply = { kind: "unreachable", reason: "test" };
 
 type Harness = Awaited<ReturnType<typeof startHarness>>;
 
@@ -168,32 +170,81 @@ describe("the updates of a Live Activity that the server started", () => {
     const calls = liegeOverTime(harness);
     await harness.starts.start(liege, token);
 
-    await wakeUntil(harness, harness.relay.clock.now() + startWindow);
+    await wakeUntil(harness, harness.relay.clock.now() + updateWindow);
 
     for (let index = 1; index < calls.length; index += 1) {
       expect((calls[index]?.at ?? 0) - (calls[index - 1]?.at ?? 0)).toBeGreaterThanOrEqual(minute);
     }
   });
 
-  it("sends updates for 45 minutes after the last start at the station only, then deletes its channel and asks PRIM no more", async () => {
+  it("sends updates for 20 minutes after the last start at the station only, asks PRIM no more, and deletes its channel at the end of the 45 minutes of the start", async () => {
     const harness = await startHarness();
     const sent = recordUpdates(harness);
     const first = harness.relay.clock.now();
     await harness.starts.start(abbesses, token);
-    await wakeUntil(harness, first + 20 * minute);
+    await wakeUntil(harness, first + 10 * minute);
     expect(await harness.starts.start(abbesses, otherToken)).toEqual({ result: "started" });
     const last = harness.relay.clock.now();
 
-    await wakeUntil(harness, last + startWindow - second);
-    expect(sent.at(-1)?.at).toBeGreaterThan(last + startWindow - 2 * minute - second);
+    await wakeUntil(harness, last + updateWindow - second);
+    expect(sent.at(-1)?.at).toBeGreaterThan(last + updateWindow - 2 * minute - second);
     const primCalls = harness.relay.prim.calls.length;
     const updates = sent.length;
+
+    await wakeUntil(harness, last + startWindow - second);
+    expect(sent).toHaveLength(updates);
+    expect(harness.relay.prim.calls).toHaveLength(primCalls);
+    expect(harness.apple.requests.filter((request) => request.method === "DELETE")).toEqual([]);
 
     await wakeUntil(harness, last + 3 * startWindow);
     expect(sent).toHaveLength(updates);
     expect(harness.relay.prim.calls).toHaveLength(primCalls);
     expect(harness.apple.requests.at(-1)).toMatchObject({ method: "DELETE", headers: { "apns-channel-id": "channel-1" } });
     expect(harness.starts.nextWake()).toBeUndefined();
+  });
+
+  for (const [kind, contractCase, reply] of [
+    ["times", "abbesses", undefined],
+    ["No trains", "abbesses-no-train", undefined],
+    ["Times unavailable", "abbesses-no-train", failure],
+  ] as const) {
+    it(`gives each push a stale date at the latest at the end of the window, so that ${kind} read old when the updates stop`, async () => {
+      const harness = await startHarness({ contractCase });
+      const sent = recordUpdates(harness);
+      const end = harness.relay.clock.now() + updateWindow;
+      await harness.starts.start(abbesses, token);
+      if (reply !== undefined) {
+        harness.relay.prim.answerWith(() => reply);
+      }
+
+      await wakeUntil(harness, end + 10 * minute);
+
+      const pushes = [harness.apple.starts[0], ...sent.map((update) => update.request)].map((request) => (JSON.parse(request?.body ?? "") as { aps: Aps }).aps);
+      expect(sent.length).toBeGreaterThan(5);
+      for (const aps of pushes) {
+        expect(aps["stale-date"]).toBeLessThanOrEqual(end / 1000);
+      }
+      const lastState = sent.at(-1)?.aps["content-state"];
+      expect(kind === "Times unavailable" ? lastState?.trains.noData : lastState?.trains.lines).toBeDefined();
+    });
+  }
+
+  it("gives the riders already there the end of a window that a later start makes longer, before their old end", async () => {
+    const harness = await startHarness({ contractCase: "abbesses-no-train" });
+    const sent = recordUpdates(harness);
+    const oldEnd = harness.relay.clock.now() + updateWindow;
+    await harness.starts.start(abbesses, token);
+    await wakeUntil(harness, oldEnd - 10 * second);
+    expect(await harness.starts.start(abbesses, otherToken)).toEqual({ result: "started" });
+    const newEnd = harness.relay.clock.now() + updateWindow;
+    const primCalls = harness.relay.prim.calls.length;
+
+    await wakeUntil(harness, oldEnd);
+
+    const last = sent.at(-1);
+    expect(last?.at).toBe(oldEnd - 10 * second);
+    expect(last?.aps["stale-date"]).toBe(Math.floor(newEnd / 1000));
+    expect(harness.relay.prim.calls).toHaveLength(primCalls);
   });
 
   it("sends no update for a station whose start Apple refused", async () => {
@@ -225,7 +276,6 @@ describe("the updates of a Live Activity that the server started", () => {
 });
 
 describe("the updates when a stop has no train or does not answer, as the lock screen shows it today", () => {
-  const failure: PrimReply = { kind: "unreachable", reason: "test" };
 
   it("keeps the times shown when PRIM fails, then marks them stale once their first train has left, never empty", async () => {
     const harness = await startHarness();
@@ -280,7 +330,7 @@ describe("the updates when a stop has no train or does not answer, as the lock s
     expect(asks.filter((at) => at > (out.at(-1)?.at ?? 0))).toEqual([]);
   });
 
-  it("shows Times unavailable when PRIM fails after No trains, which never gets old", async () => {
+  it("shows Times unavailable when PRIM fails after No trains", async () => {
     const harness = await startHarness({ contractCase: "abbesses-no-train" });
     const sent = recordUpdates(harness);
     await harness.starts.start(abbesses, token);
