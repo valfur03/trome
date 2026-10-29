@@ -390,7 +390,7 @@ wait_for_wallpaper_update() {
     rm -f "$state/after-wallpaper-update" "$state/dasd-log.$default" "$state/dasd-log.$default.next"
 }
 wallpaper_update_message() {
-    sed -n -E 's/.*(Waiting for the daily update|was still [a-z]+|ended after).*/\1/p' "$state/wallpaper-update.err" | paste -s -d ' ' -
+    sed -n -E 's/.*(Waiting for the daily update|was still [a-z]+|ended after|already waited).*/\1/p' "$state/wallpaper-update.err" | paste -s -d ' ' -
 }
 expect "a job runs at once when the scheduler of iOS logs nothing of the daily wallpaper update" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
 wallpaper_update_submitted "Sun Oct 18 05:38:47 2099" > "$state/dasd-log.$default"
@@ -404,6 +404,13 @@ expect "a job waits while the daily wallpaper update is due, until iOS has run i
 expect "a job runs at once when the daily wallpaper update started more than 10 minutes ago and its end was not logged" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
 { wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); wallpaper_update_started); } > "$state/dasd-log.$default"
 expect "a job says that it waits for a running daily wallpaper update before it goes on at the limit" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still running"
+wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
+expect "a job goes on at the limit when the daily wallpaper update stays due" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still due"
+wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
+expect "the next job does not wait again for the same due update" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran already waited"
+wallpaper_update_submitted "Sun Oct  4 05:35:18 2026" > "$state/dasd-log.$default"
+expect "a job waits again for the next due update" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still due"
+rm -f "$TROME_LOGS/wallpaper-update-gave-up"
 
 language_at_restart() {
     cat "$state/language-at-springboard-restart.$default" 2> /dev/null || echo "no restart"

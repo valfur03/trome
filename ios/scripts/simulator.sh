@@ -9,6 +9,7 @@ widget_host_log_seconds=60
 wallpaper_update_wait_seconds=${TROME_WALLPAPER_UPDATE_WAIT_SECONDS:-600}
 wallpaper_update_run_seconds=600
 wallpaper_update_task=com.apple.springboard.posterboardupdate.overnight
+wallpaper_update_gave_up=${TROME_LOGS:-$HOME/Library/Logs/TROME}/wallpaper-update-gave-up
 slot=${RATP_SIM_SLOT:-1}
 
 case "$slot" in
@@ -222,7 +223,7 @@ wallpaper_update_state() {
     case $last in
         "submitted "*)
             due=$(LC_ALL=C date -j -f '%a %b %d %H:%M:%S %Y' "${last#submitted }" +%s 2> /dev/null) || due=
-            if [ -n "$due" ] && [ "$due" -le "$(date +%s)" ]; then echo due; else echo idle; fi
+            if [ -n "$due" ] && [ "$due" -le "$(date +%s)" ]; then echo "due from ${last#submitted }"; else echo idle; fi
             ;;
         "started "*)
             started_at=$(date -j -f '%Y-%m-%d %H:%M:%S' "${last#started }" +%s 2> /dev/null) || started_at=0
@@ -238,16 +239,25 @@ wallpaper_update_state() {
 # the Simulator then stopped each draw of the Live Activity at its watchdog, then gave up, and a test that looked for
 # the Live Activity failed. So, when the task is due or runs, the jobs wait until iOS has run it. A newer iOS may
 # change these log messages: then the jobs no longer wait.
+# A job that waited the whole limit for a due update writes it down, so the next jobs do not wait again for the same
+# update: iOS once ran it 31 minutes after it was due, and a newer iOS may never run it on an idle Simulator.
 wait_for_wallpaper_update() {
     started=$(date +%s)
     waited=
     while state=$(wallpaper_update_state "$1") && [ "$state" != idle ]; do
+        if [ "$1 $state" = "$(cat "$wallpaper_update_gave_up" 2> /dev/null)" ]; then
+            echo "A job already waited $wallpaper_update_wait_seconds s for the daily update of the wallpapers of iOS ($state); going on" >&2
+            return 0
+        fi
         if [ -z "$waited" ]; then
             echo "Waiting for the daily update of the wallpapers of iOS ($state), which keeps the Mac busy for minutes" >&2
             waited=yes
         fi
         if [ "$(date +%s)" -ge $((started + wallpaper_update_wait_seconds)) ]; then
             echo "The daily update of the wallpapers of iOS was still $state after $wallpaper_update_wait_seconds s; going on" >&2
+            case $state in
+                due*) mkdir -p "${wallpaper_update_gave_up%/*}" && echo "$1 $state" > "$wallpaper_update_gave_up" ;;
+            esac
             return 0
         fi
         sleep 5
