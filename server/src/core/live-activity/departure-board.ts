@@ -1,5 +1,5 @@
 import type { Departure } from "./station-departures";
-import { monitoringRefs, sameLine, stationListOrder, type Station, type TransitLine } from "./station-catalog";
+import { isQuay, monitoringRefs, sameLine, stationListOrder, type Station, type TransitLine } from "./station-catalog";
 
 const departedGrace = 30_000;
 const farthestTime = 60 * 60_000;
@@ -51,3 +51,26 @@ export class DepartureBoard {
   }
 }
 
+
+/** The trains of the last answer of a station, which the next one may keep for its stops that do not answer. */
+export interface LastTrains {
+  departures: readonly Departure[];
+  unansweredStops: ReadonlySet<string>;
+  earlier: readonly Departure[];
+}
+
+/**
+ * The trains to keep for the stops that did not answer this time (`departuresToKeep(forUnanswered:now:)` of the app):
+ * the trains that the last answer got from these stops and that have not left yet, or, for a stop that did not answer then either, the trains that it kept itself.
+ */
+export function departuresToKeep(last: LastTrains, stops: ReadonlySet<string>, now: number): Departure[] {
+  const answeredThen = new Set([...stops].filter((stop) => !last.unansweredStops.has(stop)));
+  const stillUnanswered = new Set([...stops].filter((stop) => last.unansweredStops.has(stop)));
+  const fresh = last.departures.filter((departure) => departure.time > now && isFromOneOf(departure, answeredThen));
+  const kept = last.earlier.filter((departure) => isFromOneOf(departure, stillUnanswered));
+  return [...fresh, ...kept];
+}
+
+function isFromOneOf(departure: Departure, stops: ReadonlySet<string>): boolean {
+  return monitoringRefs(departure.line).some((stop) => stops.has(stop) && (!isQuay(stop) || departure.quayRef === stop));
+}

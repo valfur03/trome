@@ -277,7 +277,7 @@ describe("the start of a Live Activity", () => {
       expect(wake - relay.clock.now()).toBeLessThanOrEqual(10 * minute);
       expect(wake).toBeGreaterThan(relay.clock.now());
       relay.clock.advance(wake - relay.clock.now());
-      await starts.forgetPast();
+      await starts.wake();
     }
 
     expect(relay.clock.now() - startedAt).toBe(startWindow);

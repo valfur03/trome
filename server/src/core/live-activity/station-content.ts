@@ -44,6 +44,8 @@ export interface StationContent {
   trains: ContentTrains;
   updatedAt: number;
   serverIsOut: boolean;
+  /** Times kept after a failed call, once their first train has left: the widget hides the waits at once (`isMarkedStale` of the app). */
+  isMarkedStale?: boolean;
 }
 
 const maximumRowsWithTwoTrains = 2;
@@ -51,13 +53,21 @@ const farthestTime = 60 * 60_000;
 /** The seconds between 1970 and 2001: the app's `JSONEncoder` writes a date as seconds since 2001. */
 const referenceDateSeconds = 978_307_200;
 
-export function stationContent(station: Station, stations: readonly Station[], trains: StationTrains, catalog: StationCatalog, now: number): StationContent {
+/** `earlier` holds the trains that an earlier answer gave for the stops that did not answer this time (`departuresToKeep`). */
+export function stationContent(
+  station: Station,
+  stations: readonly Station[],
+  trains: StationTrains,
+  catalog: StationCatalog,
+  now: number,
+  earlier: readonly Departure[] = [],
+): StationContent {
   const lineDirections = new LineDirections(catalog);
   if (trains.kind === "failed") {
     return { stationName: station.name, trains: { kind: "noData" }, updatedAt: now, serverIsOut: trains.serverIsOut };
   }
   const answeredAt = Math.min(trains.answeredAt ?? now, now);
-  const board = new DepartureBoard(trains.departures, stations, answeredAt, trains.unansweredStops);
+  const board = new DepartureBoard(trains.departures, stations, answeredAt, trains.unansweredStops, earlier);
   const knowsThereIsNoTrain = board.isEmpty && board.unansweredStops.size === 0;
   const lines = knowsThereIsNoTrain
     ? [...station.lines].sort(stationListOrder).map((line) => ({
@@ -162,7 +172,7 @@ function shownLine(line: TransitLine): ShownLine {
 export function encodeContent(content: StationContent): Record<string, unknown> {
   return {
     appNeedsUpdate: false,
-    isMarkedStale: false,
+    isMarkedStale: content.isMarkedStale ?? false,
     serverIsOut: content.serverIsOut,
     stationName: content.stationName,
     trains: content.trains.kind === "noData" ? { noData: {} } : { lines: { _0: encodePage(content.trains.page) } },

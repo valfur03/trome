@@ -4,9 +4,11 @@ import type { ApnsKey, ApnsSettings } from "../push/apns-settings";
 import type { RelayAnswer } from "../relay/relay";
 import type { Clock } from "../time/clock";
 import { minute } from "../time/clock";
-import { contentOfStation } from "./content-of-station";
+import { readStation } from "./content-of-station";
 import type { StationCatalog } from "./station-catalog";
+import { stationContent } from "./station-content";
 import { startPayload } from "./start-payload";
+import { StationUpdates } from "./station-updates";
 
 /**
  * Starts the Live Activity of a station on the iPhone of a rider, when the app, woken near the station, asks for it.
@@ -15,6 +17,7 @@ import { startPayload } from "./start-payload";
  *   To know it without keeping the token, the server keeps only a keyed hash of the token and the station, with a key that is made at random in memory and never leaves it; a sleep or a deploy forgets both, and the next ask then starts again.
  * - Apple gives a token to its production service or to its development one, and the token does not say which: the start goes to production first, then to development when production answers that the token is not its own.
  * - Each station has one broadcast channel in each service, made at its first start and deleted 45 minutes after its last one.
+ *   Until then, `StationUpdates` sends the new minutes of the station on it.
  * - A log line holds the result only: never the token, the station or an error text (which may hold the address, and so the token).
  */
 export type StartResult =
@@ -52,8 +55,12 @@ interface Channel {
 export class LiveActivityStarts {
   private readonly starts = new Map<string, { until: number; result: Promise<StartResult> }>();
   private readonly channels = new Map<string, Channel>();
+  private readonly updates: StationUpdates;
 
-  constructor(private readonly dependencies: LiveActivityStartsDependencies) {}
+  constructor(private readonly dependencies: LiveActivityStartsDependencies) {
+    const { catalog, departures, clock, logger } = dependencies;
+    this.updates = new StationUpdates({ catalog, departures, clock, logger, send: (stationId, payload) => this.broadcast(stationId, payload) });
+  }
 
   async start(stationId: string, token: string): Promise<StartResult> {
     const { settings, catalog, clock, logger, startKey } = this.dependencies;
@@ -90,11 +97,12 @@ export class LiveActivityStarts {
     return answer;
   }
 
-  /** When the object must be awake next: to forget a start or to delete a channel, and at most 10 minutes from now, so that memory lasts the whole window. */
+  /** When the object must be awake next: to send an update, to forget a start or to delete a channel, and at most 10 minutes from now, so that memory lasts the whole window. */
   nextWake(): number | undefined {
     const ends = [
       ...[...this.starts.values()].map((start) => start.until),
       ...[...this.channels.values()].map((channel) => channel.lastStart + startWindow),
+      this.updates.nextUpdate() ?? Number.POSITIVE_INFINITY,
     ].filter((end) => Number.isFinite(end));
     if (ends.length === 0) {
       return undefined;
@@ -102,8 +110,13 @@ export class LiveActivityStarts {
     return Math.min(...ends, this.dependencies.clock.now() + longestWake);
   }
 
-  /** Forgets the starts past their window, and deletes the channels with no start in the last 45 minutes. */
-  async forgetPast(): Promise<void> {
+  /** Does what is due at `nextWake`: sends the updates, forgets the starts past their window, and deletes the channels with no start in the last 45 minutes. */
+  async wake(): Promise<void> {
+    await this.updates.sendDue();
+    await this.forgetPast();
+  }
+
+  private async forgetPast(): Promise<void> {
     this.forgetPastStarts();
     const now = this.dependencies.clock.now();
     const due = [...this.channels.entries()].filter(([, channel]) => channel.lastStart + startWindow <= now);
@@ -137,7 +150,8 @@ export class LiveActivityStarts {
     if (station === undefined) {
       return { result: "unknown-station" };
     }
-    const content = await contentOfStation(station, catalog, departures, () => clock.now());
+    const reading = await readStation(station, catalog, departures);
+    const content = stationContent(station, reading.stations, reading.trains, catalog, clock.now());
     let refusal: { reason: string; environment: string } | undefined;
     for (const key of settings.keys) {
       const channelId = await this.channel(key, stationId);
@@ -148,6 +162,7 @@ export class LiveActivityStarts {
       const now = clock.now();
       const answer = await apns.start(key, token, startPayload(station, content, channelId, now), now + startExpiration);
       if (answer.ok) {
+        this.updates.follow(station, reading, content, now + startWindow);
         logger.info("live-activity-start", { result: "started", environment: key.environment });
         return { result: "started" };
       }
@@ -161,6 +176,25 @@ export class LiveActivityStarts {
     const reason = refusal?.reason ?? "no-answer";
     logger.info("live-activity-start", { result: "refused", reason, ...(refusal ? { environment: refusal.environment } : {}) });
     return { result: "refused", reason };
+  }
+
+  /** Sends an update on the channel of the station in each service; a log line holds the result and the service only. */
+  private async broadcast(stationId: string, payload: string): Promise<void> {
+    const { apns, logger } = this.dependencies;
+    const channels = [...this.channels.entries()].filter(([name]) => name.endsWith(`|${stationId}`)).map(([, channel]) => channel);
+    await Promise.all(
+      channels.map(async (channel) => {
+        const id = await channel.id;
+        if (typeof id !== "string") {
+          return;
+        }
+        const answer = await apns.broadcast(channel.key, id, payload);
+        logger.info(
+          "live-activity-update",
+          answer.ok ? { result: "sent", environment: channel.key.environment } : { result: "refused", reason: answer.reason, environment: channel.key.environment },
+        );
+      }),
+    );
   }
 
   /** The channel of the station in the service of the key, made at its first start; a failed one is made again at the next start. */
