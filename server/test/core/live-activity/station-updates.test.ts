@@ -276,7 +276,6 @@ describe("the updates of a Live Activity that the server started", () => {
 });
 
 describe("the updates when a stop has no train or does not answer, as the lock screen shows it today", () => {
-
   it("keeps the times shown when PRIM fails, then marks them stale once their first train has left, never empty", async () => {
     const harness = await startHarness();
     const sent = recordUpdates(harness);
