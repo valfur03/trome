@@ -271,7 +271,10 @@ public final class AutoLiveActivityModel {
         await refreshRegions(around: position)
     }
 
-    private func openTappedStation() async {
+}
+
+private extension AutoLiveActivityModel {
+    func openTappedStation() async {
         guard appIsActive, let stationId = pendingTappedStationId else { return }
         pendingTappedStationId = nil
         guard let station = catalog.station(withId: stationId) else { return }
@@ -292,9 +295,7 @@ public final class AutoLiveActivityModel {
             await show(station)
         }
     }
-}
 
-private extension AutoLiveActivityModel {
     func stateDidChange(from oldValue: AutoLiveActivityState) {
         guard state != oldValue else { return }
         let station = state.shown.flatMap { catalog.station(withId: $0.stationId) }
