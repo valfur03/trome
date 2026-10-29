@@ -8,6 +8,9 @@ target=${1:-production}
 commit=${2:-}
 cd "$(dirname "$0")/.."
 
+# What the Worker is built from: server/, contracts/, and the station list of the app, which the server bundles.
+server_files=". ../contracts ../ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json"
+
 case "$target" in
     production)
         branch=$(git rev-parse --abbrev-ref HEAD)
@@ -15,8 +18,9 @@ case "$target" in
             echo "make server-deploy deploys main only, and this folder is on '$branch'. Run it in the main folder, on main." >&2
             exit 1
         fi
-        if [ -n "$(git status --porcelain -- . ../contracts)" ]; then
-            echo "make server-deploy deploys only what is committed, and server/ or contracts/ has changes that are not committed." >&2
+        # shellcheck disable=SC2086 # the paths of the list have no space
+        if [ -n "$(git status --porcelain -- $server_files)" ]; then
+            echo "make server-deploy deploys only what is committed, and server/, contracts/ or the station list of the app has changes that are not committed." >&2
             exit 1
         fi
         env_flag=--env=
@@ -38,8 +42,8 @@ never_a_file="Never use a secrets file ('wrangler deploy --secrets-file', which 
 rerun="Then open this run on GitHub and press 'Re-run failed jobs'."
 
 if [ -n "$commit" ]; then
-    # A run deploys its own commit, and never older server code over newer: when main has moved on and server/ or
-    # contracts/ changed since this commit, the run of that newer commit deploys it.
+    # A run deploys its own commit, and never older server code over newer: when main has moved on and server/,
+    # contracts/ or the station list changed since this commit, the run of that newer commit deploys it.
     head=$(git rev-parse HEAD)
     if [ "$head" != "$commit" ]; then
         echo "This folder is at $head, not at $commit: nothing was deployed." >&2
@@ -50,8 +54,9 @@ if [ -n "$commit" ]; then
         exit 1
     fi
     tip=$(git rev-parse FETCH_HEAD)
-    if [ "$tip" != "$commit" ] && ! git diff --quiet "$commit" "$tip" -- . ../contracts; then
-        echo "This run deploys $commit, but main is now at $tip, which changes server/ or contracts/: the run of that newer commit deploys it. Nothing was deployed." >&2
+    # shellcheck disable=SC2086
+    if [ "$tip" != "$commit" ] && ! git diff --quiet "$commit" "$tip" -- $server_files; then
+        echo "This run deploys $commit, but main is now at $tip, which changes server/, contracts/ or the station list: the run of that newer commit deploys it. Nothing was deployed." >&2
         exit 1
     fi
 fi

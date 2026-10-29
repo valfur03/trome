@@ -1,6 +1,7 @@
 name: Server deploy
 
-# Deploys the server to its staging Worker after each push to main that changes server/ or contracts/,
+# Deploys the server to its staging Worker after each push to main that changes server/, contracts/
+# or the station list of the app, which the server bundles,
 # once make server-check passed on that commit (server/guide/deploy.md, "How a deploy happens").
 # The maintainer may start it by hand on main, to deploy again: Actions > Server deploy > Run workflow.
 # The repo is public, so its logs are public: no step prints the Cloudflare token, the account ID, the app token
@@ -13,6 +14,7 @@ on:
     paths:
       - "server/**"
       - "contracts/**"
+      - "ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json"
   workflow_dispatch:
 
 permissions: {}

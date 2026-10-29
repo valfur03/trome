@@ -72,6 +72,9 @@ esac
 FAKE
 chmod +x "$repo/server/node_modules/.bin/wrangler"
 echo '{}' > "$repo/contracts/a.json"
+stations=ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json
+mkdir -p "$repo/${stations%/*}"
+echo '[]' > "$repo/$stations"
 git -C "$repo" add -A
 git -C "$repo" commit -q -m init
 
@@ -123,6 +126,10 @@ echo change > "$repo/contracts/a.json"
 expect "production refuses changes that are not committed" "$(deploy production)" "refuses"
 expect "it does not deploy then" "$(deployed production)" "not deployed"
 git -C "$repo" checkout -q -- contracts
+echo '[1]' > "$repo/$stations"
+expect "production refuses a change of the station list that is not committed (the server bundles it)" "$(deploy production)" "refuses"
+expect "the message names the station list" "$(contains "$state/out" "server/, contracts/ or the station list of the app has changes that are not committed")" "yes"
+git -C "$repo" checkout -q -- "$stations"
 
 git -C "$repo" switch -q -c task/1
 expect "production refuses another branch" "$(deploy production)" "refuses"
@@ -148,6 +155,14 @@ git -C "$other/clone" -c user.email=test@example.com -c user.name=test commit -q
 git -C "$other/clone" push -q origin main
 rm "$cloudflare/staging/deployed"
 expect "run: main has moved on with no change of server/ or contracts/: the commit still deploys" "$(deploy staging "$commit")" "deploys"
+
+echo '[1]' > "$other/clone/$stations"
+git -C "$other/clone" -c user.email=test@example.com -c user.name=test commit -q -am "a change of the station list"
+git -C "$other/clone" push -q origin main
+rm "$cloudflare/staging/deployed"
+expect "run: main has moved on with a change of the station list, which the server bundles: the old commit refuses" "$(deploy staging "$commit")" "refuses"
+expect "run: it deploys nothing then (station list)" "$(deployed staging)" "not deployed"
+touch "$cloudflare/staging/deployed"
 
 echo '{"b":1}' > "$other/clone/contracts/a.json"
 git -C "$other/clone" -c user.email=test@example.com -c user.name=test commit -q -am "a change of contracts/"

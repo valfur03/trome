@@ -18,7 +18,7 @@ Both deploy commands stop when a secret of their Worker is not set, and say whic
 
 ## How a deploy happens
 
-A push to `main` that changes `server/` or `contracts/` starts the GitHub workflow **Server deploy** (`.github/workflows/server-deploy.yml`), and nobody types a command:
+A push to `main` that changes `server/`, `contracts/` or the station list of the app, which the server bundles, starts the GitHub workflow **Server deploy** (`.github/workflows/server-deploy.yml`), and nobody types a command:
 
 1. It runs `make server-check` on that commit.
 2. It deploys the commit to the staging Worker, with the commit as the tag and the message of the new version, which the Worker's **Deployments** page of the Cloudflare dashboard shows.
@@ -29,7 +29,7 @@ The production Worker is still deployed by hand, with `make server-deploy`.
 
 Before the deploy, the run refuses, and deploys nothing:
 
-- when `main` has moved on to a commit that changes `server/` or `contracts/`: the run of that newer commit deploys it, so an old run never puts older code back;
+- when `main` has moved on to a commit that changes one of them: the run of that newer commit deploys it, so an old run never puts older code back;
 - when a secret that `server/wrangler.jsonc` requires is not set on the staging Worker: the run names it.
 
 When a run is red, its failed step says why:
