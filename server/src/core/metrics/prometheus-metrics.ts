@@ -17,7 +17,7 @@ export const metricsContentType = "text/plain; version=0.0.4; charset=utf-8";
 export const allowedLabels = ["kind", "status"] as const;
 
 const names: Record<Tally, { name: string; help: string }> = {
-  appCalls: { name: "app_calls", help: "Requests for times with the right app token" },
+  appCalls: { name: "app_calls", help: "Requests for times with the right app token, and the asks of the server for the Live Activities that it started" },
   cacheHits: { name: "cache_hits", help: "App calls answered with an answer that the server already held" },
   heldAnswers: { name: "held_answers", help: "App calls answered with a held answer while the server could not ask PRIM" },
   outAnswers: { name: "out_answers", help: "App calls answered 503 out, with no times" },

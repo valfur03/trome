@@ -51,7 +51,6 @@ export class DepartureBoard {
   }
 }
 
-
 /** The trains of the last answer of a station, which the next one may keep for its stops that do not answer. */
 export interface LastTrains {
   departures: readonly Departure[];

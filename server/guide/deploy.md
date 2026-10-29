@@ -118,7 +118,7 @@ It shows a table: today so far, then each Paris day of the last 14 days, newest 
 Under the table, a line names each day with PRIM answers that the builds cannot read ([Unreadable PRIM answers](how-it-works.md#unreadable-prim-answers)).
 A day with no call is a line of zeros.
 When the server keeps no total from 14 days ago, the table starts at its oldest day, and says so.
-App calls are the requests for times with the right app token: a wrong token, `/health` and this read do not count.
+App calls are the requests for times with the right app token, and the asks of the server for the Live Activities that it started (each start, and each update for 45 minutes): a wrong token, `/health` and this read do not count.
 
 Add `FULL=1` for the whole report, as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls, errors and unreadable PRIM answers, hour by hour (`parisHour`), with no stop.
 Its `errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
