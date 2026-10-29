@@ -41,8 +41,6 @@ export interface LiveActivityStartsDependencies {
 export const startWindow = 45 * minute;
 /** A start that Apple has not given to the iPhone after this time is dropped: the rider has walked on. */
 const startExpiration = 2 * minute;
-/** The longest wait of the timer that keeps the object awake: Cloudflare holds an object awake for a pending timer of up to 15 minutes. */
-const longestWake = 10 * minute;
 /** Apple's answer when the token belongs to the other service. */
 const otherServiceReason = "BadDeviceToken";
 
@@ -97,7 +95,7 @@ export class LiveActivityStarts {
     return answer;
   }
 
-  /** When the object must be awake next: to send an update, to forget a start or to delete a channel, and at most 10 minutes from now, so that memory lasts the whole window. */
+  /** When the next work is due: to send an update, to forget a start or to delete a channel; undefined when memory holds nothing of the starts. */
   nextWake(): number | undefined {
     const ends = [
       ...[...this.starts.values()].map((start) => start.until),
@@ -107,7 +105,7 @@ export class LiveActivityStarts {
     if (ends.length === 0) {
       return undefined;
     }
-    return Math.min(...ends, this.dependencies.clock.now() + longestWake);
+    return Math.min(...ends);
   }
 
   /** Does what is due at `nextWake`: sends the updates, forgets the starts past their window, and deletes the channels with no start in the last 45 minutes. */

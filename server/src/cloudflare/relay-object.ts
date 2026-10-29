@@ -5,6 +5,7 @@ import { secretValues } from "../core/config/secrets";
 import { createStartKeys, LiveActivityStarts, type StartResult } from "../core/live-activity/live-activity-starts";
 import { StationCatalog } from "../core/live-activity/station-catalog";
 import { createLogger } from "../core/logging/logger";
+import { minute } from "../core/time/clock";
 import { createApnsClient } from "../core/push/apns-client";
 import { apnsSettings } from "../core/push/apns-settings";
 import { ProviderTokens } from "../core/push/provider-token";
@@ -17,6 +18,8 @@ import { DurableObjectSqlDatabase } from "./durable-object-sql-database";
 import { optionalSecrets } from "./optional-secrets";
 
 export const relayObjectName = "relay";
+/** A pending timer holds off a sleep for up to 15 minutes from its start. */
+const startsKeepAwake = 10 * minute;
 
 /**
  * The one server object. Cloudflare puts an idle object to sleep about 10 s after its last request when no timer and no call is open, and a sleep empties its memory.
@@ -25,6 +28,8 @@ export const relayObjectName = "relay";
  * an answer until the oldest age at which it is given (5 minutes), and a failed stop until the end of its pause.
  * A pending timer holds off eviction for up to 15 minutes from its start, and each timer here ends at most 5 minutes after the latest PRIM answer, so the object still sleeps through a quiet night.
  * A start of a Live Activity keeps the object awake 45 minutes more, with timers of at most 10 minutes: memory then knows the start, so that a second ask of the same rider sends no second alert, and the channel of the station, on which it sends the new minutes every 30 seconds to 2 minutes, and which it deletes at the end.
+ * The work of the starts that is due later (an update, the delete of a channel) runs in a storage alarm, not in a timer: each alarm is a new invocation, with its own limit of subrequests (50 on the Free plan), where a chain of timers could share the one of the request that started it.
+ * The alarm holds only a time; the memory of the starts stays in memory.
  */
 export class RelayObject extends DurableObject<Env> {
   private readonly relay: Relay;
@@ -98,6 +103,7 @@ export class RelayObject extends DurableObject<Env> {
       return await this.starts.start(stationId, startToken);
     } finally {
       this.planUseTimer();
+      await this.planStartsAlarm(false);
     }
   }
 
@@ -113,14 +119,33 @@ export class RelayObject extends DurableObject<Env> {
     return snapshot;
   }
 
-  /** The older version set a storage alarm to write the counts: one may still come after a deploy, and it only tidies the memory. */
-  override alarm(): void {
+  /** Does the work of the starts that is due. An older version set an alarm to write the counts: one may still come after a deploy, and finds nothing due. */
+  override async alarm(): Promise<void> {
     this.relay.forgetPastUse();
-    this.planUseTimer();
+    try {
+      await this.starts.wake();
+    } finally {
+      this.planUseTimer();
+      await this.planStartsAlarm(true);
+    }
   }
 
+  /** Sets the alarm at the next work of the starts, unless an earlier one is set; in the alarm, the one that runs is spent, so the next is set in any case. */
+  private async planStartsAlarm(inAlarm: boolean): Promise<void> {
+    const at = this.starts.nextWake();
+    if (at === undefined) {
+      return;
+    }
+    const planned = inAlarm ? null : await this.ctx.storage.getAlarm();
+    if (planned === null || planned > at) {
+      await this.ctx.storage.setAlarm(at);
+    }
+  }
+
+  /** The timer that keeps the object awake: at the end of the use of the relay's memory, and every 10 minutes while the starts hold something, whose work the alarm does. */
   private planUseTimer(): void {
-    const ends = [this.relay.nextUseEnd(), this.starts.nextWake()].filter((end) => end !== undefined);
+    const startsEnd = this.starts.nextWake() === undefined ? undefined : Date.now() + startsKeepAwake;
+    const ends = [this.relay.nextUseEnd(), startsEnd].filter((end) => end !== undefined);
     const useEnd = ends.length === 0 ? undefined : Math.min(...ends);
     if (useEnd === undefined || (this.useTimer !== undefined && this.useTimer.at <= useEnd)) {
       return;
@@ -131,9 +156,7 @@ export class RelayObject extends DurableObject<Env> {
     const handle = setTimeout(() => {
       this.useTimer = undefined;
       this.relay.forgetPastUse();
-      void this.starts.wake().finally(() => {
-        this.planUseTimer();
-      });
+      this.planUseTimer();
     }, useEnd - Date.now());
     this.useTimer = { at: useEnd, handle };
   }

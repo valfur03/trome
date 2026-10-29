@@ -181,6 +181,7 @@ So the app, woken near a station, sends the station and that token, and the serv
   It holds the first page only, as the start does, and is the same for every rider of the station: the lock screen shows one page at a time, and the content of every page of Châtelet is over Apple's 5,120 bytes for a channel.
   An update over that size is not sent, and the log line `live-activity-update` says `too-large`; a test checks that every station of the list, at its busiest, stays under 4,096 bytes.
   The updates go at priority 5, which Apple does not count against a budget per hour, and may group when the iPhone saves power.
+  They run in a storage alarm of the server object, which holds only a time: each alarm is a new invocation, with its own limit of 50 subrequests on the Free plan, where a chain of timers could share the limit of the request that started it.
 - **The cost of the updates.** Each started Live Activity costs PRIM calls for 45 minutes, not for the few minutes of an app on screen: in the model of [`relay-whole-day.test.ts`](../test/core/relay/relay-whole-day.test.ts), 15 riders with two starts a day would make 1,130 to 1,400 calls with no cap.
   The cap still holds: past it, riders read "Times unavailable" (15 to 30 in 100 answers of that model).
 

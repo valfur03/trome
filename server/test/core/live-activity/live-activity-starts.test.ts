@@ -219,13 +219,12 @@ describe("the start of a Live Activity", () => {
     }
   });
 
-  it("stays awake through the window with waits of at most 10 minutes, then deletes the channel and forgets all", async () => {
+  it("has work due through the window, then deletes the channel and forgets all", async () => {
     const { starts, apple, relay } = await startHarness();
     const startedAt = relay.clock.now();
     await starts.start(abbesses, token);
 
     for (let wake = starts.nextWake(); wake !== undefined; wake = starts.nextWake()) {
-      expect(wake - relay.clock.now()).toBeLessThanOrEqual(10 * minute);
       expect(wake).toBeGreaterThan(relay.clock.now());
       relay.clock.advance(wake - relay.clock.now());
       await starts.wake();
