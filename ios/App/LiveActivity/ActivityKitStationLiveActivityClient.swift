@@ -12,7 +12,9 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
 
     private nonisolated let idsEndedByTheApp = Mutex<Set<String>>([])
     private var followedIds: Set<String> = []
+    private var idsStartedByTheApp: Set<String> = []
     private var onRemoval: (@MainActor (LiveActivityRemoval) -> Void)?
+    private var onAppearance: (@MainActor () -> Void)?
 
     init() {
         #if DEBUG
@@ -22,6 +24,7 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         Task { [weak self] in
             for await activity in Activity<StationActivityAttributes>.activityUpdates {
                 self?.follow(activity)
+                self?.reportAppearance(of: activity)
             }
         }
     }
@@ -42,11 +45,12 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         guard areActivitiesEnabled else {
             throw StationLiveActivityError.turnedOff
         }
-        _ = try Activity.request(
+        let activity = try Activity.request(
             attributes: StationActivityAttributes(),
             content: ActivityContent(state: content, staleDate: content.staleDate),
             pushType: nil
         )
+        idsStartedByTheApp.insert(activity.id)
         #if DEBUG
         Self.log(content, sentBy: "start")
         #endif
@@ -96,6 +100,12 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         }
     }
 
+    /// A Live Activity that the app did not start, while it runs: the one that the server's push started.
+    private func reportAppearance(of activity: Activity<StationActivityAttributes>) {
+        guard !idsStartedByTheApp.contains(activity.id), activity.activityState == .active else { return }
+        onAppearance?()
+    }
+
     private func reportRemoval(of id: String) {
         let endedByTheApp = idsEndedByTheApp.withLock { $0.contains(id) }
         onRemoval?(
@@ -107,8 +117,12 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
     }
 }
 
-extension ActivityKitStationLiveActivityClient: LiveActivityRemovalWatcher {
+extension ActivityKitStationLiveActivityClient: LiveActivityWatcher {
     func watchRemovals(_ onRemoval: @escaping @MainActor (LiveActivityRemoval) -> Void) {
         self.onRemoval = onRemoval
+    }
+
+    func watchAppearances(_ onAppearance: @escaping @MainActor () -> Void) {
+        self.onAppearance = onAppearance
     }
 }

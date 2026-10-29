@@ -58,8 +58,11 @@ public final class AutoLiveActivityModel {
         }
         self.state = state
         stateDidChange(from: AutoLiveActivityState())
+        if liveActivity.isShowing {
+            adoptThePushedLiveActivity()
+        }
         endPauseIfOver()
-        watchLiveActivityRemovals()
+        watchLiveActivityChanges()
         observePosition()
         observeScreenStation()
         observeAutomaticMode()
@@ -251,6 +254,11 @@ public final class AutoLiveActivityModel {
     func syncWithSystem() {
         liveActivity.syncWithSystem()
         forgetTheExampleIfRemoved()
+        if liveActivity.isShowing, adoptThePushedLiveActivity() {
+            removedOutsideTheApp = nil
+            services.locationKeeper.begin()
+            restartFeed(fetchNow: false)
+        }
         guard !liveActivity.isShowing, let shown = state.shown else { return }
         removedOutsideTheApp = shown
         forgetShownLiveActivity()
@@ -269,8 +277,14 @@ public final class AutoLiveActivityModel {
         guard let station = catalog.station(withId: stationId) else { return }
         endPause(at: stationId, reason: "tap on the arrival notification")
         state.arrivalStationId = stationId
+        if liveActivity.isShowing, let shown = state.shown, shown.stationId == stationId {
+            return
+        }
+        if liveActivity.isShowing, let shown = state.shown, shown.isStartedByThePush {
+            state.shown = nil
+            await endLiveActivity()
+        }
         if liveActivity.isShowing, let shown = state.shown {
-            guard shown.stationId != stationId else { return }
             state.shown = .init(stationId: stationId, startedAt: shown.startedAt, hasBeenNear: true)
             await perform(.switchTo(station))
         } else {

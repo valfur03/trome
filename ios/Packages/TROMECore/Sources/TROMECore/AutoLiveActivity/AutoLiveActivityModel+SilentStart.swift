@@ -22,13 +22,38 @@ extension AutoLiveActivityModel {
         if isTheSameArrival {
             state.openArrivalStationId = station.id
         }
+        if isStarted {
+            followThePushedStart(at: station)
+            return
+        }
         endTheLocationKeptForTheAsk()
-        guard !isStarted else { return }
         guard isTheSameArrival, inputs.automaticMode.allowsAutomaticStart else {
             services.wakeLog?.record(.silentStart, "No fallback: the arrival at \(station.name) is over")
             return
         }
         await notifyAsTheFallback(at: station, because: nil)
+    }
+
+    /// The push may have landed during the ask: the app then follows it at once, and keeps the location as for a
+    /// Live Activity that it started. Otherwise it follows it when iOS next runs the app: at the push, at a wake of
+    /// a region, or when the rider opens it.
+    private func followThePushedStart(at station: Station) {
+        guard state.shown == nil else { return }
+        state.pushedStart = PushedStart(stationId: station.id, answeredAt: configuration.now())
+        syncWithSystem()
+        if state.shown == nil {
+            endTheLocationKeptForTheAsk()
+        }
+    }
+
+    /// Follows the Live Activity that the push brought, as one that the app started; true when it does.
+    @discardableResult
+    func adoptThePushedLiveActivity() -> Bool {
+        guard let adopted = configuration.rules.adoptThePushedLiveActivity(state: state) else { return false }
+        state = adopted
+        let name = shownStation?.name ?? adopted.shown?.stationId ?? ""
+        services.wakeLog?.record(.silentStart, "Follows the Live Activity that the server started: \(name)")
+        return true
     }
 
     private func notifyAsTheFallback(at station: Station, because reason: String?) async {

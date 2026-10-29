@@ -142,7 +142,7 @@ struct AutoLiveActivityModelTests {
                 notifier: notifier,
                 regionWatcher: watcher,
                 locationKeeper: keeper,
-                liveActivityRemovals: removals,
+                liveActivityChanges: removals,
                 wakeLog: wakeLog,
                 silentStart: silentStart
             ),

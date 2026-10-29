@@ -11,6 +11,8 @@ public struct LiveActivityRemoval: Equatable, Sendable {
 }
 
 @MainActor
-public protocol LiveActivityRemovalWatcher: AnyObject {
+public protocol LiveActivityWatcher: AnyObject {
     func watchRemovals(_ onRemoval: @escaping @MainActor (LiveActivityRemoval) -> Void)
+    /// Each Live Activity that iOS shows and that the app did not start, such as one that the server's push started.
+    func watchAppearances(_ onAppearance: @escaping @MainActor () -> Void)
 }

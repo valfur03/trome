@@ -6,9 +6,12 @@ private let pauseLogger = Logger(category: "LiveActivity")
 #endif
 
 extension AutoLiveActivityModel {
-    func watchLiveActivityRemovals() {
-        services.liveActivityRemovals.watchRemovals { [weak self] removal in
+    func watchLiveActivityChanges() {
+        services.liveActivityChanges.watchRemovals { [weak self] removal in
             self?.liveActivityWasRemoved(removal)
+        }
+        services.liveActivityChanges.watchAppearances { [weak self] in
+            self?.syncWithSystem()
         }
     }
 

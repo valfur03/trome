@@ -3,11 +3,20 @@ import Testing
 @testable import TROMECore
 
 @MainActor
-final class StubLiveActivityRemovals: LiveActivityRemovalWatcher {
+final class StubLiveActivityRemovals: LiveActivityWatcher {
     private var onRemoval: (@MainActor (LiveActivityRemoval) -> Void)?
+    private var onAppearance: (@MainActor () -> Void)?
 
     func watchRemovals(_ onRemoval: @escaping @MainActor (LiveActivityRemoval) -> Void) {
         self.onRemoval = onRemoval
+    }
+
+    func watchAppearances(_ onAppearance: @escaping @MainActor () -> Void) {
+        self.onAppearance = onAppearance
+    }
+
+    func reportAppearance() {
+        onAppearance?()
     }
 
     func report(endedByTheApp: Bool = false, activitiesAreEnabled: Bool = true) {

@@ -47,7 +47,7 @@ struct TROMEApp: App {
                 automaticMode: automaticModeModel
             ),
             regionWatcher: regionWatcher,
-            liveActivityRemovals: liveActivityClient
+            liveActivityChanges: liveActivityClient
         )
         let notificationResponseHandler = Self.connectSystemEvents(
             to: autoLiveActivityModel, liveActivity: liveActivityModel, regionWatcher: regionWatcher
@@ -124,7 +124,7 @@ struct TROMEApp: App {
         liveActivity: StationLiveActivityModel,
         inputs: AutoLiveActivityModel.Inputs,
         regionWatcher: CoreLocationStationRegionWatcher,
-        liveActivityRemovals: ActivityKitStationLiveActivityClient
+        liveActivityChanges: ActivityKitStationLiveActivityClient
     ) -> AutoLiveActivityModel {
         AutoLiveActivityModel(
             catalog: catalog,
@@ -134,7 +134,7 @@ struct TROMEApp: App {
                 notifier: UserNotificationArrivalNotifier(wakeLog: regionWatcher.wakeLog),
                 regionWatcher: regionWatcher,
                 locationKeeper: CoreLocationBackgroundLocationKeeper(),
-                liveActivityRemovals: liveActivityRemovals,
+                liveActivityChanges: liveActivityChanges,
                 wakeLog: regionWatcher.wakeLog,
                 silentStart: silentStartOfThisBuild(wakeLog: regionWatcher.wakeLog)
             ),

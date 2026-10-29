@@ -5,11 +5,22 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
         public var stationId: String
         public var startedAt: Date
         public var hasBeenNear: Bool
+        /// Started by the server's push: it listens to the channel of its station, so it cannot switch station.
+        public var isStartedByThePush: Bool
 
-        public init(stationId: String, startedAt: Date, hasBeenNear: Bool) {
+        public init(stationId: String, startedAt: Date, hasBeenNear: Bool, isStartedByThePush: Bool = false) {
             self.stationId = stationId
             self.startedAt = startedAt
             self.hasBeenNear = hasBeenNear
+            self.isStartedByThePush = isStartedByThePush
+        }
+
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            stationId = try container.decode(String.self, forKey: .stationId)
+            startedAt = try container.decode(Date.self, forKey: .startedAt)
+            hasBeenNear = try container.decode(Bool.self, forKey: .hasBeenNear)
+            isStartedByThePush = try container.decodeIfPresent(Bool.self, forKey: .isStartedByThePush) ?? false
         }
     }
 
@@ -19,6 +30,7 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
         case pause
         case openArrivalStationId
         case exampleStartedAt
+        case pushedStart
     }
 
     public var arrivalStationId: String?
@@ -27,6 +39,7 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
             if shown != nil {
                 openArrivalStationId = nil
                 exampleStartedAt = nil
+                pushedStart = nil
             }
         }
     }
@@ -34,6 +47,8 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
     public var pause: StationPause?
     var openArrivalStationId: String?
     public var exampleStartedAt: Date?
+    /// A start that the server took, until the app follows the Live Activity that it brings.
+    public var pushedStart: PushedStart?
 
     public init(
         arrivalStationId: String? = nil,
@@ -140,6 +155,7 @@ public struct AutoLiveActivityRules: Sendable {
 
     func waitsForAResume(state: AutoLiveActivityState, now: Date, onArrival response: ArrivalResponse) -> Bool {
         guard response == .start, state.shown == nil, let stationId = state.openArrivalStationId else { return false }
+        guard state.pushedStart?.awaitsItsLiveActivity(at: stationId, now: now) != true else { return false }
         return state.pause?.pauses(stationId, at: now) != true
     }
 
@@ -217,11 +233,14 @@ private extension AutoLiveActivityRules.Decision {
             arrival = .paused(station, until: pause.end)
             return
         }
+        if let shown = state.shown, shown.stationId == station.id {
+            arrival = .alreadyShown(station)
+            return
+        }
+        if let shown = state.shown, shown.isStartedByThePush {
+            end(because: .pushedForAnotherStation(arrivedAt: station))
+        }
         if let shown = state.shown {
-            guard shown.stationId != station.id else {
-                arrival = .alreadyShown(station)
-                return
-            }
             state.shown = .init(stationId: station.id, startedAt: shown.startedAt, hasBeenNear: true)
             actions.append(.switchTo(station))
             arrival = .switched(station)
