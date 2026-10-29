@@ -13,6 +13,11 @@ enum Fixture {
             .sorted()
     }
 
+    /// The examples of one route of the server: `departures`, or `live-activity` (the start of a Live Activity).
+    static func apiExampleNames(of route: String) throws -> [String] {
+        try apiExampleNames().filter { $0.hasPrefix("\(route)-") }
+    }
+
     static func apiExample(_ name: String) throws -> Data {
         try Data(contentsOf: contractsFolder("api").appending(path: "\(name).json"))
     }

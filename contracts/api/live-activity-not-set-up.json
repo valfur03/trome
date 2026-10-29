@@ -1,0 +1,24 @@
+{
+  "description": "The server has no key of Apple's push service, and does nothing else. The app falls back to its arrival notification.",
+  "request": {
+    "method": "POST",
+    "path": "/v1/stations/IDFM:monomodalStopPlace:43234/live-activity",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>",
+      "content-type": "application/json"
+    },
+    "body": {
+      "startToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  },
+  "response": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/json",
+      "cache-control": "no-store"
+    },
+    "body": {
+      "result": "not-set-up"
+    }
+  }
+}

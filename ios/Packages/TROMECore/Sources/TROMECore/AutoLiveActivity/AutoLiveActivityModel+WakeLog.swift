@@ -6,7 +6,7 @@ extension AutoLiveActivityModel {
             return
         }
         lastLoggedOutcomeKey = outcome.logKey
-        wakeLog.record(.decision, outcome.summary)
+        wakeLog.record(.decision, services.silentStart == nil ? outcome.summary : outcome.summaryWithASilentStart)
     }
 
     func log(_ ending: LiveActivityEnding?) {

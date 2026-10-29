@@ -20,7 +20,7 @@ struct APIExample: Decodable {
 }
 
 struct TrainServerContractTests {
-    static let exampleNames = (try? Fixture.apiExampleNames()) ?? []
+    static let exampleNames = (try? Fixture.apiExampleNames(of: "departures")) ?? []
     static let requestTime = Fixture.date("2026-10-02T08:30:00Z")
     private let abbesses = PRIMDeparturesProviderTests().abbesses
 
@@ -52,8 +52,10 @@ struct TrainServerContractTests {
         return (reason, retryAt)
     }
 
-    @Test func readsEveryExampleOfTheAppAPI() {
+    @Test func readsEveryExampleOfTheAppAPI() throws {
         #expect(Self.exampleNames.count >= 7)
+        let read = Self.exampleNames + LiveActivityStartContractTests.exampleNames
+        #expect(Set(try Fixture.apiExampleNames()) == Set(read))
     }
 
     @Test(arguments: ["departures-out-budget", "departures-out-prim-limit"])

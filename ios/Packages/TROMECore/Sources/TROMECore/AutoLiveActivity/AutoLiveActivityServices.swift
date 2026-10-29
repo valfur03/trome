@@ -77,19 +77,24 @@ extension AutoLiveActivityModel {
         public let locationKeeper: any BackgroundLocationKeeper
         public let liveActivityRemovals: any LiveActivityRemovalWatcher
         public let wakeLog: WakeLog?
+        /// Nil in a build with no push code (a free Apple ID, or a Release build until the silent start is on),
+        /// and in a build with no server: the app then notifies the arrival, as before.
+        public let silentStart: SilentStart?
 
         public init(
             notifier: any ArrivalNotifier,
             regionWatcher: any StationRegionWatcher,
             locationKeeper: any BackgroundLocationKeeper,
             liveActivityRemovals: any LiveActivityRemovalWatcher,
-            wakeLog: WakeLog? = nil
+            wakeLog: WakeLog? = nil,
+            silentStart: SilentStart? = nil
         ) {
             self.notifier = notifier
             self.regionWatcher = regionWatcher
             self.locationKeeper = locationKeeper
             self.liveActivityRemovals = liveActivityRemovals
             self.wakeLog = wakeLog
+            self.silentStart = silentStart
         }
     }
 

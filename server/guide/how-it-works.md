@@ -17,7 +17,7 @@ Each address answers `GET` and `HEAD` only, but the start of a Live Activity, wh
 
 `{stopRef}` is `STIF:StopArea:SP:<number>:` or `STIF:StopPoint:Q:<number>:`.
 A wrong or missing token gets `401`, and another stop reference gets `400`.
-[`contracts/api/`](../../contracts/api/) holds an example of each answer of the departures route.
+[`contracts/api/`](../../contracts/api/) holds an example of each answer of the departures route and of the start of a Live Activity.
 
 When the server cannot ask PRIM, it gives the answer that it holds for the stop, if that answer is less than 5 minutes old.
 Otherwise it answers `503`, with `{"status":"out","reason":...,"retryAt":...}` and `Retry-After`:

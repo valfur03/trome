@@ -74,6 +74,15 @@ A debug build can [shorten the 45 minutes](testing-tools.md#make-the-45-minute-l
 The notification has two actions, "Not for 1 h" ("Pas pendant 1 h") and "Not today" ("Pas aujourd’hui").
 Each one snoozes the automatic mode with no app opened, also when the phone is locked.
 
+### The silent start (Debug builds of a paid team)
+
+A Debug build with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and a server in `ios/Config/Server.xcconfig` replaces the notification of a background arrival with a start through the server.
+It needs a paid Apple Developer Program team, because a free Apple ID cannot sign the push capability; Release builds, and builds with no such setting, keep the notification.
+The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`), and the Live Activity comes on the lock screen with no notification and no tap.
+It asks once per arrival, and never when a Live Activity already shows.
+The notification comes instead, once, when Live Activities are off, when iOS gave no start token, or when the server cannot be reached, refuses, is not set up, or gives no answer within 10 seconds: iOS gives a woken app only seconds to run.
+The [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) writes each step.
+
 ## Snooze, turn off, and the pause after a swipe
 
 | | Snooze | Turn off | Swipe away |

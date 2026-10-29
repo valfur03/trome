@@ -1,0 +1,24 @@
+{
+  "description": "The same start token asked for the same station less than 45 minutes ago (iOS often gives the app the same event twice), so the server sends nothing to Apple. The app does nothing more, as after a start.",
+  "request": {
+    "method": "POST",
+    "path": "/v1/stations/IDFM:monomodalStopPlace:43234/live-activity",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>",
+      "content-type": "application/json"
+    },
+    "body": {
+      "startToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "cache-control": "no-store"
+    },
+    "body": {
+      "result": "already-started"
+    }
+  }
+}

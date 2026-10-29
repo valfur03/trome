@@ -111,8 +111,8 @@ struct AutoLiveActivityModelTests {
         )
     }
 
-    func makeModel(catalog: StationCatalog = Places.catalog) -> AutoLiveActivityModel {
-        let model = makeModel(locationService: locationService, keeper: keeper, catalog: catalog)
+    func makeModel(catalog: StationCatalog = Places.catalog, silentStart: SilentStart? = nil) -> AutoLiveActivityModel {
+        let model = makeModel(locationService: locationService, keeper: keeper, catalog: catalog, silentStart: silentStart)
         locationService.start()
         return model
     }
@@ -120,7 +120,8 @@ struct AutoLiveActivityModelTests {
     private func makeModel(
         locationService: LocationService,
         keeper: StubLocationKeeper,
-        catalog: StationCatalog = Places.catalog
+        catalog: StationCatalog = Places.catalog,
+        silentStart: SilentStart? = nil
     ) -> AutoLiveActivityModel {
         let clock = clock
         let now: @Sendable () -> Date = { clock.now }
@@ -140,7 +141,8 @@ struct AutoLiveActivityModelTests {
                 regionWatcher: watcher,
                 locationKeeper: keeper,
                 liveActivityRemovals: removals,
-                wakeLog: wakeLog
+                wakeLog: wakeLog,
+                silentStart: silentStart
             ),
             configuration: .init(store: AutoLiveActivityStore(storage: storage), now: now, sleep: sleep)
         )

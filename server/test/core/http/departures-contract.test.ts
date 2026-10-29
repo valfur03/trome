@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { route } from "../../../src/core/http/router";
+import type { StartResult } from "../../../src/core/live-activity/live-activity-starts";
 import { createLogger } from "../../../src/core/logging/logger";
 import { minute } from "../../../src/core/time/clock";
 import { answer } from "../relay/fake-prim-client";
@@ -9,7 +10,7 @@ import { primFixture } from "../relay/prim-fixtures";
 import { relayHarness, type RelayHarness } from "../relay/relay-harness";
 
 interface Example {
-  request: { method: string; path: string; headers: Record<string, string> };
+  request: { method: string; path: string; headers: Record<string, string>; body?: { startToken: string } };
   response: {
     status: number;
     headers: Record<string, string>;
@@ -50,13 +51,24 @@ const scenarios: Record<string, (harness: RelayHarness) => Promise<unknown>> = {
   "departures-bad-stop.json": () => Promise.resolve(),
 };
 
+/** The answers of the start of a Live Activity: the route says what the start gave, whatever Apple did. */
+const starts: Record<string, StartResult> = {
+  "live-activity-started.json": { result: "started" },
+  "live-activity-already-started.json": { result: "already-started" },
+  "live-activity-refused.json": { result: "refused", reason: "BadDeviceToken" },
+  "live-activity-refused-no-answer.json": { result: "refused", reason: "no-answer" },
+  "live-activity-not-set-up.json": { result: "not-set-up" },
+};
+
 function example(name: string): Example {
   return JSON.parse(readFileSync(`${folder}${name}`, "utf8")) as Example;
 }
 
 describe("the API examples of contracts/api/", () => {
   it("each have a scenario here", () => {
-    expect(readdirSync(folder).filter((name) => name.endsWith(".json")).sort()).toEqual(Object.keys(scenarios).sort());
+    expect(readdirSync(folder).filter((name) => name.endsWith(".json")).sort()).toEqual(
+      [...Object.keys(scenarios), ...Object.keys(starts)].sort(),
+    );
   });
 
   for (const [name, setUp] of Object.entries(scenarios)) {
@@ -90,6 +102,40 @@ describe("the API examples of contracts/api/", () => {
         expect(harness.prim.calls.length).toBe(callsBefore);
         expect(harness.relay.counts().days).toEqual([]);
       }
+    });
+  }
+
+  for (const [name, result] of Object.entries(starts)) {
+    it(`are what the server answers: ${name}`, async () => {
+      const { request, response } = example(name);
+      const asked: [string, string][] = [];
+      const headers = Object.fromEntries(
+        Object.entries(request.headers).map(([key, value]) => [key, value.replace("<APP_TOKEN>", appToken)]),
+      );
+      const harness = relayHarness({ now: requestTime });
+
+      const answered = await route(
+        new Request(`https://server.test${request.path}`, { method: request.method, headers, body: JSON.stringify(request.body) }),
+        {
+          logger: createLogger([], () => undefined),
+          clock: harness.clock,
+          tokens: { app: [appToken], owner: "owner-token-of-the-test" },
+          relay: { departures: () => Promise.reject(new Error("no departures in this test")),
+            counts: () => Promise.resolve(harness.relay.counts()), metrics: () => Promise.resolve(harness.relay.metrics()),
+          },
+          liveActivities: {
+            start: (stationId, startToken) => {
+              asked.push([stationId, startToken]);
+              return Promise.resolve(result);
+            },
+          },
+        },
+      );
+
+      expect(asked).toEqual([["IDFM:monomodalStopPlace:43234", request.body?.startToken]]);
+      expect(answered.status).toBe(response.status);
+      expect(Object.fromEntries(answered.headers)).toEqual(response.headers);
+      expect(await answered.json()).toEqual(response.body);
     });
   }
 });

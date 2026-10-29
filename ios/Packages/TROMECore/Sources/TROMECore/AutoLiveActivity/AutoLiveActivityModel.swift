@@ -214,7 +214,7 @@ public final class AutoLiveActivityModel {
     func perform(_ action: AutoLiveActivityRules.Action) async {
         switch action {
         case .notify(let station):
-            await services.notifier.notify(station)
+            await announceArrival(at: station)
         case .start(let station):
             await show(station)
         case .switchTo(let station):

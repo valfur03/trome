@@ -8,6 +8,7 @@ PRIM_API_KEY =
 TRAIN_SERVER_HOST =
 TRAIN_SERVER_APP_TOKEN =
 TROME_RELEASE_TEAM =
+TROME_SILENT_START =
 
 #include? "Local.xcconfig"
 #include? "Secrets.xcconfig"

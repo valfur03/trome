@@ -40,8 +40,11 @@ settings:
       TROME_WANTED_WIDGET_ID: $(TROME_CHECKED_DEBUG_WIDGET_ID_IF_$(TROME_OLD_SETTING_CHECK):default=$(APP_BUNDLE_ID).widget)
       WIDGET_BUNDLE_ID: $(TROME_REFUSED_ID_$(TROME_WANTED_WIDGET_ID:lower:identifier):default=$(TROME_WANTED_WIDGET_ID))
       RATP_APP_PRIM_API_KEY: $(PRIM_API_KEY)
-      RATP_APP_TRAIN_SERVER_HOST: ""
-      RATP_APP_TRAIN_SERVER_APP_TOKEN: ""
+      # A Debug build asks PRIM for its trains; only the silent start, when it is on, asks the server.
+      TROME_SILENT_START_SERVER_HOST_YES: $(TRAIN_SERVER_HOST)
+      TROME_SILENT_START_APP_TOKEN_YES: $(TRAIN_SERVER_APP_TOKEN)
+      RATP_APP_TRAIN_SERVER_HOST: $(TROME_SILENT_START_SERVER_HOST_$(TROME_SILENT_START:default=NO))
+      RATP_APP_TRAIN_SERVER_APP_TOKEN: $(TROME_SILENT_START_APP_TOKEN_$(TROME_SILENT_START:default=NO))
     Release:
       APP_BUNDLE_ID: io.github.valfur03.trome
       WIDGET_BUNDLE_ID: io.github.valfur03.trome.widget
@@ -109,6 +112,14 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      # The silent start (TROME_SILENT_START = YES in Config/Local.xcconfig, for a paid team only) compiles the push
+      # code and adds the push capability. Release keeps it out until the silent start is turned on for the store.
+      configs:
+        Debug:
+          TROME_SILENT_START_CONDITION_YES: SILENT_START
+          TROME_SILENT_START_ENTITLEMENTS_YES: Config/SilentStart.entitlements
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) $(TROME_SILENT_START_CONDITION_$(TROME_SILENT_START:default=NO))
+          CODE_SIGN_ENTITLEMENTS: $(TROME_SILENT_START_ENTITLEMENTS_$(TROME_SILENT_START:default=NO))
 
   TROMEWidget:
     type: app-extension

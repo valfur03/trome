@@ -79,6 +79,7 @@ private struct WakeLogRow: View {
         case .regions: "map"
         case .decision: "arrow.triangle.branch"
         case .notification: "bell"
+        case .silentStart: "dot.radiowaves.up.forward"
         }
     }
 
@@ -89,6 +90,7 @@ private struct WakeLogRow: View {
         case .regions: .teal
         case .decision: .orange
         case .notification: .green
+        case .silentStart: .purple
         }
     }
 }

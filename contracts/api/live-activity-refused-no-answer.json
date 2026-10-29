@@ -1,0 +1,25 @@
+{
+  "description": "Apple's push service did not answer the server. The app falls back to its arrival notification.",
+  "request": {
+    "method": "POST",
+    "path": "/v1/stations/IDFM:monomodalStopPlace:43234/live-activity",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>",
+      "content-type": "application/json"
+    },
+    "body": {
+      "startToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  },
+  "response": {
+    "status": 502,
+    "headers": {
+      "content-type": "application/json",
+      "cache-control": "no-store"
+    },
+    "body": {
+      "result": "refused",
+      "reason": "no-answer"
+    }
+  }
+}

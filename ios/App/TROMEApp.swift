@@ -135,7 +135,8 @@ struct TROMEApp: App {
                 regionWatcher: regionWatcher,
                 locationKeeper: CoreLocationBackgroundLocationKeeper(),
                 liveActivityRemovals: liveActivityRemovals,
-                wakeLog: regionWatcher.wakeLog
+                wakeLog: regionWatcher.wakeLog,
+                silentStart: silentStartOfThisBuild(wakeLog: regionWatcher.wakeLog)
             ),
             configuration: .init(
                 store: AutoLiveActivityStore(storage: UserDefaults.standard),
@@ -205,6 +206,25 @@ struct TROMEApp: App {
         return TrainServerConfiguration(infoDictionary: Bundle.main.infoDictionary).map { server in
             PRIMDeparturesProvider(source: .server(server), httpClient: URLSession(configuration: .ephemeral))
         }
+        #endif
+    }
+
+    /// The start of the Live Activity through the server, with no notification and no tap. Its push code is compiled
+    /// only into a build that a paid team signs (`TROME_SILENT_START` in `ios/Config/Local.xcconfig`): a free Apple ID
+    /// cannot sign the push capability. A Release build keeps it off, so the store build notifies as before.
+    private static func silentStartOfThisBuild(wakeLog: WakeLog?) -> SilentStart? {
+        #if SILENT_START
+        guard let server = TrainServerConfiguration(infoDictionary: Bundle.main.infoDictionary) else {
+            wakeLog?.record(.silentStart, "Silent start off: this build has no server")
+            return nil
+        }
+        return SilentStart(
+            starter: ServerLiveActivityStarter(server: server, httpClient: URLSession(configuration: .ephemeral)),
+            tokens: ActivityKitPushToStartTokenSource(wakeLog: wakeLog),
+            wakeLog: wakeLog
+        )
+        #else
+        nil
         #endif
     }
 

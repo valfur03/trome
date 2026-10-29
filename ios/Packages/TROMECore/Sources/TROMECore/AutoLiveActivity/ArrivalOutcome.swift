@@ -30,6 +30,12 @@ enum ArrivalOutcome: Equatable, Sendable {
         return "noStationNear:\(nearest?.station.id ?? "")"
     }
 
+    /// With the silent start, an arrival in the background asks the server first: the notification is only its fallback.
+    var summaryWithASilentStart: String {
+        guard case .notified(let station) = self else { return summary }
+        return "Arrived in the background: \(station.name)"
+    }
+
     var summary: String {
         let arrivalRadius = Int(AutoLiveActivityRules.arrivalRadiusMeters)
         let stopRadius = Int(AutoLiveActivityRules.stopRadiusMeters)
