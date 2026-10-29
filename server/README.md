@@ -25,7 +25,7 @@ Neither needs a Cloudflare account.
 
 The local server uses fake secrets, from `server/.dev.vars`, which it creates and git ignores.
 So it never gets real trains: PRIM refuses its fake key, and you check the answers for trains in the unit tests, which fake PRIM.
-`make check` runs `make server-check` when your branch changes `server/` or `contracts/`.
+`make check` runs `make server-check` when your branch changes `server/`, `contracts/` or the station list of the app, which the server bundles.
 
 ## Find your way in the code
 

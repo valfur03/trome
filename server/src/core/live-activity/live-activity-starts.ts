@@ -74,7 +74,11 @@ export class LiveActivityStarts {
       logger.info("live-activity-start", { ...answer });
       return answer;
     }
-    const result = this.send(settings, stationId, token);
+    // A fault of the server is a refusal, so that the app falls back and the next ask tries again: an entry left with no end would refuse that rider until a sleep.
+    const result = this.send(settings, stationId, token).catch((): StartResult => {
+      logger.error("live-activity-start", { result: "refused", reason: "server-error" });
+      return { result: "refused", reason: "server-error" };
+    });
     const entry = { until: Number.POSITIVE_INFINITY, result };
     this.starts.set(key, entry);
     const answer = await result;

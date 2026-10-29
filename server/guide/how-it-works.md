@@ -157,7 +157,7 @@ So the app, woken near a station, sends the station and that token, and the serv
 |---|---|---|---|
 | `{"result":"started"}` | `200` | Apple took the start. | Nothing more. |
 | `{"result":"already-started"}` | `200` | The same token asked for the same station less than 45 minutes ago, and the server sent nothing. | Nothing more. |
-| `{"result":"refused","reason":"<reason>"}` | `502` | Apple refused the start with this reason (`BadDeviceToken`, `Unregistered`, `TooManyRequests`, ...), or `no-answer` when Apple did not answer. | Its own way to start. |
+| `{"result":"refused","reason":"<reason>"}` | `502` | Apple refused the start with this reason (`BadDeviceToken`, `Unregistered`, `TooManyRequests`, ...), `no-answer` when Apple did not answer, or `server-error` on a fault of the server. | Its own way to start. |
 | `{"result":"not-set-up"}` | `503` | The server has no key of Apple's push service ([the secrets](deploy.md#the-secrets)), and did nothing else. | Its own way to start. |
 
 `{stationId}` is the id of a station of the app's list, such as `IDFM:22059`; another id gets `400`, and a body with no start token gets `400`.

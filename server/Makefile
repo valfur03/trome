@@ -48,7 +48,7 @@ server-check-if-changed:
 	@if ./scripts/server-changed.sh $(SERVER_BASE); then \
 		$(MAKE) --no-print-directory server-check; \
 	else \
-		echo "server/ and contracts/ have no change since $(SERVER_BASE): skipping make server-check"; \
+		echo "server/, contracts/ and the station list of the app have no change since $(SERVER_BASE): skipping make server-check"; \
 	fi
 
 server-dev: server-setup

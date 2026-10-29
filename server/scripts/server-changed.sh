@@ -15,8 +15,13 @@ if [ -z "$merge_base" ]; then
     exit 0
 fi
 
-if ! git diff --quiet "$merge_base" -- server contracts; then
+# The server also bundles the station list of the app, so a change of it alone checks the server too.
+watched="server contracts ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json"
+
+# shellcheck disable=SC2086 # the paths of the list have no space
+if ! git diff --quiet "$merge_base" -- $watched; then
     exit 0
 fi
 
-[ -n "$(git ls-files --others --exclude-standard -- server contracts)" ]
+# shellcheck disable=SC2086
+[ -n "$(git ls-files --others --exclude-standard -- $watched)" ]

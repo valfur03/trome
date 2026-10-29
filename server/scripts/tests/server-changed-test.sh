@@ -46,4 +46,13 @@ git -C "$repo" switch -q -c task/2
 echo x > "$repo/server/new.ts"
 expect "a new file in server/" "$(changed)" "changed"
 
+git -C "$repo" switch -q main
+rm "$repo/server/new.ts"
+git -C "$repo" switch -q -c task/3
+mkdir -p "$repo/ios/Packages/TROMECore/Sources/TROMECore/Resources"
+echo "{}" > "$repo/ios/Packages/TROMECore/Sources/TROMECore/Resources/stations.json"
+git -C "$repo" add -A
+git -C "$repo" commit -q -m stations
+expect "a change of the station list of the app, which the server bundles" "$(changed)" "changed"
+
 [ "$failures" -eq 0 ]

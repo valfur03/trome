@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { secretValues } from "../../../src/core/config/secrets";
 import { contentOfStation } from "../../../src/core/live-activity/content-of-station";
 import { createStartKeys, LiveActivityStarts, startWindow } from "../../../src/core/live-activity/live-activity-starts";
@@ -227,6 +227,18 @@ describe("the start of a Live Activity", () => {
     silent.apple.answerWith(() => "no-answer");
     expect(await silent.starts.start(abbesses, token)).toEqual({ result: "refused", reason: "no-answer" });
     expect(silent.apple.starts).toEqual([]);
+  });
+
+  it("answers refused on a fault of the server, logs no token, and starts at the next ask", async () => {
+    const { starts, apple, relay, logLines } = await startHarness();
+    vi.spyOn(relay.relay, "departures").mockRejectedValueOnce(new Error(`fault with ${token}`));
+
+    expect(await starts.start(abbesses, token)).toEqual({ result: "refused", reason: "server-error" });
+    expect(apple.starts).toEqual([]);
+    expect(logLines.join("\n")).not.toContain(token);
+
+    expect(await starts.start(abbesses, token)).toEqual({ result: "started" });
+    expect(apple.starts).toHaveLength(1);
   });
 
   it("uses only the service of the key that is set", async () => {
