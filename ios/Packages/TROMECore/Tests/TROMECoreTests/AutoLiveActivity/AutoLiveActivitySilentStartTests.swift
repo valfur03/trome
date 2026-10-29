@@ -17,7 +17,9 @@ extension AutoLiveActivityModelTests {
 
     func silentStart(_ starter: StubLiveActivityStarter, tokens: StubStartTokens = StubStartTokens()) -> SilentStart {
         let clock = clock
-        return SilentStart(starter: starter, tokens: tokens, wakeLog: wakeLog, sleep: { try await clock.sleep(for: $0) })
+        return SilentStart(
+            starter: starter, tokens: tokens, wakeLog: wakeLog, sleep: { try await clock.sleep(for: $0) }
+        )
     }
 
     func sameArrivalLine(at station: Station) -> String {
@@ -106,7 +108,10 @@ extension AutoLiveActivityModelTests {
 
         #expect(starter.asks.isEmpty)
         #expect(notifier.notified == [Places.stationA])
-        #expect(silentStartLines.suffix(2) == ["No start token from iOS within 10 s", "Fallback: the arrival notification"])
+        #expect(silentStartLines.suffix(2) == [
+            "No start token from iOS within 10 s",
+            "Fallback: the arrival notification"
+        ])
     }
 
     @Test func notifiesWithNoAskWhenLiveActivitiesAreOffInSettings() async {

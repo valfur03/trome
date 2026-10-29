@@ -112,7 +112,9 @@ struct AutoLiveActivityModelTests {
     }
 
     func makeModel(catalog: StationCatalog = Places.catalog, silentStart: SilentStart? = nil) -> AutoLiveActivityModel {
-        let model = makeModel(locationService: locationService, keeper: keeper, catalog: catalog, silentStart: silentStart)
+        let model = makeModel(
+            locationService: locationService, keeper: keeper, catalog: catalog, silentStart: silentStart
+        )
         locationService.start()
         return model
     }
