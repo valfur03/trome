@@ -71,7 +71,7 @@ It finds them in two steps.
 The render test records SwiftUI's own layout of each text (`Text.LayoutKey`): where it is, whether it is cut, and how many characters show.
 Then, on the Mac, text recognition reads each cut text in its part of the image, and the command compares it with the texts of the drawn state to know whether it is a time, a destination, a label or the station name.
 When the text recognition fails, the report still gives the too tall drawings of each language, lists no cut text and no breach, and ends with an error: an empty reading would count as a destination cut to nothing.
-It fails on GitHub's Mac, so the workflow **Release checks** draws every view and counts the too tall ones there, and the cut texts and the breaches are read only on a Mac, with `make live-activity-render`.
+It fails on GitHub's Mac, so the workflow **Release checks** draws every view and counts the too tall ones there, and the cut texts and the breaches are read only with `make live-activity-render` on your own Mac.
 Cut texts that are none of these, for example "Horaires indisponibles", are counted as other cut texts, and a person reads them.
 It looks at the images only, so at the stations that have one, and the summary says how many stations that is.
 
