@@ -23,7 +23,12 @@ extension PhoneSetRecorder {
         ]) { storage in
             _ = automaticMode(in: storage, now: shown.now)
             var state = AutoLiveActivityState(arrivalStationId: station.id)
-            state.shown = .init(stationId: station.id, startedAt: startedAt, hasBeenNear: true, isStartedByThePush: true)
+            state.shown = .init(
+                stationId: station.id,
+                startedAt: startedAt,
+                hasBeenNear: true,
+                isStartedByThePush: true
+            )
             AutoLiveActivityStore(storage: storage).save(state)
             StationLiveActivityInputsStore(storage: storage).save(.init(station: station, trains: shown.trains))
         }

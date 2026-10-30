@@ -251,14 +251,15 @@ release-server-timing:
 	@./scripts/release-server-timing.sh Config/Server.xcconfig
 
 # At each upload: the build of tag builds/<version>/<build> records what it keeps on the phone, from its own code.
+phone-set-record: PHONE_SET_TAG = builds/$(subst -,/,$(BUILD))
+phone-set-record: PHONE_SET_OUT = $(abspath $(CURDIR)/../contracts/phone/$(BUILD))
 phone-set-record:
 	@[ -n "$(BUILD)" ] || { echo "phone-set-record: name the build, for example BUILD=1.0.0-4"; exit 1; }
-	@tag="builds/$$(echo '$(BUILD)' | sed 's|-|/|')"; out="$(CURDIR)/../contracts/phone/$(BUILD)"; \
-	git rev-parse -q --verify "$$tag^{commit}" > /dev/null || { echo "phone-set-record: no tag $$tag: tag the build first"; exit 1; }; \
-	git diff --quiet "$$tag" -- $(CORE_PACKAGE) || { echo "phone-set-record: $(CORE_PACKAGE) is not the code of $$tag: record from the commit of the build"; exit 1; }; \
-	[ ! -e "$$out" ] || { echo "phone-set-record: contracts/phone/$(BUILD) exists, and a recorded set is never written again"; exit 1; }; \
-	PHONE_SET_RECORD="$$out" $(BUILD_GATE) swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors --filter PhoneSetRecorder \
-		&& echo "phone-set-record: wrote contracts/phone/$(BUILD)/: commit it"
+	@git rev-parse -q --verify "$(PHONE_SET_TAG)^{commit}" > /dev/null || { echo "phone-set-record: no tag $(PHONE_SET_TAG): tag the build first"; exit 1; }
+	@git diff --quiet "$(PHONE_SET_TAG)" -- $(CORE_PACKAGE) || { echo "phone-set-record: $(CORE_PACKAGE) is not the code of $(PHONE_SET_TAG): record from the commit of the build"; exit 1; }
+	@[ ! -e "$(PHONE_SET_OUT)" ] || { echo "phone-set-record: contracts/phone/$(BUILD) exists, and a recorded set is never written again"; exit 1; }
+	@$(BUILD_GATE) env PHONE_SET_RECORD="$(PHONE_SET_OUT)" swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors --filter PhoneSetRecorder
+	@echo "phone-set-record: wrote contracts/phone/$(BUILD)/: commit it"
 
 # Not in make check: it calls the production server with the tokens of the maintainer's own file.
 release-tokens-check:

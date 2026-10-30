@@ -60,7 +60,7 @@ struct PhoneSetTests {
         case "snoozed":
             let until = try #require(phone.rider.snoozedUntil.map(Fixture.date))
             #expect(mode(until.addingTimeInterval(-1)).mode == .snoozed(until: until))
-            #expect(mode(until.addingTimeInterval(-1)).allowsAutomaticStart == false, "the snooze ended before its time")
+            #expect(!mode(until.addingTimeInterval(-1)).allowsAutomaticStart, "the snooze ended before its time")
             #expect(mode(until).allowsAutomaticStart, "the snooze did not end at its time")
         case nil:
             #expect(phone.storage.values[AutomaticModeStore.key] == nil)
@@ -98,7 +98,8 @@ struct PhoneSetTests {
     func theLastTimesOfTheLiveActivityStay(_ path: String) throws {
         let phone = try RecordedPhone(path)
         guard let expected = phone.rider.lastTimes else { return }
-        let inputs = try #require(StationLiveActivityInputsStore(storage: phone.storage).load(), "the last times are lost")
+        let store = StationLiveActivityInputsStore(storage: phone.storage)
+        let inputs = try #require(store.load(), "the last times are lost")
         #expect(inputs.station.id == expected.stationId)
         switch inputs.trains {
         case .departures(let board, let updatedAt):
@@ -128,62 +129,13 @@ struct PhoneSetTests {
 extension PhoneSetTests {
     static let someDay = Fixture.date("2026-10-30T08:00:00Z")
 
-    /// What the rider set, which `PhoneSetRecorder` wrote next to the bytes of the app.
-    struct Rider: Decodable {
-        struct Shown: Decodable {
-            var stationId: String
-            var startedAt: String
-            var hasBeenNear: Bool
-            var isStartedByThePush: Bool?
-        }
-
-        struct Pause: Decodable {
-            var stationId: String
-            var end: String
-        }
-
-        struct LastTimes: Decodable {
-            var stationId: String
-            var updatedAt: String?
-            var departures: Int?
-            var noLiveData: Bool?
-        }
-
-        struct PushedStart: Decodable {
-            var stationId: String
-            var answeredAt: String
-        }
-
-        var automaticMode: String?
-        var snoozedUntil: String?
-        var arrivalStationId: String?
-        var shown: Shown?
-        var pause: Pause?
-        var lastTimes: LastTimes?
-        var pushedStart: PushedStart?
-    }
-
-    /// The `UserDefaults` of one state of a set, and what the rider set.
-    struct RecordedPhone {
-        let storage = PhoneSetRecorder.RecordingStore()
-        let rider: Rider
-
-        init(_ path: String) throws {
-            let folder = try Fixture.contractsFolder("phone").appending(path: path, directoryHint: .isDirectory)
-            for file in try FileManager.default.contentsOfDirectory(atPath: folder.path()) where file.hasSuffix(".json") {
-                guard file != "rider.json" else { continue }
-                storage.values[String(file.dropLast(".json".count))] = try Data(contentsOf: folder.appending(path: file))
-            }
-            rider = try JSONDecoder().decode(Rider.self, from: Data(contentsOf: folder.appending(path: "rider.json")))
-        }
-    }
-
     nonisolated static func paths(in part: String) throws -> [String] {
         try setNames().flatMap { set in try names(in: "\(set)/\(part)").map { "\(set)/\(part)/\($0)" } }
     }
 
     nonisolated static func names(in path: String) throws -> [String] {
-        try FileManager.default.contentsOfDirectory(atPath: Fixture.contractsFolder("phone").appending(path: path).path())
+        let folder = try Fixture.contractsFolder("phone").appending(path: path)
+        return try FileManager.default.contentsOfDirectory(atPath: folder.path())
             .filter { !$0.hasPrefix(".") }
             .sorted()
     }
@@ -251,5 +203,57 @@ extension PhoneSetTests {
         default:
             false
         }
+    }
+}
+
+/// What the rider set, which `PhoneSetRecorder` wrote next to the bytes of the app.
+struct PhoneSetRider: Decodable {
+    struct Shown: Decodable {
+        var stationId: String
+        var startedAt: String
+        var hasBeenNear: Bool
+        var isStartedByThePush: Bool?
+    }
+
+    struct Pause: Decodable {
+        var stationId: String
+        var end: String
+    }
+
+    struct LastTimes: Decodable {
+        var stationId: String
+        var updatedAt: String?
+        var departures: Int?
+        var noLiveData: Bool?
+    }
+
+    struct PushedStart: Decodable {
+        var stationId: String
+        var answeredAt: String
+    }
+
+    var automaticMode: String?
+    var snoozedUntil: String?
+    var arrivalStationId: String?
+    var shown: Shown?
+    var pause: Pause?
+    var lastTimes: LastTimes?
+    var pushedStart: PushedStart?
+}
+
+/// The `UserDefaults` of one state of a set, and what the rider set.
+struct RecordedPhone {
+    let storage = PhoneSetRecorder.RecordingStore()
+    let rider: PhoneSetRider
+
+    init(_ path: String) throws {
+        let folder = try Fixture.contractsFolder("phone").appending(path: path, directoryHint: .isDirectory)
+        let files = try FileManager.default.contentsOfDirectory(atPath: folder.path())
+        for file in files where file.hasSuffix(".json") && file != "rider.json" {
+            let key = String(file.dropLast(".json".count))
+            storage.values[key] = try Data(contentsOf: folder.appending(path: file))
+        }
+        let rider = try Data(contentsOf: folder.appending(path: "rider.json"))
+        self.rider = try JSONDecoder().decode(PhoneSetRider.self, from: rider)
     }
 }

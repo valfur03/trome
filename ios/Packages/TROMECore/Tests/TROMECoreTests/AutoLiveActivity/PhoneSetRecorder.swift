@@ -33,7 +33,8 @@ struct PhoneSetRecorder {
             automaticMode(in: storage, now: now).setOn(false)
         }
         let until = now.addingTimeInterval(60 * 60)
-        try record("automatic-snoozed", rider: ["automaticMode": "snoozed", "snoozedUntil": Self.text(until)]) { storage in
+        let snoozed: [String: Any] = ["automaticMode": "snoozed", "snoozedUntil": Self.text(until)]
+        try record("automatic-snoozed", rider: snoozed) { storage in
             automaticMode(in: storage, now: now).snooze(for: .oneHour)
         }
     }
@@ -137,7 +138,7 @@ extension PhoneSetRecorder {
     /// The next trains of a case, as this build reads the answers of the server for its stops.
     static func trains(of name: String) async throws -> Trains {
         let file = try contractsFolder("live-activity/cases").appending(path: "\(name).json")
-        let recordedCase = try JSONDecoder().decode(RecordedCase.self, from: Data(contentsOf: file))
+        let recordedCase = try JSONDecoder().decode(PhoneSetCase.self, from: Data(contentsOf: file))
         let station = try #require(StationCatalog.bundled().station(withId: recordedCase.station), "\(name)")
         let now = try date(recordedCase.now)
         let primFolder = try contractsFolder("prim")
@@ -208,28 +209,29 @@ extension PhoneSetRecorder {
     }
 }
 
-extension PhoneSetRecorder {
-    struct RecordedCase: Decodable {
-        struct Answer: Decodable {
-            var prim: String?
-            var answeredAt: String?
-            var out: String?
-            var retryAt: String?
-        }
-
-        var station: String
-        var now: String
-        var answers: [String: Answer]
+/// A case of `contracts/live-activity/cases/`: a station, a time, and the answer of the server for each stop.
+struct PhoneSetCase: Decodable {
+    struct Answer: Decodable {
+        var prim: String?
+        var answeredAt: String?
+        var out: String?
+        var retryAt: String?
     }
 
+    var station: String
+    var now: String
+    var answers: [String: Answer]
+}
+
+extension PhoneSetRecorder {
     /// The server of a case: the PRIM answer of each stop with its time, or an "out" with its retry time, as the
     /// server sends them to every build (`contracts/api/`).
     final class CaseHTTPClient: HTTPClient {
-        let answers: [String: RecordedCase.Answer]
+        let answers: [String: PhoneSetCase.Answer]
         let primFolder: URL
         let now: Date
 
-        init(answers: [String: RecordedCase.Answer], primFolder: URL, now: Date) {
+        init(answers: [String: PhoneSetCase.Answer], primFolder: URL, now: Date) {
             self.answers = answers
             self.primFolder = primFolder
             self.now = now
@@ -237,27 +239,27 @@ extension PhoneSetRecorder {
 
         func data(for request: URLRequest) async throws -> (Data, URLResponse) {
             let path = request.url?.absoluteString.removingPercentEncoding ?? ""
-            guard let url = request.url, let answer = answers.first(where: { path.contains("/\($0.key)/") })?.value else {
-                throw RecorderError.noAnswer(path)
-            }
-            let (body, status, headers) = try reply(answer, to: path)
+            let answer = answers.first { path.contains("/\($0.key)/") }?.value
+            guard let url = request.url, let answer else { throw RecorderError.noAnswer(path) }
+            let (body, headers) = try reply(answer, to: path)
+            let status = answer.out == nil ? 200 : 503
             let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: "HTTP/1.1", headerFields: headers)
             return (body, try #require(response))
         }
 
-        private func reply(_ answer: RecordedCase.Answer, to path: String) throws -> (Data, Int, [String: String]) {
+        private func reply(_ answer: PhoneSetCase.Answer, to path: String) throws -> (Data, [String: String]) {
             if let reason = answer.out {
                 let retryAt = try PhoneSetRecorder.date(answer.retryAt ?? "")
                 let body = try JSONSerialization.data(withJSONObject: [
                     "status": "out", "reason": reason, "retryAt": answer.retryAt ?? ""
                 ])
                 let retryAfter = Int(max(0, retryAt.timeIntervalSince(now)).rounded(.up))
-                return (body, 503, ["Retry-After": String(retryAfter)])
+                return (body, ["Retry-After": String(retryAfter)])
             }
             guard let prim = answer.prim, let answeredAt = answer.answeredAt else { throw RecorderError.noAnswer(path) }
             let body = try Data(contentsOf: primFolder.appending(path: "\(prim).json"))
             let lastModified = Self.httpDate(try PhoneSetRecorder.date(answeredAt))
-            return (body, 200, ["Content-Type": "application/json", "Last-Modified": lastModified])
+            return (body, ["Content-Type": "application/json", "Last-Modified": lastModified])
         }
 
         private static func httpDate(_ date: Date) -> String {
