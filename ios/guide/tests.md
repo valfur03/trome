@@ -34,7 +34,7 @@ To write one:
 - Read a recorded PRIM answer from `contracts/prim/` with `Fixture.data(_:)`, such as `Fixture.data("stop-monitoring-abbesses")`.
 - When a change of the app changes the content of the Live Activity or the rules of a line, `LiveActivityContentContractTests` fails: the server builds the same content for a start, from `contracts/live-activity/`.
   Run it with `LIVE_ACTIVITY_CONTRACT_WRITE=1` to write the new contents and line data, then change the server in the same change until `make server-check` passes.
-- When a change of a value that the app keeps on the phone (Automatic mode, the Live Activity that it follows, its last times) or of the content of the Live Activity would make an update forget it, `PhoneSetTests` fails: it reads the values that each build in the field wrote, from `contracts/phone/`.
+- When a change of a value that the app keeps on the phone (Automatic mode, the Live Activity that it follows, its last times, the line page that the rider tapped to) or of the content of the Live Activity would make an update forget it, `PhoneSetTests` fails: it reads the values that each build in the field wrote, from `contracts/phone/`.
   Make the new code read them; never edit a recorded set.
   `PhoneSetRecorder` records the set of a new build at its upload (`make phone-set-record`).
 - Give a service of iOS, such as the position or ActivityKit, a fake of the small protocol that `TROMECore` declares for it.

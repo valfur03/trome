@@ -112,6 +112,31 @@ struct PhoneSetTests {
         }
     }
 
+    /// The line page that the rider tapped to stays: the widget reads the same choice, and finds its line on the
+    /// content of the same station, so the Live Activity does not go back to its first page after an update.
+    @Test(arguments: try statePaths())
+    func theLinePageThatTheRiderTappedToStays(_ path: String) throws {
+        let phone = try RecordedPhone(path)
+        let choice = LinesPageChoiceStore(storage: phone.storage).load()
+        guard let expected = phone.rider.linesPageChoice else {
+            #expect(choice == nil)
+            return
+        }
+        let read = try #require(choice, "the line page that the rider tapped to is lost")
+        #expect(read.activityID == expected.activityID)
+        #expect(read.stationName == expected.stationName)
+        #expect(read.line.mode.rawValue == expected.line.mode)
+        #expect(read.line.name == expected.line.name)
+        let set = try #require(path.split(separator: "/").first)
+        let file = try Fixture.contractsFolder("phone")
+            .appending(path: "\(set)/live-activity/\(expected.contentCase).json")
+        let recorded = try Data(contentsOf: file)
+        let content = try JSONDecoder().decode(StationActivityAttributes.ContentState.self, from: recorded)
+        let index = content.chosenIndex(by: read, activityID: expected.activityID)
+        #expect(index != nil, "the widget finds no page of the line that the rider tapped to")
+        #expect(index != content.trains.linesPage?.firstIndex, "the line that the rider tapped to is on the first page")
+    }
+
     /// The widget decodes the content that iOS holds, and reads back every value that the build wrote in it.
     @Test(arguments: try contentPaths())
     func theWidgetReadsTheContentOfTheLiveActivity(_ path: String) throws {
@@ -232,6 +257,19 @@ struct PhoneSetRider: Decodable {
         var answeredAt: String
     }
 
+    struct PageChoice: Decodable {
+        struct Line: Decodable {
+            var mode: String
+            var name: String
+        }
+
+        /// The case of the Live Activity whose content the rider tapped on, in `live-activity/` of the same set.
+        var contentCase: String
+        var activityID: String
+        var stationName: String
+        var line: Line
+    }
+
     var automaticMode: String?
     var snoozedUntil: String?
     var arrivalStationId: String?
@@ -239,6 +277,7 @@ struct PhoneSetRider: Decodable {
     var pause: Pause?
     var lastTimes: LastTimes?
     var pushedStart: PushedStart?
+    var linesPageChoice: PageChoice?
 }
 
 /// The `UserDefaults` of one state of a set, and what the rider set.
