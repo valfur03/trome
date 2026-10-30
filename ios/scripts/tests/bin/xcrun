@@ -30,10 +30,20 @@ case "$command" in
         case "$*" in
             "devices booted") list_devices booted ;;
             devices*) list_devices ;;
-            "runtimes available") echo "iOS 27.0 (27.0 - 24A434) - com.apple.CoreSimulator.SimRuntime.iOS-27-0" ;;
+            # As on an image of GitHub's Mac: the newest runtime runs only one new device.
+            "runtimes available")
+                echo "iOS 27.0 (27.0 - 24A434) - com.apple.CoreSimulator.SimRuntime.iOS-27-0"
+                echo "iOS 27.1 (27.1 - 24A94425) - com.apple.CoreSimulator.SimRuntime.iOS-27-1"
+                ;;
         esac
         ;;
     create)
+        # simctl refuses a runtime that does not run the device type, and with no runtime it picks the newest one that does.
+        if [ "${3:-}" = com.apple.CoreSimulator.SimRuntime.iOS-27-1 ] && [ "$2" != com.apple.CoreSimulator.SimDeviceType.iPhone-Duo ]; then
+            echo "An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=403):" >&2
+            echo "Incompatible device" >&2
+            exit 147
+        fi
         udid=$(uuidgen)
         echo "$1 Shutdown" > "$state/device.$udid"
         echo "$2" > "$state/type.$udid"
