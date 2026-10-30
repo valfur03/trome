@@ -6,7 +6,7 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
         public var startedAt: Date
         public var hasBeenNear: Bool
         /// Started by the server's push: it listens to the channel of its station, so it cannot switch station.
-        public var isStartedByThePush: Bool
+        var isStartedByThePush: Bool
 
         public init(stationId: String, startedAt: Date, hasBeenNear: Bool, isStartedByThePush: Bool = false) {
             self.stationId = stationId
@@ -48,7 +48,7 @@ public struct AutoLiveActivityState: Codable, Equatable, Sendable {
     var openArrivalStationId: String?
     public var exampleStartedAt: Date?
     /// A start that the server took, until the app follows the Live Activity that it brings.
-    public var pushedStart: PushedStart?
+    var pushedStart: PushedStart?
 
     public init(
         arrivalStationId: String? = nil,
