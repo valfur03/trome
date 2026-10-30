@@ -50,6 +50,7 @@ final class TestClock: Sendable {
     static let refreshInterval: Duration = .seconds(30)
     private let date = Mutex(Date(timeIntervalSince1970: 1_000_000))
     private let firingLimit = Mutex<TimeInterval>(0)
+    private let heldTimers = Mutex<Set<TimeInterval>>([])
 
     var now: Date {
         date.withLock { $0 }
@@ -63,9 +64,16 @@ final class TestClock: Sendable {
         firingLimit.withLock { $0 = seconds }
     }
 
+    /// Keeps the timers of this length from firing. A timer that may fire ends after a few milliseconds of real
+    /// time, so one that races a fake answer (the wait for a slow answer) wins on a busy machine.
+    func holdTimers(of seconds: TimeInterval) {
+        heldTimers.withLock { _ = $0.insert(seconds) }
+    }
+
     func sleep(for duration: Duration) async throws {
         let seconds = TimeInterval(duration.components.seconds)
-        guard duration != Self.refreshInterval, seconds <= firingLimit.withLock({ $0 }) else {
+        let isHeld = heldTimers.withLock { $0.contains(seconds) }
+        guard duration != Self.refreshInterval, !isHeld, seconds <= firingLimit.withLock({ $0 }) else {
             try await Task.sleep(for: .seconds(3_600))
             return
         }

@@ -42,6 +42,8 @@ extension AutoLiveActivityModelTests {
             north(Self.asnieres, leavesAfter: 700, of: line13),
             north(Self.saintDenis, leavesAfter: 940, of: line13)
         ]), for: station)
+        // The answer comes at once: the wait for a slow answer must not end first, however busy the machine.
+        clock.holdTimers(of: BackgroundTrainsRefresh.answerWaitInPlaceOfARedraw)
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { client.updates.contains { $0.updatedAt >= start.addingTimeInterval(110) } }
@@ -102,10 +104,12 @@ extension AutoLiveActivityModelTests {
         await waitUntil { client.updates.contains { !$0.saintDenisTimes.isEmpty } }
         model.setAppPhase(.background)
         provider.answer(.failure(.unreachable), for: station)
+        // The failure comes at once: the wait for a slow answer must not end first, however busy the machine.
+        clock.holdTimers(of: BackgroundTrainsRefresh.answerWaitInPlaceOfARedraw)
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
-        await waitUntil { client.updates.contains { $0.updatedAt >= start.addingTimeInterval(100) } }
-        try? await Task.sleep(for: .milliseconds(50))
+        // An update after the departure comes only once the work at the departure is done.
+        await waitUntil { client.updates.contains { $0.updatedAt > start.addingTimeInterval(100) } }
 
         let atTheDeparture = client.updates.last { $0.updatedAt == start.addingTimeInterval(100) }
         #expect(atTheDeparture?.saintDenisTimes == [start.addingTimeInterval(460)])
