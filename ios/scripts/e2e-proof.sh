@@ -39,13 +39,20 @@ timed() {
     perl -e '$seconds = shift; alarm $seconds; exec @ARGV or die "cannot run $ARGV[0]: $!\n"' "$@"
 }
 
-# "too tall 0, cut texts 3, breaches 1" from the output of the render check, or nothing when a count is missing.
+# "too tall 0, cut texts 3, breaches 1" from the output of the render check, added up over its languages (fr and en),
+# or nothing when a language misses a count (its text recognition failed): a count of one language only would hide a cut.
 render_counts() {
-    tall=$(sed -n -E 's/^Too tall for their text size, in [a-z]+: ([0-9]+).*/\1/p' "$1" | head -n 1)
-    cut=$(sed -n -E 's/^Cut texts in the images[^:]*: ([0-9]+).*/\1/p' "$1" | head -n 1)
-    breaches=$(sed -n -E 's/^Breaches of the cut rules[^:]*: ([0-9]+).*/\1/p' "$1" | head -n 1)
-    [ -n "$tall" ] && [ -n "$cut" ] && [ -n "$breaches" ] || return 0
-    echo "too tall $tall, cut texts $cut, breaches $breaches"
+    awk '
+        function count(text) { sub(/^[^:]*: /, "", text); return text + 0 }
+        /^== Language: / { languages++ }
+        /^Too tall for their text size, in [a-z]+: [0-9]+/ { tall += count($0); n_tall++ }
+        /^Cut texts in the images[^:]*: [0-9]+/ { cut += count($0); n_cut++ }
+        /^Breaches of the cut rules[^:]*: [0-9]+/ { breaches += count($0); n_breaches++ }
+        END {
+            if (languages < 1) languages = 1
+            if (n_tall == languages && n_cut == languages && n_breaches == languages)
+                printf "too tall %d, cut texts %d, breaches %d\n", tall, cut, breaches
+        }' "$1"
 }
 
 # The text of the record of the tree of $1, written by publish and checked by read.
