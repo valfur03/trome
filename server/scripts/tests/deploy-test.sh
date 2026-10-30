@@ -140,7 +140,7 @@ expect "an unknown target refuses" "$(deploy prod)" "refuses"
 
 # The run of the GitHub workflow: deploy.sh <target> <commit>.
 git -C "$repo" switch -q main
-git init -q --bare "$state/origin.git"
+git init -q --bare -b main "$state/origin.git"
 git -C "$repo" remote add origin "$state/origin.git"
 git -C "$repo" push -q origin main
 commit=$(git -C "$repo" rev-parse HEAD)

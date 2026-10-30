@@ -27,6 +27,8 @@ server-setup: node-check
 		$(QUIET) $(LOGS)/server-install.log 'added [0-9]+ packages' npm ci; \
 	fi
 
+# The script tests read no git config of the computer (GIT_CONFIG_NOSYSTEM, GIT_CONFIG_GLOBAL): the git of Xcode names a new branch main, the git of a clean runner master.
+# So they give the same result on a Mac and on a GitHub runner.
 server-check: server-setup
 	@./scripts/dev-vars-check.sh
 	@node scripts/request-log-check.ts
@@ -38,7 +40,7 @@ server-check: server-setup
 	@$(QUIET) $(LOGS)/server-unit-tests.log '^ +(Test Files|Tests) ' npm test
 	@mkdir -p $(LOGS)
 	@count=0; for test in ./scripts/tests/*-test.sh; do \
-		$$test > $(LOGS)/server-test-scripts.log 2>&1 \
+		GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null $$test > $(LOGS)/server-test-scripts.log 2>&1 \
 			|| { cat $(LOGS)/server-test-scripts.log; echo "server-test-scripts: FAILED: $$test (its whole output is above, and in server/$(LOGS)/server-test-scripts.log)"; exit 1; }; \
 		count=$$((count + 1)); \
 	done; \
