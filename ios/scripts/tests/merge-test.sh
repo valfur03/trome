@@ -683,4 +683,114 @@ expect "the gate of that merge runs with that Node, and no Node manager is calle
 export PATH="$path_before_node"
 TROME_MERGE_CHECK=$passing_check
 
+
+# The record of the E2E pass: with a remote, make merge pushes main and leaves the record on GitHub (a fake gh),
+# so that the release can refuse a commit of main whose tree the full suite never passed on (e2e-proof.sh).
+export FAKE_GH_STATE="$state/gh"
+mkdir -p "$FAKE_GH_STATE/statuses"
+git init -q --bare "$state/origin.git"
+git -C "$repo" remote add origin "$state/origin.git"
+git -C "$repo" push -q origin main
+cat > "$state/render.sh" << 'RENDER'
+#!/bin/sh
+echo render >> "$FAKE_SIM_STATE/steps"
+[ ! -e "$FAKE_SIM_STATE/render-fails" ] || { echo "The text recognition of this Mac failed"; exit 1; }
+echo "Too tall for their text size, in fr: 0 (list: too-tall.csv)"
+echo "Cut texts in the images (OCR, for a person to read): 5 (list: cut-texts.txt)"
+echo "Breaches of the cut rules (texts cut too much), in the images of 3 stations: 1 (list: breaches.txt)"
+RENDER
+chmod +x "$state/render.sh"
+export TROME_MERGE_RENDER="$state/render.sh"
+TROME_MERGE_E2E=$passing_e2e
+
+origin_main() {
+    git -C "$state/origin.git" rev-parse main
+}
+
+record() {
+    jq -r '.[0] | [.context, .state, .description] | join(" | ")' "$FAKE_GH_STATE/statuses/$1.json" 2> /dev/null || echo "no record"
+}
+
+proof() {
+    (cd "$repo" && "$scripts/e2e-proof.sh" read "$1" || true)
+}
+
+short_main() {
+    git -C "$repo" rev-parse --short "main${1:-}"
+}
+
+app_task recorded
+merge recorded
+expect "a merge with a remote succeeds" "$status" "0"
+expect "after the E2E suite, it draws the views, as main has no render counts on GitHub" "$(steps_line)" "check check-locked e2e e2e-locked nested-job render "
+expect "it pushes main" "$(origin_main)" "$(rev main)"
+expect "it leaves on the new commit of main the record of the full E2E pass, with the tree and the render counts" "$(record "$(rev main)")" \
+    "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: too tall 0, cut texts 5, breaches 1."
+expect "it says so" "$(contains "$state/recorded.log" "make merge: pushed main, and left on $(short_main) the record of its full E2E pass (the status 'E2E on the Mac' on GitHub), with its render counts: too tall 0, cut texts 5, breaches 1.")" "yes"
+expect "the release reads the record" "$(proof main | head -n 1)" "E2E proof: found (the full E2E suite passed on the Mac on this tree)"
+
+app_task undrawn
+merge undrawn
+expect "a merge whose change the views do not draw runs no render check when main has render counts" "$(steps_line)" "check check-locked e2e e2e-locked nested-job "
+expect "its record says that it did not draw" "$(record "$(rev main)")" \
+    "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: not drawn."
+expect "the release shows the counts of the last drawing" "$(proof main | sed -n 2p)" \
+    "render counts: too tall 0, cut texts 5, breaches 1 (drawn on the Mac on $(short_main '~1'))"
+
+new_task views
+mkdir -p "$state/views/ios/Widget"
+commit "$state/views" ios/Widget/View.swift view
+merge views
+expect "a merge that changes the views draws them" "$(steps_line)" "check check-locked e2e e2e-locked nested-job render "
+
+new_task recorded_docs
+commit "$state/recorded_docs" recorded_docs.md docs
+before=$(origin_main)
+merge recorded_docs
+expect "a merge that changes no app code runs no E2E suite and no render check" "$(steps_line)" "check check-locked "
+expect "it leaves no record and does not push: the push after the merge sends it" "$(origin_main) $(record "$(rev main)")" "$before no record"
+git -C "$repo" push -q origin main
+expect "the release still accepts its commit, by the record of the commit before it" "$(proof main | head -n 1)" \
+    "E2E proof: found (the full E2E suite passed on the Mac on $(short_main '~1'); the 1 commits since change no app code)"
+
+new_task render_fails
+mkdir -p "$state/render_fails/ios/Widget"
+commit "$state/render_fails" ios/Widget/Other.swift other
+touch "$state/render-fails"
+merge render_fails
+rm "$state/render-fails"
+expect "a render check that fails does not stop the merge: it is a report" "$status $(origin_main)" "0 $(rev main)"
+expect "the record then says that it did not draw" "$(record "$(rev main)")" \
+    "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: not drawn."
+expect "the merge says that the render check gave no counts" "$(contains "$state/render_fails.log" "the render check gave no counts")" "yes"
+
+app_task e2e_fails
+commit "$state/e2e_fails" fails-e2e bad
+before=$(origin_main)
+TROME_MERGE_E2E=$failing_e2e
+merge e2e_fails
+TROME_MERGE_E2E=$passing_e2e
+expect "a merge whose E2E suite fails draws nothing, pushes nothing and leaves no record" \
+    "$(steps_line)$(origin_main) $(record "$(rev task/e2e_fails)")" "check check-locked e2e e2e-locked nested-job $before no record"
+
+app_task push_refused
+git clone -q -b main "$state/origin.git" "$state/other-clone"
+commit "$state/other-clone" pushed-elsewhere other
+git -C "$state/other-clone" push -q origin main
+merge push_refused
+expect "when the push of main is refused, the merge still lands main" "$status $(rev main)" "0 $(rev task/push_refused)"
+expect "it leaves no record, and says that a release refuses the commit" \
+    "$(record "$(rev main)") $(contains "$state/push_refused.log" "the push of main to origin failed, so $(short_main) has no record of its E2E pass on GitHub, and a release refuses it")" "no record yes"
+git -C "$repo" fetch -q origin main
+git -C "$repo" reset -q --hard FETCH_HEAD
+
+app_task gh_fails
+touch "$FAKE_GH_STATE/fail"
+merge gh_fails
+rm "$FAKE_GH_STATE/fail"
+expect "when GitHub cannot be read, the merge draws the views, as it cannot tell if main has render counts" "$(steps_line)" "check check-locked e2e e2e-locked nested-job render "
+expect "when GitHub does not take the record, the merge still lands and pushes main, and says that a release refuses the commit" \
+    "$status $(origin_main) $(contains "$state/gh_fails.log" "but GitHub did not take the record of the E2E pass of $(short_main), so a release refuses it")" "0 $(rev main) yes"
+git -C "$repo" remote remove origin
+
 [ "$failures" -eq 0 ]
