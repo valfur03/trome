@@ -183,11 +183,12 @@ make server-counts URL=https://trome-server.<your subdomain>.workers.dev
 Paste the owner token when it asks.
 It shows a table: today so far, then each Paris day of the last 14 days, newest first, with its app calls, PRIM calls, `out` answers, errors, and the Paris hour with the most app calls.
 Under the table, a line names each day with PRIM answers that the builds cannot read ([Unreadable PRIM answers](how-it-works.md#unreadable-prim-answers)).
+Then a line gives the answers of the start of a Live Activity of each day that had some, for example `Live Activity starts, Today (so far): refused:BadDeviceToken 1, started 1.`, or says `none` ([what each answer tells](how-it-works.md#the-start-of-a-live-activity)).
 A day with no call is a line of zeros.
 When the server keeps no total from 14 days ago, the table starts at its oldest day, and says so.
 App calls are the requests for times with the right app token, and the asks of the server for the Live Activities that it started (each start, and each update for 45 minutes): a wrong token, `/health` and this read do not count.
 
-Add `FULL=1` for the whole report, as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls, errors and unreadable PRIM answers, hour by hour (`parisHour`), with no stop.
+Add `FULL=1` for the whole report, as JSON: the cap and the PRIM calls of today, then each Paris day of the last 30 days, with its app calls, cache hits, held answers, `out` answers, PRIM calls, errors, unreadable PRIM answers and start answers (`startAnswers`), hour by hour (`parisHour`), with no stop.
 Its `errorLines` lists the failed PRIM calls of the last 7 days: the time, the kind and the HTTP status, with no stop and no IP address.
 The counts of app calls and cache hits are written at most every 10 seconds, to stay far below the writes that the Free plan allows each day.
 A timer keeps the server awake until they are written, so that a sleep of the server loses none.
@@ -220,6 +221,7 @@ Prometheus only makes outgoing calls, so nothing opens at your home.
    `docker compose restart` applies neither the new mount nor the new flag, and it does not rebuild an image.
    Then open its Targets page: the `trome` job shows `UP`.
 6. Query `trome_app_calls_previous_day`: it gives the app calls of yesterday, the same as yesterday's line of `make server-counts`.
+   `trome_live_activity_starts_total` and `trome_live_activity_starts_previous_day` give the start answers, with one `answer` label for each name of the counts.
 
 Use 2 minutes: on a day where every PRIM call fails, one scrape a minute would read about a quarter of the SQLite rows that the Free plan allows each day, and beyond about 5 minutes Prometheus draws gaps.
 The `_total` counters count since 00:00 in Paris and start again from 0 there, which `rate()` and `increase()` read as a restart; the `_previous_day` gauges give each whole Paris day exactly.

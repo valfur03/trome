@@ -184,6 +184,10 @@ So the app, woken near a station, sends the station and that token, and the serv
   An update over that size is not sent, and the log line `live-activity-update` says `too-large`; a test checks that every station of the list, at its busiest, stays under 4,096 bytes.
   The updates go at priority 5, which Apple does not count against a budget per hour, and may group when the iPhone saves power.
   They run in a storage alarm of the server object, which holds only a time: each alarm is a new invocation, with its own limit of 50 subrequests on the Free plan, where a chain of timers could share the limit of the request that started it.
+- **The count of the answers.** The server counts each answer in its hour, by a short name: `started`, `already-started`, `refused:<reason>` (Apple's reason, or `no-answer`, `server-error`), `not-set-up`, and `bad-request` for each `400` of an ask with the right app token.
+  So the owner tells where a start stopped: no answer at all means that no ask arrived (the app was not woken, or had no start token); `started` means that Apple took the start, so a rider who saw nothing lost it on the iPhone; a `refused` answer means that the app fell back to its own way.
+  The name is a word of a fixed list: a reason that Apple does not document counts as `refused:other`, and its log line gives it.
+  The count holds no station, no token, no hash of a token and no time finer than the hour; it is kept 30 days, through a restart, as the other counts ([Read the counts](deploy.md#read-the-counts)).
 - **The cost of the updates.** Each started Live Activity costs PRIM calls for 20 minutes, not for the few minutes of an app on screen: in the model of [`relay-whole-day.test.ts`](../test/core/relay/relay-whole-day.test.ts), 15 riders with two starts a day make 522 to 633 calls of the 800 of the cap, and at most 2 in 100 answers are "out".
   Updates for 45 minutes would make 1,130 to 1,400 calls with no cap, and 15 to 30 in 100 answers would read "Times unavailable" under the cap.
 
@@ -192,6 +196,7 @@ So the app, woken near a station, sends the station and that token, and the serv
 Nothing.
 A request holds only a stop and the app token, and the server reads nothing else of it: no position, no device or account identifier, no push token, no IP address, no user agent, no body.
 The one exception is the start of a Live Activity: it reads a station and the start token of the iPhone, and passes the token to Apple; after the call, the token is in no storage, no log line and no memory, which keeps only a keyed hash of the token and the station for 45 minutes, and a test checks the three.
+Its storage keeps only the count of the answers by hour, a number for each name of a fixed list, with no station and no token.
 A test sends all of these, and checks that none is stored or logged.
 After the request, the server keeps no stop in its storage or its log lines: the counts and the error lines have none.
 Only its memory holds a stop, and only to serve the next requests: the stop of a PRIM call in flight, the latest answer of a stop for 10 minutes, a stop whose PRIM call failed for its 60 s pause, the channel of a station for 45 minutes after its last start, and the last content and trains sent on it for 20 minutes.
