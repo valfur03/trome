@@ -113,11 +113,15 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-      # The silent start (TROME_SILENT_START = YES in Config/Local.xcconfig, for a paid team only) compiles the push
-      # code and adds the push capability. Release keeps it out until the silent start is turned on for the store.
-      # The app group, which the app shares with the widget for the page that a rider taps to on a push of the server,
-      # comes with the silent start on an iPhone, and in every Debug build for the Simulator, which needs no team.
+      # The silent start compiles the push code, and adds the push capability and the app group that the app
+      # shares with the widget for the page that a rider taps to on a push of the server.
+      # Every Release build has it: only the paid team signs one.
+      # A Debug build has it only with TROME_SILENT_START = YES in Config/Local.xcconfig (a paid team),
+      # as a free Apple ID can sign neither; a Debug build for the Simulator, which needs no team, has the group.
       configs:
+        Release:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) SILENT_START
+          CODE_SIGN_ENTITLEMENTS: Config/SilentStart.entitlements
         Debug:
           TROME_SILENT_START_CONDITION_YES: SILENT_START
           TROME_SILENT_START_ENTITLEMENTS_YES: Config/SilentStart.entitlements
@@ -154,6 +158,8 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
       # The app group of the app, under the same rule as the app.
       configs:
+        Release:
+          CODE_SIGN_ENTITLEMENTS: Config/AppGroup.entitlements
         Debug:
           TROME_WIDGET_ENTITLEMENTS_YES: Config/AppGroup.entitlements
           TROME_WIDGET_ENTITLEMENTS_NO[sdk=iphonesimulator*]: Config/AppGroup.entitlements

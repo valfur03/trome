@@ -166,7 +166,8 @@ Then you create the app record, which is the page of TROME in App Store Connect.
 2. Select **App IDs** and click **Continue**, then keep the type **App** and click **Continue**.
 
 3. Enter `TROME` as the description, select **Explicit**, and enter `io.github.valfur03.trome` as the bundle ID.
-   Leave the capabilities as they are: TROME uses none of them.
+   Under **Capabilities**, tick **Push Notifications** and its **Broadcast Capability**: the server starts the Live Activity with a push, and updates its times on a channel of the station.
+   Leave the other capabilities: Xcode adds the app group that the app shares with its Live Activity when it signs the first archive.
    Click **Continue**, check the ID letter by letter, and click **Register**.
 
 4. Do the same for the Live Activity: description `TROME Live Activity`, bundle ID `io.github.valfur03.trome.widget`.

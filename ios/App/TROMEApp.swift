@@ -219,8 +219,8 @@ struct TROMEApp: App {
     }
 
     /// The start of the Live Activity through the server, with no notification and no tap. Its push code is compiled
-    /// only into a build that a paid team signs (`TROME_SILENT_START` in `ios/Config/Local.xcconfig`): a free Apple ID
-    /// cannot sign the push capability. A Release build keeps it off, so the store build notifies as before.
+    /// only into a build that a paid team signs: every Release build, and a Debug build with `TROME_SILENT_START` in
+    /// `ios/Config/Local.xcconfig`. A free Apple ID cannot sign the push capability, so its builds notify as before.
     private static func silentStartOfThisBuild(wakeLog: WakeLog?) -> SilentStart? {
         #if SILENT_START
         guard let server = TrainServerConfiguration(infoDictionary: Bundle.main.infoDictionary) else {

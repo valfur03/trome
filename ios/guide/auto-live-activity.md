@@ -55,7 +55,7 @@ A fake position is always trusted.
 |---|---|
 | The rider comes within 150 meters of a station, and the app is open | The Live Activity of this station starts at once |
 | The same, but a system popup covers the app (a permission question) | It waits, and starts when the app is active again; if the app goes to the background first, the notification comes instead |
-| The same, with the app in the background or closed | One notification, with the station name alone as its title ("Abbesses") and no body, also when Live Activities are off. A tap opens the app and starts the Live Activity |
+| The same, with the app in the background or closed | The server starts the Live Activity, with no notification and no tap ([the silent start](#the-silent-start)). When it cannot, one notification, with the station name alone as its title ("Abbesses") and no body, also when Live Activities are off. A tap opens the app and starts the Live Activity |
 | The rider opens the app at that station without tapping the notification | The Live Activity starts, and the notification goes away, also when notifications are off |
 | A Live Activity shows, and the rider comes within 150 meters of another station | It switches to the new station, with the app open, in the background or closed: no second Live Activity, no notification |
 | The rider moves more than 250 meters from the station of the Live Activity | It ends, once the rider has been within 250 meters of it. So a rider reaches a next station more than 400 meters away with no Live Activity: with the app in the background or closed, that station notifies |
@@ -78,20 +78,22 @@ A debug build can [shorten the 45 minutes](testing-tools.md#make-the-45-minute-l
 The notification has two actions, "Not for 1 h" ("Pas pendant 1 h") and "Not today" ("Pas aujourd’hui").
 Each one snoozes the automatic mode with no app opened, also when the phone is locked.
 
-### The silent start (Debug builds of a paid team)
+### The silent start
 
-A Debug build with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` (then run `make generate`) and a server in `ios/Config/Server.xcconfig` asks the server to start the Live Activity at a background arrival, and notifies only as the fallback.
-It needs a paid Apple Developer Program team, because a free Apple ID cannot sign the push capability; Release builds, and builds with no such setting, keep the notification.
+At a background arrival, the app asks the server to start the Live Activity, and notifies only as the fallback.
+Every Release build does it, the store build too.
+A Debug build does it only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` (then run `make generate`) and a server in `ios/Config/Server.xcconfig`.
+Both need a paid Apple Developer Program team, because a free Apple ID cannot sign the push capability; a Debug build with no such setting keeps the notification.
 The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`, [the server side](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
 The Live Activity then comes on the lock screen with no notification and no tap only when the push topic of the server is the bundle ID of this build.
-A real server pushes to the bundle ID of the Release build only ([`APNS_BUNDLE_ID`](../../server/guide/deploy.md#the-secrets)), so Apple refuses the start of a Debug build, the server answers refused, and the app sends the notification: a Debug build checks the ask and the fallback, not the start.
+A real server pushes to the bundle ID of the Release build only ([`APNS_BUNDLE_ID`](../../server/guide/deploy.md#the-secrets)), so Apple refuses the start of a Debug build, the server answers refused, and the app sends the notification: a Debug build checks the ask and the fallback, and only a Release build shows the start.
 It asks once per arrival, and never while a Live Activity that the app follows shows.
 The app follows the Live Activity that the server started as soon as it runs with it on screen: at once when it lands during the ask, otherwise when iOS next wakes the app, at the latest when the phone leaves the 250-meter area of the station.
 It then ends it as one that it started: at 250 meters, or 45 minutes after the answer of the server; a swipe pauses the station.
 It cannot switch it to the next station, as its updates come on the channel of its station: at the next station, it ends it, and that station starts its own, with the server or by the app when the app is open.
 With the app open at the station when the server answers, the app waits 30 seconds for that Live Activity, and only then starts its own.
 The notification comes instead, once, when Live Activities are off, when iOS gave no start token, or when the server cannot be reached, refuses, is not set up, or gives no answer within 10 seconds: iOS gives a woken app only seconds to run.
-The [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) writes each step.
+In a Debug build, the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) writes each step.
 
 ## Snooze, turn off, and the pause after a swipe
 
@@ -140,7 +142,7 @@ Any other failure of ActivityKit says "The lock screen display could not start."
 
 ## The questions iOS asks, in order
 
-The app needs the location "Always" to start the Live Activity while it is closed, and notifications to tell the rider that it can.
+The app needs the location "Always" to start the Live Activity while it is closed, and notifications for the fallback of the [silent start](#the-silent-start).
 `LocationQuestionsRules` asks them in this order:
 
 1. The location, **While Using the App**, at the first launch.
@@ -201,6 +203,6 @@ While a Live Activity shows, the app must go on getting the position, to switch 
 The app gets new times in the background only while it runs.
 It stops running when the rider closes it from the app switcher, when the location is not allowed, or when iOS ends it to free memory.
 Then the 45 minutes apply only when iOS wakes the app again or the rider opens it, and the Live Activity gets no new times until then.
-The app sends no push update, so no server can refresh a Live Activity of an app that does not run.
+A Live Activity that the server started is the exception: its times come from the server, on the channel of its station ([the server side](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
 To see what the app does, [read the logs](../README.md#read-the-logs): the categories `LiveActivity` and `BackgroundLocation` log each state, end, pause and background start.
 On an iPhone, with no cable, the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) shows each wake by iOS and each arrival decision.
