@@ -374,6 +374,10 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
     If the app code that asks the server changed since the build of that set (`git diff builds/<old version>/<old build> builds/1.0.0/4 -- ios/Packages/TROMECore/Sources/TROMECore/Trains`), make the copy say what the new code reads, and run `make test` and `make server-check`.
     `make test` fails when the app code does not send and read what the newest set says, and `make server-check` when the server does not keep it.
     Never edit an older set: `make server-check` fails on it, and fails too when a build of the table has no set.
+    The same commit records the phone set of the build, next to its promises: run `make phone-set-record BUILD=1.0.0-4`, which refuses when the app code is not the code of the tag.
+    It writes in `contracts/phone/1.0.0-4/` the exact values that this build keeps on the phone for each state of a rider (Automatic mode, the Live Activity that it follows, its last times), and the content of its Live Activity for each case of `contracts/live-activity/cases/`.
+    `make test` reads every recorded set with the code of today, and fails when an update would forget what a rider set.
+    Never edit a recorded phone set while its build is in the field.
     Then add the line of the build to `ios/Config/BuildTokens.txt`, here `4 = <token>`, with the app token of `ios/Config/Server.xcconfig` that this build holds, and run `make release-tokens-check`: the line of the new build must say **accepted**.
     That file is not in git, so it is not in the commit.
 
@@ -687,6 +691,8 @@ Every build uploaded to Apple is a row of this table, from its upload on, and ke
 A server change keeps every build in the field working: the server adds what a new build needs next to what the older ones read, and never swaps it.
 Why: a rider updates when they choose, so an old build can call the server for years.
 What each build sends to the server and how it reads each answer is its recorded set of promises in [`contracts/builds/`](https://github.com/valfur03/trome/tree/main/contracts/builds), which the server is checked against ([The promise to the builds in the field](https://github.com/valfur03/trome/blob/main/server/guide/how-it-works.md#the-promise-to-the-builds-in-the-field)).
+What each build keeps on the phone is its recorded phone set in [`contracts/phone/`](https://github.com/valfur03/trome/tree/main/contracts/phone), which the app code of today must read as the rider left it.
+The builds 1.0.0 (1) to (3) are older than its recorder: each of their sets was recorded by a copy of `PhoneSetRecorder.swift`, alone, in a throwaway checkout of the tag of the build, with `PHONE_SET_CONTRACTS` set to the `contracts/` folder of `main` for the cases of the Live Activity.
 
 Each build has the git tag `builds/<version>/<build>` on its commit, which you add at the end of the upload in [step 4](#4-build-upload-and-check-the-first-build).
 A TestFlight build becomes unavailable to testers after 90 days: the table counts them from the upload, and App Store Connect shows the days left on the build, so trust it when the two differ.

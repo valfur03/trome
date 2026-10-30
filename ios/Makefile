@@ -104,7 +104,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -132,6 +132,7 @@ help:
 	@echo "make release-signing-check  Fail when Xcode would sign a Release build with no TROME_RELEASE_TEAM, or would not sign it automatically with one (no compile, no Apple account)"
 	@echo "make release-server-check  Before an archive: say in one line whether the production server accepts the host and the app token of ios/Config/Server.xcconfig (one request for the trains of one stop; prints neither)"
 	@echo "make release-server-timing  Split the time of a call to the production server of ios/Config/Server.xcconfig: connection, Worker, server object, PRIM (5 calls of one rider in 35 s, at most 2 PRIM calls; prints neither)"
+	@echo "make phone-set-record BUILD=<version>-<build>  At each upload, from the commit of the build: record in contracts/phone/ the values that it keeps on the phone, which make test reads with the code of today"
 	@echo "make release-tokens-check  After every change of a secret of the production server, and before every upload: say, one line per build that riders may hold, whether the production server accepts its app token of ios/Config/BuildTokens.txt (one request per build; prints no token)"
 	@echo "make release-archive-check  Build an unsigned Release archive of the app and its widget for an iPhone, with stand-in server values: shows that the store build compiles, with no account and no secret (not in make check)"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
@@ -248,6 +249,16 @@ release-server-check:
 # Not in make check: it calls the production server with the token of the maintainer's own file.
 release-server-timing:
 	@./scripts/release-server-timing.sh Config/Server.xcconfig
+
+# At each upload: the build of tag builds/<version>/<build> records what it keeps on the phone, from its own code.
+phone-set-record:
+	@[ -n "$(BUILD)" ] || { echo "phone-set-record: name the build, for example BUILD=1.0.0-4"; exit 1; }
+	@tag="builds/$$(echo '$(BUILD)' | sed 's|-|/|')"; out="$(CURDIR)/../contracts/phone/$(BUILD)"; \
+	git rev-parse -q --verify "$$tag^{commit}" > /dev/null || { echo "phone-set-record: no tag $$tag: tag the build first"; exit 1; }; \
+	git diff --quiet "$$tag" -- $(CORE_PACKAGE) || { echo "phone-set-record: $(CORE_PACKAGE) is not the code of $$tag: record from the commit of the build"; exit 1; }; \
+	[ ! -e "$$out" ] || { echo "phone-set-record: contracts/phone/$(BUILD) exists, and a recorded set is never written again"; exit 1; }; \
+	PHONE_SET_RECORD="$$out" $(BUILD_GATE) swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors --filter PhoneSetRecorder \
+		&& echo "phone-set-record: wrote contracts/phone/$(BUILD)/: commit it"
 
 # Not in make check: it calls the production server with the tokens of the maintainer's own file.
 release-tokens-check:
