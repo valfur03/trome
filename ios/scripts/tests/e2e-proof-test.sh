@@ -158,7 +158,7 @@ EOF
 expect "the counts are read from the output of the render check" "$("$proof" render-counts "$state/render.txt")" "too tall 2, cut texts 17, breaches 3"
 sed '/^Cut texts/d' "$state/render.txt" > "$state/render-no-ocr.txt"
 expect "an output with no cut texts (the text recognition failed) gives no counts" "$("$proof" render-counts "$state/render-no-ocr.txt")" ""
-# make live-activity-render draws in French and English (RENDER_LANGUAGES of ios/Makefile): a cut text in English only must count.
+# make live-activity-render ENGLISH=1 draws in French, then in English: a cut text in English only must count.
 sed -e 's/in fr:/in en:/' -e 's/== Language: fr/== Language: en/' -e 's/: 2 (list/: 1 (list/' -e 's/: 17 (list/: 4 (list/' -e 's/: 3 (list/: 5 (list/' \
     "$state/render.txt" > "$state/render-en.txt"
 cat "$state/render.txt" "$state/render-en.txt" > "$state/render-two.txt"

@@ -39,8 +39,8 @@ timed() {
     perl -e '$seconds = shift; alarm $seconds; exec @ARGV or die "cannot run $ARGV[0]: $!\n"' "$@"
 }
 
-# "too tall 0, cut texts 3, breaches 1" from the output of the render check, added up over its languages (fr and en),
-# or nothing when a language misses a count (its text recognition failed): a count of one language only would hide a cut.
+# "too tall 0, cut texts 3, breaches 1" from the output of the render check, added up over the languages it drew (make merge draws French only; ENGLISH=1 adds English),
+# or nothing when one of them misses a count (its text recognition failed): a count of one language only would hide a cut.
 render_counts() {
     awk '
         function count(text) { sub(/^[^:]*: /, "", text); return text + 0 }
