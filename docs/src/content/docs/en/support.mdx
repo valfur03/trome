@@ -44,18 +44,19 @@ The Live Activity may then not start by itself, and the nearest station may be t
 
 ## Nothing comes when TROME is closed
 
-With TROME open, the Live Activity shows as soon as you come near a station.
-With TROME closed, you get a notification with the name of the station, for example **“Châtelet”**: tap it to show the Live Activity.
+The Live Activity shows as soon as you come near a station, with TROME open or closed.
+With TROME closed, it needs the internet: TROME asks my server to put it on your lock screen.
+When it cannot, you get a notification with the name of the station instead, for example **“Châtelet”**: tap it to show the Live Activity.
 
-To get this notification, TROME needs two permissions, in **Settings > Apps > TROME**:
+For TROME closed, check two permissions, in **Settings > Apps > TROME**:
 
 - **Location** set to **Always**.
-  With **While Using the App**, no notification comes when TROME is closed.
+  With **While Using the App**, nothing comes when TROME is closed.
   [Why **Always**?](#why-trome-asks-for-always-location)
-- **Notifications** turned on.
+- **Notifications** turned on, for the times when the Live Activity cannot start by itself.
   [Why notifications?](#why-trome-asks-for-notifications)
 
-You get one notification for each arrival.
+Each arrival brings the Live Activity or one notification, once.
 During a snooze, nothing starts: see [what the snooze and the pause do](#what-the-automatic-mode-the-snooze-and-the-pause-do).
 
 ## The times stop updating
@@ -134,8 +135,8 @@ The app then says “Paused at Châtelet until 3:51 PM”, and **Cancel the paus
 
 ### Why TROME asks for notifications
 
-They tell you that you are near a station when TROME is closed.
-Without them, the Live Activity shows when you open TROME near a station.
+When TROME is closed and the Live Activity cannot start by itself, for example with no internet, a notification tells you that you are near a station.
+Without them, the Live Activity still starts by itself; when it cannot, it shows when you open TROME near a station.
 
 TROME asks for notifications only after the location, and only once.
 

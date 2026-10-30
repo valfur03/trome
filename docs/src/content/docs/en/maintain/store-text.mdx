@@ -11,7 +11,7 @@ import { contactEmail } from '../../../../contact.ts';
 
 export const whatToTestFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
 1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche sur l’écran verrouillé, avec des horaires d’exemple.
-2. À une vraie station de Paris : autorisez la localisation « Toujours » et les notifications, puis approchez-vous à moins de 150 mètres. App ouverte, les trains s’affichent à votre arrivée. App fermée, une notification doit vous prévenir : touchez-la, et ils s’affichent. Si rien ne vient, dites-le-moi.
+2. À une vraie station de Paris : autorisez la localisation « Toujours » et les notifications, puis approchez-vous à moins de 150 mètres. Les trains s’affichent à votre arrivée, app ouverte ou fermée, sans rien toucher. Si une notification vient à la place, ou si rien ne vient, dites-le-moi.
 3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ». Sur l’exemple, ils ne font que l’arrêter.
 
 À savoir : il n’y a pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
@@ -19,7 +19,7 @@ Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envo
 
 export const whatToTestEn = `For Paris and Île-de-France only. Three things to try:
 1. From anywhere: open TROME, tap “See an example”, then lock the iPhone. Châtelet shows on the lock screen, with sample times.
-2. At a real Paris station: allow location “Always” and notifications, then come within 150 meters. With the app open, the trains show when you arrive. With the app closed, a notification should tell you: one tap shows them. If nothing comes, tell me.
+2. At a real Paris station: allow location “Always” and notifications, then come within 150 meters. The trains show when you arrive, with the app open or closed, with no tap. If a notification comes instead, or nothing comes, tell me.
 3. Not now: on the lock screen, tap “30 min”, “1 h” or “Today”. On the example, they only end it.
 
 Good to know: there is no account to create, and trains show only during the metro and RER service hours.
@@ -63,7 +63,7 @@ Both languages say the same facts: where TROME works, what it shows, and that it
 The subtitle is a phrase on purpose, because Apple calls it one, and the promotional text is two full sentences.
 The promotional text and the first sentence of the description show one after the other, so they say two things: the promotional text says who TROME is for and what the rider no longer has to do, and the first sentence of the description says what TROME is for.
 The promotional text names the metro and the RER in a full sentence, because titles 2 and 3 have no `RER`, and whichever title App Store Connect accepts, the top of the store must still say it.
-Neither names the notification or the way in, because version 1 needs one tap: the block "Quand les trains s’affichent" / "When the trains show" tells it once.
+Neither names the way in: the block "Quand les trains s’affichent" / "When the trains show" tells it once.
 
 Subtitle, French (26 of 30 characters):
 
@@ -99,7 +99,7 @@ The rest is made of full sentences too, and only the bullets are phrases, becaus
 Each block below is a section with its own heading line, because the store shows plain text, and its paragraph is one line, so that the store wraps it.
 [The writing guide](https://github.com/valfur03/trome/blob/main/docs/README.md) says how marketing text reads.
 
-French (2188 of 4000 characters):
+French (2093 of 4000 characters):
 
 ```text wrap
 TROME affiche sur votre écran verrouillé les prochains trains de la station où vous êtes, dans les deux sens. TROME est faite pour Paris et l’Île-de-France uniquement. Elle est gratuite, sans compte et sans publicité.
@@ -110,7 +110,7 @@ Ce que vous voyez
 • Tout cela s’affiche sur l’écran verrouillé, et dans la Dynamic Island sur les iPhone qui en ont une.
 
 Quand les trains s’affichent
-TROME détecte la station quand vous êtes à 150 mètres environ, donc vous n’avez aucune station à choisir. Quand l’app est ouverte, les trains s’affichent à votre arrivée. Quand elle est fermée, une notification vous prévient : touchez-la, et les trains s’affichent. Quand vous vous éloignez de la station, les trains disparaissent. Si vous ne voulez pas des trains maintenant, mettez TROME en pause pendant 30 minutes, 1 heure ou jusqu’à la fin de la journée, depuis l’écran verrouillé.
+TROME détecte la station quand vous êtes à 150 mètres environ, donc vous n’avez aucune station à choisir. Les trains s’affichent dès votre arrivée, app ouverte ou fermée. Quand vous vous éloignez de la station, les trains disparaissent. Si vous ne voulez pas des trains maintenant, mettez TROME en pause pendant 30 minutes, 1 heure ou jusqu’à la fin de la journée, depuis l’écran verrouillé.
 
 Votre position reste sur votre iPhone
 TROME s’en sert pour trouver la station la plus proche. Elle ne quitte pas l’iPhone : je ne la reçois jamais. Pour fonctionner quand l’app est fermée, TROME demande la localisation « Toujours ». Si vous la refusez, TROME fonctionne tant que l’app est ouverte.
@@ -124,7 +124,7 @@ Bon à savoir
 Horaires : « Prochains passages » d’Île-de-France Mobilités (PRIM), sous « Licence Mobilités ». Stations : adaptées à partir de données d’Île-de-France Mobilités, sous licences ODbL et Licence Ouverte v2.0. TROME n’est pas une app de la RATP ni d’Île-de-France Mobilités, et aucune des deux ne la soutient.
 ```
 
-English (1916 of 4000 characters):
+English (1852 of 4000 characters):
 
 ```text wrap
 On your lock screen, TROME shows the next trains at the station where you are, in both directions. TROME is for Paris and Île-de-France only. It is free, with no account and no ads.
@@ -135,7 +135,7 @@ What you see
 • All of this shows on the lock screen, and in the Dynamic Island on iPhones that have one.
 
 When the trains show
-TROME detects the station when you are within about 150 meters, so there is no station to pick. While the app is open, the trains show when you arrive. When the app is closed, a notification tells you: one tap shows the trains. When you walk away from the station, the trains disappear. If you do not want the trains right now, snooze TROME for 30 minutes, 1 hour or the rest of the day, from the lock screen.
+TROME detects the station when you are within about 150 meters, so there is no station to pick. The trains show as soon as you arrive, with the app open or closed. When you walk away from the station, the trains disappear. If you do not want the trains right now, snooze TROME for 30 minutes, 1 hour or the rest of the day, from the lock screen.
 
 Your position stays on your iPhone
 TROME uses it to find the nearest station. It never leaves the iPhone: I never receive it. To work while the app is closed, TROME asks for Always location. If you refuse, TROME still works while the app is open.
@@ -222,11 +222,11 @@ App Review rarely sits in Paris, so the notes tell the reviewer how to see the L
 | Sign-in required | Off: TROME has no account. |
 | Contact first name, last name and phone | Yours, given at the submission. Never write them in a file of the repo: the phone goes in the international format, with a plus sign and the country code. |
 | Contact email | <Contact /> |
-| Notes | The English text below (3162 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
+| Notes | The English text below (3706 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
 | Attachment | The recording of the real station, as the recording script says. |
 
 ```text wrap
-I make TROME alone. It shows the next metro and RER trains at the station where you are, as a Live Activity on the lock screen. It works in Paris and Île-de-France only, so review it from anywhere with the example row below. No account, no sign-in, no purchase, no ads, no tracking. iPhone only, iOS 18 or later.
+I make TROME alone. It shows the next metro and RER trains at the station where you are, as a Live Activity on the lock screen. It works in Paris and Île-de-France only, so review it from anywhere with the example row below, which starts the Live Activity by hand; the attached video shows the start with the app closed, at a real station. No account, no sign-in, no purchase, no ads, no tracking. iPhone only, iOS 18 or later.
 
 TO REVIEW FROM ANYWHERE (about 2 minutes, nothing to set up):
 1. Open TROME. iOS asks for your location. After "Allow While Using App", it asks for "Always", then for notifications. After "Allow Once", it asks only for notifications, up to a minute later. After "Don't Allow", it asks neither. If the question does not show, tap Continue in the Location row. Any answer is fine: the example needs none of them. Outside Paris, the top card says "Nothing on the lock screen" and some rows are orange because a permission is missing. This is normal, and the example works.
@@ -237,15 +237,15 @@ TO REVIEW FROM ANYWHERE (about 2 minutes, nothing to set up):
 
 HOW IT WORKS IN REAL USE (I recorded the attached video at a Paris station, on a real iPhone):
 - Within about 150 meters of a metro or RER station, with the app open, the Live Activity starts with real times.
-- With the app closed, iOS wakes TROME near a station. TROME sends a local notification, and one tap starts the Live Activity. This is why I ask for "Always" location: the app is closed when people arrive. With "While Using" only, the app still works while it is open.
-- The position is used on the iPhone to find the nearest station. It is never sent to my server. The server gets only the identifier of a stop.
-- Notifications are local, and optional.
+- With the app closed, iOS wakes TROME near a station. TROME sends the station and its push-to-start token to my server, which starts the Live Activity through Apple's push service: it appears on the lock screen with no tap, and the server moves its times with updates on a broadcast channel of the station. This is why I ask for "Always" location: the app is closed when people arrive. With "While Using" only, the app still works while it is open.
+- When the start cannot happen (no network, or the push is refused), TROME sends a local notification instead, and one tap starts the Live Activity. Notifications are optional, and only this fallback.
+- The position is used on the iPhone to find the nearest station. It is never sent to my server. The server gets the identifier of a stop and, for the start only, the push-to-start token, which it passes to Apple and does not keep.
 
 TRAIN DATA: real times come from the PRIM service of Île-de-France Mobilités, through my server, which is running during the review. Metro and RER do not run all night: outside service hours there are no real times, but the example works at any hour. When the server cannot be reached, the lock screen says "Times unavailable".
 ```
 
 Check each line of these notes against the build that you submit: `make run RELEASE=1` runs the app as the store ships it in the Simulator, with no Testing tools.
-The bullet about the closed app waits for the proof on a real iPhone: see [the clause that waits for the proof](#the-closed-app-clause-that-waits-for-the-proof).
+The bullets about the closed app are true only if the Live Activity starts by itself with the build that you submit: see it on your iPhone at a station first.
 Keep the sentence about the video only when the video is attached, and keep the sentence about the server only while it runs.
 
 ## TestFlight: what the first external testers read
@@ -268,11 +268,11 @@ Beta app description, English (246 bytes):
 TROME is for Paris and Île-de-France only: on your lock screen, it shows the next trains at the station where you are. Anywhere else, you can try “See an example”. This is a test version, free and with no account, and your feedback helps me.
 ```
 
-What to test, French (995 bytes):
+What to test, French (981 bytes):
 
 <Code code={whatToTestFr} lang="text" wrap />
 
-What to test, English (780 bytes):
+What to test, English (763 bytes):
 
 <Code code={whatToTestEn} lang="text" wrap />
 
@@ -289,59 +289,12 @@ Each line below is a claim that the app cannot keep, or a risk with App Review, 
 
 - **No `RATP`, `IDFM` or `Île-de-France Mobilités` outside the source line.** The rules of App Review forbid the mark of others, in the title, the subtitle and the keywords above all, and the source line shows the data credit that the licence asks for and the sentence that TROME is not their app.
 - **No promise of times for every line.** The source lists only the next three or four trains of a stop, and the times follow the service hours, so the text says "the next trains", never "live times for every line".
-- **No promise of a start with no tap.** Version 1 has no silent start: a closed app sends a notification, and one tap brings the Live Activity.
-  The first sentences say what the rider gets, and the notification is named once, in the block "Quand les trains s’affichent" / "When the trains show".
-  Only a real iPhone at a station shows that iOS wakes the closed app, so see the notification come on your iPhone before you paste any text that says it comes.
-  Until you have seen it, the public What's new pages and `CHANGELOG.md` say nothing about the closed app: [the clause that waits for the proof](#the-closed-app-clause-that-waits-for-the-proof) is not in them.
-- **No headline that says a notification pops up.** The notification is the way in of version 1, not what TROME is.
+- **The start with no tap, said once.** With the app closed, the server starts the Live Activity with a push, and a notification comes only when it cannot.
+  The first sentences say what the rider gets, and the way in is told once, in the block "Quand les trains s’affichent" / "When the trains show".
+  Only a real iPhone at a station shows that the start comes, so see it on your iPhone with the build that you submit before you paste the text.
+- **No mention of the notification in the description.** It is only the fallback of the start, not what TROME is: the review notes and the TestFlight text name it.
 - **No claim outside Paris.** The app is not blocked elsewhere, but it shows nothing useful there, except the example, so the first lines name the limit.
 - **No claim about the battery, and no `real time`.** Nobody measured the first, and the second promises more than the source gives.
-
-## The closed-app clause that waits for the proof
-
-Five places hold the claim that a closed app sends a notification as a line of text for the store or for the notes of a version: the description, the review notes, the TestFlight text, the What's new pages and `CHANGELOG.md`.
-The store texts above carry it already, and you check them before you paste.
-The What's new pages and `CHANGELOG.md` go online with the site, so they carry it only after the proof.
-
-When the notification has come on a real iPhone at a station, add the clause to the 1.0 line of each of the three.
-In `fr/whats-new.mdx`, the line reads:
-
-```text wrap
-App ouverte, les trains s’affichent à votre arrivée à une station ; app fermée, une notification vous prévient : touchez-la, et ils s’affichent.
-```
-
-In `en/whats-new.mdx` and `CHANGELOG.md`, the line reads:
-
-```text wrap
-With the app open, the trains show when you arrive at a station; with the app closed, a notification tells you, and one tap shows them.
-```
-
-When it did not come, or not every time, remove the closed-app sentences from the other three places instead, and leave the What's new line as it stands:
-
-- the description, French and English: the block "Quand les trains s’affichent" / "When the trains show" keeps only its sentence about the open app, and the permission sentence "Pour fonctionner quand l’app est fermée" / "To work while the app is closed" goes, with the sentence that follows it;
-- the review notes: the bullet about the closed app;
-- the TestFlight text: step 2 of "What to test" says only what happens with the app open.
-
-More pages tell the way in as how the app works, with the steps and the permissions: `README.md`, the two home pages, the two Help pages and the two Privacy pages.
-Each tells it once, in one place: the bullet "How the trains show" of `README.md`, the section "Comment les trains arrivent sur l’écran verrouillé" or "How the trains reach your lock screen" of each home, the section "Rien ne vient quand TROME est fermé" or "Nothing comes when TROME is closed" of each Help page.
-The permission steps and the notification answers sit next to them: the Help sections on **Always** and on notifications, and the permission steps of the install tutorial.
-The Privacy pages tell it in one sentence, in the section "Votre position" / "Your position": "Avec l’accès **Toujours**, iOS prévient TROME quand vous arrivez près d’une station, même quand l’app est fermée." / "With **Always** access, iOS tells TROME when you come near a station, even when the app is closed."
-They stay while the proof is open, because a rider who has the app needs the steps to find why nothing comes.
-When the notification did not come, rewrite them from what the proof found, in the same change as the three places above, since they say that the app does what it does not.
-
-## Sentences to change when the Live Activity starts by itself
-
-Version 1 brings the Live Activity to a closed app with one notification and one tap.
-The day it starts with no tap, edit these sentences, and only these:
-
-- the description, French and English: the block "Quand les trains s’affichent" / "When the trains show", and the permission sentence "Pour fonctionner quand l’app est fermée" / "To work while the app is closed", with the sentence that follows it;
-- the review notes: the bullet about the closed app;
-- the TestFlight text: step 2 of "What to test";
-- the closed-app clause of the 1.0 line on the What's new pages and in `CHANGELOG.md`, if you added it, and a line about the new start in the entry of the next version.
-
-The pages above change on the same day, in the places that they name: the closed-app sentence of each goes, and the sentence that says that the app starts with no tap takes its place.
-The headline and the first paragraph of each page already say what the rider gets, and not how it comes, so they stay.
-The titles, the subtitle, the promotional text and the beta description do not name the notification, so they stay.
 
 ## When the app changes, check these claims
 
@@ -352,7 +305,7 @@ After a change that touches one of these claims, check its guide, and edit the t
 |---|---|
 | The next trains of both directions of every line, with the destination of each train | [the Live Activity guide](https://github.com/valfur03/trome/blob/main/ios/guide/live-activity.md) |
 | The lock screen and the Dynamic Island | [the Live Activity guide](https://github.com/valfur03/trome/blob/main/ios/guide/live-activity.md) |
-| Shows within about 150 meters when the app is open, comes with a notification and one tap when it is closed, and goes away when you leave | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |
+| Shows within about 150 meters, with the app open or closed (a notification and one tap only when the start by push cannot happen), and goes away when you leave | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |
 | The location **Always** is asked for the closed app, and **While Using** works while the app is open | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |
 | The questions for **Always** and for notifications come only after location is allowed; after **Don’t Allow**, iOS asks neither | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |
 | A pause of 30 minutes, 1 hour or the rest of the day | [the automatic start guide](https://github.com/valfur03/trome/blob/main/ios/guide/auto-live-activity.md) |

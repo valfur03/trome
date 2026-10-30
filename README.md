@@ -14,8 +14,7 @@ It is open source and not on the App Store yet: [follow the launch](#get-it-on-y
 
 - **No station to pick.** TROME finds the station when you are about 150 metres from it, and takes the trains off your lock screen when you walk away.
 - **Every line of the station.** At a station with many lines, tap the name of the station to see the next line, metro or RER.
-- **How the trains show.** With TROME open, they show when you arrive.
-  With TROME closed, a notification names the station: tap it, and they show while you go down to the platform.
+- **How the trains show.** They show when you arrive, with TROME open or closed.
 - **Not now?** Snooze TROME from the lock screen for 30 minutes, an hour, or the rest of the day.
 - **Your exact position stays on your iPhone.** No account and no ads: read [what TROME sends, and what it keeps](https://trome.valfur.fr/en/privacy/).
 

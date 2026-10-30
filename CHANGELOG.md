@@ -10,11 +10,12 @@ The text for riders is also on the [What’s new](https://trome.valfur.fr/en/wha
 
 - The next trains of the station near you, on the lock screen and in the Dynamic Island.
 - Metro and RER, both directions of every line, in Paris and Île-de-France.
-- With the app open, the trains show when you arrive at a station.
+- The trains show when you arrive at a station, with the app open or closed.
 - A pause of 30 minutes, 1 hour or the rest of the day, and “See an example” to try it from anywhere.
 
 ### For builders
 
 - The app is for iPhone, with iOS 18 or later.
 - A release build asks the TROME server for the train times, and a debug build asks PRIM with your own key: [where the train times come from](ios/guide/trains.md).
+- With the app closed, a release build has the server start the Live Activity with a push, and a build signed with a free Apple ID shows a notification instead: [the silent start](ios/guide/auto-live-activity.md#the-silent-start).
 - The code is under the [MIT licence](LICENSE), and the station list and the train times keep their own licences: [NOTICE.md](NOTICE.md).
