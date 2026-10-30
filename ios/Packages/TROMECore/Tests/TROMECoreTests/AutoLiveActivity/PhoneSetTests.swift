@@ -125,8 +125,8 @@ struct PhoneSetTests {
         let read = try #require(choice, "the line page that the rider tapped to is lost")
         #expect(read.activityID == expected.activityID)
         #expect(read.stationName == expected.stationName)
-        #expect(read.line.mode.rawValue == expected.line.mode)
-        #expect(read.line.name == expected.line.name)
+        #expect(read.line.mode.rawValue == expected.line["mode"])
+        #expect(read.line.name == expected.line["name"])
         let set = try #require(path.split(separator: "/").first)
         let file = try Fixture.contractsFolder("phone")
             .appending(path: "\(set)/live-activity/\(expected.contentCase).json")
@@ -258,16 +258,12 @@ struct PhoneSetRider: Decodable {
     }
 
     struct PageChoice: Decodable {
-        struct Line: Decodable {
-            var mode: String
-            var name: String
-        }
-
         /// The case of the Live Activity whose content the rider tapped on, in `live-activity/` of the same set.
         var contentCase: String
         var activityID: String
         var stationName: String
-        var line: Line
+        /// The mode and the name of the line.
+        var line: [String: String]
     }
 
     var automaticMode: String?
