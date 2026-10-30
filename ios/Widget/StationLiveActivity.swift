@@ -10,26 +10,26 @@ struct StationLiveActivity: Widget {
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: StationActivityAttributes.self) { context in
-            LockScreenView(state: context.state, isStale: context.looksStale)
+            LockScreenView(state: context.drawnState, isStale: context.looksStale)
                 .activityBackgroundTint(.black)
                 .environment(\.colorScheme, .dark)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    if context.state.multiLinePage == nil {
-                        Image(systemName: context.state.leadingLine?.symbolName ?? "tram.fill")
+                    if context.drawnState.multiLinePage == nil {
+                        Image(systemName: context.drawnState.leadingLine?.symbolName ?? "tram.fill")
                             .font(.title3)
                     }
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    if context.state.multiLinePage == nil {
-                        Text(context.state.stationName)
+                    if context.drawnState.multiLinePage == nil {
+                        Text(context.drawnState.stationName)
                             .font(.headline)
                             .lineLimit(1)
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ExpandedIslandBottomRegion(state: context.state, isStale: context.looksStale)
+                    ExpandedIslandBottomRegion(state: context.drawnState, isStale: context.looksStale)
                 }
             } compactLeading: {
                 if let line = context.island.line {
@@ -37,9 +37,9 @@ struct StationLiveActivity: Widget {
                         .padding(.leading, line.mode == .rer ? Self.rerIslandInset : 0)
                 }
             } compactTrailing: {
-                CompactIslandWait(island: context.island, drawnAt: context.state.updatedAt)
+                CompactIslandWait(island: context.island, drawnAt: context.drawnState.updatedAt)
             } minimal: {
-                MinimalIslandWait(island: context.island, drawnAt: context.state.updatedAt)
+                MinimalIslandWait(island: context.island, drawnAt: context.drawnState.updatedAt)
             }
         }
     }
@@ -254,12 +254,18 @@ private struct LineDirectionRow: View {
 }
 
 private extension ActivityViewContext<StationActivityAttributes> {
+    /// The content on the page that the rider tapped to, which a push of the server, sent to every rider of the
+    /// station with the first page shown, carries but does not show.
+    var drawnState: StationActivityAttributes.ContentState {
+        state.showingThePage(chosenBy: LinesPageChoiceStore.ofThisApp()?.load(), activityID: activityID)
+    }
+
     var looksStale: Bool {
         state.isStale(systemSaysStale: isStale)
     }
 
     var island: DynamicIslandWait {
-        state.dynamicIslandWait(isStale: looksStale)
+        drawnState.dynamicIslandWait(isStale: looksStale)
     }
 }
 

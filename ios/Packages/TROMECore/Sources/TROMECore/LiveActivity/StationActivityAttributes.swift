@@ -71,12 +71,19 @@ extension StationActivityAttributes.ContentState {
         trains: NextTrainsState,
         now: Date,
         firstLineIndex: Int = 0,
+        carriesEveryPage: Bool = false,
         serverIsOut: Bool? = nil,
         appNeedsUpdate: Bool? = nil
     ) {
         self.init(
             stationName: station.name,
-            trains: .init(trains, at: station, now: now, firstLineIndex: firstLineIndex),
+            trains: .init(
+                trains,
+                at: station,
+                now: now,
+                firstLineIndex: firstLineIndex,
+                carriesEveryPage: carriesEveryPage
+            ),
             updatedAt: now,
             serverIsOut: serverIsOut ?? (trains.serverRetryAt != nil),
             appNeedsUpdate: appNeedsUpdate ?? trains.refusesTheAppToken
@@ -108,7 +115,7 @@ extension StationActivityAttributes.Trains {
         return page
     }
 
-    init(_ state: NextTrainsState, at station: Station, now: Date, firstLineIndex: Int) {
+    init(_ state: NextTrainsState, at station: Station, now: Date, firstLineIndex: Int, carriesEveryPage: Bool) {
         switch state {
         case .idle, .loading:
             self = .loading
@@ -123,7 +130,8 @@ extension StationActivityAttributes.Trains {
                         hasADirectionWithTwoEnds: line.hasADirectionWithTwoEnds(at: station)
                     )
                 },
-                from: firstLineIndex
+                from: firstLineIndex,
+                carriesEveryPage: carriesEveryPage
             ))
         case .departures(let board, _):
             let upcoming = board.departures.filter { $0.time > now }
@@ -155,7 +163,8 @@ extension StationActivityAttributes.Trains {
             self = .lines(LinesPage(
                 showing: lines,
                 from: firstLineIndex,
-                laterTrain: board.laterDepartures.first
+                laterTrain: board.laterDepartures.first,
+                carriesEveryPage: carriesEveryPage
             ))
         }
     }

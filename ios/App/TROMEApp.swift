@@ -116,7 +116,16 @@ struct TROMEApp: App {
     private static func makeLiveActivityModel(
         client: ActivityKitStationLiveActivityClient
     ) -> StationLiveActivityModel {
-        StationLiveActivityModel(client: client, store: StationLiveActivityInputsStore(storage: UserDefaults.standard))
+        var sendsAsTheServer = false
+        #if DEBUG
+        sendsAsTheServer = ProcessInfo.processInfo.arguments.contains(StationLiveActivityModel.sendsAsTheServerArgument)
+        #endif
+        return StationLiveActivityModel(
+            client: client,
+            store: StationLiveActivityInputsStore(storage: UserDefaults.standard),
+            pageChoices: LinesPageChoiceStore.ofThisApp(),
+            sendsAsTheServer: sendsAsTheServer
+        )
     }
 
     private static func makeAutoLiveActivityModel(

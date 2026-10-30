@@ -50,7 +50,13 @@ struct LiveActivityContentContractTests {
         for ref in contractCase.answers.keys {
             #expect(asked.contains { $0.contains("/\(ref)/") }, "\(name): \(ref) was not asked")
         }
-        let content = StationActivityAttributes.ContentState(station: station, trains: model.state, now: now)
+        // The server's content carries every page, from which each lock screen draws the page of its rider's line.
+        let content = StationActivityAttributes.ContentState(
+            station: station,
+            trains: model.state,
+            now: now,
+            carriesEveryPage: true
+        )
         let encoded = try JSONEncoder().encode(content)
 
         let contentFile = folder.appending(path: "contents/\(name).json")
@@ -67,6 +73,30 @@ struct LiveActivityContentContractTests {
             from: Data(contentsOf: contentFile)
         )
         #expect(decoded == content)
+        try Self.expectEachCarriedPageIsThePageOfTheApp(decoded, station: station, trains: model.state, now: now)
+    }
+
+    /// The page that the widget draws from the pages of a push, for a rider who tapped to it, is the page that the
+    /// app itself draws for that line: the same line, the same trains, never another line's.
+    private static func expectEachCarriedPageIsThePageOfTheApp(
+        _ pushed: StationActivityAttributes.ContentState,
+        station: Station,
+        trains: NextTrainsState,
+        now: Date
+    ) throws {
+        guard let page = pushed.trains.linesPage, page.allLines.count > 1 else { return }
+        #expect(page.pages?.count == page.allLines.count)
+        for index in page.allLines.indices {
+            let ownPage = StationActivityAttributes.ContentState(
+                station: station,
+                trains: trains,
+                now: now,
+                firstLineIndex: index
+            ).trains.linesPage
+            var drawn = try #require(page.showing(pageAt: index))
+            drawn.pages = nil
+            #expect(drawn == ownPage, "page \(index) of \(station.name)")
+        }
     }
 
     @Test func theLineDataIsTheDataOfThePackage() throws {

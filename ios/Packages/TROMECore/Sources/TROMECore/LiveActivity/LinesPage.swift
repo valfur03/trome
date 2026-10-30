@@ -18,6 +18,12 @@ public struct LineTrains: Codable, Hashable, Sendable {
         self.hasADirectionWithTwoEnds = hasADirectionWithTwoEnds
     }
 
+    /// The line as its own page draws it: with more than two directions, each keeps only its next train, so that the
+    /// page stays under the 160 points of the lock screen.
+    var asItsPageDrawsIt: LineTrains {
+        directions.count > LinesPage.maximumRowsWithTwoTrains ? keepingOnlyTheNextTrains : self
+    }
+
     var keepingOnlyTheNextTrains: LineTrains {
         var line = self
         line.directions = directions.map { direction in
@@ -65,6 +71,10 @@ public struct LinesPage: Codable, Hashable, Sendable {
     public var lines: [LineTrains]
     public var allLines: [TransitLine]
     public var firstIndex: Int
+    /// The lines of the first pages, each as its page draws it, in the order of `allLines`: all of them, or the
+    /// first ones that fit the push. Only the server's content carries them: one push goes to every rider of the
+    /// station, so each lock screen draws from them the page that its rider tapped to (`showingThePage(chosenBy:)`).
+    public var pages: [LineTrains]?
     public var soonestTrain: SoonestTrain?
     public var nextTrainIsOverAnHourAway: Bool
     var nextTrainComesWithinTheHourAt: Date?
@@ -85,12 +95,9 @@ public struct LinesPage: Codable, Hashable, Sendable {
         self.nextTrainIsOverAnHourAway = nextTrainIsOverAnHourAway
     }
 
-    init(showing lines: [LineTrains], from index: Int, laterTrain: Departure? = nil) {
+    init(showing lines: [LineTrains], from index: Int, laterTrain: Departure? = nil, carriesEveryPage: Bool = false) {
         let firstIndex = lines.indices.contains(index) ? index : 0
-        var shown = Array(lines[firstIndex...].prefix(1))
-        if shown.flatMap(\.directions).count > Self.maximumRowsWithTwoTrains {
-            shown = shown.map(\.keepingOnlyTheNextTrains)
-        }
+        let shown = lines[firstIndex...].prefix(1).map(\.asItsPageDrawsIt)
         let soonestTrain = lines
             .flatMap { line in
                 line.directions.compactMap { direction in
@@ -110,6 +117,9 @@ public struct LinesPage: Codable, Hashable, Sendable {
             nextTrainIsOverAnHourAway: nextTrainIsOverAnHourAway
         )
         lineWithNoAnswer = lines.first { $0.directions.contains(where: \.hasNoAnswer) }?.line
+        if carriesEveryPage, lines.count > 1 {
+            pages = lines.map(\.asItsPageDrawsIt)
+        }
         if nextTrainIsOverAnHourAway {
             nextTrainComesWithinTheHourAt = laterTrain?.time.addingTimeInterval(-DepartureBoard.farthestTimeSeconds)
             lineOfTheTrainOverAnHourAway = laterTrain.flatMap { train in
@@ -169,6 +179,30 @@ public struct LinesPage: Codable, Hashable, Sendable {
     public var nextFirstIndex: Int {
         let next = firstIndex + lines.count
         return next < allLines.count ? next : 0
+    }
+
+    /// The page after this one among the pages that the content carries, and the first after the last.
+    var nextCarriedIndex: Int? {
+        guard let pages, pages.count > 1 else { return nil }
+        let next = firstIndex + 1
+        return next < pages.count ? next : 0
+    }
+
+    func index(of line: TransitLine) -> Int? {
+        allLines.firstIndex { $0.mode == line.mode && $0.name == line.name }
+    }
+
+    /// The page of the line at `index`, drawn from the pages that the content carries, with the minutes of this
+    /// content; nil when the content does not carry it, so that the caller keeps a page that it has.
+    func showing(pageAt index: Int) -> LinesPage? {
+        guard let pages, pages.indices.contains(index), allLines.indices.contains(index),
+              pages[index].line.mode == allLines[index].mode, pages[index].line.name == allLines[index].name else {
+            return nil
+        }
+        var page = self
+        page.lines = [pages[index]]
+        page.firstIndex = index
+        return page
     }
 
     var keepingOnlyTheNextTrains: LinesPage {

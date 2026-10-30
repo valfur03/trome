@@ -5,6 +5,7 @@ import Foundation
 final class StubStationLiveActivityClient: StationLiveActivityClient {
     var isShowing = false
     var shownContent: StationActivityAttributes.ContentState?
+    var shownActivityID: String?
     var startError: (any Error)?
     var areActivitiesEnabled = true
     var holdsNextUpdate = false

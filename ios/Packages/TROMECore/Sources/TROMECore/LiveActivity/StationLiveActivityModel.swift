@@ -15,10 +15,16 @@ public enum StationLiveActivityError: Error, Equatable, Sendable {
 public protocol StationLiveActivityClient: AnyObject {
     var isShowing: Bool { get }
     var shownContent: StationActivityAttributes.ContentState? { get }
+    /// The id of the Live Activity on screen, which keys the page that its rider chose.
+    var shownActivityID: String? { get }
     var areActivitiesEnabled: Bool { get }
     func start(_ content: StationActivityAttributes.ContentState) throws
     func update(_ content: StationActivityAttributes.ContentState) async
     func end() async
+}
+
+extension StationLiveActivityClient {
+    public var shownActivityID: String? { nil }
 }
 
 @MainActor
@@ -33,6 +39,10 @@ public final class StationLiveActivityModel {
 
     private let client: any StationLiveActivityClient
     private let store: StationLiveActivityInputsStore?
+    private let pageChoices: LinesPageChoiceStore?
+    /// Debug builds only, for the end-to-end test of the page that a tap chose: every content is the one that the
+    /// server pushes (the first page, and every page), so only the rider's choice can show another page.
+    private let sendsAsTheServer: Bool
     private let now: @Sendable () -> Date
     private var inputs: StationLiveActivityInputs?
     private var firstLineIndex: Int
@@ -47,20 +57,28 @@ public final class StationLiveActivityModel {
     @ObservationIgnored private var startCount = 0
     /// The last content that the app gave iOS, in the order of the system calls, and when: an update that iOS
     /// would draw the same is not sent while iOS may still draw the last one (`send(_:afterATap:)`).
+    /// The launch argument of a debug build that sets `sendsAsTheServer`.
+    public static let sendsAsTheServerArgument = "--content-as-the-server"
+
     @ObservationIgnored private var lastSend: (content: StationActivityAttributes.ContentState, at: Date)?
 
     public init(
         client: any StationLiveActivityClient,
         store: StationLiveActivityInputsStore? = nil,
+        pageChoices: LinesPageChoiceStore? = nil,
+        sendsAsTheServer: Bool = false,
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.client = client
         self.store = store
+        self.pageChoices = pageChoices
+        self.sendsAsTheServer = sendsAsTheServer
         self.now = now
         self.isShowing = client.isShowing
         self.areActivitiesEnabled = client.areActivitiesEnabled
         let shown = client.shownContent
-        self.firstLineIndex = shown?.trains.linesPage?.firstIndex ?? 0
+        self.firstLineIndex = shown?.chosenIndex(by: pageChoices?.load(), activityID: client.shownActivityID)
+            ?? shown?.trains.linesPage?.firstIndex ?? 0
         if client.isShowing, let shown, shown.trains.linesPage != nil,
            let saved = store?.load(), saved.station.name == shown.stationName {
             inputs = saved
@@ -117,22 +135,48 @@ public final class StationLiveActivityModel {
         await show(station: station, trains: trains)
     }
 
+    /// The tap on the header: the page after the one that the Live Activity draws, which may be a page that the rider
+    /// chose before a push of the server. With no trains of its own, the app shows it from the pages that the content
+    /// carries. The choice is kept for the widget, which draws it again from each push that carries it.
     public func showNextLines() async {
-        guard isShowing, let shown = content ?? client.shownContent, let page = shown.trains.linesPage else {
+        guard isShowing, let shown = newestShownContent else {
             Self.logPager("show the next lines: no page shown (showing: \(isShowing))")
             return
         }
-        firstLineIndex = page.nextFirstIndex
-        Self.logPager("show the next lines of \(shown.stationName): page from \(page.firstIndex) to \(firstLineIndex)")
-        guard let inputs, !keptTimesAreStale(at: now()) else {
-            let kept = markedStaleIfTheKeptTimesAreOld(shown)
-            if kept != shown {
-                content = kept
-            }
-            await send(kept, afterATap: true)
+        let activityID = client.shownActivityID
+        let drawn = activityID.map { shown.showingThePage(chosenBy: pageChoices?.load(), activityID: $0) } ?? shown
+        guard let page = drawn.trains.linesPage else {
+            Self.logPager("show the next lines: no page shown (showing: \(isShowing))")
             return
         }
-        await show(station: inputs.station, trains: inputs.trains, afterATap: true)
+        let hasTrains = inputs != nil && !keptTimesAreStale(at: now())
+        let carriedPage = hasTrains ? nil : page.nextCarriedIndex.flatMap(page.showing(pageAt:))
+        firstLineIndex = carriedPage?.firstIndex ?? page.nextFirstIndex
+        Self.logPager("show the next lines of \(shown.stationName): page from \(page.firstIndex) to \(firstLineIndex)")
+        if let activityID, hasTrains || carriedPage != nil, page.allLines.indices.contains(firstLineIndex) {
+            pageChoices?.save(
+                LinesPageChoice(activityID: activityID, stationName: drawn.stationName, line: page.allLines[firstLineIndex])
+            )
+        }
+        if let inputs, hasTrains {
+            await show(station: inputs.station, trains: inputs.trains, afterATap: true)
+            return
+        }
+        var kept = markedStaleIfTheKeptTimesAreOld(drawn)
+        if let carriedPage {
+            kept.trains = .lines(carriedPage)
+        }
+        if kept != shown {
+            content = kept
+        }
+        await send(kept, afterATap: true)
+    }
+
+    /// The content of the Live Activity: the app's own last one, or a newer one that a push of the server brought.
+    private var newestShownContent: StationActivityAttributes.ContentState? {
+        guard let content else { return client.shownContent }
+        guard let shown = client.shownContent, shown.updatedAt > content.updatedAt else { return content }
+        return shown
     }
 
     func redraw() async {
@@ -308,7 +352,8 @@ public final class StationLiveActivityModel {
             station: station,
             trains: trains,
             now: now(),
-            firstLineIndex: firstLineIndex,
+            firstLineIndex: sendsAsTheServer ? 0 : firstLineIndex,
+            carriesEveryPage: sendsAsTheServer,
             serverIsOut: serverIsOut,
             appNeedsUpdate: appNeedsUpdate
         )

@@ -37,6 +37,10 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
         Self.runningActivities.first?.content.state
     }
 
+    var shownActivityID: String? {
+        Self.runningActivities.first?.id
+    }
+
     var areActivitiesEnabled: Bool {
         ActivityAuthorizationInfo().areActivitiesEnabled
     }

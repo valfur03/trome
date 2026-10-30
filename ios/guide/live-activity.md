@@ -18,6 +18,7 @@ Put a rule in `TROMECore` (`ios/Packages/TROMECore/Sources/TROMECore/`), with a 
 | What the compact and minimal views show | the rules in `DynamicIslandWait`; the views `CompactIslandWait`, `MinimalIslandWait`, `IslandNumber` | `DynamicIslandWaitTests` |
 | The look of a metro strip, a fork group, an RER row or a header | `PanamStrip`, `PanamBranchEndRows`, `SielRowsView`, `PanamStripsHeader` in `ios/Widget/`; `StationLiveActivity.swift` holds the entry views | [the render check](render-check.md) |
 | The header and its tap | `LinesPagerButton`, `ShowNextLinesIntent`, `StationLiveActivityModel.showNextLines()` | `StationLiveActivityModelTests` |
+| The page that a tap chose, across the updates of the server | `LinesPageChoice`, `LinesPage.pages`, `ContentState.showingThePage(chosenBy:activityID:)` | `StationLiveActivityPageChoiceTests`, `LiveActivityContentContractTests` |
 | When the Live Activity is drawn again | `LinesPage.nextRedrawDate`, `StationLiveActivityModel.redraw()`; `BackgroundTrainsRefresh.asksInsteadOfRedrawing`, when a row would lose a train; not for an update that draws the same as the last one, sent less than 25 s ago, except after a tap (`ContentState.drawsTheSame(as:)`, `StationLiveActivityModel.sameDrawingWait`) | `LinesPageTests+Redraw`, `StationLiveActivityRedrawTests`, `StationLiveActivitySameDrawingTests`, `AutoLiveActivityFeedTests+ForkEnds` |
 | How the app starts, updates and ends the Live Activity in iOS | `StationLiveActivityModel` and its protocol `StationLiveActivityClient`; the adapter `ActivityKitStationLiveActivityClient` and the start error `LiveActivityStartError`, in `ios/App/LiveActivity/` | `StationLiveActivityModelTests` |
 
@@ -47,6 +48,11 @@ So has a place with several stations: Châtelet, Châtelet - Les Halles and Les 
 - **The order of the pages** is the lines of the station itself first (metro by number, then RER), then the lines of the other stations of the place, nearest station first.
   A line of another station has a walking icon and the name of that station in place of the station name, so that the rider knows where to walk.
 - **The first page** shows when the Live Activity starts or switches to another station.
+- **A tapped page holds** across the updates of the server, which go to every rider of the station with the first page shown.
+  Each update also carries the trains of the other pages, so the widget draws the page of the line that the rider tapped to, with the minutes of the update.
+  The app keeps that line, for this Live Activity and this station, in an app group that it shares with the widget: the widget has no other place to read it from.
+  An update that does not carry that page shows the first page.
+  At the busiest hour, the pages of the biggest places (Saint-Lazare, Châtelet, Gare du Nord) do not all fit in one update, so a tap there goes round the first pages only, until the app has trains of its own ([how the server fits them](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
 - **The trains.** A direction keeps its next two trains of the next 60 minutes, and a page keeps at most three directions.
   When a page has more than two directions, each one keeps only its next train, to stay under 160 points.
   PRIM sometimes lists one metro train twice, less than a minute apart: the page keeps the first, because no two metro trains leave a platform that close.
@@ -178,7 +184,7 @@ So the app sends a new content in these cases:
 |---|---|
 | New trains arrive | Draws the page with them: [when the app asks again](trains.md#when-the-app-asks-again) |
 | In the background, a train on the page starts to approach, arrives or leaves; the soonest train of the station does the same, on any page, for the island | Draws the page again at that moment, with the times it has, and no call to PRIM |
-| The rider taps the header | Shows the next page, from the trains it has |
+| The rider taps the header | Shows the next page, from the trains it has, or from the pages that the update of the server carries |
 
 Between two updates the numbers count down by themselves.
 Only a few formats do that, so use one of these:

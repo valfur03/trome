@@ -30,6 +30,12 @@ export interface LinesPage {
   lines: LineTrains[];
   allLines: ShownLine[];
   firstIndex: number;
+  /**
+   * The lines of every page, each as its page draws it, in the order of `allLines`, at a station with several lines (`LinesPage.pages` of the app).
+   * The update of a channel goes to every rider of the station, so it carries the pages, and each lock screen draws the page that its rider tapped to.
+   * A push carries the first ones that fit Apple's limit (`withThePagesThatFit`).
+   */
+  pages?: LineTrains[];
   soonestTrain?: SoonestTrain;
   nextTrainIsOverAnHourAway: boolean;
   nextTrainComesWithinTheHourAt?: number;
@@ -114,10 +120,7 @@ function boardLines(board: DepartureBoard, station: Station, lineDirections: Lin
 
 function linesPage(lines: readonly LineTrains[], index: number, laterTrain: Departure | undefined): LinesPage {
   const firstIndex = index >= 0 && index < lines.length ? index : 0;
-  let shown = lines.slice(firstIndex, firstIndex + 1);
-  if (shown.flatMap((line) => line.directions).length > maximumRowsWithTwoTrains) {
-    shown = shown.map(keepingOnlyTheNextTrains);
-  }
+  const shown = lines.slice(firstIndex, firstIndex + 1).map(asItsPageDrawsIt);
   let soonestTrain: SoonestTrain | undefined;
   for (const line of lines) {
     for (const direction of line.directions) {
@@ -130,6 +133,9 @@ function linesPage(lines: readonly LineTrains[], index: number, laterTrain: Depa
   const nextTrainIsOverAnHourAway =
     soonestTrain === undefined && lines.some((line) => line.directions.some((direction) => direction.nextTrainIsOverAnHourAway));
   const page: LinesPage = { lines: shown, allLines: lines.map((line) => line.line), firstIndex, nextTrainIsOverAnHourAway };
+  if (lines.length > 1) {
+    page.pages = lines.map(asItsPageDrawsIt);
+  }
   if (soonestTrain !== undefined) {
     page.soonestTrain = soonestTrain;
   }
@@ -145,6 +151,11 @@ function linesPage(lines: readonly LineTrains[], index: number, laterTrain: Depa
     }
   }
   return page;
+}
+
+/** A page of one line keeps only the next train of each direction when it has more than two, to stay under the height of the lock screen. */
+function asItsPageDrawsIt(line: LineTrains): LineTrains {
+  return line.directions.length > maximumRowsWithTwoTrains ? keepingOnlyTheNextTrains(line) : line;
 }
 
 function keepingOnlyTheNextTrains(line: LineTrains): LineTrains {
@@ -182,16 +193,10 @@ export function encodeContent(content: StationContent): Record<string, unknown> 
 
 function encodePage(page: LinesPage): Record<string, unknown> {
   return withoutUndefined({
-    lines: page.lines.map((line) =>
-      withoutUndefined({
-        line: line.line,
-        directions: line.directions.map(encodeDirection),
-        stationName: line.stationName,
-        hasADirectionWithTwoEnds: line.hasADirectionWithTwoEnds,
-      }),
-    ),
+    lines: page.lines.map(encodeLine),
     allLines: page.allLines,
     firstIndex: page.firstIndex,
+    pages: page.pages?.map(encodeLine),
     soonestTrain:
       page.soonestTrain === undefined
         ? undefined
@@ -200,6 +205,15 @@ function encodePage(page: LinesPage): Record<string, unknown> {
     nextTrainComesWithinTheHourAt: optionalSwiftDate(page.nextTrainComesWithinTheHourAt),
     lineOfTheTrainOverAnHourAway: page.lineOfTheTrainOverAnHourAway,
     lineWithNoAnswer: page.lineWithNoAnswer,
+  });
+}
+
+function encodeLine(line: LineTrains): Record<string, unknown> {
+  return withoutUndefined({
+    line: line.line,
+    directions: line.directions.map(encodeDirection),
+    stationName: line.stationName,
+    hasADirectionWithTwoEnds: line.hasADirectionWithTwoEnds,
   });
 }
 

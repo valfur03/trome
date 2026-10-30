@@ -25,6 +25,6 @@ TROME_BUNDLE_ID_PREFIX = com.example
 
 // Optional, only when DEVELOPMENT_TEAM is a paid Apple Developer Program team: YES compiles the silent start into your
 // Debug builds (the server starts the Live Activity at a station, with no notification and no tap).
-// A free Apple ID cannot sign the push capability that it needs, so leave it empty with a Personal Team.
+// It needs the push capability and an app group (shared by the app and its widget), which a free Apple ID cannot sign, so leave it empty with a Personal Team.
 // It also needs your server in ios/Config/Server.xcconfig (a copy of Server.example.xcconfig); with no server, the app notifies as before.
 // TROME_SILENT_START = YES
