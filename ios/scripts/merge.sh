@@ -2,9 +2,11 @@
 set -eu
 
 scripts=$(cd "$(dirname "$0")" && pwd)
+. "$scripts/code-paths.sh"
 target=main
 check_command=${TROME_MERGE_CHECK:-make check}
 e2e_command=${TROME_MERGE_E2E:-make e2e}
+render_command=${TROME_MERGE_RENDER:-make live-activity-render}
 merge_lock=${RATP_MERGE_LOCK:-/tmp/ratp-merge.lock}
 # sim-lock.sh reads the same queue: a job that is not a merge waits while a merge waits in it.
 queue=${RATP_MERGE_QUEUE:-${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}.merge-queue}
@@ -119,22 +121,59 @@ use_node_of() {
     done
 }
 
-is_app_code() {
-    case "$1" in
-        ios/Packages/TROMECore/Tests/*) return 1 ;;
-        ios/App/* | ios/Widget/* | ios/UITests/* | ios/DocsScreenshots/* | ios/RenderCheck/* | ios/Packages/*) return 0 ;;
-        docs/* | server/* | contracts/* | video/* | .claude/* | .github/* | *.md | *.mdx | LICENSE) return 1 ;;
-    esac
-    return 0
+changes_app_code() {
+    diff_touches "$1" "$2" is_app_code
 }
 
-changes_app_code() {
-    git diff --name-only --no-renames "$1" "$2" | {
-        while IFS= read -r path; do
-            ! is_app_code "$path" || exit 0
-        done
-        exit 1
-    }
+# Runs a command, and stops it after $1 seconds: a hung network call must not hold the Simulator lock.
+timed() {
+    perl -e '$seconds = shift; alarm $seconds; exec @ARGV or die "cannot run $ARGV[0]: $!\n"' "$@"
+}
+
+# The release refuses a commit of main with no record of a full E2E pass on its tree (e2e-proof.sh).
+# After a passed E2E run, it draws the Live Activity views for the counts of the record, when they may have changed
+# since the last drawing on GitHub; it sets render_counts, or leaves it empty when it did not draw.
+# The render check is a report, not a gate: it never fails the merge.
+draw_for_record() {
+    render_counts=
+    git remote get-url origin > /dev/null 2>&1 || return 0
+    if diff_touches "$old" "$tip" is_render_input; then
+        why="$names changes the Live Activity views or their data"
+    elif "$scripts/e2e-proof.sh" read "$old" 2> /dev/null | grep -q '^render counts: too tall '; then
+        step "3/4 render check: skipped, the views are the ones of the last drawing on GitHub"
+        return 0
+    else
+        why="$target has no render counts on GitHub"
+    fi
+    step "3/4 render check of the Live Activity ($render_command), for the record of the merge: $why"
+    render_log=$(mktemp "${TMPDIR:-/tmp}/trome-merge-render.XXXXXX")
+    (cd "$tip_root" && sh -c "$render_command") > "$render_log" 2>&1 || true
+    render_counts=$("$scripts/e2e-proof.sh" render-counts "$render_log")
+    if [ -n "$render_counts" ]; then
+        step "render counts: $render_counts"
+    else
+        step "the render check gave no counts, so the record says 'not drawn' (a report, not a gate: the merge goes on). Its last lines:"
+        tail -n 5 "$render_log" >&2
+    fi
+    rm -f "$render_log"
+}
+
+# Pushes main to origin, and leaves on its new commit the record of its full E2E pass: GitHub keeps a status only for a
+# commit that it has. Prints what it did. A failure leaves main as it landed: the factory push or the owner sends it.
+publish_record() {
+    if ! git remote get-url origin > /dev/null 2>&1; then
+        echo "make merge: no remote 'origin', so no record of the E2E pass of $(short "$tip") is left on GitHub."
+        return 0
+    fi
+    if ! timed 120 git push -q origin "$tip:refs/heads/$target" > "$work/publish.err" 2>&1; then
+        echo "make merge: the push of $target to origin failed, so $(short "$tip") has no record of its E2E pass on GitHub, and a release refuses it until the next merge that runs the E2E suite: $(tail -n 1 "$work/publish.err")"
+        return 0
+    fi
+    if ! "$scripts/e2e-proof.sh" publish "$tip" "$render_counts" > "$work/publish.err" 2>&1; then
+        echo "make merge: pushed $target, but GitHub did not take the record of the E2E pass of $(short "$tip"), so a release refuses it until the next merge that runs the E2E suite: $(tail -n 1 "$work/publish.err")"
+        return 0
+    fi
+    echo "make merge: pushed $target, and left on $(short "$tip") the record of its full E2E pass (the status 'E2E on the Mac' on GitHub)${render_counts:+, with its render counts: $render_counts}."
 }
 
 e2e_evidence() {
@@ -342,6 +381,8 @@ land() {
     fi
     stack_step=
     stack_failure=
+    e2e_passed=
+    render_counts=
     shared="one gate"
     use_node_of "$@"
     step "2/4 quality gate ($check_command)$once"
@@ -354,6 +395,9 @@ land() {
         if ! (cd "$tip_root" && TROME_E2E_EVIDENCE_NOTE=$evidence_note sh -c "$e2e_command"); then
             stack_step="full E2E suite"
             stack_failure=$(e2e_evidence "$evidence_note")
+        else
+            e2e_passed=1
+            draw_for_record
         fi
         rm -f "$evidence_note"
     else
@@ -379,11 +423,15 @@ land() {
         fi
     fi
     if [ -z "$stack_step" ]; then
+        record=
+        [ -z "$e2e_passed" ] || record=$(publish_record)
         for key; do
             if [ "$count" -eq 1 ]; then
-                finish "$key" 0 "make merge: $target is now $(short "$tip") ($names)."
+                finish "$key" 0 "make merge: $target is now $(short "$tip") ($names).${record:+
+$record}"
             else
-                finish "$key" 0 "make merge: $target is now $(short "$tip") ($names). $(field "$key" branch) landed in a train of $count tasks, which shared $shared."
+                finish "$key" 0 "make merge: $target is now $(short "$tip") ($names). $(field "$key" branch) landed in a train of $count tasks, which shared $shared.${record:+
+$record}"
             fi
         done
         for key in $conflicted; do
@@ -493,7 +541,7 @@ case "${1:-}" in
         train
         ;;
     *)
-        echo "Usage: $0   Land the branch of this worktree on $target, before the other Simulator jobs that wait: rebase, gate, full E2E suite, fast-forward. The merges that wait together share one gate and one E2E run." >&2
+        echo "Usage: $0   Land the branch of this worktree on $target, before the other Simulator jobs that wait: rebase, gate, full E2E suite, fast-forward, then push main with the record of its E2E pass. The merges that wait together share one gate and one E2E run." >&2
         exit 1
         ;;
 esac
