@@ -130,8 +130,7 @@ extension StationActivityAttributes.Trains {
                         hasADirectionWithTwoEnds: line.hasADirectionWithTwoEnds(at: station)
                     )
                 },
-                from: firstLineIndex,
-                carriesEveryPage: carriesEveryPage
+                from: firstLineIndex, carriesEveryPage: carriesEveryPage
             ))
         case .departures(let board, _):
             let upcoming = board.departures.filter { $0.time > now }

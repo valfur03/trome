@@ -47,7 +47,10 @@ struct StationLiveActivityPageChoiceTests {
         return StationLiveActivityModel(client: client, pageChoices: choices, now: { [clock] in clock.now })
     }
 
-    private func drawn(_ content: StationActivityAttributes.ContentState?, by activityID: String = "activity-1") -> LinesPage? {
+    private func drawn(
+        _ content: StationActivityAttributes.ContentState?,
+        by activityID: String = "activity-1"
+    ) -> LinesPage? {
         content?.showingThePage(chosenBy: choices.load(), activityID: activityID).trains.linesPage
     }
 
