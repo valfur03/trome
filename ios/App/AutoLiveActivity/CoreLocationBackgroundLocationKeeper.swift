@@ -16,10 +16,16 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
         manager.activityType = .otherNavigation
         manager.pausesLocationUpdatesAutomatically = false
         manager.showsBackgroundLocationIndicator = false
+        #if DEBUG
+        endWhenUITestsAsk()
+        #endif
     }
 
     func begin() {
         guard !isKeeping else { return }
+        #if DEBUG
+        guard !Self.isEndedForUITests else { return }
+        #endif
         Self.log("begin")
         isKeeping = true
         manager.allowsBackgroundLocationUpdates = true
@@ -52,7 +58,7 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
 extension CoreLocationBackgroundLocationKeeper {
     nonisolated private static let logger = Logger(category: "BackgroundLocation")
 
-    nonisolated private static func log(_ event: String) {
+    nonisolated static func log(_ event: String) {
         #if DEBUG
         logger.notice("background location: \(event, privacy: .public)")
         #endif
