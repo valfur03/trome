@@ -6,7 +6,9 @@ extension LocationService {
         #if DEBUG
         let sourceStore = LocationSourceStore(storage: UserDefaults.standard)
         sourceStore.resetIfAsked(by: ProcessInfo.processInfo.arguments)
-        return LocationService(realProvider: CoreLocationProvider(), sourceStore: sourceStore)
+        let service = LocationService(realProvider: CoreLocationProvider(), sourceStore: sourceStore)
+        UITestLocationEnd.listen(stopping: service)
+        return service
         #else
         LocationService(realProvider: CoreLocationProvider(), sourceStore: nil)
         #endif

@@ -92,6 +92,8 @@ Each class inherits from `E2ETestCase` ([`ios/UITests/E2ETestCase.swift`](../UIT
 In debug builds, `--fake-trains` gives fake trains with no call to PRIM, and `--fake-trains at-platform` a train at the platform at once ([the other states](testing-tools.md#ask-for-a-train-at-the-platform-or-another-state)).
 `--keep-running-in-background` keeps the app awake in the background, so that a new position reaches it.
 `makeApp()` adds `--end-live-activity` (debug builds only): at launch, the app ends the Live Activity that the last test left, so each test starts with none, and no test taps a button of the app to end it.
+Before it kills the app of the last test, `makeApp()` sends it to the background and waits until it ends its position stream and its background sessions (debug builds only, `E2ETestCase+LocationEnd.swift`).
+Why: iOS keeps the stream of an app killed while it streams, and starts the app again to serve it, so a launch at that moment fails with "No such process".
 
 ## The render check of the Live Activity
 

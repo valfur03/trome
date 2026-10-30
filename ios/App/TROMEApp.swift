@@ -56,7 +56,6 @@ struct TROMEApp: App {
         #if DEBUG
         uiTestLocationKeeper = CoreLocationBackgroundLocationKeeper.begunIfAsked(by: ProcessInfo.processInfo.arguments)
         autoLiveActivityModel.endLiveActivityIfAsked(by: ProcessInfo.processInfo.arguments)
-        UITestLocationEnd.listen(stopping: locationService)
         #endif
         self.stationCatalog = stationCatalog
         _permissionsModel = State(initialValue: PermissionsModel(locationPermission: permission))
