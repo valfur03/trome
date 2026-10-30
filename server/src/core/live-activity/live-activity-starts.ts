@@ -64,22 +64,31 @@ export class LiveActivityStarts {
   }
 
   async start(stationId: string, token: string): Promise<StartResult> {
-    const { counts, clock } = this.dependencies;
     let answer: StartResult;
     try {
       answer = await this.answer(stationId, token);
     } catch (error) {
       // A fault before the send, which the route answers 500: the app falls back, as from a refusal.
-      counts.countStartAnswer({ result: "refused", reason: "server-error" }, clock.now());
+      this.count({ result: "refused", reason: "server-error" });
       throw error;
     }
-    counts.countStartAnswer(answer, clock.now());
+    this.count(answer);
     return answer;
   }
 
   /** Counts an ask that the route refused as bad, such as a body with no start token. */
   badRequest(): void {
-    this.dependencies.counts.countStartAnswer({ result: "bad-request" }, this.dependencies.clock.now());
+    this.count({ result: "bad-request" });
+  }
+
+  /** A count that fails (a write refused by the storage) never changes the answer: a started Live Activity answered as a fault would also bring the notification. */
+  private count(answer: StartAnswer): void {
+    const { counts, clock, logger } = this.dependencies;
+    try {
+      counts.countStartAnswer(answer, clock.now());
+    } catch {
+      logger.error("live-activity-start-count", { result: "not-counted" });
+    }
   }
 
   private async answer(stationId: string, token: string): Promise<StartResult> {

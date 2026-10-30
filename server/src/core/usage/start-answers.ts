@@ -51,6 +51,16 @@ const reasons = new Set([
   "InternalServerError",
   "ServiceUnavailable",
   "Shutdown",
+  // Apple, the same page, for a channel of broadcast pushes: the first to fail when the capability or the key does not match.
+  "FeatureNotEnabled",
+  "MissingChannelId",
+  "BadChannelId",
+  "ChannelNotRegistered",
+  "BadRequestParams",
+  "BadRequestPayload",
+  "MissingPushType",
+  "CannotCreateChannelConfig",
+  "TopicMismatch",
   // The server's own (`apns-client.ts`, `live-activity-starts.ts`).
   "no-answer",
   "server-error",

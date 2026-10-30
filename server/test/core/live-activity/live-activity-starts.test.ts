@@ -265,6 +265,20 @@ describe("the start of a Live Activity", () => {
     expect(relay.usage.report().days[0]?.startAnswers).toEqual({ "refused:server-error": 1 });
   });
 
+  it("still answers started when the storage refuses the count, so that the app brings no notification on top of the Live Activity", async () => {
+    const { starts, apple, relay, logLines } = await startHarness();
+    vi.spyOn(relay.usage, "countStartAnswer").mockImplementation(() => {
+      throw new Error("rows written over the daily limit");
+    });
+
+    await expect(starts.start(abbesses, token)).resolves.toEqual({ result: "started" });
+    expect(() => {
+      starts.badRequest();
+    }).not.toThrow();
+    expect(apple.starts).toHaveLength(1);
+    expect(logLines.filter((line) => line.includes("not-counted"))).toHaveLength(2);
+  });
+
   it("counts with no stop, no token, no hash of it and no time finer than the hour, in storage and in the counts", async () => {
     const { starts, relay } = await startHarness();
     await starts.start(abbesses, token);
