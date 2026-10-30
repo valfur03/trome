@@ -2,10 +2,12 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import { contentOfStation } from "../../../src/core/live-activity/content-of-station";
-import { startWindow } from "../../../src/core/live-activity/live-activity-starts";
+import { LiveActivityStarts, startWindow } from "../../../src/core/live-activity/live-activity-starts";
 import { StationCatalog } from "../../../src/core/live-activity/station-catalog";
 import { encodeContent, staleDate } from "../../../src/core/live-activity/station-content";
-import { minute } from "../../../src/core/time/clock";
+import { createLogger } from "../../../src/core/logging/logger";
+import { metricsText } from "../../../src/core/metrics/prometheus-metrics";
+import { hour, minute } from "../../../src/core/time/clock";
 import { testApnsSettings } from "../push/fake-apple";
 import { everyStoredRow } from "../storage/every-stored-row";
 import { startHarness } from "./live-activity-harness";
@@ -216,6 +218,75 @@ describe("the start of a Live Activity", () => {
       expect(line).not.toContain(token);
       expect(line).not.toContain(abbesses);
       expect(line).not.toContain("Abbesses");
+    }
+  });
+
+  it("counts each answer by its result in the hour, so that the owner tells a wake that never asked from a start that failed", async () => {
+    const { starts, apple, relay } = await startHarness();
+    await starts.start(abbesses, token);
+    await starts.start(abbesses, token);
+    await starts.start("IDFM:not-a-station", token);
+    starts.badRequest();
+    apple.answerWith((request, reply) => (request.url.includes("/3/device/") ? { status: 429, reason: "TooManyRequests" } : reply));
+    await starts.start(chateletLesHalles, token);
+    apple.answerWith(() => "no-answer");
+    await starts.start(chateletLesHalles, otherToken);
+    vi.spyOn(relay.relay, "departures").mockRejectedValueOnce(new Error("fault"));
+    await starts.start(abbesses, otherToken);
+    const notSetUp = await startHarness({ settings: "none" });
+    await notSetUp.starts.start(abbesses, token);
+
+    expect(relay.usage.report().days[0]?.startAnswers).toEqual({
+      started: 1,
+      "already-started": 1,
+      "bad-request": 2,
+      "refused:TooManyRequests": 1,
+      "refused:no-answer": 1,
+      "refused:server-error": 1,
+    });
+    expect(notSetUp.relay.usage.report().days[0]?.startAnswers).toEqual({ "not-set-up": 1 });
+  });
+
+  it("counts a fault before the send as a server error, and still answers it as a fault", async () => {
+    const { settings } = await testApnsSettings();
+    const { relay } = await startHarness();
+    const starts = new LiveActivityStarts({
+      settings,
+      apns: { start: vi.fn(), createChannel: vi.fn(), deleteChannel: vi.fn(), broadcast: vi.fn() },
+      catalog,
+      departures: (stopRef) => relay.relay.departures(stopRef),
+      clock: relay.clock,
+      logger: createLogger([], () => undefined),
+      startKey: () => Promise.reject(new Error("no key")),
+      counts: relay.usage,
+    });
+
+    await expect(starts.start(abbesses, token)).rejects.toThrow("no key");
+    expect(relay.usage.report().days[0]?.startAnswers).toEqual({ "refused:server-error": 1 });
+  });
+
+  it("counts with no stop, no token, no hash of it and no time finer than the hour, in storage and in the counts", async () => {
+    const { starts, relay } = await startHarness();
+    await starts.start(abbesses, token);
+    await starts.start(abbesses, token);
+    await starts.start(chateletLesHalles, otherToken);
+    starts.badRequest();
+
+    const rows = relay.database.all("SELECT * FROM start_answer_hours");
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(Object.keys(row).sort()).toEqual(["answer", "count", "hour_start", "paris_day"]);
+      expect(Number(row.hour_start) % hour).toBe(0);
+      expect(String(row.answer)).toMatch(/^(started|already-started|not-set-up|bad-request|other|refused:[A-Za-z-]{1,40}|refused:status-\d{3})$/);
+    }
+    const counts = JSON.stringify(relay.relay.counts());
+    const metrics = metricsText(relay.relay.metrics());
+    for (const text of [JSON.stringify(everyStoredRow(relay.database)), counts, metrics]) {
+      for (const held of [token, otherToken, abbesses, chateletLesHalles, "22059", "45102", "Abbesses"]) {
+        expect(text).not.toContain(held);
+      }
+      // A keyed hash of a token is 64 hexadecimal characters: no run of 16 is anywhere.
+      expect(text).not.toMatch(/[0-9a-f]{16}/);
     }
   });
 

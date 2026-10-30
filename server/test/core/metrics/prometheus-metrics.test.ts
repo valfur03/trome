@@ -14,6 +14,8 @@ const snapshot: MetricsSnapshot = {
     { kind: "prim-timeout", status: null, count: 1 },
     { kind: "prim-http-error", status: 500, count: 2 },
   ],
+  startAnswersToday: { started: 2, "refused:BadDeviceToken": 1 },
+  startAnswersPreviousDay: { "bad-request": 3 },
 };
 
 // The rules of the text format 0.0.4 (prometheus.io/docs/instrumenting/exposition_formats/), which Prometheus 2.55 reads.
@@ -58,17 +60,29 @@ describe("metricsText", () => {
     // 23:59 in Paris, the day before.
     usage.recordError({ at: Date.parse("2026-10-01T21:59:00.000Z"), kind: "prim-timeout", status: null });
     usage.recordError({ at: Date.parse("2026-10-01T22:00:00.000Z"), kind: "prim-limit", status: 429 });
+    for (const answer of [
+      { result: "started" },
+      { result: "refused", reason: "BadDeviceToken" },
+      { result: "refused", reason: "80a1b2c3d4e5f60718293a4b5c6d7e8f" },
+      { result: "unknown-station" },
+    ]) {
+      usage.countStartAnswer(answer, now - hour);
+    }
     const text = metricsText({ ...usage.metricsTotals(now), dailyCap: 800 });
 
     const labelNames = new Set<string>();
     for (const line of text.split("\n").filter((line) => line.includes("{"))) {
       for (const [, name, value] of line.matchAll(/([a-zA-Z_][a-zA-Z0-9_]*)="([^"]*)"/g)) {
         labelNames.add(name ?? "");
-        expect(name === "status" ? /^(\d{3}|none)$/.test(value ?? "") : /^prim-[a-z-]+$/.test(value ?? ""), line).toBe(true);
+        const shape = { status: /^(\d{3}|none)$/, kind: /^prim-[a-z-]+$/, answer: /^(started|already-started|not-set-up|bad-request|other|refused:[A-Za-z-]{1,40}|refused:status-\d{3})$/ }[
+          name ?? ""
+        ];
+        expect(shape?.test(value ?? ""), line).toBe(true);
       }
     }
     expect([...labelNames].every((name) => (allowedLabels as readonly string[]).includes(name))).toBe(true);
-    expect(allowedLabels).toEqual(["kind", "status"]);
+    // The answer of a start is a label too (the count of the start answers, which holds no stop and no token).
+    expect(allowedLabels).toEqual(["kind", "status", "answer"]);
 
     const values = parseMetrics(text);
     expect(values.get('trome_prim_call_failures_total{kind="prim-http-error",status="500"}')).toBe(1);
@@ -77,6 +91,10 @@ describe("metricsText", () => {
     // The timeout of the day before is not a failure of today.
     expect([...values.keys()].some((key) => key.includes("prim-timeout"))).toBe(false);
     expect(values.get("trome_errors_total")).toBe(5);
+    expect(values.get('trome_live_activity_starts_total{answer="started"}')).toBe(1);
+    expect(values.get('trome_live_activity_starts_total{answer="refused:BadDeviceToken"}')).toBe(1);
+    expect(values.get('trome_live_activity_starts_total{answer="refused:other"}')).toBe(1);
+    expect(values.get('trome_live_activity_starts_total{answer="bad-request"}')).toBe(1);
   });
 
   it("gives every total, today and on the previous day, and the cap", () => {
@@ -93,5 +111,8 @@ describe("metricsText", () => {
     expect(values.get("trome_unreadable_answers_previous_day")).toBe(0);
     expect(values.get("trome_out_answers_previous_day")).toBe(0);
     expect(values.get("trome_prim_daily_cap")).toBe(800);
+    expect(values.get('trome_live_activity_starts_total{answer="started"}')).toBe(2);
+    expect(values.get('trome_live_activity_starts_total{answer="refused:BadDeviceToken"}')).toBe(1);
+    expect(values.get('trome_live_activity_starts_previous_day{answer="bad-request"}')).toBe(3);
   });
 });

@@ -23,6 +23,7 @@ export default {
       },
       liveActivities: {
         start: (stationId, startToken) => relay.startLiveActivity(stationId, startToken),
+        badRequest: () => relay.countBadStartRequest(),
       },
     });
   },

@@ -15,6 +15,8 @@ export interface RelayService {
 
 export interface LiveActivityService {
   start(stationId: string, startToken: string): Promise<StartResult>;
+  /** Counts an ask refused as bad (400), so that the owner sees an app that asks wrong. */
+  badRequest(): Promise<void>;
 }
 
 export interface RouterDependencies {
@@ -65,6 +67,7 @@ async function answer(request: Request, pathname: string, dependencies: RouterDe
     const stationId = decoded(liveActivity[1] ?? "");
     const startToken = await startTokenOf(request);
     if (stationId === undefined || !stationIdShape.test(stationId) || startToken === undefined) {
+      await liveActivities.badRequest();
       return errorResponse(400, "bad request");
     }
     return startResponse(await liveActivities.start(stationId, startToken));

@@ -21,7 +21,7 @@ const report: CountsReport = {
 };
 
 const zero = { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0, unreadableAnswers: 0 };
-const snapshot: MetricsSnapshot = { today: { ...zero, appCalls: 3 }, previousDay: zero, dailyCap: 800, failuresToday: [] };
+const snapshot: MetricsSnapshot = { today: { ...zero, appCalls: 3 }, previousDay: zero, dailyCap: 800, failuresToday: [], startAnswersToday: {}, startAnswersPreviousDay: {} };
 
 function server(
   answer: RelayAnswer = { kind: "times", body: '{"Siri":{}}', primAnsweredAt: Date.parse("2026-10-02T08:29:30.000Z") },
@@ -31,10 +31,15 @@ function server(
   const lines: string[] = [];
   const asked: string[] = [];
   const starts: { stationId: string; startToken: string }[] = [];
+  let badRequests = 0;
   const liveActivities: LiveActivityService = {
     start: (stationId, startToken) => {
       starts.push({ stationId, startToken });
       return Promise.resolve(startResult);
+    },
+    badRequest: () => {
+      badRequests += 1;
+      return Promise.resolve();
     },
   };
   let countsRead = 0;
@@ -60,7 +65,7 @@ function server(
       relay,
       liveActivities,
     });
-  return { send, lines, asked, starts, countsRead: () => countsRead };
+  return { send, lines, asked, starts, countsRead: () => countsRead, badRequests: () => badRequests };
 }
 
 const withToken = (url: string, token: string, init: RequestInit = {}) =>
@@ -284,7 +289,7 @@ describe("route: start of a Live Activity", () => {
     [{ result: "not-set-up" }, 503, { result: "not-set-up" }],
     [{ result: "unknown-station" }, 400, { error: "unknown station" }],
   ])("answers %j with its status and its words", async (result, status, body) => {
-    const { send, starts } = server(undefined, undefined, result);
+    const { send, starts, badRequests } = server(undefined, undefined, result);
 
     const response = await send(ask());
 
@@ -292,6 +297,8 @@ describe("route: start of a Live Activity", () => {
     expect(await response.json()).toEqual(body);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(starts).toEqual([{ stationId: "IDFM:22059", startToken }]);
+    // The start counts its own answers, an unknown station included.
+    expect(badRequests()).toBe(0);
   });
 
   it("logs the route with no station and no token", async () => {
@@ -308,16 +315,18 @@ describe("route: start of a Live Activity", () => {
       [ask(undefined, appToken, "GET"), 405],
       [ask(undefined, appToken, "PUT"), 405],
     ] as const) {
-      const { send, starts } = server();
+      const { send, starts, badRequests } = server();
 
       const response = await send(request);
 
       expect(response.status).toBe(status);
       expect(starts).toEqual([]);
+      // Only an ask with the app token is counted, so that a stranger cannot fill the counts.
+      expect(badRequests()).toBe(0);
     }
   });
 
-  it("refuses a body that is not a start token, and starts nothing", async () => {
+  it("refuses a body that is not a start token, starts nothing, and counts it as a bad request", async () => {
     for (const body of [
       "",
       "not json",
@@ -327,17 +336,18 @@ describe("route: start of a Live Activity", () => {
       JSON.stringify({ startToken: "ab" }),
       JSON.stringify({ startToken: "a".repeat(5000) }),
     ]) {
-      const { send, starts } = server();
+      const { send, starts, badRequests } = server();
 
       const response = await send(ask(body));
 
       expect(response.status, body.slice(0, 20)).toBe(400);
       expect(starts).toEqual([]);
+      expect(badRequests(), body.slice(0, 20)).toBe(1);
     }
   });
 
-  it("refuses a station id that is not one", async () => {
-    const { send, starts } = server();
+  it("refuses a station id that is not one, and counts it as a bad request", async () => {
+    const { send, starts, badRequests } = server();
 
     const response = await send(
       withToken(`https://server.test/v1/stations/${encodeURIComponent("a b")}/live-activity`, appToken, {
@@ -348,5 +358,6 @@ describe("route: start of a Live Activity", () => {
 
     expect(response.status).toBe(400);
     expect(starts).toEqual([]);
+    expect(badRequests()).toBe(1);
   });
 });

@@ -3,6 +3,7 @@ import type { ApnsClient } from "../push/apns-client";
 import type { ApnsKey, ApnsSettings } from "../push/apns-settings";
 import type { RelayAnswer } from "../relay/relay";
 import type { Clock } from "../time/clock";
+import type { StartAnswer } from "../usage/start-answers";
 import { minute } from "../time/clock";
 import { readStation } from "./content-of-station";
 import type { StationCatalog } from "./station-catalog";
@@ -19,6 +20,7 @@ import { StationUpdates, updateWindow } from "./station-updates";
  * - Each station has one broadcast channel in each service, made at its first start and deleted 45 minutes after its last one.
  *   Until then, `StationUpdates` sends the new minutes of the station on it.
  * - A log line holds the result only: never the token, the station or an error text (which may hold the address, and so the token).
+ * - Each answer, and each ask that the route refuses as bad, is counted in its hour by its result (`UsageCounts.countStartAnswer`), so that the owner sees where a start stopped: no ask, an ask that Apple took, or one that failed.
  */
 export type StartResult =
   | { result: "started" }
@@ -36,6 +38,7 @@ export interface LiveActivityStartsDependencies {
   logger: Logger;
   /** The keyed hash of a token and a station (`createStartKeys`). */
   startKey: (text: string) => Promise<string>;
+  counts: { countStartAnswer(answer: StartAnswer, at: number): void };
 }
 
 export const startWindow = 45 * minute;
@@ -61,6 +64,25 @@ export class LiveActivityStarts {
   }
 
   async start(stationId: string, token: string): Promise<StartResult> {
+    const { counts, clock } = this.dependencies;
+    let answer: StartResult;
+    try {
+      answer = await this.answer(stationId, token);
+    } catch (error) {
+      // A fault before the send, which the route answers 500: the app falls back, as from a refusal.
+      counts.countStartAnswer({ result: "refused", reason: "server-error" }, clock.now());
+      throw error;
+    }
+    counts.countStartAnswer(answer, clock.now());
+    return answer;
+  }
+
+  /** Counts an ask that the route refused as bad, such as a body with no start token. */
+  badRequest(): void {
+    this.dependencies.counts.countStartAnswer({ result: "bad-request" }, this.dependencies.clock.now());
+  }
+
+  private async answer(stationId: string, token: string): Promise<StartResult> {
     const { settings, catalog, clock, logger, startKey } = this.dependencies;
     if (settings === undefined) {
       logger.info("live-activity-start", { result: "not-set-up" });

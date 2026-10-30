@@ -1,4 +1,4 @@
-import type { Tallies, Tally } from "../usage/usage-counts";
+import type { StartAnswerCounts, Tallies, Tally } from "../usage/usage-counts";
 
 /** The totals that `/metrics` shows: only what the server already keeps, with no stop and no identifier. */
 export interface MetricsSnapshot {
@@ -9,12 +9,16 @@ export interface MetricsSnapshot {
   dailyCap: number;
   /** The failed PRIM calls since Paris midnight, by kind and HTTP status (`null` when PRIM gave no status). */
   failuresToday: { kind: string; status: number | null; count: number }[];
+  /** The answers of the start of a Live Activity since Paris midnight, by name (`startAnswerName`), from the written hours only. */
+  startAnswersToday: StartAnswerCounts;
+  /** The same answers in the whole previous Paris day. */
+  startAnswersPreviousDay: StartAnswerCounts;
 }
 
 export const metricsContentType = "text/plain; version=0.0.4; charset=utf-8";
 
-/** The only label names that a metric may have: neither can hold a stop, an IP address, a time or an identifier. */
-export const allowedLabels = ["kind", "status"] as const;
+/** The only label names that a metric may have: none can hold a stop, an IP address, a time or an identifier, as each value is a word of a short list or a status. */
+export const allowedLabels = ["kind", "status", "answer"] as const;
 
 const names: Record<Tally, { name: string; help: string }> = {
   appCalls: { name: "app_calls", help: "Requests for times with the right app token, and the asks of the server for the Live Activities that it started" },
@@ -58,7 +62,22 @@ export function metricsText(snapshot: MetricsSnapshot): string {
       .sort((a, b) => a.kind.localeCompare(b.kind) || String(a.status).localeCompare(String(b.status)))
       .map(({ kind, status, count }) => ({ labels: { kind, status: status === null ? "none" : String(status) }, value: count })),
   );
+  const startHelp = "Answers of the start of a Live Activity by answer (started, already-started, refused:<reason>, not-set-up, bad-request)";
+  family(lines, "trome_live_activity_starts_total", "counter", `${startHelp}, since 00:00 in Paris.`, answerSamples(snapshot.startAnswersToday));
+  family(
+    lines,
+    "trome_live_activity_starts_previous_day",
+    "gauge",
+    `${startHelp}, in the whole previous Paris day.`,
+    answerSamples(snapshot.startAnswersPreviousDay),
+  );
   return `${lines.join("\n")}\n`;
+}
+
+function answerSamples(answers: StartAnswerCounts): Sample[] {
+  return Object.entries(answers)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([answer, value]) => ({ labels: { answer }, value }));
 }
 
 interface Sample {

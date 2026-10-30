@@ -177,4 +177,28 @@ describe("the start of a Live Activity, before the push key is set", () => {
     expect(lines.join("\n")).not.toContain(startToken);
     expect(lines.join("\n")).not.toContain("22059");
   });
+  it("counts the answer and a bad ask by result, keeps them through a restart, and gives them to the owner with no token and no station", async () => {
+    fakePrim();
+    const ask = (body: string) =>
+      exports.default.fetch("https://server.test/v1/stations/IDFM%3A22059/live-activity", {
+        method: "POST",
+        headers: { authorization: `Bearer ${env.APP_TOKEN}` },
+        body,
+      });
+    expect((await ask(JSON.stringify({ startToken }))).status).toBe(503);
+    expect((await ask("{}")).status).toBe(400);
+    await abortAllDurableObjects();
+    const owner = { headers: { authorization: `Bearer ${env.OWNER_TOKEN}` } };
+
+    const counts = await (await exports.default.fetch("https://server.test/v1/owner/counts", owner)).text();
+    const metrics = await (await exports.default.fetch("https://server.test/metrics", owner)).text();
+
+    expect((JSON.parse(counts) as { days: { startAnswers: unknown }[] }).days[0]?.startAnswers).toEqual({ "not-set-up": 1, "bad-request": 1 });
+    expect(metrics).toContain('trome_live_activity_starts_total{answer="not-set-up"} 1');
+    expect(metrics).toContain('trome_live_activity_starts_total{answer="bad-request"} 1');
+    for (const text of [counts, metrics, await everyStoredRow()]) {
+      expect(text).not.toContain(startToken);
+      expect(text).not.toContain("22059");
+    }
+  });
 });

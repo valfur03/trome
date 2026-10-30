@@ -1,6 +1,7 @@
 import type { SqlDatabase } from "../storage/sql-database";
 import { day, hour } from "../time/clock";
 import { nextParisDayStart, parisDay, parisHour } from "../time/paris-time";
+import { startAnswerName, type StartAnswer } from "./start-answers";
 
 export const tallies = ["appCalls", "cacheHits", "heldAnswers", "outAnswers", "primCalls", "errors", "unreadableAnswers"] as const;
 
@@ -14,13 +15,18 @@ export interface ErrorLine {
   status: number | null;
 }
 
+/** The answers of the start of a Live Activity, by name (`startAnswerName`): `{"started": 2, "refused:BadDeviceToken": 1}`. */
+export type StartAnswerCounts = Record<string, number>;
+
 export interface HourCounts extends Tallies {
   start: string;
   parisHour: string;
+  startAnswers: StartAnswerCounts;
 }
 
 export interface DayCounts extends Tallies {
   day: string;
+  startAnswers: StartAnswerCounts;
   hours: HourCounts[];
 }
 
@@ -68,6 +74,10 @@ export class UsageCounts {
     );
     // So that `/metrics` reads only the error lines of today, not those of 7 days.
     database.run("CREATE INDEX IF NOT EXISTS error_lines_at ON error_lines (at, kind, status)");
+    // One row for each hour and answer: a name of a short list (`startAnswerName`), and no stop, token or time finer than the hour.
+    database.run(
+      "CREATE TABLE IF NOT EXISTS start_answer_hours (hour_start INTEGER NOT NULL, paris_day TEXT NOT NULL, answer TEXT NOT NULL, count INTEGER NOT NULL, PRIMARY KEY (hour_start, answer))",
+    );
     forgetTheStopsOfOlderVersions(database);
     addTheTalliesOfNewerVersions(database);
   }
@@ -99,6 +109,17 @@ export class UsageCounts {
     this.flush();
   }
 
+  /** Counts an answer of the start route in its hour, written at once: the starts are few, and the count of an ask must outlive a sleep that comes right after it. */
+  countStartAnswer(answer: StartAnswer, at: number): void {
+    const start = Math.floor(at / hour) * hour;
+    this.database.run(
+      "INSERT INTO start_answer_hours (hour_start, paris_day, answer, count) VALUES (?, ?, ?, 1) ON CONFLICT (hour_start, answer) DO UPDATE SET count = count + 1",
+      start,
+      parisDay(start),
+      startAnswerName(answer),
+    );
+  }
+
   flushWhenDue(): void {
     this.flushScheduled = false;
     this.flush();
@@ -126,6 +147,7 @@ export class UsageCounts {
 
   forgetOldCounts(now: number): void {
     this.database.run("DELETE FROM usage_hours WHERE hour_start < ?", now - countsKeptFor);
+    this.database.run("DELETE FROM start_answer_hours WHERE hour_start < ?", now - countsKeptFor);
     this.database.run("DELETE FROM error_lines WHERE at < ?", now - errorLinesKeptFor);
   }
 
@@ -135,17 +157,27 @@ export class UsageCounts {
 
   report(): UsageReport {
     this.flush();
-    const hours = this.database
-      .all<HourRow>(
-        `SELECT hour_start, paris_day, ${tallies.map((tally) => columns[tally]).join(", ")} FROM usage_hours ORDER BY hour_start DESC`,
-      )
-      .map(hourCounts);
+    const hours = new Map(
+      this.database
+        .all<HourRow>(`SELECT hour_start, paris_day, ${tallies.map((tally) => columns[tally]).join(", ")} FROM usage_hours`)
+        .map((row) => [Number(row.hour_start), hourCounts(row)]),
+    );
+    // An hour may have start answers and no app call: a refused ask, or a server with no push key.
+    for (const row of this.database.all<{ hour_start: number; paris_day: string; answer: string; count: number }>(
+      "SELECT hour_start, paris_day, answer, count FROM start_answer_hours",
+    )) {
+      const start = row.hour_start;
+      const hourOfRow = hours.get(start) ?? hourCounts({ hour_start: start, paris_day: row.paris_day });
+      hourOfRow.counts.startAnswers[row.answer] = row.count;
+      hours.set(start, hourOfRow);
+    }
     const days = new Map<string, DayCounts>();
-    for (const { day: parisDayOfHour, counts } of hours) {
-      const dayCounts = days.get(parisDayOfHour) ?? { day: parisDayOfHour, ...emptyTallies(), hours: [] };
+    for (const { day: parisDayOfHour, counts } of [...hours.entries()].sort(([a], [b]) => b - a).map(([, entry]) => entry)) {
+      const dayCounts = days.get(parisDayOfHour) ?? { day: parisDayOfHour, ...emptyTallies(), startAnswers: {}, hours: [] };
       for (const tally of tallies) {
         dayCounts[tally] += counts[tally];
       }
+      addAnswers(dayCounts.startAnswers, counts.startAnswers);
       dayCounts.hours.push(counts);
       days.set(parisDayOfHour, dayCounts);
     }
@@ -167,6 +199,8 @@ export function metricsTotals(database: SqlDatabase, now: number): {
   today: Tallies;
   previousDay: Tallies;
   failuresToday: { kind: string; status: number | null; count: number }[];
+  startAnswersToday: StartAnswerCounts;
+  startAnswersPreviousDay: StartAnswerCounts;
 } {
   const today = parisDay(now);
   const previous = previousParisDay(today);
@@ -193,7 +227,22 @@ export function metricsTotals(database: SqlDatabase, now: number): {
     failure.count += 1;
     failures.set(key, failure);
   }
-  return { ...totals, failuresToday: [...failures.values()] };
+  const startAnswers = { today: {} as StartAnswerCounts, previousDay: {} as StartAnswerCounts };
+  for (const row of database.all<{ paris_day: string; answer: string; count: number }>(
+    "SELECT paris_day, answer, SUM(count) AS count FROM start_answer_hours WHERE hour_start >= ? GROUP BY paris_day, answer",
+    Math.floor(now / hour) * hour - 50 * hour,
+  )) {
+    const target = row.paris_day === today ? startAnswers.today : row.paris_day === previous ? startAnswers.previousDay : undefined;
+    if (target) {
+      target[row.answer] = row.count;
+    }
+  }
+  return {
+    ...totals,
+    failuresToday: [...failures.values()],
+    startAnswersToday: startAnswers.today,
+    startAnswersPreviousDay: startAnswers.previousDay,
+  };
 }
 
 function parisDayStart(now: number): number {
@@ -231,11 +280,17 @@ function emptyTallies(): Tallies {
   return { appCalls: 0, cacheHits: 0, heldAnswers: 0, outAnswers: 0, primCalls: 0, errors: 0, unreadableAnswers: 0 };
 }
 
+function addAnswers(total: StartAnswerCounts, added: StartAnswerCounts): void {
+  for (const [answer, count] of Object.entries(added)) {
+    total[answer] = (total[answer] ?? 0) + count;
+  }
+}
+
 function hourCounts(row: HourRow): { day: string; counts: HourCounts } {
   const start = Number(row.hour_start);
-  const counts: HourCounts = { start: new Date(start).toISOString(), parisHour: parisHour(start), ...emptyTallies() };
+  const counts: HourCounts = { start: new Date(start).toISOString(), parisHour: parisHour(start), ...emptyTallies(), startAnswers: {} };
   for (const tally of tallies) {
-    counts[tally] = Number(row[columns[tally]]);
+    counts[tally] = Number(row[columns[tally]] ?? 0);
   }
   return { day: String(row.paris_day), counts };
 }

@@ -453,6 +453,7 @@ describe("Relay: what it counts", () => {
         primCalls: 3,
         errors: 2,
         unreadableAnswers: 0,
+        startAnswers: {},
         hours: [
           {
             start: "2026-10-02T08:00:00.000Z",
@@ -464,6 +465,7 @@ describe("Relay: what it counts", () => {
             primCalls: 3,
             errors: 2,
             unreadableAnswers: 0,
+            startAnswers: {},
           },
         ],
       },

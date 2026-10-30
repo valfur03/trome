@@ -88,7 +88,7 @@ describe("the API examples of contracts/api/", () => {
         relay: { departures: (stopRef) => harness.relay.departures(stopRef), counts: () => Promise.resolve(harness.relay.counts()),
           metrics: () => Promise.resolve(harness.relay.metrics()),
         },
-        liveActivities: { start: () => Promise.reject(new Error("no start in this test")) },
+        liveActivities: { start: () => Promise.reject(new Error("no start in this test")), badRequest: () => Promise.resolve() },
       });
 
       expect(answered.status).toBe(response.status);
@@ -128,6 +128,7 @@ describe("the API examples of contracts/api/", () => {
               asked.push([stationId, startToken]);
               return Promise.resolve(result);
             },
+            badRequest: () => Promise.resolve(),
           },
         },
       );

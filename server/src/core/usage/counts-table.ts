@@ -13,6 +13,7 @@ interface Line {
   outAnswers: number;
   errors: number;
   unreadableAnswers: number;
+  startAnswers: Record<string, number>;
   busiestHour: string;
 }
 
@@ -28,6 +29,7 @@ const numberColumns = [
  * A day with no row in the report had no call, so it is a line of zeros.
  * The table starts at the oldest day that the report holds, when that day is in the window, and says so.
  * PRIM answers that the builds cannot read get a line under the table only on the days that had some, as they need the owner's action; the table keeps its 80 columns.
+ * The answers of the start of a Live Activity get a line for each day that had some, or one line that says none, so that a walk to a station reads where its start stopped.
  */
 export function countsTable(report: Pick<CountsReport, "today" | "days">): string {
   const byDay = new Map(report.days.map((dayCounts) => [dayCounts.day, dayCounts]));
@@ -52,6 +54,7 @@ export function countsTable(report: Pick<CountsReport, "today" | "days">): strin
       outAnswers: dayCounts?.outAnswers ?? 0,
       errors: dayCounts?.errors ?? 0,
       unreadableAnswers: dayCounts?.unreadableAnswers ?? 0,
+      startAnswers: dayCounts?.startAnswers ?? {},
       busiestHour: busiest ? `${busiest.parisHour} (${calls(busiest.appCalls)})` : "-",
     });
   }
@@ -82,6 +85,21 @@ export function countsTable(report: Pick<CountsReport, "today" | "days">): strin
     output.push(
       `Unreadable PRIM answers: ${unreadable.map(({ label, unreadableAnswers }) => `${label} ${String(unreadableAnswers)}`).join(", ")}.`,
       "See server/guide/how-it-works.md, section Unreadable PRIM answers.",
+    );
+  }
+  // A server older than this count gives no start answers: the table then says nothing of them.
+  if (report.days.length === 0 || report.days.some((dayCounts) => "startAnswers" in dayCounts)) {
+    const started = lines.filter(({ startAnswers }) => Object.keys(startAnswers).length > 0);
+    output.push(
+      ...(started.length === 0
+        ? ["Live Activity starts: none."]
+        : started.map(
+            ({ label, startAnswers }) =>
+              `Live Activity starts, ${label}: ${Object.entries(startAnswers)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([answer, count]) => `${answer} ${String(count)}`)
+                .join(", ")}.`,
+          )),
     );
   }
   return `${output.join("\n")}\n`;

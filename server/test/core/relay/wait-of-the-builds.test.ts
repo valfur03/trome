@@ -74,7 +74,7 @@ describe("the longest wait of the server for PRIM", () => {
             counts: () => Promise.resolve(relay.counts()),
             metrics: () => Promise.resolve(relay.metrics()),
           },
-          liveActivities: { start: () => Promise.reject(new Error("no start in this test")) },
+          liveActivities: { start: () => Promise.reject(new Error("no start in this test")), badRequest: () => Promise.resolve() },
         },
       );
 

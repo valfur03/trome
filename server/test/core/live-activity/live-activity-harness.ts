@@ -59,6 +59,7 @@ export async function startHarness(options: { settings?: ApnsSettings | "none"; 
     clock: relay.clock,
     logger,
     startKey: createStartKeys(),
+    counts: relay.usage,
   });
   return { relay, apple, starts, logLines, publicKeys: generated.publicKeys, settings: generated.settings };
 }

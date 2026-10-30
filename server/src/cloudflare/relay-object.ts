@@ -87,6 +87,7 @@ export class RelayObject extends DurableObject<Env> {
       clock,
       logger,
       startKey: createStartKeys(),
+      counts: this.usage,
     });
   }
 
@@ -105,6 +106,11 @@ export class RelayObject extends DurableObject<Env> {
       this.planUseTimer();
       await this.planStartsAlarm(false);
     }
+  }
+
+  /** Counts an ask of a start that the route refused as bad; it holds nothing in memory, so it plans no timer. */
+  countBadStartRequest(): void {
+    this.starts.badRequest();
   }
 
   counts(): CountsReport {
