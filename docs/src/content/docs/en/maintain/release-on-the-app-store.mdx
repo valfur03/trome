@@ -288,6 +288,9 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    Among other checks, it builds the Release app and fails with a message when the app has no privacy manifest, no answer on encryption, or a version that is not three numbers such as 1.0.0.
    It also fails when the code of the app or of its Live Activity calls an API of Apple's list of APIs that need a reason, and the privacy manifest gives no reason for it.
    Then `git status --short` and `git log origin/main..` must print nothing: the tag of step 10 of this list names one commit of `main`, so the archive must hold no change outside it, and that commit must be on GitHub.
+   And `make e2e-proof` must print `E2E proof: found`: the end-to-end tests passed on this commit, or on an earlier one with the same app code.
+   `make merge` leaves that record on `main` after a pass, because GitHub's Mac cannot run these tests.
+   It also prints the counts of the render check, which nothing compares with an earlier release yet.
 
 2. Make your server file from its example, then open it.
    You do this once: on a later archive the file is already there, so only run the check at the end of this step.
