@@ -1,6 +1,7 @@
 import { env, exports } from "cloudflare:workers";
 import { abortAllDurableObjects, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it } from "vitest";
+import { DurableObjectSqlDatabase } from "../../src/cloudflare/durable-object-sql-database";
 import { relayObject } from "../../src/cloudflare/relay-object";
 import type { SqlDatabase, SqlValue } from "../../src/core/storage/sql-database";
 import { hour } from "../../src/core/time/clock";
@@ -10,6 +11,35 @@ afterEach(async () => {
   await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
   await abortAllDurableObjects();
 });
+
+/** Records the statements that the server object runs on its SQLite storage during the work, and the rows that they write. */
+async function recordSql(work: () => Promise<unknown>): Promise<{ queries: string[]; rowsWritten: number }> {
+  const statements: { query: string; cursor: SqlStorageCursor<Record<string, SqlStorageValue>> }[] = [];
+  let original: SqlStorage["exec"] | undefined;
+  await runInDurableObject(relayObject(env), (_object, state) => {
+    const sql = state.storage.sql;
+    const exec = sql.exec.bind(sql);
+    original = exec;
+    sql.exec = ((query: string, ...bindings: unknown[]) => {
+      const cursor = exec(query, ...bindings);
+      statements.push({ query, cursor });
+      return cursor;
+    }) as SqlStorage["exec"];
+  });
+  try {
+    await work();
+  } finally {
+    await runInDurableObject(relayObject(env), (_object, state) => {
+      if (original) {
+        state.storage.sql.exec = original;
+      }
+    });
+  }
+  return {
+    queries: statements.map(({ query }) => query),
+    rowsWritten: statements.reduce((sum, { cursor }) => sum + cursor.rowsWritten, 0),
+  };
+}
 
 function metrics(token?: string): Promise<Response> {
   return exports.default.fetch("https://server.test/metrics", token ? { headers: { authorization: `Bearer ${token}` } } : {});
@@ -76,15 +106,17 @@ describe("/metrics", () => {
     expect(measure.rowsRead).toBeLessThanOrEqual(1000);
   });
 
-  it("answers fast enough for one scrape a minute", async () => {
-    await metrics(env.OWNER_TOKEN);
-    const reads = 50;
-    const started = performance.now();
-    for (let index = 0; index < reads; index += 1) {
-      await (await metrics(env.OWNER_TOKEN)).text();
-    }
-    const each = (performance.now() - started) / reads;
-    // Measured: about 3 ms each in the local runtime.
-    expect(each).toBeLessThan(100);
+  it("runs only the reads of the totals for a scrape through the Worker, and writes no row", async () => {
+    // The rows are what a scrape a minute costs on the Free plan, and the test above bounds the rows of these reads: a time measure would depend on the load of the machine.
+    const scrape = await recordSql(async () => {
+      expect((await metrics(env.OWNER_TOKEN)).status).toBe(200);
+    });
+    const totals = await recordSql(() =>
+      runInDurableObject(relayObject(env), (_object, state) => metricsTotals(new DurableObjectSqlDatabase(state.storage.sql), Date.now())),
+    );
+
+    expect(totals.queries.length).toBeGreaterThan(0);
+    expect(scrape.queries).toEqual(totals.queries);
+    expect(scrape.rowsWritten).toBe(0);
   });
 });
