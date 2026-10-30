@@ -9,7 +9,6 @@ class E2ETestCase: XCTestCase {
     private static let alwaysPromptAnswer = "Keep Only While Using"
     private static let permissionAnswers = [locationPromptAnswer, alwaysPromptAnswer, "Allow"]
     private static let allowedLocationLabels = ["Location, Always", "Location, While Using the App"]
-    private static let endBackgroundLocationNotification = "TROME.UITests.endBackgroundLocation"
     @MainActor private static var permissionsAreSettled = false
 
     override class func setUp() {
@@ -40,36 +39,11 @@ class E2ETestCase: XCTestCase {
 
     @MainActor
     private func terminateWithItsRelaunches(_ app: XCUIApplication) {
-        endBackgroundLocation(of: app)
+        endTheLocationWork(of: app)
         for _ in 0..<3 where app.state != .notRunning {
             app.terminate()
             _ = app.wait(for: .runningBackground, timeout: 1)
         }
-    }
-
-    // A background location session that is open when the app is killed outlives the app, and iOS then starts
-    // the app again in the background. On a busy Mac that start can come seconds later, in the middle of the
-    // next launch, which then fails with "No such process". So the app first ends its sessions (a Darwin
-    // notification that Debug builds observe), and the test waits until iOS suspends it: iOS suspends an app in
-    // the background only once no session keeps it running, so the kill then leaves no session behind.
-    @MainActor
-    private func endBackgroundLocation(of app: XCUIApplication) {
-        guard [.runningForeground, .runningBackground].contains(app.state) else { return }
-        if app.state == .runningForeground {
-            XCUIDevice.shared.press(.home)
-        }
-        CFNotificationCenterPostNotification(
-            CFNotificationCenterGetDarwinNotifyCenter(),
-            CFNotificationName(Self.endBackgroundLocationNotification as CFString),
-            nil,
-            nil,
-            true
-        )
-        XCTAssertTrue(
-            app.wait(for: .runningBackgroundSuspended, timeout: UITestTimeout.element),
-            "iOS did not suspend the app after it ended its background location, so a kill could leave "
-                + "a session that starts the app again"
-        )
     }
 
     @MainActor

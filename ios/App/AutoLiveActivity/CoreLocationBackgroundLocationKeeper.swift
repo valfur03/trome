@@ -17,7 +17,7 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
         manager.pausesLocationUpdatesAutomatically = false
         manager.showsBackgroundLocationIndicator = false
         #if DEBUG
-        endWhenUITestsAsk()
+        letUITestsEndIt()
         #endif
     }
 
