@@ -108,7 +108,8 @@ extension AutoLiveActivityModelTests {
         try #require(lines.count == 2)
         let time = DateFormatter()
         time.dateFormat = "HH:mm:ss"
-        #expect(lines[1].hasPrefix("Asked for Station M: answer 0 s old, 12 Mairie d'Issy \(time.string(from: train)); next ask by "))
+        let firstTrain = "12 Mairie d'Issy \(time.string(from: train))"
+        #expect(lines[1].hasPrefix("Asked for Station M: answer 0 s old, \(firstTrain); next ask by "))
         #expect(lines[0].hasPrefix("Asked for Station M: no answer (unreachable); next ask by "))
     }
 }

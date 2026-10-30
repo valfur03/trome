@@ -18,7 +18,8 @@ struct BackgroundTrainsLogLineTests {
 
     private func answer(at answeredAt: Date, _ trains: [(String, String)]) -> NextTrainsState {
         let departures = trains.map { Departure(line: lineA, destination: $0.0, time: date($0.1)) }
-        return .departures(DepartureBoard(departures: departures, stations: [station], now: answeredAt), updatedAt: answeredAt)
+        let board = DepartureBoard(departures: departures, stations: [station], now: answeredAt)
+        return .departures(board, updatedAt: answeredAt)
     }
 
     @Test func givesTheAgeOfTheAnswerTheNextTrainOfEachDirectionAndTheNextAsk() {
