@@ -52,7 +52,7 @@ So has a place with several stations: Châtelet, Châtelet - Les Halles and Les 
   Each update also carries the trains of the other pages, so the widget draws the page of the line that the rider tapped to, with the minutes of the update.
   The app keeps that line, for this Live Activity and this station, in an app group that it shares with the widget: the widget has no other place to read it from.
   An update that does not carry that page shows the first page.
-  At the busiest hour, the pages of the biggest places (Saint-Lazare, Châtelet, Gare du Nord) do not all fit in one update, so a tap there goes round the first pages only, until the app has trains of its own ([how the server fits them](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
+  Apple keeps the content of a Live Activity under 4 KB, so at the busiest hour the pages of some stations do not all fit in one update: a tap there goes round the first pages only, or stays on the first, until the app has trains of its own ([how the server fits them](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
 - **The trains.** A direction keeps its next two trains of the next 60 minutes, and a page keeps at most three directions.
   When a page has more than two directions, each one keeps only its next train, to stay under 160 points.
   PRIM sometimes lists one metro train twice, less than a minute apart: the page keeps the first, because no two metro trains leave a platform that close.

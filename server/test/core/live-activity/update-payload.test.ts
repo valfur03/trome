@@ -5,13 +5,13 @@ import { stationContent, type StationContent } from "../../../src/core/live-acti
 import type { Departure } from "../../../src/core/live-activity/station-departures";
 import { updateWindow } from "../../../src/core/live-activity/station-updates";
 import { startPayload, startSizeLimit } from "../../../src/core/live-activity/start-payload";
-import { broadcastSizeLimit, payloadBytes, updatePayload } from "../../../src/core/live-activity/update-payload";
+import { broadcastSizeLimit, contentSizeLimit, payloadBytes, updatePayload } from "../../../src/core/live-activity/update-payload";
 import { second } from "../../../src/core/time/clock";
 import { primFixture } from "../relay/prim-fixtures";
 import { catalog, contractCase, startHarness } from "./live-activity-harness";
 
 /**
- * An update on a channel must fit Apple's 5,120 bytes, whole body counted, for every station of the list.
+ * An update on a channel must fit Apple's 5,120 bytes, whole body counted, for every station of the list, and its content Apple's 4 KB for the content of a Live Activity.
  * It shows the first page and carries the other pages that fit, in the order of the app, so that each lock screen draws the page that its rider tapped to.
  */
 const token = "80a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f80a1b2c3d4e5f607";
@@ -74,6 +74,17 @@ function sentPage(payload: string): SentPage {
   return (JSON.parse(payload) as { aps: { "content-state": { trains: { lines: { _0: SentPage } } } } }).aps["content-state"].trains.lines._0;
 }
 
+/**
+ * The bytes of the content that an iPhone gets from the push, on the biggest page that it carries: each lock screen draws its rider's page from it, and the app sends it again on the tapped page.
+ * Apple refuses a content over 4 KB, whatever the push, and the lock screen then keeps its old minutes.
+ */
+function widestSentContentBytes(payload: string): number {
+  const content = (JSON.parse(payload) as { aps: { "content-state": { trains: { lines?: { _0: SentPage } } } } }).aps["content-state"];
+  const page = content.trains.lines?._0;
+  const shown = (page?.pages ?? []).map((line, index) => ({ ...content, trains: { lines: { _0: { ...page, lines: [line], firstIndex: index } } } }));
+  return Math.max(...[content, ...shown].map((each) => payloadBytes(JSON.stringify(each))));
+}
+
 describe("the size of an update on the channel of a station", () => {
   it("fits Apple's limit for the recorded answers of Châtelet - Les Halles, the biggest place of the list", async () => {
     const harness = await startHarness({ contractCase: "chatelet-les-halles-hub" });
@@ -85,9 +96,10 @@ describe("the size of an update on the channel of a station", () => {
     const page = sentPage(body);
     expect(page.firstIndex).toBe(0);
     expect(page.allLines).toHaveLength(8);
-    expect(page.pages?.map((carried) => carried.line)).toEqual(page.allLines);
+    expect(page.pages?.map((carried) => carried.line)).toEqual(page.allLines.slice(0, 5));
     expect(page.pages?.[0]).toEqual(page.lines[0]);
     expect(new TextEncoder().encode(body).length).toBeLessThanOrEqual(broadcastSizeLimit);
+    expect(widestSentContentBytes(body)).toBeLessThanOrEqual(contentSizeLimit);
   });
 
   it("fits Apple's limit for every station of the list at its busiest, and its first page alone keeps a fifth of the limit to spare", () => {
@@ -102,14 +114,18 @@ describe("the size of an update on the channel of a station", () => {
 
   it("carries every page of most stations with several lines at their busiest, and the first pages that fit at the others", () => {
     const several = catalog.stations.map(busiestContent).filter((content) => content.trains.kind === "lines" && content.trains.page.allLines.length > 1);
-    const carried = several.map((content) => sentPage(updatePayload(content, now, now + updateWindow)));
+    const payloads = several.map((content) => updatePayload(content, now, now + updateWindow));
+    const carried = payloads.map(sentPage);
 
     for (const page of carried) {
       const pages = page.pages ?? [];
-      expect(pages.length).toBeGreaterThanOrEqual(2);
+      expect(pages).not.toHaveLength(1);
       expect(pages.map((carriedPage) => carriedPage.line)).toEqual(page.allLines.slice(0, pages.length));
     }
-    expect(carried.filter((page) => page.pages?.length === page.allLines.length).length).toBeGreaterThan(several.length * 0.8);
+    for (const [index, payload] of payloads.entries()) {
+      expect(widestSentContentBytes(payload), several[index]?.stationName).toBeLessThanOrEqual(contentSizeLimit);
+    }
+    expect(carried.filter((page) => page.pages?.length === page.allLines.length).length).toBeGreaterThan(several.length * 0.5);
   });
 
   it("leaves out only the pages that would go over the limit", () => {
@@ -133,11 +149,19 @@ describe("the size of an update on the channel of a station", () => {
     const sizes = catalog.stations.map((station) => {
       const payload = startPayload(station, busiestContent(station), "channel-1", now, now + updateWindow);
       const page = sentPage(payload);
-      return { name: station.name, bytes: payloadBytes(payload), pages: page.pages?.map((carried) => carried.line) ?? [], allLines: page.allLines };
+      return {
+        name: station.name,
+        bytes: payloadBytes(payload),
+        contentBytes: widestSentContentBytes(payload),
+        pages: page.pages?.map((carried) => carried.line) ?? [],
+        allLines: page.allLines,
+      };
     });
     const biggest = sizes.reduce((largest, size) => (size.bytes > largest.bytes ? size : largest));
+    const biggestContent = sizes.reduce((largest, size) => (size.contentBytes > largest.contentBytes ? size : largest));
 
     expect(biggest.bytes, biggest.name).toBeLessThanOrEqual(startSizeLimit);
+    expect(biggestContent.contentBytes, biggestContent.name).toBeLessThanOrEqual(contentSizeLimit);
     for (const size of sizes) {
       expect(size.pages).toEqual(size.allLines.slice(0, size.pages.length));
       expect(size.pages).not.toHaveLength(1);

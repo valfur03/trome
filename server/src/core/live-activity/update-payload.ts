@@ -4,6 +4,13 @@ import { encodeContent, staleDate, type StationContent } from "./station-content
 export const broadcastSizeLimit = 5120;
 
 /**
+ * Apple's limit for the content of a Live Activity, in every push and every update of the app: 4 KB, whatever the limit of the push that brings it.
+ * An iPhone refuses a bigger content and keeps the old one, so the lock screen goes stale.
+ * The limit here keeps 64 bytes of it for what the iPhone's own encoding may add: the longer digits of a date in fractions of a second.
+ */
+export const contentSizeLimit = 4096 - 64;
+
+/**
  * The body of the push that updates the Live Activities of a station on its channel: the new content, with no alert, so that the rider notices nothing but the minutes.
  * The content shows the first page, as at the start, and carries the other pages that fit Apple's limit, so that a rider who tapped to another line keeps it (`withThePagesThatFit`).
  * The stale date is the one of the content, as when the app sends it, but never after the end of the window of updates: see `windowStaleDate`.
@@ -21,21 +28,36 @@ export function updatePayload(content: StationContent, now: number, windowEnd: n
 }
 
 /**
- * The body that `payloadOf` makes from the content with the most pages that keep it within `limit` bytes: all of them, or the first ones in the order of the app.
+ * The body that `payloadOf` makes from the content with the most pages that keep it within `limit` bytes, and its content within `contentSizeLimit` whichever carried page it shows: all of them, or the first ones in the order of the app.
  * One push goes to every rider of the station, and each lock screen draws the page that its rider tapped to when the push carries it, and the first page when it does not.
- * At the busiest hour, the pages of the biggest places (Saint-Lazare, Châtelet, Gare du Nord) do not all fit, so a rider there can reach only the first ones until the app has trains of its own.
+ * After a tap with no trains of its own, the app sends the content of the push on the tapped page, so that content must fit Apple's limit too.
+ * At the busiest hour, the pages of the biggest places do not all fit, so a rider there can reach only the first ones until the app has trains of its own.
  * When even the first page alone is over the limit, the body is still over it, and the caller does not send it.
  */
 export function withThePagesThatFit(content: StationContent, limit: number, payloadOf: (content: StationContent) => string): string {
   let fitting = content;
   let payload = payloadOf(fitting);
-  while (payloadBytes(payload) > limit && fitting.trains.kind === "lines" && fitting.trains.page.pages !== undefined) {
+  while (
+    (payloadBytes(payload) > limit || widestContentBytes(fitting) > contentSizeLimit) &&
+    fitting.trains.kind === "lines" &&
+    fitting.trains.page.pages !== undefined
+  ) {
     const { pages, ...page } = fitting.trains.page;
     const fewer = pages.slice(0, -1);
     fitting = { ...fitting, trains: { kind: "lines", page: fewer.length > 1 ? { ...page, pages: fewer } : page } };
     payload = payloadOf(fitting);
   }
   return payload;
+}
+
+/** The bytes of the content as an iPhone receives it, on the biggest of the pages that it carries: the page that a tap may show in place of the first. */
+export function widestContentBytes(content: StationContent): number {
+  const bytes = (shown: StationContent) => payloadBytes(JSON.stringify(encodeContent(shown)));
+  const page = content.trains.kind === "lines" ? content.trains.page : undefined;
+  if (page?.pages === undefined) {
+    return bytes(content);
+  }
+  return Math.max(...page.pages.map((line, index) => bytes({ ...content, trains: { kind: "lines", page: { ...page, lines: [line], firstIndex: index } } })));
 }
 
 /**

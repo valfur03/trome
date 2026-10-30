@@ -55,11 +55,10 @@ public final class StationLiveActivityModel {
 
     @ObservationIgnored private let systemCalls = InOrderCalls()
     @ObservationIgnored private var startCount = 0
-    /// The last content that the app gave iOS, in the order of the system calls, and when: an update that iOS
-    /// would draw the same is not sent while iOS may still draw the last one (`send(_:afterATap:)`).
     /// The launch argument of a debug build that sets `sendsAsTheServer`.
     public static let sendsAsTheServerArgument = "--content-as-the-server"
-
+    /// The last content that the app gave iOS, in the order of the system calls, and when: an update that iOS
+    /// would draw the same is not sent while iOS may still draw the last one (`send(_:afterATap:)`).
     @ObservationIgnored private var lastSend: (content: StationActivityAttributes.ContentState, at: Date)?
 
     public init(
