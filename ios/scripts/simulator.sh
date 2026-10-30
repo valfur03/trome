@@ -88,16 +88,13 @@ shut_down_other_shared() {
     done
 }
 
+# simctl picks the newest runtime that runs the device type: the newest runtime of the Mac may run only one new
+# device (an image of GitHub's Mac has an iOS 27.1 for the iPhone Duo only), and it refuses an iPhone 17 there.
 create_device() {
-    runtime=$(xcrun simctl list runtimes available \
-        | grep '^iOS ' \
-        | tail -n 1 \
-        | sed -E 's/.* - (com\.apple\.CoreSimulator\.SimRuntime\.[^ ]+).*/\1/')
-    if [ -z "$runtime" ]; then
-        echo "No iOS Simulator runtime found. Run: xcodebuild -downloadPlatform iOS" >&2
+    if ! xcrun simctl create "$name" "$device_type"; then
+        echo "No iOS Simulator runtime runs $device_type. Run: xcodebuild -downloadPlatform iOS" >&2
         exit 1
     fi
-    xcrun simctl create "$name" "$device_type" "$runtime"
 }
 
 device_udid() {
@@ -106,6 +103,15 @@ device_udid() {
         udid=$(create_device)
     fi
     echo "$udid"
+}
+
+# The runtime of the shared Simulator, as 'iOS 27.0 (27.0 - 24A434)': the heading of its group in the list of devices,
+# with the version and build of that runtime when the list of runtimes has it.
+runtime_of() {
+    heading=$(xcrun simctl list devices \
+        | awk -v udid="($1)" '/^-- .* --$/ { heading = substr($0, 4, length($0) - 6) } index($0, udid) { print heading; exit }')
+    runtime=$(xcrun simctl list runtimes available | grep -F "$heading (" | head -n 1 | sed -E 's/ - com\.apple.*//')
+    echo "${runtime:-$heading}"
 }
 
 boot_device() {
@@ -410,6 +416,9 @@ case "$command" in
     find)
         find_udid
         ;;
+    runtime)
+        runtime_of "$(device_udid)"
+        ;;
     boot)
         boot_device
         ;;
@@ -500,7 +509,7 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|boot|reset [command...]|wait-for-wallpaper-update [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|status-bar|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|runtime|boot|reset [command...]|wait-for-wallpaper-update [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|status-bar|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch', 'language' and 'switch-language'); the default is English (en)" >&2
         echo "'status-bar' sets the status bar of the pictures (9:41, full battery and signal), and boots the Simulator again once when it booted with a 24-hour clock" >&2

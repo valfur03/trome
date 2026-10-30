@@ -65,7 +65,8 @@ jobs:
           export DEVELOPER_DIR="$xcode/Contents/Developer"
           echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
           build=$(xcodebuild -version | sed -n 's/^Build version //p')
-          runtime=$(xcrun simctl list runtimes available | grep '^iOS ' | tail -n 1 | sed -E 's/ - com\.apple.*//')
+          # The runtime that the render check runs on: the newest one may run only another device.
+          runtime=$(ios/scripts/simulator.sh runtime) || runtime="none: the shared Simulator could not be created"
           wait=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" \
             --jq '.jobs[0] | ((.started_at | fromdateiso8601) - (.created_at | fromdateiso8601)) / 60 * 10 | round / 10' \
             2> /dev/null || echo "unknown")
