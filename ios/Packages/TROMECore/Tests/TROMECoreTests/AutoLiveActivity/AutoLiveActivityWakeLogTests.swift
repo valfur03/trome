@@ -84,4 +84,31 @@ extension AutoLiveActivityModelTests {
         let screenChanges = wakeLog.entries.filter { $0.kind == .launch }.map(\.text)
         #expect(screenChanges == ["App in the background", "App on screen"])
     }
+
+    /// A background call writes what answered and when the app asks again, so that the next outing can tell
+    /// an app that iOS did not run from a source that answered old times or an answer that was not drawn.
+    @Test func logsEachCallForTheLiveActivityInTheBackgroundWithItsAnswer() async throws {
+        let line12 = TransitLine(mode: .metro, name: "12")
+        let station = Station(id: "m", name: "Station M", coordinate: Coordinate(48.8600, 2.3600), lines: [line12])
+        let train = clock.now.addingTimeInterval(300)
+        provider.answer(.success([Departure(line: line12, destination: "Mairie d'Issy", time: train)]), for: station)
+        let model = makeModel(catalog: StationCatalog(stations: [station]))
+        await arrive(at: station.coordinate, in: model)
+        await waitUntil { client.updates.contains { $0.trains.linesPage != nil } }
+        #expect(!wakeLog.entries.contains { $0.kind == .trains })
+
+        model.setAppPhase(.background)
+        clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { wakeLog.entries.contains { $0.kind == .trains } }
+        provider.answer(.failure(.unreachable), for: station)
+        clock.letTimersFire(upTo: 2 * BackgroundTrainsRefresh.maximumDelay)
+        await waitUntil { wakeLog.entries.filter { $0.kind == .trains }.count == 2 }
+
+        let lines = wakeLog.entries.filter { $0.kind == .trains }.map(\.text)
+        try #require(lines.count == 2)
+        let time = DateFormatter()
+        time.dateFormat = "HH:mm:ss"
+        #expect(lines[1].hasPrefix("Asked for Station M: answer 0 s old, 12 Mairie d'Issy \(time.string(from: train)); next ask by "))
+        #expect(lines[0].hasPrefix("Asked for Station M: no answer (unreachable); next ask by "))
+    }
 }

@@ -54,4 +54,14 @@ extension AutoLiveActivityModel {
             .regions, WatchedRegion.summary(of: regions, around: position, catalog: catalog), unlessRepeated: true
         )
     }
+
+    func logBackgroundCall(at station: Station, nextCall: Date?) {
+        guard let wakeLog = services.wakeLog, !Task.isCancelled, shownStation?.id == station.id else { return }
+        wakeLog.record(.trains, BackgroundTrainsLogLine.text(
+            station: station,
+            state: inputs.liveActivityTrains.state(for: station),
+            now: configuration.now(),
+            nextCall: nextCall
+        ))
+    }
 }

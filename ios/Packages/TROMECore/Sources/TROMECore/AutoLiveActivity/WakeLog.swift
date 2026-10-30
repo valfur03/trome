@@ -9,6 +9,7 @@ public struct WakeLogEntry: Codable, Equatable, Sendable, Identifiable {
         case decision
         case notification
         case silentStart
+        case trains
     }
 
     public let id: UUID

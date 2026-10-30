@@ -70,12 +70,16 @@ extension AutoLiveActivityModel {
                 await liveActivity.redraw()
                 continue
             }
+            let asked = asksPRIM
             if asksPRIM {
                 lastCall = configuration.now()
                 await feed(station, inPlaceOfARedraw: redrawDate != nil)
                 asksPRIM = BackgroundTrainsRefresh.shouldAskAgain(after: inputs.liveActivityTrains.state(for: station))
             }
             nextCall = nextPRIMCall(for: station, asksPRIM: asksPRIM)
+            if asked {
+                logBackgroundCall(at: station, nextCall: asksPRIM ? nextCall : nil)
+            }
         }
     }
 

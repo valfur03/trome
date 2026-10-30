@@ -145,6 +145,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Branch | Each arrival that the app decides, with its reason: notified, started, switched, or why not; each end of the Live Activity by its distance or time limit |
 | Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
 | Radio waves | With the [silent start](auto-live-activity.md#the-silent-start-debug-builds-of-a-paid-team): the start token from iOS, each ask to the server, its answer ("started", "already started", "refused", "not set up", "no answer") or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), the fallback to the notification, and "Follows the Live Activity that the server started" when the app finds it on screen |
+| Tram | Each call that the app makes for its Live Activity in the background: how old the answer is and the next train of each direction that it hands to iOS (four at most), or why no answer came; then "next ask by" and a time, or "asks no more" |
 
 "App launched" is written at the start of the launch.
 When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.
@@ -156,6 +157,8 @@ The decision line after it rests on that position, with one exception: after "en
 Other area lines can follow any launch: iOS can send the state of each area when the app starts ("left", "not watched"), and "area around you" and "stop area" are not stations.
 iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
+With a Live Activity on the lock screen and the app in the background, no tram line after the time of "next ask by" means that iOS was not running the app.
+An old answer, or the same times line after line, comes from the train data; times in the line that the lock screen does not show mean that iOS did not draw them.
 A line "No arrival at" a station with a rough position or none is followed by "Second chance at" that station: "asks iOS for a position", then its result: "notified after N s", or "gave up" or "ended" after N s, with the reason.
 When the result line never comes, iOS suspended or closed the app before the end of the 2 minutes.
 A line "Live Activity ended: N m from" a station, before a line "Notified", says that the rider left that station before reaching the next one, so the next one notified instead of a switch.
