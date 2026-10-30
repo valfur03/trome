@@ -57,7 +57,7 @@ No E2E test, no build and no script of the E2E suite reads them, and `make check
 One exception: a Markdown or MDX file in a folder that the build of the app takes as its sources (`ios/App/`, `ios/Widget/`, `ios/UITests/`, `ios/DocsScreenshots/`, `ios/RenderCheck/`, `ios/Packages/` except its unit tests) is app code, because XcodeGen copies it into the app as a resource.
 Unit tests (`ios/Packages/TROMECore/Tests/`), the server (`server/`, its `Makefile` included: no E2E test uses it), the film (`video/`, its `Makefile` included), the shared test files of `contracts/`, the files of `.github/` (the GitHub workflows and forms: no build and no test of the repo reads them, and GitHub runs the workflows on its own machines) and backlog files are not app code either.
 `contracts/` holds only files that tests read: no build of the app or of the server ships one.
-A task that makes the app read a file of `contracts/` at run time, or makes the build or an E2E test read one of these docs files, makes it app code, and changes `is_app_code` in `ios/scripts/merge.sh` in the same task.
+A task that makes the app read a file of `contracts/` at run time, or makes the build or an E2E test read one of these docs files, makes it app code, and changes `is_app_code` in `ios/scripts/code-paths.sh` in the same task (`make merge` and the reader of the record of the E2E pass both use it).
 
 - **The implementer** runs only the E2E test classes of the flows that it changed: `make e2e ONLY=SnoozeTests`, or `make e2e ONLY="SnoozeTests LiveActivityTests"` for more than one.
   The class names are the file names in `ios/UITests/`.

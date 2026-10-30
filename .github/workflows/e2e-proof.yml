@@ -1,0 +1,38 @@
+name: E2E proof
+
+# Says whether the commit of the run has a record that the full E2E suite passed on the Mac on its tree, and fails when it has none.
+# The full E2E suite cannot pass on GitHub's Mac, so make merge runs it on the Mac, then pushes main and leaves the record:
+# a commit status named "E2E on the Mac", written with the token of the owner of the repo (ios/scripts/e2e-proof.sh).
+# A commit with no record of its own counts when an older commit of main has one and no commit since changes app code,
+# the same rule by which make merge skips the suite.
+# The release checks run it; it can also be started by hand: Actions > E2E proof > Run workflow, on main or on a branch.
+# It holds no secret: its token only reads the repo and the statuses.
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  proof:
+    name: E2E proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      statuses: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The history, to find the commit whose record covers this one; no file contents, which the reader does not need.
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Read the record of the full E2E pass on the Mac, and the render counts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: ios/scripts/e2e-proof.sh read "$GITHUB_SHA"

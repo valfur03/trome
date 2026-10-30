@@ -2,6 +2,9 @@
 paths:
   - "ios/scripts/merge.sh"
   - "ios/scripts/tests/merge-test.sh"
+  - "ios/scripts/code-paths.sh"
+  - "ios/scripts/e2e-proof.sh"
+  - "ios/scripts/tests/e2e-proof-test.sh"
 commands:
   - '^(\S*/)?make\b.*\smerge(\s|$)'
   - '^git(\s+-[Cc]\s+\S+|\s+--?\S+)*\s+(rebase|merge|pull)(\s|$)'
@@ -53,8 +56,11 @@ Each step runs only when the step before it passed:
 1. It rebases the branch of the worktree onto the tip of `main`.
 2. It runs the quality gate (`make check`).
 3. It runs the full E2E suite (`make e2e`), unless the branch changes no app code (see "Which E2E tests to run" in `.claude/rules/tests.md`).
+   After a pass, it runs the render check (`make live-activity-render`) when the branch changes the Live Activity views or their data, or when `main` has no render counts on GitHub.
+   The render check is a report: when it fails, the merge goes on, and its record says "not drawn".
 4. It fast-forwards `main` to the rebased branch.
    When `main` is checked out in a folder (the main folder of the repo), it updates that folder too, with `git merge --ff-only`: a fast-forward, never a merge commit.
+   When the E2E suite ran, it then pushes `main` to `origin`, and leaves the record of the E2E pass on that commit (below).
 
 Then it frees the lock.
 When a step fails (a rebase conflict, the gate, the E2E suite), it stops at once, says which step failed, leaves `main` as it was, and frees the lock.
@@ -65,6 +71,25 @@ Changes on other files of that folder do not stop it.
 It checks this again when its turn comes, and the fast-forward still fails safely when such changes appear during the run.
 It refuses to start on `main`, with changes that are not committed, with `ONLY=` (the E2E suite is always the full one), or with nothing to merge.
 It lands only the commit that it started with: a task whose branch gets a new commit while its `make merge` waits or runs does not land, and keeps that commit.
+
+**The record of the E2E pass.** The release runs on GitHub, whose Mac cannot pass the E2E suite, so it reads the proof that the suite passed on the Mac (decision-113).
+The record is a commit status of GitHub, named `E2E on the Mac`, on the commit of `main` that the E2E suite tested: its text names the tree of that commit and the render counts (too tall, cut texts, breaches of decision-15), or "Render: not drawn".
+`make merge` writes it with `ios/scripts/e2e-proof.sh publish`, right after its push, because GitHub keeps a status only for a commit that it has.
+`ios/scripts/e2e-proof.sh read` (`make e2e-proof`, and the workflow **E2E proof**, which the release checks run) reads it, and fails when it is missing:
+
+- A commit that `make merge` tested has its own record.
+- A commit that changes no app code (a docs merge, which skips the E2E suite) has none: the reader finds the record of the last commit before it that has one, when no commit between them changes app code.
+  This is the rule by which `make merge` skips the suite, from the same list (`ios/scripts/code-paths.sh`), so it opens no new way to skip it.
+- A commit that changes app code with no record (a push by hand, a merge whose push or record failed) is refused, and so is every commit after it, until a merge that runs the E2E suite lands.
+- The render counts follow the same walk, with the list of the files that the views draw: a commit that changes them with no drawing has "render counts: missing", which shows but does not fail.
+
+Only a token of the owner of the repo can write the record that counts: the reader keeps only the statuses whose author is the owner.
+A workflow writes a status with its own token, whose author is `github-actions[bot]`, so a workflow on a pushed branch cannot forge one, and a branch push writes no status.
+Never write the status `E2E on the Mac` by hand (`gh api .../statuses`): only `make merge` writes it, after a full pass.
+Why: the owner's token is the only guard, and agents use it.
+
+When `make merge` says that the push or the record failed, `main` has landed, but a release refuses it.
+Tell the prompter: the next merge that runs the E2E suite leaves a new record.
 
 Why one command, with the lock all along:
 

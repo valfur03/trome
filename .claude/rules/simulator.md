@@ -97,7 +97,7 @@ Why: the Simulator has no command for a wallpaper, so it is set by taps in the w
 A job reset keeps the wallpaper; a new or erased Simulator does not, so run `make simulator-wallpaper` again after `make simulator-delete`.
 So is `make live-activity-render` (the render check of the Live Activity views, see `.claude/rules/render-check.md`).
 
-`make merge` takes the lock before the rebase and frees it after the fast-forward, success or failure (see `.claude/rules/merge.md`).
+`make merge` takes the lock before the rebase and frees it after the fast-forward and the push of the record of the E2E pass, success or failure (see `.claude/rules/merge.md`).
 Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots.
 A merge goes first: while a `make merge` waits (its entry in `/tmp/ratp-sim.lock.merge-queue`), a job that is not a merge waits too, even when it came first; the job that holds the lock keeps it to its end.
 A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock.

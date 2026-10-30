@@ -159,7 +159,7 @@ draw_for_record() {
 }
 
 # Pushes main to origin, and leaves on its new commit the record of its full E2E pass: GitHub keeps a status only for a
-# commit that it has. Prints what it did. A failure leaves main as it landed: the factory push or the owner sends it.
+# commit that it has. Prints what it did. A failure leaves main as it landed, for the next push.
 publish_record() {
     if ! git remote get-url origin > /dev/null 2>&1; then
         echo "make merge: no remote 'origin', so no record of the E2E pass of $(short "$tip") is left on GitHub."

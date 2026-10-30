@@ -8,7 +8,7 @@ commands:
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+(secret|variable)(\s|$)'
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+workflow\s+(run|enable|disable)(\s|$)'
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+run\s+rerun(\s|$)'
-  - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+api\s.*(environments|pending_deployments|deployment_protection_rules|secrets|variables|dispatches|rerun|rulesets|protection)'
+  - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+api\s.*(environments|pending_deployments|deployment_protection_rules|secrets|variables|dispatches|rerun|rulesets|protection|statuses)'
 ---
 # GitHub: secrets, environments, release and deploy workflows
 
@@ -28,6 +28,8 @@ The task that gives a secret to a script of a workflow adds that script to the `
   The manager's push of `main` is the only way an agent starts one.
   Why: it ships to riders with a secret, and the prompter's login would let any agent start it with no review.
   An agent may start a workflow that holds no secret (the checks), when its task needs a real run.
+- **Never write a commit status** (`gh api .../statuses`).
+  Why: the status `E2E on the Mac` is the proof that the release reads of a full E2E pass on the Mac, and only `make merge` writes it, after the pass (`.claude/rules/merge.md`).
 - **Never approve or reject a waiting deployment** (`gh api .../pending_deployments`, the web page).
   Why: the approval of the app's signing environment is the prompter's click on the first three App Store releases (decision-108 point 4), and GitHub cannot tell an agent from him.
   The server's deploy has no required reviewer (decision-108 point 1), so it has no deployment to answer.

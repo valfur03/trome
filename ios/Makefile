@@ -104,7 +104,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge e2e-proof
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -137,7 +137,8 @@ help:
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
-	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, fast-forward. Merges that wait together share one run; when it fails, they land one by one"
+	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, fast-forward, then push main with the record of its E2E pass and its render counts. Merges that wait together share one run; when it fails, they land one by one"
+	@echo "make e2e-proof           Say whether a commit (COMMIT=, default HEAD) has, on GitHub, the record that make merge leaves after a full E2E pass on its tree, and its render counts; fail when it has none (the release refuses it)"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
@@ -328,6 +329,9 @@ clean-shared-cache:
 
 merge:
 	@./scripts/merge.sh
+
+e2e-proof:
+	@./scripts/e2e-proof.sh read $(or $(COMMIT),HEAD)
 
 store-screenshots: project
 	@./scripts/wallpaper.sh check

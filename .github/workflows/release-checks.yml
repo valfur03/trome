@@ -6,7 +6,8 @@ name: Release checks
 # no step prints Info.plist or the build settings, and the archive is never uploaded as an artifact.
 # The summary of the run gives the Xcode build, the image, the wait for the runner, and the outcome and minutes of each check.
 # The E2E suite does not run here: GitHub's Mac is too slow for the Live Activity buttons (iOS stops their code at 30 s),
-# so it stays a gate of every release on the Mac, at make merge. The summary says so in a fixed row, never a pass.
+# so it stays a gate of every release on the Mac, at make merge. The summary says so in a fixed row, never a pass,
+# and the job "E2E proof" fails when the commit has no record of a full E2E pass on the Mac (e2e-proof.yml).
 
 on:
   workflow_dispatch:
@@ -18,6 +19,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  e2e-proof:
+    name: E2E proof
+    permissions:
+      contents: read
+      statuses: read
+    uses: ./.github/workflows/e2e-proof.yml
+
   checks:
     name: Release checks
     # The standard size of the Xcode 27 image: free in a public repo. The larger xcode-27-xlarge is paid.
