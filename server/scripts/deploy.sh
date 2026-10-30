@@ -26,11 +26,13 @@ case "$target" in
         env_flag=--env=
         secrets_command="make server-secrets"
         secret_command="make server-secret NAME=<name>"
+        deploy_command="make server-deploy"
         ;;
     staging)
         env_flag="--env=staging"
         secrets_command="make server-secrets STAGING=1"
         secret_command="make server-secret NAME=<name> STAGING=1"
+        deploy_command="make server-deploy-staging"
         ;;
     *)
         echo "Unknown target '$target': use production or staging." >&2
@@ -95,7 +97,9 @@ fi
 if ! ./node_modules/.bin/wrangler deploy "$env_flag" --config wrangler.jsonc "$@"; then
     if [ -n "$commit" ]; then
         echo "The deploy failed. If wrangler says that required secrets have not been set, set each one from your computer with '$secret_command'. $rerun" >&2
-        echo "If wrangler aborts because of conflicts, a setting of the Worker was changed in the Cloudflare dashboard: put it in server/wrangler.jsonc, or undo it in the dashboard. $rerun" >&2
+        # After a change in the dashboard, wrangler first reads the Worker's settings there, and a token limited to one
+        # Worker cannot read all of them (custom domains have no per-Worker role): the run stops before any upload.
+        echo "If wrangler aborts because of conflicts, or cannot fetch the metadata from the dashboard, the Worker was changed outside this repo (in the Cloudflare dashboard), even if undone since, and a run never overrides that: put the change in server/wrangler.jsonc on main or undo it, then deploy main once from your computer with '$deploy_command', which shows the difference and asks. $rerun" >&2
     else
         echo "The deploy failed. If wrangler says that required secrets have not been set, run '$secrets_command' first, then deploy again." >&2
     fi

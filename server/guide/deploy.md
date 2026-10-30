@@ -35,8 +35,12 @@ Before the deploy, the run refuses, and deploys nothing:
 When a run is red, its failed step says why:
 
 - **A secret is not set**: set it with `make server-secret NAME=<name> STAGING=1`, then open the run on GitHub and press **Re-run failed jobs**.
-- **wrangler aborts because of conflicts**: someone changed a setting of the Worker in the Cloudflare dashboard, and the run never overrides it with no person to answer.
-  Put the setting in `server/wrangler.jsonc`, or undo it in the dashboard, then re-run.
+- **wrangler aborts because of conflicts, or cannot fetch the metadata from the dashboard**: someone changed the Worker outside this repo, for example a variable in the Cloudflare dashboard, and the run never overrides it with no person to answer.
+  After a change in the dashboard, wrangler first reads the settings of the Worker there, and the staging token cannot read all of them, because Cloudflare has no role of one Worker for its custom domains.
+  So every run stops before it uploads anything, even after you undo the change, and a re-run alone fails again.
+  Put the change in `server/wrangler.jsonc` on `main`, or undo it in the dashboard.
+  Then, in your main folder on an up-to-date `main`, run `make server-deploy-staging` once: wrangler shows the difference and asks you, and after this deploy the runs deploy again.
+  Then re-run.
 - **The check of staging failed**: the step says which check, and the HTTP status of the answer.
   The new version is live on staging: fix it with a new commit on `main`.
 

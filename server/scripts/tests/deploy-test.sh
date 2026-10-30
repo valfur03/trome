@@ -119,6 +119,7 @@ touch "$cloudflare/fail-deploy"
 expect "a failed deploy refuses" "$(deploy staging)" "refuses"
 expect "after a failed deploy, the message says to set the secrets first" "$(contains "$state/out" "run 'make server-secrets STAGING=1' first")" "yes"
 expect "after a failed deploy, the message warns never to use a secrets file" "$(contains "$state/out" "Never use a secrets file")" "yes"
+expect "after a failed deploy by a person, no message says to deploy from your computer" "$(contains "$state/out" "deploy main once from your computer")" "no"
 rm "$cloudflare/fail-deploy"
 
 rm "$cloudflare/production/deployed"
@@ -187,6 +188,15 @@ expect "run: the message says how to set it, then to re-run" "$(contains "$state
 expect "run: the message warns never to use a secrets file" "$(contains "$state/out" "Never use a secrets file")" "yes"
 printf 'owner-value\n' | "$repo/server/node_modules/.bin/wrangler" secret put OWNER_TOKEN --env=staging
 expect "run: once the secret is set, the re-run deploys" "$(deploy staging "$tip")" "deploys"
+
+# After a change in the Cloudflare dashboard, wrangler 4.147.0 with the token of one Worker stops with 'Unable to fetch
+# bindings, routes, or services metadata from the dashboard. Please try again later.': a re-run alone fails again.
+rm "$cloudflare/staging/deployed"
+touch "$cloudflare/fail-deploy"
+expect "run: a deploy that wrangler stops refuses" "$(deploy staging "$tip")" "refuses"
+expect "run: the message says that a change in the dashboard stops the runs, even one undone since" "$(contains "$state/out" "If wrangler aborts because of conflicts, or cannot fetch the metadata from the dashboard, the Worker was changed outside this repo (in the Cloudflare dashboard), even if undone since")" "yes"
+expect "run: the message says to deploy main once from a computer with make server-deploy-staging, then to re-run" "$(contains "$state/out" "then deploy main once from your computer with 'make server-deploy-staging', which shows the difference and asks. Then open this run on GitHub and press 'Re-run failed jobs'.")" "yes"
+rm "$cloudflare/fail-deploy"
 
 rm -rf "$cloudflare/staging"
 expect "run: when wrangler cannot list the secrets, the deploy checks them itself, and refuses" "$(deploy staging "$tip")" "refuses"
