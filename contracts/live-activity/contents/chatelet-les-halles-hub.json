@@ -111,6 +111,258 @@
           "name" : "4"
         },
         "nextTrainIsOverAnHourAway" : false,
+        "pages" : [
+          {
+            "directions" : [
+              {
+                "label" : "Saint-Germain-en-Laye \/ Cergy le Haut \/ Poissy",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Boissy-Saint-Léger \/ Marne-la-Vallée - Chessy",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "eb2132",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "A"
+            }
+          },
+          {
+            "directions" : [
+              {
+                "label" : "Aéroport Charles de Gaulle 2 TGV \/ Mitry - Claye",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Robinson \/ Saint-Rémy-lès-Chevreuse",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "5091cb",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "B"
+            }
+          },
+          {
+            "directions" : [
+              {
+                "label" : "Creil",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "destination" : "Stade de France Saint-Denis",
+                    "time" : 812614590
+                  },
+                  {
+                    "destination" : "Villiers-le-Bel - Gonesse - Arnouville",
+                    "time" : 812615010
+                  }
+                ]
+              },
+              {
+                "label" : "Melun \/ Malesherbes",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "destination" : "Melun",
+                    "time" : 812614710
+                  },
+                  {
+                    "destination" : "Malesherbes",
+                    "time" : 812615130
+                  }
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "008b5b",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "D"
+            }
+          },
+          {
+            "directions" : [
+              {
+                "label" : "Porte de Clignancourt",
+                "nextTrainIsOverAnHourAway" : false,
+                "noAnswer" : true,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Bagneux - Lucie Aubrac",
+                "nextTrainIsOverAnHourAway" : false,
+                "noAnswer" : true,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "a0006e",
+                "text" : "ffffff"
+              },
+              "mode" : "metro",
+              "name" : "4"
+            },
+            "stationName" : "Les Halles"
+          },
+          {
+            "directions" : [
+              {
+                "label" : "La Défense",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Château de Vincennes",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "ffbe00",
+                "text" : "000000"
+              },
+              "mode" : "metro",
+              "name" : "1"
+            },
+            "stationName" : "Châtelet"
+          },
+          {
+            "directions" : [
+              {
+                "label" : "La Courneuve - 8 Mai 1945",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              },
+              {
+                "branchEnds" : [
+                  "Mairie d'Ivry",
+                  "Villejuif - Louis Aragon"
+                ],
+                "label" : "Mairie d'Ivry \/ Villejuif - Louis Aragon",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ],
+                "trainsOfEachEnd" : [
+                  {
+                    "end" : "Mairie d'Ivry",
+                    "nextTrainIsOverAnHourAway" : false,
+                    "trains" : [
+
+                    ]
+                  },
+                  {
+                    "end" : "Villejuif - Louis Aragon",
+                    "nextTrainIsOverAnHourAway" : false,
+                    "trains" : [
+
+                    ]
+                  }
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "ff82b4",
+                "text" : "000000"
+              },
+              "mode" : "metro",
+              "name" : "7"
+            },
+            "stationName" : "Châtelet"
+          },
+          {
+            "directions" : [
+              {
+                "label" : "Rosny-Bois-Perrier",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "6e491e",
+                "text" : "ffffff"
+              },
+              "mode" : "metro",
+              "name" : "11"
+            },
+            "stationName" : "Châtelet"
+          },
+          {
+            "directions" : [
+              {
+                "label" : "Saint-Denis - Pleyel",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Aéroport d'Orly",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "640082",
+                "text" : "ffffff"
+              },
+              "mode" : "metro",
+              "name" : "14"
+            },
+            "stationName" : "Châtelet"
+          }
+        ],
         "soonestTrain" : {
           "line" : {
             "color" : {

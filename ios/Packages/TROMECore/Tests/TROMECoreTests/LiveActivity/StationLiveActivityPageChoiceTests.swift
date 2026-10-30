@@ -10,6 +10,7 @@ struct StationLiveActivityPageChoiceTests {
     private let client = StubStationLiveActivityClient()
     private let storage = InMemoryKeyValueStore()
     private let lines = ["4", "5", "7"].map { TransitLine(mode: .metro, name: $0) }
+    private let ends = ["4": "Porte de Clignancourt", "5": "Bobigny - Pablo Picasso", "7": "La Courneuve - 8 Mai 1945"]
 
     private var gareDeLEst: Station {
         Station(id: "gare-de-l-est", name: "Gare de l'Est", coordinate: Coordinate(48.8762, 2.3580), lines: lines)
@@ -22,7 +23,7 @@ struct StationLiveActivityPageChoiceTests {
     /// The content of a push: the first page shown, and the first `carried` pages, with trains in `minutes`.
     private func push(inMinutes minutes: Double, carried: Int = 3) -> StationActivityAttributes.ContentState {
         let departures = lines.map {
-            Departure(line: $0, destination: "Terminus \($0.name)", time: clock.now.addingTimeInterval(minutes * 60))
+            Departure(line: $0, destination: ends[$0.name] ?? "", time: clock.now.addingTimeInterval(minutes * 60))
         }
         let board = DepartureBoard(departures: departures, stations: [gareDeLEst], now: clock.now)
         var content = StationActivityAttributes.ContentState(
@@ -67,16 +68,19 @@ struct StationLiveActivityPageChoiceTests {
         #expect(shownLine(drawn(client.updates.last)) == "5")
     }
 
-    @Test func theNextPushKeepsTheTappedPageWithItsOwnMinutes() async {
+    @Test func theNextPushKeepsTheTappedPageWithItsOwnMinutes() async throws {
         let model = startedByAPush(push(inMinutes: 4))
         await model.showNextLines()
+        let tappedTrain = try #require(firstTrain(client.updates.last?.trains.linesPage))
 
         clock.advance(by: 60)
-        let nextPush = push(inMinutes: 2)
+        let nextPush = push(inMinutes: 6)
 
         #expect(shownLine(nextPush.trains.linesPage) == "4")
         #expect(shownLine(drawn(nextPush)) == "5")
-        #expect(firstTrain(drawn(nextPush)) == clock.now.addingTimeInterval(120))
+        let pushedTrain = try #require(firstTrain(drawn(nextPush)))
+        #expect(pushedTrain == nextPush.trains.linesPage?.pages?[1].directions.first?.trains.first?.time)
+        #expect(pushedTrain != tappedTrain)
     }
 
     @Test func aPushThatNoLongerCarriesTheTappedPageShowsTheFirstPage() async {
@@ -111,6 +115,7 @@ struct StationLiveActivityPageChoiceTests {
 
         #expect(shownLine(drawn(client.updates.last)) == "7")
         #expect(firstTrain(drawn(client.updates.last)) == clock.now.addingTimeInterval(180))
+        #expect(client.updates.last?.trains.linesPage?.firstIndex == 2)
     }
 
     @Test func theChoiceHoldsOnlyForItsLiveActivityAndStation() async {
@@ -141,7 +146,7 @@ struct StationLiveActivityPageChoiceTests {
         await model.showNextLines()
         client.shownContent = push(inMinutes: 3)
         let departures = lines.map {
-            Departure(line: $0, destination: "Terminus \($0.name)", time: clock.now.addingTimeInterval(120))
+            Departure(line: $0, destination: ends[$0.name] ?? "", time: clock.now.addingTimeInterval(120))
         }
         let trains = NextTrainsState.departures(
             DepartureBoard(departures: departures, stations: [gareDeLEst], now: clock.now),

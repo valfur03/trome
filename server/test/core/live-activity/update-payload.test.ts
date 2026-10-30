@@ -46,8 +46,7 @@ function firstPageOnly(content: StationContent): StationContent {
   if (content.trains.kind !== "lines") {
     return content;
   }
-  const { pages: _pages, ...page } = content.trains.page;
-  return { ...content, trains: { kind: "lines", page } };
+  return { ...content, trains: { kind: "lines", page: { ...content.trains.page, pages: undefined } } };
 }
 
 function busiestUpdate(station: Station): { name: string; bytes: number; firstPageBytes: number; trains: number } {

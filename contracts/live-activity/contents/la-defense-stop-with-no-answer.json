@@ -65,6 +65,91 @@
           "name" : "1"
         },
         "nextTrainIsOverAnHourAway" : false,
+        "pages" : [
+          {
+            "directions" : [
+              {
+                "label" : "Château de Vincennes",
+                "nextTrainIsOverAnHourAway" : false,
+                "noAnswer" : true,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : false,
+            "line" : {
+              "color" : {
+                "background" : "ffbe00",
+                "text" : "000000"
+              },
+              "mode" : "metro",
+              "name" : "1"
+            }
+          },
+          {
+            "directions" : [
+              {
+                "label" : "Saint-Germain-en-Laye \/ Cergy le Haut \/ Poissy",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "arrivalTime" : 812544280,
+                    "destination" : "Poissy",
+                    "time" : 812544300
+                  }
+                ]
+              },
+              {
+                "label" : "Boissy-Saint-Léger \/ Marne-la-Vallée - Chessy",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+                  {
+                    "arrivalTime" : 812543680,
+                    "destination" : "Boissy-Saint-Léger",
+                    "time" : 812543700
+                  }
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "eb2132",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "A"
+            }
+          },
+          {
+            "directions" : [
+              {
+                "label" : "Nanterre-La-Folie",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              },
+              {
+                "label" : "Chelles - Gournay \/ Tournan",
+                "nextTrainIsOverAnHourAway" : false,
+                "trains" : [
+
+                ]
+              }
+            ],
+            "hasADirectionWithTwoEnds" : true,
+            "line" : {
+              "color" : {
+                "background" : "b94e9a",
+                "text" : "ffffff"
+              },
+              "mode" : "rer",
+              "name" : "E"
+            }
+          }
+        ],
         "soonestTrain" : {
           "line" : {
             "color" : {
