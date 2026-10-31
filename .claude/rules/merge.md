@@ -43,9 +43,9 @@ Why: a merge finishes a task, and the tasks that depend on it wait for it; on 20
 
 **Merges that wait together land as one train.** The `make merge` that gets the Simulator lock takes every task whose `make merge` waits, in the order they started.
 It rebases each task onto the one before it, then runs the gate and the full E2E suite once, on the last one, and fast-forwards `main` to it.
+Why: each landing held the Simulator about 5 minutes, 28% of its time on 2026-10-07; a train of 2 or 3 tasks costs about one landing.
 Before its rebase, each task runs `change-notes-check` on its own commits, and a task that fails it does not land.
 Why: the gate of a train sees the commits of all its tasks, so a task of the app with no note would pass on the note of another task.
-Why: each landing held the Simulator about 5 minutes, 28% of its time on 2026-10-07; a train of 2 or 3 tasks costs about one landing.
 When the train fails (the gate, the E2E suite, the fast-forward), `main` does not move, each branch goes back to where it was, and the tasks land one by one, in the same run, each with its own gate and E2E run, as below.
 So the task at fault goes back to its Software Engineer, and the others still land.
 When every task passes alone, the failure of the train was flaky: `make merge` says so, with the evidence folder, and the manager creates a bug task for it (see "Flaky tests" in `CLAUDE.md`).
