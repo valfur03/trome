@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""Checks the notes of the changes of the app, in ios/changes/: the lines that a version tells its riders and builders.
+
+Each change that a rider or a builder notices adds one note file in the same change (ios/changes/README.md says how), and
+the notes of a version are gathered from these files at release time.
+Why: the person who makes a change knows, at that moment, what a rider will notice and in which words. A list made at
+release time from the commit titles gives builder words, and one made from the closed issues gives lines that are false
+for the build that riders hold.
+
+  check [<base>]  Fail, with the file and the reason, on a note that breaks its format. Also fail when the commits since
+                  <base> (main by default) change the code of the app with no note and no commit message that says
+                  "no rider change". Only the commits are judged, as only they merge, and the marker is in a commit message.
+"""
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from typing import Dict, List, Optional, Tuple
+
+from repo_files import repo_files
+
+NOTES = "ios/changes/"
+README = NOTES + "README.md"
+LANGUAGES = {"fr": "French", "en": "English"}
+# Each kind with the languages that it needs. Builders read the repo in English, so a builder note has English only.
+KINDS: Dict[str, Tuple[str, ...]] = {"headline": ("fr", "en"), "item": ("fr", "en"), "apple": ("fr", "en"), "builder": ("en",)}
+# A headline fits in 2 lines on the card of an iPhone's width, so that the French one leaves room for an item before
+# the store cuts the text with "more" (about 3 lines).
+HEADLINE_LIMIT = 100
+FIELD = re.compile(r"^(kind|fr|en):(.*)$")
+NO_RIDER_CHANGE = "no rider change"
+# The code that goes into the app: the app, the widget and the packages that they share, except the unit tests.
+APP_CODE = re.compile(r"^ios/(?:App|Widget)/|^ios/Packages/(?![^/]+/Tests/)")
+
+USAGE = "Usage: change-notes-check.py check [<base branch, main by default>]"
+
+
+def note_problems(path: str, text: str) -> List[str]:
+    """The reasons why the note at path is refused, or an empty list."""
+    if not path.endswith(".txt"):
+        return ["a note is a .txt file (ios/changes/README.md shows one)"]
+    fields: Dict[str, str] = {}
+    problems: List[str] = []
+    last: Optional[str] = None
+    for line in text.split("\n"):
+        line = line.rstrip("\r")
+        if not line.strip():
+            continue
+        match = FIELD.match(line)
+        if match is None:
+            if last in LANGUAGES:
+                problem = f"the {LANGUAGES[last]} line goes on over more than one line: write one line per language"
+            else:
+                problem = f"a line that is not 'kind:', 'fr:' or 'en:': \"{line.strip()[:40]}\""
+            if problem not in problems:
+                problems.append(problem)
+            continue
+        key, value = match.group(1), match.group(2).strip()
+        if key in fields:
+            problems.append(f"two '{key}:' lines: write one line per language")
+        fields[key] = value
+        last = key
+    kind = fields.get("kind", "")
+    if not kind:
+        return problems + ["no kind: start with 'kind: headline', 'kind: item', 'kind: apple' or 'kind: builder'"]
+    if kind not in KINDS:
+        return problems + [f"unknown kind '{kind}': write headline, item, apple or builder"]
+    for language, name in LANGUAGES.items():
+        if language in KINDS[kind] and not fields.get(language):
+            problems.append(f"no {name} line: add '{language}: <one line in {name}>'")
+        if language not in KINDS[kind] and language in fields:
+            problems.append(f"a {kind} note is in English only: remove its '{language}:' line")
+    if kind == "headline":
+        for language, name in LANGUAGES.items():
+            length = len(fields.get(language, ""))
+            if length > HEADLINE_LIMIT:
+                problems.append(
+                    f"the {name} headline has {length} characters, more than {HEADLINE_LIMIT}: "
+                    "a headline fits in 2 lines on the card of an iPhone's width")
+    return problems
+
+
+def git(root, *arguments: str) -> str:
+    return subprocess.run(["git", "-C", str(root), *arguments], capture_output=True, text=True, check=True).stdout
+
+
+def merge_base(root, base: str) -> Optional[str]:
+    for ref in (base, f"origin/{base}"):
+        try:
+            return git(root, "merge-base", "HEAD", ref).strip()
+        except subprocess.CalledProcessError:
+            continue
+    return None
+
+
+def judge_change(root, base: str) -> Tuple[bool, str]:
+    """(passes, what the change is) for the commits since base."""
+    start = merge_base(root, base)
+    if start is None:
+        return True, f"no branch '{base}' or 'origin/{base}' to compare with, so the change is not judged"
+    changed = [path for path in git(root, "diff", "--name-only", "--no-renames", start, "HEAD").split("\n") if path]
+    app_code = [path for path in changed if APP_CODE.match(path)]
+    if not app_code:
+        return True, f"the commits since {base} change no code of the app"
+    if any(path.startswith(NOTES) and path != README for path in changed):
+        return True, f"the commits since {base} change the app and add or edit its note"
+    if NO_RIDER_CHANGE in git(root, "log", "--format=%B", f"{start}..HEAD").lower():
+        return True, f"the commits since {base} change the app and say \"{NO_RIDER_CHANGE}\""
+    shown = ", ".join(app_code[:3]) + (f" and {len(app_code) - 3} more" if len(app_code) > 3 else "")
+    return False, (
+        f"the commits since {base} change the code of the app ({shown}), with no note in {NOTES} "
+        f"and no commit that says \"{NO_RIDER_CHANGE}\".\n"
+        f"When a rider or a builder will notice the change, add its note ({README} says how).\n"
+        f"When nobody will, say so in a commit, for example: git commit --allow-empty -m \"chore: {NO_RIDER_CHANGE}\"\n"
+        "Why: the notes of each version are gathered from these files, so a change with neither could reach riders with no line.")
+
+
+def main(arguments: List[str]) -> None:
+    if not arguments or arguments[0] != "check" or len(arguments) > 2:
+        sys.exit(USAGE)
+    base = arguments[1] if len(arguments) == 2 else "main"
+    root, paths = repo_files("change-notes-check", [NOTES])
+    notes = [path for path in paths if path != README]
+    failures = []
+    for path in notes:
+        try:
+            text = (root / path).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            failures.append(f"{path}: could not read it as UTF-8 text: {error}")
+            continue
+        failures += [f"{path}: {problem}" for problem in note_problems(path, text)]
+    passes, change = judge_change(root, base)
+    if not passes:
+        failures.append(change)
+    for failure in failures:
+        print(f"change-notes-check: {failure}", file=sys.stderr)
+    if failures:
+        sys.exit("change-notes-check: FAILED")
+    print(f"change-notes-check: OK ({len(notes)} notes in {NOTES}; {change})")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

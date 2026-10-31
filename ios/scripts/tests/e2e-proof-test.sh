@@ -120,6 +120,8 @@ expect "the record of the owner, on the tree of the commit, counts among the oth
 
 tests_only=$(commit ios/Packages/TROMECore/Tests/RuleTests.swift test)
 expect "a change of the unit tests only is not app code" "$(read_proof "$tests_only")" "exit 0"
+notes_only=$(commit ios/changes/line-number.txt note)
+expect "a note of the changes only is not app code: no build and no test reads it" "$(read_proof "$notes_only")" "exit 0"
 
 touch "$FAKE_GH_STATE/fail"
 expect "when GitHub cannot be read, the proof is missing, with exit 2" "$(read_proof "$forged")" "exit 2"

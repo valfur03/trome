@@ -4,11 +4,12 @@
 # one list, so the release never accepts a commit that make merge would have tested.
 
 # App code is what the E2E suite exercises (.claude/rules/tests.md, "Which E2E tests to run").
+# The notes of the changes (ios/changes/) are text for the notes of a version: no build and no test reads them.
 is_app_code() {
     case "$1" in
         ios/Packages/TROMECore/Tests/*) return 1 ;;
         ios/App/* | ios/Widget/* | ios/UITests/* | ios/DocsScreenshots/* | ios/RenderCheck/* | ios/Packages/*) return 0 ;;
-        docs/* | server/* | contracts/* | video/* | .claude/* | .github/* | *.md | *.mdx | LICENSE) return 1 ;;
+        docs/* | server/* | contracts/* | video/* | ios/changes/* | .claude/* | .github/* | *.md | *.mdx | LICENSE) return 1 ;;
     esac
     return 0
 }

@@ -401,7 +401,7 @@ land() {
         fi
         rm -f "$evidence_note"
     else
-        step "3/4 full E2E suite: skipped, $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the server or the contracts, see .claude/rules/tests.md)"
+        step "3/4 full E2E suite: skipped, $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the notes of the changes, the server or the contracts, see .claude/rules/tests.md)"
     fi
     if [ -z "$stack_step" ]; then
         step "4/4 fast-forward $target to $(short "$tip")"

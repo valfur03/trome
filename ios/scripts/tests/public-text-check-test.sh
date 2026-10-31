@@ -213,6 +213,14 @@ file ios/App/Model.swift "// we keep our state here"
 expect "code, MDX imports, link addresses (href and src too), double and curly quotes, names and words that only contain the pronoun pass, and only Markdown and MDX are read for it" "$(check)" "passes"
 
 reset_repo
+file ios/changes/pause.txt "kind: item
+fr: Nous avons ajouté une pause (TASK-12).
+en: We added a pause."
+expect "a note of the changes, which riders read in the notes of a version, fails on a backlog id and on a team's voice" "$(check)" "fails"
+expect "it finds the backlog id and the voice of the note, in each language" \
+    "$(hit 'ios/changes/pause.txt:2: a backlog id: "TASK-12"') $(hit "ios/changes/pause.txt:2: $voice: \"Nous\"") $(hit "ios/changes/pause.txt:3: $voice: \"We\"")" "1 1 1"
+
+reset_repo
 file ios/scripts/public-text-check.py "INTERNAL_RULES = [\"prompter\", \"/Users/\"]"
 file ios/scripts/tests/public-text-check-test.sh "file docs/page.mdx \"TASK-140\""
 printf 'docs/draft.md\n' > "$repo/.gitignore"

@@ -46,6 +46,8 @@ VOICE_RULE = re.compile(
 # ‘Our Title’, « nous »). A straight single quote is also an apostrophe, so it does not mark a quotation. The value of
 # another attribute (alt="...") is the page's own text, so its quotes are taken off before the quotations; the double
 # quotes of the front matter are YAML syntax, not a quotation.
+# The notes of the changes are prose that riders read in the notes of a version, so they speak with the same voice.
+CHANGE_NOTES = "ios/changes/"
 INLINE_CODE = re.compile(r"(`+).+?\1")
 MDX_IMPORT = re.compile(r"^import\s.*\sfrom\s")
 ADDRESS = re.compile(r"\]\([^)]*\)|<?https?://[^\s>)]+>?|\b(?:href|src)=(?:\"[^\"]*\"|'[^']*'|\{[^}]*\})")
@@ -117,7 +119,7 @@ def hits(root, path):
                     continue
                 if not is_allowed(path, text):
                     yield number, reason, text
-    if path.endswith(MARKDOWN_SUFFIXES):
+    if path.endswith(MARKDOWN_SUFFIXES) or path.startswith(CHANGE_NOTES):
         yield from voice_hits(path, content)
 
 
