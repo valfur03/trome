@@ -147,7 +147,7 @@ help::
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make release-run-check   Start the app as the store ships it (as make run RELEASE=1 builds it) on the shared Simulator, and fail when it does not reach its first screen or shows a Testing tool (takes the Simulator lock; make merge runs it)"
-	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, make release-run-check, fast-forward, then push main with the record of both passes and its render counts. Merges that wait together share one run; when it fails, they land one by one"
+	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, make release-run-check, fast-forward, then push main with the record of both passes and its render counts. Merges that wait together share one run; when it fails, they land one by one; a branch with no app code runs no E2E and takes no Simulator lock"
 	@echo "make e2e-proof           Say whether a commit (COMMIT=, default HEAD) has, on GitHub, the record that make merge leaves after a full E2E pass and a run of the Release app on its tree, and its render counts; fail when either is missing (the release refuses it)"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"

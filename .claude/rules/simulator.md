@@ -100,7 +100,8 @@ So is `make release-run-check`, which starts the app as the store ships it (`mak
 
 `make merge` takes the lock before the rebase and frees it after the fast-forward and the push of the record of the E2E pass, success or failure (see `.claude/rules/merge.md`).
 Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots.
-A merge goes first: while a `make merge` waits (its entry in `/tmp/ratp-sim.lock.merge-queue`), a job that is not a merge waits too, even when it came first; the job that holds the lock keeps it to its end.
+A merge goes first: while a `make merge` of app code waits (its entry in `/tmp/ratp-sim.lock.merge-queue`), a job that is not a merge waits too, even when it came first; the job that holds the lock keeps it to its end.
+A merge with no app code (`app=0` in its entry) takes no Simulator lock, so no job waits for it.
 A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock.
 It does not free the lock when it ends: the outer job does.
 

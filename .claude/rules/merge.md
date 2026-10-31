@@ -37,9 +37,16 @@ When that Node is older than the one of `.nvmrc` and the branch changes `docs/`,
 Why: twice (2026-10-04 and 2026-10-07), a merge waited for the lock, then failed in the gate because the shell had the old default Node and the branch changed a docs page.
 Run it in the background: it can wait long for the Simulator lock.
 
-**A merge goes first.** While a `make merge` waits, a Simulator job that is not a merge (QA, a review, `make e2e`) does not take the lock: it prints `Waiting for the Simulator lock of slot 1: a merge goes first`, with the folder of that merge.
+**A merge goes first.** While a `make merge` of app code waits, a Simulator job that is not a merge (QA, a review, `make e2e`) does not take the lock: it prints `Waiting for the Simulator lock of slot 1: a merge goes first`, with the folder of that merge.
 The job that holds the lock keeps it to its end: a merge never cuts it off.
 Why: a merge finishes a task, and the tasks that depend on it wait for it; on 2026-10-07, a merge waited about 25 minutes behind a QA run and a review.
+
+**A merge with no app code takes no Simulator lock.** When the branch changes no app code (the rule of "Which E2E tests to run" in `.claude/rules/tests.md`), `make merge` lands it with no Simulator lock: it prints `no Simulator lock`, and no Simulator job waits for it.
+It still takes the merge lock, so two merges never rebase or land at once, and its gate builds still go through the build gate.
+`make merge` decides it before the task enters the queue, from the diff of the branch to the commit where it left `main`, never from the rebased train.
+When the rebased train still changes app code (a commit of the branch that `main` already has drops out in the rebase), it takes the lock then, as a merge of app code, and runs the E2E suite, the Release app run and the render check.
+A train with one task of app code takes the lock for the whole train, as below.
+Why: on 2026-10-31, 14 of 41 merges in 52 hours changed no app code, and their gates held the Simulator 184 minutes while QA, reviews and E2E runs waited (TASK-489).
 
 **Merges that wait together land as one train.** The `make merge` that gets the Simulator lock takes every task whose `make merge` waits, in the order they started.
 It rebases each task onto the one before it, then runs the gate and the full E2E suite once, on the last one, and fast-forwards `main` to it.
@@ -52,7 +59,7 @@ When every task passes alone, the failure of the train was flaky: `make merge` s
 A task that conflicts with a task before it in the train skips the train and lands alone when that task does not land.
 Each `make merge` prints the result of its own task; the one that ran the train also prints every step.
 
-For each task alone, or once for a train, it takes the Simulator lock, then does these steps.
+For each task alone, or once for a train, it takes the Simulator lock (none when no task changes app code, above), then does these steps.
 Each step runs only when the step before it passed:
 
 1. It rebases the branch of the worktree onto the tip of `main`.
