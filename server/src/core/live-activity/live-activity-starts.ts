@@ -55,7 +55,7 @@ const startExpiration = 2 * minute;
 export const startLimit = 6 * second;
 /**
  * How long a start waits for the trains of the station: the relay waits up to 10 s for PRIM, which would leave no time for Apple.
- * A stop that has not answered by then counts as failed, as when PRIM fails: the Live Activity starts with "Times unavailable" for it, and the update 30 s later brings its trains, which the relay keeps when they come.
+ * A stop that has not answered by then counts as failed, as when PRIM fails: the Live Activity starts with "Times unavailable" for it, and the first update comes 30 s later (`minimumDelay`), not up to 2 minutes later as after a content that the server read whole, with the trains that the relay keeps when they come.
  * Why not fall back: a Live Activity with late times serves the rider better than the arrival notification.
  */
 export const readLimit = 3 * second;
@@ -203,10 +203,13 @@ export class LiveActivityStarts {
     if (station === undefined) {
       return { result: "unknown-station" };
     }
-    const reading = await this.readWithin(station);
+    const { reading, lateStops } = await this.readWithin(station);
     const content = stationContent(station, reading.stations, reading.trains, catalog, clock.now());
     let refusal: { reason: string; environment: string } | undefined;
     for (const key of settings.keys) {
+      if (limit.aborted) {
+        break;
+      }
       // The channel goes on being made past the limit, for the next start of the station.
       const channelId = await beforeAbort(this.channel(key, stationId), limit, () => ({ reason: "no-answer" }));
       if (typeof channelId !== "string") {
@@ -216,7 +219,7 @@ export class LiveActivityStarts {
       const now = clock.now();
       const answer = await apns.start(key, token, startPayload(station, content, channelId, now, now + updateWindow), now + startExpiration, limit);
       if (answer.ok) {
-        this.updates.follow(station, reading, content, now + updateWindow);
+        this.updates.follow(station, reading, content, now + updateWindow, { lateStops });
         logger.info("live-activity-start", { result: "started", environment: key.environment });
         return { result: "started" };
       }
@@ -232,8 +235,8 @@ export class LiveActivityStarts {
     return { result: "refused", reason };
   }
 
-  /** The trains of the station, as the stops have answered within `readLimit`. */
-  private async readWithin(station: Station): Promise<StationReading> {
+  /** The trains of the station, as the stops have answered within `readLimit`, and the number of stops that had not. */
+  private async readWithin(station: Station): Promise<{ reading: StationReading; lateStops: number }> {
     const { catalog, departures, clock, logger } = this.dependencies;
     const limit = timeLimit(readLimit);
     let late = 0;
@@ -242,7 +245,8 @@ export class LiveActivityStarts {
         late += 1;
         return { kind: "out", reason: "prim-failure", retryAt: clock.now() };
       };
-      return await readStation(station, catalog, (stopRef) => beforeAbort(departures(stopRef), limit.signal, lateAnswer));
+      const reading = await readStation(station, catalog, (stopRef) => beforeAbort(departures(stopRef), limit.signal, lateAnswer));
+      return { reading, lateStops: late };
     } finally {
       limit.end();
       if (late > 0) {

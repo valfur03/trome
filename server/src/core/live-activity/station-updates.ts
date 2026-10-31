@@ -52,8 +52,11 @@ export class StationUpdates {
 
   constructor(private readonly dependencies: StationUpdatesDependencies) {}
 
-  /** A start at the station: its updates go on until `until`, and the first one comes as the app's would after this content. */
-  follow(station: Station, reading: StationReading, content: StationContent, until: number): void {
+  /**
+   * A start at the station: its updates go on until `until`, and the first one comes as the app's would after this content.
+   * When stops of the station were late for the start (`lateStops`), it comes at the shortest wait instead: their trains are what the rider waits for.
+   */
+  follow(station: Station, reading: StationReading, content: StationContent, until: number, { lateStops = 0 }: { lateStops?: number } = {}): void {
     const now = this.dependencies.clock.now();
     const held = this.followed.get(station.id);
     if (held !== undefined) {
@@ -65,7 +68,7 @@ export class StationUpdates {
     this.followed.set(station.id, {
       station,
       until,
-      nextAt: now + delay(staleDate(content), now),
+      nextAt: now + (lateStops > 0 ? minimumDelay : delay(staleDate(content), now)),
       sent: content,
       keptStaleDate: undefined,
       last: lastTrains(reading, []),

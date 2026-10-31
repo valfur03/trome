@@ -170,7 +170,7 @@ So the app, woken near a station, sends the station and that token, and the serv
   [`contracts/live-activity/`](../../contracts/live-activity/) holds cases of PRIM answers and the content that the app builds from each; a test of the app and a test of the server both check them, and the server reads the stations and the line data from the files of the app.
 - **An answer within 6 seconds.** The app waits 10 seconds for the answer, its wait for the start token included, then shows its own way to start; a Live Activity that came later would come on top of it.
   So the server answers within 6 seconds, which leaves the rest to the phone and to the wake of the server object.
-  It waits at most 3 seconds for the trains: a stop that has not answered by then counts as failed, as when PRIM fails, and the next update brings its trains.
+  It waits at most 3 seconds for the trains: a stop that has not answered by then counts as failed, as when PRIM fails, and the first update, 30 seconds later, brings its trains.
   When the 6 seconds are over, it answers `no-answer`, and drops a start to Apple that has not left yet.
 - **One start in 45 minutes.** iOS can give the app the same event twice, and each start is an alert on the iPhone: so the same token and station within 45 minutes, the longest outing, get `already-started`.
   The server knows it without keeping the token: it keeps only a keyed hash of the token and the station, in memory, with a key made at random in memory.

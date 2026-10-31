@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import { contentOfStation } from "../../../src/core/live-activity/content-of-station";
-import { LiveActivityStarts, startWindow } from "../../../src/core/live-activity/live-activity-starts";
+import { LiveActivityStarts, readLimit, startWindow } from "../../../src/core/live-activity/live-activity-starts";
+import { minimumDelay } from "../../../src/core/live-activity/station-updates";
 import { StationCatalog } from "../../../src/core/live-activity/station-catalog";
 import { encodeContent, staleDate } from "../../../src/core/live-activity/station-content";
 import { createLogger } from "../../../src/core/logging/logger";
@@ -322,6 +323,30 @@ describe("the start of a Live Activity", () => {
       headers: { "apns-channel-id": "channel-1" },
     });
     expect(await starts.start(abbesses, token)).toEqual({ result: "started" });
+  });
+
+  it("sends the first update 30 s after a start that PRIM was too slow for, so that the rider waits no longer for the times", async () => {
+    const { starts, relay, apple, logLines } = await startHarness();
+    relay.prim.answerWith(() => "wait");
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const started = starts.start(abbesses, token);
+      // The keyed hash of the start runs on a thread that fake timers do not wait for: the read starts once PRIM is asked.
+      while (relay.prim.waiting === 0) {
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+      await vi.advanceTimersByTimeAsync(readLimit);
+
+      expect(await started).toEqual({ result: "started" });
+      expect(apple.starts).toHaveLength(1);
+      expect(starts.nextWake()).toBe(relay.clock.now() + minimumDelay);
+      expect(logLines.filter((line) => line.includes("live-activity-start-read"))).toEqual([
+        expect.stringContaining('"result":"late"') as string,
+      ]);
+    } finally {
+      relay.prim.release();
+      vi.useRealTimers();
+    }
   });
 
   it.each(["chatelet-les-halles-hub", "magenta-hub", "liege-branches"])("fits the start of %s in the size that Apple allows", async (contractCase) => {
