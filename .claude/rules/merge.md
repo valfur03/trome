@@ -77,7 +77,7 @@ It lands only the commit that it started with: a task whose branch gets a new co
 The E2E suite runs the Debug app, and `make check` only compiles the Release app, so a fault of the Release app alone (a start that fails with no key, a Testing tool left outside `#if DEBUG`) passes them.
 So `make release-run-check` builds the Release app as `make run RELEASE=1` does (no PRIM key, a server that never answers), installs it on the shared Simulator, under the lock, and starts it with one UI test (`ios/ReleaseRun/`).
 It fails when the app does not start, does not reach its first screen, or shows a Testing tool.
-It adds about 40 s of the Simulator to a merge that changes app code (measured in TASK-451); a merge with no app code skips it, with the E2E suite.
+It adds about 70 s to the time that a merge of app code holds the lock: about 30 s to build the Release app, then about 40 s on the Simulator (measured in TASK-451); a merge with no app code skips it, with the E2E suite.
 When it fails, the task goes back to its Software Engineer, with the result bundle that `make merge` names (it holds the crash report when the app crashed).
 
 **Unfinished work stays out of the Release app** (decision-114 point 3).

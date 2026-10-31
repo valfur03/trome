@@ -69,7 +69,7 @@ A task that makes the app read a file of `contracts/` at run time, or makes the 
   A reviewer who changes app code runs only the E2E test classes of the flows that its change touches.
 - **The manager** runs `make merge` after QA passed the task (see `.claude/rules/merge.md`).
   It runs the full `make e2e` once, after the rebase onto `main`, on the commit that it fast-forwards `main` to.
-  Then it starts the app as the store ships it (`make release-run-check`, about 40 s of the Simulator), on the same commit.
+  Then it starts the app as the store ships it (`make release-run-check`, about 70 s of the lock), on the same commit.
   A task that changes only docs (Markdown and MDX files, `LICENSE`, `.claude/`), unit tests, the notes of `ios/changes/`, `server/`, `contracts/`, `video/` or `.github/` (no app code) skips both: `main` was green, and the task adds no app code.
   `make merge` sees this by itself.
 - **QA** runs no automated tests.
