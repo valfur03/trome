@@ -115,7 +115,7 @@ extension AutoLiveActivityModelTests {
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { provider.callCount > callCount }
-        try? await Task.sleep(for: .milliseconds(50))
+        await expectNever { client.shownContent?.trains == .noData || client.shownContent?.shownTrains.isEmpty ?? true }
 
         #expect(provider.callCount > callCount)
         #expect(client.shownContent?.trains != .noData)
