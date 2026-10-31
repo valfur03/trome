@@ -28,6 +28,14 @@ struct ScreenshotSteps {
         XCTAssertTrue(shownStation(in: app).waitForNonExistence(timeout: timeout), "A Live Activity still shows")
     }
 
+    /// The fake trains count from the launch, so a picture taken minutes into the run would show shorter waits, or
+    /// the next train. A new launch before each picture gives it the waits of a fresh launch, as on the pages.
+    func launchAgain(_ app: XCUIApplication) {
+        app.terminate()
+        app.launch()
+        turnOnTheAutomaticMode(in: app)
+    }
+
     func shownStation(in app: XCUIApplication) -> XCUIElement {
         app.staticTexts["liveActivityStationName"]
     }

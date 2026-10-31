@@ -71,7 +71,10 @@ final class StoreScreenshotTests: XCTestCase {
         XCTAssertTrue(app.buttons["seeAnExample"].isEnabled, "The row See an example is not enabled")
         XCTAssertFalse(app.buttons["testingTools"].exists, "The link to the Testing tools shows")
 
-        for stop in Self.stops {
+        for (index, stop) in Self.stops.enumerated() {
+            if index > 0 {
+                steps.launchAgain(app)
+            }
             steps.showTheLiveActivity(of: stop.station, at: stop.position, in: app)
             XCUIDevice.shared.press(.home)
             steps.openNotificationCenter()

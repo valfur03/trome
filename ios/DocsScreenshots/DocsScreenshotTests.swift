@@ -97,7 +97,10 @@ final class DocsScreenshotTests: XCTestCase {
         app.launch()
         steps.turnOnTheAutomaticMode(in: app)
 
-        for screenshot in Self.liveActivityScreenshots {
+        for (index, screenshot) in Self.liveActivityScreenshots.enumerated() {
+            if index > 0 {
+                steps.launchAgain(app)
+            }
             steps.showTheLiveActivity(of: screenshot.station, at: screenshot.position, in: app)
             XCUIDevice.shared.press(.home)
             steps.openNotificationCenter()
