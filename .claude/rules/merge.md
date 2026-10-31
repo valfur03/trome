@@ -49,6 +49,7 @@ A train with one task of app code takes the lock for the whole train, as below.
 Why: on 2026-10-31, 14 of 41 merges in 52 hours changed no app code, and their gates held the Simulator 184 minutes while QA, reviews and E2E runs waited (TASK-489).
 
 **Merges that wait together land as one train.** The `make merge` that gets the Simulator lock takes every task whose `make merge` waits, in the order they started.
+When no task that waits changes app code, the `make merge` that gets the merge lock drives the train with no Simulator lock, and takes only the tasks with no app code: a task of app code drives the next train.
 It rebases each task onto the one before it, then runs the gate and the full E2E suite once, on the last one, and fast-forwards `main` to it.
 Why: each landing held the Simulator about 5 minutes, 28% of its time on 2026-10-07; a train of 2 or 3 tasks costs about one landing.
 Before its rebase, each task runs `change-notes-check` on its own commits, and a task that fails it does not land.

@@ -98,7 +98,7 @@ A job reset keeps the wallpaper; a new or erased Simulator does not, so run `mak
 So is `make live-activity-render` (the render check of the Live Activity views, see `.claude/rules/render-check.md`).
 So is `make release-run-check`, which starts the app as the store ships it (`make merge` runs it after the E2E suite).
 
-`make merge` takes the lock before the rebase and frees it after the fast-forward and the push of the record of the E2E pass, success or failure (see `.claude/rules/merge.md`).
+A `make merge` of app code takes the lock before the rebase and frees it after the fast-forward and the push of the record of the E2E pass, success or failure (see `.claude/rules/merge.md`).
 Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots.
 A merge goes first: while a `make merge` of app code waits (its entry in `/tmp/ratp-sim.lock.merge-queue`), a job that is not a merge waits too, even when it came first; the job that holds the lock keeps it to its end.
 A merge with no app code (`app=0` in its entry) takes no Simulator lock, so no job waits for it.
