@@ -20,10 +20,10 @@ struct FakeDeparturesProviderTests {
 
     func departures(at stations: [Station]) async throws -> [Departure] {
         let now = now
-        return try await FakeDeparturesProvider(now: { now }).departures(at: stations)
+        return try await FakeDeparturesProvider(start: now, now: { now }).departures(at: stations)
     }
 
-    @Test func givesTrainsTowardBothEndsWithTimesFromNow() async throws {
+    @Test func givesTrainsTowardBothEndsWithTimesFromTheLaunch() async throws {
         let result = try await departures(at: [station("Abbesses", [line12])])
 
         #expect(result == [

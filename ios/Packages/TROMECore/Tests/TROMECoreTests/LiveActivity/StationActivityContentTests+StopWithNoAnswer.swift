@@ -15,7 +15,7 @@ extension StationActivityContentTests {
         let station = try #require(catalog.stations.first { $0.name == "Saint-Lazare" })
         let hub = catalog.hubStations(of: station)
         let departures = hub.flatMap { station in
-            station.lines.flatMap { FakeDeparturesProvider.departures(of: $0, at: station, from: now) }
+            station.lines.flatMap { FakeDeparturesProvider.departures(of: $0, at: station, from: now, now: now) }
         }
         let board = DepartureBoard(
             departures: departures.filter { keptLine($0.line.name) },

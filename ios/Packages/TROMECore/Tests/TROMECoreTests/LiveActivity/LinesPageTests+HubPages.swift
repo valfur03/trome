@@ -8,7 +8,7 @@ extension LinesPageTests {
         let station = try #require(catalog.stations.first { $0.name == name })
         let hub = catalog.hubStations(of: station)
         let departures = hub.flatMap { station in
-            station.lines.flatMap { FakeDeparturesProvider.departures(of: $0, at: station, from: now) }
+            station.lines.flatMap { FakeDeparturesProvider.departures(of: $0, at: station, from: now, now: now) }
         }
         let board = DepartureBoard(departures: departures, stations: hub, now: now)
         var pages: [LinesPage] = []

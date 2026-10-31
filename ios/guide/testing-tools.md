@@ -45,7 +45,7 @@ make fake-trains
 ```
 
 It prints `fake trains: default applied` once the app uses them, or `not applied, launch again`: then run it again.
-The first train comes 3 minutes after the launch, the other direction one minute later, then one train every 4 minutes.
+The first train comes 3 minutes after the launch, the other direction one minute later, then one train every 4 minutes, with the app open or in the background.
 
 The app saves the choice at each launch that has arguments: on with `--fake-trains`, off without it.
 A launch with no argument keeps it: a launch by iOS (a tap on the Live Activity, a region event, a start again in the background), the **Run** button of Xcode with the default scheme, and `make switch-language`.

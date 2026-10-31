@@ -35,12 +35,11 @@ extension LiveActivityRenderCheck {
     /// Drawn with the states of a server that is out, since a stop that did not answer is often a stop that is out.
     func drawTheNoAnswerStates(
         of catalog: StationCatalog,
-        fake: FakeDeparturesProvider,
         into outDir: URL
     ) async throws -> [String] {
         let now = Date()
         let station = try XCTUnwrap(catalog.stations.first { $0.name == Self.noAnswerStation })
-        let hubDepartures = try await fake.departures(at: catalog.hubStations(of: station))
+        let hubDepartures = try await fakeTrains(at: catalog.hubStations(of: station))
         let samples = Self.noAnswerStates(at: catalog, hubDepartures: hubDepartures, now: now)
         XCTAssertEqual(samples.count, 3, "States with a stop that did not answer that the render check could not build")
         var rows: [String] = []

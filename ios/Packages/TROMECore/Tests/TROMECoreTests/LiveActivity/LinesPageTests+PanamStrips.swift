@@ -14,7 +14,7 @@ extension LinesPageTests {
     func pageWithFakeTrains(at name: String) throws -> LinesPage {
         try page(at: name) { _, hub in
             let departures = hub.flatMap { station in
-                station.lines.flatMap { FakeDeparturesProvider.departures(of: $0, at: station, from: now) }
+                station.lines.flatMap { FakeDeparturesProvider.departures(of: $0, at: station, from: now, now: now) }
             }
             return .departures(DepartureBoard(departures: departures, stations: hub, now: now), updatedAt: now)
         }

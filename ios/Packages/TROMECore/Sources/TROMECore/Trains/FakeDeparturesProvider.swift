@@ -35,16 +35,23 @@ public struct FakeDeparturesProvider: DeparturesProvider {
         }
         return stations.flatMap { station in
             station.lines.flatMap { line in
-                guard let scenario else { return Self.departures(of: line, at: station, from: now) }
+                guard let scenario else { return Self.departures(of: line, at: station, from: start, now: now) }
                 return Self.departures(of: line, at: station, in: scenario, from: start, now: now)
             }
         }
     }
 
-    static func departures(of line: TransitLine, at station: Station, from start: Date) -> [Departure] {
-        line.departureSides(at: station).flatMap { sideIndex, destinations in
-            (0..<trainsPerSide).map { index in
-                let minutes = firstTrainMinutes + sideIndex + index * minutesBetweenTrains
+    /// The default fake trains. Train `k` of the side `s` leaves `firstTrainMinutes + s + k * minutesBetweenTrains`
+    /// minutes after `start`, the launch: each fetch gives the next trains of that same timetable, so a train that the
+    /// app counts down leaves at its time, and the next one takes its place.
+    static func departures(of line: TransitLine, at station: Station, from start: Date, now: Date) -> [Departure] {
+        let minutesSinceStart = now.timeIntervalSince(start) / 60
+        return line.departureSides(at: station).flatMap { sideIndex, destinations in
+            let firstMinutes = firstTrainMinutes + sideIndex
+            let left = (minutesSinceStart - Double(firstMinutes)) / Double(minutesBetweenTrains)
+            let next = max(0, Int(left.rounded(.down)) + 1)
+            return (next..<next + trainsPerSide).map { index in
+                let minutes = firstMinutes + index * minutesBetweenTrains
                 return Departure(
                     line: line,
                     destination: destinations[index % destinations.count],

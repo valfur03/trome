@@ -55,7 +55,6 @@ final class LiveActivityRenderCheck: XCTestCase {
         let started = Date()
         let language = try checkLanguage()
         let catalog = try StationCatalog.bundled()
-        let fake = try XCTUnwrap(FakeDeparturesProvider.ifAsked(by: ["--fake-trains"]))
         let outDir = try outputDirectory()
         let missing = Self.imageStations.filter { name in !catalog.stations.contains { $0.name == name } }
         XCTAssertEqual(missing, [], "Stations of the image set that the station list no longer has")
@@ -63,7 +62,7 @@ final class LiveActivityRenderCheck: XCTestCase {
         for station in catalog.stations {
             let hub = catalog.hubStations(of: station)
             let now = Date()
-            let board = DepartureBoard(departures: try await fake.departures(at: hub), stations: hub, now: now)
+            let board = DepartureBoard(departures: try await fakeTrains(at: hub), stations: hub, now: now)
             var index = 0
             var page = 0
             repeat {
@@ -91,7 +90,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             rows += try drawEveryVariant(of: state, at: forkStation, page: pageNumber, into: outDir)
         }
         rows += try drawTheGoneTrainStates(at: stripStation, into: outDir) + drawTheRERStates(of: catalog, into: outDir)
-        rows += try await drawTheServerOutStates(of: catalog, fake: fake, into: outDir)
+        rows += try await drawTheServerOutStates(of: catalog, into: outDir)
         rows += try drawTheNoTimesStates(of: catalog, into: outDir)
         try rows.joined(separator: "\n").write(
             to: outDir.appendingPathComponent("heights.csv"), atomically: true, encoding: .utf8
@@ -152,14 +151,20 @@ final class LiveActivityRenderCheck: XCTestCase {
         return rows
     }
 
+    /// The fake trains of a new launch at each fetch: each page shows the times of a fresh launch (3 and 4 minutes),
+    /// however long the check has run, so that two runs draw the same texts.
+    func fakeTrains(at stations: [Station]) async throws -> [Departure] {
+        let fake = try XCTUnwrap(FakeDeparturesProvider.ifAsked(by: ["--fake-trains"]))
+        return try await fake.departures(at: stations)
+    }
+
     private func drawTheServerOutStates(
         of catalog: StationCatalog,
-        fake: FakeDeparturesProvider,
         into outDir: URL
     ) async throws -> [String] {
         let now = Date()
         let hubStation = try XCTUnwrap(catalog.stations.first { $0.name == Self.serverOutHubStation })
-        let hubDepartures = try await fake.departures(at: catalog.hubStations(of: hubStation))
+        let hubDepartures = try await fakeTrains(at: catalog.hubStations(of: hubStation))
         let samples = Self.serverOutStates(at: catalog, hubDepartures: hubDepartures, now: now)
         XCTAssertEqual(samples.count, 4, "Server out states that the render check could not build")
         var rows: [String] = []
@@ -171,7 +176,7 @@ final class LiveActivityRenderCheck: XCTestCase {
             let pageNumber = Self.firstUpdateTheAppStatesPage + page
             rows += try drawEveryVariant(of: sample.state, at: sample.station, page: pageNumber, into: outDir)
         }
-        return rows + (try await drawTheNoAnswerStates(of: catalog, fake: fake, into: outDir))
+        return rows + (try await drawTheNoAnswerStates(of: catalog, into: outDir))
     }
 
     func drawEveryVariant(
