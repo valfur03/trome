@@ -8,6 +8,7 @@ struct PanamStripsHeader: View {
     let line: LineTrains
     let stationName: String
     let cellWidth: CGFloat
+    let isStale: Bool
 
     @ScaledMetric(relativeTo: .headline) private var nameSize: CGFloat = 17
 
@@ -77,17 +78,24 @@ struct PanamStripsHeader: View {
             if page.hasOtherLines {
                 OtherLinesControl(count: page.otherLineCount)
             } else if showsColumnTitles, line.line.mode == .metro {
-                HStack(spacing: PanamStrip.ruleWidth) {
-                    Text("1st")
-                        .frame(width: cellWidth)
-                    Text("2nd")
-                        .frame(width: cellWidth)
-                }
-                .font(.caption2)
-                .lineLimit(1)
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
+                columnTitles
             }
         }
+    }
+
+    /// Hidden, not removed, when the times are old: the boxes are empty then, so the words label nothing,
+    /// but their room stays, so the name and the boxes do not move when the times come back.
+    private var columnTitles: some View {
+        HStack(spacing: PanamStrip.ruleWidth) {
+            Text("1st")
+                .frame(width: cellWidth)
+            Text("2nd")
+                .frame(width: cellWidth)
+        }
+        .font(.caption2)
+        .lineLimit(1)
+        .foregroundStyle(.secondary)
+        .opacity(isStale ? 0 : 1)
+        .accessibilityHidden(true)
     }
 }

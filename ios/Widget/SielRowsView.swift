@@ -11,7 +11,9 @@ struct SielRowsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            PanamStripsHeader(page: page, line: line, stationName: state.stationName, cellWidth: cellWidth)
+            PanamStripsHeader(
+                page: page, line: line, stationName: state.stationName, cellWidth: cellWidth, isStale: isStale
+            )
             VStack(alignment: .leading, spacing: 3) {
                 if line.directions.isEmpty {
                     NoTrainsText()
