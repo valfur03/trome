@@ -450,3 +450,4 @@ For example: "A builder who has never used Terminal stops at step 7: it does not
 14. **No sideways scroll.** At the width of its reader (1280 pixels for a maintainer on a laptop, 390 for a rider on a phone), `document.documentElement.scrollWidth` equals `clientWidth`: measure the page, not only its code blocks.
     A table or a long inline code can push the whole page sideways while every block wraps, and a text to paste is then cut at the right.
 15. **The checks pass.** `make check` checks the length of the lines, the public text, the internal links of the site, the two languages of each riders' page and the draft notices, and `make docs-screenshots` checks the pictures.
+    A change to a page with a date line, such as the privacy page, sets that date to the day of the change in each language, and `make check` fails when it does not.

@@ -105,7 +105,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check change-notes-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge e2e-proof
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check page-date-check change-notes-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge e2e-proof
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -120,12 +120,13 @@ help:
 	@echo "make run RELEASE=1       Same, with the app as the store ships it: Release configuration, no Testing tools, no PRIM key, and a server that never answers, so no real trains (also for make build and make switch-language)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
 	@echo "make fake-trains STATE=at-platform  After make run: open the app again with fake trains in this state (no STATE: the default times), and say whether the app uses them"
-	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + change notes check + phone set check + bundle ID check + app icon check + recommended settings check + key leak check (with the upload checks of the Release app) + build (no warning allowed) + strings check + unit tests + script tests"
+	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + page date check + change notes check + phone set check + bundle ID check + app icon check + recommended settings check + key leak check (with the upload checks of the Release app) + build (no warning allowed) + strings check + unit tests + script tests"
 	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, when a text of the app or the Live Activity has no French text, or when a French permission text does not say APP_NAME"
 	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code), and put APP_NAME of Config/Base.xcconfig in the permission texts"
 	@echo "make prose-check         Fail when a line of prose of a Markdown or MDX file of the repo is longer than 400 characters (write one sentence per line)"
 	@echo "make public-text-check   Fail when a file of the repo has a backlog id, a word of the team's own process, a personal email address, a local path, the old name of the app, or \"we\" in the prose"
 	@echo "make change-notes-check  Fail when a note of ios/changes/ breaks its format, or when the commits since main change the code of the app with no note and no commit title that ends with \"(no rider change)\" (part of make check)"
+	@echo "make page-date-check     Fail when a docs page with a date line says a day older than the last change of its text, or not the same day as the page in the other language"
 	@echo "make test                Unit tests only (on the Mac, no Simulator)"
 	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
 	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key, that a new key replaces the old one, that a Release build holds the app token of the server but never the PRIM key, that a Release build with no server host or no app token fails, and that the Release app passes the upload checks of App Store Connect: an icon of 1024 x 1024 pixels with no transparent pixel, a privacy manifest with a reason for each required reason API that its code uses, the answer on encryption, a version such as 1.0.0, no placeholder address (uses fake values)"
@@ -228,6 +229,9 @@ phone-set-check:
 change-notes-check:
 	@./scripts/change-notes-check.py check
 
+page-date-check:
+	@./scripts/page-date-check.py
+
 test:
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/unit-tests.log 'Test run with|Executed [1-9]' swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
 
@@ -243,7 +247,7 @@ test-scripts:
 	done; \
 	echo "test-scripts: OK ($$count script tests)"
 
-check: lint prose-check public-text-check change-notes-check phone-set-check bundle-id-check release-signing-check app-icon-check recommended-settings-check live-key-check build strings-check test test-scripts
+check: lint prose-check public-text-check page-date-check change-notes-check phone-set-check bundle-id-check release-signing-check app-icon-check recommended-settings-check live-key-check build strings-check test test-scripts
 
 bundle-id-check: project
 	@./scripts/bundle-id-check.sh $(PROJECT)
