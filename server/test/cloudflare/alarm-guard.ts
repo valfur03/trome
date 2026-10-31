@@ -8,16 +8,17 @@ import { RelayObject } from "../../src/cloudflare/relay-object";
 // This file fails the test in which workerd ran one on its own, with the error that it threw.
 
 const ranOnTheirOwn: string[] = [];
+// eslint-disable-next-line @typescript-eslint/unbound-method -- called below with the object as `this`
 const alarm = RelayObject.prototype.alarm;
 
-RelayObject.prototype.alarm = async function (this: RelayObject, ...details: Parameters<typeof alarm>): Promise<void> {
+RelayObject.prototype.alarm = async function (this: RelayObject, ...details: unknown[]): Promise<void> {
   // workerd gives the details of the alarm; runDurableObjectAlarm gives none.
   if (details[0] === undefined) {
-    return alarm.apply(this, details);
+    return alarm.call(this);
   }
   ranOnTheirOwn.push("an alarm of the server object ran on its own");
   try {
-    await alarm.apply(this, details);
+    await alarm.call(this);
   } catch (error) {
     ranOnTheirOwn.push(`it threw: ${String(error)}`);
     throw error;
