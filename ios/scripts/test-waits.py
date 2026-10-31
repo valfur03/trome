@@ -37,6 +37,7 @@ TYPE = re.compile(
 )
 TEST = re.compile(r"@Test\b")
 FUNC = re.compile(r"\bfunc\s+(\w+)")
+RAN = re.compile(r"Test run with (\d+) tests? ")
 
 
 def git(root: Path, *arguments: str) -> str:
@@ -105,7 +106,8 @@ def run(root: Path, base: str) -> int:
     command = ["swift", "test", "--package-path", PACKAGE, "--scratch-path", SCRATCH, "-Xswiftc", "-warnings-as-errors"]
     if chosen != "all":
         command += ["--filter", chosen]
-    what = "every unit test" if chosen == "all" else f"{chosen.count('|') + 1} tests of the changed test files"
+    expected = 0 if chosen == "all" else chosen.count("|") + 1
+    what = "every unit test" if chosen == "all" else f"{expected} tests of the changed test files"
     LOGS.mkdir(parents=True, exist_ok=True)
     for pace in PACES:
         for number in range(1, repeats + 1):
@@ -121,6 +123,13 @@ def run(root: Path, base: str) -> int:
                     "test, it waits for one thing and checks another, so it passes only on a quiet Mac: wait for the "
                     f"state that the check reads (ios/guide/tests.md). Whole output: ios/{log}; replay it with "
                     f"TROME_TEST_WAITS={pace} swift test --filter <test>."
+                )
+                return 1
+            ran = sum(int(count) for count in RAN.findall(log.read_text(encoding="utf-8", errors="replace")))
+            if ran < expected:
+                print(
+                    f"test-waits: FAILED, the filter ran {ran} of the {expected} tests of the changed test files: "
+                    f"test-waits.py did not read the name of a test or of its type. Whole output: ios/{log}."
                 )
                 return 1
     print(f"test-waits: OK, {what}, {repeats} runs in each pace ({', '.join(PACES)})")
