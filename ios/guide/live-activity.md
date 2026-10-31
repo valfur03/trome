@@ -116,7 +116,7 @@ The page decides which look draws it, in `LinesPage.panamStripsLine` and `LinesP
   The two words share one size, the largest at which the longer one fits the box.
 - At a station with one line, the header of a strip page says "1st" and "2nd" ("1er", "2e") above the two columns.
   A page with "+N >" has no such words.
-  When the times are old ([the stale rule](#the-stale-rule)), the words are hidden but keep their room: the boxes are empty, so the words would label nothing, and the page keeps its height and layout.
+  When the boxes are empty because the times are old ([the stale rule](#the-stale-rule)), or under "Times unavailable" or "Update the app" ([when it cannot show times](#when-it-cannot-show-times)), the words are hidden but keep their room: they would label nothing, and the header keeps its height and the boxes their place.
 - The end-of-line name shrinks to 70%, then is cut.
   The station name in the header loses the "1st" and "2nd" first, then shrinks to 60%, then goes onto a second line only on a page with one strip or none, then is cut.
   A second line would push a page of two strips over 160 points.
