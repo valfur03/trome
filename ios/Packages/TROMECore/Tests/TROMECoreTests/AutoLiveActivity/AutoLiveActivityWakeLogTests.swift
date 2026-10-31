@@ -97,10 +97,18 @@ extension AutoLiveActivityModelTests {
         await waitUntil { client.updates.contains { $0.trains.linesPage != nil } }
         #expect(!wakeLog.entries.contains { $0.kind == .trains })
 
+        // The answer changes after the first call in the background, not when the test sees it: the next timer may
+        // fire before the test goes on.
+        let firstBackgroundCall = provider.callCount + 1
+        provider.answer(for: station) { [provider] in
+            guard provider.callCount > firstBackgroundCall else {
+                return .success([Departure(line: line12, destination: "Mairie d'Issy", time: train)])
+            }
+            return .failure(.unreachable)
+        }
         model.setAppPhase(.background)
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { wakeLog.entries.contains { $0.kind == .trains } }
-        provider.answer(.failure(.unreachable), for: station)
         clock.letTimersFire(upTo: 2 * BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { wakeLog.entries.filter { $0.kind == .trains }.count == 2 }
 

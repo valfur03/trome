@@ -196,9 +196,7 @@ struct NextTrainsModelTests {
         let model = makeModel(sleep: { _ in try await Task.sleep(for: .seconds(3_600)) })
 
         let updates = Task { await model.keepUpdated(for: abbesses) }
-        for _ in 0..<1_000 where provider.callCount == 0 {
-            try? await Task.sleep(for: .milliseconds(1))
-        }
+        await waitUntil { provider.callCount > 0 }
         #expect(model.updatingStationId == "abbesses")
         updates.cancel()
         await updates.value

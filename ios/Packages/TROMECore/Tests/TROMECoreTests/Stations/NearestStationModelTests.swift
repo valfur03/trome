@@ -57,10 +57,12 @@ struct NearestStationModelTests {
         .found(NearbyStation(station: nation, distanceMeters: position.distance(to: nation.coordinate)))
     }
 
-    private func waitForState(_ expected: NearestStationState, in model: NearestStationModel) async {
-        for _ in 0..<1_000 where model.state != expected {
-            try? await Task.sleep(for: .milliseconds(1))
-        }
+    private func waitForState(
+        _ expected: NearestStationState,
+        in model: NearestStationModel,
+        sourceLocation: SourceLocation = #_sourceLocation
+    ) async {
+        await waitUntil(sourceLocation: sourceLocation) { model.state == expected }
     }
 
     @Test func asksForPermissionTheFirstTimeThenFindsTheStation() async {

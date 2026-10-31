@@ -150,9 +150,7 @@ struct StationLiveActivityModelTests {
         client.holdsNextUpdate = true
 
         let first = Task { await model.update(station: abbesses, trains: .noLiveData) }
-        for _ in 0..<1_000 where !client.isHoldingAnUpdate {
-            await Task.yield()
-        }
+        await waitUntil { client.isHoldingAnUpdate }
         let second = Task { await model.update(station: pigalle, trains: .noLiveData) }
         for _ in 0..<100 {
             await Task.yield()

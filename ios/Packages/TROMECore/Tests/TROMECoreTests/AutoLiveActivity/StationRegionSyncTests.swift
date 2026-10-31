@@ -81,9 +81,7 @@ struct StationRegionSyncTests {
 
         monitor.holdNextAdd()
         let firstWatch = Task { await sync.watch(first) }
-        while !monitor.isHoldingAnAdd {
-            await Task.yield()
-        }
+        await waitUntil { monitor.isHoldingAnAdd }
         let lastWatch = Task { await sync.watch(last) }
         await Self.letOthersRun()
         monitor.release()
@@ -101,9 +99,7 @@ struct StationRegionSyncTests {
 
         monitor.holdNextAdd()
         var watches = [Task { await sync.watch(plans[0]) }]
-        while !monitor.isHoldingAnAdd {
-            await Task.yield()
-        }
+        await waitUntil { monitor.isHoldingAnAdd }
         for plan in plans.dropFirst() {
             watches.append(Task { await sync.watch(plan) })
             await Self.letOthersRun()

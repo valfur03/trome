@@ -16,12 +16,6 @@ struct AutomaticModeModelTests {
         )
     }
 
-    private func waitUntil(_ condition: () -> Bool) async {
-        for _ in 0..<1_000 where !condition() {
-            try? await Task.sleep(for: .milliseconds(1))
-        }
-    }
-
     @Test func isOnAtFirstLaunch() {
         let model = makeModel()
 

@@ -15,9 +15,7 @@ struct StationLiveActivityEndTests {
     private func holdTheEnd(of model: StationLiveActivityModel) async -> Task<Void, Never> {
         client.holdsNextEnd = true
         let stop = Task { await model.stop() }
-        for _ in 0..<1_000 where !client.isHoldingAnEnd {
-            await Task.yield()
-        }
+        await waitUntil { client.isHoldingAnEnd }
         return stop
     }
 

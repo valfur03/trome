@@ -81,16 +81,20 @@ struct LocationServiceTests {
         )
     }
 
-    private func waitForProblem(_ expected: LocationProblem?, in service: LocationService) async {
-        for _ in 0..<1_000 where service.problem != expected {
-            await Task.yield()
-        }
+    private func waitForProblem(
+        _ expected: LocationProblem?,
+        in service: LocationService,
+        sourceLocation: SourceLocation = #_sourceLocation
+    ) async {
+        await waitUntil(sourceLocation: sourceLocation) { service.problem == expected }
     }
 
-    private func waitForPosition(_ expected: Coordinate?, in service: LocationService) async {
-        for _ in 0..<1_000 where service.position != expected {
-            await Task.yield()
-        }
+    private func waitForPosition(
+        _ expected: Coordinate?,
+        in service: LocationService,
+        sourceLocation: SourceLocation = #_sourceLocation
+    ) async {
+        await waitUntil(sourceLocation: sourceLocation) { service.position == expected }
     }
 
     @Test func reportsTheRealGPSPositionByDefault() async {
@@ -228,9 +232,7 @@ struct LocationServiceTests {
         #expect(gps.isReporting)
 
         service = nil
-        for _ in 0..<1_000 where gps.isReporting {
-            await Task.yield()
-        }
+        await waitUntil { !gps.isReporting }
 
         #expect(service == nil)
         #expect(!gps.isReporting)

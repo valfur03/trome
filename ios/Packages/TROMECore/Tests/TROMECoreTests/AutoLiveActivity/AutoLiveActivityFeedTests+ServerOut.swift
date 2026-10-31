@@ -36,7 +36,7 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
 
         await arrive(at: Places.fiftyMetersFromA, in: model)
-        await waitUntil { provider.callCount >= 3 }
+        await waitUntil { callTimes.all.count >= 3 }
 
         let times = callTimes.all
         #expect(times.count >= 3)
@@ -53,7 +53,7 @@ extension AutoLiveActivityModelTests {
         model.setAppPhase(.background)
 
         clock.letTimersFire(upTo: 1_840)
-        await waitUntil { provider.callCount >= 3 }
+        await waitUntil { callTimes.all.count >= 3 }
 
         let times = callTimes.all
         #expect(times.count >= 3)

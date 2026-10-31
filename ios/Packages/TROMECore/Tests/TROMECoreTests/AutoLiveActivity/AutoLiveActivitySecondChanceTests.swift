@@ -22,10 +22,11 @@ extension AutoLiveActivityModelTests {
     }
 
     /// The second chance asks iOS every 5 s of the test clock, and each ask takes about 20 ms of real time.
-    private func waitForTheEnd(of model: AutoLiveActivityModel) async {
-        for _ in 0..<5_000 where !model.secondChances.isEmpty {
-            try? await Task.sleep(for: .milliseconds(1))
-        }
+    private func waitForTheEnd(
+        of model: AutoLiveActivityModel,
+        sourceLocation: SourceLocation = #_sourceLocation
+    ) async {
+        await waitUntil(sourceLocation: sourceLocation) { model.secondChances.isEmpty }
     }
 
     private func roughPositionsAtA() {

@@ -158,12 +158,6 @@ struct AutoLiveActivityModelTests {
         )
     }
 
-    func waitUntil(_ condition: () -> Bool) async {
-        for _ in 0..<1_000 where !condition() {
-            try? await Task.sleep(for: .milliseconds(1))
-        }
-    }
-
     func wake(_ model: AutoLiveActivityModel, at position: Coordinate) async {
         let fix = PositionFix(coordinate: position, accuracyMeters: 10, timestamp: clock.now)
         await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: fix)
@@ -174,10 +168,14 @@ struct AutoLiveActivityModelTests {
         await model.appDidBecomeActive()
     }
 
-    func arrive(at position: Coordinate, in model: AutoLiveActivityModel) async {
+    func arrive(
+        at position: Coordinate,
+        in model: AutoLiveActivityModel,
+        sourceLocation: SourceLocation = #_sourceLocation
+    ) async {
         await activate(model)
         gps.report(position)
-        await waitUntil { client.isShowing && keeper.isKeeping }
+        await waitUntil(sourceLocation: sourceLocation) { client.isShowing && keeper.isKeeping }
     }
 
     @Test func startsTheLiveActivityWhenThePhoneArrivesWhileTheAppIsOnScreen() async {
@@ -240,9 +238,11 @@ struct AutoLiveActivityModelTests {
     @Test func endsTheLiveActivityAfterTheMaximumDurationWithoutAnyMove() async {
         clock.letTimersFire()
         let model = makeModel()
-        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await activate(model)
+        gps.report(Places.fiftyMetersFromA)
 
-        await waitUntil { client.endCount == 1 && !keeper.isKeeping }
+        // The timer ends it 20 ms after the start, so wait for what stays: a start, then an end.
+        await waitUntil { client.started.count == 1 && client.endCount == 1 && !keeper.isKeeping }
 
         #expect(client.endCount == 1)
         #expect(model.shownStation == nil)

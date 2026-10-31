@@ -60,9 +60,11 @@ extension AutoLiveActivityModelTests {
     @Test func logsTheEndOfTheLiveActivityAfterTheTimeLimit() async {
         clock.letTimersFire()
         let model = makeModel()
-        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await activate(model)
+        gps.report(Places.fiftyMetersFromA)
 
-        await waitUntil { client.endCount == 1 }
+        // The timer ends it 20 ms after the start, so wait for what stays: a start, then an end.
+        await waitUntil { client.started.count == 1 && client.endCount == 1 }
 
         #expect(decisionLines.last == "Live Activity ended: 45 min after it started")
     }

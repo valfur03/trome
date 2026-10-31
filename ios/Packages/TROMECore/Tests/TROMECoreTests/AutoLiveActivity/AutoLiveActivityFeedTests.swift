@@ -137,7 +137,7 @@ extension AutoLiveActivityModelTests {
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { provider.callCount == callCount + 1 }
-        await waitUntil { provider.callCount > callCount + 1 }
+        await expectNever { provider.callCount > callCount + 1 }
 
         #expect(provider.callCount == callCount + 1)
         #expect(client.shownContent?.shownTrains.isEmpty == false)
@@ -256,7 +256,7 @@ extension AutoLiveActivityModelTests {
 
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
         await waitUntil { provider.callCount == 2 }
-        await waitUntil { provider.callCount > 2 }
+        await expectNever { provider.callCount > 2 }
 
         #expect(provider.callCount == 2)
     }
