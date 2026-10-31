@@ -16,7 +16,7 @@ extension AutoLiveActivityModelTests {
 
         model.setAppPhase(.background)
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
-        try? await Task.sleep(for: .milliseconds(200))
+        await expectNever { provider.callCount > callCount }
 
         #expect(callCount == 1)
         #expect(provider.callCount == callCount)

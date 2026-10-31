@@ -7,17 +7,17 @@ extension AutoLiveActivityModelTests {
         let model = makeModel()
         await activate(model)
         gps.report(Places.fourHundredMetersFromA)
-        try? await Task.sleep(for: .milliseconds(50))
+        await expectNever(for: .milliseconds(50)) { provider.callCount > 0 }
         clock.letTimersFire(upTo: BackgroundTrainsRefresh.maximumDelay)
 
         model.setAppPhase(.background)
-        try? await Task.sleep(for: .milliseconds(50))
+        await expectNever(for: .milliseconds(50)) { provider.callCount > 0 }
         clock.letTimersFire(upTo: 2 * BackgroundTrainsRefresh.maximumDelay)
         let relaunched = makeModel()
         relaunched.setAppPhase(.background)
-        try? await Task.sleep(for: .milliseconds(50))
+        await expectNever(for: .milliseconds(50)) { provider.callCount > 0 }
         clock.letTimersFire(upTo: 3 * BackgroundTrainsRefresh.maximumDelay)
-        try? await Task.sleep(for: .milliseconds(50))
+        await expectNever { provider.callCount > 0 }
 
         #expect(!client.isShowing)
         #expect(provider.callCount == 0)
@@ -80,10 +80,10 @@ extension AutoLiveActivityModelTests {
         let callCount = provider.callCount
 
         let relaunched = makeModel()
-        try? await Task.sleep(for: .milliseconds(50))
+        await expectNever(for: .milliseconds(50)) { provider.callCount > callCount }
         await activate(relaunched)
         await waitUntil { provider.callCount > callCount }
-        try? await Task.sleep(for: .milliseconds(100))
+        await expectNever { provider.callCount > callCount + 1 }
 
         #expect(provider.callCount == callCount + 1)
         withExtendedLifetime(model) {}
@@ -227,7 +227,7 @@ extension AutoLiveActivityModelTests {
         #expect(provider.callCount == 1)
 
         model.setAppPhase(.background)
-        try? await Task.sleep(for: .milliseconds(100))
+        await expectNever { provider.callCount > 1 }
 
         #expect(provider.callCount == 1)
     }

@@ -105,7 +105,7 @@ extension AutoLiveActivityModelTests {
         await model.handleRegionEvent(.left(regionId: "arrival:a"), lastKnownFix: nil)
         let asks = gps.currentFixRequestCount
         gps.currentFixAccuracyMeters = 10
-        try? await Task.sleep(for: .milliseconds(100))
+        await expectNever { gps.currentFixRequestCount > asks || !notifier.notified.isEmpty }
 
         #expect(model.secondChances.isEmpty)
         #expect(gps.currentFixRequestCount == asks)
@@ -141,7 +141,7 @@ extension AutoLiveActivityModelTests {
         #expect(keeper.isKeeping)
         await waitForTheEnd(of: model)
         let asks = gps.currentFixRequestCount
-        try? await Task.sleep(for: .milliseconds(100))
+        await expectNever { gps.currentFixRequestCount > asks }
 
         #expect(gps.currentFixRequestCount == asks)
         #expect(asks <= 1 + Int(ArrivalSecondChance.limit) / 5)
@@ -183,7 +183,7 @@ extension AutoLiveActivityModelTests {
         await waitForTheEnd(of: model)
         let asks = gps.currentFixRequestCount
         gps.currentFixAccuracyMeters = 10
-        try? await Task.sleep(for: .milliseconds(100))
+        await expectNever { gps.currentFixRequestCount > asks || !notifier.notified.isEmpty }
 
         #expect(model.secondChances.isEmpty)
         #expect(gps.currentFixRequestCount == asks)

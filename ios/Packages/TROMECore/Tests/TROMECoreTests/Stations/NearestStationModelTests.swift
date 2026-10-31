@@ -220,8 +220,9 @@ struct NearestStationModelTests {
 
         permission.authorization = .denied
         await model.refresh()
+        await waitForState(.permissionDenied, in: model)
         gps.report(farFromNation)
-        try? await Task.sleep(for: .milliseconds(20))
+        await expectNever { model.state != .permissionDenied }
 
         #expect(model.state == .permissionDenied)
     }
