@@ -249,8 +249,8 @@ merge_waits() {
     [ -z "${RATP_SIM_MERGE:-}" ] || return 1
     for merge_ask in "$merge_asks"/*; do
         [ -f "$merge_ask" ] || continue
-        # A pid that the system gave again to another process is not a merge that waits.
-        if ps -p "$(basename "$merge_ask")" -o command= 2> /dev/null | grep -q 'sim-lock\.sh'; then
+        # A pid that the system gave again to another process is not a merge that waits: not even to this job.
+        if [ "$(basename "$merge_ask")" != "$$" ] && ps -p "$(basename "$merge_ask")" -o command= 2> /dev/null | grep -q 'sim-lock\.sh'; then
             merge_root=$(cat "$merge_ask" 2> /dev/null || true)
             return 0
         fi
