@@ -1,0 +1,3 @@
+kind: headline
+fr: App fermée, les trains s’affichent seuls sur l’écran verrouillé dès votre arrivée en station.
+en: With the app closed, the trains show on the lock screen by themselves when you reach a station.

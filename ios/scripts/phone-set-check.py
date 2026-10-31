@@ -21,9 +21,9 @@ import subprocess
 import sys
 from typing import Dict, List, Optional
 
+from builds_table import GUIDE, table_rows
+
 SETS = "contracts/phone"
-GUIDE = "docs/src/content/docs/en/maintain/release-on-the-app-store.mdx"
-TABLE_HEADING = "## The builds that riders may hold"
 RETIRED_WITH_A_REASON = re.compile(r"^Retired on [^:]+:\s*\S")
 BUILD_NAME = re.compile(r"^(\d+\.\d+\.\d+) \((\d+)\)$")
 
@@ -40,39 +40,19 @@ def git(root: str, *args: str, stdin: Optional[str] = None) -> str:
     ).stdout
 
 
-def cells(line: str) -> List[str]:
-    return [cell.strip() for cell in line.strip().strip("|").split("|")]
-
-
 def build_rows(guide_path: str) -> Optional[List[Dict[str, object]]]:
     """The rows of the table of builds, or None when the guide has no table that can be read."""
-    try:
-        with open(guide_path, encoding="utf-8") as file:
-            lines = file.read().split("\n")
-    except OSError:
+    rows = table_rows(guide_path)
+    if rows is None or "Status" not in rows[0]:
         return None
-    if TABLE_HEADING not in lines:
-        return None
-    section = lines[lines.index(TABLE_HEADING) + 1 :]
-    section = section[: next((i for i, line in enumerate(section) if line.startswith("## ")), len(section))]
-    header = next((i for i, line in enumerate(section) if line.strip().startswith("|")), None)
-    if header is None or "Status" not in cells(section[header]):
-        return None
-    status = cells(section[header]).index("Status")
-    body = section[header + 2 :]
-    body = body[: next((i for i, line in enumerate(body) if not line.strip().startswith("|")), len(body))]
-    rows = []
-    for line in body:
-        row = cells(line)
-        text = re.sub(r"[*`]", "", row[status] if status < len(row) else "").strip()
-        rows.append(
-            {
-                "build": row[0],
-                "retired": text.startswith("Retired on "),
-                "retired_with_a_reason": bool(RETIRED_WITH_A_REASON.match(text)),
-            }
-        )
-    return rows or None
+    return [
+        {
+            "build": row["build"],
+            "retired": row["Status"].startswith("Retired on "),
+            "retired_with_a_reason": bool(RETIRED_WITH_A_REASON.match(row["Status"])),
+        }
+        for row in rows
+    ]
 
 
 def folder_of(build: str) -> Optional[str]:
