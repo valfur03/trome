@@ -108,8 +108,9 @@ rev() {
     git -C "$repo" rev-parse "$1"
 }
 
+# Writes the step, then "<step>-locked" when it runs inside the Simulator job that holds the lock (not when another job holds it).
 step_recorder() {
-    printf 'echo %s >> "$FAKE_SIM_STATE/steps" && test -e "$RATP_SIM_LOCK/pid" && echo %s-locked >> "$FAKE_SIM_STATE/steps"' "$1" "$1"
+    printf 'echo %s >> "$FAKE_SIM_STATE/steps" && if test -n "${RATP_SIM_HELD_PID:-}" && test "$(cat "$RATP_SIM_LOCK/pid" 2> /dev/null)" = "$RATP_SIM_HELD_PID"; then echo %s-locked >> "$FAKE_SIM_STATE/steps"; fi' "$1" "$1"
 }
 
 start_merge() {
@@ -148,7 +149,7 @@ cat > "$repo/.git/hooks/reference-transaction" << 'EOF'
 while read -r old new ref; do
     case "$ref" in
         refs/heads/*)
-            if [ -e "$RATP_SIM_LOCK/pid" ]; then held=locked; else held=free; fi
+            if [ -n "${RATP_SIM_HELD_PID:-}" ] && [ "$(cat "$RATP_SIM_LOCK/pid" 2> /dev/null)" = "$RATP_SIM_HELD_PID" ]; then held=locked; else held=free; fi
             echo "$ref $held" >> "$FAKE_SIM_STATE/refs"
             ;;
     esac
@@ -254,7 +255,7 @@ commit "$state/docs" docs/page page
 commit "$state/docs" README.md readme
 merge docs
 expect "make merge of a task that changes only docs succeeds" "$status" "0"
-expect "make merge skips the E2E suite when the task changes only docs" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+expect "make merge skips the E2E suite, and takes no Simulator lock, when the task changes only docs" "$(tr '\n' ' ' < "$state/steps")" "check "
 expect "make merge says why it skips the E2E suite" "$(contains "$state/docs.log" "changes no app code")" "yes"
 expect "main is the task that changes only docs" "$(rev main)" "$(rev task/docs)"
 
@@ -264,7 +265,7 @@ commit "$state/server" server/src/worker.ts worker
 commit "$state/server" contracts/prim/answer.json answer
 merge server
 expect "make merge of a task that changes only the server and the contracts succeeds" "$status" "0"
-expect "make merge skips the E2E suite when the task changes only the server and the contracts" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+expect "make merge skips the E2E suite when the task changes only the server and the contracts" "$(tr '\n' ' ' < "$state/steps")" "check "
 
 new_task video
 mkdir -p "$state/video/video/src"
@@ -272,7 +273,7 @@ commit "$state/video" video/src/Film.tsx film
 commit "$state/video" video/Makefile makefile
 merge video
 expect "make merge of a task that changes only the film source succeeds" "$status" "0"
-expect "make merge skips the E2E suite when the task changes only the film source" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+expect "make merge skips the E2E suite when the task changes only the film source" "$(tr '\n' ' ' < "$state/steps")" "check "
 
 new_task markdown
 mkdir -p "$state/markdown/ios/guide" "$state/markdown/.claude/rules" "$state/markdown/ios/Packages/TROMECore/Tests/TROMECoreTests/Stations"
@@ -281,7 +282,7 @@ for file in CONTRIBUTING.md ARCHITECTURE.md NOTICE.md LICENSE ios/README.md ios/
 done
 merge markdown
 expect "make merge of a task that changes only Markdown, LICENSE, .claude/ and the unit tests succeeds" "$status" "0"
-expect "make merge skips the E2E suite when the task changes only Markdown or MDX files, LICENSE, .claude/ and the unit tests" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+expect "make merge skips the E2E suite when the task changes only Markdown or MDX files, LICENSE, .claude/ and the unit tests" "$(tr '\n' ' ' < "$state/steps")" "check "
 
 new_task github
 mkdir -p "$state/github/.github/workflows" "$state/github/.github/ISSUE_TEMPLATE"
@@ -289,7 +290,7 @@ commit "$state/github" .github/workflows/docs-site.yml workflow
 commit "$state/github" .github/ISSUE_TEMPLATE/bug.yml form
 merge github
 expect "make merge of a task that changes only .github/ succeeds" "$status" "0"
-expect "make merge skips the E2E suite when the task changes only .github/, which no build and no test reads" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+expect "make merge skips the E2E suite when the task changes only .github/, which no build and no test reads" "$(tr '\n' ' ' < "$state/steps")" "check "
 
 new_task github_app
 mkdir -p "$state/github_app/.github/workflows" "$state/github_app/ios/App"
@@ -520,8 +521,79 @@ done
 before=$(rev main)
 merge_together docs_a docs_b docs_c
 expect "three merges that wait together land" "$(finish_merge docs_a) $(finish_merge docs_b) $(finish_merge docs_c)" "0 0 0"
-expect "a train of three tasks runs one gate, and no E2E run when no task changes app code" "$(steps_line)" "check check-locked "
+expect "a train of three tasks runs one gate, and no E2E run and no Simulator lock when no task changes app code" "$(steps_line)" "check "
 expect "a train of three lands the three tasks in order" "$(rev main) $(rev main~1) $(rev main~2) $(rev main~3)" "$(rev task/docs_c) $(rev task/docs_b) $(rev task/docs_a) $before"
+
+# A merge with no app code holds no Simulator: it lands while another job holds the lock, and no job waits for it.
+mkfifo "$state/release-holder"
+"$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"' "$state/release-holder" > /dev/null 2>&1 &
+holder=$!
+wait_until test -e "$RATP_SIM_LOCK/pid"
+new_task nolock
+commit "$state/nolock" nolock.md nolock
+merge nolock
+expect "a merge with no app code lands while another job holds the Simulator lock" "$status $(rev main)" "0 $(rev task/nolock)"
+expect "it runs the gate and moves main with no Simulator lock" "$(steps_line)$(contains "$state/refs" locked)" "check no"
+expect "it says that it takes no Simulator lock" "$(contains "$state/nolock.log" "no Simulator lock: task/nolock changes no app code")" "yes"
+expect "it leaves no record of a Simulator job" "$(awk -F '\t' '$9 ~ /nolock/' "$state/logs/simulator-jobs.tsv" | wc -l | tr -d ' ')" "0"
+
+# A job that waits for the Simulator is not held back by a merge with no app code that waits, but it is by a merge of app code.
+new_task queued_docs
+commit "$state/queued_docs" queued_docs.md queued_docs
+app_task queued_app
+before=$(rev main)
+lockf -k "$RATP_MERGE_LOCK" sh -c 'read -r line < "$0"' "$state/release-merge-lock" &
+merge_lock_holder=$!
+until ! lockf -s -k -t 0 "$RATP_MERGE_LOCK" true 2> /dev/null; do sleep 0.1; done
+: > "$state/steps"
+: > "$state/refs"
+start_merge queued_docs
+wait_until has_queued 1
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-after-docs >> "$FAKE_SIM_STATE/steps"' > "$state/qa-docs.log" 2>&1 &
+qa_docs=$!
+wait_until grep -q "Waiting for the Simulator lock" "$state/qa-docs.log"
+echo release > "$state/release-holder"
+wait "$holder" "$qa_docs"
+expect "a job that waits takes the free Simulator while a merge with no app code waits" "$(steps_line)$(contains "$state/qa-docs.log" "a merge goes first")" "qa-after-docs no"
+"$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"' "$state/release-holder" > /dev/null 2>&1 &
+holder=$!
+wait_until test -e "$RATP_SIM_LOCK/pid"
+start_merge queued_app
+wait_until has_queued 2
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-after-app >> "$FAKE_SIM_STATE/steps"' > "$state/qa-app.log" 2>&1 &
+qa_app=$!
+wait_until grep -q "a merge goes first" "$state/qa-app.log"
+echo release > "$state/release-holder"
+wait "$holder"
+expect "a job that waits does not take the free Simulator while a merge of app code waits" "$(contains "$state/qa-app.log" "a merge goes first (")$(steps_line)" "yesqa-after-docs "
+: > "$state/steps"
+echo release > "$state/release-merge-lock"
+wait "$merge_lock_holder"
+expect "a train that mixes a task of app code and a task with no app code lands both" "$(finish_merge queued_docs) $(finish_merge queued_app)" "0 0"
+wait "$qa_app"
+expect "it holds the Simulator lock for the whole train, and runs the E2E suite, before the job that waits" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked qa-after-app "
+expect "it moves main with the Simulator lock" "$(contains "$state/refs" "refs/heads/main locked")" "yes"
+expect "main has both tasks" "$(rev main~2)" "$before"
+
+# The second guard: the task changes no app code from where it left main, but its rebase does. Its first commit,
+# which adds a file of the app, is already on main, so the rebase drops it, and the commit that removes that file stays.
+new_task undo
+mkdir -p "$state/undo/ios/App"
+commit "$state/undo" ios/App/Undo.swift undo
+git -C "$repo" cherry-pick "$(rev task/undo)" > /dev/null
+git -C "$state/undo" rm -q ios/App/Undo.swift
+git -C "$state/undo" commit -q -m "remove ios/App/Undo.swift (no rider change)"
+commit "$state/undo" undo.md undo
+TROME_MERGE_E2E="$passing_e2e && sed -n 's/^app=/app-/p' \"\$RATP_SIM_LOCK.merge-queue\"/*.task >> \"\$FAKE_SIM_STATE/steps\""
+merge undo
+TROME_MERGE_E2E=$passing_e2e
+expect "a task whose rebase changes app code lands, its gate with no Simulator lock, then its E2E suite with it" "$status $(steps_line)" \
+    "0 check e2e e2e-locked nested-job app-1 release-run release-run-locked "
+expect "it says why it takes the lock" "$(contains "$state/undo.log" "the rebased train changes app code: it takes the Simulator lock")" "yes"
+expect "main no longer has the file of the app" "$(git -C "$repo" ls-tree --name-only main ios/App/Undo.swift) $(rev main)" " $(rev task/undo)"
+expect "the record of its Simulator job is a merge, and names the task" \
+    "$(awk -F '\t' '$2 == "merge" && $9 == "task/undo" { print $9 }' "$state/logs/simulator-jobs.tsv")" "task/undo"
+expect "the merges with no app code leave no task in the queue" "$(queued)" "0"
 
 # The gate of a train sees the commits of all its tasks: a task of the app with no note must not pass on the note of another.
 notes_task() {
@@ -768,7 +840,7 @@ mkdir -p "$state/docsnode/docs"
 commit "$state/docsnode" docs/page.md "page"
 merge docsnode
 expect "with the Node of .nvmrc active, make merge of a docs change succeeds" "$status" "0"
-expect "the gate of that merge runs with that Node, and no Node manager is called" "$(tr '\n' ' ' < "$state/steps")" "check check-locked v24.0.0 "
+expect "the gate of that merge runs with that Node, and no Node manager is called" "$(tr '\n' ' ' < "$state/steps")" "check v24.0.0 "
 export PATH="$path_before_node"
 TROME_MERGE_CHECK=$passing_check
 
@@ -837,7 +909,7 @@ new_task recorded_docs
 commit "$state/recorded_docs" recorded_docs.md docs
 before=$(origin_main)
 merge recorded_docs
-expect "a merge that changes no app code runs no E2E suite, no Release app run and no render check" "$(steps_line)" "check check-locked "
+expect "a merge that changes no app code runs no E2E suite, no Release app run and no render check" "$(steps_line)" "check "
 expect "it leaves no record and does not push: the push after the merge sends it" "$(origin_main) $(record "$(rev main)")" "$before no record"
 git -C "$repo" push -q origin main
 expect "the release still accepts its commit, by the record of the commit before it" "$(proof main | head -n 1)" \

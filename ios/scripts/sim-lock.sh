@@ -239,11 +239,13 @@ cpu_idle_percent() {
     echo "${idle:-0}"
 }
 
-# A merge goes first: a job that is not a merge waits while a 'make merge' waits in the queue.
+# A merge goes first: a job that is not a merge waits while a 'make merge' of app code waits in the queue.
+# A merge with no app code (app=0, from the diff of its branch) takes no Simulator lock, so no job waits for it.
 merge_waits() {
     [ -z "${RATP_SIM_MERGE:-}" ] || return 1
     for merge_entry in "$merge_queue"/*.task; do
         [ -f "$merge_entry" ] && [ ! -e "${merge_entry%.task}.result" ] || continue
+        [ "$(sed -n 's/^app=//p' "$merge_entry" 2> /dev/null || true)" != 0 ] || continue
         merge_pid=$(sed -n 's/^pid=//p' "$merge_entry" 2> /dev/null || true)
         # A pid that the system gave again to another process is not a merge that waits.
         if [ -n "$merge_pid" ] && ps -p "$merge_pid" -o command= 2> /dev/null | grep -q 'merge\.sh'; then

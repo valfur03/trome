@@ -25,10 +25,12 @@ is_render_input() {
 }
 
 # Exits 0 when the diff of the commits $1 and $2 changes a file for which the rule $3 (is_app_code, is_render_input) is true.
+# A diff that git cannot make counts as a change: a doubt never skips a check.
 diff_touches() {
-    git diff --name-only --no-renames "$1" "$2" | {
+    diff_paths=$(git diff --name-only --no-renames "$1" "$2") || return 0
+    printf '%s\n' "$diff_paths" | {
         while IFS= read -r path; do
-            ! "$3" "$path" || exit 0
+            [ -z "$path" ] || ! "$3" "$path" || exit 0
         done
         exit 1
     }
