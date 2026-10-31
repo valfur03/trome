@@ -2,11 +2,14 @@
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
 scripts=$(cd "$tests/.." && pwd)
-state=$(mktemp -d)
+state=$(mktemp -d "${TMPDIR:-/tmp}/merge-test.XXXXXX")
 repo="$state/repo"
 failures=0
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE ONLY RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID RATP_SIM_MERGE RATP_MERGE_QUEUE || true
 export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 RATP_MERGE_LOCK="$state/merge.lock" SCRIPTS="$scripts" TROME_LOGS="$state/logs"
+# The work folders of make merge go in the folder of this run, so that the cleanup removes them too.
+mkdir "$state/tmp"
+export TMPDIR="$state/tmp"
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.com
 
@@ -16,11 +19,51 @@ printf 'trap "kill \\$!; exit" TERM\nsleep 600 &\nwait\n' > "$state/idle-watcher
 idle_watcher=$(cat "$state/idle-watcher/pid")
 echo "$idle_watcher" > "$RATP_SIM_LOCK.slots-watcher"
 
+# Sets 'left' to the processes that this run started and that still run: its children, their children, and so on.
+# Only these: another run of this test, or a real make merge, may run the same scripts at the same time.
+# It runs in this shell, not in a subshell, so that it does not find itself.
+find_started() {
+    table=$(ps -A -o pid= -o ppid=)
+    found=$(printf '%s\n' "$table" | awk -v root="$$" '
+        { parent[$1] = $2 }
+        END {
+            found[root] = 1
+            do {
+                more = 0
+                for (p in parent) if (!(p in found) && (parent[p] in found)) { found[p] = 1; more = 1 }
+            } while (more)
+            for (p in found) if (p != root) print p
+        }')
+    left=
+    for p in $found; do
+        if kill -0 "$p" 2> /dev/null; then
+            left="$left $p"
+        fi
+    done
+}
+
+# A run that is stopped, or that ends early, still has merges running, which write in its folder:
+# they are stopped first, or the folder is removed while they write in it, and stays.
 cleanup() {
     kill "$idle_watcher" "$(cat "$RATP_SIM_LOCK.slots-watcher" 2> /dev/null)" 2> /dev/null || true
+    find_started
+    if [ -n "$left" ]; then
+        kill -TERM $left 2> /dev/null || true
+        tries=0
+        find_started
+        while [ -n "$left" ] && [ "$tries" -lt 200 ]; do
+            sleep 0.1
+            tries=$((tries + 1))
+            find_started
+        done
+        [ -z "$left" ] || kill -KILL $left 2> /dev/null || true
+    fi
     rm -rf "$state"
 }
 trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 expect() {
     if [ "$2" = "$3" ]; then
@@ -623,8 +666,12 @@ wait_until has_queued 3
 echo release > "$state/release-kill-qa"
 wait "$kill_qa"
 wait_until test -e "$state/rebasing-kill-c"
-pkill -TERM -f "$scripts/merge.sh train" || true
-pkill -KILL -P "$(grep -l '^branch=task/kill_a$' "$queue"/*.task | xargs sed -n 's/^pid=//p')" lockf
+# By PID, never by name: another run of this test, or a real make merge, may run a train of the same scripts.
+# The train is the one child of the Simulator job that holds the lock; that job runs for the make merge of kill_a.
+merge_a=$(grep -l '^branch=task/kill_a$' "$queue"/*.task | xargs sed -n 's/^pid=//p')
+train=$(pgrep -P "$(cat "$RATP_SIM_LOCK/pid")")
+kill -TERM $train
+pkill -KILL -P "$merge_a" lockf
 wait_until test -e "$state/kill_a.status"
 expect "after a train stopped during a rebase, the other tasks land" "$(finish_merge kill_b) $(finish_merge kill_c)" "0 0"
 expect "a train stopped during a rebase puts back the branches it rebased: main gets no commit of the stopped task" "$(rev main~2)" "$before"
