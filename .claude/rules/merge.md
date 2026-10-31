@@ -56,7 +56,8 @@ Each step runs only when the step before it passed:
 1. It rebases the branch of the worktree onto the tip of `main`.
 2. It runs the quality gate (`make check`).
 3. It runs the full E2E suite (`make e2e`), unless the branch changes no app code (see "Which E2E tests to run" in `.claude/rules/tests.md`).
-   After a pass, it runs the render check (`make live-activity-render`) when the branch changes the Live Activity views or their data, or when `main` has no render counts on GitHub.
+   After a pass, it runs the app as the store ships it (`make release-run-check`, below), and fails when that run fails.
+   Then it runs the render check (`make live-activity-render`) when the branch changes the Live Activity views or their data, or when `main` has no render counts on GitHub.
    The render check is a report: when it fails, the merge goes on, and its record says "not drawn".
 4. It fast-forwards `main` to the rebased branch.
    When `main` is checked out in a folder (the main folder of the repo), it updates that folder too, with `git merge --ff-only`: a fast-forward, never a merge commit.
@@ -72,10 +73,23 @@ It checks this again when its turn comes, and the fast-forward still fails safel
 It refuses to start on `main`, with changes that are not committed, with `ONLY=` (the E2E suite is always the full one), or with nothing to merge.
 It lands only the commit that it started with: a task whose branch gets a new commit while its `make merge` waits or runs does not land, and keeps that commit.
 
+**The run of the Release app.** Every commit of `main` must be safe to ship as it is (decision-114).
+The E2E suite runs the Debug app, and `make check` only compiles the Release app, so a fault of the Release app alone (a start that fails with no key, a Testing tool left outside `#if DEBUG`) passes them.
+So `make release-run-check` builds the Release app as `make run RELEASE=1` does (no PRIM key, a server that never answers), installs it on the shared Simulator, under the lock, and starts it with one UI test (`ios/ReleaseRun/`).
+It fails when the app does not start, does not reach its first screen, or shows a Testing tool.
+It adds about 40 s of the Simulator to a merge that changes app code (measured in TASK-451); a merge with no app code skips it, with the E2E suite.
+When it fails, the task goes back to its Software Engineer, with the result bundle that `make merge` names (it holds the crash report when the app crashed).
+
+**Unfinished work stays out of the Release app** (decision-114 point 3).
+A change that is a part of a larger rider feature merges only when riders cannot reach it in the Release app: it is compiled out of the Release build, or off by a switch that the Release build holds off, and the path that riders use works as before.
+Its ticket names how it is hidden, and the reviewer checks it.
+When it shows something on a screen, its accessibility identifier goes in the list of `ios/ReleaseRun/ReleaseRunTests.swift`, so the run of the Release app proves that it is absent; the reviewer checks that too.
+The change that turns the feature on removes it from that list, and carries the headline of its release.
+
 **The record of the E2E pass.** The release runs on GitHub, whose Mac cannot pass the E2E suite, so it reads the proof that the suite passed on the Mac (decision-113).
-The record is a commit status of GitHub, named `E2E on the Mac`, on the commit of `main` that the E2E suite tested: its text names the tree of that commit and the render counts (too tall, cut texts, breaches of decision-15), or "Render: not drawn".
+The record is a commit status of GitHub, named `E2E on the Mac`, on the commit of `main` that the E2E suite tested: its text names the tree of that commit, the render counts (too tall, cut texts, breaches of decision-15) or "Render: not drawn", and "Release run: passed".
 `make merge` writes it with `ios/scripts/e2e-proof.sh publish`, right after its push, because GitHub keeps a status only for a commit that it has.
-`ios/scripts/e2e-proof.sh read` (`make e2e-proof`, and the workflow **E2E proof**, which the release checks run) reads it, and fails when it is missing:
+`ios/scripts/e2e-proof.sh read` (`make e2e-proof`, and the workflow **E2E proof**, which the release checks run) reads it, prints `E2E proof: found` or `missing`, then `Release app run: found` or `missing`, and fails when either is missing:
 
 - A commit that `make merge` tested has its own record.
 - A commit that changes no app code (a docs merge, which skips the E2E suite) has none: the reader finds the record of the last commit before it that has one, when no commit between them changes app code.

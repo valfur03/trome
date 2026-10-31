@@ -8,7 +8,7 @@
 is_app_code() {
     case "$1" in
         ios/Packages/TROMECore/Tests/*) return 1 ;;
-        ios/App/* | ios/Widget/* | ios/UITests/* | ios/DocsScreenshots/* | ios/RenderCheck/* | ios/Packages/*) return 0 ;;
+        ios/App/* | ios/Widget/* | ios/UITests/* | ios/DocsScreenshots/* | ios/RenderCheck/* | ios/ReleaseRun/* | ios/Packages/*) return 0 ;;
         docs/* | server/* | contracts/* | video/* | ios/changes/* | .claude/* | .github/* | *.md | *.mdx | LICENSE) return 1 ;;
     esac
     return 0

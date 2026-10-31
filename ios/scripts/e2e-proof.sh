@@ -1,10 +1,12 @@
 #!/bin/sh
-# The record that make merge leaves on a commit of main when the full E2E suite passed on its tree, and its reader.
+# The record that make merge leaves on a commit of main when the full E2E suite and the run of the Release app (make
+# release-run-check) passed on its tree, and its reader.
 #
 # The full E2E suite runs only on the Mac, at make merge: GitHub's Mac is too slow for the Live Activity buttons.
 # So the release reads this record before it cuts a commit, and refuses a commit with none.
 # The record is a commit status of GitHub, named "E2E on the Mac", on the commit of main that make merge pushed.
-# Its text names the tree that the suite ran on, and the counts of the render check when make merge drew the views.
+# Its text names the tree that the suite ran on, the counts of the render check when make merge drew the views,
+# and the pass of the Release app run (a record of an older make merge has none, so its commit counts as not run).
 # A status is public and holds no secret; GitHub shows it next to the commit.
 #
 # Who can write it: only a token of the owner of the repo. The reader keeps only the statuses whose author is the owner,
@@ -20,8 +22,9 @@ context="E2E on the Mac"
 max_walk=${TROME_E2E_PROOF_MAX_WALK:-50}
 
 usage() {
-    echo "Usage: $0 read [<commit>]    Say whether the commit (default HEAD) has a record of a full E2E pass on the Mac, and its render counts:" >&2
-    echo "                             exit 0 when the record is found, 1 when it is missing, 2 when GitHub cannot be read." >&2
+    echo "Usage: $0 read [<commit>]    Say whether the commit (default HEAD) has a record of a full E2E pass and a Release app run" >&2
+    echo "                             on the Mac, and its render counts: exit 0 when both are found, 1 when one is missing," >&2
+    echo "                             2 when GitHub cannot be read." >&2
     echo "                             A commit with no record of its own is covered by the record of an older commit of main" >&2
     echo "                             when no commit since changes app code (the rule of make merge for skipping the suite)." >&2
     echo "                             The lines go to GITHUB_STEP_SUMMARY too, when it is set." >&2
@@ -57,7 +60,7 @@ render_counts() {
 
 # The text of the record of the tree of $1, written by publish and checked by read.
 record_text() {
-    echo "Full E2E passed on tree $(git rev-parse "$1^{tree}"). Render: ${2:-not drawn}."
+    echo "Full E2E passed on tree $(git rev-parse "$1^{tree}"). Render: ${2:-not drawn}. Release run: passed."
 }
 
 publish() {
@@ -66,8 +69,9 @@ publish() {
         -f "description=$(record_text "$commit" "${2:-}")" > /dev/null
 }
 
-# Prints the render counts of the record of the commit $1 ("not drawn" when the merge did not draw), or nothing when
-# the commit has no record. Exits 1 when GitHub cannot be read.
+# Prints the render counts of the record of the commit $1 ("not drawn" when the merge did not draw), a tab, and
+# "passed" when the record has a pass of the Release app run; or nothing when the commit has no record.
+# Exits 1 when GitHub cannot be read.
 record_of() {
     tree=$(git rev-parse "$1^{tree}")
     statuses=$(timed 30 gh api "repos/{owner}/{repo}/commits/$1/statuses?per_page=100" \
@@ -79,10 +83,11 @@ record_of() {
     printf '%s\n' "$statuses" | awk -F '\t' -v owner="$owner" -v tree="$tree" '
         $1 == owner && index($2, "on tree " tree ".") {
             if (match($2, /Render: too tall [0-9]+, cut texts [0-9]+, breaches [0-9]+/)) {
-                print substr($2, RSTART + 8, RLENGTH - 8)
+                render = substr($2, RSTART + 8, RLENGTH - 8)
             } else {
-                print "not drawn"
+                render = "not drawn"
             }
+            print render "\t" (index($2, " Release run: passed.") ? "passed" : "")
             exit
         }'
 }
@@ -103,32 +108,43 @@ read_proof() {
     [ -z "${GITHUB_STEP_SUMMARY:-}" ] || printf '## E2E proof of %s\n\n' "$(short "$commit")" >> "$GITHUB_STEP_SUMMARY"
     if ! owner=$(timed 30 gh api "repos/{owner}/{repo}" --jq .owner.login 2>&1); then
         say "E2E proof: missing (GitHub could not be read: $(echo "$owner" | tail -n 1))"
+        say "Release app run: missing"
         say "render counts: missing"
         return 2
     fi
     e2e=
+    release=
     render=
     unreadable=0
     walked=0
     at=$commit
     while [ -z "$e2e" ] || [ -z "$render" ]; do
         if ! record=$(record_of "$at"); then
-            [ -n "$e2e" ] || { e2e="missing (GitHub could not be read: $record)"; unreadable=1; }
+            [ -n "$e2e" ] || { e2e="missing (GitHub could not be read: $record)"; unreadable=1; release=missing; }
             [ -n "$render" ] || render=missing
             break
         fi
+        drawn=$(printf '%s' "$record" | cut -f 1)
         if [ -n "$record" ] && [ -z "$e2e" ]; then
             if [ "$at" = "$commit" ]; then
                 e2e="found (the full E2E suite passed on the Mac on this tree)"
+                where="this tree"
             else
                 e2e="found (the full E2E suite passed on the Mac on $(short "$at"); the $walked commits since change no app code)"
+                where=$(short "$at")
+            fi
+            if [ "$(printf '%s' "$record" | cut -f 2)" = passed ]; then
+                release="found (the app as the store ships it started on the Mac on $where, with no Testing tools)"
+            else
+                release="missing (the record of $(short "$at") has no run of the Release app: make merge did not run it yet)"
             fi
         fi
-        if [ -n "$record" ] && [ "$record" != "not drawn" ] && [ -z "$render" ]; then
-            render="$record (drawn on the Mac on $(short "$at"))"
+        if [ -n "$drawn" ] && [ "$drawn" != "not drawn" ] && [ -z "$render" ]; then
+            render="$drawn (drawn on the Mac on $(short "$at"))"
         fi
         if [ -z "$e2e" ] && changes "$at" is_app_code; then
             e2e="missing ($(short "$at") changes app code, and has no record of a full E2E pass on the Mac)"
+            release=missing
         fi
         if [ -z "$render" ] && changes "$at" is_render_input; then
             render=missing
@@ -136,7 +152,7 @@ read_proof() {
         walked=$((walked + 1))
         if [ -z "$e2e" ] || [ -z "$render" ]; then
             if [ "$walked" -ge "$max_walk" ]; then
-                [ -n "$e2e" ] || e2e="missing (no record in the last $max_walk commits)"
+                [ -n "$e2e" ] || { e2e="missing (no record in the last $max_walk commits)"; release=missing; }
                 [ -n "$render" ] || render=missing
             else
                 at=$(git rev-parse "$at^")
@@ -144,13 +160,14 @@ read_proof() {
         fi
     done
     say "E2E proof: $e2e"
+    say "Release app run: $release"
     say "render counts: $render"
     case "$render" in
         missing) ;;
         *) say "The render counts are shown, not compared: the first release sets the baseline." ;;
     esac
     case "$e2e" in
-        found*) return 0 ;;
+        found*) case "$release" in found*) return 0 ;; esac ;;
     esac
     return $((1 + unreadable))
 }

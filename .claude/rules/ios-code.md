@@ -6,6 +6,7 @@ paths:
   - "ios/UITests/**"
   - "ios/RenderCheck/**"
   - "ios/DocsScreenshots/**"
+  - "ios/ReleaseRun/**"
   - "ios/project.yml"
   - "ios/Config/**"
 ---
@@ -71,7 +72,9 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   Tests of the scripts: `ios/scripts/tests/<name>-test.sh` (`make test-scripts`, with a fake `xcrun` for the Simulator scripts).
   Docs screenshots: `ios/DocsScreenshots/`.
   The render check of the Live Activity views: `ios/RenderCheck/`.
+  The run of the app as the store ships it (`make release-run-check`): `ios/ReleaseRun/`.
   Code that needs a unit test goes in `TROMECore`.
+- **Unfinished work.** A change that is a part of a larger rider feature stays out of the Release app, and its ticket says how: "Unfinished work stays out of the Release app" in `.claude/rules/merge.md`; the reviewer checks it.
 - **No warnings.** `make check` fails on any build warning and when a newer Xcode may recommend new project settings (`ios/README.md`, section "Before you commit"; `make recommended-settings-check` prints the steps for new settings).
   Fix the cause.
   Never silence a warning, and never raise `options.xcodeVersion` in `ios/project.yml` without adding the settings that Xcode proposes.

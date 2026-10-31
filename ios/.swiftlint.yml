@@ -3,6 +3,7 @@ included:
   - Widget
   - UITests
   - DocsScreenshots
+  - ReleaseRun
   - RenderCheck
   - Packages/TROMECore/Sources
   - Packages/TROMECore/Tests

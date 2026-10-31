@@ -4,7 +4,7 @@ paths:
   - "ios/scripts/simulator.sh"
   - "ios/scripts/tests/sim-lock-test.sh"
 commands:
-  - '^(\S*/)?make\b.*\s(run|e2e|docs-screenshots|store-screenshots|live-activity-render|switch-language|merge|simulator-delete|simulator-delete-old|simulator-wallpaper)(\s|$)'
+  - '^(\S*/)?make\b.*\s(run|e2e|docs-screenshots|store-screenshots|live-activity-render|release-run-check|switch-language|merge|simulator-delete|simulator-delete-old|simulator-wallpaper)(\s|$)'
   - '^\S*sim-lock\.sh(\s|$)'
   - '^\S*simulator\.sh(\s|$)'
   - '^xcrun\b.*\ssimctl\b'
@@ -13,7 +13,7 @@ commands:
 ---
 # The shared Simulator and its lock
 
-These rules are for every job that boots or uses a Simulator: `make run`, `make e2e`, `make docs-screenshots`, `make store-screenshots`, `make simulator-wallpaper`, `make live-activity-render`, `make merge`, and any command through `ios/scripts/sim-lock.sh`.
+These rules are for every job that boots or uses a Simulator: `make run`, `make e2e`, `make docs-screenshots`, `make store-screenshots`, `make simulator-wallpaper`, `make live-activity-render`, `make release-run-check`, `make merge`, and any command through `ios/scripts/sim-lock.sh`.
 The two rules above them, never a second Simulator and at most one Simulator job, are in `CLAUDE.md`.
 
 **The code of the second slot (decided against on this Mac):** `ios/scripts/sim-lock.sh` keeps the code of a second slot, but off (`slots=${RATP_SIM_SLOTS:-1}`).
@@ -96,6 +96,7 @@ A picture command never adds or deletes a wallpaper: it checks it on disk (`ios/
 Why: the Simulator has no command for a wallpaper, so it is set by taps in the wallpaper editor, and the delete by taps at the end of each run failed in three runs of five and left a stray wallpaper (TASK-311, decision-76).
 A job reset keeps the wallpaper; a new or erased Simulator does not, so run `make simulator-wallpaper` again after `make simulator-delete`.
 So is `make live-activity-render` (the render check of the Live Activity views, see `.claude/rules/render-check.md`).
+So is `make release-run-check`, which starts the app as the store ships it (`make merge` runs it after the E2E suite).
 
 `make merge` takes the lock before the rebase and frees it after the fast-forward and the push of the record of the E2E pass, success or failure (see `.claude/rules/merge.md`).
 Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots.

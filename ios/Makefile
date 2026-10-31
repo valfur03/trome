@@ -19,6 +19,8 @@ STORE_COMPOSER := $(BUILD_DIR)/store-screenshots-compose
 # The composer places the line badge by the rule of the app's badge, so it builds with that file of the app.
 STORE_COMPOSER_SOURCES := scripts/store-screenshots-compose/main.swift Packages/TROMECore/Sources/TROMEBadge/LineBadge/LabelInk.swift
 RENDER_SCHEME := TROMERenderCheck
+RELEASE_RUN_SCHEME := TROMEReleaseRun
+RELEASE_RUN_RESULT := $(BUILD_DIR)/release-run.xcresult
 RENDER_OUT := $(BUILD_DIR)/live-activity-render
 BUILD_RESULT := $(BUILD_DIR)/build.xcresult
 RELEASE_ARCHIVE_DIR := $(BUILD_DIR)/release-archive-check
@@ -98,14 +100,14 @@ XCODEBUILD := $(BUILD_GATE) $(USE_SHARED_CACHE) xcodebuild -quiet \
 	SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
 BUILD_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
 # The Release build is not signed: the store build is signed by the paid team, and the Simulator runs it unsigned.
-BUILD_RELEASE_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) -configuration Release -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) \
-	CODE_SIGNING_ALLOWED=NO -xcconfig Config/ReleaseRun.xcconfig build
+RELEASE_RUN_SETTINGS := -configuration Release CODE_SIGNING_ALLOWED=NO -xcconfig Config/ReleaseRun.xcconfig
+BUILD_RELEASE_APP := $(XCODEBUILD) -scheme $(APP_SCHEME) $(RELEASE_RUN_SETTINGS) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build
 EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALLOWED=NO \
 	-exportLocalizations -localizationPath $(BUILD_DIR)/Localizations -exportLanguage fr
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check page-date-check change-notes-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge e2e-proof
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check page-date-check change-notes-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render release-run-check merge e2e-proof
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -142,8 +144,9 @@ help:
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
-	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, fast-forward, then push main with the record of its E2E pass and its render counts. Merges that wait together share one run; when it fails, they land one by one"
-	@echo "make e2e-proof           Say whether a commit (COMMIT=, default HEAD) has, on GitHub, the record that make merge leaves after a full E2E pass on its tree, and its render counts; fail when it has none (the release refuses it)"
+	@echo "make release-run-check   Start the app as the store ships it (as make run RELEASE=1 builds it) on the shared Simulator, and fail when it does not reach its first screen or shows a Testing tool (takes the Simulator lock; make merge runs it)"
+	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, make release-run-check, fast-forward, then push main with the record of both passes and its render counts. Merges that wait together share one run; when it fails, they land one by one"
+	@echo "make e2e-proof           Say whether a commit (COMMIT=, default HEAD) has, on GitHub, the record that make merge leaves after a full E2E pass and a run of the Release app on its tree, and its render counts; fail when either is missing (the release refuses it)"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
@@ -329,6 +332,17 @@ e2e: project
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
 		$(E2E_ONLY) -resultBundlePath $(E2E_RESULT) test-without-building
+
+# The app as the store ships it, started by iOS: the test of ios/ReleaseRun/ needs no wallpaper, widget host or permission.
+release-run-check: project
+	@rm -rf $(RELEASE_RUN_RESULT)
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/release-run-build.log '' $(XCODEBUILD) -scheme $(RELEASE_RUN_SCHEME) $(RELEASE_RUN_SETTINGS) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@RATP_SIM_KIND=release-run $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
+		$(QUIET) $(LOGS)/release-run.log '^E2E tests: ' \
+		sh -c '"$$@"; status=$$?; ./scripts/e2e-failures.py $(RELEASE_RUN_RESULT); exit $$status' release-run \
+		$(XCODEBUILD) -scheme $(RELEASE_RUN_SCHEME) $(RELEASE_RUN_SETTINGS) -collect-test-diagnostics never \
+		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 -resultBundlePath $(RELEASE_RUN_RESULT) test-without-building
+	@echo "release-run-check: OK (the Release app reached its first screen, with no Testing tools)"
 
 stations:
 	python3 scripts/update-stations.py

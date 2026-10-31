@@ -7,6 +7,7 @@ target=main
 check_command=${TROME_MERGE_CHECK:-make check}
 e2e_command=${TROME_MERGE_E2E:-make e2e}
 render_command=${TROME_MERGE_RENDER:-make live-activity-render}
+release_run_command=${TROME_MERGE_RELEASE_RUN:-make release-run-check}
 merge_lock=${RATP_MERGE_LOCK:-/tmp/ratp-merge.lock}
 # sim-lock.sh reads the same queue: a job that is not a merge waits while a merge waits in it.
 queue=${RATP_MERGE_QUEUE:-${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}.merge-queue}
@@ -130,8 +131,8 @@ timed() {
     perl -e '$seconds = shift; alarm $seconds; exec @ARGV or die "cannot run $ARGV[0]: $!\n"' "$@"
 }
 
-# The release refuses a commit of main with no record of a full E2E pass on its tree (e2e-proof.sh).
-# After a passed E2E run, it draws the Live Activity views for the counts of the record, when they may have changed
+# The release refuses a commit of main with no record of a full E2E pass and a Release app run on its tree (e2e-proof.sh).
+# After both passed, it draws the Live Activity views for the counts of the record, when they may have changed
 # since the last drawing on GitHub; it sets render_counts, or leaves it empty when it did not draw.
 # The render check is a report, not a gate: it never fails the merge.
 draw_for_record() {
@@ -158,8 +159,8 @@ draw_for_record() {
     rm -f "$render_log"
 }
 
-# Pushes main to origin, and leaves on its new commit the record of its full E2E pass: GitHub keeps a status only for a
-# commit that it has. Prints what it did. A failure leaves main as it landed, for the next push.
+# Pushes main to origin, and leaves on its new commit the record of its full E2E pass and Release app run:
+# GitHub keeps a status only for a commit that it has. Prints what it did. A failure leaves main as it landed, for the next push.
 publish_record() {
     if ! git remote get-url origin > /dev/null 2>&1; then
         echo "make merge: no remote 'origin', so no record of the E2E pass of $(short "$tip") is left on GitHub."
@@ -173,7 +174,7 @@ publish_record() {
         echo "make merge: pushed $target, but GitHub did not take the record of the E2E pass of $(short "$tip"), so a release refuses it until the next merge that runs the E2E suite: $(tail -n 1 "$work/publish.err")"
         return 0
     fi
-    echo "make merge: pushed $target, and left on $(short "$tip") the record of its full E2E pass (the status 'E2E on the Mac' on GitHub)${render_counts:+, with its render counts: $render_counts}."
+    echo "make merge: pushed $target, and left on $(short "$tip") the record of its full E2E pass and Release app run (the status 'E2E on the Mac' on GitHub)${render_counts:+, with its render counts: $render_counts}."
 }
 
 e2e_evidence() {
@@ -396,12 +397,19 @@ land() {
             stack_step="full E2E suite"
             stack_failure=$(e2e_evidence "$evidence_note")
         else
-            e2e_passed=1
-            draw_for_record
+            # Every commit of main must be safe to ship: the app as the store ships it must start, with no Testing tools.
+            step "3/4 Release app run ($release_run_command)$once"
+            if ! (cd "$tip_root" && sh -c "$release_run_command"); then
+                stack_step="Release app run"
+                stack_failure="Its result bundle, with the crash report when the app crashed: $tip_root/ios/.build/release-run.xcresult"
+            else
+                e2e_passed=1
+                draw_for_record
+            fi
         fi
         rm -f "$evidence_note"
     else
-        step "3/4 full E2E suite: skipped, $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the notes of the changes, the server or the contracts, see .claude/rules/tests.md)"
+        step "3/4 full E2E suite and Release app run: skipped, $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the notes of the changes, the server or the contracts, see .claude/rules/tests.md)"
     fi
     if [ -z "$stack_step" ]; then
         step "4/4 fast-forward $target to $(short "$tip")"
@@ -495,7 +503,7 @@ train() {
         land "$one"
     done
     case "$train_step" in
-        "quality gate" | "full E2E suite") ;;
+        "quality gate" | "full E2E suite" | "Release app run") ;;
         *) return 0 ;;
     esac
     last=
@@ -541,7 +549,7 @@ case "${1:-}" in
         train
         ;;
     *)
-        echo "Usage: $0   Land the branch of this worktree on $target, before the other Simulator jobs that wait: rebase, gate, full E2E suite, fast-forward, then push main with the record of its E2E pass. The merges that wait together share one gate and one E2E run." >&2
+        echo "Usage: $0   Land the branch of this worktree on $target, before the other Simulator jobs that wait: rebase, gate, full E2E suite, Release app run, fast-forward, then push main with the record of both passes. The merges that wait together share one gate and one E2E run." >&2
         exit 1
         ;;
 esac

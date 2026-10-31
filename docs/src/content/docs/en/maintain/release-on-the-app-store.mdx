@@ -304,7 +304,8 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    It also fails when the code of the app or of its Live Activity calls an API of Apple's list of APIs that need a reason, and the privacy manifest gives no reason for it.
    Then `git status --short` and `git log origin/main..` must print nothing: the tag of step 10 of this list names one commit of `main`, so the archive must hold no change outside it, and that commit must be on GitHub.
    And `make e2e-proof` must print `E2E proof: found`: the end-to-end tests passed on this commit, or on an earlier one with the same app code.
-   `make merge` leaves that record on `main` after a pass, because GitHub's Mac cannot run these tests.
+   It must also print `Release app run: found`: on that commit, the app as the store ships it started, reached its first screen and showed no Testing tools.
+   `make merge` leaves that record on `main` after both pass, because GitHub's Mac cannot run these tests.
    It also prints the counts of the render check, which nothing compares with an earlier release yet.
 
 2. Make your server file from its example, then open it.

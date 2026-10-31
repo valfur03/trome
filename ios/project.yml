@@ -192,6 +192,20 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: TROME
 
+  # The app as the store ships it, started by iOS (make release-run-check): its scheme builds and tests in Release.
+  TROMEReleaseRun:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - ReleaseRun
+    dependencies:
+      - target: TROME
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(TROME_CHECKED_ID_PREFIX).trome.dev.release-run
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: TROME
+
   TROMERenderCheckHost:
     type: application
     platform: iOS
@@ -256,6 +270,15 @@ schemes:
       config: Debug
       targets:
         - TROMEDocsScreenshots
+
+  TROMEReleaseRun:
+    build:
+      targets:
+        TROME: all
+    test:
+      config: Release
+      targets:
+        - TROMEReleaseRun
 
   TROMERenderCheck:
     build:

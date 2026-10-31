@@ -1,7 +1,8 @@
 name: E2E proof
 
-# Says whether the commit of the run has a record that the full E2E suite passed on the Mac on its tree, and fails when it has none.
-# The full E2E suite cannot pass on GitHub's Mac, so make merge runs it on the Mac, then pushes main and leaves the record:
+# Says whether the commit of the run has a record that the full E2E suite passed on the Mac on its tree, and that the app as the
+# store ships it started there (make release-run-check), and fails when either is missing.
+# The full E2E suite cannot pass on GitHub's Mac, so make merge runs both on the Mac, then pushes main and leaves the record:
 # a commit status named "E2E on the Mac", written with the token of the owner of the repo (ios/scripts/e2e-proof.sh).
 # A commit with no record of its own counts when an older commit of main has one and no commit since changes app code,
 # the same rule by which make merge skips the suite.
@@ -31,7 +32,7 @@ jobs:
           fetch-depth: 0
           filter: blob:none
 
-      - name: Read the record of the full E2E pass on the Mac, and the render counts
+      - name: Read the record of the full E2E pass and the Release app run on the Mac, and the render counts
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
