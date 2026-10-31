@@ -278,10 +278,16 @@ What to test, English (763 bytes):
 
 TestFlight shows the text in the language of the tester's iPhone, and falls back to the primary language.
 
+This What to Test is for the first build that a group gets, a first install.
+For each later build, `make release-notes` prints the What to Test of each language: the lines that are new in the version, then two lines that say where TROME works and how to report a problem.
+A tester of a later build already has the app, and wants to know what changed.
+The command keeps each text under 1,000 bytes, as above.
+
 ## What 1.0 says to riders, outside the store
 
 The first version of an app has no **What's New** field.
-The 1.0 lines are on the site, in the pages [Nouveautés](/fr/whats-new/) and [What's new](/en/whats-new/), and in `CHANGELOG.md`: they are the one source of the notes of the version, and they are not pasted in the store.
+The 1.0 lines are on the site, in the pages [Nouveautés](/fr/whats-new/) and [What's new](/en/whats-new/), and in `CHANGELOG.md`, and they are not pasted in the store.
+From the next version on, the one source of the notes of a version is the note that each change writes in `ios/changes/`: `make release-notes` prints, from these notes, the What's New of each language, under Apple's 4,000 characters, and the same lines go to TestFlight, the What's new pages and `CHANGELOG.md`.
 
 ## What the text must not say
 

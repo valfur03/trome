@@ -83,9 +83,12 @@ Check that each one is ready before you start the step that needs it, so that yo
 - **For step 6: the App Privacy answers,** written from the privacy page, so that the store and the page say the same thing.
 - **For step 6: the screenshots,** in French and in English, at the 6.9-inch size of App Store Connect (for example 1260 × 2736 pixels), made by one command in the repo.
 - **For steps 5 and 7: the review notes,** in English and under 4,000 bytes ([in the store text page](/en/maintain/store-text/#what-app-review-reads-the-contact-and-the-notes)), and **the recording script**: you film the recording yourself, on your iPhone, at a real station, with the final build.
-- **For step 8: the notes of the version,** in two layers.
-  For developers, the commit log, whose messages start with their type (`feat`, `fix`, `docs`), and `CHANGELOG.md` in the repo, which sums it up for each version.
-  For riders, three or four lines in their own words, in French and in English, written by a person: they go on the site's What's new page ([Nouveautés](/fr/whats-new/), [What's new](/en/whats-new/)), and from the second version on, in the What's New field of the store.
+- **For step 8: the notes of the version,** made from the notes that each change of the app writes in [`ios/changes/`](https://github.com/valfur03/trome/tree/main/ios/changes), in French and in English.
+  `make release-notes` prints them: the What's New of the store and the What to Test of TestFlight, in each language, and the entry of `CHANGELOG.md`.
+  It counts the notes that the build on the App Store does not hold, so it reads [the table of builds](#the-builds-that-riders-may-hold) and the tag of that build.
+  When no change since that build is one that a rider notices, it prints `no release` and the lines that wait: a version exists for one headline, so it waits for one.
+  It stops on two headlines: the second waits for its own version.
+  Version 1.0 has no What's New field: its lines are on the site's What's new pages ([Nouveautés](/fr/whats-new/), [What's new](/en/whats-new/)) and in `CHANGELOG.md`.
 
 </Checklist>
 
@@ -482,7 +485,9 @@ So the group stays small until the quota of the PRIM account is raised.
 3. Click the **+** button next to **External Testing**, name the group, for example `First riders`, and click **Create**.
    App Store Connect needs the internal group of the steps above before it lets you create this one.
 
-4. In the group, click **Add Builds**, choose the build, enter what testers should look at in **What to Test**, and click **Submit Review**.
+4. In the group, click **Add Builds**, choose the build, paste in **What to Test** the text of each language, and click **Submit Review**.
+   For the first build of the group, the text is the one of [the store text page](/en/maintain/store-text/#testflight-what-the-first-external-testers-read), for a first install.
+   For each later build, it is the What to Test that `make release-notes` prints: what is new, then how to report a problem.
    If App Store Connect asks for a contact and notes for the beta review, give your name, email and phone, and paste the review notes.
 
 5. Wait for the beta review: App Store Connect emails you when it approves the build.
@@ -549,6 +554,7 @@ Apple counts the limits in characters, except the keywords, which it counts in b
    ```
 
    The first version has no **What's New** field.
+   From the next version on, paste in it the What's New of that language that `make release-notes` prints.
 
 7. Under **Previews and Screenshots**, choose the **iPhone** tab, and drag the screenshots of that language, in their order, into the 6.9-inch well.
    Apple scales them down for the smaller iPhones.
@@ -628,6 +634,7 @@ The store has no tester limit, so release only when the PRIM quota has been rais
    Then click **Release This Version**, and **Confirm**.
    TROME can take up to 24 hours to show on the App Store.
    When it shows, write App Store, with no date, in the **Where** cell of the row of the build in [the builds that riders may hold](#the-builds-that-riders-may-hold).
+   From then on, `make release-notes` counts the notes of the next version from this build.
 
 </Steps>
 
