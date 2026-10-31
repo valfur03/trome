@@ -117,10 +117,10 @@ def run(root: Path, base: str) -> int:
             if status != 0:
                 print("\n".join(issues(log)))
                 print(
-                    f"test-waits: FAILED in the {pace} pace (run {number} of {repeats}): a test waits for one thing and "
-                    "checks another, so it passes only on a quiet Mac. Wait for the state that the check reads "
-                    f"(ios/guide/tests.md). Whole output: ios/{log}; run it again with TROME_TEST_WAITS={pace} swift "
-                    "test --filter <test>."
+                    f"test-waits: FAILED in the {pace} pace (run {number} of {repeats}). If the test passes in make "
+                    "test, it waits for one thing and checks another, so it passes only on a quiet Mac: wait for the "
+                    f"state that the check reads (ios/guide/tests.md). Whole output: ios/{log}; replay it with "
+                    f"TROME_TEST_WAITS={pace} swift test --filter <test>."
                 )
                 return 1
     print(f"test-waits: OK, {what}, {repeats} runs in each pace ({', '.join(PACES)})")

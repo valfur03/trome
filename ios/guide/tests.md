@@ -40,6 +40,12 @@ To write one:
 - Give a service of iOS, such as the position or ActivityKit, a fake of the small protocol that `TROMECore` declares for it.
 - Give the test the time zone, the locale and the date it needs: the settings of your Mac are not the ones of the next Mac.
 - The tests run on macOS, so put any code that only iOS has inside `#if os(iOS)`.
+- To wait for work that runs in the background, use `waitUntil { ... }`, and wait for the state that your next check reads, never for an earlier step: the code under test may not have caught up yet.
+  The wait fails at its own line when its condition never holds.
+  To check that something does not happen, such as one more call, use `expectNever { ... }`.
+- `make check` runs the tests of the test files that you changed with `make test-waits`: 3 times with waits that look again at once, as when the code under test runs late on a busy Mac, and 3 times with waits that look again after 50 ms, as when the test itself runs late.
+  A test that passes in `make test` and fails there waits for one thing and checks another.
+  To replay one failure, run `swift test` as above with `TROME_TEST_WAITS=eager` or `TROME_TEST_WAITS=late` in front.
 
 ## End-to-end tests
 
