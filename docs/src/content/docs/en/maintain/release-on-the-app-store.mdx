@@ -16,8 +16,9 @@ You need your Mac with the TROME repo, App Store Connect open in a browser, and 
 Each step needs your Apple Account, because you are the Account Holder and nobody else can sign in.
 What can be prepared without your account is in [Have these ready](#have-these-ready).
 
-<Aside type="caution" title="Written from Apple's help, tried only in step 4">
-  Step 4 was followed on a paid account, for the first three builds, in October 2026.
+<Aside type="caution" title="Written from Apple's help, tried only on the archive and the upload of step 4">
+  The archive and the upload of step 4 were followed on a paid account, for the first three builds, in October 2026.
+  Steps 2 and 3 were needed to archive them.
   The other steps come from Apple's help pages, read on 3 October 2026, and each step names the pages that it follows.
   Each step that was not tried on an account is marked <Badge text="Not checked on an account" variant="caution" />.
   When a screen differs from the page, trust the screen, note the difference, and see [Fix this page](#fix-this-page).
@@ -63,15 +64,16 @@ Check that each one is ready before you start the step that needs it, so that yo
   The name on the home screen stays TROME, whatever store title you get.
 - **For step 3: nothing.** The repo signs the release build with the team of `ios/Config/Signing.xcconfig`, a file that git ignores and that you make in step 3, and with no other team.
 - **For step 4: the build checks in the repo.** The version is 1.0.0 and the build number is the one of the next upload, the app has its icon, its privacy manifest and its answer on encryption, and `make check` passes.
-- **For step 4: the production server.** You set its secrets in your own terminal with `make server-secrets`, which asks for each value at a hidden prompt, then you run `make server-deploy`, and its `/health` address answers `{"status":"ok"}`.
-  Never put the PRIM key or the owner token in a file or in a message: a file can end up in git, and git keeps it for good.
-  The app token is the one value that goes in a file, and the next item says why that is safe.
-- **For step 4: the app token, made before you run `make server-secrets`.** The command asks for it but does not make it.
-  Make it first, in your terminal, with `openssl rand -hex 32`, and keep a copy in your password manager: Cloudflare never shows a secret again.
+- **For step 4: the app token, made first.** `make server-secrets`, in the next item, asks for it but does not make it.
+  Make it in your terminal with `openssl rand -hex 32`, and keep a copy in your password manager: Cloudflare never shows a secret again.
   Use `-hex` and not `-base64`: the app reads the token from `ios/Config/Server.xcconfig`, where `//` starts a comment, and a `-base64` token can hold `//`.
-  This token goes in that file, though the PRIM key and the owner token never do, because it is not a secret in the same way.
+  This token goes in that file, though the other secrets never do, because it is not a secret in the same way.
   The app holds it, so anyone who takes the app apart can read it.
   What protects your PRIM quota is the daily cap on the server's PRIM calls; the token only keeps casual traffic out, and the file keeps it out of a public repo ([The secrets](https://github.com/valfur03/trome/blob/main/server/guide/deploy.md#the-secrets) says the same).
+- **For step 4: the production server.** Make the app token first (the item above).
+  Then you set the secrets of the server in your own terminal with `make server-secrets`, which asks for each value at a hidden prompt, and you run `make server-deploy`, and its `/health` address answers `{"status":"ok"}`.
+  Never put any other secret in a file or in a message (the PRIM key, the owner token, the Apple push key): a file can end up in git, and git keeps it forever.
+  The app token is the one value that goes in a file, and the item above says why that is safe.
 - **For step 4: the server address and the app token in the release build.** The release build reads them from `ios/Config/Server.xcconfig`, a file that git ignores, never from a file of the repo, and you make it in step 4.
   Have two values at hand: the host of the production server (for example `trome-server.<your subdomain>.workers.dev`), and the app token of the item above.
   The archive fails with no host or no token in that file.
@@ -271,11 +273,12 @@ With your paid team in it, Xcode signs the release build automatically, and make
 
 ## 4. Build, upload and check the first build
 
-<Badge text="Checked 11 October 2026, Xcode 27.0" variant="success" />
+<Badge text="Items 3 to 8 checked 11 October 2026, Xcode 27.0" variant="success" />
 
-Builds 1 to 3 were archived and uploaded with these steps, from 11 October 2026, in Xcode 27.0 (27A266a).
-The choices of the **Distribute App** list in step 6 were read on 18 October 2026, in the Organizer of build 3.
-The phone set of step 11 came after those uploads, and no upload has followed it yet.
+Builds 1 to 3 were archived and uploaded with items 3 to 8 of the list below (open the project, archive, validate, distribute, wait, read the status), from 11 October 2026, in Xcode 27.0 (27A266a).
+The choices of the **Distribute App** list in item 6 were read on 18 October 2026, in the Organizer of build 3.
+The other items were not tried on an upload: the checks of items 1 and 2 (`make e2e-proof`, `make release-server-check`, `make release-tokens-check`), the tag and the files of items 10 and 11 (the set in `contracts/builds/`, the phone set).
+Read their output with care on build 4, and note what differs.
 
 Apple's help, read on 3 October 2026: [Distributing your app for beta testing and releases](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases), [Upload builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/),
 [App build statuses](https://developer.apple.com/help/app-store-connect/reference/app-uploads/app-build-statuses/), [Overview of export compliance](https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/),
@@ -361,11 +364,11 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    Xcode lists the methods of distribution: **App Store Connect**, **TestFlight Internal Only**, **Release Testing**, **Enterprise**, **Debugging** and **Custom**.
    Keep **App Store Connect**, the first one, which Xcode selects for you ("Use recommended settings to upload app to App Store Connect for testing and release").
    Its build can go to your TestFlight groups, to external testers and to the store.
-   Never choose **TestFlight Internal Only**: Apple marks the build as internal for good, so it can go to nobody but your internal testers, and can never be submitted to the App Store.
-   A wrong choice cannot be mended: the build keeps its number, so you raise the number and archive again.
-   The other methods make a build for other ways of installing it, and send nothing to TestFlight.
+   Never choose **TestFlight Internal Only**: Apple marks the build as internal forever, so it can go to nobody but your internal testers, and can never be submitted to the App Store.
+   A wrong choice cannot be undone: the build keeps its number, so you raise the number and archive again.
+   The other methods make a build for other ways of installing it: do not use them for TestFlight.
    Then click **Distribute**: Xcode signs the build and uploads it.
-   If Xcode shows more screens, keep the recommended settings.
+   Xcode may show more screens before it uploads; nobody has seen them yet, so keep the recommended settings and note what they ask.
 
    Xcode may change the build number of the upload.
    Do nothing at this point: the number that App Store Connect shows decides, not the one in the repo, and steps 10 and 11 start from it.
@@ -378,7 +381,12 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
 8. Look at the build number first: no mark **Internal** must sit under it (in the list of builds, build 1 of TROME has one).
    If it does, the build was sent as **TestFlight Internal Only**: leave it, and send a new build with **App Store Connect**, as step 6 says, after raising the build number.
    Then look at its status:
-   - **Ready to Submit:** the build passed the upload checks, so go on to [TestFlight](#5-test-with-testflight-your-iphone-first-then-a-small-group).
+   - **Processing:** Apple has not finished with the build.
+     Wait, and look again after Apple's email.
+   - **Ready to Submit**, **Ready to Test** or **Testing:** the build passed the upload checks, so go on to [TestFlight](#5-test-with-testflight-your-iphone-first-then-a-small-group).
+     The three differ only in who holds the build: **Ready to Submit** has no group yet, **Ready to Test** has no tester yet, and **Testing** is held by a group or a tester.
+     The Builds list of 18 October showed builds 1 to 3 as **Testing**, because groups hold them.
+     Nobody has seen which status build 4 gets, so note it.
    - **Missing Compliance:** the build does not answer the encryption question by itself.
      For this build, click **Manage** and say that TROME uses only the encryption built into iOS (its HTTPS connections): that use is exempt, so Apple needs no export compliance documents.
      Then open an issue in the repo, so that the next build answers by itself.
