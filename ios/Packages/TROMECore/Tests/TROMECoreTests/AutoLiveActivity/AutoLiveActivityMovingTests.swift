@@ -33,6 +33,8 @@ extension AutoLiveActivityModelTests {
         await model.handleRegionEvent(
             .entered(regionId: "arrival:b"), lastKnownFix: position == .lastKnown ? atB : nil
         )
+        // The update reaches the Live Activity after the model decides the switch.
+        await waitUntil { client.updates.last?.stationName == "Station B" }
 
         #expect(client.updates.last?.stationName == "Station B")
         #expect(client.started.count == 1)
