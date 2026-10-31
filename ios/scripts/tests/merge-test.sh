@@ -525,10 +525,19 @@ expect "a train of three tasks runs one gate, and no E2E run and no Simulator lo
 expect "a train of three lands the three tasks in order" "$(rev main) $(rev main~1) $(rev main~2) $(rev main~3)" "$(rev task/docs_c) $(rev task/docs_b) $(rev task/docs_a) $before"
 
 # A merge with no app code holds no Simulator: it lands while another job holds the lock, and no job waits for it.
-mkfifo "$state/release-holder"
-"$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"' "$state/release-holder" > /dev/null 2>&1 &
-holder=$!
-wait_until test -e "$RATP_SIM_LOCK/pid"
+# The job that holds the Simulator ends when a file appears, so that a test that fails never blocks on it.
+hold_simulator() {
+    rm -f "$state/release-holder"
+    "$scripts/sim-lock.sh" job sh -c 'until [ -e "$0" ]; do sleep 0.1; done' "$state/release-holder" > /dev/null 2>&1 &
+    holder=$!
+    wait_until test -e "$RATP_SIM_LOCK/pid"
+}
+
+lock_is_free() {
+    [ ! -e "$RATP_SIM_LOCK" ]
+}
+
+hold_simulator
 new_task nolock
 commit "$state/nolock" nolock.md nolock
 merge nolock
@@ -552,25 +561,24 @@ wait_until has_queued 1
 RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-after-docs >> "$FAKE_SIM_STATE/steps"' > "$state/qa-docs.log" 2>&1 &
 qa_docs=$!
 wait_until grep -q "Waiting for the Simulator lock" "$state/qa-docs.log"
-echo release > "$state/release-holder"
-wait "$holder" "$qa_docs"
+touch "$state/release-holder"
+wait "$holder"
+wait_until grep -q qa-after-docs "$state/steps"
 expect "a job that waits takes the free Simulator while a merge with no app code waits" "$(steps_line)$(contains "$state/qa-docs.log" "a merge goes first")" "qa-after-docs no"
-"$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"' "$state/release-holder" > /dev/null 2>&1 &
-holder=$!
-wait_until test -e "$RATP_SIM_LOCK/pid"
+hold_simulator
 start_merge queued_app
 wait_until has_queued 2
 RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-after-app >> "$FAKE_SIM_STATE/steps"' > "$state/qa-app.log" 2>&1 &
 qa_app=$!
 wait_until grep -q "a merge goes first" "$state/qa-app.log"
-echo release > "$state/release-holder"
-wait "$holder"
+touch "$state/release-holder"
+wait_until lock_is_free
 expect "a job that waits does not take the free Simulator while a merge of app code waits" "$(contains "$state/qa-app.log" "a merge goes first (")$(steps_line)" "yesqa-after-docs "
 : > "$state/steps"
 echo release > "$state/release-merge-lock"
 wait "$merge_lock_holder"
 expect "a train that mixes a task of app code and a task with no app code lands both" "$(finish_merge queued_docs) $(finish_merge queued_app)" "0 0"
-wait "$qa_app"
+wait "$holder" "$qa_docs" "$qa_app"
 expect "it holds the Simulator lock for the whole train, and runs the E2E suite, before the job that waits" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked qa-after-app "
 expect "it moves main with the Simulator lock" "$(contains "$state/refs" "refs/heads/main locked")" "yes"
 expect "main has both tasks" "$(rev main~2)" "$before"
@@ -580,6 +588,8 @@ expect "main has both tasks" "$(rev main~2)" "$before"
 new_task undo
 mkdir -p "$state/undo/ios/App"
 commit "$state/undo" ios/App/Undo.swift undo
+# main moves first, so that the copy is a new commit: in the same second, a copy on the same parent would be the same commit.
+advance_main undo-before undo-before
 git -C "$repo" cherry-pick "$(rev task/undo)" > /dev/null
 git -C "$state/undo" rm -q ios/App/Undo.swift
 git -C "$state/undo" commit -q -m "remove ios/App/Undo.swift (no rider change)"
