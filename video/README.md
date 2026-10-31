@@ -29,7 +29,7 @@ fnm exec --using=.nvmrc -- make video-studio
 | `make video-still` | Renders one frame to `video/out/still.png`. `FRAME=<n>` picks the frame (60 by default, at 30 frames a second). |
 | `make video-clip` | Renders the whole film, with its music, to `video/out/clip.mp4`. |
 | `make video-stills` | Renders the key frames of the storyboard, in each look and language, one PNG each, and the storyboard on one page in each language, to `video/out/stills/`. It needs the captures of `make film-captures` and the bezel of the store pictures ([Apple's iPhone bezel](../ios/guide/assets.md#the-store-screenshots)); `BEZEL=<path>` picks another bezel file. |
-| `make video-check` | The quality gate of the folder: the type check, the unit tests of the music, and the render of one frame, whose size it checks. `make check` runs it only when a branch changes `video/`. |
+| `make video-check` | The quality gate of the folder: the type check, the unit tests of the music, the tests of the scripts, and the render of one frame, whose size it checks. `make check` runs it only when a branch changes `video/`. |
 
 The first command installs the packages and the headless browser that renders the frames: about 1.1 GB in `video/node_modules`, once per folder, half of it the browser.
 
@@ -45,7 +45,10 @@ So `make video-still`, `make video-stills`, `make video-clip` and `make video-ch
 When another job holds the lock, the render waits and prints `Waiting for the Simulator lock`, with the job that holds it.
 
 Render with these commands, not with the Render button of the studio or with `npx remotion render`: those skip the lock.
-When the headless browser of Remotion does not start (the render stops at `Waiting for root component to load`), `CHROME=<path>` renders with an installed Chrome instead, for example `CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`.
+On a Mac, a render uses a copy of the headless browser of Remotion, in `~/Library/Caches/TROME-video/`, made once per browser version.
+Why: when the repo is in a folder that macOS protects (Documents, Desktop, Downloads, iCloud Drive), the browser of `video/node_modules` waits for a permission dialog of macOS, and the render stops at `Waiting for root component to load`.
+The copy is a clone on APFS, so it takes no disk space until one of the two changes; delete the folder when no render runs, and the next render makes it again.
+`CHROME=<path>` renders with another browser instead, for example `CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`.
 
 ## What git keeps
 
@@ -61,5 +64,5 @@ A finished film does not go into git either, because a large file stays in the h
 - **Inter**, the font of every text that the film draws, is under the [SIL Open Font License 1.1](https://github.com/rsms/inter/blob/master/LICENSE.txt).
   It comes from the npm package `@fontsource-variable/inter`, with its licence text.
 - **The music** is made in code by `music/synth.ts`, with no sample and no loop of anyone else, so it is under the MIT licence of the repo.
-- **The tools that Remotion downloads**: Chrome Headless Shell (the BSD licence of Chromium) and FFmpeg (LGPL), in `video/node_modules`.
+- **The tools that Remotion downloads**: Chrome Headless Shell (the BSD licence of Chromium) and FFmpeg (LGPL), in `video/node_modules` (and the copy of the browser, in `~/Library/Caches/TROME-video/`).
   React is under the MIT licence.

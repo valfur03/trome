@@ -11,9 +11,9 @@ APP_PICTURES := $(foreach lang,fr en,$(foreach case,metro rer fork,public/app/li
 # The key frames show the captures of the film (make film-captures) in Apple's iPhone bezel: neither is kept in git.
 BEZEL ?= $(HOME)/Library/Application Support/TROME/store-bezel.png
 FILM_CAPTURES := ../ios/.build/film-captures/captures
-# CHROME=<path of a Chrome> renders with that browser, in its headless mode, instead of the headless shell that
-# Remotion downloads (for a Mac where that shell hangs on its first page). Not BROWSER: the studio of Remotion reads
-# BROWSER as the browser that opens it, and BROWSER=none as "open none".
+# A render uses a copy of the headless shell that Remotion downloads, outside the repo (scripts/browser.sh says why).
+# CHROME=<path of a Chrome> renders with that browser instead, in its headless mode. Not BROWSER: the studio of
+# Remotion reads BROWSER as the browser that opens it, and BROWSER=none as "open none".
 CHROME_FLAGS = $(if $(CHROME),--browser-executable="$(CHROME)" --chrome-mode=chrome-for-testing)
 STUDIO_FLAGS := $(if $(PORT),--port $(PORT)) $(if $(filter 0,$(OPEN)),--no-open)
 
@@ -24,7 +24,7 @@ help:
 	@echo "make video-still         Render one frame of the film to video/out/still.png (FRAME=<n> for another frame), through the Simulator lock"
 	@echo "make video-clip          Render the film with its music to video/out/clip.mp4, through the Simulator lock"
 	@echo "make video-stills        Render the key frames of the storyboard (two looks, French and English) and its page in each language to video/out/stills/, through the Simulator lock (needs make film-captures, and BEZEL=<path> when the bezel is not in its place)"
-	@echo "make video-check         Film quality gate: type check + unit tests + render one frame and check its size"
+	@echo "make video-check         Film quality gate: type check + unit tests + script tests + render one frame and check its size"
 
 node-check:
 	@./scripts/node-check.sh
@@ -70,6 +70,7 @@ video-stills: video-setup $(APP_PICTURES) film-pictures
 video-check: video-setup $(MUSIC) $(APP_PICTURES)
 	@$(QUIET) $(LOGS)/video-type-check.log '' npx --no-install tsc
 	@$(QUIET) $(LOGS)/video-unit-tests.log '^ℹ (tests|fail) ' node --test "music/**/*.test.ts"
+	@$(QUIET) $(LOGS)/video-script-tests.log 'browser-test: .*' ./scripts/tests/browser-test.sh
 	@$(RENDER) still Film .build/check/still.png --frame=$(FRAME) --log=error $(CHROME_FLAGS)
 	@node scripts/still-check.ts .build/check/still.png
 
