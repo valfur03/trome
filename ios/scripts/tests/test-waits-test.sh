@@ -90,6 +90,12 @@ width=$(cd "$scripts/.." && env -u SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDT
     make -s -f Makefile -f "$state/width.mk" show-width)
 expect "the recipes of ios/Makefile run as many unit tests at once as the Mac has cores" "$width" \
     "$(sysctl -n hw.ncpu)"
+# Swift Testing still names that variable experimental: a new Xcode that stops reading it would bring the mass
+# timeouts back with no error, so this fails when the Swift Testing of the active Xcode no longer holds its name.
+testing="$(xcrun --show-sdk-platform-path)/Developer/Library/Frameworks/Testing.framework/Testing"
+read_by_swift=no
+! grep -qa SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH "$testing" || read_by_swift=yes
+expect "the Swift Testing of the active Xcode still reads the bound of the tests that run at once" "$read_by_swift" yes
 
 if [ "$failures" -ne 0 ]; then
     echo "$failures failures"

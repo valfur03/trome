@@ -38,8 +38,8 @@ CORE_PACKAGE := Packages/TROMECore
 # The unit tests run at most as many tests at once as the Mac has cores.
 # Swift Testing starts every test at once by default, and the tests of the main actor then share its one thread, so on
 # a slow or busy Mac a wait of 10 s ran out while that thread served hundreds of other tests.
-# Swift 6.4 still names the variable experimental: a run that fails many waits at the same moment is the sign that a
-# new Swift no longer reads it.
+# Swift 6.4 still names the variable experimental: scripts/tests/test-waits-test.sh fails when the Swift Testing of the
+# active Xcode no longer holds its name.
 export SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH ?= $(shell sysctl -n hw.ncpu)
 NO_KEY := -xcconfig Config/NoKey.xcconfig
 # make build (so make check and make run) compiles the silent start, which every Release build and the Debug builds
