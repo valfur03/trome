@@ -57,7 +57,7 @@ A fake position is always trusted.
 | The same, but a system popup covers the app (a permission question) | It waits, and starts when the app is active again; if the app goes to the background first, the notification comes instead |
 | The same, with the app in the background or closed | The server starts the Live Activity, with no notification and no tap ([the silent start](#the-silent-start)). When it cannot, one notification, with the station name alone as its title ("Abbesses") and no body, also when Live Activities are off. A tap opens the app and starts the Live Activity |
 | The rider opens the app at that station without tapping the notification | The Live Activity starts, and the notification goes away, also when notifications are off |
-| A Live Activity shows, and the rider comes within 150 meters of another station | It switches to the new station, with the app open, in the background or closed: no second Live Activity, no notification |
+| A Live Activity that the app started shows, and the rider comes within 150 meters of another station | It switches to the new station, with the app open, in the background or closed: no second Live Activity, no notification. One that the server started ends, and the new station starts its own ([the silent start](#the-silent-start)) |
 | The rider moves more than 250 meters from the station of the Live Activity | It ends, once the rider has been within 250 meters of it. So a rider reaches a next station more than 400 meters away with no Live Activity: with the app in the background or closed, that station notifies |
 | 45 minutes after the Live Activity started | It ends. A switch does not start the count again |
 | The same station again | Nothing, until the rider leaves the station and comes back |
