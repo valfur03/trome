@@ -1,8 +1,9 @@
 import CoreLocation
 import XCTest
 
-/// The steps that the docs pictures, the store pictures and the captures of the film share: turn on the automatic mode, put the Live
-/// Activity of a station on the lock screen with the fake trains, show it, and take a still screenshot.
+/// The steps that the docs pictures, the store pictures and the captures of the film share: turn on the automatic
+/// mode, put the Live Activity of a station on the lock screen with the fake trains, show it, and take a still
+/// screenshot.
 @MainActor
 struct ScreenshotSteps {
     static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)

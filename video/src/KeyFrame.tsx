@@ -103,7 +103,7 @@ const Field = ({tones}: {tones: ReturnType<typeof palette>}) => (
 );
 
 // The end card: the name alone. The icon is left out: its "013" runs off its own edges, which reads as an icon cut
-// in two at the size of a film (the prompter's remark on the end card of round 1).
+// in two at the size of a film.
 const EndCard = ({look, beat}: {look: Look; beat: Beat}) => {
   const {colour, tones} = lineOf(beat);
   return (
