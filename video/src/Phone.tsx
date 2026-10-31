@@ -13,7 +13,7 @@ export const card = {top: 1812, bottom: 2235} as const;
 export const captureOf = (name: NonNullable<Beat['capture']>, lang: Lang) => staticFile(`app/film/lock-${name}-${lang}.png`);
 
 // The phone: a real capture of the lock screen, whole, under the bezel, scaled down only (never up, so no pixel
-// is blurred), at whole pixels. Nothing is drawn on it: no shadow, no reflection, no tilt. With no capture, the
+// is blurred), its box at whole pixels. Nothing is drawn on it: no shadow, no reflection, no tilt. With no capture, the
 // screen is off (black), as a locked phone in the dark.
 export const Phone = ({src, scale, centreX, top}: {src?: string; scale: number; centreX: number; top: number}) => {
   const width = Math.round(bezel.width * scale);

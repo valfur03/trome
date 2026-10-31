@@ -45,7 +45,7 @@ So `make video-still`, `make video-stills`, `make video-clip` and `make video-ch
 When another job holds the lock, the render waits and prints `Waiting for the Simulator lock`, with the job that holds it.
 
 Render with these commands, not with the Render button of the studio or with `npx remotion render`: those skip the lock.
-When the headless browser of Remotion does not start (the render stops at `Waiting for root component to load`), `BROWSER=<path>` renders with an installed Chrome instead, for example `BROWSER="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`.
+When the headless browser of Remotion does not start (the render stops at `Waiting for root component to load`), `CHROME=<path>` renders with an installed Chrome instead, for example `CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`.
 
 ## What git keeps
 
