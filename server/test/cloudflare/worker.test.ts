@@ -1,19 +1,16 @@
 import { env, exports } from "cloudflare:workers";
-import { abortAllDurableObjects, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
+import { abortAllDurableObjects, runDurableObjectAlarm } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
 import worker from "../../src/cloudflare/worker";
 import { everyStoredRow } from "./every-stored-row";
 import { secretNames } from "../../src/core/config/secrets";
 import { fakePrim } from "./fake-prim";
+import { forgetEverything } from "./forget-everything";
 
 const departuresUrl = "https://server.test/v1/stops/STIF:StopArea:SP:42155:/departures";
 
-afterEach(async () => {
-  vi.restoreAllMocks();
-  await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
-  await abortAllDurableObjects();
-});
+afterEach(forgetEverything);
 
 const oldAppToken = "0a1b2c3d4e5f60718293a4b5c6d7e8f9";
 const newAppToken = "f9e8d7c6b5a4938271605f4e3d2c1b0a";

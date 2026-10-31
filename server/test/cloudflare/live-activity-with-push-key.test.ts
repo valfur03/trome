@@ -1,10 +1,11 @@
 import { env, exports } from "cloudflare:workers";
-import { abortAllDurableObjects, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
+import { runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
 import { primEndpoint } from "../../src/core/relay/prim-client";
 import { day, hour, minute } from "../../src/core/time/clock";
 import { recordedAnswer } from "./fake-prim";
+import { forgetEverything } from "./forget-everything";
 
 /**
  * The updates of a started Live Activity run in the storage alarm of the object, each one a new invocation with its own limit of subrequests, and never in the timer that keeps the object awake.
@@ -12,12 +13,7 @@ import { recordedAnswer } from "./fake-prim";
  */
 const startToken = "80a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f";
 
-afterEach(async () => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-  await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
-  await abortAllDurableObjects();
-});
+afterEach(forgetEverything);
 
 /** The recorded answer of Abbesses, as if PRIM gave it now: its trains leave 2 to 10 minutes from now. */
 function recordedNow(): string {
@@ -102,6 +98,18 @@ describe("the updates of a started Live Activity on Cloudflare", () => {
     expect(network.deletes()).toBe(1);
     await runInDurableObject(relayObject(env), () => vi.runAllTimersAsync());
     expect(await timerCount()).toBe(0);
+  });
+
+  it("fail the test that runs their alarm when it throws, as when storage cannot plan the next update", async () => {
+    useFakeTime();
+    fakeNetwork();
+    expect(await (await start()).json()).toEqual({ result: "started" });
+    await passTime(((await plannedAlarm()) ?? Date.now()) - Date.now());
+    await runInDurableObject(relayObject(env), (_object, state) => {
+      vi.spyOn(state.storage, "setAlarm").mockRejectedValueOnce(new Error("storage fault"));
+    });
+
+    await expect(runDurableObjectAlarm(relayObject(env))).rejects.toThrow("storage fault");
   });
 
   it("keeps the object awake while it holds a refused start, with no answer of PRIM left in memory", async () => {

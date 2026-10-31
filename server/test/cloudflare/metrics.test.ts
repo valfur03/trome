@@ -1,16 +1,14 @@
 import { env, exports } from "cloudflare:workers";
-import { abortAllDurableObjects, runInDurableObject } from "cloudflare:test";
+import { runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it } from "vitest";
 import { DurableObjectSqlDatabase } from "../../src/cloudflare/durable-object-sql-database";
 import { relayObject } from "../../src/cloudflare/relay-object";
 import type { SqlDatabase, SqlValue } from "../../src/core/storage/sql-database";
 import { hour } from "../../src/core/time/clock";
 import { UsageCounts, metricsTotals } from "../../src/core/usage/usage-counts";
+import { forgetEverything } from "./forget-everything";
 
-afterEach(async () => {
-  await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
-  await abortAllDurableObjects();
-});
+afterEach(forgetEverything);
 
 /** Records the statements that the server object runs on its SQLite storage during the work, and the rows that they write. */
 async function recordSql(work: () => Promise<unknown>): Promise<{ queries: string[]; rowsWritten: number }> {

@@ -1,11 +1,10 @@
-import { env, exports } from "cloudflare:workers";
-import { abortAllDurableObjects, runInDurableObject } from "cloudflare:test";
+import { exports } from "cloudflare:workers";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { relayObject } from "../../src/cloudflare/relay-object";
 import { primEndpoint } from "../../src/core/relay/prim-client";
 import { brokenPromises, type Answered, type PromisedAnswer, type PromiseSet } from "./build-promises";
 import { filled, recordedSets } from "./recorded-sets";
 import { judgeTheStartPromises } from "./start-promises";
+import { forgetEverything } from "./forget-everything";
 
 // Every recorded set of contracts/builds/ is asked to the whole Worker (the router, the server object, its storage and its
 // PRIM client), with PRIM faked by the recorded answers of the set, and each answer is judged as the builds of the set read it.
@@ -117,13 +116,6 @@ const situations: Record<string, Record<string, Situation>> = {
     "with a token it does not know": ({ set, stop, promise }) => ask(set, stop, promise.requestHeaders),
   },
 };
-
-async function forgetEverything(): Promise<void> {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-  await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
-  await abortAllDurableObjects();
-}
 
 afterEach(forgetEverything);
 

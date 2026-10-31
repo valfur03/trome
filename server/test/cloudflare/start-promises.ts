@@ -1,11 +1,11 @@
-import { env, exports } from "cloudflare:workers";
-import { abortAllDurableObjects, runInDurableObject } from "cloudflare:test";
+import { exports } from "cloudflare:workers";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { relayObject } from "../../src/cloudflare/relay-object";
 import { primEndpoint } from "../../src/core/relay/prim-client";
+import { day, hour, minute } from "../../src/core/time/clock";
 import { brokenPromises, type Answered, type PromisedAnswer, type StartPromises } from "./build-promises";
 import { recordedAnswer } from "./fake-prim";
 import { filled, recordedSets } from "./recorded-sets";
+import { forgetEverything } from "./forget-everything";
 
 // The start of the Live Activity in each recorded set (its key liveActivityStart) is asked to the whole Worker, with PRIM
 // and Apple's push service faked, and each answer is judged as the builds of the set read it.
@@ -44,8 +44,8 @@ const appleRefusal = (reason: string, status = 400): Response => new Response(JS
 
 function fakeNetwork(): FakeNetwork {
   vi.spyOn(console, "log").mockImplementation(() => undefined);
-  vi.useFakeTimers({ toFake: ["Date"] });
-  vi.setSystemTime(new Date("2026-10-02T06:30:00.000Z"));
+  // 06:30 UTC of a day to come: the alarm of a start lies after the real now, where workerd does not run it on its own (alarm-guard.ts).
+  vi.useFakeTimers({ toFake: ["Date"], now: Math.ceil(Date.now() / day) * day + 6 * hour + 30 * minute });
   const network: FakeNetwork = { prim: "answers", apple: "takes the start" };
   vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
     const url = input instanceof Request ? input.url : String(input);
@@ -119,13 +119,6 @@ const situations: Record<PushKey, Record<string, Record<string, StartSituation>>
     "the server has no push key of Apple": { "on a deploy with no push key": ask },
   },
 };
-
-async function forgetEverything(): Promise<void> {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-  await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
-  await abortAllDurableObjects();
-}
 
 function asks(start: StartPromises, askFor: string): { station: string; startToken: string }[] {
   const tokens = start.startTokens.map(({ startToken }) => startToken);

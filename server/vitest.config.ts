@@ -18,6 +18,8 @@ const pushSecrets = {
   APNS_SANDBOX_KEY: generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
 };
 const withPushKey = "test/cloudflare/**/*-with-push-key.test.ts";
+/** Fails a test in which workerd ran an alarm of the server object on its own, where its error fails nothing. */
+const alarmGuard = "test/cloudflare/alarm-guard.ts";
 
 export default defineConfig({
   test: {
@@ -38,6 +40,7 @@ export default defineConfig({
         ],
         test: {
           name: "cloudflare",
+          setupFiles: [alarmGuard],
           include: ["test/cloudflare/**/*.test.ts"],
           exclude: [withPushKey],
         },
@@ -51,6 +54,7 @@ export default defineConfig({
         ],
         test: {
           name: "cloudflare-push",
+          setupFiles: [alarmGuard],
           include: [withPushKey],
         },
       },

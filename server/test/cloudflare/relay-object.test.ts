@@ -1,5 +1,5 @@
 import { env, exports } from "cloudflare:workers";
-import { abortAllDurableObjects, evictDurableObject, listDurableObjectIds, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
+import { evictDurableObject, listDurableObjectIds, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
 import { day, hour, minute } from "../../src/core/time/clock";
@@ -7,15 +7,11 @@ import { parisDay } from "../../src/core/time/paris-time";
 import { flushDelay } from "../../src/core/usage/usage-counts";
 import { everyStoredRow } from "./every-stored-row";
 import { fakePrim, recordedAnswer } from "./fake-prim";
+import { forgetEverything } from "./forget-everything";
 
 const abbesses = "STIF:StopArea:SP:42155:";
 
-afterEach(async () => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-  await runInDurableObject(relayObject(env), (_object, state) => state.storage.deleteAll());
-  await abortAllDurableObjects();
-});
+afterEach(forgetEverything);
 
 function departures(stopRef: string): Promise<Response> {
   return exports.default.fetch(`https://server.test/v1/stops/${stopRef}/departures`, {
