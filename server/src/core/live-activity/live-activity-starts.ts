@@ -4,9 +4,10 @@ import type { ApnsKey, ApnsSettings } from "../push/apns-settings";
 import type { RelayAnswer } from "../relay/relay";
 import type { Clock } from "../time/clock";
 import type { StartAnswer } from "../usage/start-answers";
-import { minute } from "../time/clock";
-import { readStation } from "./content-of-station";
-import type { StationCatalog } from "./station-catalog";
+import { minute, second } from "../time/clock";
+import { beforeAbort, timeLimit } from "../time/time-limit";
+import { readStation, type StationReading } from "./content-of-station";
+import type { Station, StationCatalog } from "./station-catalog";
 import { stationContent } from "./station-content";
 import { startPayload } from "./start-payload";
 import { StationUpdates, updateWindow } from "./station-updates";
@@ -19,6 +20,7 @@ import { StationUpdates, updateWindow } from "./station-updates";
  * - Apple gives a token to its production service or to its development one, and the token does not say which: the start goes to production first, then to development when production answers that the token is not its own.
  * - Each station has one broadcast channel in each service, made at its first start and deleted 45 minutes after its last one.
  *   Until then, `StationUpdates` sends the new minutes of the station on it.
+ * - A start answers within `startLimit`, so that the app still waits for the answer.
  * - A log line holds the result only: never the token, the station or an error text (which may hold the address, and so the token).
  * - Each answer, and each ask that the route refuses as bad, is counted in its hour by its result (`UsageCounts.countStartAnswer`), so that the owner sees where a start stopped: no ask, an ask that Apple took, or one that failed.
  */
@@ -44,6 +46,19 @@ export interface LiveActivityStartsDependencies {
 export const startWindow = 45 * minute;
 /** A start that Apple has not given to the iPhone after this time is dropped: the rider has walked on. */
 const startExpiration = 2 * minute;
+/**
+ * How long a start may take on the server, from the ask to the answer.
+ * A build waits 10 s for the answer, its wait for the start token of iOS included, then shows its arrival notification (`waitForTheAnswerSeconds` in `contracts/builds/`): a Live Activity that Apple brought later would come on top of it.
+ * The rest of the 10 s is for the phone, the wake of the server object and the start token; `wait-of-the-start.test.ts` checks the sum against every recorded build.
+ * When the time is over, the start answers `no-answer`, and a start request to Apple that has not left yet is dropped.
+ */
+export const startLimit = 6 * second;
+/**
+ * How long a start waits for the trains of the station: the relay waits up to 10 s for PRIM, which would leave no time for Apple.
+ * A stop that has not answered by then counts as failed, as when PRIM fails: the Live Activity starts with "Times unavailable" for it, and the update 30 s later brings its trains, which the relay keeps when they come.
+ * Why not fall back: a Live Activity with late times serves the rider better than the arrival notification.
+ */
+export const readLimit = 3 * second;
 /** Apple's answer when the token belongs to the other service. */
 const otherServiceReason = "BadDeviceToken";
 
@@ -174,22 +189,32 @@ export class LiveActivityStarts {
   }
 
   private async send(settings: ApnsSettings, stationId: string, token: string): Promise<StartResult> {
-    const { apns, catalog, departures, clock, logger } = this.dependencies;
+    const limit = timeLimit(startLimit);
+    try {
+      return await this.sendWithin(settings, stationId, token, limit.signal);
+    } finally {
+      limit.end();
+    }
+  }
+
+  private async sendWithin(settings: ApnsSettings, stationId: string, token: string, limit: AbortSignal): Promise<StartResult> {
+    const { apns, catalog, clock, logger } = this.dependencies;
     const station = catalog.station(stationId);
     if (station === undefined) {
       return { result: "unknown-station" };
     }
-    const reading = await readStation(station, catalog, departures);
+    const reading = await this.readWithin(station);
     const content = stationContent(station, reading.stations, reading.trains, catalog, clock.now());
     let refusal: { reason: string; environment: string } | undefined;
     for (const key of settings.keys) {
-      const channelId = await this.channel(key, stationId);
+      // The channel goes on being made past the limit, for the next start of the station.
+      const channelId = await beforeAbort(this.channel(key, stationId), limit, () => ({ reason: "no-answer" }));
       if (typeof channelId !== "string") {
         refusal ??= { reason: channelId.reason, environment: key.environment };
         continue;
       }
       const now = clock.now();
-      const answer = await apns.start(key, token, startPayload(station, content, channelId, now, now + updateWindow), now + startExpiration);
+      const answer = await apns.start(key, token, startPayload(station, content, channelId, now, now + updateWindow), now + startExpiration, limit);
       if (answer.ok) {
         this.updates.follow(station, reading, content, now + updateWindow);
         logger.info("live-activity-start", { result: "started", environment: key.environment });
@@ -205,6 +230,25 @@ export class LiveActivityStarts {
     const reason = refusal?.reason ?? "no-answer";
     logger.info("live-activity-start", { result: "refused", reason, ...(refusal ? { environment: refusal.environment } : {}) });
     return { result: "refused", reason };
+  }
+
+  /** The trains of the station, as the stops have answered within `readLimit`. */
+  private async readWithin(station: Station): Promise<StationReading> {
+    const { catalog, departures, clock, logger } = this.dependencies;
+    const limit = timeLimit(readLimit);
+    let late = 0;
+    try {
+      const lateAnswer = (): RelayAnswer => {
+        late += 1;
+        return { kind: "out", reason: "prim-failure", retryAt: clock.now() };
+      };
+      return await readStation(station, catalog, (stopRef) => beforeAbort(departures(stopRef), limit.signal, lateAnswer));
+    } finally {
+      limit.end();
+      if (late > 0) {
+        logger.info("live-activity-start-read", { result: "late", stops: late });
+      }
+    }
   }
 
   /** Sends an update on the channel of the station in each service; a log line holds the result and the service only. */

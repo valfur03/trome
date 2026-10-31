@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PrimBudget } from "../../../src/core/budget/prim-budget";
 import { relaySettings } from "../../../src/core/config/relay-settings";
@@ -11,29 +9,11 @@ import { Relay } from "../../../src/core/relay/relay";
 import { UsageCounts } from "../../../src/core/usage/usage-counts";
 import { NodeSqliteDatabase } from "../storage/node-sqlite-database";
 import { FakeClock } from "../time/fake-clock";
+import { marginForThePhone, shortestRecordedWait, wakeOfASleepingServerObject } from "./recorded-waits";
 
 // A build in the field gives up on an answer after the wait that its recorded set names (contracts/builds/).
 // The server must answer before that, even when PRIM never answers, so that the build reads the out answer and its retry time,
-// not a failure of its own. On top of the wait for PRIM come two parts that this test cannot run:
-// - the wake of a server object that slept: 5 ms in the Workers runtime for a first call with its constructor, so 1 s is a wide bound;
-// - the phone's own time: its connection to Cloudflare (on a new connection over 4G, about 3 round trips) and the hop to the server object.
-const wakeOfASleepingServerObject = 1_000;
-const marginForThePhone = 2_000;
-
-const buildsFolder = fileURLToPath(new URL("../../../../contracts/builds/", import.meta.url));
-
-function shortestWaitOfTheBuilds(): { seconds: number; set: string } {
-  const sets = readdirSync(buildsFolder, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => {
-      const set = JSON.parse(readFileSync(`${buildsFolder}${entry.name}/promises.json`, "utf8")) as {
-        app: { waitForOneAnswerSeconds: number };
-      };
-      return { seconds: set.app.waitForOneAnswerSeconds, set: entry.name };
-    });
-  expect(sets.length).toBeGreaterThan(0);
-  return sets.reduce((shortest, set) => (set.seconds < shortest.seconds ? set : shortest));
-}
+// not a failure of its own; recorded-waits.ts gives the room for the parts that this test cannot run.
 
 afterEach(() => {
   vi.useRealTimers();
@@ -89,7 +69,10 @@ describe("the longest wait of the server for PRIM", () => {
     expect(answered, `no answer after ${String(waited)} ms`).toBeDefined();
     expect(Math.floor((answered?.status ?? 0) / 100), "the builds read a 2xx as times").not.toBe(2);
     expect(await answered?.json()).toMatchObject({ status: "out" });
-    const shortest = shortestWaitOfTheBuilds();
+    const shortest = shortestRecordedWait((set) => set.app.waitForOneAnswerSeconds);
+    if (shortest === undefined) {
+      throw new Error("contracts/builds/ holds no set");
+    }
     expect(
       waited + wakeOfASleepingServerObject + marginForThePhone,
       `The server waits ${String(waited)} ms for PRIM. With ${String(wakeOfASleepingServerObject)} ms for the wake of the server object and ` +

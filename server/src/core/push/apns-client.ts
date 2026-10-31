@@ -1,3 +1,4 @@
+import { timeLimit } from "../time/time-limit";
 import { apnsHosts, type ApnsKey } from "./apns-settings";
 import type { ProviderTokens } from "./provider-token";
 
@@ -8,7 +9,8 @@ import type { ProviderTokens } from "./provider-token";
 export type ApnsAnswer = { ok: true; channelId?: string } | { ok: false; status: number; reason: string };
 
 export interface ApnsClient {
-  start(key: ApnsKey, token: string, payload: string, expiresAt: number): Promise<ApnsAnswer>;
+  /** `limit` ends the wait early: a start that the app no longer waits for is dropped, before it leaves when it can be. */
+  start(key: ApnsKey, token: string, payload: string, expiresAt: number, limit?: AbortSignal): Promise<ApnsAnswer>;
   createChannel(key: ApnsKey): Promise<ApnsAnswer>;
   deleteChannel(key: ApnsKey, channelId: string): Promise<ApnsAnswer>;
   broadcast(key: ApnsKey, channelId: string, payload: string): Promise<ApnsAnswer>;
@@ -28,48 +30,68 @@ const providerTokenReasons = new Set(["ExpiredProviderToken", "InvalidProviderTo
 export function createApnsClient(dependencies: { fetch: Fetch; tokens: ProviderTokens; bundleId: string }): ApnsClient {
   const { fetch, tokens, bundleId } = dependencies;
 
-  async function send(key: ApnsKey, url: string, init: RequestInit): Promise<ApnsAnswer> {
+  async function send(key: ApnsKey, url: string, init: RequestInit, limit?: AbortSignal): Promise<ApnsAnswer> {
     let authorization: string;
     try {
       authorization = `bearer ${await tokens.token(key)}`;
     } catch {
       return { ok: false, status: 0, reason: "unreadable-key" };
     }
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        ...init,
-        headers: { ...(init.headers as Record<string, string>), authorization },
-        signal: AbortSignal.timeout(timeout),
-      });
-    } catch {
+    if (limit?.aborted === true) {
       return { ok: false, status: 0, reason: "no-answer" };
     }
-    if (response.ok) {
-      await response.body?.cancel();
-      const channelId = response.headers.get("apns-channel-id");
-      return channelId === null ? { ok: true } : { ok: true, channelId };
+    const own = timeLimit(timeout);
+    const controller = new AbortController();
+    const stop = (): void => {
+      controller.abort();
+    };
+    own.signal.addEventListener("abort", stop, { once: true });
+    limit?.addEventListener("abort", stop, { once: true });
+    try {
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          ...init,
+          headers: { ...(init.headers as Record<string, string>), authorization },
+          signal: controller.signal,
+        });
+      } catch {
+        return { ok: false, status: 0, reason: "no-answer" };
+      }
+      if (response.ok) {
+        await response.body?.cancel();
+        const channelId = response.headers.get("apns-channel-id");
+        return channelId === null ? { ok: true } : { ok: true, channelId };
+      }
+      const reason = await reasonOf(response);
+      if (providerTokenReasons.has(reason)) {
+        tokens.forget(key);
+      }
+      return { ok: false, status: response.status, reason };
+    } finally {
+      own.end();
+      limit?.removeEventListener("abort", stop);
     }
-    const reason = await reasonOf(response);
-    if (providerTokenReasons.has(reason)) {
-      tokens.forget(key);
-    }
-    return { ok: false, status: response.status, reason };
   }
 
   return {
-    start: (key, token, payload, expiresAt) =>
-      send(key, `${apnsHosts[key.environment].device}/3/device/${encodeURIComponent(token)}`, {
-        method: "POST",
-        headers: {
-          "apns-push-type": "liveactivity",
-          "apns-topic": `${bundleId}.push-type.liveactivity`,
-          "apns-priority": "10",
-          "apns-expiration": String(Math.floor(expiresAt / 1000)),
-          "content-type": "application/json",
+    start: (key, token, payload, expiresAt, limit) =>
+      send(
+        key,
+        `${apnsHosts[key.environment].device}/3/device/${encodeURIComponent(token)}`,
+        {
+          method: "POST",
+          headers: {
+            "apns-push-type": "liveactivity",
+            "apns-topic": `${bundleId}.push-type.liveactivity`,
+            "apns-priority": "10",
+            "apns-expiration": String(Math.floor(expiresAt / 1000)),
+            "content-type": "application/json",
+          },
+          body: payload,
         },
-        body: payload,
-      }),
+        limit,
+      ),
     createChannel: (key) =>
       send(key, `${apnsHosts[key.environment].channels}/1/apps/${bundleId}/channels`, {
         method: "POST",
