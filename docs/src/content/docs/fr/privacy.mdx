@@ -11,7 +11,7 @@ import Contact from '../../../components/Contact.astro';
 Dernière mise à jour : 30 octobre 2026.
 
 TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
-Selon la définition d’Apple, TROME ne collecte aucune donnée sur vous : ce qui arrive au serveur sert à répondre, puis n’est pas conservé.
+Selon la définition d’Apple, TROME ne collecte aucune donnée sur vous : le serveur se sert de ce qui lui arrive pour répondre, et n’en garde rien sous une forme lisible.
 Cette page explique ce que l’app TROME pour iPhone fait de vos données, ce que le serveur stocke, qui les reçoit, et quels sont vos droits.
 
 ## En bref
@@ -21,6 +21,7 @@ Cette page explique ce que l’app TROME pour iPhone fait de vos données, ce qu
 - Votre position reste sur votre iPhone : l’app ne l’envoie à personne.
 - Pour afficher les horaires, l’app envoie au serveur l’identifiant de la station près de laquelle vous êtes, mais ni votre position, ni aucun identifiant qui vous soit propre.
 - Pour afficher l’activité en direct quand l’app est fermée, l’app envoie aussi le jeton de démarrage qu’iOS lui donne : le serveur le transmet à Apple, et ne le garde pas.
+  Pendant 45 minutes, il en garde seulement une empreinte, qui ne permet pas de retrouver le jeton.
 - Le serveur ne garde aucun historique des stations demandées, ni de qui les demande.
   Cloudflare, qui héberge le serveur, voit passer chaque requête, [comme l’explique la suite](#cloudflare-et-la-source-des-horaires).
 - La fiche de l’App Store dit la même chose : données non collectées.
@@ -39,7 +40,7 @@ Sans votre position, TROME ne peut pas trouver la station la plus proche.
 
 Pour afficher les prochains passages, l’app demande les horaires au serveur de TROME.
 Elle lui transmet l’identifiant de la station (par exemple celui de Châtelet) et un code identique pour toutes les copies de l’app, qui ne dit rien de vous.
-Elle ne transmet ni votre position, ni un identifiant de votre iPhone, ni aucun autre identifiant qui vous soit propre.
+Pour les horaires, elle ne transmet ni votre position, ni un identifiant de votre iPhone, ni aucun autre identifiant qui vous soit propre.
 Cette requête indique donc près de quelle station vous êtes à ce moment-là.
 
 Comme toute connexion à internet, la requête arrive avec l’adresse IP de votre iPhone et des informations techniques, comme les versions de l’app et d’iOS.
@@ -52,7 +53,7 @@ Elle lui transmet l’identifiant de la station et le jeton de démarrage qu’i
 Ce jeton permet au service de notifications push d’Apple de joindre TROME sur votre iPhone : il identifie donc votre iPhone pour TROME.
 Le serveur le transmet une fois à Apple, avec le contenu de l’activité en direct (la station, ses lignes et ses prochains trains), puis ne le garde nulle part : ni stockage, ni journal, ni mémoire.
 Pendant 45 minutes, il garde seulement une empreinte à clé du jeton et de la station, en mémoire, avec une clé tirée au hasard.
-Cette empreinte ne permet pas de retrouver le jeton, et sert seulement à ne pas envoyer une seconde alerte quand iOS signale deux fois la même arrivée.
+Cette empreinte ne permet pas de retrouver le jeton, et sert seulement à éviter un second démarrage quand iOS signale deux fois la même arrivée.
 
 ## Pourquoi ces données sont utilisées, et sur quelle base légale
 
@@ -60,9 +61,10 @@ La base légale est la même pour chacun des usages ci-dessous : l’intérêt l
 Voici à quoi sert chaque donnée :
 
 - **L’identifiant de la station, et l’adresse IP qui l’accompagne** : vous donner les horaires demandés, et rien d’autre.
-- **Le jeton de démarrage, et son empreinte** : afficher l’activité en direct sur votre écran verrouillé quand l’app est fermée, et ne pas envoyer de seconde alerte pour la même arrivée.
   Au sens du RGPD, utiliser une donnée le temps d’une requête, c’est déjà la traiter, même si rien n’est conservé.
-  L’intérêt est légitime ici : TROME ne peut pas fonctionner sans ces données, le traitement est très bref, et rien qui vous identifie n’est conservé.
+  L’intérêt est légitime ici : TROME ne peut pas fonctionner sans ces données, le traitement est très bref, et le serveur ne conserve ni la station demandée ni votre adresse IP.
+- **Le jeton de démarrage, et son empreinte** : afficher l’activité en direct sur votre écran verrouillé quand l’app est fermée, et éviter un second démarrage pour la même arrivée.
+  L’intérêt est légitime ici : le démarrage ne peut pas se faire sans le jeton, le jeton sert à une seule requête et n’est pas conservé, et son empreinte est gardée 45 minutes seulement, ne permet pas de retrouver le jeton, et ne sert à rien d’autre.
 - **Les compteurs du serveur, et leur copie** : surveiller la limite quotidienne d’appels à la source des horaires, et suivre l’usage de TROME.
   Ils ne contiennent ni station ni adresse IP.
 - **La liste d’erreurs du serveur** : comprendre pourquoi il n’a pas obtenu les horaires de la source, et corriger le problème.
@@ -89,7 +91,8 @@ Il ne stocke que :
 - **l’empreinte à clé d’un jeton de démarrage et de sa station**, dans la même mémoire, pendant 45 minutes : elle ne permet pas de retrouver le jeton ([voir plus haut](#quand-lapp-est-fermée)) ;
 - **le canal d’une station**, sur lequel Apple envoie les nouveaux horaires aux activités en direct de cette station, pendant 45 minutes après son dernier démarrage : il ne dit rien de qui s’y trouve.
 
-Le serveur ne conserve aucune adresse IP, aucun identifiant de vous ou de votre iPhone, et aucune position.
+Le serveur ne conserve aucune adresse IP, aucune position et aucun jeton de démarrage.
+D’un démarrage de l’activité en direct, il garde seulement l’empreinte et le canal ci-dessus, pendant 45 minutes.
 Aucun journal des requêtes n’est activé chez son hébergeur.
 
 ## Cloudflare et la source des horaires

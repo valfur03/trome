@@ -11,7 +11,7 @@ import Contact from '../../../components/Contact.astro';
 Last updated: 30 October 2026.
 
 TROME needs to know which station you are near, not who you are.
-By Apple’s definition, TROME collects no data about you: what reaches the server is used to answer, then not kept.
+By Apple’s definition, TROME collects no data about you: the server uses what reaches it to answer, and keeps none of it in a form that anyone can read.
 This page says what the TROME iPhone app does with your data, what the server stores, who receives it, and what your rights are.
 
 ## In short
@@ -21,6 +21,7 @@ This page says what the TROME iPhone app does with your data, what the server st
 - Your position stays on your iPhone: the app sends it to nobody.
 - To show the train times, the app sends the server the identifier of the station you are near, but not your position, and nothing that the app adds to identify you.
 - To show the Live Activity when the app is closed, the app also sends the start token that iOS gives it: the server passes it to Apple, and does not keep it.
+  For 45 minutes, it keeps only a hash of it, which cannot give the token back.
 - The server keeps no history of the stations asked for, or of who asks for them.
   Cloudflare, which runs the server, sees each request while it passes, [as explained below](#cloudflare-and-the-source-of-the-times).
 - The App Store page says the same: Data Not Collected.
@@ -39,7 +40,7 @@ Without your position, TROME cannot find the nearest station.
 
 To show the next trains, the app asks TROME’s server for the times.
 It sends the identifier of the station (for example the one of Châtelet) and a code that every copy of the app shares, which says nothing about you.
-It sends neither your position, nor an identifier of your iPhone, nor anything that the app adds to identify you.
+For the times, it sends neither your position, nor an identifier of your iPhone, nor anything that the app adds to identify you.
 So the request shows which station you are near at that moment.
 
 Like any internet connection, the request arrives with the IP address of your iPhone and technical details, such as the versions of the app and iOS.
@@ -52,7 +53,7 @@ It sends the identifier of the station and the start token that iOS made for the
 This token lets Apple’s push service reach TROME on your iPhone, so it identifies your iPhone for TROME.
 The server passes it once to Apple, with the content of the Live Activity (the station, its lines and its next trains), and then keeps it nowhere: in no storage, no log and no memory.
 For 45 minutes, it keeps only a keyed hash of the token and the station, in memory, with a key made at random.
-This hash cannot give the token back, and it serves only to send no second alert when iOS reports the same arrival twice.
+This hash cannot give the token back, and it serves only to make no second start when iOS reports the same arrival twice.
 
 ## Why this data is used, and on what legal basis
 
@@ -60,9 +61,10 @@ The legal basis is the same for each use below: legitimate interest (GDPR, artic
 Here is what each piece of data is for:
 
 - **The identifier of the station, and the IP address that comes with it**: to give you the times that you ask for, and nothing else.
-- **The start token, and its hash**: to put the Live Activity on your lock screen when the app is closed, and to send no second alert for the same arrival.
   Under the GDPR, using data for the length of one request already counts as processing, even if nothing is stored.
-  The interest is legitimate here because TROME cannot work without this data, the processing is very short, and nothing that identifies you is stored.
+  The interest is legitimate here because TROME cannot work without this data, the processing is very short, and the server stores neither the station that you ask for nor your IP address.
+- **The start token, and its hash**: to put the Live Activity on your lock screen when the app is closed, and to make no second start for the same arrival.
+  The interest is legitimate here because the start cannot happen without the token, the token is used for one request and not kept, and its hash is kept for 45 minutes only, cannot give the token back, and serves no other use.
 - **The server’s totals, and their copy**: to watch the daily limit of calls to the source of the times, and to follow how much TROME is used.
   They have no station and no IP address.
 - **The server’s list of errors**: to see why it did not get the times from the source, and to fix what is wrong.
@@ -89,7 +91,8 @@ It stores only:
 - **the keyed hash of a start token and its station**, in the same memory, for 45 minutes: it cannot give the token back ([see above](#when-the-app-is-closed));
 - **the channel of a station**, on which Apple sends the new times to the Live Activities of that station, for 45 minutes after its last start: it says nothing of who is there.
 
-The server stores no IP address, no identifier of you or of your iPhone, and no position.
+The server stores no IP address, no position and no start token.
+Of a start of the Live Activity, it keeps only the hash and the channel above, for 45 minutes.
 No request log is turned on at its host.
 
 ## Cloudflare and the source of the times
