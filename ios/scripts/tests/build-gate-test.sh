@@ -116,7 +116,7 @@ expect "every Simulator test run of ios/Makefile goes through the gate" \
     "$(grep -F '$(SIM_LOCK) job' "$makefile" | grep -F ' reset ' | grep -cvF '$(SIM_LOCK) job $(TEST_RUN_GATE) ')" "0"
 expect "every build of ios/Makefile goes through the gate" \
     "$(grep -E '^XCODEBUILD :=|swift test|build-for-testing|\$\(QUIET\) \$\(LOGS\)/build\.log|EXPORT_STRINGS\)$' "$makefile" \
-        | grep -cvE '^XCODEBUILD := \$\(BUILD_GATE\) |^	@\$\(BUILD_GATE\) ')" "0"
+        | grep -cvE '^XCODEBUILD := \$\(BUILD_GATE\) |^	@\$\(BUILD_GATE\) |^[A-Z0-9_]+_BUILD = \$\(BUILD_GATE\) ')" "0"
 
 # A script that runs 'swift <file>' or 'swiftc' compiles, itself or through a script that it runs, so it loads the Mac as a build does.
 compiles_swift() {
