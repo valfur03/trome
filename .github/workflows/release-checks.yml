@@ -8,6 +8,8 @@ name: Release checks
 # The E2E suite does not run here: GitHub's Mac is too slow for the Live Activity buttons (iOS stops their code at 30 s),
 # so it stays a gate of every release on the Mac, at make merge. The summary says so in a fixed row, never a pass,
 # and the job "E2E proof" fails when the commit has no record of a full E2E pass on the Mac (e2e-proof.yml).
+# The job "Phone set" fails when the newest build in the field has no recorded phone set in contracts/phone/,
+# which the unit tests read with the code of today, so that an update keeps what a rider set (ios/scripts/phone-set-check.py).
 
 on:
   workflow_dispatch:
@@ -25,6 +27,21 @@ jobs:
       contents: read
       statuses: read
     uses: ./.github/workflows/e2e-proof.yml
+
+  phone-set:
+    name: Phone set
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Say whether the newest build in the field has its recorded phone set
+        run: ios/scripts/phone-set-check.py release
 
   checks:
     name: Release checks

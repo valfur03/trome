@@ -380,7 +380,8 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
     The same commit records the phone set of the build, next to its promises: run `make phone-set-record BUILD=1.0.0-4`, which refuses when the app code is not the code of the tag.
     It writes in `contracts/phone/1.0.0-4/` the exact values that this build keeps on the phone for each state of a rider (Automatic mode, the Live Activity that it follows, its last times), and the content of its Live Activity for each case of `contracts/live-activity/cases/`.
     `make test` reads every recorded set with the code of today, and fails when an update would forget what a rider set.
-    Never edit a recorded phone set while its build is in the field.
+    Never edit a recorded phone set while its build is in the field: `make check` fails when one of its files changes, moves or goes, or when a file joins it, until the row of its build is retired.
+    And the job **Phone set** of the release checks prints `Phone set of 1.0.0 (4): found` or `missing` for the newest build in the field, and fails when it is missing.
     Then add the line of the build to `ios/Config/BuildTokens.txt`, here `4 = <token>`, with the app token of `ios/Config/Server.xcconfig` that this build holds, and run `make release-tokens-check`: the line of the new build must say **accepted**.
     That file is not in git, so it is not in the commit.
 

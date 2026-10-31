@@ -104,7 +104,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge e2e-proof
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render merge e2e-proof
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -119,7 +119,7 @@ help:
 	@echo "make run RELEASE=1       Same, with the app as the store ships it: Release configuration, no Testing tools, no PRIM key, and a server that never answers, so no real trains (also for make build and make switch-language)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
 	@echo "make fake-trains STATE=at-platform  After make run: open the app again with fake trains in this state (no STATE: the default times), and say whether the app uses them"
-	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + bundle ID check + app icon check + recommended settings check + key leak check (with the upload checks of the Release app) + build (no warning allowed) + strings check + unit tests + script tests"
+	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + phone set check + bundle ID check + app icon check + recommended settings check + key leak check (with the upload checks of the Release app) + build (no warning allowed) + strings check + unit tests + script tests"
 	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, when a text of the app or the Live Activity has no French text, or when a French permission text does not say APP_NAME"
 	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code), and put APP_NAME of Config/Base.xcconfig in the permission texts"
 	@echo "make prose-check         Fail when a line of prose of a Markdown or MDX file of the repo is longer than 400 characters (write one sentence per line)"
@@ -133,6 +133,7 @@ help:
 	@echo "make release-server-check  Before an archive: say in one line whether the production server accepts the host and the app token of ios/Config/Server.xcconfig (one request for the trains of one stop; prints neither)"
 	@echo "make release-server-timing  Split the time of a call to the production server of ios/Config/Server.xcconfig: connection, Worker, server object, PRIM (5 calls of one rider in 35 s, at most 2 PRIM calls; prints neither)"
 	@echo "make phone-set-record BUILD=<version>-<build>  At each upload, from the commit of the build: record in contracts/phone/ the values that it keeps on the phone, which make test reads with the code of today"
+	@echo "make phone-set-check     Fail when a recorded phone set of contracts/phone/ changed, moved, went or grew while its build is in the field (part of make check)"
 	@echo "make release-tokens-check  After every change of a secret of the production server, and before every upload: say, one line per build that riders may hold, whether the production server accepts its app token of ios/Config/BuildTokens.txt (one request per build; prints no token)"
 	@echo "make release-archive-check  Build an unsigned Release archive of the app and its widget for an iPhone, with stand-in server values: shows that the store build compiles, with no account and no secret (not in make check)"
 	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
@@ -219,6 +220,9 @@ prose-check:
 public-text-check:
 	@./scripts/public-text-check.py
 
+phone-set-check:
+	@./scripts/phone-set-check.py check
+
 test:
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/unit-tests.log 'Test run with|Executed [1-9]' swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
 
@@ -234,7 +238,7 @@ test-scripts:
 	done; \
 	echo "test-scripts: OK ($$count script tests)"
 
-check: lint prose-check public-text-check bundle-id-check release-signing-check app-icon-check recommended-settings-check live-key-check build strings-check test test-scripts
+check: lint prose-check public-text-check phone-set-check bundle-id-check release-signing-check app-icon-check recommended-settings-check live-key-check build strings-check test test-scripts
 
 bundle-id-check: project
 	@./scripts/bundle-id-check.sh $(PROJECT)
