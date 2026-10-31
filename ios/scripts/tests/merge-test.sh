@@ -44,20 +44,27 @@ find_started() {
 
 # A run that is stopped, or that ends early, still has merges running, which write in its folder:
 # they are stopped first, or the folder is removed while they write in it, and stays.
+# A process stays on the list until it has ended, also once its parent has ended and it is no longer found.
 cleanup() {
     kill "$idle_watcher" "$(cat "$RATP_SIM_LOCK.slots-watcher" 2> /dev/null)" 2> /dev/null || true
     find_started
-    if [ -n "$left" ]; then
-        kill -TERM $left 2> /dev/null || true
-        tries=0
+    kill -TERM $left 2> /dev/null || true
+    tracked=$left
+    tries=0
+    while [ -n "$tracked" ] && [ "$tries" -lt 200 ]; do
+        sleep 0.1
+        tries=$((tries + 1))
         find_started
-        while [ -n "$left" ] && [ "$tries" -lt 200 ]; do
-            sleep 0.1
-            tries=$((tries + 1))
-            find_started
+        still=
+        for p in $tracked $left; do
+            case " $still " in *" $p "*) continue ;; esac
+            if kill -0 "$p" 2> /dev/null; then
+                still="$still $p"
+            fi
         done
-        [ -z "$left" ] || kill -KILL $left 2> /dev/null || true
-    fi
+        tracked=$still
+    done
+    [ -z "$tracked" ] || kill -KILL $tracked 2> /dev/null || true
     rm -rf "$state"
 }
 trap cleanup EXIT
