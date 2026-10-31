@@ -150,7 +150,8 @@ def check(root: str, guide_path: str) -> int:
             f"phone-set-check: the recorded phone set {SETS}/{name}/ changed, but its build is not retired in the release guide:\n"
             + "".join(f"  {line}\n" for line in lines)
             + "  A recorded set is never edited: riders still hold this build, and the code of today must read what it wrote.\n"
-            f"  Put the set back (git checkout <the commit that recorded it> -- {SETS}/{name}), and make the code read it.\n"
+            f"  Put the set back as {set_recorded_in[name][:7]} recorded it (git checkout {set_recorded_in[name][:7]} -- {SETS}/{name},"
+            " and remove the files that it did not hold), and make the code read it.\n"
             "  A new build gets a new folder (make phone-set-record), recorded in one commit.\n"
             "  A set may change only when its build has the status 'Retired on <date>: <reason>' in the table of the release guide."
         )
