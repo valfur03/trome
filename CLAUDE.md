@@ -41,7 +41,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 
 | Rule file | What it holds | It loads when you |
 |---|---|---|
-| `ios-code.md` | Code structure of the iOS app, the texts in French and English, no warnings | touch `ios/App/`, `ios/Widget/`, `ios/Packages/`, `ios/UITests/`, `ios/RenderCheck/`, `ios/DocsScreenshots/`, `ios/ReleaseRun/`, `ios/project.yml`, `ios/Config/` |
+| `ios-code.md` | Code structure of the iOS app, the texts in French and English, no warnings | touch in `ios/`: `App/`, `Widget/`, `Packages/`, `UITests/`, `RenderCheck/`, `DocsScreenshots/`, `ReleaseRun/`, `project.yml`, `Config/` |
 | `tests.md` | Test levels, which E2E tests to run | touch the same app files or the tests; run `make e2e` |
 | `simulator.md` | The shared Simulator, the lock, hold it only while you use it, when your job ends | run a command that uses a Simulator (`make run`, `make e2e`, `make merge`, `sim-lock.sh`, ...); touch the lock scripts |
 | `simulator-history.md` | The measurements behind the Simulator rules, and the code of the second slot | touch the lock scripts or `ios/scripts/timing/` |
