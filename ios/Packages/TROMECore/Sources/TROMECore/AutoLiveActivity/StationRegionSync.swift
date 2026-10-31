@@ -7,7 +7,11 @@ import Foundation
 /// that no later plan removes, and iOS refuses new areas past its limit.
 @MainActor
 public final class StationRegionSync {
-    public var onAdding: (Set<String>) -> Void = { _ in }
+    /// Gets the areas of a plan that iOS does not keep yet, before the plan adds them: iOS answers such an add
+    /// with a first state when the assumed state is wrong (a Simulator walk). It leaves out the areas that iOS
+    /// keeps and the plan adds again (each one at the first plan of a process, which keeps `added` in memory only):
+    /// on a phone, such a re-add gave no event, even with a wrong assumed state, so a later event is a real one.
+    public var onAddingNew: (Set<String>) -> Void = { _ in }
     public var wakeLog: WakeLog?
 
     private let monitor: any RegionMonitor
@@ -46,7 +50,7 @@ public final class StationRegionSync {
             added[id] = nil
         }
         let toAdd = regions.filter { !kept.contains($0.id) || added[$0.id] != $0 }
-        onAdding(Set(toAdd.map(\.id)))
+        onAddingNew(Set(toAdd.map(\.id)).subtracting(kept))
         for region in toAdd {
             await monitor.add(region)
             added[region.id] = region

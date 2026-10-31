@@ -141,6 +141,21 @@ struct StationRegionSyncTests {
         #expect(Set(monitor.ids) == Self.ids(of: plan))
     }
 
+    /// A real event that iOS sends again after the first plan of a new process is not labelled as the first
+    /// state of a new area: that plan adds again every area that iOS kept, and only the new ones answer.
+    @Test func expectsAFirstStateOnlyFromTheAreasThatIOSDidNotKeep() async {
+        let plan = Self.plan("a", count: 3)
+        let monitor = FakeRegionMonitor(ids: [plan[0].id, plan[1].id])
+        let sync = StationRegionSync(monitor: monitor)
+        var announced: [Set<String>] = []
+        sync.onAddingNew = { announced.append($0) }
+
+        await sync.watch(plan)
+
+        #expect(announced == [[plan[2].id]])
+        #expect(Set(monitor.ids) == Self.ids(of: plan))
+    }
+
     @Test func tellsTheWakeLogWhenIOSKeepsAnotherCountThanThePlan() async {
         let storage = InMemoryKeyValueStore()
         let log = WakeLog(storage: storage)

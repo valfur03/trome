@@ -140,7 +140,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Icon | A line for |
 |---|---|
 | Power | Each launch of the app, then the settings of the phone at that launch; each time the app comes on screen or leaves it |
-| Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports, with where the phone was for a station area; one line for the first state of the new areas, but its own line for each station that the phone is inside |
+| Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports, with where the phone was for a station area; one line for the first state of the areas that iOS did not watch yet, but its own line for each station that the phone is inside |
 | Map | Each time the app chooses again the stations that iOS watches |
 | Branch | Each arrival that the app decides, with its reason: notified, started, switched, or why not; each end of the Live Activity by its distance or time limit |
 | Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |

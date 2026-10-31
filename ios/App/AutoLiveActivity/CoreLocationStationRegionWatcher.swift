@@ -34,7 +34,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     private func makeSync(of monitor: CLMonitor) -> StationRegionSync {
         let sync = StationRegionSync(monitor: CoreLocationRegionMonitor(monitor))
         sync.wakeLog = wakeLog
-        sync.onAdding = { [weak self] ids in self?.expectFirstStates(of: ids) }
+        sync.onAddingNew = { [weak self] ids in self?.expectFirstStates(of: ids) }
         self.sync = sync
         return sync
     }
