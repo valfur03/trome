@@ -499,7 +499,7 @@ late_job=$!
 wait_until grep -q "a merge goes first" "$state/late-job.log"
 expect "a merge runs its gate and its test builds while another job holds the Simulator, and does not cut that job off" "$(steps_line)" "check build "
 expect "the merge then waits for the job that holds the Simulator, and its message names that job" \
-    "$(cat "$state/queue_a.log" "$state/queue_b.log" | grep -c "Waiting for the Simulator lock: every Simulator slot is busy (slot 1: a job in .* (PID $qa))")" "1"
+    "$(cat "$state/queue_a.log" "$state/queue_b.log" | grep -c "Waiting for the Simulator lock: 1st in line, held by a job in .* (PID $qa)")" "1"
 echo release > "$state/release-qa"
 wait "$qa"
 expect "the first merge of a train lands" "$(finish_merge queue_a)" "0"
@@ -599,7 +599,7 @@ touch "$state/gate-go"
 wait_until grep -q "Waiting for the Simulator lock" "$state/during_gate.log"
 TROME_MERGE_CHECK=$passing_check
 expect "after its gate, the merge waits for the QA job, and does not stop it" "$(steps_line)" "check qa-start build "
-expect "its message names the job that holds the Simulator" "$(contains "$state/during_gate.log" "Waiting for the Simulator lock: every Simulator slot is busy (slot 1: a job in $(cd "$scripts/../.." && pwd) (PID $qa_gate))")" "yes"
+expect "its message names the job that holds the Simulator" "$(contains "$state/during_gate.log" "Waiting for the Simulator lock: 1st in line, held by a job in $(cd "$scripts/../.." && pwd) (PID $qa_gate)")" "yes"
 touch "$state/release-gate-qa"
 wait "$qa_gate"
 expect "the merge lands after the QA job" "$(finish_merge during_gate) $(rev main~1)" "0 $before"
@@ -616,8 +616,9 @@ expect "a merge whose test build fails does not land" "$status $(rev main)" "1 $
 expect "it says that the test build failed" "$(contains "$state/build_fails.log" "the step 'test build' failed for task/build_fails")" "yes"
 expect "it runs no test, and never takes the Simulator lock" "$(steps_line)$(awk -F '\t' '$9 == "task/build_fails"' "$state/logs/simulator-jobs.tsv" | wc -l | tr -d ' ')" "check build 0"
 
+# A merge asks for the Simulator by joining the line of the jobs that wait for it (sim-lock.sh).
 merge_asks() {
-    ls "$RATP_SIM_LOCK.merge-asks" 2> /dev/null | wc -l | tr -d ' '
+    ls "$RATP_SIM_LOCK.line" 2> /dev/null | grep -c '^[0-9]*\.[0-9]*$' || true
 }
 
 # A make merge stopped while it waits for the Simulator leaves no entry in the queue and no ask for the Simulator,
