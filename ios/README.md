@@ -63,6 +63,7 @@ To let git run it after a pull or a change of branch, run `make git-hooks` once.
 Run `make check`.
 It runs the lint, the checks of the texts and of the app icon, the build, the unit tests and the tests of the scripts, and stops at the first failure, with a message that says what to do.
 The build accepts no warning: fix its cause, and never silence it.
+A change that a rider or a builder will notice adds its note to `changes/` ([how](changes/README.md)); a change of the app code with no note needs a commit that says "no rider change".
 When your branch changes `docs/`, `server/`, `contracts/` or `video/`, `make check` checks them too, which needs Node 24 ([how to install it](../server/README.md#run-and-test-it-locally)).
 On GitHub, a maintainer can start the same checks by hand on GitHub's Mac, with the render check and an unsigned Release archive (`make release-archive-check`): the workflow **Release checks**, in the **Actions** tab.
 The end-to-end tests are not part of it, as GitHub's Mac is too slow for the Live Activity buttons: they run on your own Mac, at `make merge`.
@@ -195,6 +196,7 @@ Inside `ios/`:
 | `DocsScreenshots/` | The XCUITest suite that takes the app screenshots of the docs. |
 | `RenderCheck/` | The render check of the Live Activity views (`make live-activity-render`): a unit test bundle, and in `Host/` the small app that runs it with the texts of the widget. |
 | `Config/` | Build settings. Your key and Team ID go in the local files here. |
+| `changes/` | The note of each change that a rider or a builder will notice, from which the notes of a version are made. |
 | `scripts/` | Helper scripts for the `make` commands of the app. |
 
 The feature folders have the same names in `ios/App/`, in the sources of `TROMECore` and in its tests: `Stations`, `Location`, `Trains`, `LiveActivity`, `AutoLiveActivity`, `Example`, `About`.
