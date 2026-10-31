@@ -73,8 +73,9 @@ extension PromisedAnswer {
 
     private static var anyStartBody: [ReplySample] {
         [
-            #"{"result":"started"}"#, #"{"result":"already-started"}"#, #"{"result":"refused","reason":"BadDeviceToken"}"#,
-            #"{"result":"not-set-up"}"#, #"{"error":"unauthorized"}"#, "<html>Bad gateway</html>", ""
+            #"{"result":"started"}"#, #"{"result":"already-started"}"#,
+            #"{"result":"refused","reason":"BadDeviceToken"}"#, #"{"result":"not-set-up"}"#,
+            #"{"error":"unauthorized"}"#, "<html>Bad gateway</html>", ""
         ].map { text in ReplySample(shown: "body \(text.debugDescription)") { $0.otherBody = Data(text.utf8) } }
     }
 

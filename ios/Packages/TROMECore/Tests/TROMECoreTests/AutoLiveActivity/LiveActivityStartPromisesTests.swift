@@ -94,7 +94,8 @@ struct LiveActivityStartPromisesTests {
             for reply in try answer.startReplies() {
                 count += 1
                 let stubReply = reply.stubReply
-                let starter = ServerLiveActivityStarter(server: .test, httpClient: ServerStubHTTPClient { _ in stubReply })
+                let client = ServerStubHTTPClient { _ in stubReply }
+                let starter = ServerLiveActivityStarter(server: .test, httpClient: client)
                 let read = await starter.start(stationId: ask.station, startToken: ask.startToken)
                 if read.startsTheLiveActivity != (reading == .start) {
                     problems.append("\(answer.when), \(reply.shown.joined(separator: ", ")): reads \(read.summary)")
