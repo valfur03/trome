@@ -389,10 +389,10 @@ on_train_exit() {
 # may still put the branches back and stop its tests. The next train waits until it has ended.
 wait_for_last_train() {
     said=
-    # Only a train is waited for: a stale PID that the system gave again to a make merge that waits for the merge lock,
-    # or to this train, would never end.
+    # Only a train is waited for: a stale PID that the system gave again to a make merge or to its lockf, which wait for
+    # the merge lock, or to this train, would never end. A train is the shell that runs 'merge.sh drive', never its lockf.
     while last_train=$(cat "$queue/train.pid" 2> /dev/null) && [ -n "$last_train" ] && [ "$last_train" != "$$" ] \
-        && ps -p "$last_train" -o command= 2> /dev/null | grep -q 'merge\.sh drive'; do
+        && ps -p "$last_train" -o command= 2> /dev/null | grep -q '^[^ ]*sh .*merge\.sh drive'; do
         [ -n "$said" ] || step "waiting for the train of a stopped make merge to end (PID $last_train)"
         said=1
         sleep 1

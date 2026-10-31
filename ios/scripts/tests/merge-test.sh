@@ -815,6 +815,57 @@ kill "$other" 2> /dev/null || true
 wait "$other" 2> /dev/null || true
 rm -f "$asks/$other"
 
+# A stale ask whose PID the system gave again to the sim-lock.sh of a job that is not a merge: that job does not wait for itself.
+: > "$state/steps"
+RATP_SIM_POLL_SECONDS=1 sh -c 'echo /gone > "$1/$$"; exec "$2/sim-lock.sh" job sh -c "echo after-own-pid >> \"\$FAKE_SIM_STATE/steps\""' \
+    sh "$asks" "$scripts" > "$state/own.log" 2>&1 &
+own=$!
+tries=0
+while kill -0 "$own" 2> /dev/null && [ "$tries" -lt 60 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+kill "$own" 2> /dev/null || true
+wait "$own" 2> /dev/null || true
+expect "a job does not wait for a merge whose stale ask has the PID of its own sim-lock.sh, and removes that ask" "$(steps_line) $(merge_asks)" "after-own-pid  0"
+
+# A stale train.pid whose PID the system gave again to a process that is not a train: the next train does not wait for it.
+# The lockf of a make merge that waits for the merge lock names 'merge.sh drive' too, and a make merge names 'merge.sh'.
+lockf -k "$state/not-a-train.lock" sh -c 'sleep 600; :' merge.sh drive stale > /dev/null 2>&1 &
+not_train=$!
+echo "$not_train" > "$queue/train.pid"
+app_task stale_lockf
+merge stale_lockf
+expect "a train does not wait for a stale train.pid that now names the lockf of a make merge" \
+    "$status $(contains "$state/stale_lockf.log" "waiting for the train of a stopped make merge")" "0 no"
+pkill -P "$not_train" sleep 2> /dev/null || true
+kill "$not_train" 2> /dev/null || true
+wait "$not_train" 2> /dev/null || true
+sh -c 'sleep 600; :' merge.sh > /dev/null 2>&1 &
+not_train=$!
+echo "$not_train" > "$queue/train.pid"
+app_task stale_outer
+merge stale_outer
+expect "a train does not wait for a stale train.pid that now names a make merge" \
+    "$status $(contains "$state/stale_outer.log" "waiting for the train of a stopped make merge")" "0 no"
+pkill -P "$not_train" sleep 2> /dev/null || true
+kill "$not_train" 2> /dev/null || true
+wait "$not_train" 2> /dev/null || true
+# The train itself, when the stale PID went to it: it takes the merge lock as make merge does, with no task to land.
+lockf -k "$RATP_MERGE_LOCK" sh -c 'cd "$3" && echo "$$" > "$1/train.pid" && exec "$2/merge.sh" drive none' sh "$queue" "$scripts" "$repo" \
+    > "$state/own-train.log" 2>&1 &
+own=$!
+tries=0
+while kill -0 "$own" 2> /dev/null && [ "$tries" -lt 60 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+kill "$own" 2> /dev/null || true
+wait "$own" 2> /dev/null || true
+expect "a train does not wait for a stale train.pid that has its own PID" \
+    "$([ "$tries" -lt 60 ] && echo ended || echo hung) $(contains "$state/own-train.log" "waiting for the train of a stopped make merge")" "ended no"
+expect "a train whose own PID was in a stale train.pid ends and leaves no train.pid" "$(test -e "$queue/train.pid" && echo left || echo none)" "none"
+
 # The train is stopped while it rebases its third task: the second task, already rebased onto the first one, goes back too.
 app_task kill_a
 app_task kill_b
