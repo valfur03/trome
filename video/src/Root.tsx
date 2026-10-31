@@ -1,6 +1,7 @@
 import {Composition} from 'remotion';
 import {Film} from './Film';
-import {Stills, languages, stills} from './Stills';
+import {Stills} from './Stills';
+import {keyFrames} from './arrival';
 import {Storyboard, storyboard} from './Storyboard';
 import {film} from './timing';
 
@@ -20,8 +21,16 @@ export const Root = () => (
       width={film.width}
       height={film.height}
       fps={film.fps}
-      durationInFrames={stills.length * languages.length}
+      durationInFrames={keyFrames.length}
     />
-    <Composition id="Storyboard" component={Storyboard} width={storyboard.width} height={storyboard.height} fps={film.fps} durationInFrames={1} />
+    <Composition
+      id="Storyboard"
+      component={Storyboard}
+      width={storyboard.width}
+      height={storyboard.height}
+      fps={film.fps}
+      durationInFrames={1}
+      defaultProps={{lang: 'fr' as const}}
+    />
   </>
 );

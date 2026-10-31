@@ -2,6 +2,8 @@
 # The store pictures: four per language, in English and French, from captures of the shared Simulator.
 #   capture: takes the captures, in the Simulator lock (make store-screenshots runs it)
 #   compose: composes the pictures from the last captures, with no Simulator (make store-screenshots-compose)
+# make film-captures runs capture with another test class and other names (STORE_CAPTURE_TEST, STORE_CAPTURED), and
+# no compose: the film places the captures itself.
 set -eu
 
 usage() {
@@ -18,7 +20,8 @@ out=${STORE_SCREENSHOTS_OUT:-"$root/.build/store-screenshots"}
 captures="$out/captures"
 languages="en fr"
 pictures="1-metro 2-fork 3-rer 4-app"
-captured="app app-help-row island-metro lock-metro island-fork lock-fork island-rer lock-rer"
+captured=${STORE_CAPTURED:-"app app-help-row island-metro lock-metro island-fork lock-fork island-rer lock-rer"}
+test_class=${STORE_CAPTURE_TEST:-StoreScreenshotTests}
 # Apple's iPhone bezel stays out of git: its licence forbids copies. ios/guide/assets.md says how to place it.
 bezel=${STORE_BEZEL:-"$HOME/Library/Application Support/TROME/store-bezel.png"}
 
@@ -66,7 +69,7 @@ capture() {
         language_result=$(result_of "$language")
         rm -rf "$language_result"
         TEST_RUNNER_STORE_LANGUAGE=$language "$@" -resultBundlePath "$language_result" \
-            -only-testing:"$target/StoreScreenshotTests" test-without-building \
+            -only-testing:"$target/$test_class" test-without-building \
             || {
                 status=$?
                 "$scripts/e2e-failures.py" "$language_result"

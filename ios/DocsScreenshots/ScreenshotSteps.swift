@@ -1,17 +1,37 @@
 import CoreLocation
 import XCTest
 
-/// The steps that the docs pictures and the store pictures share: turn on the automatic mode, put the Live
+/// The steps that the docs pictures, the store pictures and the captures of the film share: turn on the automatic mode, put the Live
 /// Activity of a station on the lock screen with the fake trains, show it, and take a still screenshot.
 @MainActor
 struct ScreenshotSteps {
     static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
     private static let allowLiveActivitiesAnswers = ["Always Allow", "Toujours autoriser", "Allow", "Autoriser"]
+    /// The buttons of the permission questions of iOS, in English and in French.
+    private static let permissionAnswers = [
+        "Allow While Using App", "Change to Always Allow", "Allow",
+        "Autoriser pendant l’utilisation de l’app", "Passer à Toujours autoriser", "Autoriser"
+    ]
 
     let timeout: TimeInterval = 30
 
     var springboard: XCUIApplication {
         XCUIApplication(bundleIdentifier: "com.apple.springboard")
+    }
+
+    /// Answers the questions of iOS that show (the first run on a reset Simulator), until none shows for 3 s.
+    func answerThePermissionQuestions() {
+        let answers = springboard.buttons.matching(NSPredicate(format: "label IN %@", Self.permissionAnswers))
+        var quietSince = Date()
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline, Date().timeIntervalSince(quietSince) < 3 {
+            if answers.firstMatch.exists {
+                answers.firstMatch.tap()
+                quietSince = Date()
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+        }
+        XCTAssertFalse(answers.firstMatch.exists, "A permission question of iOS stayed on the screen")
     }
 
     func turnOnTheAutomaticMode(in app: XCUIApplication) {

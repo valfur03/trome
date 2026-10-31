@@ -1,7 +1,7 @@
 # The checks of make check are the files of ios/checks/: each one names its command on a line 'CHECKS += <command>'.
 IOS_CHECKS := $(shell sed -n 's/^CHECKS += //p' /dev/null $(wildcard ios/checks/*.mk))
 IOS_TARGETS := setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check run switch-language fake-trains e2e stations simulator \
-	simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render release-run-check merge e2e-proof $(IOS_CHECKS)
+	simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose film-captures live-activity-render release-run-check merge e2e-proof $(IOS_CHECKS)
 DOCS_TARGETS := docs docs-dev docs-stop docs-check docs-check-if-changed
 VIDEO_TARGETS := video-setup video-studio video-still video-stills video-clip video-check video-check-if-changed
 SERVER_TARGETS := server-setup server-check server-check-if-changed server-dev server-stop server-login server-secrets server-secret server-counts server-deploy-staging server-deploy

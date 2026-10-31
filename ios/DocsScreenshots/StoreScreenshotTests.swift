@@ -31,12 +31,6 @@ final class StoreScreenshotTests: XCTestCase {
         )
     ]
 
-    /// The buttons of the permission questions of iOS, in English and in French.
-    private static let permissionAnswers = [
-        "Allow While Using App", "Change to Always Allow", "Allow",
-        "Autoriser pendant l’utilisation de l’app", "Passer à Toujours autoriser", "Autoriser"
-    ]
-
     @MainActor
     private var steps: ScreenshotSteps {
         ScreenshotSteps()
@@ -118,17 +112,7 @@ final class StoreScreenshotTests: XCTestCase {
     /// main screen shows the permissions given: Location Always and Notifications On, in English.
     @MainActor
     private func answerThePermissionQuestions(in app: XCUIApplication) {
-        let answers = steps.springboard.buttons.matching(NSPredicate(format: "label IN %@", Self.permissionAnswers))
-        var quietSince = Date()
-        let deadline = Date().addingTimeInterval(steps.timeout)
-        while Date() < deadline, Date().timeIntervalSince(quietSince) < 3 {
-            if answers.firstMatch.exists {
-                answers.firstMatch.tap()
-                quietSince = Date()
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
-        }
-        XCTAssertFalse(answers.firstMatch.exists, "A permission question of iOS stayed on the screen")
+        steps.answerThePermissionQuestions()
         guard language == "en" else { return }
         let location = app.descendants(matching: .any)["locationPermissionStatus"]
         let notifications = app.descendants(matching: .any)["notificationsPermissionStatus"]

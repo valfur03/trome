@@ -107,7 +107,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render release-run-check merge e2e-proof
+.PHONY: help setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose film-captures live-activity-render release-run-check merge e2e-proof
 
 help::
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -156,6 +156,7 @@ help::
 	@echo "make docs-screenshots    Take the app screenshots of the docs on the shared Simulator (takes the Simulator lock); a failed run keeps its evidence, as make e2e does"
 	@echo "make store-screenshots   Make the store pictures, in English and French, from captures of the shared Simulator (takes the Simulator lock), in ios/.build/store-screenshots/"
 	@echo "make store-screenshots-compose  Make the store pictures again from the last captures, with no Simulator"
+	@echo "make film-captures       Take the captures of the film (the Live Activity on the lock screen at each of its stations), in English and French, on the shared Simulator (takes the Simulator lock), in ios/.build/film-captures/captures/"
 	@echo "make live-activity-render  Draw the Live Activity views for every station and page, in French, and list the too tall ones, the cut texts and the breaches of the cut rules (takes the Simulator lock; not in the gate)"
 	@echo "make live-activity-render ENGLISH=1  Same, in French, then in English"
 
@@ -306,6 +307,19 @@ store-screenshots: project
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
 		-test-timeouts-enabled YES -default-test-execution-time-allowance 300
 	@$(MAKE) --no-print-directory store-screenshots-compose
+
+# The names of the captures of the film: FilmCaptureTests takes them, video/Makefile reads them.
+FILM_CAPTURES := lock-parmentier lock-strasbourg lock-pont-neuf lock-luxembourg lock-corvisart
+
+film-captures: project
+	@./scripts/wallpaper.sh check
+	@$(BUILD_GATE) $(QUIET) $(LOGS)/film-captures-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	@RATP_SIM_KIND=film-captures STORE_SCREENSHOTS_OUT=$(CURDIR)/$(BUILD_DIR)/film-captures STORE_CAPTURE_TEST=FilmCaptureTests STORE_CAPTURED="$(FILM_CAPTURES)" \
+		$(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-wallpaper-update $(SIMULATOR) wait-for-widget-host $(SIMULATOR) with-destination \
+		$(QUIET) $(LOGS)/film-captures.log '^Captured ' ./scripts/store-screenshots.sh capture $(BUILD_DIR)/film-captures.xcresult $(LOGS)/film-captures.log "$(APP_PATH)" \
+		$(XCODEBUILD) $(NO_KEY) -scheme $(DOCS_SCHEME) \
+		-parallel-testing-enabled NO -collect-test-diagnostics never \
+		-test-timeouts-enabled YES -default-test-execution-time-allowance 300
 
 store-screenshots-compose:
 	@mkdir -p $(LOGS)
