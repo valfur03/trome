@@ -8,7 +8,8 @@ failures=0
 trap 'rm -rf "$state"' EXIT
 # The make commands below go through the build gate. The gate of the Mac is shared with every worktree: a test run or a
 # build of another worktree would add its wait line to the output, and a test run here would stop their builds.
-export RATP_BUILD_GATE="$state/gate"
+# Its waits go to a log folder of its own: a made-up wait in the log of the Mac would make its wait measures look busier.
+export RATP_BUILD_GATE="$state/gate" TROME_LOGS="$state/trome-logs"
 unset RATP_BUILD_GATE_HELD
 
 expect() {
@@ -176,6 +177,8 @@ wait "$holder"
 expect "while a Simulator test run holds the gate, make test passes with the wait line, then the count of the unit tests" \
     "$(cat "$state/busy-status") $(lines) $(sed -n 1p "$state/out" | cut -c1-29) $(sed -n 2p "$state/out" | grep -c 'unit-tests: OK .*Test run with 653 tests in 45 suites passed')" \
     "exit 0 2 Waiting: a Simulator test run 1"
+expect "the wait of that made-up test run goes to the log folder of this test, never to the log of the Mac" \
+    "$(grep -c 'a test run' "$state/trome-logs/build-waits.tsv" 2>/dev/null || echo 0)" "1"
 
 expect "make test fails on a failing unit test" "$(FAKE=fail run_make test)" "exit 1"
 expect "it prints the failing unit test with its name and message" \
