@@ -271,8 +271,11 @@ TROME is for Paris and Île-de-France only: on your lock screen, it shows the ne
 TestFlight shows each text in the language of the tester's iPhone, and falls back to the primary language.
 
 The What to Test of every build after 1.0.0 (3), to any group, is the text that `make release-notes` prints for each language: the lines that are new in the version, then one line that says where TROME works and how to report a problem.
-A tester who updates wants to know what changed, and a tester who comes late reads the beta app description first, which is the same for every build.
+A tester who updates wants to know what changed.
+The beta app description is set once for the app, not for each build, and TestFlight shows it to the testers, so it is the text that a friend who comes late can read, and it says that TROME is for Paris only.
 The command keeps each text under 1,000 bytes, as above.
+
+## A message for a new friend, sent outside TestFlight
 
 The text below was the What to Test of the builds up to 1.0.0 (3), for a first install, and it is no longer pasted in What to Test.
 It stays as a message that you may send to a new friend with the TestFlight link: three things to try, and how to report a problem.
