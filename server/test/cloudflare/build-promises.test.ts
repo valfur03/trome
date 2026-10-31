@@ -2,36 +2,14 @@ import { env, exports } from "cloudflare:workers";
 import { abortAllDurableObjects, runInDurableObject } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { relayObject } from "../../src/cloudflare/relay-object";
-import { appTokens } from "../../src/core/auth/app-tokens";
 import { primEndpoint } from "../../src/core/relay/prim-client";
 import { brokenPromises, type Answered, type PromisedAnswer, type PromiseSet } from "./build-promises";
+import { filled, recordedSets } from "./recorded-sets";
+import { judgeTheStartPromises } from "./start-promises";
 
 // Every recorded set of contracts/builds/ is asked to the whole Worker (the router, the server object, its storage and its
 // PRIM client), with PRIM faked by the recorded answers of the set, and each answer is judged as the builds of the set read it.
 // Why: a build that riders hold never changes, so the server keeps every answer of its set until the release guide retires it.
-
-const files = import.meta.glob<string>("../../../contracts/builds/*/**/*.json", { eager: true, query: "?raw", import: "default" });
-const setFolder = /^\.\.\/\.\.\/\.\.\/contracts\/builds\/([^/]+)\//;
-
-interface RecordedSet {
-  folder: string;
-  set: PromiseSet;
-  file: (path: string) => string;
-}
-
-function recordedSets(): RecordedSet[] {
-  const folders = [...new Set(Object.keys(files).map((path) => setFolder.exec(path)?.[1] ?? ""))].filter(Boolean).sort();
-  return folders.map((folder) => {
-    const file = (path: string): string => {
-      const text = files[`../../../contracts/builds/${folder}/${path}`];
-      if (text === undefined) {
-        throw new Error(`contracts/builds/${folder}/ has no ${path}`);
-      }
-      return text;
-    };
-    return { folder, set: JSON.parse(file("promises.json")) as PromiseSet, file };
-  });
-}
 
 type PrimReply = Response | "unreachable";
 
@@ -57,21 +35,6 @@ function fakePrim(): FakePrim {
     return reply === "unreachable" ? Promise.reject(new TypeError("Network connection lost.")) : Promise.resolve(reply);
   });
   return prim;
-}
-
-const placeholders: Record<string, string> = {
-  "<APP_TOKEN>": appTokens(env.APP_TOKEN)[0] ?? "",
-  "<A_TOKEN_THAT_THE_SERVER_DOES_NOT_ACCEPT>": "0f0e0d0c0b0a09080706050403020100",
-};
-
-function filled(text: string): string {
-  return text.replace(/<[A-Z_]+>/g, (placeholder) => {
-    const value = placeholders[placeholder];
-    if (value === undefined) {
-      throw new Error(`the set has a placeholder this check does not know: ${placeholder}`);
-    }
-    return value;
-  });
 }
 
 async function ask(set: PromiseSet, stop: string, requestHeaders: Record<string, string> = {}): Promise<Answered> {
@@ -200,3 +163,5 @@ describe("the recorded sets of promises of contracts/builds/", () => {
     }
   }
 });
+
+judgeTheStartPromises("with no push key");

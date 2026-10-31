@@ -30,6 +30,17 @@ export interface PromiseSet {
   request: { method: string; path: string; headers: Record<string, string> };
   stops: { stop: string; shape: string; prim: string }[];
   answers: PromisedAnswer[];
+  /** The start of the Live Activity of a station, from the first build that asks the server for it, 1.0.0 (4). */
+  liveActivityStart?: StartPromises;
+}
+
+/** What a build sends to start the Live Activity of a station, and how it reads each answer; the answers use the same matchers. */
+export interface StartPromises {
+  app: { waitForTheAnswerSeconds: number };
+  request: { method: string; path: string; headers: Record<string, string>; body: Record<string, string> };
+  stations: { station: string; shape: string }[];
+  startTokens: { startToken: string; shape: string }[];
+  answers: PromisedAnswer[];
 }
 
 export interface Answered {

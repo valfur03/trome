@@ -10,6 +10,8 @@ struct PromisedReply {
     var headers: [String: String] = [:]
     var json: [String: Any]?
     var primAnswer: Data?
+    /// A body that is neither the PRIM answer nor a JSON object.
+    var otherBody: Data?
     /// The time that Last-Modified says: the build shows it as the time of the answer.
     var answeredAt: Date?
     /// The retry time that the reply gives, before the shortest wait of the build.
@@ -18,7 +20,7 @@ struct PromisedReply {
 
     var stubReply: ServerStubHTTPClient.Reply {
         let json = json.flatMap { try? JSONSerialization.data(withJSONObject: $0, options: .sortedKeys) }
-        return .init(body: primAnswer ?? json ?? Data(), status: status, headers: headers)
+        return .init(body: primAnswer ?? json ?? otherBody ?? Data(), status: status, headers: headers)
     }
 }
 
@@ -54,7 +56,29 @@ extension PromisedAnswer {
         if body.json != nil {
             first.json = [:]
         }
-        let parts = try [statusSamples()] + headerSamples() + retryTimeSamples() + jsonSamples()
+        return try replies(from: first, parts: [statusSamples()] + headerSamples() + retryTimeSamples() + jsonSamples())
+    }
+
+    /// Replies that keep this promise of the start of the Live Activity, as above. When the promise names no body,
+    /// each status also comes with a body that says the start came, and the first status with other bodies:
+    /// the server check judges no body then, so the build must read the status alone.
+    func startReplies() throws -> [PromisedReply] {
+        var first = PromisedReply()
+        if body.json != nil {
+            first.json = [:]
+        }
+        let anyBody = body.json == nil && body.primAnswer != true ? [Self.anyStartBody] : []
+        return try replies(from: first, parts: [statusSamples()] + headerSamples() + jsonSamples() + anyBody)
+    }
+
+    private static var anyStartBody: [ReplySample] {
+        [
+            #"{"result":"started"}"#, #"{"result":"already-started"}"#, #"{"result":"refused","reason":"BadDeviceToken"}"#,
+            #"{"result":"not-set-up"}"#, #"{"error":"unauthorized"}"#, "<html>Bad gateway</html>", ""
+        ].map { text in ReplySample(shown: "body \(text.debugDescription)") { $0.otherBody = Data(text.utf8) } }
+    }
+
+    private func replies(from first: PromisedReply, parts: [[ReplySample]]) -> [PromisedReply] {
         let firstChoice = parts.map { $0[0] }
         var choices = [firstChoice]
         for (index, samples) in parts.enumerated() {

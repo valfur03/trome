@@ -33,7 +33,7 @@ The reviewer checks them, as for the iOS app.
   Never edit, move or delete a recorded set to make the check pass, and never change the app code together with the server to get round it: add the new path, header or field next to the old one, which only new builds read.
   A set leaves only when the table "The builds that riders may hold" of the release guide retires all its builds, with a reason; a server change is never that reason.
   Why: a build in the field never changes, so a record that a server change could edit to match itself would protect no rider; editing the example to match the server was the careless fix that let every break through (TASK-400).
-  A new situation of a set gets its scenario in `build-promises.test.ts`; the matchers of `build-promises.ts` only grow.
+  A new situation of a set gets its scenario in `build-promises.test.ts` (in `start-promises.ts` for the start of the Live Activity); the matchers of `build-promises.ts` only grow.
 - **Folders by feature** inside `core/` (`http/`, `logging/`, `config/`, `storage/`, `time/`, `auth/`, `relay/`, `budget/`, `usage/`), with the same names in `test/core/`.
   The fakes of the tests go in the folder of what they replace (`test/core/time/fake-clock.ts`, `test/core/relay/fake-prim-client.ts`).
   Files in kebab case, one main export each.

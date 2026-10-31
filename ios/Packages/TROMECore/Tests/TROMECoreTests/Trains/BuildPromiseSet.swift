@@ -29,14 +29,16 @@ struct BuildPromiseSet: Decodable {
     let request: Request
     let stops: [Stop]
     let answers: [PromisedAnswer]
+    /// The start of the Live Activity, from the first build that asks the server for it (`LiveActivityStartPromise`).
+    let liveActivityStart: LiveActivityStartPromise?
     private(set) var folder = URL(filePath: "/")
 
     private enum CodingKeys: String, CodingKey {
-        case builds, app, request, stops, answers
+        case builds, app, request, stops, answers, liveActivityStart
     }
 
     static let knownKeys: [String: Set<String>] = [
-        "set": ["description", "builds", "app", "request", "stops", "answers"],
+        "set": ["description", "builds", "app", "request", "stops", "answers", "liveActivityStart"],
         "app": ["waitForOneAnswerSeconds", "askEverySeconds", "shortestWaitAfterAnOutAnswerSeconds"],
         "request": ["method", "path", "headers"],
         "stop": ["stop", "shape", "prim"],
@@ -44,7 +46,12 @@ struct BuildPromiseSet: Decodable {
         "status": ["class", "notClass", "is"],
         "retryTime": ["header", "headerForm", "orBodyKey", "bodyKeyForm"],
         "body": ["primAnswer", "json"],
-        "matcher": ["is", "form", "oneOf", "noneOf", "type", "optional"]
+        "matcher": ["is", "form", "oneOf", "noneOf", "type", "optional"],
+        "liveActivityStart": ["app", "request", "stations", "startTokens", "answers"],
+        "startApp": ["waitForTheAnswerSeconds"],
+        "startRequest": ["method", "path", "headers", "body"],
+        "station": ["station", "shape"],
+        "startToken": ["startToken", "shape"]
     ]
 
     /// The set of the newest build that riders may hold: the next upload copies it, and the app code must still
@@ -94,9 +101,16 @@ struct BuildPromiseSet: Decodable {
 
     private static func unknownKeys(in set: Any) -> [String] {
         let set = set as? [String: Any] ?? [:]
-        let answers = set["answers"] as? [[String: Any]] ?? []
+        let start = set["liveActivityStart"] as? [String: Any]
+        var answers = set["answers"] as? [[String: Any]] ?? []
         var objects: [(kind: String, object: Any?)] = [("set", set), ("app", set["app"]), ("request", set["request"])]
         objects += (set["stops"] as? [Any] ?? []).map { ("stop", $0) }
+        if let start {
+            objects += [("liveActivityStart", start), ("startApp", start["app"]), ("startRequest", start["request"])]
+            objects += (start["stations"] as? [Any] ?? []).map { ("station", $0) }
+            objects += (start["startTokens"] as? [Any] ?? []).map { ("startToken", $0) }
+            answers += start["answers"] as? [[String: Any]] ?? []
+        }
         for answer in answers {
             objects += [("answer", answer), ("status", answer["status"]), ("body", answer["body"])]
             objects += answer["retryTime"].map { [("retryTime", $0)] } ?? []
