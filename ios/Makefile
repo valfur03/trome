@@ -35,6 +35,12 @@ BUILD_GATE := ./scripts/build-gate.py build
 TEST_RUN_GATE := ./scripts/build-gate.py tests
 LOGS := $(BUILD_DIR)/logs
 CORE_PACKAGE := Packages/TROMECore
+# The unit tests run at most as many tests at once as the Mac has cores.
+# Swift Testing starts every test at once by default, and the tests of the main actor then share its one thread, so on
+# a slow or busy Mac a wait of 10 s ran out while that thread served hundreds of other tests.
+# Swift 6.4 still names the variable experimental: a run that fails many waits at the same moment is the sign that a
+# new Swift no longer reads it.
+export SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH ?= $(shell sysctl -n hw.ncpu)
 NO_KEY := -xcconfig Config/NoKey.xcconfig
 # make build (so make check and make run) compiles the silent start, which every Release build and the Debug builds
 # of a paid team turn on, so that no check leaves its code uncompiled; NoKey.xcconfig gives it no server, so it stays

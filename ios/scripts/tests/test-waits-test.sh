@@ -1,6 +1,6 @@
 #!/bin/sh
 # Tests the choice of test-waits.py in throwaway repos: which unit tests it runs for the test files that a change
-# touches. It runs no test: the runs themselves are make test-waits.
+# touches, and the bound of the tests that run at once. It runs no test: the runs themselves are make test-waits.
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
 scripts=$(cd "$tests/.." && pwd)
@@ -82,6 +82,14 @@ git -C "$repo" checkout -q -- .
 git -C "$repo" reset -q --hard
 write "$core/Trains/StubProvider.swift" "final class StubProvider { var calls = 0 }"
 expect "a changed fake or helper, which any test may use: every test" "$(chosen)" "all"
+
+# The unit tests of make test and make test-waits run at most as many tests at once as the Mac has cores: when Swift
+# Testing starts them all at once, a wait runs out of time on a busy Mac (ios/Makefile).
+printf 'show-width:\n\t@echo "$$SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH"\n' > "$state/width.mk"
+width=$(cd "$scripts/.." && env -u SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH \
+    make -s -f Makefile -f "$state/width.mk" show-width)
+expect "the recipes of ios/Makefile run as many unit tests at once as the Mac has cores" "$width" \
+    "$(sysctl -n hw.ncpu)"
 
 if [ "$failures" -ne 0 ]; then
     echo "$failures failures"

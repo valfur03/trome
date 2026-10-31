@@ -46,6 +46,10 @@ To write one:
 - `make check` runs the tests of the test files that you changed with `make test-waits`: 3 times with waits that look again at once, as when the code under test runs late on a busy Mac, and 3 times with waits that look again after 50 ms, as when the test itself runs late.
   A test that passes in `make test` and fails there waits for one thing and checks another.
   To replay one failure, run `swift test` as above with `TROME_TEST_WAITS=eager` or `TROME_TEST_WAITS=late` in front.
+- The `make` commands run at most as many unit tests at once as the Mac has cores (`SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH`, set in `ios/Makefile`).
+  Without it, Swift Testing starts every test at once, and the tests of the main actor share its one thread, so on a busy Mac a wait runs out of time while that thread serves hundreds of other tests.
+  When many waits of one run fail at the same moment, the whole run was slow, not one test.
+  To make a run slow without loading the Mac, put `taskpolicy -b` in front of the command: it runs at the lowest priority of macOS, on fewer and slower cores.
 
 ## End-to-end tests
 
