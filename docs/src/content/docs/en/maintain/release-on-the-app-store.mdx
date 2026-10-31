@@ -79,7 +79,7 @@ Check that each one is ready before you start the step that needs it, so that yo
   The archive fails with no host or no token in that file.
 - **For steps 4 and 5: the privacy page and the help page online,** with the name and the contact address that they hold: [Confidentialité](/fr/privacy/), [Privacy](/en/privacy/), [Aide](/fr/support/) and [Help](/en/support/).
   The app opens the same two pages from its screen, and the build of step 4 must already have these addresses.
-- **For step 5: the beta app description and what to test,** a few lines for the testers, in French and in English: [the store text page](/en/maintain/store-text/#testflight-what-the-first-external-testers-read) holds them.
+- **For step 5: the beta app description and what to test,** a few lines for the testers, in French and in English: [the store text page](/en/maintain/store-text/#testflight-what-the-testers-read) holds the description, and `make release-notes` prints the What to Test.
 - **For step 6: the App Privacy answers,** written from the privacy page, so that the store and the page say the same thing.
 - **For step 6: the screenshots,** in French and in English, at the 6.9-inch size of App Store Connect (for example 1260 × 2736 pixels), made by one command in the repo.
 - **For steps 5 and 7: the review notes,** in English and under 4,000 bytes ([in the store text page](/en/maintain/store-text/#what-app-review-reads-the-contact-and-the-notes)), and **the recording script**: you film the recording yourself, on your iPhone, at a real station, with the final build.
@@ -486,8 +486,8 @@ So the group stays small until the quota of the PRIM account is raised.
    App Store Connect needs the internal group of the steps above before it lets you create this one.
 
 4. In the group, click **Add Builds**, choose the build, paste in **What to Test** the text of each language, and click **Submit Review**.
-   For the first build of the group, the text is the one of [the store text page](/en/maintain/store-text/#testflight-what-the-first-external-testers-read), for a first install.
-   For each later build, it is the What to Test that `make release-notes` prints: what is new, then how to report a problem.
+   The text is the What to Test that `make release-notes` prints: what is new in the version, then how to report a problem.
+   Build 1.0.0 (3) was the last build with the first-install text of [the store text page](/en/maintain/store-text/#testflight-what-the-testers-read); every build after it, to any group, takes the command's text.
    If App Store Connect asks for a contact and notes for the beta review, give your name, email and phone, and paste the review notes.
 
 5. Wait for the beta review: App Store Connect emails you when it approves the build.

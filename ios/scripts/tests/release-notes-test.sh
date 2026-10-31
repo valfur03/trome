@@ -131,7 +131,7 @@ expected_en="The trains show by themselves.
 • Item two."
 expect "the English What's New is the headline, then the three newest items" "$(section "== App Store, What's New, English")" "$expected_en"
 expect "the oldest item is left out, and named" "$(said '- Item one. (ios/changes/one.txt)')" "1"
-expected_fr="Nouveau dans ce build :
+expected_fr="Nouveau dans cette version :
 Les trains s’affichent seuls.
 • Élément four.
 • Élément three.
@@ -164,7 +164,7 @@ expect "they say no release, since the build on the App Store" "$(head -1 "$stat
 expect "the item waits" "$(said '- item: Item small. (ios/changes/small.txt)')" "1"
 expect "the builder note waits" "$(said '- builder: A tool for builders. (ios/changes/builder.txt)')" "1"
 expect "no What's New is printed" "$(said "What's New")" "0"
-expect "the What to Test of a TestFlight build still has the item" "$(section "== TestFlight, What to Test, English")" "New in this build:
+expect "the What to Test of a TestFlight build still has the item" "$(section "== TestFlight, What to Test, English")" "New in this version:
 • Item small."
 
 for name in two three four; do
@@ -172,7 +172,7 @@ for name in two three four; do
     commit "item $name"
 done
 run > /dev/null
-expect "on a quiet week, the What to Test has the three newest items" "$(section "== TestFlight, What to Test, English")" "New in this build:
+expect "on a quiet week, the What to Test has the three newest items" "$(section "== TestFlight, What to Test, English")" "New in this version:
 • Item four.
 • Item three.
 • Item two."

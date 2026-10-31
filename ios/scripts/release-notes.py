@@ -36,7 +36,8 @@ STORE_LIMIT = 4000  # characters per language: Apple's limit of the What's New f
 # showing, so every TestFlight text of the repo stays under 1,000 bytes.
 TESTFLIGHT_LIMIT = 1000
 ITEMS = 3  # The items that ride with the headline: the store cuts its text after about 3 lines, then "more".
-NEW_IN_THIS_BUILD = {"fr": "Nouveau dans ce build :", "en": "New in this build:"}
+# "Version", not "build": the lines count since the store build, so a second build of one version shows them again.
+NEW_IN_THIS_VERSION = {"fr": "Nouveau dans cette version :", "en": "New in this version:"}
 # What a tester of a later build needs: where the app works, and how to report a problem. Not the "three things to try"
 # of the first text, which is for a first install.
 FOR_TESTERS = {
@@ -129,7 +130,7 @@ def texts(notes: List[Dict[str, str]], lead: bool) -> Dict[str, Dict[str, str]]:
     """The texts of each place in each language, checked against the limit of its field."""
     store = {language: "\n".join(lines_of(notes, language, lead)) for language in NAMES}
     testflight = {
-        language: "\n".join(([NEW_IN_THIS_BUILD[language], store[language], ""] if notes else []) + [FOR_TESTERS[language]])
+        language: "\n".join(([NEW_IN_THIS_VERSION[language], store[language], ""] if notes else []) + [FOR_TESTERS[language]])
         for language in NAMES
     }
     for language, name in NAMES.items():

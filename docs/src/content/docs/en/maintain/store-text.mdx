@@ -9,7 +9,7 @@ import { Code } from '@astrojs/starlight/components';
 import Contact from '../../../../components/Contact.astro';
 import { contactEmail } from '../../../../contact.ts';
 
-export const whatToTestFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
+export const newFriendFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
 1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche sur l’écran verrouillé, avec des horaires d’exemple.
 2. À une vraie station de Paris : autorisez la localisation « Toujours » et les notifications, puis approchez-vous à moins de 150 mètres. Les trains s’affichent à votre arrivée, app ouverte ou fermée, sans rien toucher. Si une notification vient à la place, ou si rien ne vient, dites-le-moi.
 3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ». Sur l’exemple, ils ne font que l’arrêter.
@@ -17,7 +17,7 @@ export const whatToTestFr = `Pour Paris et l’Île-de-France seulement. Trois c
 À savoir : il n’y a pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
 Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envoyer. Vous pouvez aussi m’écrire à ${contactEmail}.`;
 
-export const whatToTestEn = `For Paris and Île-de-France only. Three things to try:
+export const newFriendEn = `For Paris and Île-de-France only. Three things to try:
 1. From anywhere: open TROME, tap “See an example”, then lock the iPhone. Châtelet shows on the lock screen, with sample times.
 2. At a real Paris station: allow location “Always” and notifications, then come within 150 meters. The trains show when you arrive, with the app open or closed, with no tap. If a notification comes instead, or nothing comes, tell me.
 3. Not now: on the lock screen, tap “30 min”, “1 h” or “Today”. On the example, they only end it.
@@ -248,12 +248,12 @@ Check each line of these notes against the build that you submit: `make run RELE
 The bullets about the closed app are true only if the Live Activity starts by itself with the build that you submit: see it on your iPhone at a station first.
 Keep the sentence about the video only when the video is attached, and keep the sentence about the server only while it runs.
 
-## TestFlight: what the first external testers read
+## TestFlight: what the testers read
 
 Apple's pages ([Provide test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information/) and [Enter test information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/enter-test-information)), read on 7 October 2026,
 make the beta app description and a feedback email required for external testers, and give no limit for any of these fields.
 So each text stays under 1,000 bytes, which fits any limit of 1,000 bytes or more.
-Each text says in its first sentence that TROME works in Paris and Île-de-France only, and is written in full sentences, as the description is.
+Each text below says in its first sentence that TROME works in Paris and Île-de-France only, and is written in full sentences, as the description is.
 The feedback email is <Contact />, the address of every contact.
 
 Beta app description, French (287 bytes):
@@ -268,20 +268,22 @@ Beta app description, English (246 bytes):
 TROME is for Paris and Île-de-France only: on your lock screen, it shows the next trains at the station where you are. Anywhere else, you can try “See an example”. This is a test version, free and with no account, and your feedback helps me.
 ```
 
-What to test, French (981 bytes):
+TestFlight shows each text in the language of the tester's iPhone, and falls back to the primary language.
 
-<Code code={whatToTestFr} lang="text" wrap />
-
-What to test, English (763 bytes):
-
-<Code code={whatToTestEn} lang="text" wrap />
-
-TestFlight shows the text in the language of the tester's iPhone, and falls back to the primary language.
-
-This What to Test is for the first build that a group gets, a first install.
-For each later build, `make release-notes` prints the What to Test of each language: the lines that are new in the version, then two lines that say where TROME works and how to report a problem.
-A tester of a later build already has the app, and wants to know what changed.
+The What to Test of every build after 1.0.0 (3), to any group, is the text that `make release-notes` prints for each language: the lines that are new in the version, then two lines that say where TROME works and how to report a problem.
+A tester who updates wants to know what changed, and a tester who comes late reads the beta app description first, which is the same for every build.
 The command keeps each text under 1,000 bytes, as above.
+
+The text below was the What to Test of the builds up to 1.0.0 (3), for a first install, and it is no longer pasted in What to Test.
+It stays as a message that you may send to a new friend with the TestFlight link: three things to try, and how to report a problem.
+
+Message to a new friend, French (981 bytes):
+
+<Code code={newFriendFr} lang="text" wrap />
+
+Message to a new friend, English (763 bytes):
+
+<Code code={newFriendEn} lang="text" wrap />
 
 ## What 1.0 says to riders, outside the store
 
