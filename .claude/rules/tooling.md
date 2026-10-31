@@ -2,6 +2,7 @@
 paths:
   - "ios/scripts/**"
   - "ios/Makefile"
+  - "ios/checks/**"
   - "Makefile"
 ---
 # The build tooling: the shared build cache, the build gate and the git hooks
@@ -37,6 +38,14 @@ No wait in a test can fix that: iOS itself drops the tap.
 - A script test that runs `swift`, `swiftc` or `xcodebuild` (or one of them through `xcrun`) runs itself through the gate (its first lines, as in `store-screenshots-test.sh`).
   `make test-scripts` puts `ios/scripts/tests/gate-guard/` first on `PATH`, so such a call outside the gate fails the test (TASK-438); a call by an absolute path skips `PATH`, so `build-gate-test.sh` refuses one in `ios/scripts/`.
 - `ios/scripts/tests/build-gate-test.sh` checks the gate and this wiring of `ios/Makefile`.
+
+## The checks of make check
+
+Each check of `make check` is one file of `ios/checks/`: its line `CHECKS += <command>`, its step for the help of `make check`, its help line and its rule.
+`make check` runs them in the order of the file names (`010-lint.mk`, ..., `150-test-scripts.mk`), and the root `Makefile` and both `make help` lists read them from there.
+A new check is a new file, numbered to run where it belongs (the cheap checks before `build`), and it edits no shared line.
+Why: when every check sat on the same long lines of both `Makefile` files, two tasks that each added a check conflicted at every rebase (four times in one day).
+`ios/scripts/tests/check-list-test.sh` checks the wiring of each file, and that two new checks rebase onto each other with no conflict.
 
 ## The git hooks
 

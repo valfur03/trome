@@ -107,14 +107,13 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check page-date-check change-notes-check release-notes bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render release-run-check merge e2e-proof
+.PHONY: help setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render release-run-check merge e2e-proof
 
-help:
+help::
 	@echo "make setup               Install the tools and create the Xcode project"
 	@echo "make generate            Create the Xcode project again (after a change in project.yml or ios/Config), and refuse the App Store IDs in the Debug IDs of ios/Config"
 	@echo "make git-hooks           Turn on the git hooks: after a git pull or a checkout in the main folder, the Xcode project is created again"
 	@echo "make git-hooks-off       Turn off the git hooks"
-	@echo "make build               Build the app for the Simulator, with no warning allowed (make run builds it first)"
 	@echo "make run                 Build the app and open it in the shared Simulator (keeps the Simulator lock)"
 	@echo "make run LIVE=1          Same, with your PRIM key from the main folder of the repo (ios/Config/Secrets.xcconfig, see ios/README.md)"
 	@echo "make run SMALL=1         Same, on the smallest supported iPhone (an iPhone SE, 375 x 667 pt; keeps the Simulator lock)"
@@ -122,27 +121,23 @@ help:
 	@echo "make run RELEASE=1       Same, with the app as the store ships it: Release configuration, no Testing tools, no PRIM key, and a server that never answers, so no real trains (also for make build and make switch-language)"
 	@echo "make switch-language LANGUAGE=en  After make run: put the Simulator in this language (en or fr) and open the app again, with its data"
 	@echo "make fake-trains STATE=at-platform  After make run: open the app again with fake trains in this state (no STATE: the default times), and say whether the app uses them"
-	@echo "make check               iOS quality gate: lint + Markdown line check + public text check + page date check + change notes check + phone set check + bundle ID check + app icon check + recommended settings check + key leak check (with the upload checks of the Release app) + build (no warning allowed) + strings check + unit tests + script tests"
-	@echo "make strings-check       Fail when a build in Xcode would change a String Catalog, when a text of the app or the Live Activity has no French text, or when a French permission text does not say APP_NAME"
+	@echo "make check               iOS quality gate: $(CHECK_STEPS)"
+
+# The checks of make check: one file each in checks/, with its rule and its help line; make check runs them in the
+# order of the file names. So a new check is a new file, and two tasks that each add a check change no same line.
+include $(sort $(wildcard checks/*.mk))
+CHECK_STEPS_JOINED = $(foreach check,$(CHECKS),+ $(CHECK_STEP_$(check)))
+CHECK_STEPS = $(wordlist 2,$(words $(CHECK_STEPS_JOINED)),$(CHECK_STEPS_JOINED))
+check: $(CHECKS)
+
+help::
 	@echo "make strings-sync        Update the String Catalogs as a build in Xcode does (new texts, texts no longer in the code), and put APP_NAME of Config/Base.xcconfig in the permission texts"
-	@echo "make prose-check         Fail when a line of prose of a Markdown or MDX file of the repo is longer than 400 characters (write one sentence per line)"
-	@echo "make public-text-check   Fail when a file of the repo has a backlog id, a word of the team's own process, a personal email address, a local path, the old name of the app, or \"we\" in the prose"
-	@echo "make change-notes-check  Fail when a note of ios/changes/ breaks its format, or when the commits since main change the code of the app with no note and no commit title that ends with \"(no rider change)\" (part of make check)"
-	@echo "make page-date-check     Fail when a docs page with a date line says a day older than the last change of its text, or not the same day as the page in the other language"
-	@echo "make test                Unit tests only (on the Mac, no Simulator)"
-	@echo "make test-scripts        Tests of the scripts: the Simulator lock (with a fake xcrun, no Simulator) and the warning checks"
-	@echo "make live-key-check      Prove that a LIVE=1 build does not print the key, that a new key replaces the old one, that a Release build holds the app token of the server but never the PRIM key, that a Release build with no server host or no app token fails, and that the Release app passes the upload checks of App Store Connect: an icon of 1024 x 1024 pixels with no transparent pixel, a privacy manifest with a reason for each required reason API that its code uses, the answer on encryption, a version such as 1.0.0, no placeholder address (uses fake values)"
-	@echo "make app-icon-check      Fail when the app has no store icon of 1024 x 1024 pixels, or when its icon has an alpha channel"
-	@echo "make bundle-id-check     Fail when a Debug build could carry the App Store bundle ID (also with the Debug IDs of Local.xcconfig set), or when a Release build is signed automatically with no TROME_RELEASE_TEAM"
-	@echo "make release-signing-check  Fail when Xcode would sign a Release build with no TROME_RELEASE_TEAM, or would not sign it automatically with one, or without the push capability and the app group of the silent start (no compile, no Apple account)"
 	@echo "make release-server-check  Before an archive: say in one line whether the production server accepts the host and the app token of ios/Config/Server.xcconfig (one request for the trains of one stop; prints neither)"
 	@echo "make release-server-timing  Split the time of a call to the production server of ios/Config/Server.xcconfig: connection, Worker, server object, PRIM (5 calls of one rider in 35 s, at most 2 PRIM calls; prints neither)"
 	@echo "make release-notes       Print the What's New of the next store release and the TestFlight What to Test, in French and English, from the notes of ios/changes/ that the build on the App Store does not hold; or no release, with the lines that wait (fails on two headlines)"
 	@echo "make phone-set-record BUILD=<version>-<build>  At each upload, from the commit of the build: record in contracts/phone/ the values that it keeps on the phone, which make test reads with the code of today"
-	@echo "make phone-set-check     Fail when a recorded phone set of contracts/phone/ changed, moved, went or grew while its build is in the field (part of make check)"
 	@echo "make release-tokens-check  After every change of a secret of the production server, and before every upload: say, one line per build that riders may hold, whether the production server accepts its app token of ios/Config/BuildTokens.txt (one request per build; prints no token)"
 	@echo "make release-archive-check  Build an unsigned Release archive of the app and its widget for an iPhone, with stand-in server values: shows that the store build compiles, with the silent start, its push capability and its app group, with no account and no secret (not in make check)"
-	@echo "make recommended-settings-check  Fail when the installed Xcode is newer than the one that last checked the project settings"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make release-run-check   Start the app as the store ships it (as make run RELEASE=1 builds it) on the shared Simulator, and fail when it does not reach its first screen or shows a Testing tool (takes the Simulator lock; make merge runs it)"
@@ -186,83 +181,13 @@ git-hooks:
 git-hooks-off:
 	@./scripts/git-hooks.sh off
 
-lint:
-	@$(QUIET) $(LOGS)/lint.log '' swiftlint lint --strict --quiet
-
 lint-fix:
 	swiftlint --fix --quiet
 	swiftlint lint --strict --quiet
 
-# With LIVE=1, Xcode keeps its copy of the build settings (the build description, in .build/DerivedData) until the path
-# of an -xcconfig file changes, not its content. So PRIM_SECRETS_STAMP passes the time, the file number and the size of
-# the key file (never its content): a new key changes the stamp, and Xcode reads the file again.
-build: project
-ifeq ($(LIVE),1)
-	@test -f "$(PRIM_SECRETS)" || { echo "No PRIM key: $(PRIM_SECRETS) does not exist. Add the key there (see ios/README.md), or build without LIVE=1." >&2; exit 1; }
-	@echo "LIVE=1: the build uses the PRIM key of $(PRIM_SECRETS)"
-	@if [ "$(PRIM_SECRETS)" = "$(OLD_PRIM_SECRETS)" ]; then echo "Note: the key is at its old place. Once the main folder has the ios/ folder, move it there: cd $(MAIN_FOLDER) && mv Config/Secrets.xcconfig ios/Config/ && rmdir Config"; fi
-	@$(BUILD_APP) -xcconfig "$(PRIM_SECRETS)" PRIM_SECRETS_STAMP="$$(stat -f '%Fm-%i-%z' "$(PRIM_SECRETS)")"
-else ifeq ($(RELEASE),1)
-	@rm -rf $(BUILD_RESULT)
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/build-release.log '' $(BUILD_RELEASE_APP) -resultBundlePath $(BUILD_RESULT)
-	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
-else
-	@rm -rf $(BUILD_RESULT)
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/build.log '' $(BUILD_APP) $(NO_KEY) $(SILENT_START_COMPILED) -resultBundlePath $(BUILD_RESULT)
-	@xcrun xcresulttool get build-results --path $(BUILD_RESULT) | ./scripts/build-warnings.py
-endif
-
-strings-check: project
-	@$(BUILD_GATE) ./scripts/strings-sync.sh check $(EXPORT_STRINGS)
-	@./scripts/strings-check.py $(STRING_CATALOGS)
-	@./scripts/app-name-sync.py --check Config/Base.xcconfig App/InfoPlist.xcstrings
-
 strings-sync: project
 	@./scripts/app-name-sync.py Config/Base.xcconfig App/InfoPlist.xcstrings
 	@$(BUILD_GATE) ./scripts/strings-sync.sh sync $(EXPORT_STRINGS)
-
-prose-check:
-	@./scripts/prose-check.py
-
-public-text-check:
-	@./scripts/public-text-check.py
-
-phone-set-check:
-	@./scripts/phone-set-check.py check
-
-change-notes-check:
-	@./scripts/change-notes-check.py check
-
-page-date-check:
-	@./scripts/page-date-check.py
-
-release-notes:
-	@./scripts/release-notes.py
-
-test:
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/unit-tests.log 'Test run with|Executed [1-9]' swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors
-
-# A script test that compiles runs itself through the build gate; the guard, first on PATH, fails a swift, swiftc or xcodebuild (also through xcrun) outside it.
-test-scripts:
-	@mkdir -p $(LOGS)
-	@count=0; guard_log=$(CURDIR)/$(LOGS)/test-scripts-swift.log; for test in ./scripts/tests/*-test.sh; do \
-		: > $$guard_log; \
-		status=0; PATH="$(CURDIR)/scripts/tests/gate-guard:$$PATH" RATP_SWIFT_GUARD_LOG=$$guard_log $$test > $(LOGS)/test-scripts.log 2>&1 || status=$$?; \
-		[ ! -s $$guard_log ] || { cat $$guard_log; echo "test-scripts: FAILED: $$test runs these compiles outside the build gate: run it through ./scripts/build-gate.py build"; exit 1; }; \
-		[ $$status -eq 0 ] || { cat $(LOGS)/test-scripts.log; echo "test-scripts: FAILED: $$test (its whole output is above, and in ios/$(LOGS)/test-scripts.log)"; exit 1; }; \
-		count=$$((count + 1)); \
-	done; \
-	echo "test-scripts: OK ($$count script tests)"
-
-check: lint prose-check public-text-check page-date-check change-notes-check phone-set-check bundle-id-check release-signing-check app-icon-check recommended-settings-check live-key-check build strings-check test test-scripts
-
-bundle-id-check: project
-	@./scripts/bundle-id-check.sh $(PROJECT)
-
-# Not through the build gate: each build stops at the signing check, before any compile, in a few seconds.
-release-signing-check: project
-	@./scripts/release-signing-check.sh $(PROJECT) $(BUILD_DIR)/release-signing-check
-	@./scripts/release-entitlements-check.py $(PROJECT)
 
 # Not in make check: it calls the production server with the token of the maintainer's own file.
 release-server-check:
@@ -271,6 +196,9 @@ release-server-check:
 # Not in make check: it calls the production server with the token of the maintainer's own file.
 release-server-timing:
 	@./scripts/release-server-timing.sh Config/Server.xcconfig
+
+release-notes:
+	@./scripts/release-notes.py
 
 # At each upload: the build of tag builds/<version>/<build> records what it keeps on the phone, from its own code.
 phone-set-record: PHONE_SET_TAG = builds/$(subst -,/,$(BUILD))
@@ -299,15 +227,6 @@ release-archive-check: project
 		|| { echo "release-archive-check: FAILED: the archive has no $(APP_NAME).app with its widget $(APP_NAME)Widget.appex" >&2; exit 1; }
 	@./scripts/release-entitlements-check.py $(PROJECT) $(RELEASE_ARCHIVE)
 	@echo "release-archive-check: OK ($(APP_NAME).app with its widget, unsigned, in ios/$(RELEASE_ARCHIVE))"
-
-app-icon-check:
-	@./scripts/app-icon-check.py App/Assets.xcassets/AppIcon.appiconset
-
-recommended-settings-check:
-	@./scripts/recommended-settings-check.sh project.yml "$$(xcodebuild -version | head -1)"
-
-live-key-check: project
-	@TROME_SHARED_CACHE="$(TROME_SHARED_CACHE)" ./scripts/live-key-check.sh
 
 run: build
 	@RATP_SIM_KIND=run RATP_SIM_DETAIL="$(RUN_DETAIL)" $(SIM_LOCK) open $(SIMULATOR) launch "$(APP_PATH)"

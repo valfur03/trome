@@ -180,7 +180,7 @@ Each part of the repo has its own folder. The root holds only the files of the w
 | `README.md`, `CLAUDE.md`, `.gitignore`, `.nvmrc` | Files for the whole repo. `.nvmrc` pins the Node version of the Node parts (`docs/`, `server/` and `video/`). |
 | `.claude/` | The rules of Claude Code by topic (`rules/`), and the hook that brings each rule to the work that needs it (`hooks/`). |
 | `Makefile` | Runs each `make` command in the folder of its part. It has no build logic. `make check` runs the checks of all parts. |
-| `ios/` | The iPhone app, with its own `Makefile`, `project.yml`, `.swiftlint.yml`, build settings and scripts. Its build output goes to `ios/.build/`. |
+| `ios/` | The iPhone app, with its own `Makefile`, `project.yml`, `.swiftlint.yml`, build settings and scripts. Each check of `make check` is a file of `ios/checks/`. Its build output goes to `ios/.build/`. |
 | `docs/` | The docs site (Starlight), with its own `Makefile` and scripts. |
 | `server/` | The server (a Cloudflare Worker in TypeScript), with its own `Makefile`, scripts and `package.json` (see [server/README.md](../server/README.md)). |
 | `video/` | The source of the film of the app (Remotion), with its own `Makefile`, scripts and `package.json` (see [video/README.md](../video/README.md)). |

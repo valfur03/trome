@@ -109,7 +109,9 @@ expect "it says that it runs next to the test run" "$(grep -c "this build runs n
 kill "$hung" 2> /dev/null || true
 wait "$hung" 2> /dev/null || true
 
-makefile="$tests/../../Makefile"
+# ios/Makefile with the checks of make check, which it includes from ios/checks/.
+makefile="$state/ios-makefile"
+cat "$tests/../../Makefile" "$tests"/../../checks/*.mk > "$makefile"
 expect "every Simulator test run of ios/Makefile goes through the gate" \
     "$(grep -F '$(SIM_LOCK) job' "$makefile" | grep -F ' reset ' | grep -cvF '$(SIM_LOCK) job $(TEST_RUN_GATE) ')" "0"
 expect "every build of ios/Makefile goes through the gate" \
