@@ -142,7 +142,7 @@ def main(arguments: List[str]) -> None:
         print(f"change-notes-check: {failure}", file=sys.stderr)
     if failures:
         sys.exit("change-notes-check: FAILED")
-    print(f"change-notes-check: OK ({len(notes)} notes in {NOTES}; {change})")
+    print(f"change-notes-check: OK ({len(notes)} note{'' if len(notes) == 1 else 's'} in {NOTES}; {change})")
 
 
 if __name__ == "__main__":
