@@ -136,7 +136,8 @@ reset_repo
 commit ios/App/Screen.swift "screen"
 expect "a change of the app with no note and no 'no rider change' fails" "$(check)" "fails"
 expect "the message names the changed file of the app" "$(said "change the code of the app (ios/App/Screen.swift)")" "1"
-expect "the message says both ways out" "$(said "add its note (ios/changes/README.md says how)") $(said "git commit --allow-empty -m \"chore: no rider change\"")" "1 1"
+expect "the message says the three ways out" \
+    "$(said "add its note (ios/changes/README.md says how)") $(said "end the title of one of its commits with \"(no rider change)\"") $(said "git commit --allow-empty -m \"chore: no rider change\"")" "1 1 1"
 write ios/changes/screen.txt "kind: item
 fr: L'écran montre les trains.
 en: The screen shows the trains."
@@ -148,8 +149,10 @@ expect "it says that the change has its note" "$(said "change the app and add or
 reset_repo
 commit ios/Widget/View.swift "view"
 expect "a change of the widget with no note fails" "$(check)" "fails"
-commit ios/Widget/View.swift "view 2" "fix(ios): draw the view again (no rider change)"
-expect "a commit title that says 'no rider change' lets it pass" "$(check)" "passes"
+commit ios/Widget/View.swift "view 2" "docs: the notes check asks for a note or says no rider change"
+expect "a title that only talks about 'no rider change' does not count" "$(check)" "fails"
+commit ios/Widget/View.swift "view 3" "fix(ios): draw the view again (no rider change)"
+expect "a commit title that ends with '(no rider change)' lets it pass" "$(check)" "passes"
 expect "it says why it passes" "$(said "say \"no rider change\"")" "1"
 
 reset_repo
@@ -161,6 +164,13 @@ commit ios/scripts/other.sh "other" "build: a change on main"
 git -C "$repo" checkout -q task
 git -C "$repo" rebase -q main
 expect "the empty commit stays after a rebase onto a newer main, as make merge does" "$(check)" "passes"
+
+reset_repo
+commit ios/App/Screen.swift "screen"
+git -C "$repo" commit -q --allow-empty -m "refactor(ios): split the screen
+
+No rider change."
+expect "a line 'No rider change.' in the body of a commit counts too" "$(check)" "passes"
 
 reset_repo
 commit ios/Packages/Core/Tests/RuleTests.swift "test"

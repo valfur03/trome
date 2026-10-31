@@ -89,7 +89,7 @@ The kind says what your change is; the notes of a version come from the note of 
 
 When a rider or a builder will notice your change, add its note to `ios/changes/`, in the same change: one line in French and one in English, in the words of a rider, or English only for a note to builders ([how to write a note](ios/changes/README.md)).
 The notes of each version, on the App Store and in `CHANGELOG.md`, are made from these files.
-When nobody will notice it, say "no rider change" in the title of one of your commits instead: `make check` refuses a change of the app code with neither.
+When nobody will notice it, end the title of one of your commits with "(no rider change)" instead: `make check` refuses a change of the app code with neither.
 
 ## Send your change
 

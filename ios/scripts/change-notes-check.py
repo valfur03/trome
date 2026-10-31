@@ -8,8 +8,9 @@ release time from the commit titles gives builder words, and one made from the c
 for the build that riders hold.
 
   check [<base>]  Fail, with the file and the reason, on a note that breaks its format. Also fail when the commits since
-                  <base> (main by default) change the code of the app with no note and no commit message that says
-                  "no rider change". Only the commits are judged, as only they merge, and the marker is in a commit message.
+                  <base> (main by default) change the code of the app with no note and no commit that says
+                  "no rider change": a title that ends with "(no rider change)", or that is "chore: no rider change".
+                  Only the commits are judged, as only they merge, and the marker is in a commit message.
 """
 from __future__ import annotations
 
@@ -30,6 +31,9 @@ KINDS: Dict[str, Tuple[str, ...]] = {"headline": ("fr", "en"), "item": ("fr", "e
 HEADLINE_LIMIT = 100
 FIELD = re.compile(r"^(kind|fr|en):(.*)$")
 NO_RIDER_CHANGE = "no rider change"
+# The marker is a line of its own form, so that a title that only talks about the rule (as the change that made it)
+# does not count: "<title> (no rider change)", or "no rider change" alone after the kind of the commit.
+MARKER = re.compile(r"\(no rider change\)\s*$|^(?:[a-z]+(?:\([^)]*\))?!?:\s*)?no rider change\.?\s*$", re.IGNORECASE)
 # The code that goes into the app: the app, the widget and the packages that they share, except the unit tests.
 APP_CODE = re.compile(r"^ios/(?:App|Widget)/|^ios/Packages/(?![^/]+/Tests/)")
 
@@ -105,14 +109,15 @@ def judge_change(root, base: str) -> Tuple[bool, str]:
         return True, f"the commits since {base} change no code of the app"
     if any(path.startswith(NOTES) and path != README for path in changed):
         return True, f"the commits since {base} change the app and add or edit its note"
-    if NO_RIDER_CHANGE in git(root, "log", "--format=%B", f"{start}..HEAD").lower():
+    if any(MARKER.search(line) for line in git(root, "log", "--format=%B", f"{start}..HEAD").split("\n")):
         return True, f"the commits since {base} change the app and say \"{NO_RIDER_CHANGE}\""
     shown = ", ".join(app_code[:3]) + (f" and {len(app_code) - 3} more" if len(app_code) > 3 else "")
     return False, (
         f"the commits since {base} change the code of the app ({shown}), with no note in {NOTES} "
         f"and no commit that says \"{NO_RIDER_CHANGE}\".\n"
         f"When a rider or a builder will notice the change, add its note ({README} says how).\n"
-        f"When nobody will, say so in a commit, for example: git commit --allow-empty -m \"chore: {NO_RIDER_CHANGE}\"\n"
+        f"When nobody will, end the title of one of its commits with \"({NO_RIDER_CHANGE})\", "
+        f"or add this commit: git commit --allow-empty -m \"chore: {NO_RIDER_CHANGE}\"\n"
         "Why: the notes of each version are gathered from these files, so a change with neither could reach riders with no line.")
 
 

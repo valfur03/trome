@@ -5,7 +5,7 @@ The notes of a version are gathered from these files at its release: the What's 
 Why: the person who makes a change knows, at that moment, what a rider will notice and in which words.
 
 A change that nobody will notice (a refactor, a test, a tool, the docs) has no note.
-When such a change touches the code of the app, one of its commits says "no rider change", for example in its title, or in an empty commit: `git commit --allow-empty -m "chore: no rider change"`.
+When such a change touches the code of the app, the title of one of its commits ends with "(no rider change)", or an empty commit says it: `git commit --allow-empty -m "chore: no rider change"`.
 
 ## Write a note
 
@@ -32,7 +32,7 @@ A later change that fixes or completes the same thing, before its version is out
 ## How a note is checked
 
 `make change-notes-check`, part of `make check`, refuses a note that breaks this format.
-It also refuses a branch whose commits change the code of the app (`ios/App/`, `ios/Widget/`, `ios/Packages/` except their tests) with no note and no commit that says "no rider change".
+It also refuses a branch whose commits change the code of the app (`ios/App/`, `ios/Widget/`, `ios/Packages/` except their tests) with no note and no such commit.
 `make public-text-check` reads the notes too: no personal data, and one person speaks.
 
 The review of a change reads its note against the diff, and confirms the kind of a headline: a headline is never the call of its author alone.

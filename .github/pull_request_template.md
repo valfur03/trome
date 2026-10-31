@@ -16,7 +16,7 @@ Closes #
 ## The note for riders
 
 <!-- When a rider or a builder will notice your change, add its note in ios/changes/ (ios/changes/README.md says how), and copy its lines here.
-When nobody will, write "no rider change" here, and in the title of one of your commits: make check looks for it there. -->
+When nobody will, write "no rider change" here, and end the title of one of your commits with "(no rider change)": make check looks for it there. -->
 
 ## How you checked it
 
@@ -25,5 +25,5 @@ When nobody will, write "no rider change" here, and in the title of one of your 
 <!-- Tick a box with [x]. When a box does not apply to your change, leave it empty and write why after it. -->
 - [ ] `make check` passes.
 - [ ] Each text that riders see in my change exists in English and in French.
-- [ ] My change has its note in `ios/changes/`, or one of its commits says "no rider change".
+- [ ] My change has its note in `ios/changes/`, or the title of one of its commits ends with "(no rider change)".
 - [ ] Each page of the docs that my change made false is fixed in it.
