@@ -8,7 +8,7 @@ sidebar:
 
 import Contact from '../../../components/Contact.astro';
 
-Last updated: 30 October 2026.
+Last updated: 31 October 2026.
 
 TROME needs to know which station you are near, not who you are.
 By Apple’s definition, TROME collects no data about you: the server uses what reaches it to answer, and keeps none of it in a form that anyone can read.
@@ -53,7 +53,7 @@ It sends the identifier of the station and the start token that iOS made for the
 This token lets Apple’s push service reach TROME on your iPhone, so it identifies your iPhone for TROME.
 The server passes it once to Apple, with the content of the Live Activity (the station, its lines and its next trains), and then keeps it nowhere: in no storage, no log and no memory.
 For 45 minutes, it keeps only a keyed hash of the token and the station, in memory, with a key made at random.
-This hash cannot give the token back, and it serves only to make no second start when iOS reports the same arrival twice.
+This hash cannot give the token back, and it serves only to avoid a second start when iOS reports the same arrival twice.
 
 ## Why this data is used, and on what legal basis
 
@@ -63,7 +63,7 @@ Here is what each piece of data is for:
 - **The identifier of the station, and the IP address that comes with it**: to give you the times that you ask for, and nothing else.
   Under the GDPR, using data for the length of one request already counts as processing, even if nothing is stored.
   The interest is legitimate here because TROME cannot work without this data, the processing is very short, and the server stores neither the station that you ask for nor your IP address.
-- **The start token, and its hash**: to put the Live Activity on your lock screen when the app is closed, and to make no second start for the same arrival.
+- **The start token, and its hash**: to put the Live Activity on your lock screen when the app is closed, and to avoid a second start for the same arrival.
   The interest is legitimate here because the start cannot happen without the token, the token is used for one request and not kept, and its hash is kept for 45 minutes only, cannot give the token back, and serves no other use.
 - **The server’s totals, and their copy**: to watch the daily limit of calls to the source of the times, and to follow how much TROME is used.
   They have no station and no IP address.

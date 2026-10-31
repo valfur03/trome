@@ -222,7 +222,7 @@ App Review rarely sits in Paris, so the notes tell the reviewer how to see the L
 | Sign-in required | Off: TROME has no account. |
 | Contact first name, last name and phone | Yours, given at the submission. Never write them in a file of the repo: the phone goes in the international format, with a plus sign and the country code. |
 | Contact email | <Contact /> |
-| Notes | The English text below (3748 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
+| Notes | The English text below (3750 of 4000 bytes). Apple accepts any language, and English is the one that every reviewer reads. |
 | Attachment | The recording of the real station, as the recording script says. |
 
 ```text wrap
@@ -239,7 +239,7 @@ HOW IT WORKS IN REAL USE (I recorded the attached video at a Paris station, on a
 - Within about 150 meters of a metro or RER station, with the app open, the Live Activity starts with real times.
 - With the app closed, iOS wakes TROME near a station. TROME sends the station and its push-to-start token to my server, which starts the Live Activity through Apple's push service: it appears on the lock screen with no tap, and the server moves its times with updates on a broadcast channel of the station. This is why I ask for "Always" location: the app is closed when people arrive. With "While Using" only, the app still works while it is open.
 - When the start cannot happen (no network, or the push is refused), TROME sends a local notification instead, and one tap starts the Live Activity. Notifications are optional, and only this fallback.
-- The position is used on the iPhone to find the nearest station. It is never sent to my server. The server gets the identifier of a stop and, for the start only, the push-to-start token, which it passes to Apple and does not keep, keeping only a hash of it for 45 minutes.
+- The position is used on the iPhone to find the nearest station. It is never sent to my server. The server gets the identifier of a stop and, for the start only, the push-to-start token, which it passes to Apple and does not keep; it holds only a hash of it, for 45 minutes.
 
 TRAIN DATA: real times come from the PRIM service of Île-de-France Mobilités, through my server, which is running during the review. Metro and RER do not run all night: outside service hours there are no real times, but the example works at any hour. When the server cannot be reached, the lock screen says "Times unavailable".
 ```
