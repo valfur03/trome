@@ -78,3 +78,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   An agent cannot open that Xcode dialog: when `make recommended-settings-check` fails, ask the prompter (label `needs-prompter`).
 - **New module.** Add a target in `ios/Packages/` only when it solves a real problem (code that must not see the rest, code shared with a new target, build time).
   Deeper changes that these rules call for are `tech` tasks.
+- **The note for riders.** A change of the app code that a rider or a builder will notice adds its note in `ios/changes/` (format and kinds: `ios/changes/README.md`); a change that nobody will notice ends one commit title with "(no rider change)".
+  `make check` fails on a change of the app code with neither, but it cannot judge which one is true.
+  The reviewer reads the note, or the marker, against the diff: a change that a rider will notice with a "(no rider change)" marker, or a note with a wrong kind or a false line, is a medium finding.
+  The reviewer confirms a headline, never its author alone (`.claude/rules/writing.md`, row "The notes of a version").
