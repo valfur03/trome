@@ -3,8 +3,15 @@ set -eu
 
 base_lock=${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}
 watcher="$base_lock.slots-watcher"
-# Each merge that waits for the Simulator writes a file here, named by its PID: the jobs that wait let it go first.
-merge_asks="$base_lock.merge-asks"
+# The jobs that wait for the Simulator stand in a line: one file each, named by when it asked (in microseconds) and its PID.
+# Jobs that are not merges get the lock in the order in which they asked, not the first to look after a release.
+# A merge goes before them, but a job that one merge has passed goes before the next merge: no job waits behind two merges.
+line="$base_lock.line"
+# The key of the last merge that took the lock: the jobs in line that asked before it were passed once.
+passed="$line/passed"
+my_entry=
+nl='
+'
 # One Simulator job at a time: a second Simulator next to the first one takes the whole CPU of the Mac,
 # and each job then runs several times slower. The code of a second slot stays, but off.
 slots=${RATP_SIM_SLOTS:-1}
@@ -243,63 +250,162 @@ cpu_idle_percent() {
     echo "${idle:-0}"
 }
 
-# A merge goes first: a job that is not a merge waits while a 'make merge' asks for the Simulator.
-# A merge asks only once its rebase, gate and test builds have passed: before that, it uses no Simulator, so no job waits for it.
-merge_waits() {
-    [ -z "${RATP_SIM_MERGE:-}" ] || return 1
-    for merge_ask in "$merge_asks"/*; do
-        [ -f "$merge_ask" ] || continue
-        # A pid that the system gave again to another process is not a merge that waits: not even to this job.
-        if [ "$(basename "$merge_ask")" != "$$" ] && ps -p "$(basename "$merge_ask")" -o command= 2> /dev/null | grep -q 'sim-lock\.sh'; then
-            merge_root=$(cat "$merge_ask" 2> /dev/null || true)
-            return 0
+ordinal() {
+    case $(($1 % 100)) in
+        11 | 12 | 13)
+            echo "${1}th"
+            return
+            ;;
+    esac
+    case $(($1 % 10)) in
+        1) echo "${1}st" ;;
+        2) echo "${1}nd" ;;
+        3) echo "${1}rd" ;;
+        *) echo "${1}th" ;;
+    esac
+}
+
+# A process is told apart from a later process with the same PID by the time when it started.
+started_at() {
+    LC_ALL=C ps -p "$1" -o lstart= 2> /dev/null | sed -E 's/ +/ /g; s/^ //; s/ $//'
+}
+
+# A job joins the line when it starts to wait, and leaves it when it takes the lock or ends (on_exit).
+join_line() {
+    [ -z "$my_entry" ] || return 0
+    my_key=$(perl -MTime::HiRes=time -e 'printf "%d", time * 1000000')
+    my_entry="$my_key.$$"
+    my_kind=job
+    [ -z "${RATP_SIM_MERGE:-}" ] || my_kind=merge
+    my_start=$(started_at "$$")
+    trap on_exit EXIT
+    write_entry
+}
+
+write_entry() {
+    mkdir -p "$line"
+    printf '%s\n%s\n%s\n' "$my_kind" "$my_start" "$root" > "$line/.new.$$"
+    mv "$line/.new.$$" "$line/$my_entry"
+}
+
+leave_line() {
+    [ -n "$my_entry" ] || return 0
+    rm -f "$line/$my_entry" "$line/.new.$$"
+    my_entry=
+}
+
+# A merge that takes the lock passes the jobs in line that asked before it: they go before the next merge.
+mark_passed() {
+    [ "$my_kind" = merge ] || return 0
+    read_passed
+    [ "$my_key" -gt "$passed_key" ] || return 0
+    echo "$my_key" > "$line/.passed.$$"
+    mv "$line/.passed.$$" "$passed"
+}
+
+read_passed() {
+    passed_key=$(cat "$passed" 2> /dev/null || true)
+    case $passed_key in "" | *[!0-9]*) passed_key=0 ;; esac
+}
+
+# Reads the line in its order: the jobs that a merge has passed, then the merges, then the other jobs, each in the order
+# in which they asked. A waiter that has ended leaves the line here, also when the system gave its PID to another process
+# (its start time differs); a suspended waiter keeps its place, but the others go before it while it is suspended.
+# Sets place (where this job stands, from 1) and merge_ahead (the folder of the first merge before it, if any).
+read_line() {
+    [ -f "$line/$my_entry" ] || write_entry
+    read_passed
+    in_line=
+    for entry in "$line"/[0-9]*.[0-9]*; do
+        [ -f "$entry" ] || continue
+        name=${entry##*/}
+        key=${name%%.*}
+        pid=${name#*.}
+        case "$key.$pid" in *[!0-9.]* | *.*.*) continue ;; esac
+        if [ "$name" = "$my_entry" ]; then
+            entry_kind=$my_kind
+            entry_root=$root
+        else
+            content=$(cat "$entry" 2> /dev/null || true)
+            entry_kind=${content%%"$nl"*}
+            content=${content#*"$nl"}
+            entry_start=${content%%"$nl"*}
+            entry_root=${content#*"$nl"}
+            process=$(LC_ALL=C ps -p "$pid" -o stat= -o lstart= 2> /dev/null | sed -E 's/ +/ /g; s/^ //; s/ $//')
+            if [ -z "$process" ] || [ "${process#* }" != "$entry_start" ]; then
+                rm -f "$entry"
+                continue
+            fi
+            case $process in T*) continue ;; esac
         fi
-        rm -f "$merge_ask"
+        rank=3
+        if [ "$entry_kind" = merge ]; then
+            rank=2
+        elif [ "$key" -lt "$passed_key" ]; then
+            rank=1
+        fi
+        in_line="$in_line$rank $key $name $entry_kind $entry_root$nl"
     done
-    return 1
+    place=0
+    merge_ahead=
+    while read -r rank key name entry_kind entry_root; do
+        [ -n "$name" ] || continue
+        place=$((place + 1))
+        [ "$name" != "$my_entry" ] || break
+        [ "$entry_kind" != merge ] || [ -n "$merge_ahead" ] || merge_ahead=$entry_root
+    done << LINE
+$(printf '%s' "$in_line" | sort -k1,1n -k2,2n)
+LINE
 }
 
-# A merge says that it waits for the Simulator, until it holds it or ends.
-ask_first() {
-    [ -n "${RATP_SIM_MERGE:-}" ] || return 0
-    mkdir -p "$merge_asks"
-    echo "$root" > "$merge_asks/$$"
-    trap 'rm -f "$merge_asks/$$"' EXIT
+# Sets the line that a job that waits prints (its place, and who holds the lock), and records why it waited.
+wait_in_line() {
+    wait_kind=$1
+    [ -z "$merge_ahead" ] || waited_for merge
+    waited_for "$wait_kind"
+    wait_reason="$(ordinal "$place") in line${merge_ahead:+, a merge goes first ($merge_ahead)}, $2"
 }
 
-stop_asking() {
-    [ -n "${RATP_SIM_MERGE:-}" ] || return 0
-    rm -f "$merge_asks/$$"
-    trap - EXIT
+# The first in line looks at the lock every second, so that a free lock does not stay idle while the others wait.
+wait_a_little() {
+    if [ "$place" -eq 1 ]; then
+        sleep 1
+    else
+        sleep "$poll_seconds"
+    fi
 }
 
+# Returns 0 with the lock of a free slot; 1 when the job waits ($wait_kind, $wait_reason), or another job took the slot first (race).
 try_to_take_a_slot() {
     free_slots=
     busy=
-    if merge_waits; then
-        wait_kind=merge
-        busy=$merge_root
-        wait_reason="a merge goes first ($merge_root)"
-        return 1
-    fi
+    read_line
     for candidate in $(all_slots); do
         use_slot "$candidate"
         if [ ! -e "$lock" ] || remove_if_stale; then
             free_slots="$free_slots $candidate"
+        elif [ "$slots" -eq 1 ]; then
+            busy=$(describe_holder)
         else
             busy="$busy${busy:+; }slot $candidate: $(describe_holder)"
         fi
     done
     if [ -z "$free_slots" ]; then
-        wait_kind=busy
-        wait_reason="every Simulator slot is busy ($busy)"
+        if [ "$slots" -eq 1 ]; then
+            wait_in_line busy "held by $busy"
+        else
+            wait_in_line busy "every Simulator slot is busy ($busy)"
+        fi
+        return 1
+    fi
+    if [ "$place" -gt 1 ]; then
+        wait_in_line line "free for the $(ordinal 1)"
         return 1
     fi
     if [ -n "$busy" ]; then
         idle=$(cpu_idle_percent)
         if [ "$idle" -lt "$min_idle_percent" ]; then
-            wait_kind=cpu
-            wait_reason="a Simulator slot is free, but the CPU is only $idle% idle, and a job next to another one needs $min_idle_percent% ($busy)"
+            wait_in_line cpu "a Simulator slot is free, but the CPU is only $idle% idle, and a job next to another one needs $min_idle_percent% ($busy)"
             return 1
         fi
     fi
@@ -315,55 +421,58 @@ try_to_take_a_slot() {
 acquire() {
     said=
     start_waiting
-    ask_first
+    join_line
     until try_to_take_a_slot; do
         if [ "$wait_kind" = race ]; then
             sleep 1
             continue
         fi
-        waited_for "$wait_kind"
-        if [ "$wait_kind $busy" != "$said" ]; then
+        if [ "$wait_kind $place $merge_ahead $busy" != "$said" ]; then
             echo "Waiting for the Simulator lock: $wait_reason" >&2
-            said="$wait_kind $busy"
+            said="$wait_kind $place $merge_ahead $busy"
         fi
-        sleep "$poll_seconds"
+        wait_a_little
     done
     take
     stamp "$1"
-    stop_asking
+    mark_passed
+    leave_line
     start_watcher
     if [ -n "$said" ]; then
-        echo "Got the Simulator lock (slot $RATP_SIM_SLOT)" >&2
+        echo "Got the Simulator lock$(slot_name)" >&2
     fi
+}
+
+# With one slot (the default), the messages say nothing about slots.
+slot_name() {
+    [ "$slots" -eq 1 ] || echo " (slot $RATP_SIM_SLOT)"
 }
 
 acquire_slot() {
     said=
     start_waiting
-    until ! merge_waits && mkdir "$lock" 2> /dev/null; do
-        if merge_waits; then
-            waited_for merge
-            if [ "merge $merge_root" != "$said" ]; then
-                echo "Waiting for the Simulator lock of slot $RATP_SIM_SLOT: a merge goes first ($merge_root)" >&2
-                said="merge $merge_root"
-            fi
-            sleep "$poll_seconds"
+    join_line
+    while :; do
+        read_line
+        if [ "$place" -eq 1 ] && mkdir "$lock" 2> /dev/null; then
+            break
+        fi
+        if [ -e "$lock" ] && remove_if_stale; then
             continue
         fi
-        if [ ! -e "$lock" ]; then
+        if [ -e "$lock" ]; then
+            wait_in_line busy "held by $(describe_holder)"
+        elif [ "$place" -gt 1 ]; then
+            wait_in_line line "free for the $(ordinal 1)"
+        else
             sleep 1
             continue
         fi
-        if remove_if_stale; then
-            continue
+        if [ "$wait_reason" != "$said" ]; then
+            echo "Waiting for the Simulator lock$(slot_name): $wait_reason" >&2
+            said=$wait_reason
         fi
-        waited_for busy
-        held_by=$(describe_holder)
-        if [ "$held_by" != "$said" ]; then
-            echo "Waiting for the Simulator lock of slot $RATP_SIM_SLOT, held by $held_by" >&2
-            said=$held_by
-        fi
-        sleep "$poll_seconds"
+        wait_a_little
     done
     take
     stamp all
@@ -449,6 +558,7 @@ watch() {
 on_exit() {
     status=$?
     trap - EXIT
+    leave_line
     release "$status"
     exit "$status"
 }
@@ -456,6 +566,7 @@ on_exit() {
 on_exit_if_failed() {
     status=$?
     trap - EXIT
+    leave_line
     if [ "$status" -ne 0 ]; then
         release "$status"
     fi
@@ -473,6 +584,7 @@ open_simulator() {
 on_reopen_exit() {
     status=$?
     trap - EXIT
+    leave_line
     rm -f "$lock/pid"
     exit "$status"
 }
@@ -598,6 +710,7 @@ case "$command" in
                 acquire_slot
             fi
         done
+        leave_line
         start_watcher
         "$@"
         ;;

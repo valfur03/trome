@@ -67,11 +67,16 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 ## The Simulator lock
 
 `make run` and `make e2e` take a machine-wide lock: the folder `/tmp/ratp-sim.lock`.
-While another job holds it, they wait and print `Waiting for the Simulator lock`, with the reason.
+While another job holds it, they wait and print `Waiting for the Simulator lock`, with their place in the line and who holds the lock (`2nd in line, held by a job (e2e) in <folder> (PID <n>)`).
 This is normal.
-Do not stop them, and do not delete the lock.
+Do not stop them, and do not delete the lock or the line.
 The wait can be long, so run these commands in the background.
 
+- **The line.** The jobs that wait get the lock in the order in which they asked (a file each in `/tmp/ratp-sim.lock.line/`, named by when it asked and its PID).
+  A merge goes before them, but a job that one merge has passed goes before the next merge (`.claude/rules/merge.md`).
+  Why: before the line, the first job to look after a release won, so a QA run once waited 59 minutes for 2.5 minutes of use, passed by three merges and by two render checks that asked after it (TASK-489).
+- A waiter that ends, is stopped or loses its terminal leaves the line; one killed with KILL leaves it at the next check of another waiter, which compares the PID and the start time of its process, so a PID that the system gave again keeps no place.
+  A suspended waiter (Ctrl-Z) keeps its place, but the others go before it until it runs again.
 - `make e2e` frees the lock when the tests end, pass or fail.
 - A stopped job leaves no work and no state behind: TERM (or INT, HUP) to its `make`, to `sim-lock.sh` or to any script of the job stops every process of the job, and the lock is freed only when the last one has ended (after 60 s, `RATP_SIM_STOP_SECONDS`, the rest is killed).
   A job script that changes the Simulator puts it back when it is stopped, as `ios/scripts/docs-screenshots.sh` does, and `ios/scripts/tests/sim-lock-stop-test.sh` proves it; stop a job with TERM, never with KILL, which nothing can pass on.
@@ -102,7 +107,7 @@ A `make merge` of app code holds the lock only for its test runs: the E2E suite,
 It rebases, runs `make check` and builds the tests first, with no Simulator lock, and frees the lock when the test runs end, before the fast-forward.
 Why: the rebase, the gate and the builds use no Simulator, and held it for about 9.5 minutes of each merge, while QA, reviews and E2E runs waited (TASK-489).
 Before all that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, and it keeps that lock while it waits for the Simulator, so `main` cannot move between its gate and its tests.
-A merge goes first from the moment it asks for the Simulator (a file named by the PID of its `sim-lock.sh`, in `/tmp/ratp-sim.lock.merge-asks/`): a job that is not a merge waits too, even when it came first; the job that holds the lock keeps it to its end, and the merge says which job it waits for.
+A merge goes first in the line from the moment it asks for the Simulator, before the jobs that came first, except a job that one merge has already passed; the job that holds the lock keeps it to its end, and the merge says which job it waits for.
 A merge that rebases, runs its gate or waits in the queue does not ask yet, so a job may take the free Simulator then, and the merge waits for it.
 A merge with no app code takes no Simulator lock.
 A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock.

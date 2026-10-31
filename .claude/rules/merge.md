@@ -37,10 +37,13 @@ When that Node is older than the one of `.nvmrc` and the branch changes `docs/`,
 Why: twice (2026-10-04 and 2026-10-07), a merge waited for the lock, then failed in the gate because the shell had the old default Node and the branch changed a docs page.
 Run it in the background: it can wait long for the Simulator lock.
 
-**A merge goes first.** While a `make merge` of app code waits for the Simulator lock, after its gate and its test builds, a Simulator job that is not a merge (QA, a review, `make e2e`) does not take the lock: it prints `Waiting for the Simulator lock of slot 1: a merge goes first`, with the folder of that merge.
+**A merge goes first, but passes a job only once.** The Simulator jobs that wait stand in a line (`.claude/rules/simulator.md`).
+A `make merge` of app code joins it when it asks for the Simulator lock, after its gate and its test builds, and goes before the jobs that are not merges (QA, a review, `make e2e`): they print `Waiting for the Simulator lock: 2nd in line, a merge goes first (<folder of the merge>), held by ...`.
+But a job that one merge has passed goes before the next merge: so no job waits behind more than one merge, and a merge waits at most for the jobs that the merge before it passed.
 The job that holds the lock keeps it to its end: a merge never cuts it off, and it names that job in its `Waiting for the Simulator lock` line.
 Before it asks (while it rebases, runs its gate or waits in the queue), a job takes the free Simulator, and the merge then waits for it.
-Why: a merge finishes a task, and the tasks that depend on it wait for it; on 2026-10-07, a merge waited about 25 minutes behind a QA run and a review.
+Why a merge goes first: a merge finishes a task, and the tasks that depend on it wait for it; on 2026-10-07, a merge waited about 25 minutes behind a QA run and a review.
+Why only once: on 2026-10-31, a QA run waited 59 minutes for 2.5 minutes of use, as three merges, one after the other, and two render checks went before it (TASK-489).
 
 **A merge holds the Simulator only for its test runs.** `make merge` rebases, runs the gate and builds the tests (`make e2e-build release-run-build`, and `make live-activity-render-build` when it draws) with no Simulator lock.
 Then it takes the lock, runs the E2E suite, the Release app run and the render check on the builds (`NO_BUILD=1`), and frees the lock before the fast-forward.

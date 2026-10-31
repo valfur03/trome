@@ -24,7 +24,7 @@ idle_watcher=$(fake_watcher idle-watcher "$version")
 
 cleanup() {
     kill ${watcher:-} ${started:-} 2> /dev/null || true
-    for fake in "$state"/*/pid; do
+    for fake in "$state"/*/pid "$state"/line.*.pid; do
         kill "$(cat "$fake")" 2> /dev/null || true
     done
     kill "$(cat "$RATP_SIM_LOCK.slots-watcher" 2> /dev/null)" 2> /dev/null || true
@@ -565,6 +565,159 @@ finish_background
 expect "make run in the other folder runs once the job ends, and keeps the lock" "$(ran open-after-job) $(cat "$RATP_SIM_LOCK/worktree")" "ran $state/other"
 "$other_scripts/sim-lock.sh" free
 expect "make simulator-shutdown in the other folder frees the lock" "$(test -e "$RATP_SIM_LOCK" && echo held || true)" ""
+
+# The line: the jobs that wait for the Simulator get it in the order in which they asked, a merge goes before them,
+# and a job that one merge has passed goes before the next merge. Each job of these tests writes its name to the file
+# order when it gets the lock, and keeps the lock while the file hold.<name> exists.
+line_dir="$RATP_SIM_LOCK.line"
+
+line_job() {
+    name=$1
+    shift
+    env RATP_SIM_POLL_SECONDS=1 "$@" "$scripts/sim-lock.sh" job sh -c 'echo "$0" >> "$FAKE_SIM_STATE/order"
+        tries=0
+        while [ -e "$FAKE_SIM_STATE/hold.$0" ] && [ "$tries" -lt 600 ]; do
+            sleep 0.1
+            tries=$((tries + 1))
+        done' "$name" > "$state/line.$name.log" 2>&1 &
+    echo $! > "$state/line.$name.pid"
+}
+
+line_pid() {
+    cat "$state/line.$1.pid"
+}
+
+said() {
+    grep -qF "$2" "$state/line.$1.log" 2> /dev/null
+}
+
+# Starts a job, and waits until it stands in the line.
+line_job_waits() {
+    line_job "$@"
+    wait_for said "$1" "in line"
+}
+
+has_run() {
+    grep -qx "$1" "$state/order" 2> /dev/null
+}
+
+order() {
+    paste -s -d ' ' - < "$state/order" 2> /dev/null || true
+}
+
+in_line() {
+    ls "$line_dir" 2> /dev/null | grep -c '^[0-9]*\.[0-9]*$' || true
+}
+
+line_is_empty() {
+    [ "$(in_line)" = 0 ]
+}
+
+end_line_jobs() {
+    for name in "$@"; do
+        wait_until_stopped "$(line_pid "$name")"
+    done
+}
+
+# A stale entry of the line: a key from long ago, so it stands first, and a start time that its PID does not have.
+stale_entry() {
+    mkdir -p "$line_dir"
+    printf '%s\nThu Jan 1 00:00:00 1970\n/gone\n' "$2" > "$line_dir/0000000000000001.$1"
+}
+
+: > "$state/order"
+hold "$RATP_SIM_LOCK"
+line_job_waits first RATP_SIM_POLL_SECONDS=3
+line_job_waits second RATP_SIM_POLL_SECONDS=3
+line_job_waits third
+expect "a job that waits says its place in the line and who holds the lock, in one line, with no word about slots" \
+    "$(grep -c "Waiting for the Simulator lock" "$state/line.second.log") $(grep -cF "Waiting for the Simulator lock: 2nd in line, held by a job in /another/worktree (PID $idle_watcher)" "$state/line.second.log") $(grep -c slot "$state/line.second.log" || true)" "1 1 0"
+rm -rf "$RATP_SIM_LOCK"
+end_line_jobs first second third
+expect "three jobs that asked in order get the lock in that order, also when the last one looks at the lock more often" "$(order)" "first second third"
+expect "the jobs leave the line when they get the lock" "$(in_line)" "0"
+
+: > "$state/order"
+hold "$RATP_SIM_LOCK"
+line_job_waits passed
+touch "$state/hold.merge_one"
+line_job_waits merge_one RATP_SIM_MERGE=1
+wait_for said passed "a merge goes first"
+expect "a job behind a merge says that a merge goes first, with the folder of that merge" \
+    "$(grep -cF "Waiting for the Simulator lock: 2nd in line, a merge goes first ($(cd "$scripts/../.." && pwd)), held by a job in /another/worktree" "$state/line.passed.log")" "1"
+rm -rf "$RATP_SIM_LOCK"
+wait_for has_run merge_one
+line_job_waits merge_two RATP_SIM_MERGE=1
+expect "a merge that waits behind a job that the merge before it passed says so" \
+    "$(grep -cF "Waiting for the Simulator lock: 2nd in line, held by a job (merge) in" "$state/line.merge_two.log")" "1"
+rm -f "$state/hold.merge_one"
+end_line_jobs merge_one passed merge_two
+expect "a merge goes before a job that asked first, and that job, once passed, goes before the next merge" "$(order)" "merge_one passed merge_two"
+
+: > "$state/order"
+hold "$RATP_SIM_LOCK"
+line_job_waits after_passes
+line_job_waits merge_three RATP_SIM_MERGE=1
+rm -rf "$RATP_SIM_LOCK"
+end_line_jobs after_passes merge_three
+expect "a job that no merge has passed yet lets the next merge go first, whatever merges passed other jobs before" "$(order)" "merge_three after_passes"
+
+: > "$state/order"
+line_job merge_alone RATP_SIM_MERGE=1
+end_line_jobs merge_alone
+expect "a merge that finds the lock free and no job in line takes it at once" "$(grep -c "Waiting" "$state/line.merge_alone.log" || true) $(test -e "$RATP_SIM_LOCK" && echo held || echo free)" "0 free"
+
+: > "$state/order"
+hold "$RATP_SIM_LOCK"
+line_job_waits killed
+line_job_waits after_killed
+kill -KILL "$(line_pid killed)"
+{ wait "$(line_pid killed)"; } 2> /dev/null || true
+rm -rf "$RATP_SIM_LOCK"
+end_line_jobs after_killed
+expect "a waiter that was killed, so that it could not leave the line, does not block the next one, and leaves the line" "$(order) $(in_line)" "after_killed 0"
+
+: > "$state/order"
+hold "$RATP_SIM_LOCK"
+line_job_waits terminated
+kill -TERM "$(line_pid terminated)"
+wait_until_stopped "$(line_pid terminated)"
+expect "a waiter that is stopped, or loses its terminal, leaves the line at once" "$(in_line)" "0"
+rm -rf "$RATP_SIM_LOCK"
+
+# A suspended waiter (Ctrl-Z) keeps its place, but the others go while it is suspended.
+: > "$state/order"
+hold "$RATP_SIM_LOCK"
+line_job_waits suspended
+line_job_waits not_suspended
+kill -STOP "$(line_pid suspended)"
+rm -rf "$RATP_SIM_LOCK"
+wait_for has_run not_suspended
+kill -CONT "$(line_pid suspended)"
+end_line_jobs not_suspended suspended
+expect "a suspended waiter lets the next one go, and gets the lock once it runs again" "$(order) $(in_line)" "not_suspended suspended 0"
+
+# Stale entries, also with a PID that the system gave again: to a live sim-lock.sh, or to the job that reads the line.
+stale_entry "$idle_watcher" merge
+line_job after_reused_merge
+end_line_jobs after_reused_merge
+expect "a job does not wait for the stale entry of a stopped merge whose PID is now another sim-lock.sh, and removes it" \
+    "$(cat "$state/line.after_reused_merge.log")$(in_line)" "0"
+sh -c 'exit 0' &
+dead=$!
+wait "$dead"
+: > "$state/order"
+stale_entry "$dead" job
+line_job after_dead
+end_line_jobs after_dead
+expect "a job does not wait for the stale entry of a waiter that has ended, and removes it" "$(cat "$state/line.after_dead.log")$(in_line)" "0"
+
+: > "$state/order"
+env RATP_SIM_POLL_SECONDS=1 sh -c 'mkdir -p "$1"; printf "job\nThu Jan 1 00:00:00 1970\n/gone\n" > "$1/0000000000000001.$$"
+    exec "$2/sim-lock.sh" job sh -c "echo own_pid >> \"\$FAKE_SIM_STATE/order\""' sh "$line_dir" "$scripts" > "$state/line.own_pid.log" 2>&1 &
+echo $! > "$state/line.own_pid.pid"
+wait_until_stopped "$(line_pid own_pid)"
+expect "a job does not wait for a stale entry with the PID of its own sim-lock.sh, and removes it" "$(order) $(in_line)" "own_pid 0"
 
 export RATP_SIM_SLOTS=2
 hold "$RATP_SIM_LOCK"
