@@ -144,39 +144,42 @@ export function judgeTheStartPromises(pushKey: PushKey): void {
   const own = situations[pushKey];
   const known = (when: string): boolean => Object.values(situations).some((situationsOfAKey) => situationsOfAKey[when] !== undefined);
 
+  const judged = recordedSets().flatMap(({ folder, set }) =>
+    (set.liveActivityStart?.answers ?? [])
+      .filter((promise) => own[promise.when] !== undefined || (!known(promise.when) && pushKey === "with no push key"))
+      .map((promise) => ({ folder, builds: set.builds.join(", "), start: set.liveActivityStart as StartPromises, promise })),
+  );
+  // Before the first set that holds the start, there is nothing to judge, and an empty suite would fail the run.
+  if (judged.length === 0) {
+    return;
+  }
+
   describe(`the start of the Live Activity in the recorded sets of promises, ${pushKey}`, () => {
     afterEach(forgetEverything);
 
-    for (const { folder, set } of recordedSets()) {
-      const start = set.liveActivityStart;
-      for (const promise of start?.answers ?? []) {
-        if (start === undefined || (own[promise.when] === undefined && (known(promise.when) || pushKey === "with a push key"))) {
-          continue;
-        }
-        const builds = set.builds.join(", ");
-        it(`${builds}: when ${promise.when}, the server gives what they read`, async () => {
-          const situation = own[promise.when];
-          expect(
-            situation,
-            `${builds} (contracts/builds/${folder}/): the server tests have no situation for the start "${promise.when}". Add it to server/test/cloudflare/start-promises.ts; never edit the set.`,
-          ).toBeDefined();
-          const asked = asks(start, promise.askFor);
-          expect(asked.length, `${builds}: askFor "${promise.askFor}" names no station`).toBeGreaterThan(0);
+    for (const { folder, builds, start, promise } of judged) {
+      it(`${builds}: when ${promise.when}, the server gives what they read`, async () => {
+        const situation = own[promise.when];
+        expect(
+          situation,
+          `${builds} (contracts/builds/${folder}/): the server tests have no situation for the start "${promise.when}". Add it to server/test/cloudflare/start-promises.ts; never edit the set.`,
+        ).toBeDefined();
+        const asked = asks(start, promise.askFor);
+        expect(asked.length, `${builds}: askFor "${promise.askFor}" names no station`).toBeGreaterThan(0);
 
-          for (const { station, startToken } of asked) {
-            for (const [way, bring] of Object.entries(situation ?? {})) {
-              const network = fakeNetwork();
-              const answered = await bring({ start, promise, station, startToken, network });
-              expect(
-                brokenPromises(promise, answered, ""),
-                `The server breaks a promise to builds ${builds} (contracts/builds/${folder}/promises.json): when ${promise.when} (${way}), for ${station}, ` +
-                  `they read ${promise.reads}. Riders of these builds still use them: change the server by adding, never by changing what they read.`,
-              ).toEqual([]);
-              await forgetEverything();
-            }
+        for (const { station, startToken } of asked) {
+          for (const [way, bring] of Object.entries(situation ?? {})) {
+            const network = fakeNetwork();
+            const answered = await bring({ start, promise, station, startToken, network });
+            expect(
+              brokenPromises(promise, answered, ""),
+              `The server breaks a promise to builds ${builds} (contracts/builds/${folder}/promises.json): when ${promise.when} (${way}), for ${station}, ` +
+                `they read ${promise.reads}. Riders of these builds still use them: change the server by adding, never by changing what they read.`,
+            ).toEqual([]);
+            await forgetEverything();
           }
-        });
-      }
+        }
+      });
     }
   });
 }
