@@ -3,7 +3,9 @@ import type {Beat, Lang} from './arrival';
 
 // Apple's iPhone 18 Pro bezel, as it is (its licence forbids copies, so make copies it into public/app/ from the
 // file of each maintainer), and the hole of its screen, which has the size of the Simulator's captures.
-export const bezel = {width: 1350, height: 2760, screen: {x: 72, y: 69, width: 1206, height: 2622}} as const;
+// The corners of the hole are round (radius measured on the bezel): the capture is cut to them, or its square
+// corners would show outside the phone.
+export const bezel = {width: 1350, height: 2760, screen: {x: 72, y: 69, width: 1206, height: 2622, radius: 192}} as const;
 
 // Where the card of the Live Activity sits in a capture of the lock screen, in its pixels.
 export const card = {top: 1812, bottom: 2235} as const;
@@ -21,11 +23,15 @@ export const Phone = ({src, scale, centreX, top}: {src?: string; scale: number; 
     top: bezel.screen.y * scale,
     width: bezel.screen.width * scale,
     height: bezel.screen.height * scale,
+    borderRadius: bezel.screen.radius * scale,
+    overflow: 'hidden' as const,
   };
   return (
     <div style={{position: 'absolute', left: Math.round(centreX - width / 2), top: Math.round(top), width, height}}>
       {src ? (
-        <Img src={src} style={{position: 'absolute', ...screen}} />
+        <div style={{position: 'absolute', ...screen}}>
+          <Img src={src} style={{width: screen.width, height: screen.height}} />
+        </div>
       ) : (
         <div style={{position: 'absolute', ...screen, backgroundColor: 'black'}} />
       )}

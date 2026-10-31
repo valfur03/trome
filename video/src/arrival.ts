@@ -37,7 +37,7 @@ export const beats: readonly Beat[] = [
     to: 5,
     capture: 'parmentier',
     line: '3',
-    moves: 'The phone, cut in half by the bottom edge, is dark for 4 beats; its screen lights on beat 5 (9:41); it starts to rise.',
+    moves: 'The phone, cut in half by the bottom edge, is dark for 4 beats; its screen lights on beat 5 (9:41); then it starts to rise.',
   },
   {
     id: '2-already',
@@ -46,7 +46,7 @@ export const beats: readonly Beat[] = [
     capture: 'parmentier',
     line: '3',
     word: {fr: 'Déjà là.', en: 'Already there.'},
-    moves: 'The phone rises, still cut, until the card of line 3 is in the light; the word comes on the downbeat at 7 s.',
+    moves: 'The phone rises, still cut, until the card of line 3 is in the middle; the word comes on the downbeat at 7 s.',
   },
   {
     id: '3-hub',
@@ -54,7 +54,7 @@ export const beats: readonly Beat[] = [
     to: 12,
     capture: 'strasbourg',
     line: '4',
-    moves: 'Cut on the bar: another place (4, 8, 9, the card shows "+2"); the phone comes from the other edge, the light turns to line 4.',
+    moves: 'Cut on the bar: another place (lines 4, 8, 9; the card shows "+2"); the phone slides in at a new height, the light turns to line 4.',
   },
   {
     id: '4-fork',
@@ -62,7 +62,7 @@ export const beats: readonly Beat[] = [
     to: 14,
     capture: 'pont-neuf',
     line: '7',
-    moves: 'Cut on the bar: line 7 and its two branches; the phone slides on, the light turns pink.',
+    moves: 'Cut on the bar: line 7 and its two branches; the phone slides in at a new height, the light turns pink.',
   },
   {
     id: '5-rer',
@@ -70,7 +70,7 @@ export const beats: readonly Beat[] = [
     to: 16,
     capture: 'luxembourg',
     line: 'B',
-    moves: 'Cut on the bar: an RER, its rows of times; the phone slides on, the light turns blue.',
+    moves: 'Cut on the bar: an RER, with its rows of times; the phone slides in at a new height, the light turns blue.',
   },
   {
     id: '6-every',
@@ -79,14 +79,14 @@ export const beats: readonly Beat[] = [
     capture: 'corvisart',
     line: '6',
     word: {fr: 'À chaque station.', en: 'At every station.'},
-    moves: 'Cuts every 2 beats, then on every beat (Corvisart, Anvers, Abbesses, Liège, Goncourt, Saint-Paul, Pelleport, Cité Universitaire); the word holds over them.',
+    moves: 'Cuts every 2 beats, then on every beat, through 8 stations of other lines (the first is Corvisart); the word holds over them.',
   },
   {
     id: '7-end',
     from: 21,
     to: 24,
     line: '1',
-    moves: 'Cut on the bar: the icon and TROME, still; the light fades out on the last beat.',
+    moves: 'Cut on the bar: the name, still; the light fades out on the last beat.',
   },
 ];
 

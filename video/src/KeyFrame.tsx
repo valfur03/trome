@@ -1,15 +1,16 @@
-import {AbsoluteFill, Img, staticFile} from 'remotion';
+import {AbsoluteFill} from 'remotion';
 import {type Beat, type Lang, type Look, lineColours} from './arrival';
 import {inter} from './fonts';
 import {Phone, bezel, captureOf, card} from './Phone';
 import {css, night, palette, type RGB} from './palette';
 import {film} from './timing';
 
-// One key frame of the storyboard of the arrival, in one of its two looks:
-// - look A, "night": a black stage, the phone large (it fills the width), hung from the top edge or rising from the
-//   bottom one in turn, a pool of the line's colour where the phone is not, the word centred in white;
-// - look B, "field": the lit field of the store pictures, in the line's colour, which changes at each cut, the phone
-//   smaller and always rising from the bottom edge, the word large and left-aligned at the top.
+// One key frame of the storyboard of the arrival, in one of its two looks. In both, the phone is as large as it can
+// be and stay whole across the film, and the first beat cuts it in half at the bottom edge.
+// - look A, "night": a black stage; in the montage the phone hangs from the top edge, so the clock is cut off and the
+//   card is the subject; a pool of the line's colour lights the bottom, where the word is, centred, in white;
+// - look B, "field": the lit field of the store pictures, in the line's colour, which changes at each cut; the phone
+//   rises from the bottom edge, so the whole lock screen shows, clock and card; the word is large, at the top left.
 
 const rgb = (value: number): RGB => [(value >> 16) & 255, (value >> 8) & 255, value & 255];
 const lineOf = (beat: Beat) => {
@@ -17,13 +18,14 @@ const lineOf = (beat: Beat) => {
   return {colour, tones: palette({name: beat.line, mode: beat.line === 'B' ? 'rer' : 'metro', colour, text: [255, 255, 255]})};
 };
 
-const scales = {a: 0.64, b: 0.56} as const;
+// Both looks show the phone at the largest scale at which it is whole across the film (864 of 886 pixels).
+const scales = {a: 0.64, b: 0.64} as const;
 
 // The y of the centre of the card in the film, for each beat with a phone; 'half' cuts the phone in half at the
 // bottom edge (the first beat: only the top of the lock screen shows).
 const cardY: Record<Look, Record<string, number | 'half'>> = {
-  a: {'1-light': 'half', '2-already': 780, '3-hub': 1700, '4-fork': 720, '5-rer': 1660, '6-every': 780},
-  b: {'1-light': 'half', '2-already': 1700, '3-hub': 1660, '4-fork': 1720, '5-rer': 1680, '6-every': 1700},
+  a: {'1-light': 'half', '2-already': 780, '3-hub': 880, '4-fork': 700, '5-rer': 840, '6-every': 760},
+  b: {'1-light': 'half', '2-already': 1700, '3-hub': 1640, '4-fork': 1720, '5-rer': 1660, '6-every': 1740},
 };
 
 const phoneTop = (look: Look, beat: Beat) => {
@@ -55,13 +57,13 @@ const Word = ({look, text, hung}: {look: Look; text: string; hung: boolean}) =>
     <div
       style={{
         position: 'absolute',
-        left: 72,
-        width: 742,
-        top: 200,
+        left: 64,
+        width: 760,
+        top: 72,
         fontFamily: inter,
         fontWeight: 800,
-        fontSize: 124,
-        lineHeight: 1.02,
+        fontSize: 104,
+        lineHeight: 1,
         letterSpacing: -3,
         color: 'white',
       }}
@@ -100,24 +102,15 @@ const Field = ({tones}: {tones: ReturnType<typeof palette>}) => (
   </AbsoluteFill>
 );
 
+// The end card: the name alone. The icon is left out: its "013" runs off its own edges, which reads as an icon cut
+// in two at the size of a film (the prompter's remark on the end card of round 1).
 const EndCard = ({look, beat}: {look: Look; beat: Beat}) => {
   const {colour, tones} = lineOf(beat);
-  const icon = 300;
   return (
     <AbsoluteFill style={{backgroundColor: css(night)}}>
       {look === 'a' ? <Pool colour={colour} atTop={false} strength={0.7} /> : <Field tones={tones} />}
       <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center'}}>
-        <Img
-          src={staticFile('app/app-icon.png')}
-          style={{
-            width: icon,
-            height: icon,
-            borderRadius: icon * 0.2237,
-            // The icon is black: a faint rim, as iOS draws around a dark icon, keeps its shape on a dark ground.
-            boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.16)',
-          }}
-        />
-        <div style={{marginTop: 56, fontFamily: inter, fontWeight: 700, fontSize: 112, letterSpacing: 2, color: 'white'}}>TROME</div>
+        <div style={{fontFamily: inter, fontWeight: 800, fontSize: 168, letterSpacing: 4, color: 'white'}}>TROME</div>
       </AbsoluteFill>
     </AbsoluteFill>
   );

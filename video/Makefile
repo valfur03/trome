@@ -11,6 +11,9 @@ APP_PICTURES := $(foreach lang,fr en,$(foreach case,metro rer fork,public/app/li
 # The key frames show the captures of the film (make film-captures) in Apple's iPhone bezel: neither is kept in git.
 BEZEL ?= $(HOME)/Library/Application Support/TROME/store-bezel.png
 FILM_CAPTURES := ../ios/.build/film-captures/captures
+# BROWSER=<path of a Chrome> renders with that browser, in its headless mode, instead of the headless shell that
+# Remotion downloads (for a Mac where that shell hangs on its first page).
+BROWSER_FLAGS = $(if $(BROWSER),--browser-executable="$(BROWSER)" --chrome-mode=chrome-for-testing)
 STUDIO_FLAGS := $(if $(PORT),--port $(PORT)) $(if $(filter 0,$(OPEN)),--no-open)
 
 .PHONY: help node-check film-pictures video-setup video-studio video-still video-clip video-stills video-check video-check-if-changed
@@ -48,25 +51,25 @@ video-studio: video-setup $(MUSIC) $(APP_PICTURES)
 	npx --no-install remotion studio $(STUDIO_FLAGS)
 
 video-still: video-setup $(MUSIC) $(APP_PICTURES)
-	@$(RENDER) still Film out/still.png --frame=$(FRAME)
+	@$(RENDER) still Film out/still.png --frame=$(FRAME) $(BROWSER_FLAGS)
 
 video-clip: video-setup $(MUSIC) $(APP_PICTURES)
-	@$(RENDER) render Film out/clip.mp4
+	@$(RENDER) render Film out/clip.mp4 $(BROWSER_FLAGS)
 
 # One PNG per key frame (the Stills composition: one frame per key frame, in the order of src/arrival.ts), named by
 # scripts/name-stills.ts, and the storyboard on one page in each language.
 video-stills: video-setup $(APP_PICTURES) film-pictures
 	@rm -rf out/stills
-	@$(RENDER) render Stills out/stills --sequence --image-format=png
+	@$(RENDER) render Stills out/stills --sequence --image-format=png $(BROWSER_FLAGS)
 	@node scripts/name-stills.ts out/stills
-	@$(RENDER) still Storyboard out/stills/storyboard-fr.png --props='{"lang":"fr"}'
-	@$(RENDER) still Storyboard out/stills/storyboard-en.png --props='{"lang":"en"}'
+	@$(RENDER) still Storyboard out/stills/storyboard-fr.png --props='{"lang":"fr"}' $(BROWSER_FLAGS)
+	@$(RENDER) still Storyboard out/stills/storyboard-en.png --props='{"lang":"en"}' $(BROWSER_FLAGS)
 
 # The render runs outside $(QUIET), so a wait for the Simulator lock shows as it happens.
 video-check: video-setup $(MUSIC) $(APP_PICTURES)
 	@$(QUIET) $(LOGS)/video-type-check.log '' npx --no-install tsc
 	@$(QUIET) $(LOGS)/video-unit-tests.log '^ℹ (tests|fail) ' node --test "music/**/*.test.ts"
-	@$(RENDER) still Film .build/check/still.png --frame=$(FRAME) --log=error
+	@$(RENDER) still Film .build/check/still.png --frame=$(FRAME) --log=error $(BROWSER_FLAGS)
 	@node scripts/still-check.ts .build/check/still.png
 
 video-check-if-changed:

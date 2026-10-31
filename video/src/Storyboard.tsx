@@ -15,13 +15,13 @@ const frameHeight = Math.round(film.height * third);
 
 export const storyboard = {
   width: pad * 2 + beats.length * frameWidth + (beats.length - 1) * gap + 140,
-  height: 2330,
+  height: 1940,
 } as const;
 
 const lookNames = {a: 'A, night', b: 'B, field'} as const;
 
 const feel = {
-  fr: 'Je marche vers une station, je n’ouvre rien, et mes prochains trains sont déjà sur l’écran verrouillé. Et c’est vrai à chaque station, sur chaque sorte de ligne : les coupes le montrent, pas des phrases.',
+  fr: 'Je marche vers une station, je n’ouvre rien, et mes prochains trains sont déjà sur l’écran verrouillé. Et c’est vrai à chaque station, sur chaque sorte de ligne\u00a0: les coupes le montrent, pas des phrases.',
   en: 'I walk to a station, I open nothing, and my next trains are already on my lock screen. And it works at every station, on every kind of line: the cuts show it, not sentences.',
 } as const;
 
@@ -33,12 +33,16 @@ export const Storyboard = ({lang}: {lang: Lang}) => (
     <div style={{fontSize: 26, lineHeight: 1.35, marginTop: 10, maxWidth: 1900}}>{feel[lang]}</div>
     {looks.map((look) => (
       <div key={look} style={{display: 'flex', marginTop: 34}}>
-        <div style={{width: 140, fontSize: 30, fontWeight: 700, paddingTop: 44}}>{lookNames[look]}</div>
+        <div style={{width: 140, fontSize: 30, fontWeight: 700, paddingTop: 70}}>{lookNames[look]}</div>
         <div style={{display: 'flex', gap}}>
           {beats.map((beat) => (
             <div key={beat.id} style={{width: frameWidth}}>
-              <div style={{fontSize: 24, fontWeight: 700, marginBottom: 8}}>
-                {beat.from}–{beat.to} s{beat.word ? ` · “${beat.word[lang]}”` : ''}
+              {/* Two lines for every frame, the time then the word, so that the frames of a row stay aligned. */}
+              <div style={{fontSize: 24, lineHeight: 1.3, fontWeight: 700, height: 62, marginBottom: 8}}>
+                <div>
+                  {beat.from}–{beat.to} s
+                </div>
+                <div>{beat.word ? `“${beat.word[lang]}”` : ''}</div>
               </div>
               <div style={{width: frameWidth, height: frameHeight, overflow: 'hidden', borderRadius: 10, position: 'relative'}}>
                 <div style={{width: film.width, height: film.height, transform: `scale(${third})`, transformOrigin: 'top left', position: 'absolute'}}>

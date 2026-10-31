@@ -15,6 +15,7 @@ So when a change makes one of them false, the same change makes it again, except
 | The store text, [`store-text.mdx`](../../docs/src/content/docs/en/maintain/store-text.mdx) | Every text that goes into App Store Connect and TestFlight for the version, in French and in English, except the review notes, which are in English only: the title, the subtitle, the promotional text, the description, the keywords, the review notes and the TestFlight texts. | Edit the page, then count the sizes again, because each field has a limit (the page gives it) and the keywords and the review notes count bytes, not characters. Its table "When the app changes, check these claims" names the guide that holds each claim. Then paste the changed field into App Store Connect: only the promotional text can change with no new version, and every other field waits for the next one. |
 | The icon of the docs site, [`docs/public/favicon.png`](../../docs/public/favicon.png) | The app icon at 96 x 96 pixels, in the browser tab of every page. | From the root: `sips -z 96 96 ios/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png --out docs/public/favicon.png` |
 | The film and its store cut, from [`video/`](../../video/) | The Live Activity on the lock screen (the captures of the docs, in French and in English: metro line 1, RER B, the fork of line 7) and the app icon, around drawings of the line, a metro, an RER and a tunnel. | `make video-clip`, `make video-stills` ([Run it](../../video/README.md#run-it)) |
+| The key frames of the storyboard of the film, from [`video/`](../../video/) | The Live Activity on the lock screen, in French and in English, at Parmentier (metro 3), Strasbourg - Saint-Denis (metro 4, with "+2"), Pont Neuf (metro 7, a line with a branch), Luxembourg (RER B) and Corvisart (metro 6), with fake trains, whole in Apple's iPhone bezel; then the name. | `make film-captures`, then `make video-stills` ([Run it](../../video/README.md#run-it)) |
 
 The change that makes a new asset adds its row here: what it shows, and its command.
 
@@ -37,6 +38,9 @@ Its licence forbids copies, so the repo does not hold it, and each maintainer pl
 
 The command measures the screen of the bezel, and uses it only when it has the shape of the captures and keeps the Live Activity at nine tenths of its size or more.
 Otherwise, or with no bezel file, it says why, and the cuts have rounded corners and no frame.
+
+`make film-captures` takes the captures of the film the same way, with no compose step: the lock screen at each station of the storyboard, in English and in French, to `ios/.build/film-captures/captures/`.
+The film puts them in the same bezel.
 
 To publish them, drag the pictures of each language, in the order of their names, to the large display with Dynamic Island (6.9-inch) of the version in App Store Connect.
 
