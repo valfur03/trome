@@ -160,7 +160,7 @@ def report(root: Path, today: datetime.date) -> str:
         count = f"{len(shown) - 1} item{'' if len(shown) == 2 else 's'}"
         out.append(f"release-notes: the notes since {build}, {since} (tag {tag}): {lead} and {count}, newest first.")
         if not on_store:
-            out.append("The first version has no What's New field: these texts are for the versions after it.")
+            out.append("The first version has no What's New field, and its CHANGELOG.md entry is written by hand: use only the What to Test.")
         if left_out:
             out.append(
                 f"Left out, as the store shows at most {ITEMS} items (merge one into another note to keep it):\n"
