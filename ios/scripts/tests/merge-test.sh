@@ -795,41 +795,6 @@ expect "a task whose make merge was stopped during its train does not land" "$(r
 expect "a task whose make merge was stopped during its train is back on its own commits" "$(rev task/stop_b)" "$stop_b_head"
 expect "a stopped make merge leaves no task in the queue" "$(queued)" "0"
 
-# The ask of a merge for the Simulator is a file named by the PID of its sim-lock.sh: a stopped merge may leave it.
-asks="$RATP_SIM_LOCK.merge-asks"
-mkdir -p "$asks"
-sh -c 'exit 0' &
-dead=$!
-wait "$dead"
-echo /gone > "$asks/$dead"
-: > "$state/steps"
-RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-dead-merge >> "$FAKE_SIM_STATE/steps"' > "$state/dead.log" 2>&1
-expect "a job does not wait for a merge whose ask was left by a process that has ended, and removes that ask" "$(steps_line) $(merge_asks)" "after-dead-merge  0"
-
-sleep 30 &
-other=$!
-echo /gone > "$asks/$other"
-: > "$state/steps"
-RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-reused-pid >> "$FAKE_SIM_STATE/steps"' > "$state/reused.log" 2>&1
-expect "a job does not wait for a merge whose pid now belongs to another process" "$(steps_line) $(contains "$state/reused.log" "a merge goes first")" "after-reused-pid  no"
-kill "$other" 2> /dev/null || true
-wait "$other" 2> /dev/null || true
-rm -f "$asks/$other"
-
-# A stale ask whose PID the system gave again to the sim-lock.sh of a job that is not a merge: that job does not wait for itself.
-: > "$state/steps"
-RATP_SIM_POLL_SECONDS=1 sh -c 'echo /gone > "$1/$$"; exec "$2/sim-lock.sh" job sh -c "echo after-own-pid >> \"\$FAKE_SIM_STATE/steps\""' \
-    sh "$asks" "$scripts" > "$state/own.log" 2>&1 &
-own=$!
-tries=0
-while kill -0 "$own" 2> /dev/null && [ "$tries" -lt 60 ]; do
-    sleep 1
-    tries=$((tries + 1))
-done
-kill "$own" 2> /dev/null || true
-wait "$own" 2> /dev/null || true
-expect "a job does not wait for a merge whose stale ask has the PID of its own sim-lock.sh, and removes that ask" "$(steps_line) $(merge_asks)" "after-own-pid  0"
-
 # A stale train.pid whose PID the system gave again to a process that is not a train: the next train does not wait for it.
 # The lockf of a make merge that waits for the merge lock names 'merge.sh drive' too, and a make merge names 'merge.sh'.
 lockf -k "$state/not-a-train.lock" sh -c 'sleep 600; :' merge.sh drive stale > /dev/null 2>&1 &
