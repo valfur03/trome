@@ -144,10 +144,12 @@ export function judgeTheStartPromises(pushKey: PushKey): void {
   const own = situations[pushKey];
   const known = (when: string): boolean => Object.values(situations).some((situationsOfAKey) => situationsOfAKey[when] !== undefined);
 
-  const judged = recordedSets().flatMap(({ folder, set }) =>
-    (set.liveActivityStart?.answers ?? [])
-      .filter((promise) => own[promise.when] !== undefined || (!known(promise.when) && pushKey === "with no push key"))
-      .map((promise) => ({ folder, builds: set.builds.join(", "), start: set.liveActivityStart as StartPromises, promise })),
+  const judged = recordedSets().flatMap(({ folder, set: { builds, liveActivityStart: start } }) =>
+    start === undefined
+      ? []
+      : start.answers
+          .filter((promise) => own[promise.when] !== undefined || (!known(promise.when) && pushKey === "with no push key"))
+          .map((promise) => ({ folder, builds: builds.join(", "), start, promise })),
   );
   // Before the first set that holds the start, there is nothing to judge, and an empty suite would fail the run.
   if (judged.length === 0) {
