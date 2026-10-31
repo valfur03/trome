@@ -107,7 +107,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check page-date-check change-notes-check bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render release-run-check merge e2e-proof
+.PHONY: help setup generate project git-hooks git-hooks-off lint lint-fix build strings-check strings-sync prose-check public-text-check page-date-check change-notes-check release-notes bundle-id-check release-signing-check release-server-check release-server-timing release-tokens-check phone-set-record phone-set-check release-archive-check app-icon-check test test-scripts check live-key-check recommended-settings-check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose live-activity-render release-run-check merge e2e-proof
 
 help:
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -137,6 +137,7 @@ help:
 	@echo "make release-signing-check  Fail when Xcode would sign a Release build with no TROME_RELEASE_TEAM, or would not sign it automatically with one, or without the push capability and the app group of the silent start (no compile, no Apple account)"
 	@echo "make release-server-check  Before an archive: say in one line whether the production server accepts the host and the app token of ios/Config/Server.xcconfig (one request for the trains of one stop; prints neither)"
 	@echo "make release-server-timing  Split the time of a call to the production server of ios/Config/Server.xcconfig: connection, Worker, server object, PRIM (5 calls of one rider in 35 s, at most 2 PRIM calls; prints neither)"
+	@echo "make release-notes       Print the What's New of the next store release and the TestFlight What to Test, in French and English, from the notes of ios/changes/ that the build on the App Store does not hold; or no release, with the lines that wait (fails on two headlines)"
 	@echo "make phone-set-record BUILD=<version>-<build>  At each upload, from the commit of the build: record in contracts/phone/ the values that it keeps on the phone, which make test reads with the code of today"
 	@echo "make phone-set-check     Fail when a recorded phone set of contracts/phone/ changed, moved, went or grew while its build is in the field (part of make check)"
 	@echo "make release-tokens-check  After every change of a secret of the production server, and before every upload: say, one line per build that riders may hold, whether the production server accepts its app token of ios/Config/BuildTokens.txt (one request per build; prints no token)"
@@ -234,6 +235,9 @@ change-notes-check:
 
 page-date-check:
 	@./scripts/page-date-check.py
+
+release-notes:
+	@./scripts/release-notes.py
 
 test:
 	@$(BUILD_GATE) $(QUIET) $(LOGS)/unit-tests.log 'Test run with|Executed [1-9]' swift test --quiet --package-path $(CORE_PACKAGE) --scratch-path $(BUILD_DIR)/TROMECore -Xswiftc -warnings-as-errors

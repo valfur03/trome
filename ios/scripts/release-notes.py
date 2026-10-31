@@ -44,10 +44,7 @@ FOR_TESTERS = {
     "en": "For Paris and Île-de-France only. A problem? Take a screenshot: TestFlight offers to send it to me.",
 }
 NAMES = {"fr": "French", "en": "English"}
-MONTHS = {
-    "fr": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
-    "en": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-}
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 USAGE = "Usage: release-notes.py (no argument): run it as make release-notes"
 
 
@@ -114,22 +111,23 @@ def version(root: Path) -> str:
     return match.group(1) if match else "?"
 
 
-def day(language: str, today: datetime.date) -> str:
-    return f"{today.day} {MONTHS[language][today.month - 1]} {today.year}"
+def day(today: datetime.date) -> str:
+    return f"{today.day} {MONTHS[today.month - 1]} {today.year}"
 
 
-def lines_of(notes: List[Dict[str, str]], language: str) -> List[str]:
-    """The first note as a line of its own, then each other note as a bullet."""
-    return [note[language] for note in notes[:1]] + [f"• {note[language]}" for note in notes[1:]]
+def lines_of(notes: List[Dict[str, str]], language: str, lead: bool) -> List[str]:
+    """The lead note (the headline, or the requirement of Apple) as a line of its own, then each other note as a bullet."""
+    first = 1 if lead else 0
+    return [note[language] for note in notes[:first]] + [f"• {note[language]}" for note in notes[first:]]
 
 
 def block(title: str, text: str) -> str:
     return f"\n{title}\n{text}"
 
 
-def texts(notes: List[Dict[str, str]]) -> Dict[str, Dict[str, str]]:
+def texts(notes: List[Dict[str, str]], lead: bool) -> Dict[str, Dict[str, str]]:
     """The texts of each place in each language, checked against the limit of its field."""
-    store = {language: "\n".join(lines_of(notes, language)) for language in NAMES}
+    store = {language: "\n".join(lines_of(notes, language, lead)) for language in NAMES}
     testflight = {
         language: "\n".join(([NEW_IN_THIS_BUILD[language], store[language], ""] if notes else []) + [FOR_TESTERS[language]])
         for language in NAMES
@@ -152,22 +150,15 @@ def report(root: Path, today: datetime.date) -> str:
         raise Refused(
             f"two headlines wait ({files}): a release tells one, and the second waits a week for its own release.\n"
             "Keep the change of one of them out of this build, or make it an item if a rider would not tell a friend about it.")
-    since = f"the notes since {build}, " + ("the build on the App Store" if on_store else "the first build, as no build is on the App Store yet")
+    release = bool(by_kind["headline"] or by_kind["apple"])
     out = []
-    rider = by_kind["headline"] + by_kind["apple"] + by_kind["item"]
-    if not by_kind["headline"] and not by_kind["apple"]:
-        out.append(f"no release: nothing a rider notices since {build}.")
-        if not on_store:
-            out.append(f"No build is on the App Store yet: {build} is the first build of the table of builds.")
-        waiting = [f"- item: {note['en']} ({note['file']})" for note in by_kind["item"]]
-        waiting += [f"- builder: {note['en']} ({note['file']})" for note in by_kind["builder"]]
-        out.append("The lines that wait for a headline:\n" + "\n".join(waiting) if waiting else "No line waits.")
-        shown = by_kind["item"]
-    else:
+    if release:
+        rider = by_kind["headline"] + by_kind["apple"] + by_kind["item"]
         shown, left_out = rider[: 1 + ITEMS], rider[1 + ITEMS :]
+        since = "the build on the App Store" if on_store else "the first build, as no build is on the App Store yet"
         lead = "the headline" if by_kind["headline"] else "the requirement of Apple"
         count = f"{len(shown) - 1} item{'' if len(shown) == 2 else 's'}"
-        out.append(f"release-notes: {since} (tag {tag}): {lead} and {count}, newest first.")
+        out.append(f"release-notes: the notes since {build}, {since} (tag {tag}): {lead} and {count}, newest first.")
         if not on_store:
             out.append("The first version has no What's New field: these texts are for the versions after it.")
         if left_out:
@@ -177,16 +168,25 @@ def report(root: Path, today: datetime.date) -> str:
         current = version(root)
         if on_store and current == build.split(" ")[0]:
             out.append(f"Raise MARKETING_VERSION in {VERSION_FILE}: {current} is the version on the App Store.")
-    made = texts(shown)
-    if by_kind["headline"] or by_kind["apple"]:
+    else:
+        # The TestFlight build of a quiet week still tells its testers the newest items.
+        shown = by_kind["item"][:ITEMS]
+        out.append(f"no release: nothing a rider notices since {build}.")
+        if not on_store:
+            out.append(f"No build is on the App Store yet: {build} is the first build of the table of builds.")
+        waiting = [f"- item: {note['en']} ({note['file']})" for note in by_kind["item"]]
+        waiting += [f"- builder: {note['en']} ({note['file']})" for note in by_kind["builder"]]
+        out.append("The lines that wait for a headline:\n" + "\n".join(waiting) if waiting else "No line waits.")
+    made = texts(shown, release)
+    if release:
         for language, name in NAMES.items():
             text = made["store"][language]
             out.append(block(f"== App Store, What's New, {name} ({len(text)} characters of {STORE_LIMIT}) ==", text))
     for language, name in NAMES.items():
         text = made["testflight"][language]
         out.append(block(f"== TestFlight, What to Test, {name} ({len(text.encode('utf-8'))} bytes of {TESTFLIGHT_LIMIT}) ==", text))
-    if by_kind["headline"] or by_kind["apple"]:
-        entry = [f"## {version(root)} – {day('en', today)}", "", "### For riders", ""] + [f"- {note['en']}" for note in shown]
+    if release:
+        entry = [f"## {version(root)} – {day(today)}", "", "### For riders", ""] + [f"- {note['en']}" for note in shown]
         if by_kind["builder"]:
             entry += ["", "### For builders", ""] + [f"- {note['en']}" for note in by_kind["builder"]]
         out.append(block("== CHANGELOG.md; the What's new pages take the same rider lines, French on the French page ==", "\n".join(entry)))
