@@ -5,11 +5,14 @@ scripts=$(cd "$(dirname "$0")" && pwd)
 . "$scripts/code-paths.sh"
 target=main
 check_command=${TROME_MERGE_CHECK:-make check}
-e2e_command=${TROME_MERGE_E2E:-make e2e}
-render_command=${TROME_MERGE_RENDER:-make live-activity-render}
-release_run_command=${TROME_MERGE_RELEASE_RUN:-make release-run-check}
+# The builds of the test runs use no Simulator: they run before the merge takes the Simulator lock,
+# and the test runs then use them (NO_BUILD=1).
+build_command=${TROME_MERGE_BUILD:-make e2e-build release-run-build}
+render_build_command=${TROME_MERGE_RENDER_BUILD:-make live-activity-render-build}
+e2e_command=${TROME_MERGE_E2E:-make e2e NO_BUILD=1}
+render_command=${TROME_MERGE_RENDER:-make live-activity-render NO_BUILD=1}
+release_run_command=${TROME_MERGE_RELEASE_RUN:-make release-run-check NO_BUILD=1}
 merge_lock=${RATP_MERGE_LOCK:-/tmp/ratp-merge.lock}
-# sim-lock.sh reads the same queue: a job that is not a merge waits while a merge of app code waits in it.
 queue=${RATP_MERGE_QUEUE:-${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}.merge-queue}
 owner_changes="These changes belong to the owner of that folder. Ask the owner to commit, stash or drop them, and run 'make merge' again when the owner says that the folder is clear. Do not touch them yourself."
 
@@ -126,34 +129,37 @@ changes_app_code() {
     diff_touches "$1" "$2" is_app_code
 }
 
-# Whether the branch of this worktree changes app code, from its own commits: its diff to the commit where it left main,
-# never the rebased train. A merge with no app code takes no Simulator lock, so a doubt counts as app code.
-branch_changes_app_code() {
-    fork=$(git merge-base "$target" HEAD) || return 0
-    changes_app_code "$fork" HEAD
-}
-
 # Runs a command, and stops it after $1 seconds: a hung network call must not hold the Simulator lock.
 timed() {
     perl -e '$seconds = shift; alarm $seconds; exec @ARGV or die "cannot run $ARGV[0]: $!\n"' "$@"
 }
 
 # The release refuses a commit of main with no record of a full E2E pass and a Release app run on its tree (e2e-proof.sh).
-# After both passed, it draws the Live Activity views for the counts of the record, when they may have changed
-# since the last drawing on GitHub; it sets render_counts, or leaves it empty when it did not draw.
+# After both passed, the merge draws the Live Activity views for the counts of the record, when they may have changed
+# since the last drawing on GitHub. render_plan says why it draws (render_why), or leaves render_why empty;
+# it runs before the Simulator lock, as it may read GitHub.
+render_plan() {
+    render_why=
+    git remote get-url origin > /dev/null 2>&1 || return 0
+    if diff_touches "$old" "$tip" is_render_input; then
+        render_why="$names changes the Live Activity views or their data"
+    elif "$scripts/e2e-proof.sh" read "$old" 2> /dev/null | grep -q '^render counts: too tall '; then
+        step "3/4 render check: skipped, the views are the ones of the last drawing on GitHub"
+    else
+        render_why="$target has no render counts on GitHub"
+    fi
+}
+
+# It sets render_counts, or leaves it empty when it did not draw.
 # The render check is a report, not a gate: it never fails the merge.
 draw_for_record() {
     render_counts=
-    git remote get-url origin > /dev/null 2>&1 || return 0
-    if diff_touches "$old" "$tip" is_render_input; then
-        why="$names changes the Live Activity views or their data"
-    elif "$scripts/e2e-proof.sh" read "$old" 2> /dev/null | grep -q '^render counts: too tall '; then
-        step "3/4 render check: skipped, the views are the ones of the last drawing on GitHub"
+    [ -n "$render_why" ] || return 0
+    if [ ! -e "$out/render-built" ]; then
+        step "3/4 render check: skipped, its build failed (a report, not a gate: the merge goes on, and the record says 'not drawn')"
         return 0
-    else
-        why="$target has no render counts on GitHub"
     fi
-    step "3/4 render check of the Live Activity ($render_command), for the record of the merge: $why"
+    step "3/4 render check of the Live Activity ($render_command), for the record of the merge: $render_why"
     render_log=$(mktemp "${TMPDIR:-/tmp}/trome-merge-render.XXXXXX")
     (cd "$tip_root" && sh -c "$render_command") > "$render_log" 2>&1 || true
     render_counts=$("$scripts/e2e-proof.sh" render-counts "$render_log")
@@ -166,14 +172,49 @@ draw_for_record() {
     rm -f "$render_log"
 }
 
+# Whether the make merge of a task of the keys still runs.
+any_alive() {
+    for alive_key; do
+        ! alive "$alive_key" || return 0
+    done
+    return 1
+}
+
 # The steps that use the Simulator: the full E2E suite, the Release app run, and the render check for the record.
-# They run as one Simulator job of kind merge: at once inside a train that holds the lock, or with the lock that a train
-# with no app code takes only when its rebased tip changes app code. The job writes its outcome to files of $work.
+# Their builds use no Simulator, so they run first, with no Simulator lock; the test runs then run as one Simulator job
+# of kind merge, which goes before the jobs that wait from the moment it asks for the lock (sim-lock.sh).
+# The merge keeps the merge lock while it waits, so main cannot move between the gate and the tests.
+# The job writes its outcome to files of $work. The keys are the tasks of the train.
 run_simulator_checks() {
     out="$work/simulator-checks"
     rm -rf "$out"
     mkdir "$out"
-    RATP_SIM_DETAIL=$names "$scripts/sim-lock.sh" job "$scripts/merge.sh" simulator-checks "$out" "$old" "$tip" "$tip_root" "$names" "$once" || true
+    render_plan
+    step "3/4 test builds of the E2E suite and the Release app run ($build_command)$once"
+    if ! (cd "$tip_root" && sh -c "$build_command"); then
+        stack_step="test build"
+        stack_failure="Its output is above; the build logs are in $tip_root/ios/.build/logs/."
+        return 0
+    fi
+    if [ -n "$render_why" ]; then
+        step "3/4 test build of the render check ($render_build_command)"
+        if (cd "$tip_root" && sh -c "$render_build_command"); then
+            touch "$out/render-built"
+        fi
+    fi
+    step "3/4 takes the Simulator lock for the test runs"
+    RATP_SIM_MERGE=1 RATP_SIM_DETAIL=$names "$scripts/sim-lock.sh" job "$scripts/merge.sh" simulator-checks "$out" "$old" "$tip" "$tip_root" "$names" "$once" "$render_why" &
+    sim_job=$!
+    # A train whose make merges were all stopped while it waits for the Simulator stops waiting: no task would land.
+    while kill -0 "$sim_job" 2> /dev/null; do
+        if [ ! -e "$out/started" ] && ! any_alive "$@"; then
+            step "the make merge of each task of the train was stopped while it waited for the Simulator: it stops waiting"
+            kill -TERM "$sim_job" 2> /dev/null || true
+        fi
+        sleep 1
+    done
+    wait "$sim_job" || true
+    sim_job=
     if [ ! -e "$out/done" ]; then
         stack_step="full E2E suite"
         stack_failure="The Simulator job of the E2E suite stopped before its end."
@@ -186,7 +227,8 @@ run_simulator_checks() {
 }
 
 simulator_checks() {
-    out=$1 old=$2 tip=$3 tip_root=$4 names=$5 once=$6
+    out=$1 old=$2 tip=$3 tip_root=$4 names=$5 once=$6 render_why=$7
+    touch "$out/started"
     stack_step=
     stack_failure=
     render_counts=
@@ -257,34 +299,12 @@ enqueue() {
     mkdir -p "$queue"
     key=$(perl -MTime::HiRes=time -e 'printf "%.6f", time').$$
     node_path=$(command -v node 2> /dev/null || true)
-    app=1
-    branch_changes_app_code || app=0
-    printf 'pid=%s\nroot=%s\nbranch=%s\nhead=%s\nnode=%s\napp=%s\n' "$$" "$root" "$branch" "$(git rev-parse HEAD)" "${node_path:+$(dirname "$node_path")}" "$app" > "$queue/$key.new"
+    printf 'pid=%s\nroot=%s\nbranch=%s\nhead=%s\nnode=%s\n' "$$" "$root" "$branch" "$(git rev-parse HEAD)" "${node_path:+$(dirname "$node_path")}" > "$queue/$key.new"
     trap 'rm -f "$queue/$key.new" "$queue/$key.task" "$queue/$key.result" "$queue/$key.result.new"' EXIT
     trap 'exit 129' HUP
     trap 'exit 130' INT
     trap 'exit 143' TERM
     mv "$queue/$key.new" "$queue/$key.task"
-}
-
-# Exits 0 when a task that waits in the queue changes app code, or may: an entry with no app= line counts as app code.
-app_merge_waits() {
-    for entry in "$queue"/*.task; do
-        [ -f "$entry" ] || continue
-        entry_key=$(basename "$entry" .task)
-        [ ! -e "$queue/$entry_key.result" ] && alive "$entry_key" || continue
-        [ "$(field "$entry_key" app)" = 0 ] || return 0
-    done
-    return 1
-}
-
-# From now on, sim-lock.sh counts the tasks of the keys as merges of app code: a job that waits lets them go first.
-count_as_app_merge() {
-    for app_key; do
-        [ -f "$queue/$app_key.task" ] || continue
-        sed 's/^app=0$/app=1/' "$queue/$app_key.task" > "$queue/$app_key.app.new" \
-            && mv "$queue/$app_key.app.new" "$queue/$app_key.task" || rm -f "$queue/$app_key.app.new"
-    done
 }
 
 finish() {
@@ -349,6 +369,11 @@ put_back() {
 on_train_exit() {
     status=$?
     trap - EXIT
+    # A stopped train stops its Simulator job, and waits until it has freed the lock, before it puts the branches back.
+    if [ -n "${sim_job:-}" ]; then
+        kill -TERM "$sim_job" 2> /dev/null || true
+        wait "$sim_job" 2> /dev/null || true
+    fi
     if [ -n "${rebasing:-}" ] && in_rebase "$rebasing"; then
         git -C "$rebasing" rebase --abort || true
     fi
@@ -356,7 +381,21 @@ on_train_exit() {
         put_back
     fi
     rm -rf "$work"
+    [ "$(cat "$queue/train.pid" 2> /dev/null)" != "$$" ] || rm -f "$queue/train.pid"
     exit "$status"
+}
+
+# The merge lock goes with the lockf of the make merge that drives a train: when that make merge is stopped, its train
+# may still put the branches back and stop its tests. The next train waits until it has ended.
+wait_for_last_train() {
+    said=
+    while last_train=$(cat "$queue/train.pid" 2> /dev/null) && [ -n "$last_train" ] \
+        && ps -p "$last_train" -o command= 2> /dev/null | grep -q 'merge\.sh'; do
+        [ -n "$said" ] || step "waiting for the train of a stopped make merge to end (PID $last_train)"
+        said=1
+        sleep 1
+    done
+    echo "$$" > "$queue/train.pid"
 }
 
 fast_forward() {
@@ -473,14 +512,9 @@ land() {
         stack_step="quality gate"
     elif changes_app_code "$old" "$tip"; then
         shared="one gate and one E2E run"
-        if [ -z "${RATP_SIM_HELD_LOCK:-}" ]; then
-            # Each task alone changes no app code, but the rebased train does: it takes the lock now, as a merge of app code.
-            step "the rebased train changes app code: it takes the Simulator lock for the E2E suite"
-            count_as_app_merge "$@"
-        fi
-        run_simulator_checks
+        run_simulator_checks "$@"
     else
-        step "3/4 full E2E suite and Release app run: skipped, $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the notes of the changes, the server or the contracts, see .claude/rules/tests.md)"
+        step "3/4 full E2E suite and Release app run: skipped, and no Simulator lock: $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the notes of the changes, the server or the contracts, see .claude/rules/tests.md)"
     fi
     if [ -z "$stack_step" ]; then
         step "4/4 fast-forward $target to $(short "$tip")"
@@ -534,7 +568,7 @@ $stack_failure}"
 }
 
 train() {
-    no_app=${1:-}
+    sim_job=
     work=$(mktemp -d "${TMPDIR:-/tmp}/trome-merge.XXXXXX")
     trap on_train_exit EXIT
     trap 'exit 129' HUP
@@ -549,10 +583,6 @@ train() {
             rm -f "$entry"
             continue
         fi
-        # A train with no Simulator lock lands only the tasks with no app code: a task of app code drives the next train.
-        if [ -n "$no_app" ] && [ "$(field "$entry_key" app)" != 0 ]; then
-            continue
-        fi
         # A copy: the entry goes away when its make merge is stopped, and the train still needs to know its worktree.
         cp "$entry" "$work/$entry_key.task"
         train_keys="$train_keys $entry_key"
@@ -562,13 +592,6 @@ train() {
     for entry_key; do
         names="$names${names:+, }$(field "$entry_key" branch)"
     done
-    # The record of this Simulator job (make simulator-times) names the tasks of the train.
-    if [ -d "${RATP_SIM_HELD_LOCK:-}" ]; then
-        printf '%s\n' "$names" > "$RATP_SIM_HELD_LOCK/detail" 2> /dev/null || true
-    fi
-    if [ -n "$no_app" ] && [ "$#" -gt 0 ]; then
-        step "no Simulator lock: $names changes no app code"
-    fi
     if [ "$#" -gt 1 ]; then
         step "$# tasks wait to land, in this order: $names. They go as one train, with one gate and one E2E run for all."
     fi
@@ -582,7 +605,7 @@ train() {
         land "$one"
     done
     case "$train_step" in
-        "quality gate" | "full E2E suite" | "Release app run") ;;
+        "quality gate" | "test build" | "full E2E suite" | "Release app run") ;;
         *) return 0 ;;
     esac
     last=
@@ -620,24 +643,16 @@ case "${1:-}" in
     drive)
         # With the merge lock: the task already landed in the train of another make merge, or this one drives the next train.
         [ ! -e "$queue/$2.result" ] || exit 0
-        # Every Simulator job of the train is a merge: it never waits for a merge that waits for this one.
-        RATP_SIM_MERGE=1
-        export RATP_SIM_MERGE
-        if app_merge_waits; then
-            exec "$scripts/sim-lock.sh" job "$scripts/merge.sh" train
-        fi
-        # No task that waits changes app code: the train takes no Simulator lock, and the Simulator jobs go on.
-        exec "$scripts/merge.sh" train no-app
-        ;;
-    train)
-        train "${2:-}"
+        # The train rebases and runs the gate with no Simulator lock: it takes it only for the test runs.
+        wait_for_last_train
+        train
         ;;
     simulator-checks)
         shift
         simulator_checks "$@"
         ;;
     *)
-        echo "Usage: $0   Land the branch of this worktree on $target, before the other Simulator jobs that wait: rebase, gate, full E2E suite, Release app run, fast-forward, then push main with the record of both passes. The merges that wait together share one gate and one E2E run." >&2
+        echo "Usage: $0   Land the branch of this worktree on $target: rebase, gate and test builds with no Simulator lock, then, before the other Simulator jobs that wait, full E2E suite, Release app run, fast-forward, then push main with the record of both passes. The merges that wait together share one gate and one E2E run." >&2
         exit 1
         ;;
 esac

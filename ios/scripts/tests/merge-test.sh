@@ -45,7 +45,9 @@ find_started() {
 # A run that is stopped, or that ends early, still has merges running, which write in its folder:
 # they are stopped first, or the folder is removed while they write in it, and stays.
 # A process stays on the list until it has ended, also once its parent has ended and it is no longer found.
+# It keeps the exit status of the run: a run that stops on an error must not pass.
 cleanup() {
+    status=$?
     kill "$idle_watcher" "$(cat "$RATP_SIM_LOCK.slots-watcher" 2> /dev/null)" 2> /dev/null || true
     find_started
     kill -TERM $left 2> /dev/null || true
@@ -66,6 +68,7 @@ cleanup() {
     done
     [ -z "$tracked" ] || kill -KILL $tracked 2> /dev/null || true
     rm -rf "$state"
+    exit "$status"
 }
 trap cleanup EXIT
 trap 'exit 129' HUP
@@ -160,7 +163,9 @@ chmod +x "$repo/.git/hooks/reference-transaction"
 passing_check="$(step_recorder check)"
 passing_e2e="$(step_recorder e2e) && \"\$SCRIPTS/sim-lock.sh\" job sh -c 'echo nested-job >> \"\$FAKE_SIM_STATE/steps\"'"
 passing_release_run="$(step_recorder release-run)"
-export TROME_MERGE_CHECK="$passing_check" TROME_MERGE_E2E="$passing_e2e" TROME_MERGE_RELEASE_RUN="$passing_release_run"
+passing_build="$(step_recorder build)"
+export TROME_MERGE_CHECK="$passing_check" TROME_MERGE_E2E="$passing_e2e" TROME_MERGE_RELEASE_RUN="$passing_release_run" \
+    TROME_MERGE_BUILD="$passing_build" TROME_MERGE_RENDER_BUILD="$(step_recorder render-build)"
 
 new_task ok
 commit "$state/ok" ok ok
@@ -168,8 +173,8 @@ advance_main other other
 before=$(rev main)
 merge ok
 expect "make merge succeeds" "$status" "0"
-expect "make merge rebases the task, runs the gate, then the full E2E suite and the Release app run, all with the Simulator lock" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job release-run release-run-locked "
-expect "make merge holds the lock from the rebase to the fast-forward" "$(tr '\n' ' ' < "$state/refs")" "refs/heads/task/ok locked refs/heads/main locked "
+expect "make merge rebases the task, runs the gate and the test builds with no Simulator lock, then the full E2E suite and the Release app run with it" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
+expect "make merge holds the lock neither for the rebase nor for the fast-forward" "$(tr '\n' ' ' < "$state/refs")" "refs/heads/task/ok free refs/heads/main free "
 expect "main is now the rebased task branch" "$(rev main)" "$(rev task/ok)"
 expect "the task branch was rebased onto the tip of main" "$(rev task/ok~1)" "$before"
 expect "main has no merge commit" "$(git -C "$repo" rev-list --merges main)" ""
@@ -297,7 +302,7 @@ mkdir -p "$state/github_app/.github/workflows" "$state/github_app/ios/App"
 commit "$state/github_app" .github/workflows/docs-site.yml "new workflow"
 commit "$state/github_app" ios/App/Feature.swift code
 merge github_app
-expect "make merge runs the E2E suite when the task changes .github/ and app code" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job release-run release-run-locked "
+expect "make merge runs the E2E suite when the task changes .github/ and app code" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
 
 for folder in ios/App ios/Widget ios/UITests ios/DocsScreenshots ios/RenderCheck ios/Packages/TROMECore/Sources/TROMECore; do
     name=$(echo "$folder" | tr '/' '_')
@@ -305,7 +310,7 @@ for folder in ios/App ios/Widget ios/UITests ios/DocsScreenshots ios/RenderCheck
     mkdir -p "$state/$name/$folder"
     commit "$state/$name" "$folder/README.md" text
     merge "$name"
-    expect "make merge runs the E2E suite when the task changes a Markdown file in $folder, which the build of the app reads" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job release-run release-run-locked "
+    expect "make merge runs the E2E suite when the task changes a Markdown file in $folder, which the build of the app reads" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
 done
 
 new_task mixed
@@ -313,7 +318,7 @@ mkdir -p "$state/mixed/ios/guide"
 commit "$state/mixed" ios/guide/trains.md text
 commit "$state/mixed" NOTICE notice
 merge mixed
-expect "make merge runs the E2E suite when the task changes Markdown and one other file" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job release-run release-run-locked "
+expect "make merge runs the E2E suite when the task changes Markdown and one other file" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
 
 advance_main app app
 new_task moved
@@ -321,7 +326,7 @@ mkdir -p "$state/moved/docs"
 git -C "$state/moved" mv app docs/app
 git -C "$state/moved" commit -q -m "move app into docs"
 merge moved
-expect "make merge runs the E2E suite when the task moves app code into docs" "$(tr '\n' ' ' < "$state/steps")" "check check-locked e2e e2e-locked nested-job release-run release-run-locked "
+expect "make merge runs the E2E suite when the task moves app code into docs" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
 
 new_task gate
 commit "$state/gate" gate gate
@@ -330,7 +335,8 @@ TROME_MERGE_CHECK="$passing_check && exit 1"
 merge gate
 TROME_MERGE_CHECK=$passing_check
 expect "make merge fails when the quality gate fails" "$status" "1"
-expect "make merge does not run the E2E suite after a failed gate" "$(tr '\n' ' ' < "$state/steps")" "check check-locked "
+expect "make merge does not build or run the E2E suite after a failed gate, and runs the gate with no Simulator lock" "$(tr '\n' ' ' < "$state/steps")" "check "
+expect "a failed gate never takes the Simulator lock: it leaves no record of a Simulator job" "$(awk -F '\t' '$9 == "task/gate"' "$state/logs/simulator-jobs.tsv" 2> /dev/null | wc -l | tr -d ' ')" "0"
 expect "make merge leaves main unchanged when the gate fails" "$(rev main)" "$before"
 expect "make merge says that the gate failed" "$(contains "$state/gate.log" "the step 'quality gate' failed")" "yes"
 expect "make merge frees the Simulator lock when the gate fails" "$(lock_state)" "free"
@@ -480,32 +486,31 @@ new_task queue_b
 commit "$state/queue_a" queue_a queue_a
 commit "$state/queue_b" queue_b queue_b
 before=$(rev main)
-: > "$state/steps"
 "$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"; echo qa-end >> "$FAKE_SIM_STATE/steps"' "$state/release-qa" > "$state/qa.log" 2>&1 &
 qa=$!
 wait_until test -e "$RATP_SIM_LOCK/pid"
 RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo review >> "$FAKE_SIM_STATE/steps"' > "$state/review.log" 2>&1 &
 review=$!
 wait_until grep -q "Waiting for the Simulator lock" "$state/review.log"
-start_merge queue_a
-wait_until has_queued 1
-start_merge queue_b
-wait_until has_queued 2
+merge_together queue_a queue_b
+wait_until grep -qs "Waiting for the Simulator lock" "$state/queue_a.log" "$state/queue_b.log"
 RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo late >> "$FAKE_SIM_STATE/steps"' > "$state/late-job.log" 2>&1 &
 late_job=$!
-wait_until grep -q "Waiting for the Simulator lock" "$state/late-job.log"
-expect "a merge does not cut off the job that holds the Simulator" "$(cat "$state/steps")" ""
+wait_until grep -q "a merge goes first" "$state/late-job.log"
+expect "a merge runs its gate and its test builds while another job holds the Simulator, and does not cut that job off" "$(steps_line)" "check build "
+expect "the merge then waits for the job that holds the Simulator, and its message names that job" \
+    "$(cat "$state/queue_a.log" "$state/queue_b.log" | grep -c "Waiting for the Simulator lock: every Simulator slot is busy (slot 1: a job in .* (PID $qa))")" "1"
 echo release > "$state/release-qa"
 wait "$qa"
 expect "the first merge of a train lands" "$(finish_merge queue_a)" "0"
 expect "the second merge of a train lands" "$(finish_merge queue_b)" "0"
 wait "$review" "$late_job"
-expect "merges go before the jobs that wait, also the ones that came first, and two merges that wait together share one gate and one E2E run" "$(steps_line | cut -d ' ' -f 1-8)" "qa-end check check-locked e2e e2e-locked nested-job release-run release-run-locked"
+expect "merges that ask for the Simulator go before the jobs that wait, also the ones that came first, and two merges that wait together share one gate and one E2E run" "$(steps_line | cut -d ' ' -f 1-8)" "check build qa-end e2e e2e-locked nested-job release-run release-run-locked"
 expect "the jobs that wait run after the merges" "$(steps_line | cut -d ' ' -f 9- | tr ' ' '\n' | sort | tr '\n' ' ')" " late review "
 expect "a job that waits says that a merge goes first" "$(contains "$state/review.log" "a merge goes first")" "yes"
 expect "a train lands its tasks in the order they came, each one rebased onto the one before it" "$(rev main) $(rev main~1) $(rev main~2)" "$(rev task/queue_b) $(rev task/queue_a) $before"
 expect "a task of a train says that it landed in the train" "$(contains "$state/queue_b.log" "task/queue_b landed in a train of 2 tasks, which shared one gate and one E2E run.")" "yes"
-expect "a task of a train says where the steps of its train are" "$(contains "$state/queue_b.log" "this task went in the train of the make merge of")" "yes"
+expect "a task of a train says where the steps of its train are" "$(cat "$state/queue_a.log" "$state/queue_b.log" | grep -c "this task went in the train of the make merge of")" "1"
 expect "main has no merge commit after a train" "$(git -C "$repo" rev-list --merges main)" ""
 expect "a train frees the Simulator lock" "$(lock_state)" "free"
 expect "the record of the Simulator job of a train is a merge, and names the tasks of the train" \
@@ -546,7 +551,8 @@ expect "it runs the gate and moves main with no Simulator lock" "$(steps_line)$(
 expect "it says that it takes no Simulator lock" "$(contains "$state/nolock.log" "no Simulator lock: task/nolock changes no app code")" "yes"
 expect "it leaves no record of a Simulator job" "$(awk -F '\t' '$9 ~ /nolock/' "$state/logs/simulator-jobs.tsv" | wc -l | tr -d ' ')" "0"
 
-# A job that waits for the Simulator is not held back by a merge with no app code that waits, but it is by a merge of app code.
+# A merge of app code that waits in the queue, for the merge lock, does not hold back a job that waits for the Simulator:
+# only a merge that asks for the Simulator does.
 new_task queued_docs
 commit "$state/queued_docs" queued_docs.md queued_docs
 app_task queued_app
@@ -556,32 +562,115 @@ merge_lock_holder=$!
 until ! lockf -s -k -t 0 "$RATP_MERGE_LOCK" true 2> /dev/null; do sleep 0.1; done
 : > "$state/steps"
 : > "$state/refs"
-start_merge queued_docs
+start_merge queued_app
 wait_until has_queued 1
-RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-after-docs >> "$FAKE_SIM_STATE/steps"' > "$state/qa-docs.log" 2>&1 &
-qa_docs=$!
-wait_until grep -q "Waiting for the Simulator lock" "$state/qa-docs.log"
+start_merge queued_docs
+wait_until has_queued 2
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-after-queued >> "$FAKE_SIM_STATE/steps"' > "$state/qa-queued.log" 2>&1 &
+qa_queued=$!
+wait_until grep -q "Waiting for the Simulator lock" "$state/qa-queued.log"
 touch "$state/release-holder"
 wait "$holder"
-wait_until grep -q qa-after-docs "$state/steps"
-expect "a job that waits takes the free Simulator while a merge with no app code waits" "$(steps_line)$(contains "$state/qa-docs.log" "a merge goes first")" "qa-after-docs no"
-hold_simulator
-start_merge queued_app
-wait_until has_queued 2
-RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-after-app >> "$FAKE_SIM_STATE/steps"' > "$state/qa-app.log" 2>&1 &
-qa_app=$!
-wait_until grep -q "a merge goes first" "$state/qa-app.log"
-touch "$state/release-holder"
-wait_until lock_is_free
-expect "a job that waits does not take the free Simulator while a merge of app code waits" "$(contains "$state/qa-app.log" "a merge goes first (")$(steps_line)" "yesqa-after-docs "
+wait_until grep -q qa-after-queued "$state/steps"
+expect "a job that waits takes the free Simulator while a merge of app code waits in the queue" "$(steps_line)$(contains "$state/qa-queued.log" "a merge goes first")" "qa-after-queued no"
 : > "$state/steps"
 echo release > "$state/release-merge-lock"
-wait "$merge_lock_holder"
+wait "$merge_lock_holder" "$qa_queued"
 expect "a train that mixes a task of app code and a task with no app code lands both" "$(finish_merge queued_docs) $(finish_merge queued_app)" "0 0"
-wait "$holder" "$qa_docs" "$qa_app"
-expect "it holds the Simulator lock for the whole train, and runs the E2E suite, before the job that waits" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked qa-after-app "
-expect "it moves main with the Simulator lock" "$(contains "$state/refs" "refs/heads/main locked")" "yes"
+expect "it runs one gate, then the E2E suite with the Simulator lock" "$(steps_line)" "check build e2e e2e-locked nested-job release-run release-run-locked "
+expect "it moves main with no Simulator lock" "$(contains "$state/refs" "refs/heads/main free")" "yes"
 expect "main has both tasks" "$(rev main~2)" "$before"
+
+# A merge asks for the Simulator only after its gate and its test builds: a QA job that asks during the gate takes it,
+# and the merge then waits for it, names it, and lands after it.
+app_task during_gate
+before=$(rev main)
+rm -f "$state/gate-go" "$state/release-gate-qa"
+: > "$state/steps"
+TROME_MERGE_CHECK="$passing_check && until [ -e \"\$FAKE_SIM_STATE/gate-go\" ]; do sleep 0.1; done"
+start_merge during_gate
+wait_until grep -q '^check$' "$state/steps"
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo qa-start >> "$FAKE_SIM_STATE/steps"; until [ -e "$0" ]; do sleep 0.1; done; echo qa-end >> "$FAKE_SIM_STATE/steps"' \
+    "$state/release-gate-qa" > "$state/qa-gate.log" 2>&1 &
+qa_gate=$!
+wait_until grep -q qa-start "$state/steps"
+expect "a QA job takes the free Simulator during the gate of a merge of app code" "$(steps_line)$(contains "$state/qa-gate.log" "a merge goes first")" "check qa-start no"
+touch "$state/gate-go"
+wait_until grep -q "Waiting for the Simulator lock" "$state/during_gate.log"
+TROME_MERGE_CHECK=$passing_check
+expect "after its gate, the merge waits for the QA job, and does not stop it" "$(steps_line)" "check qa-start build "
+expect "its message names the job that holds the Simulator" "$(contains "$state/during_gate.log" "Waiting for the Simulator lock: every Simulator slot is busy (slot 1: a job in $(cd "$scripts/../.." && pwd) (PID $qa_gate))")" "yes"
+touch "$state/release-gate-qa"
+wait "$qa_gate"
+expect "the merge lands after the QA job" "$(finish_merge during_gate) $(rev main~1)" "0 $before"
+expect "it runs its E2E suite and its Release app run once the QA job has ended" "$(steps_line)" "check qa-start build qa-end e2e e2e-locked nested-job release-run release-run-locked "
+
+# A failed test build never takes the Simulator lock.
+app_task build_fails
+before=$(rev main)
+: > "$state/steps"
+TROME_MERGE_BUILD="$passing_build && exit 1"
+merge build_fails
+TROME_MERGE_BUILD=$passing_build
+expect "a merge whose test build fails does not land" "$status $(rev main)" "1 $before"
+expect "it says that the test build failed" "$(contains "$state/build_fails.log" "the step 'test build' failed for task/build_fails")" "yes"
+expect "it runs no test, and never takes the Simulator lock" "$(steps_line)$(awk -F '\t' '$9 == "task/build_fails"' "$state/logs/simulator-jobs.tsv" | wc -l | tr -d ' ')" "check build 0"
+
+merge_asks() {
+    ls "$RATP_SIM_LOCK.merge-asks" 2> /dev/null | wc -l | tr -d ' '
+}
+
+# A make merge stopped while it waits for the Simulator leaves no entry in the queue and no ask for the Simulator,
+# and the next merge and the next job go on.
+hold_simulator
+app_task stopped_wait
+before=$(rev main)
+: > "$state/steps"
+start_merge stopped_wait
+wait_until grep -q "Waiting for the Simulator lock" "$state/stopped_wait.log"
+expect "a merge that waits for the Simulator asks for it" "$(merge_asks)" "1"
+# By PID, never by name, as a stop of make merge does: its lockf, then itself; the train sees that no make merge of its tasks is left.
+stopped=$(grep -l '^branch=task/stopped_wait$' "$queue"/*.task | xargs sed -n 's/^pid=//p')
+pkill -TERM -P "$stopped" lockf || true
+kill -TERM "$stopped" 2> /dev/null || true
+wait_until test -e "$state/stopped_wait.status"
+asks_none() {
+    [ "$(merge_asks)" = 0 ]
+}
+wait_until asks_none
+expect "a merge stopped while it waits for the Simulator leaves no entry in the queue and no ask for the Simulator" "$(queued) $(merge_asks)" "0 0"
+expect "it did not land" "$(rev main)" "$before"
+RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-stopped >> "$FAKE_SIM_STATE/steps"' > "$state/after-stopped.log" 2>&1 &
+after_stopped=$!
+wait_until grep -q "Waiting for the Simulator lock" "$state/after-stopped.log"
+touch "$state/release-holder"
+wait "$holder" "$after_stopped"
+expect "the next job takes the Simulator, and no merge goes before it" "$(steps_line)$(contains "$state/after-stopped.log" "a merge goes first")" "check build after-stopped no"
+: > "$state/steps"
+rm -f "$state/stopped_wait.status"
+merge stopped_wait
+expect "the next make merge lands" "$status $(rev main)" "0 $(rev task/stopped_wait)"
+
+# Two merges of app code queued one after the other land one after the other: the second one waits for the merge lock
+# while the first one waits for the Simulator, and then runs its own gate and its own E2E suite.
+hold_simulator
+app_task line_a
+app_task line_b
+before=$(rev main)
+: > "$state/steps"
+start_merge line_a
+wait_until grep -q "Waiting for the Simulator lock" "$state/line_a.log"
+start_merge line_b
+wait_until has_queued 2
+wait_until grep -q "waiting for the merge of another worktree" "$state/line_b.log"
+expect "the second merge waits for the merge lock while the first one waits for the Simulator" "$(steps_line)$(contains "$state/line_b.log" "waiting for the merge of another worktree")" "check build yes"
+touch "$state/release-holder"
+wait "$holder"
+expect "two merges queued one after the other land" "$(finish_merge line_a) $(finish_merge line_b)" "0 0"
+expect "they land one after the other" "$(rev main) $(rev main~1) $(rev main~2)" "$(rev task/line_b) $(rev task/line_a) $before"
+expect "each one runs its own gate and its own E2E suite" "$(steps_line)" \
+    "check build e2e e2e-locked nested-job release-run release-run-locked check build e2e e2e-locked nested-job release-run release-run-locked "
+expect "they leave no entry in the queue, no ask for the Simulator, and the lock free" "$(queued) $(merge_asks) $(lock_state)" "0 0 free"
 
 # The second guard: the task changes no app code from where it left main, but its rebase does. Its first commit,
 # which adds a file of the app, is already on main, so the rebase drops it, and the commit that removes that file stays.
@@ -594,12 +683,9 @@ git -C "$repo" cherry-pick "$(rev task/undo)" > /dev/null
 git -C "$state/undo" rm -q ios/App/Undo.swift
 git -C "$state/undo" commit -q -m "remove ios/App/Undo.swift (no rider change)"
 commit "$state/undo" undo.md undo
-TROME_MERGE_E2E="$passing_e2e && sed -n 's/^app=/app-/p' \"\$RATP_SIM_LOCK.merge-queue\"/*.task >> \"\$FAKE_SIM_STATE/steps\""
 merge undo
-TROME_MERGE_E2E=$passing_e2e
 expect "a task whose rebase changes app code lands, its gate with no Simulator lock, then its E2E suite with it" "$status $(steps_line)" \
-    "0 check e2e e2e-locked nested-job app-1 release-run release-run-locked "
-expect "it says why it takes the lock" "$(contains "$state/undo.log" "the rebased train changes app code: it takes the Simulator lock")" "yes"
+    "0 check build e2e e2e-locked nested-job release-run release-run-locked "
 expect "main no longer has the file of the app" "$(git -C "$repo" ls-tree --name-only main ios/App/Undo.swift) $(rev main)" " $(rev task/undo)"
 expect "the record of its Simulator job is a merge, and names the task" \
     "$(awk -F '\t' '$2 == "merge" && $9 == "task/undo" { print $9 }' "$state/logs/simulator-jobs.tsv")" "task/undo"
@@ -686,7 +772,7 @@ before=$(rev main)
 merge_together clash_a clash_b
 expect "when the second task of a train conflicts with the first one, the first one lands" "$(finish_merge clash_a)" "0"
 expect "the task that conflicts with the one before it does not land" "$(finish_merge clash_b)" "1"
-expect "the train runs the gate and the E2E suite once, without the task that conflicts" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked "
+expect "the train runs the gate and the E2E suite once, without the task that conflicts" "$(steps_line)" "check build e2e e2e-locked nested-job release-run release-run-locked "
 expect "main is the first task, after a conflict in the train" "$(rev main~1)" "$before"
 expect "the task that conflicts says that its rebase failed" "$(contains "$state/clash_b.log" "the step 'rebase' failed for task/clash_b")" "yes"
 expect "the task that conflicts is as it was before" "$(rev task/clash_b) $(git -C "$state/clash_b" status --porcelain)" "$clash_head "
@@ -708,31 +794,34 @@ expect "a task whose make merge was stopped during its train does not land" "$(r
 expect "a task whose make merge was stopped during its train is back on its own commits" "$(rev task/stop_b)" "$stop_b_head"
 expect "a stopped make merge leaves no task in the queue" "$(queued)" "0"
 
-mkdir -p "$queue"
+# The ask of a merge for the Simulator is a file named by the PID of its sim-lock.sh: a stopped merge may leave it.
+asks="$RATP_SIM_LOCK.merge-asks"
+mkdir -p "$asks"
 sh -c 'exit 0' &
 dead=$!
 wait "$dead"
-printf 'pid=%s\nroot=/gone\nbranch=task/gone\nnode=\n' "$dead" > "$queue/0000000001.000000.$dead.task"
+echo /gone > "$asks/$dead"
 : > "$state/steps"
 RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-dead-merge >> "$FAKE_SIM_STATE/steps"' > "$state/dead.log" 2>&1
-expect "a job does not wait for a merge whose make merge has ended" "$(steps_line)" "after-dead-merge "
-rm -f "$queue/0000000001.000000.$dead.task"
+expect "a job does not wait for a merge whose ask was left by a process that has ended, and removes that ask" "$(steps_line) $(merge_asks)" "after-dead-merge  0"
 
 sleep 30 &
 other=$!
-printf 'pid=%s\nroot=/gone\nbranch=task/gone\nnode=\n' "$other" > "$queue/0000000001.000000.$other.task"
+echo /gone > "$asks/$other"
 : > "$state/steps"
 RATP_SIM_POLL_SECONDS=1 "$scripts/sim-lock.sh" job sh -c 'echo after-reused-pid >> "$FAKE_SIM_STATE/steps"' > "$state/reused.log" 2>&1
 expect "a job does not wait for a merge whose pid now belongs to another process" "$(steps_line) $(contains "$state/reused.log" "a merge goes first")" "after-reused-pid  no"
 kill "$other" 2> /dev/null || true
 wait "$other" 2> /dev/null || true
-rm -f "$queue/0000000001.000000.$other.task"
+rm -f "$asks/$other"
 
 # The train is stopped while it rebases its third task: the second task, already rebased onto the first one, goes back too.
 app_task kill_a
 app_task kill_b
 app_task kill_c
-kill_a_head=$(rev task/kill_a)
+for task in kill_a kill_b kill_c; do
+    eval "${task}_head=\$(rev task/$task)"
+done
 before=$(rev main)
 cat > "$repo/.git/hooks/pre-rebase" << EOF
 #!/bin/sh
@@ -741,30 +830,31 @@ case "\$(git rev-parse --show-toplevel)" in
 esac
 EOF
 chmod +x "$repo/.git/hooks/pre-rebase"
-mkfifo "$state/release-kill-qa"
-"$scripts/sim-lock.sh" job sh -c 'read -r line < "$0"' "$state/release-kill-qa" > /dev/null 2>&1 &
-kill_qa=$!
-wait_until test -e "$RATP_SIM_LOCK/pid"
-start_merge kill_a
-wait_until has_queued 1
-start_merge kill_b
-wait_until has_queued 2
-start_merge kill_c
-wait_until has_queued 3
-: > "$state/steps"
-echo release > "$state/release-kill-qa"
-wait "$kill_qa"
+merge_together kill_a kill_b kill_c
 wait_until test -e "$state/rebasing-kill-c"
 # By PID, never by name: another run of this test, or a real make merge, may run a train of the same scripts.
-# The train is the one child of the Simulator job that holds the lock; that job runs for the make merge of kill_a.
-merge_a=$(grep -l '^branch=task/kill_a$' "$queue"/*.task | xargs sed -n 's/^pid=//p')
-train=$(pgrep -P "$(cat "$RATP_SIM_LOCK/pid")")
+# The train runs under the merge lock: it is the child of the lockf of the make merge that drives it, any of the three.
+stopped=
+for task in kill_a kill_b kill_c; do
+    task_pid=$(grep -l "^branch=task/$task\$" "$queue"/*.task | xargs sed -n 's/^pid=//p')
+    train=$(pgrep -P "$(pgrep -P "$task_pid" lockf)" || true)
+    if [ -n "$train" ]; then
+        stopped=$task
+        break
+    fi
+done
 kill -TERM $train
-pkill -KILL -P "$merge_a" lockf
-wait_until test -e "$state/kill_a.status"
-expect "after a train stopped during a rebase, the other tasks land" "$(finish_merge kill_b) $(finish_merge kill_c)" "0 0"
+pkill -KILL -P "$task_pid" lockf
+wait_until test -e "$state/$stopped.status"
+landed=
+for task in kill_a kill_b kill_c; do
+    [ "$task" = "$stopped" ] || landed="$landed $(finish_merge "$task")"
+done
+expect "after a train stopped during a rebase, the other tasks land" "$landed" " 0 0"
 expect "a train stopped during a rebase puts back the branches it rebased: main gets no commit of the stopped task" "$(rev main~2)" "$before"
-expect "the task of the stopped train is back on its own commits" "$(rev task/kill_a)" "$kill_a_head"
+expect "the task of the stopped train is back on its own commits" "$(rev "task/$stopped")" "$(eval echo "\$${stopped}_head")"
+expect "the next train waits for the stopped train to end, as the merge lock went with the stopped make merge" \
+    "$(cat "$state/kill_a.log" "$state/kill_b.log" "$state/kill_c.log" | grep -c "waiting for the train of a stopped make merge to end")" "1"
 expect "a stopped train frees the Simulator lock" "$(lock_state)" "free"
 rm -f "$repo/.git/hooks/pre-rebase"
 
@@ -865,6 +955,7 @@ git -C "$repo" push -q origin main
 cat > "$state/render.sh" << 'RENDER'
 #!/bin/sh
 echo render >> "$FAKE_SIM_STATE/steps"
+if test -n "${RATP_SIM_HELD_PID:-}" && test "$(cat "$RATP_SIM_LOCK/pid" 2> /dev/null)" = "$RATP_SIM_HELD_PID"; then echo render-locked >> "$FAKE_SIM_STATE/steps"; fi
 [ ! -e "$FAKE_SIM_STATE/render-fails" ] || { echo "The text recognition of this Mac failed"; exit 1; }
 echo "Too tall for their text size, in fr: 0 (list: too-tall.csv)"
 echo "Cut texts in the images (OCR, for a person to read): 5 (list: cut-texts.txt)"
@@ -893,7 +984,7 @@ short_main() {
 app_task recorded
 merge recorded
 expect "a merge with a remote succeeds" "$status" "0"
-expect "after the E2E suite, it draws the views, as main has no render counts on GitHub" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked render "
+expect "after the E2E suite, it draws the views, as main has no render counts on GitHub" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
 expect "it pushes main" "$(origin_main)" "$(rev main)"
 expect "it leaves on the new commit of main the record of the full E2E pass, with the tree and the render counts" "$(record "$(rev main)")" \
     "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: too tall 0, cut texts 5, breaches 1. Release run: passed."
@@ -903,7 +994,7 @@ Release app run: found (the app as the store ships it started on the Mac on this
 
 app_task undrawn
 merge undrawn
-expect "a merge whose change the views do not draw runs no render check when main has render counts" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked "
+expect "a merge whose change the views do not draw runs no render check when main has render counts" "$(steps_line)" "check build e2e e2e-locked nested-job release-run release-run-locked "
 expect "its record says that it did not draw" "$(record "$(rev main)")" \
     "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: not drawn. Release run: passed."
 expect "the release shows the counts of the last drawing" "$(proof main | sed -n 3p)" \
@@ -913,7 +1004,7 @@ new_task views
 mkdir -p "$state/views/ios/Widget"
 commit "$state/views" ios/Widget/View.swift view
 merge views
-expect "a merge that changes the views draws them" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked render "
+expect "a merge that changes the views draws them" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
 
 new_task recorded_docs
 commit "$state/recorded_docs" recorded_docs.md docs
@@ -943,7 +1034,7 @@ TROME_MERGE_E2E=$failing_e2e
 merge e2e_fails
 TROME_MERGE_E2E=$passing_e2e
 expect "a merge whose E2E suite fails draws nothing, pushes nothing and leaves no record" \
-    "$(steps_line)$(origin_main) $(record "$(rev task/e2e_fails)")" "check check-locked e2e e2e-locked nested-job $before no record"
+    "$(steps_line)$(origin_main) $(record "$(rev task/e2e_fails)")" "check build render-build e2e e2e-locked nested-job $before no record"
 
 app_task release_fails
 before=$(origin_main)
@@ -952,7 +1043,7 @@ merge release_fails
 TROME_MERGE_RELEASE_RUN=$passing_release_run
 expect "a merge whose Release app run fails does not land, draws nothing, pushes nothing and leaves no record" \
     "$status $(steps_line)$(origin_main) $(record "$(rev task/release_fails)")" \
-    "1 check check-locked e2e e2e-locked nested-job release-run release-run-locked $before no record"
+    "1 check build render-build e2e e2e-locked nested-job release-run release-run-locked $before no record"
 expect "it says that the Release app run failed" "$(contains "$state/release_fails.log" "the step 'Release app run' failed for task/release_fails")" "yes"
 expect "it says where the result bundle of the run is" "$(tail -1 "$state/release_fails.log")" \
     "Its result bundle, with the crash report when the app crashed: $(cd "$state/release_fails" && pwd -P)/ios/.build/release-run.xcresult"
@@ -972,7 +1063,7 @@ app_task gh_fails
 touch "$FAKE_GH_STATE/fail"
 merge gh_fails
 rm "$FAKE_GH_STATE/fail"
-expect "when GitHub cannot be read, the merge draws the views, as it cannot tell if main has render counts" "$(steps_line)" "check check-locked e2e e2e-locked nested-job release-run release-run-locked render "
+expect "when GitHub cannot be read, the merge draws the views, as it cannot tell if main has render counts" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
 expect "when GitHub does not take the record, the merge still lands and pushes main, and says that a release refuses the commit" \
     "$status $(origin_main) $(contains "$state/gh_fails.log" "but GitHub did not take the record of the E2E pass of $(short_main), so a release refuses it")" "0 $(rev main) yes"
 git -C "$repo" remote remove origin

@@ -10,7 +10,7 @@ state=$(mktemp -d)
 udid=11111111-1111-1111-1111-111111111111
 failures=0
 export FAKE_SIM_STATE="$state" PATH="$state/bin:$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" TROME_LOGS="$state/logs" \
-    RATP_BUILD_GATE="$state/gate" RATP_MERGE_QUEUE="$state/merge-queue" TROME_SIM_DEVICES="$state/devices" \
+    RATP_BUILD_GATE="$state/gate" TROME_SIM_DEVICES="$state/devices" \
     TROME_WIDGET_HOST_WAIT_SECONDS=1 RATP_SIM_STOP_SECONDS=20
 unset RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID RATP_SIM_MERGE RATP_BUILD_GATE_HELD VERBOSE || true
 

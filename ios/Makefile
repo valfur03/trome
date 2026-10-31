@@ -113,7 +113,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose film-captures live-activity-render release-run-check merge e2e-proof
+.PHONY: help setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose film-captures live-activity-render release-run-check merge e2e-proof e2e-build release-run-build live-activity-render-build
 
 help::
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -146,8 +146,9 @@ help::
 	@echo "make release-archive-check  Build an unsigned Release archive of the app and its widget for an iPhone, with stand-in server values: shows that the store build compiles, with the silent start, its push capability and its app group, with no account and no secret (not in make check)"
 	@echo "make e2e                 End-to-end tests on the shared Simulator (takes the Simulator lock); a failed run keeps its log, its .xcresult and the Simulator log in ~/Library/Logs/TROME/e2e-failures/"
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
+	@echo "make e2e-build           Only the build of make e2e, with no Simulator lock; make e2e NO_BUILD=1 then runs the tests with no build (make merge does so, and the same for release-run-build and live-activity-render-build)"
 	@echo "make release-run-check   Start the app as the store ships it (as make run RELEASE=1 builds it) on the shared Simulator, and fail when it does not reach its first screen or shows a Testing tool (takes the Simulator lock; make merge runs it)"
-	@echo "make merge               Merge the branch of this folder into main (after QA), before the other Simulator jobs: rebase, make check, full make e2e, make release-run-check, fast-forward, then push main with the record of both passes and its render counts. Merges that wait together share one run; when it fails, they land one by one; a branch with no app code runs no E2E and takes no Simulator lock"
+	@echo "make merge               Merge the branch of this folder into main (after QA): rebase, make check and the test builds with no Simulator lock, then, before the other Simulator jobs, the test runs of the full make e2e and make release-run-check, fast-forward, then push main with the record of both passes and its render counts. Merges that wait together share one run; when it fails, they land one by one; a branch with no app code runs no E2E and takes no Simulator lock"
 	@echo "make e2e-proof           Say whether a commit (COMMIT=, default HEAD) has, on GitHub, the record that make merge leaves after a full E2E pass and a run of the Release app on its tree, and its render counts; fail when either is missing (the release refuses it)"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
@@ -245,6 +246,21 @@ fake-trains:
 	@$(SIM_LOCK) reopen ./scripts/fake-trains.sh "$(APP_PATH)" $(STATE)
 
 # The E2E tests collect no Simulator diagnostics on a failure: they took about 10 minutes, and kept the Simulator.
+# make merge builds the tests before it takes the Simulator lock, and then runs them with NO_BUILD=1.
+E2E_BUILD = $(BUILD_GATE) $(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+RELEASE_RUN_BUILD = $(BUILD_GATE) $(QUIET) $(LOGS)/release-run-build.log '' $(XCODEBUILD) -scheme $(RELEASE_RUN_SCHEME) $(RELEASE_RUN_SETTINGS) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+RENDER_BUILD = $(BUILD_GATE) $(QUIET) $(LOGS)/live-activity-render-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+UNLESS_BUILT = $(if $(filter 1,$(NO_BUILD)),@:,@$(1))
+
+e2e-build: project
+	@$(E2E_BUILD)
+
+release-run-build: project
+	@$(RELEASE_RUN_BUILD)
+
+live-activity-render-build: project
+	@$(RENDER_BUILD)
+
 e2e: project
 	@for test in $(ONLY); do \
 		class=$${test%%/*}; \
@@ -254,7 +270,7 @@ e2e: project
 			|| { echo "No E2E test named $${test#*/} in $$class" >&2; exit 1; };; esac; \
 	done
 	@rm -rf $(E2E_RESULT)
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/e2e-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	$(call UNLESS_BUILT,$(E2E_BUILD))
 	@RATP_SIM_KIND=e2e RATP_SIM_DETAIL="$(ONLY)" $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-wallpaper-update $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
 		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E tests: ' \
 		sh -c './scripts/mac-load-log.sh $(LOGS)/mac-load.log & load_log=$$!; "$$@"; status=$$?; kill $$load_log 2>/dev/null; ./scripts/e2e-failures.py $(E2E_RESULT); [ $$status -eq 0 ] || ./scripts/e2e-keep.py $(E2E_RESULT) $(LOGS)/e2e.log "$(APP_PATH)"; exit $$status' e2e \
@@ -266,7 +282,7 @@ e2e: project
 # The app as the store ships it, started by iOS: the test of ios/ReleaseRun/ needs no wallpaper, widget host or permission.
 release-run-check: project
 	@rm -rf $(RELEASE_RUN_RESULT)
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/release-run-build.log '' $(XCODEBUILD) -scheme $(RELEASE_RUN_SCHEME) $(RELEASE_RUN_SETTINGS) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	$(call UNLESS_BUILT,$(RELEASE_RUN_BUILD))
 	@RATP_SIM_KIND=release-run $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/release-run.log '^E2E tests: ' \
 		sh -c '"$$@"; status=$$?; ./scripts/e2e-failures.py $(RELEASE_RUN_RESULT); exit $$status' release-run \
@@ -333,7 +349,7 @@ store-screenshots-compose:
 	@./scripts/store-screenshots.sh compose $(STORE_COMPOSER)
 
 live-activity-render: project
-	@$(BUILD_GATE) $(QUIET) $(LOGS)/live-activity-render-build.log '' $(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -destination 'generic/platform=iOS Simulator' ARCHS=$(HOST_ARCH) build-for-testing
+	$(call UNLESS_BUILT,$(RENDER_BUILD))
 	@RATP_SIM_KIND=live-activity-render $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) with-destination \
 		$(QUIET) $(LOGS)/live-activity-render.log '^Simulator time' ./scripts/live-activity-render.sh render $(RENDER_OUT) \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(RENDER_SCHEME) -collect-test-diagnostics never test-without-building

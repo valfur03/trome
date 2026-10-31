@@ -98,10 +98,13 @@ A job reset keeps the wallpaper; a new or erased Simulator does not, so run `mak
 So is `make live-activity-render` (the render check of the Live Activity views, see `.claude/rules/render-check.md`).
 So is `make release-run-check`, which starts the app as the store ships it (`make merge` runs it after the E2E suite).
 
-A `make merge` of app code takes the lock before the rebase and frees it after the fast-forward and the push of the record of the E2E pass, success or failure (see `.claude/rules/merge.md`).
-Before that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, even with two Simulator slots.
-A merge goes first: while a `make merge` of app code waits (its entry in `/tmp/ratp-sim.lock.merge-queue`), a job that is not a merge waits too, even when it came first; the job that holds the lock keeps it to its end.
-A merge with no app code (`app=0` in its entry) takes no Simulator lock, so no job waits for it.
+A `make merge` of app code holds the lock only for its test runs: the E2E suite, the Release app run and the render check (see `.claude/rules/merge.md`).
+It rebases, runs `make check` and builds the tests first, with no Simulator lock, and frees the lock when the test runs end, before the fast-forward.
+Why: the rebase, the gate and the builds use no Simulator, and held it for about 9.5 minutes of each merge, while QA, reviews and E2E runs waited (TASK-489).
+Before all that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, and it keeps that lock while it waits for the Simulator, so `main` cannot move between its gate and its tests.
+A merge goes first from the moment it asks for the Simulator (a file named by the PID of its `sim-lock.sh`, in `/tmp/ratp-sim.lock.merge-asks/`): a job that is not a merge waits too, even when it came first; the job that holds the lock keeps it to its end, and the merge says which job it waits for.
+A merge that rebases, runs its gate or waits in the queue does not ask yet, so a job may take the free Simulator then, and the merge waits for it.
+A merge with no app code takes no Simulator lock.
 A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock.
 It does not free the lock when it ends: the outer job does.
 

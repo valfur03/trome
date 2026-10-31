@@ -3,7 +3,8 @@ set -eu
 
 base_lock=${RATP_SIM_LOCK:-/tmp/ratp-sim.lock}
 watcher="$base_lock.slots-watcher"
-merge_queue=${RATP_MERGE_QUEUE:-$base_lock.merge-queue}
+# Each merge that waits for the Simulator writes a file here, named by its PID: the jobs that wait let it go first.
+merge_asks="$base_lock.merge-asks"
 # One Simulator job at a time: a second Simulator next to the first one takes the whole CPU of the Mac,
 # and each job then runs several times slower. The code of a second slot stays, but off.
 slots=${RATP_SIM_SLOTS:-1}
@@ -87,7 +88,10 @@ describe_holder() {
     worktree=$(holder worktree)
     pid=$(holder pid)
     if [ -n "$pid" ]; then
-        echo "a job in $worktree (PID $pid)"
+        # Its kind (e2e, run...), from its record; a job of no kind is "job".
+        held_kind=$(cut -f 3 "$lock/job" 2> /dev/null || true)
+        [ "$held_kind" != job ] || held_kind=
+        echo "a job${held_kind:+ ($held_kind)} in $worktree (PID $pid)"
     elif [ -n "$(holder udid)" ]; then
         echo "the open Simulator of $worktree (run 'make simulator-shutdown' there to free it)"
     else
@@ -239,21 +243,34 @@ cpu_idle_percent() {
     echo "${idle:-0}"
 }
 
-# A merge goes first: a job that is not a merge waits while a 'make merge' of app code waits in the queue.
-# A merge with no app code (app=0, from the diff of its branch) takes no Simulator lock, so no job waits for it.
+# A merge goes first: a job that is not a merge waits while a 'make merge' asks for the Simulator.
+# A merge asks only once its rebase, gate and test builds have passed: before that, it uses no Simulator, so no job waits for it.
 merge_waits() {
     [ -z "${RATP_SIM_MERGE:-}" ] || return 1
-    for merge_entry in "$merge_queue"/*.task; do
-        [ -f "$merge_entry" ] && [ ! -e "${merge_entry%.task}.result" ] || continue
-        [ "$(sed -n 's/^app=//p' "$merge_entry" 2> /dev/null || true)" != 0 ] || continue
-        merge_pid=$(sed -n 's/^pid=//p' "$merge_entry" 2> /dev/null || true)
+    for merge_ask in "$merge_asks"/*; do
+        [ -f "$merge_ask" ] || continue
         # A pid that the system gave again to another process is not a merge that waits.
-        if [ -n "$merge_pid" ] && ps -p "$merge_pid" -o command= 2> /dev/null | grep -q 'merge\.sh'; then
-            merge_root=$(sed -n 's/^root=//p' "$merge_entry" 2> /dev/null || true)
+        if ps -p "$(basename "$merge_ask")" -o command= 2> /dev/null | grep -q 'sim-lock\.sh'; then
+            merge_root=$(cat "$merge_ask" 2> /dev/null || true)
             return 0
         fi
+        rm -f "$merge_ask"
     done
     return 1
+}
+
+# A merge says that it waits for the Simulator, until it holds it or ends.
+ask_first() {
+    [ -n "${RATP_SIM_MERGE:-}" ] || return 0
+    mkdir -p "$merge_asks"
+    echo "$root" > "$merge_asks/$$"
+    trap 'rm -f "$merge_asks/$$"' EXIT
+}
+
+stop_asking() {
+    [ -n "${RATP_SIM_MERGE:-}" ] || return 0
+    rm -f "$merge_asks/$$"
+    trap - EXIT
 }
 
 try_to_take_a_slot() {
@@ -298,6 +315,7 @@ try_to_take_a_slot() {
 acquire() {
     said=
     start_waiting
+    ask_first
     until try_to_take_a_slot; do
         if [ "$wait_kind" = race ]; then
             sleep 1
@@ -312,6 +330,7 @@ acquire() {
     done
     take
     stamp "$1"
+    stop_asking
     start_watcher
     if [ -n "$said" ]; then
         echo "Got the Simulator lock (slot $RATP_SIM_SLOT)" >&2
