@@ -35,10 +35,15 @@ contains() {
     grep -qF "$2" "$1" && echo yes || echo no
 }
 
+# Its title says "no rider change", so that make merge does not refuse a task of app code for its note (see notes_task).
 commit() {
+    titled_commit "$1" "$2" "$3" "change $2 (no rider change)"
+}
+
+titled_commit() {
     echo "$3" > "$1/$2"
     git -C "$1" add "$2"
-    git -C "$1" commit -q -m "change $2"
+    git -C "$1" commit -q -m "$4"
 }
 
 new_task() {
@@ -467,6 +472,26 @@ merge_together docs_a docs_b docs_c
 expect "three merges that wait together land" "$(finish_merge docs_a) $(finish_merge docs_b) $(finish_merge docs_c)" "0 0 0"
 expect "a train of three tasks runs one gate, and no E2E run when no task changes app code" "$(steps_line)" "check check-locked "
 expect "a train of three lands the three tasks in order" "$(rev main) $(rev main~1) $(rev main~2) $(rev main~3)" "$(rev task/docs_c) $(rev task/docs_b) $(rev task/docs_a) $before"
+
+# The gate of a train sees the commits of all its tasks: a task of the app with no note must not pass on the note of another.
+notes_task() {
+    new_task "$1"
+    mkdir -p "$state/$1/ios/App" "$state/$1/ios/changes"
+    titled_commit "$state/$1" "ios/App/$1.swift" "$1" "feat: $1"
+}
+notes_task noted
+titled_commit "$state/noted" ios/changes/noted.txt "kind: item
+fr: Une ligne.
+en: One line." "docs: the note of noted"
+notes_task unnoted
+unnoted_head=$(rev task/unnoted)
+before=$(rev main)
+merge_together noted unnoted
+expect "a task of a train with a note lands" "$(finish_merge noted)" "0"
+expect "a task of a train that changes the app with no note and no \"(no rider change)\" title does not land on the note of another task" "$(finish_merge unnoted)" "1"
+expect "the task with no note says why, with the message of change-notes-check" "$(contains "$state/unnoted.log" "change-notes-check: the commits since main change the code of the app (ios/App/unnoted.swift)")" "yes"
+expect "the task with no note is refused before its rebase" "$(rev task/unnoted)" "$unnoted_head"
+expect "main gets only the task with a note" "$(rev main) $(rev main~2)" "$(rev task/noted) $before"
 
 app_task second_ok
 app_task second_bad

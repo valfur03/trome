@@ -333,6 +333,12 @@ land() {
             finish "$key" 1 "make merge: '$task_branch' got a new commit ($(short "$(cat "$work/$key.orig")")) after its make merge started on $(short "$(field "$key" head)"). It does not land: make merge lands only the commit that it started with. Run 'make merge' again if the new commit belongs to the task."
             continue
         fi
+        # The gate judges the notes of all the commits of the train at once, so it would let a task of the app with no note
+        # pass beside a task that has one: each task is judged on its own commits, before its rebase.
+        if ! notes=$(cd "$task_root" && "$scripts/change-notes-check.py" check "$target" 2>&1); then
+            finish "$key" 1 "$(failed "notes of the changes" "$task_branch" "$notes")"
+            continue
+        fi
         touched="$touched $key"
         # From the first rebase on, a stopped train puts every branch back: a later task is rebased onto the earlier ones.
         [ "$#" -le 1 ] || put_back_on_exit=1
