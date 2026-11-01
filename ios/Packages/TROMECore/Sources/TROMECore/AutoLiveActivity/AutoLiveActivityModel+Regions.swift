@@ -18,7 +18,7 @@ extension AutoLiveActivityModel {
             await handleArrival(reportedAt: station, lastKnownFix: lastKnownFix)
             return
         }
-        guard let fix = WatchedRegion.recentFix(lastKnownFix, now: configuration.now()) else {
+        guard let fix = await recentPosition(lastKnownFix: lastKnownFix) else {
             logNoRecentPosition(lastKnownFix)
             return
         }
@@ -27,6 +27,17 @@ extension AutoLiveActivityModel {
             return
         }
         await handle(fix, maximumAge: AutoLiveActivityRules.maximumMonitoredPositionAge, logsEveryOutcome: true)
+    }
+
+    /// The app follows no position in the background, so the plan of the areas changes only at a wake: when the last
+    /// position of iOS is too old, the app asks iOS for a new one, as for a reported arrival, to plan again from
+    /// where the phone is now.
+    private func recentPosition(lastKnownFix: PositionFix?) async -> PositionFix? {
+        if let fix = WatchedRegion.recentFix(lastKnownFix, now: configuration.now()) {
+            return fix
+        }
+        let fresh = await freshPosition(waitingAtMost: ReportedArrivalRules.maximumWait)
+        return WatchedRegion.recentFix(fresh, now: configuration.now())
     }
 
     /// A position inside the stop area that iOS says the phone left is older than the exit: deciding on it

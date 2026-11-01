@@ -5,6 +5,9 @@ import Observation
 /// Read the position here, never from Core Location: then the fake position of the Testing tools
 /// (a `LocationSource.fake`, saved by `LocationSourceStore`) reaches every feature, also the ones added later.
 /// Release builds give no `LocationSourceStore`, so they always use the real position.
+///
+/// The position stream runs only while at least one `PositionNeed` holds: each new position costs battery,
+/// and iOS runs the app for it, also in the background. A need that ends stops the stream once no other holds.
 @MainActor
 @Observable
 public final class LocationService {
@@ -23,6 +26,14 @@ public final class LocationService {
     private let realProvider: any LocationProvider
     private let sourceStore: LocationSourceStore?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
+    @ObservationIgnored private(set) var needs: Set<PositionNeed> = []
+    @ObservationIgnored private(set) var isOnScreen = true
+    #if DEBUG
+    /// The E2E tests keep the app awake in the background in place of the wake for the area of a station, which the
+    /// Simulator cannot watch: the screen then keeps following the position off screen, so that a moved position
+    /// reaches the arrival rules, as a wake would.
+    @ObservationIgnored public var keepsFollowingOffScreen = false
+    #endif
 
     public init(realProvider: any LocationProvider, sourceStore: LocationSourceStore?) {
         self.realProvider = realProvider
@@ -34,14 +45,47 @@ public final class LocationService {
         updatesTask?.cancel()
     }
 
-    public func start() {
+    /// Follows the position for `need`, until `stop(for:)` ends that need.
+    public func start(for need: PositionNeed = .screen) {
+        guard need != .screen || followsTheScreen else { return }
+        needs.insert(need)
         guard updatesTask == nil else {
             return
         }
         listen(to: provider(for: source))
     }
 
+    /// Ends `need`, and stops the position stream when no other need holds. The last position stays.
+    public func stop(for need: PositionNeed) {
+        needs.remove(need)
+        guard needs.isEmpty else { return }
+        stopListening()
+    }
+
+    /// Off screen, the need of the screen ends, and a start for it that comes late (after a permission question) is
+    /// ignored: the screen follows the position again when the app is back on screen.
+    public func setOnScreen(_ onScreen: Bool) {
+        isOnScreen = onScreen
+        if !followsTheScreen {
+            stop(for: .screen)
+        }
+    }
+
+    private var followsTheScreen: Bool {
+        #if DEBUG
+        isOnScreen || keepsFollowingOffScreen
+        #else
+        isOnScreen
+        #endif
+    }
+
+    /// Ends every need at once.
     public func stop() {
+        needs.removeAll()
+        stopListening()
+    }
+
+    private func stopListening() {
         updatesTask?.cancel()
         updatesTask = nil
     }
@@ -55,7 +99,7 @@ public final class LocationService {
         fix = nil
         problem = nil
         if updatesTask != nil {
-            stop()
+            stopListening()
             listen(to: provider(for: newSource))
         }
     }
@@ -106,4 +150,13 @@ public final class LocationService {
             problem = newProblem
         }
     }
+}
+
+/// Why the app follows the position.
+public enum PositionNeed: Hashable, Sendable {
+    /// The app is on screen: the main screen shows the nearest station.
+    case screen
+    /// Work in the background: a Live Activity shows (to switch or end it),
+    /// or the app decides an arrival that iOS reported for the area of a station.
+    case backgroundWork
 }

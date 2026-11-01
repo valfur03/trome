@@ -163,8 +163,10 @@ struct AutoLiveActivityModelTests {
         await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: fix)
     }
 
+    /// As in the app, the main screen follows the position again once the app is on screen (`NearestStationModel`).
     func activate(_ model: AutoLiveActivityModel) async {
         model.setAppPhase(.active)
+        locationService.start()
         await model.appDidBecomeActive()
     }
 

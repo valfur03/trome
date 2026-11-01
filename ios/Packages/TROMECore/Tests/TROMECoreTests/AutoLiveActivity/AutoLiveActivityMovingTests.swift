@@ -4,7 +4,7 @@ import Testing
 
 /// A rider who moves past stations with the app in the background: the Live Activity switches at the next station
 /// with no notification, also when iOS wakes the app for the area of that station; and the wake log says when it
-/// ended on the way, so that the next station notifies.
+/// ended on the way, so that the wake for the next station notifies.
 extension AutoLiveActivityModelTests {
     enum ReportedPosition: CaseIterable {
         case lastKnown
@@ -47,9 +47,9 @@ extension AutoLiveActivityModelTests {
         await showAInTheBackground(model)
 
         gps.report(Places.fourHundredMetersFromA)
-        await waitUntil { client.endCount == 1 }
-        gps.report(Places.atB)
-        await waitUntil { !notifier.notified.isEmpty }
+        await waitUntil { client.endCount == 1 && !gps.isReporting }
+        let atB = PositionFix(coordinate: Places.atB, accuracyMeters: 10, timestamp: clock.now)
+        await model.handleRegionEvent(.entered(regionId: "arrival:b"), lastKnownFix: atB)
 
         #expect(notifier.notified == [Places.stationB])
         #expect(decisionLines.suffix(3) == [

@@ -237,4 +237,40 @@ struct LocationServiceTests {
         #expect(service == nil)
         #expect(!gps.isReporting)
     }
+
+    @Test func stopsThePositionUpdatesWhenTheAppLeavesTheScreen() async {
+        let service = makeService()
+        service.start()
+        gps.report(realPosition)
+        await waitForPosition(realPosition, in: service)
+
+        service.setOnScreen(false)
+        await waitUntil { !gps.isReporting }
+
+        #expect(service.position == realPosition)
+    }
+
+    @Test func keepsThePositionUpdatesOffScreenUntilTheBackgroundWorkEnds() async {
+        let service = makeService()
+        service.start()
+        service.start(for: .backgroundWork)
+
+        service.setOnScreen(false)
+        #expect(gps.isReporting)
+
+        service.stop(for: .backgroundWork)
+        await waitUntil { !gps.isReporting }
+    }
+
+    @Test func ignoresAStartForTheScreenThatComesOffScreen() async {
+        let service = makeService()
+        service.setOnScreen(false)
+
+        service.start()
+        #expect(!gps.isReporting)
+
+        service.setOnScreen(true)
+        service.start()
+        #expect(gps.isReporting)
+    }
 }

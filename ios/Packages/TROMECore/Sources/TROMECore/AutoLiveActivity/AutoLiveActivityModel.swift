@@ -86,6 +86,7 @@ public final class AutoLiveActivityModel {
         if phase != .active {
             cannotFindPosition = false
         }
+        inputs.locationService.setOnScreen(phase != .background)
         feedAfterActivityChange(wasActive: wasActive)
         if phase == .background, state.pendingArrivalStationId != nil {
             Task { await evaluate(position: nil) }
@@ -98,7 +99,7 @@ public final class AutoLiveActivityModel {
         inputs.liveActivityTrains.askAgainAfterARefusal()
         syncWithSystem()
         if liveActivity.isShowing, !showsExample {
-            services.locationKeeper.begin()
+            followPositionInBackground()
         }
         askForNotificationsIfAllowed()
         await openTappedStation()
@@ -159,10 +160,8 @@ public final class AutoLiveActivityModel {
 
     private func followPositionIfShowing() {
         guard state.shown != nil else { return }
-        services.locationKeeper.begin()
+        followPositionInBackground()
         startFeedAfterLaunch()
-        guard inputs.permission.authorization == .authorized else { return }
-        inputs.locationService.start()
     }
 
     private func observeScreenStation() {
@@ -240,14 +239,14 @@ public final class AutoLiveActivityModel {
             return
         }
         removedOutsideTheApp = nil
-        services.locationKeeper.begin()
+        followPositionInBackground()
         restartFeed(fetchNow: true)
     }
 
     private func endLiveActivity() async {
         await liveActivity.stop()
         guard !liveActivity.isShowing else { return }
-        services.locationKeeper.end()
+        stopFollowingPositionInBackground()
         restartFeed(fetchNow: false)
     }
 
@@ -256,13 +255,13 @@ public final class AutoLiveActivityModel {
         forgetTheExampleIfRemoved()
         if liveActivity.isShowing, adoptThePushedLiveActivity() {
             removedOutsideTheApp = nil
-            services.locationKeeper.begin()
+            followPositionInBackground()
             restartFeed(fetchNow: false)
         }
         guard !liveActivity.isShowing, let shown = state.shown else { return }
         removedOutsideTheApp = shown
         forgetShownLiveActivity()
-        services.locationKeeper.end()
+        stopFollowingPositionInBackground()
         restartFeed(fetchNow: false)
     }
 

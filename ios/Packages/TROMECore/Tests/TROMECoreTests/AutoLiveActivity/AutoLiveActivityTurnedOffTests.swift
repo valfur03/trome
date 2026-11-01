@@ -70,6 +70,7 @@ extension AutoLiveActivityModelTests {
     @Test func turningLiveActivitiesOnAgainAwayFromEveryStationStartsNothingAndSaysNothing() async {
         let model = makeModel()
         await refusedOnTheLockScreenAtA(model)
+        await activate(model)
         gps.report(Places.fourHundredMetersFromA)
         await waitUntil { locationService.position == Places.fourHundredMetersFromA }
 

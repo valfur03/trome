@@ -77,6 +77,22 @@ struct NearestStationModelTests {
         #expect(model.state == foundNation(from: nearNation))
     }
 
+    @Test func findsTheNearestStationAgainWhenTheAppIsBackOnScreen() async {
+        let locationService = LocationService(realProvider: gps, sourceStore: nil)
+        let model = makeModel(MockLocationPermission(authorization: .authorized), locationService: locationService)
+        await model.refresh()
+        gps.report(farFromNation)
+        await waitForState(.noStationNearby, in: model)
+        locationService.setOnScreen(false)
+        await waitUntil { !gps.isReporting }
+
+        locationService.setOnScreen(true)
+        await model.refresh()
+        gps.report(nearNation)
+
+        await waitForState(foundNation(from: nearNation), in: model)
+    }
+
     @Test func doesNotAskAgainOncePermissionIsGranted() async {
         let permission = MockLocationPermission(authorization: .authorized)
         let model = makeModel(permission)

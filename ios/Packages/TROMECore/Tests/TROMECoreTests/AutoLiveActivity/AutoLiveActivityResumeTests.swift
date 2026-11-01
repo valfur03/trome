@@ -63,9 +63,9 @@ extension AutoLiveActivityModelTests {
     @Test func aResumeWithAnImprecisePositionStartsNothingAndSaysSo() async {
         let model = makeModel()
         await pausedAtA(model)
+        await activate(model)
         gps.report(PositionFix(coordinate: Places.fiftyMetersFromA, accuracyMeters: 300, timestamp: clock.now))
         await waitUntil { locationService.fix?.accuracyMeters == 300 }
-        await activate(model)
         gps.givesACurrentFix = false
 
         await model.cancelPause()
@@ -78,10 +78,10 @@ extension AutoLiveActivityModelTests {
     @Test func aResumeFarFromEveryStationStartsNothingAndSaysNothing() async {
         let model = makeModel()
         await pausedAtA(model)
+        await activate(model)
         gps.report(Places.fourHundredMetersFromA)
         await waitUntil { locationService.position == Places.fourHundredMetersFromA }
         clock.advance(by: 45)
-        await activate(model)
 
         await model.cancelPause()
 

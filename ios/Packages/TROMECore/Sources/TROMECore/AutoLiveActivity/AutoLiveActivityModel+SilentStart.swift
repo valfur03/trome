@@ -16,7 +16,7 @@ extension AutoLiveActivityModel {
         // During the ask, the app opened at the station must not start a Live Activity of its own:
         // the one that Apple then brings would be a second.
         state.openArrivalStationId = nil
-        services.locationKeeper.begin()
+        followPositionInBackground()
         let isStarted = await silentStart.start(at: station)
         let isTheSameArrival = state.arrivalStationId == station.id && state.shown == nil
         if isTheSameArrival {
@@ -65,6 +65,6 @@ extension AutoLiveActivityModel {
     /// iOS suspends a woken app seconds after the wake: the background location keeps it running for the ask.
     private func endTheLocationKeptForTheAsk() {
         guard secondChances.isEmpty, state.shown == nil || !liveActivity.isShowing else { return }
-        services.locationKeeper.end()
+        stopFollowingPositionInBackground()
     }
 }

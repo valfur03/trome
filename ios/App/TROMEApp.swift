@@ -55,6 +55,7 @@ struct TROMEApp: App {
 
         #if DEBUG
         uiTestLocationKeeper = CoreLocationBackgroundLocationKeeper.begunIfAsked(by: ProcessInfo.processInfo.arguments)
+        locationService.keepsFollowingOffScreen = uiTestLocationKeeper != nil
         autoLiveActivityModel.endLiveActivityIfAsked(by: ProcessInfo.processInfo.arguments)
         #endif
         self.stationCatalog = stationCatalog

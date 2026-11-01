@@ -8,7 +8,7 @@ extension AutoLiveActivityModel {
         let chance = ArrivalSecondChance(station: station, reportedAt: reportedAt)
         secondChances[station.id] = chance
         services.wakeLog?.record(.decision, chance.startLine)
-        services.locationKeeper.begin()
+        followPositionInBackground()
         guard secondChanceTask == nil else { return }
         secondChanceTask = Task { [weak self, sleep = configuration.sleep] in
             while true {
@@ -56,7 +56,7 @@ extension AutoLiveActivityModel {
             end(chance, .limit(lastPosition: inputs.locationService.fix))
         }
         guard !secondChances.isEmpty else { return }
-        services.locationKeeper.begin()
+        followPositionInBackground()
         let fix = await freshPosition(waitingAtMost: ReportedArrivalRules.maximumWait)
         var isAtAStation = false
         for chance in openChances {
@@ -86,7 +86,7 @@ extension AutoLiveActivityModel {
         secondChanceTask?.cancel()
         secondChanceTask = nil
         if state.shown == nil || !liveActivity.isShowing {
-            services.locationKeeper.end()
+            stopFollowingPositionInBackground()
         }
     }
 }
