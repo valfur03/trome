@@ -41,7 +41,7 @@ Each visit costs calls of your key: see [one call for each stop area](trains.md#
 A Debug build writes each PRIM answer in the log of the phone, under the category `PRIM` ([read the logs](../README.md#read-the-logs)).
 For each call, one line gives the stop, the time of the call by the clock of the app (`call`, in UTC) and the number of entries.
 Then each entry has two lines with the same start and its rank (`entry 3`): what the app does with it, and a `fields` line.
-The `fields` line writes each field as PRIM gave it, as its name and its value, and `absent` when the answer does not have it; `empty` is an empty list, and `""` an empty text.
+The `fields` line writes each field as PRIM gave it, as its name and its value, and `absent` when the answer does not have it; `empty` is an empty list or object, and `""` an empty text.
 The fields go on their own line because the log cuts a line after 1024 bytes.
 A Release build reads none of these fields.
 
