@@ -121,7 +121,7 @@ Release builds write none of these lines.
 
 | Category | One line for |
 |---|---|
-| `PRIM` | Each train of each PRIM answer, and whether the app keeps it, and why |
+| `PRIM` | Each train of each PRIM answer, whether the app keeps it and why, and [its fields](guide/testing-tools.md#record-what-prim-answers-field-by-field) |
 | `LiveActivityContent` | Each content that the app sends to the Live Activity, train by train |
 | `LiveActivity` | Each state that iOS sends for a Live Activity, each end that the app asks for, each pause of a station, and each tap on the header that shows the next line |
 | `StationRegions` | Whether iOS can watch regions, and each region event |

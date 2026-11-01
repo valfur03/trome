@@ -36,6 +36,33 @@ It needs no location permission, so it is the quickest way to check the train da
 At the bottom, **Train data key: set** or **not set** tells you whether the build has a key; when the screen shows no times, its message says why.
 Each visit costs calls of your key: see [one call for each stop area](trains.md#one-call-for-each-stop-area).
 
+## Record what PRIM answers, field by field
+
+A Debug build writes each PRIM answer in the log of the phone, under the category `PRIM` ([read the logs](../README.md#read-the-logs)).
+For each call, one line gives the stop, the time of the call by the clock of the app (`call`, in UTC) and the number of entries.
+Then each entry has two lines with the same start and its rank (`entry 3`): what the app does with it, and a `fields` line.
+The `fields` line writes each field as PRIM gave it, as its name and its value, and `absent` when the answer does not have it; `empty` is an empty list, and `""` an empty text.
+The fields go on their own line because the log cuts a line after 1024 bytes.
+A Release build reads none of these fields.
+
+| Field | Its place in the PRIM answer |
+|---|---|
+| `ResponseTimestamp` | `StopMonitoringDelivery`: the time of the answer |
+| `RecordedAtTime` | `MonitoredStopVisit`: when PRIM recorded the entry |
+| `DestinationName`, `DestinationRef`, `JourneyNote` (the mission code), `TrainNumbers`, `VehicleJourneyName` | `MonitoredVehicleJourney` |
+| `DestinationDisplay`, `DeparturePlatformName`, `ArrivalPlatformName`, `Order` (the rank of the stop in the journey), `ArrivalStatus`, `DepartureStatus`, `VehicleAtStop` | `MonitoredVehicleJourney.MonitoredCall` |
+| `ExpectedQuayRef`, `AimedQuayRef` | `MonitoredCall.DepartureStopAssignment` |
+| `ItemProducer` | `MonitoredStopVisit.ItemIdentifier`, up to its first colon |
+
+To save the log of a session to a file, run this at its end, before `make simulator-shutdown`, with the minutes that it lasted:
+
+```sh
+xcrun simctl spawn "$(make -s simulator)" log show --last 20m --style compact \
+  --predicate 'subsystem == "TROME" AND category == "PRIM"' > prim-log.txt
+```
+
+The log never holds the train data key: before you share the file, search it for the name and the start of your key all the same.
+
 ## Get fake trains, with no key
 
 After `make run`, open the app again with fake trains at every station, with no call to PRIM, also in a build with a key:
