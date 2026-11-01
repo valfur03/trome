@@ -100,7 +100,8 @@ Tap **Far from any station**: it ends.
 
 In the background, the app asks the server to start the Live Activity ([the silent start](auto-live-activity.md#the-silent-start)), and sends no notification.
 A build of the Simulator has no silent start, so nothing shows: the [wake log](#on-your-iphone-see-why-no-live-activity-came) says why, and the Live Activity starts when you open the app at the station.
-In the Simulator, iOS keeps the app running for only about 10 to 25 seconds after you leave it, and nothing wakes it after that: do steps 3 and 4 within those seconds.
+With no Live Activity, the app follows no position in the background, and the Simulator cannot watch the areas of the stations, so nothing would reach the app there.
+So launch it with `--keep-running-in-background`, which keeps it awake and following the position in the background, in place of the wake for the area of a station.
 
 1. Tap **Use the real GPS**, and in the **Settings** app of the Simulator, set the location of TROME to **Always**.
 2. Move the Simulator far from any station:
@@ -109,8 +110,14 @@ In the Simulator, iOS keeps the app running for only about 10 to 25 seconds afte
    xcrun simctl location "$(make -s simulator)" set 48.42,2.63
    ```
 
-3. Go to the home screen.
-4. At once, move it to Abbesses:
+3. Launch the app again, with the argument:
+
+   ```sh
+   xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --keep-running-in-background
+   ```
+
+4. Go to the home screen.
+5. Move the Simulator to Abbesses:
 
    ```sh
    xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838
@@ -118,7 +125,7 @@ In the Simulator, iOS keeps the app running for only about 10 to 25 seconds afte
 
    No notification shows.
    **Wake log** has the line "No start at Abbesses, no notification: the silent start is off in this build".
-5. Open the app: the Live Activity of Abbesses starts.
+6. Open the app: the Live Activity of Abbesses starts.
 
 On your iPhone, iOS also wakes a suspended or closed app near a station, after a few seconds to a few minutes: test that case there, with **Debug > Simulate Location** in Xcode.
 
