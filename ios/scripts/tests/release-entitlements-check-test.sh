@@ -70,7 +70,7 @@ run() {
         "$script" TROME.xcodeproj ${ARCHIVE:+"$ARCHIVE"} > "$state/out" 2>&1 && echo passes || echo fails
 }
 
-archive group.io.github.valfur03.trome ActivityKitPushToStartTokenSource
+archive group.io.github.valfur03.trome PushRegistrationAppDelegate
 ARCHIVE=
 expect "the project as it is passes" "$(run)" passes
 expect "an app with no entitlements in Release fails" "$(run FAKE_APP_ENTITLEMENTS=)" fails
@@ -83,17 +83,17 @@ expect "the failure names the widget" "$(grep -c 'TROMEWidget do not name the ap
 
 ARCHIVE="$state/TROME.xcarchive"
 expect "the archive as make release-archive-check makes it passes" "$(run)" passes
-archive group.io.example.other ActivityKitPushToStartTokenSource
+archive group.io.example.other PushRegistrationAppDelegate
 expect "an archive whose widget reads another app group fails" "$(run)" fails
 archive group.io.github.valfur03.trome NotificationOnly
 expect "an archive with no silent start compiled fails" "$(run)" fails
 expect "the failure names the silent start" "$(grep -c 'has no silent start' "$state/out")" 1
-archive group.io.github.valfur03.trome "ActivityKitPushToStartTokenSource WakeLogScreen"
+archive group.io.github.valfur03.trome "PushRegistrationAppDelegate WakeLogScreen"
 expect "a store archive with the Wake log fails" "$(run)" fails
 expect "the failure names the Wake log" "$(grep -c 'has the Wake log' "$state/out")" 1
 expect "a walk archive with the Wake log passes" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" passes
 expect "the pass says it is not for the store" "$(grep -c 'never for the store' "$state/out")" 1
-archive group.io.github.valfur03.trome ActivityKitPushToStartTokenSource
+archive group.io.github.valfur03.trome PushRegistrationAppDelegate
 expect "a walk archive with no Wake log fails" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" fails
 expect "the store archive says it has no Wake log" "$(run >/dev/null; grep -c 'with no Wake log' "$state/out")" 1
 rm -rf "$state/TROME.xcarchive"

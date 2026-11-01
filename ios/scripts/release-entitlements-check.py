@@ -31,7 +31,7 @@ PUSH = "aps-environment"
 GROUPS = "com.apple.security.application-groups"
 GROUP_KEY = "TROMEAppGroup"
 # A type that exists only in a build with the silent start (ios/App/AutoLiveActivity/, inside #if SILENT_START).
-SILENT_START_TYPE = b"ActivityKitPushToStartTokenSource"
+SILENT_START_TYPE = b"PushRegistrationAppDelegate"
 # A type that exists only in a build with the Wake log (ios/App/TestingTools/, inside #if WAKE_LOG).
 WAKE_LOG_TYPE = b"WakeLogScreen"
 WAKE_LOG_CONDITION = "WAKE_LOG"
