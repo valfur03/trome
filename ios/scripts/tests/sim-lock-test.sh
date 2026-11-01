@@ -66,7 +66,10 @@ logged() {
     grep -qF "$1" "$state/background.log" 2> /dev/null
 }
 
+# The log is emptied before the job starts: the job opens it only after the fork, and a check that reads it first
+# would find the wait line of the job before.
 in_background() {
+    : > "$state/background.log"
     RATP_SIM_POLL_SECONDS=1 "$@" > "$state/background.log" 2>&1 &
     background=$!
     wait_for logged "Waiting for the Simulator lock"
