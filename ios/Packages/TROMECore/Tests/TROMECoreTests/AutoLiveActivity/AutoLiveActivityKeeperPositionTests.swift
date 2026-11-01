@@ -35,7 +35,7 @@ extension AutoLiveActivityModelTests {
         await waitUntil { client.updates.last?.stationName == "Station B" }
 
         #expect(client.started.count == 1)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(decisionLines.contains("Live Activity switched to Station B (position: keeper; stream 181 s old)"))
     }
 
