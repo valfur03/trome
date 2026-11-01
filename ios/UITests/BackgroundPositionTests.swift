@@ -7,8 +7,8 @@
 // iOS never suspends an app that an XCUITest launched, so the state of the app cannot show the drain.
 // The location is "Always", as for a rider whose closed app wakes at stations: with "While Using the App",
 // iOS sends no position to an app in the background that keeps no background session.
-// Why not cheaper: the unit tests see that the app ends its position stream (`AutoLiveActivityBackgroundPositionTests`),
-// but only iOS says whether it still sends positions to the app.
+// Why not cheaper: the unit tests see that the app ends its position stream
+// (`AutoLiveActivityBackgroundPositionTests`), but only iOS says whether it still sends positions to the app.
 import CoreLocation
 import XCTest
 

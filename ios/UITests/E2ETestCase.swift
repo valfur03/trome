@@ -6,11 +6,10 @@ class E2ETestCase: XCTestCase {
     private static let notificationCenterIdentifier = "lockscreen-date-view"
     private static let liveActivityIdentifier = "activity-content-view"
     private static let locationPromptAnswer = "Allow While Using App"
-    private static let alwaysPromptAnswer = "Keep Only While Using"
-    private static let alwaysAllowedAnswer = "Change to Always Allow"
+    static let alwaysPromptAnswer = "Keep Only While Using"
     private static let permissionAnswers = [locationPromptAnswer, alwaysPromptAnswer, "Allow"]
-    private static let allowedLocationLabels = ["Location, Always", "Location, While Using the App"]
-    @MainActor private static var permissionsAreSettled = false
+    static let allowedLocationLabels = ["Location, Always", "Location, While Using the App"]
+    @MainActor static var permissionsAreSettled = false
 
     override class func setUp() {
         super.setUp()
@@ -66,22 +65,6 @@ class E2ETestCase: XCTestCase {
         }
     }
 
-    /// Launches the app with the location "Always", the access of a rider whose closed app wakes at stations.
-    /// End the test with `resetLocationAuthorization(of:)`, so that the next test gets "While Using the App" again.
-    @MainActor
-    func launchWithLocationAlways(_ app: XCUIApplication) {
-        resetLocationAuthorization(of: app)
-        app.launch()
-        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
-        settlePermissions(
-            in: app,
-            resettingRefusedLocation: false,
-            expectingLocationPrompt: true,
-            alwaysAnswer: Self.alwaysAllowedAnswer
-        )
-        Self.permissionsAreSettled = false
-    }
-
     @MainActor
     func answerPermissionPrompts(in app: XCUIApplication) {
         XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
@@ -89,14 +72,14 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
-    private func settlePermissions(
+    func settlePermissions(
         in app: XCUIApplication,
         resettingRefusedLocation: Bool,
         expectingLocationPrompt: Bool = false,
-        alwaysAnswer: String = E2ETestCase.alwaysPromptAnswer
+        alwaysAnswer: String = E2ETestCase.alwaysPromptAnswer,
+        locationLabels: [String] = E2ETestCase.allowedLocationLabels
     ) {
         let answersToGive = [Self.locationPromptAnswer, alwaysAnswer, "Allow"]
-        let locationLabels = alwaysAnswer == Self.alwaysAllowedAnswer ? ["Location, Always"] : Self.allowedLocationLabels
         let location = locationStatus(in: app)
         let notifications = notificationsStatus(in: app)
         let screen = app.scrollViews.firstMatch
