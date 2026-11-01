@@ -34,6 +34,9 @@ GROUP_KEY = "TROMEAppGroup"
 SILENT_START_TYPE = b"PushRegistrationAppDelegate"
 # A type that exists only in a build with the Wake log (ios/App/TestingTools/, inside #if WAKE_LOG).
 WAKE_LOG_TYPE = b"WakeLogScreen"
+# The types that the archive check looks for: release-archive-gate.py builds the archive in make check when a change
+# touches a Swift file that names one of them.
+ARCHIVE_TYPES = (SILENT_START_TYPE, WAKE_LOG_TYPE)
 WAKE_LOG_CONDITION = "WAKE_LOG"
 WAKE_LOG_SETTING = "TROME_WAKE_LOG_BUILD_<n>"
 
