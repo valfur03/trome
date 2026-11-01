@@ -33,6 +33,7 @@ So it never gets real trains: PRIM refuses its fake key, and you check the answe
 - `server/test/core/<feature>/` tests the logic on Node, `server/test/cloudflare/` tests the Worker in the Cloudflare runtime, and `server/scripts/tests/` tests the scripts.
   To run one folder while you work: `cd server && npx vitest run test/core/relay`.
 - `contracts/prim/` holds recorded PRIM answers, which the tests of the app read too, `contracts/api/` holds an example of each answer of the departures route and of the start of a Live Activity, which a test checks, and `contracts/live-activity/` the content of the Live Activity that the app builds from recorded answers, which the server must build too.
+  Each answer of `contracts/prim/` says in its `Source` field where it comes from: only the Liège ones are real, built from the log of a live run of the app, and the others are hand-made, so a rule that only they prove may fail on real trains.
 - `contracts/builds/` holds what each build that riders may hold sends and reads: the server keeps every answer of it, and nobody edits it ([The promise to the builds in the field](guide/how-it-works.md#the-promise-to-the-builds-in-the-field)).
 - `server/src/core/config/relay-settings.ts` holds the settings of the quota.
 

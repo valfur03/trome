@@ -1,4 +1,5 @@
 {
+    "Source": "Hand-made, not a real PRIM answer: RER D at Gare de Lyon at 08:15 (Paris time), short trips, which end before the end of their branch, among the trains to the ends. Its journey refs, its destination refs, the ZEUS note on every train and its round times are guessed: PRIM may send another shape.",
     "Siri": {
         "ServiceDelivery": {
             "ResponseTimestamp": "2026-10-02T06:15:00.000Z",

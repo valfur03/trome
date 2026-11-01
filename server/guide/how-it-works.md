@@ -99,7 +99,7 @@ When it is not 0:
 
    Each line is a field and its type.
    Some fields come and go with the trains, such as `ArrivalStatus` or `JourneyNote`: look for a field that the builds read that has gone, has a new name or has a new type: `LineRef`, `DestinationName`, `DestinationDisplay`, and the times of `MonitoredCall`.
-4. Record the new answer in `contracts/prim/`, with a name that says its new format, and fix the parser of the app for it in a new build: the app tests read the answers there.
+4. Record the new answer in `contracts/prim/`, with a name that says its new format and a `Source` field that says where it comes from, and fix the parser of the app for it in a new build: the app tests read the answers there.
    `make server-check` then fails on the new answer.
    A failing test that expects every recorded answer to have the shape that the builds read: make it expect this answer to count, as the builds in the field cannot read it.
    A failing test that expects the server to relay every recorded answer as times: the server answers `503` `out` for the new format, to the new build too, so change the server to relay it.
