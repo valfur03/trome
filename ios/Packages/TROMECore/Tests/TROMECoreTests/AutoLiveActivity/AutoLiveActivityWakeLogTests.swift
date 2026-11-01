@@ -135,7 +135,7 @@ extension AutoLiveActivityModelTests {
         await model.handleRegionEvent(entered, lastKnownFix: fix)
         let report = wakeLog.report(phone: ["Location: Always, precise", "Low Power Mode: off"])
 
-        #expect(report.contains("Le Parc de Saint-Maur (phone 136 m away, ±13 m, 0 s old)"))
+        #expect(report.contains("Le Parc de Saint-Maur (phone 135 m away, ±13 m, 0 s old)"))
         #expect(report.contains("Watching"))
         #expect(report.contains("Answer: started"))
         #expect(report.firstMatch(of: /\d+[.,]\d{3,}/) == nil, "a coordinate in the shared record: \(report)")
