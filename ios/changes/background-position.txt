@@ -1,0 +1,3 @@
+kind: item
+fr: En arrière-plan, l’app ne suit plus votre position quand aucune activité en direct ne s’affiche.
+en: In the background, the app no longer follows your position when no Live Activity shows.

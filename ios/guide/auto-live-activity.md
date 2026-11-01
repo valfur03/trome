@@ -44,7 +44,7 @@ The values that a change often needs are constants:
 The buttons of the Live Activity run `SnoozeLiveActivityIntent`, which is in `TROMECore` because the app and the widget share it.
 It gets `AutoLiveActivityModel` from `AppDependencyManager`, which `TROMEApp` fills at launch.
 
-The end-to-end classes that cover this page are `AutoLiveActivityTests`, `ArrivalNotificationTests`, `SwipeAwayTests` and `SnoozeTests` ([what each checks](tests.md#end-to-end-tests)).
+The end-to-end classes that cover this page are `AutoLiveActivityTests`, `ArrivalNotificationTests`, `SwipeAwayTests`, `SnoozeTests` and `BackgroundPositionTests` ([what each checks](tests.md#end-to-end-tests)).
 
 ## Start, switch and stop
 
@@ -186,16 +186,23 @@ The server line states a fact and never a fault of the rider, and it never says 
 While a Live Activity shows, the app must go on getting the position, to switch or stop it, and the trains, to refresh it.
 
 - **The position.**
-  `CoreLocationBackgroundLocationKeeper` runs standard location updates that never pause.
+  The app follows the position (`LocationService`, `PositionNeed`) for three reasons only, and stops as soon as none holds:
+  - the app is on screen, to show the nearest station: this ends when the app goes to the background;
+  - a Live Activity shows, to switch or end it: this ends with the Live Activity (the rider leaves, the 45 minutes, a swipe, a snooze);
+  - iOS reported a station area that no trusted position confirms yet: this ends with its decision, after at most 2 minutes (see [Start, switch and stop](#start-switch-and-stop)), or 10 seconds for the ask of [the silent start](#the-silent-start).
+
+  Low Power Mode changes none of them.
+  Otherwise the app follows no position in the background: iOS would run it for each new position, and drain the battery of a rider who only opened it once.
+  For the last two reasons, `CoreLocationBackgroundLocationKeeper` also runs standard location updates that never pause.
   Without it, iOS pauses the new positions when the phone stands still, and suspends the app about 15 seconds after it leaves the screen.
   With the location "Always", the app hides the blue location indicator; with **While Using the App**, it needs a `CLBackgroundActivitySession`, and iOS then always shows the indicator while the Live Activity shows.
   This costs battery for at most 45 minutes.
-  The same runs for at most 2 minutes after iOS reports a station area that no trusted position confirms yet (see [Start, switch and stop](#start-switch-and-stop)).
 - **The trains.** [When the app asks again](trains.md#when-the-app-asks-again) says when it asks PRIM in the background.
 - **A closed app.**
   iOS wakes it with region monitoring (`CLMonitor`), at most 20 regions for each app.
   The app watches the 18 nearest stations (150 meters), the stop area of the shown or last station (250 meters), and one larger area around the rider.
-  When the rider leaves that area, or the app moves 100 meters from where it last chose, it picks the nearest stations again.
+  When the rider leaves that area, it picks the nearest stations again, from the position of iOS, or from a new one that it asks for when that one is older than 2 minutes.
+  While it follows the position, it also picks them again each 100 meters.
   With a fake position, the app watches no region.
   The Simulator cannot watch regions, so check this wake on an iPhone.
 

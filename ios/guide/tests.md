@@ -78,6 +78,7 @@ A failed `make docs-screenshots` keeps its evidence in the same folder.
 | `ArrivalNotificationTests` | The arrival notification, its tap and its **Not for 1 h** action, the app opened at the station, and the notification of the next station, which replaces the one not opened. |
 | `SwipeAwayTests` | A swipe of the Live Activity pauses its station only, and cancelling the pause brings it back. |
 | `SnoozeTests` | The widget draws the trains on the real Live Activity, and its buttons run in the app. |
+| `BackgroundPositionTests` | With no Live Activity, iOS suspends the app in the background, and a phone that rides at the speed of a train does not wake it. |
 
 The wake of a closed app at a station has no test, because the Simulator cannot watch regions: check it on an iPhone.
 
@@ -104,7 +105,7 @@ Each class inherits from `E2ETestCase` ([`ios/UITests/E2ETestCase.swift`](../UIT
 | `tapOnTheLiveActivity(_:)` | Waits until the tap point of a button of the Live Activity stays on the card on screen, then taps that point. The frame of a widget element is in the card's own space, so the frame alone does not show the card move. |
 
 In debug builds, `--fake-trains` gives fake trains with no call to PRIM, and `--fake-trains at-platform` a train at the platform at once ([the other states](testing-tools.md#ask-for-a-train-at-the-platform-or-another-state)).
-`--keep-running-in-background` keeps the app awake in the background, so that a new position reaches it.
+`--keep-running-in-background` keeps the app awake and following the position in the background, in place of the wake for the area of a station, so that a new position reaches it.
 `makeApp()` adds `--end-live-activity` (debug builds only): at launch, the app ends the Live Activity that the last test left, so each test starts with none, and no test taps a button of the app to end it.
 Before it kills the app of the last test, `makeApp()` sends it to the background and waits until it ends its position stream and its background sessions (debug builds only, `E2ETestCase+LocationEnd.swift`).
 Why: iOS keeps the stream of an app killed while it streams, and starts the app again to serve it, so a launch at that moment fails with "No such process".
