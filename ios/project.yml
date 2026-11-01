@@ -99,7 +99,7 @@ targets:
           - UIInterfaceOrientationPortrait
         NSSupportsLiveActivities: true
         NSLocationWhenInUseUsageDescription: $(APP_NAME) uses your location to find the nearest metro or RER station.
-        NSLocationAlwaysAndWhenInUseUsageDescription: $(APP_NAME) uses your location to tell you when you reach a metro or RER station, also when the app is closed.
+        NSLocationAlwaysAndWhenInUseUsageDescription: $(APP_NAME) uses your location to show your next trains on the lock screen when you reach a station, also when the app is closed.
         UIBackgroundModes:
           - location
         PRIMAPIKey: $(RATP_APP_PRIM_API_KEY)

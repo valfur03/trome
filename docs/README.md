@@ -376,7 +376,7 @@ A reason belongs on a page when the reader needs it to act, or to trust the page
 Leave out the history of how the project is made: no dates of decisions, no measurements, no task numbers, and no "I decided".
 
 - Not: "After the tests of September, I chose to ask for Always."
-- But: "Tap **Change to Always Allow**: then the app can tell you when you arrive at a station, even when it is closed."
+- But: "Tap **Change to Always Allow**: then the app can show your trains on the lock screen when you arrive at a station, even when it is closed."
 
 ### Say once what you could not check
 

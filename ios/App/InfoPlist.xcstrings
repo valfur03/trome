@@ -34,13 +34,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "TROME uses your location to tell you when you reach a metro or RER station, also when the app is closed."
+            "value" : "TROME uses your location to show your next trains on the lock screen when you reach a station, also when the app is closed."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "TROME utilise votre position pour vous prévenir quand vous arrivez à une station de métro ou de RER, même quand l’app est fermée."
+            "value" : "TROME utilise votre position pour afficher vos prochains trains sur l’écran verrouillé quand vous arrivez à une station, même app fermée."
           }
         }
       }
