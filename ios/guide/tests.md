@@ -74,7 +74,7 @@ A failed `make docs-screenshots` keeps its evidence in the same folder.
 | Class | What it checks on the real iOS |
 |---|---|
 | `LiveActivityTests` | The real location popups, then a Live Activity that starts with the app open at a station and that "Snooze" ends. |
-| `AutoLiveActivityTests` | A position from iOS starts, switches and ends the Live Activity, also with the app in the background. |
+| `AutoLiveActivityTests` | A position from iOS starts the Live Activity, then switches and ends it in the pocket: the location "Always", the app in the background long after iOS stops the position stream, and no launch argument of the tests. |
 | `ArrivalNotificationTests` | The arrival notification, its tap and its **Not for 1 h** action, the app opened at the station, and the notification of the next station, which replaces the one not opened. |
 | `SwipeAwayTests` | A swipe of the Live Activity pauses its station only, and cancelling the pause brings it back. |
 | `SnoozeTests` | The widget draws the trains on the real Live Activity, and its buttons run in the app. |
@@ -106,6 +106,7 @@ Each class inherits from `E2ETestCase` ([`ios/UITests/E2ETestCase.swift`](../UIT
 
 In debug builds, `--fake-trains` gives fake trains with no call to PRIM, and `--fake-trains at-platform` a train at the platform at once ([the other states](testing-tools.md#ask-for-a-train-at-the-platform-or-another-state)).
 `--keep-running-in-background` keeps the app awake and following the position in the background, in place of the wake for the area of a station, so that a new position reaches it.
+A test of the Live Activity in the pocket never uses it: a rider's phone has no such argument, and it hides the stop of the position stream by iOS.
 `makeApp()` adds `--end-live-activity` (debug builds only): at launch, the app ends the Live Activity that the last test left, so each test starts with none, and no test taps a button of the app to end it.
 Before it kills the app of the last test, `makeApp()` sends it to the background and waits until it ends its position stream and its background sessions (debug builds only, `E2ETestCase+LocationEnd.swift`).
 Why: iOS keeps the stream of an app killed while it streams, and starts the app again to serve it, so a launch at that moment fails with "No such process".

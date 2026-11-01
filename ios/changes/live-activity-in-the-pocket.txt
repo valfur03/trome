@@ -1,0 +1,3 @@
+kind: item
+fr: Téléphone en poche, l’activité en direct passe bien à la station suivante et s’arrête quand vous partez.
+en: With the phone in your pocket, the Live Activity now moves to the next station and ends when you leave.

@@ -3,6 +3,8 @@
 // rider sees in the Notification Center. The switch and the end happen as in a pocket: the location
 // "Always", the app sent to the background, and there long enough for iOS to stop the position stream
 // of an app that is no longer in use (about 10 s, in the log of locationd), so the keeper's positions decide.
+// The app runs in its second process since the grant of "Always", as a rider's app does after iOS ended it:
+// in the first one, iOS still sent the stream in the background, and the bug did not show.
 // No launch argument of the tests keeps the app awake or following the position.
 // Why not cheaper: unit tests check the rules with a fake position provider and a fake ActivityKit
 // client; only the Simulator shows that iOS still sends positions and that the real Live Activity follows them.
@@ -20,6 +22,8 @@ final class AutoLiveActivityTests: E2ETestCase {
         let app = makeApp()
         addTeardownBlock { @MainActor in self.resetLocationAuthorization(of: app) }
         launchWithLocationAlways(app)
+        terminateWithItsRelaunches(app)
+        launch(app)
         waitUntilTheLaunchEndedTheLiveActivity(in: app)
 
         moveThePhone(to: Self.pigalle)

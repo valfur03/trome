@@ -200,6 +200,9 @@ While a Live Activity shows, the app must go on getting the position, to switch 
   For the last two reasons, `CoreLocationBackgroundLocationKeeper` also runs standard location updates that never pause.
   Without it, iOS pauses the new positions when the phone stands still, and suspends the app about 15 seconds after it leaves the screen.
   With the location "Always", the app hides the blue location indicator; with **While Using the App**, it needs a `CLBackgroundActivitySession`, and iOS then always shows the indicator while the Live Activity shows.
+  The switch and the end also take the positions of these updates.
+  Why: about 10 seconds after the app leaves the screen, iOS stops the position stream (`CLLocationUpdate.liveUpdates`) of an app that no `CLBackgroundActivitySession` keeps in use, so with "Always" only these updates go on.
+  They ask for an accuracy of 10 meters, as the switch and the end decide within 150 and 250 meters of a station.
   This costs battery for at most 45 minutes.
 - **The trains.** [When the app asks again](trains.md#when-the-app-asks-again) says when it asks PRIM in the background.
 - **A closed app.**

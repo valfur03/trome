@@ -38,7 +38,7 @@ class E2ETestCase: XCTestCase {
     }
 
     @MainActor
-    private func terminateWithItsRelaunches(_ app: XCUIApplication) {
+    func terminateWithItsRelaunches(_ app: XCUIApplication) {
         endTheLocationWork(of: app)
         for _ in 0..<3 where app.state != .notRunning {
             app.terminate()
