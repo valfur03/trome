@@ -113,16 +113,16 @@ extension AutoLiveActivityModelTests {
         Station(id: "s\($0)", name: "Station \($0)", coordinate: kilometre(Double($0)), lines: [])
     })
 
-    private static func kilometre(_ km: Double) -> Coordinate {
-        Coordinate(48.80 + km * 0.009, 2.3500)
+    private static func kilometre(_ kilometres: Double) -> Coordinate {
+        Coordinate(48.80 + kilometres * 0.009, 2.3500)
     }
 
     private var watchedStationIds: Set<String> {
         Set((watcher.watched.last ?? []).compactMap { WatchedRegion.arrivalStationId(inRegionId: $0.id) })
     }
 
-    private func fix(at km: Double) -> PositionFix {
-        PositionFix(coordinate: Self.kilometre(km), accuracyMeters: 10, timestamp: clock.now)
+    private func fix(at kilometres: Double) -> PositionFix {
+        PositionFix(coordinate: Self.kilometre(kilometres), accuracyMeters: 10, timestamp: clock.now)
     }
 
     /// The app is never on screen and follows no position: only the wakes of iOS move the plan of the areas, the
