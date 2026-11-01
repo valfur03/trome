@@ -121,16 +121,32 @@ start_merge() {
     eval "merge_$1=\$!"
 }
 
+# What the merges write as they go: their logs, the steps of the fake checks, the records of the Simulator jobs, the queue.
+progress() {
+    ls -lnT "$state" "$state/logs" "$RATP_SIM_LOCK.merge-queue" 2> /dev/null | cksum
+}
+
+# Waits for the end of the merge, however long it takes: a busy Mac makes each step slower, so a bound on the whole merge
+# fails a merge that works (a failed train runs its checks three times). Only a merge that writes nothing for
+# $stall_seconds is stuck: it reads "stuck", and the cleanup stops it.
+stall_seconds=120
 finish_merge() {
-    tries=0
-    while [ ! -e "$state/$1.status" ] && [ "$tries" -lt 30 ]; do
-        sleep 1
-        tries=$((tries + 1))
-    done
     eval "pid=\$merge_$1"
+    last=$(progress)
+    still=0
+    while [ ! -e "$state/$1.status" ] && kill -0 "$pid" 2> /dev/null && [ "$still" -lt "$stall_seconds" ]; do
+        sleep 1
+        now=$(progress)
+        if [ "$now" = "$last" ]; then
+            still=$((still + 1))
+        else
+            still=0
+            last=$now
+        fi
+    done
     kill "$pid" 2> /dev/null || true
     wait "$pid" 2> /dev/null || true
-    cat "$state/$1.status" 2> /dev/null || echo "still running"
+    cat "$state/$1.status" 2> /dev/null || echo "stuck"
 }
 
 merge() {
