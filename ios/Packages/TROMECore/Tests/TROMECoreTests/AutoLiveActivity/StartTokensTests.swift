@@ -5,7 +5,9 @@ import Testing
 /// The start token kept on the phone: a process that iOS wakes at a station may get no token in its seconds, so the
 /// ask uses the last one that iOS gave. The Simulator gives no real token: these tests feed the tokens by hand, as the
 /// app does with each one that ActivityKit gives, and claim nothing about a real push.
+/// A wait that the code never ends fails its test at the time limit, rather than hanging the run.
 @MainActor
+@Suite(.timeLimit(.minutes(1)))
 struct StartTokensTests {
     static let old = "aaaa0000aaaa0000aaaa0000aaaa0000"
     static let fresh = "bbbb1111bbbb1111bbbb1111bbbb1111"
