@@ -57,7 +57,8 @@ struct LocationServiceBackgroundFixTests {
         service.use(.fake(chatelet))
         await waitUntil { service.position == chatelet.coordinate }
 
-        service.takeBackgroundFix(PositionFix(coordinate: second, accuracyMeters: 10, timestamp: Date(timeIntervalSinceNow: 60)))
+        let later = Date(timeIntervalSinceNow: 60)
+        service.takeBackgroundFix(PositionFix(coordinate: second, accuracyMeters: 10, timestamp: later))
 
         #expect(service.position == chatelet.coordinate)
     }

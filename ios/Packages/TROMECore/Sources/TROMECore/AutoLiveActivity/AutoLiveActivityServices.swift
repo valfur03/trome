@@ -21,8 +21,9 @@ public protocol RegionMonitor: AnyObject {
 }
 
 /// Keeps the app running in the background while a Live Activity shows, and gives its positions.
-/// iOS stops the position stream of `LocationService` about 10 seconds after the app leaves the screen, unless the app
-/// still counts as in use; the updates of the keeper go on with the location Always, so the switch and the end use them.
+/// iOS stops the position stream of `LocationService` about 10 seconds after the app leaves the screen,
+/// unless the app still counts as in use; the updates of the keeper go on with the location Always,
+/// so the switch and the end use them.
 @MainActor
 public protocol BackgroundLocationKeeper: AnyObject {
     var onPosition: (@MainActor (PositionFix) -> Void)? { get set }
