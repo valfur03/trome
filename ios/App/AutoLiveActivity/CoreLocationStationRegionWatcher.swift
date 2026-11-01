@@ -30,6 +30,9 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         guard let monitor = await startedMonitor() else { return }
         let sync = self.sync ?? makeSync(of: monitor)
         await sync.watch(regions)
+        #if DEBUG
+        UITestRegionWake.listen(forRegions: regions.map(\.id), of: self)
+        #endif
     }
 
     private func makeSync(of monitor: CLMonitor) -> StationRegionSync {
@@ -103,6 +106,20 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         await onWake?(event, lastKnownFix)
         wakeTime.end()
     }
+
+    #if DEBUG
+    /// The wake of `listen(to:)` for an E2E test, which the Simulator cannot give: the same handler, with the last
+    /// position of iOS, for an area that iOS keeps for the app. False when iOS keeps no such area.
+    func enterForUITests(_ regionId: String) async -> Bool {
+        guard let monitor = await monitorTask?.value, await monitor.identifiers.contains(regionId) else {
+            Self.logger.notice("UI tests: \(regionId, privacy: .public) is not watched, no wake")
+            return false
+        }
+        Self.logger.notice("UI tests: the phone entered \(regionId, privacy: .public)")
+        await handle(.entered(regionId: regionId), lastKnownFix: manager.location.flatMap(PositionFix.init))
+        return true
+    }
+    #endif
 }
 
 /// Asks iOS for time to finish a region wake: on a report of arrival, the app may wait several seconds

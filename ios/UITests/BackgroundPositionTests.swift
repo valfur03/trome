@@ -21,7 +21,6 @@ final class BackgroundPositionTests: E2ETestCase {
     private static let metersEachSecond = 10.0
     private static let rideSeconds = 60
     private static let metersBeforeTheStation = 350.0
-    private static let mostSwipesThroughTheWakeLog = 40
 
     @MainActor
     func testARideThroughAStationGivesTheAppInTheBackgroundNoPositionWithNoLiveActivity() {
@@ -30,7 +29,7 @@ final class BackgroundPositionTests: E2ETestCase {
         launchWithLocationAlways(app)
         waitUntilTheLaunchEndedTheLiveActivity(in: app)
         moveThePhone(to: Self.pointOfTheRide(after: 0))
-        openAnEmptyWakeLog(in: app)
+        openAnEmptyWakeLog(in: app, expectingNo: noStartLine(at: "Bel-Air", in: app))
 
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
@@ -51,57 +50,8 @@ final class BackgroundPositionTests: E2ETestCase {
         )
     }
 
-    /// The wake log keeps the lines of earlier runs, so the test clears it before the ride. New lines may come at
-    /// once (the plan of the station areas), so the test waits only for the line that it reads to go.
-    @MainActor
-    private func openAnEmptyWakeLog(in app: XCUIApplication) {
-        tap(app.buttons["testingTools"])
-        XCTAssertTrue(waitFor(app.navigationBars["Testing tools"]))
-        let wakeLog = app.buttons["wakeLog"]
-        for _ in 0..<5 where !(wakeLog.exists && wakeLog.isHittable) {
-            app.swipeUp()
-        }
-        tap(wakeLog)
-        let clear = app.buttons["Clear"]
-        XCTAssertTrue(waitFor(clear))
-        if clear.isEnabled {
-            clear.tap()
-        }
-        XCTAssertTrue(waitForNo(noStartLine(at: "Bel-Air", in: app)))
-    }
-
-    /// The list draws only the rows on screen, so the test scrolls down the log to its oldest line: the bottom is
-    /// where a swipe no longer changes the last row.
-    @MainActor
-    private func wakeLogShows(_ line: XCUIElement, in app: XCUIApplication) -> Bool {
-        let list = app.collectionViews.firstMatch
-        var lastRow = ""
-        for _ in 0..<Self.mostSwipesThroughTheWakeLog {
-            if line.exists {
-                return true
-            }
-            let texts = list.staticTexts
-            let count = texts.count
-            let row = count < 2 ? "" : texts.element(boundBy: count - 2).label + texts.element(boundBy: count - 1).label
-            if row == lastRow {
-                return false
-            }
-            lastRow = row
-            list.swipeUp()
-        }
-        return line.exists
-    }
-
     private static func pointOfTheRide(after second: Int) -> CLLocation {
         let meters = Double(second) * metersEachSecond - metersBeforeTheStation
         return CLLocation(latitude: belAir.latitude + meters / 111_000, longitude: belAir.longitude)
-    }
-
-    /// The line that a background arrival with no start writes, in place of the notification of earlier builds.
-    @MainActor
-    private func noStartLine(at station: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "No start at \(station),"))
-            .firstMatch
     }
 }
