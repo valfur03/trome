@@ -36,11 +36,11 @@ struct StartTokensTests {
     /// The silent start of one wake, whose time limit never ends unless `limitEnds`, so that the ask decides.
     func silentStart(_ starter: StubLiveActivityStarter, _ tokens: StartTokens, limitEnds: Bool = false)
         -> SilentStart {
-        SilentStart(starter: starter, tokens: tokens, wakeLog: wakeLog) { _ in
+        SilentStart(starter: starter, tokens: tokens, wakeLog: wakeLog, sleep: { _ in
             if !limitEnds {
                 try await Task.sleep(for: .seconds(3_600))
             }
-        }
+        })
     }
 
     // MARK: Criterion 2 and 5: the kept token
