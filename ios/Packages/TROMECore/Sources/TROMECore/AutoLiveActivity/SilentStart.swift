@@ -10,7 +10,7 @@ public protocol PushToStartTokenSource: AnyObject {
     func forget(_ token: String)
 }
 
-/// A push-to-start token, and whether it is the one kept from an earlier process rather than one that iOS gave this one.
+/// A push-to-start token, and whether it is the one kept from an earlier process, not one that iOS gave this one.
 public struct StartToken: Equatable, Sendable {
     public let value: String
     public let isKept: Bool

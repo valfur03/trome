@@ -34,7 +34,8 @@ struct StartTokensTests {
     }
 
     /// The silent start of one wake, whose time limit never ends unless `limitEnds`, so that the ask decides.
-    func silentStart(_ starter: StubLiveActivityStarter, _ tokens: StartTokens, limitEnds: Bool = false) -> SilentStart {
+    func silentStart(_ starter: StubLiveActivityStarter, _ tokens: StartTokens, limitEnds: Bool = false)
+        -> SilentStart {
         SilentStart(starter: starter, tokens: tokens, wakeLog: wakeLog) { _ in
             if !limitEnds {
                 try await Task.sleep(for: .seconds(3_600))
@@ -124,7 +125,8 @@ struct StartTokensTests {
         #expect(lines.contains("Start token refused as invalid: forgotten"))
         let nextWake = Task { await tokens.startToken() }
         tokens.receive(Self.fresh)
-        #expect(await nextWake.value == StartToken(value: Self.fresh, isKept: false), "asked again with the refused one")
+        let next = await nextWake.value
+        #expect(next == StartToken(value: Self.fresh, isKept: false), "asked again with the refused one")
     }
 
     /// Only Apple's reasons that name the token forget it: a fault of the network, of the server or of its setup
