@@ -197,35 +197,6 @@ public final class AutoLiveActivityModel {
         }
     }
 
-    func evaluate(
-        position: Coordinate?,
-        asAResume: Bool = false,
-        logsEveryOutcome: Bool = false,
-        from origin: PositionOrigin? = nil
-    ) async {
-        syncWithSystem()
-        endPauseIfOver()
-        let decide = asAResume
-            ? configuration.rules.resume(state:position:now:onArrival:catalog:)
-            : configuration.rules.decide(state:position:now:onArrival:catalog:)
-        let decision = decide(state, position, configuration.now(), arrivalResponse, catalog)
-        await apply(decision, logsEveryOutcome: logsEveryOutcome, from: origin)
-    }
-
-    func apply(
-        _ decision: AutoLiveActivityRules.Decision,
-        logsEveryOutcome: Bool,
-        from origin: PositionOrigin? = nil
-    ) async {
-        log(decision.ending, from: origin)
-        log(decision.arrival, everyOutcome: logsEveryOutcome, from: origin)
-        state = decision.state
-        for action in decision.actions {
-            await perform(action)
-        }
-        endSecondChances(on: decision.arrival)
-    }
-
     func perform(_ action: AutoLiveActivityRules.Action) async {
         switch action {
         case .notify(let station):
@@ -276,16 +247,6 @@ public final class AutoLiveActivityModel {
         forgetShownLiveActivity()
         stopFollowingPositionInBackground()
         restartFeed(fetchNow: false)
-    }
-
-    func handle(
-        _ position: Coordinate,
-        asAResume: Bool = false,
-        logsEveryOutcome: Bool = false,
-        from origin: PositionOrigin? = nil
-    ) async {
-        await evaluate(position: position, asAResume: asAResume, logsEveryOutcome: logsEveryOutcome, from: origin)
-        await refreshRegions(around: position)
     }
 
 }
@@ -377,6 +338,45 @@ private extension AutoLiveActivityModel {
 }
 
 extension AutoLiveActivityModel {
+    func evaluate(
+        position: Coordinate?,
+        asAResume: Bool = false,
+        logsEveryOutcome: Bool = false,
+        from origin: PositionOrigin? = nil
+    ) async {
+        syncWithSystem()
+        endPauseIfOver()
+        let decide = asAResume
+            ? configuration.rules.resume(state:position:now:onArrival:catalog:)
+            : configuration.rules.decide(state:position:now:onArrival:catalog:)
+        let decision = decide(state, position, configuration.now(), arrivalResponse, catalog)
+        await apply(decision, logsEveryOutcome: logsEveryOutcome, from: origin)
+    }
+
+    func apply(
+        _ decision: AutoLiveActivityRules.Decision,
+        logsEveryOutcome: Bool,
+        from origin: PositionOrigin? = nil
+    ) async {
+        log(decision.ending, from: origin)
+        log(decision.arrival, everyOutcome: logsEveryOutcome, from: origin)
+        state = decision.state
+        for action in decision.actions {
+            await perform(action)
+        }
+        endSecondChances(on: decision.arrival)
+    }
+
+    func handle(
+        _ position: Coordinate,
+        asAResume: Bool = false,
+        logsEveryOutcome: Bool = false,
+        from origin: PositionOrigin? = nil
+    ) async {
+        await evaluate(position: position, asAResume: asAResume, logsEveryOutcome: logsEveryOutcome, from: origin)
+        await refreshRegions(around: position)
+    }
+
     func handle(
         _ fix: PositionFix,
         maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge,
