@@ -1,0 +1,2 @@
+kind: builder
+en: The app sends no notification at a station: a build signed with a free Apple ID starts the Live Activity when you open the app there, and the Wake log says why no start came.
