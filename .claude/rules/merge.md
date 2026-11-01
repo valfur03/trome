@@ -143,6 +143,12 @@ When a step fails for a reason on the branch (a rebase conflict, the gate, the E
 The Software Engineer fixes the cause on the branch (for a rebase conflict, it runs `git -C <worktree> rebase main` and solves the conflict) and hands the task over again.
 Then the manager runs `make merge` again.
 
+**Guide steps after a rebase.** When a rebase of the Software Engineer brings in a change of `main` on what the guide steps of the task describe (the steps that the task writes or changes in `ios/guide/` or `server/guide/`, the code that they run, or the page itself),
+the Software Engineer runs those steps again by hand before the task goes back to review, through the Simulator lock when a step uses the Simulator.
+Its notes carry the line `Guide steps run again after the rebase: yes`, with what it ran and saw, or `Guide steps run again after the rebase: none to run`, when the rebase changed nothing that a step of the task describes.
+The reviewer of a rebased task checks that line: a missing line, or a `none to run` that the rebase diff contradicts, is a finding.
+Why: on 2026-11-01, a rebase changed what the guide steps of a task described, nobody ran them again, and the guide told a thing that the app no longer did (TASK-504).
+
 When the E2E suite fails, `make merge` prints the folder where the run kept its log, its `.xcresult` and the Simulator log (in `~/Library/Logs/TROME/e2e-failures/`).
 Put that path in the comment or the bug task: the folder outlives the worktree and the next run, so the next agent can read the evidence.
 

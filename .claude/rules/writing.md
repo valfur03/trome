@@ -30,6 +30,7 @@ The rules for every file (keep the docs true, one sentence per line, public text
     They change in the same merge, or in a docs ticket that merges with it.
     The Product Owner writes that criterion, and the reviewer checks it.
   Why: only a page read against the vision shows that it will mislead; and a swap that nobody owns when the behaviour ships is forgotten.
+- **Guide steps after a rebase.** The reviewer of a rebased task that writes or changes guide steps checks the line `Guide steps run again after the rebase` of its notes (the rule and its reason: "Guide steps after a rebase" in `.claude/rules/merge.md`).
 - **The public text check.** `make public-text-check` applies the rule "Public text" of `CLAUDE.md`.
   Its word list is in `ios/scripts/public-text-check.py`.
   It also fails on the old names of the Xcode project and of its module (in the word list, in any case): only the files that remove what a build of the old name left on a Mac or on the Simulator may write the old project name, and `ALLOWED_TEXTS` lists them with the reason.
