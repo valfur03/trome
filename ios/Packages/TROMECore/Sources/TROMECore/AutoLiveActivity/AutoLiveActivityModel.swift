@@ -25,7 +25,6 @@ public final class AutoLiveActivityModel {
     private(set) var appPhase = AppPhase.background
     var appIsActive: Bool { appPhase == .active }
     private var hasAskedForNotifications = false
-    private var pendingTappedStationId: String?
     var plannedRegions: RegionPlanKey?
     var hasClearedRegions = false
     @ObservationIgnored private var timerTask: Task<Void, Never>?
@@ -105,22 +104,12 @@ public final class AutoLiveActivityModel {
             followPositionInBackground()
         }
         askForNotificationsIfAllowed()
-        await openTappedStation()
         await evaluate(position: nil)
         await restartTheExampleAtTheFront()
         plannedRegions = nil
         await refreshRegions(around: inputs.locationService.position)
         restartFeed(fetchNow: false)
         await resumeOpenArrival()
-    }
-
-    public func notificationTapped(stationId: String) async {
-        pendingTappedStationId = stationId
-        await openTappedStation()
-    }
-
-    public func notificationActionChosen(_ action: ArrivalNotificationAction) async {
-        await snooze(for: action.snoozeDuration)
     }
 
     public func startByHand(_ station: Station) async {
@@ -187,7 +176,6 @@ public final class AutoLiveActivityModel {
                 guard let self else { return }
                 self.observeAutomaticMode()
                 if !self.inputs.automaticMode.allowsAutomaticStart {
-                    self.services.notifier.withdraw()
                     self.endSecondChancesIfAutomaticStartIsOff()
                 }
                 if self.inputs.automaticMode.mode == .turnedOff {
@@ -199,8 +187,8 @@ public final class AutoLiveActivityModel {
 
     func perform(_ action: AutoLiveActivityRules.Action) async {
         switch action {
-        case .notify(let station):
-            await announceArrival(at: station)
+        case .startInTheBackground(let station):
+            await startInTheBackground(at: station)
         case .start(let station):
             await show(station)
         case .switchTo(let station):
@@ -208,8 +196,6 @@ public final class AutoLiveActivityModel {
             restartFeed(fetchNow: true)
         case .end:
             await endLiveActivity()
-        case .withdrawNotification:
-            services.notifier.withdraw()
         }
     }
 
@@ -252,28 +238,6 @@ public final class AutoLiveActivityModel {
 }
 
 private extension AutoLiveActivityModel {
-    func openTappedStation() async {
-        guard appIsActive, let stationId = pendingTappedStationId else { return }
-        pendingTappedStationId = nil
-        guard let station = catalog.station(withId: stationId) else { return }
-        endPause(at: stationId, reason: "tap on the arrival notification")
-        state.arrivalStationId = stationId
-        if liveActivity.isShowing, let shown = state.shown, shown.stationId == stationId {
-            return
-        }
-        if liveActivity.isShowing, let shown = state.shown, shown.isStartedByThePush {
-            state.shown = nil
-            await endLiveActivity()
-        }
-        if liveActivity.isShowing, let shown = state.shown {
-            state.shown = .init(stationId: stationId, startedAt: shown.startedAt, hasBeenNear: true)
-            await perform(.switchTo(station))
-        } else {
-            state.shown = .init(stationId: stationId, startedAt: configuration.now(), hasBeenNear: true)
-            await show(station)
-        }
-    }
-
     func stateDidChange(from oldValue: AutoLiveActivityState) {
         guard state != oldValue else { return }
         let station = state.shown.flatMap { catalog.station(withId: $0.stationId) }
@@ -329,9 +293,9 @@ private extension AutoLiveActivityModel {
     func askForNotificationsIfAllowed() {
         guard !hasAskedForNotifications, inputs.permission.authorization == .authorized else { return }
         hasAskedForNotifications = true
-        Task { [weak self, permission = inputs.permission, notifier = services.notifier] in
+        Task { [weak self, permission = inputs.permission, notifications = services.notifications] in
             await permission.waitForAlwaysQuestion()
-            await notifier.requestAuthorization()
+            await notifications.requestAuthorization()
             self?.hasAskedNotificationQuestion = true
         }
     }

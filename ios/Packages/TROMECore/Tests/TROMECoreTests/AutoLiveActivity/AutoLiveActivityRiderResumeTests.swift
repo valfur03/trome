@@ -32,7 +32,7 @@ extension AutoLiveActivityModelTests {
         #expect(automaticMode.mode == .turnedOn)
         #expect(model.shownStation == Places.stationA)
         #expect(client.started.count == 2)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(model.cannotFindPosition == false)
     }
 
@@ -46,7 +46,7 @@ extension AutoLiveActivityModelTests {
 
         #expect(model.shownStation == Places.stationA)
         #expect(client.started.map(\.stationName) == ["Station A"])
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(gps.currentFixRequestCount == (heldPositionAge > 15 ? 1 : 0))
     }
 
@@ -88,7 +88,7 @@ extension AutoLiveActivityModelTests {
 
         #expect(gps.currentFixRequestCount == 0)
         #expect(client.started.isEmpty)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(model.cannotFindPosition == false)
     }
 
@@ -106,7 +106,7 @@ extension AutoLiveActivityModelTests {
 
         #expect(automaticMode.mode == .turnedOn)
         #expect(client.started.count == 1)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(model.cannotFindPosition == false)
     }
 

@@ -3,9 +3,9 @@ import Testing
 @testable import TROMECore
 
 extension AutoLiveActivityModelTests {
-    func notifiedInTheBackground(in model: AutoLiveActivityModel) async {
+    func arrivedInTheBackground(in model: AutoLiveActivityModel) async {
         gps.report(Places.fiftyMetersFromA)
-        await waitUntil { !notifier.notified.isEmpty }
+        await waitUntil { !arrivalsWithNoStart.isEmpty }
         #expect(client.started.isEmpty)
     }
 
@@ -14,23 +14,22 @@ extension AutoLiveActivityModelTests {
         await activate(model)
     }
 
-    @Test func openingTheAppAtTheStationOfANotifiedArrivalStartsItsLiveActivity() async {
+    @Test func openingTheAppAtTheStationOfAnArrivalInTheBackgroundStartsItsLiveActivity() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
 
         await openTheApp(model, after: 30)
 
         #expect(client.started.map(\.stationName) == ["Station A"])
         #expect(model.shownStation == Places.stationA)
-        #expect(notifier.notified == [Places.stationA])
-        #expect(notifier.withdrawCount == 1)
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         #expect(gps.currentFixRequestCount == 1)
         #expect(model.cannotFindPosition == false)
     }
 
     @Test func openingTheAppAtOnceUsesTheHeldPositionWithNoRequest() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
 
         await openTheApp(model, after: 5)
 
@@ -40,7 +39,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppWithNoAnswerFromIOSUsesAHeldPositionOfAtMost2Minutes() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.givesACurrentFix = false
 
         await openTheApp(model, after: 110)
@@ -48,9 +47,9 @@ extension AutoLiveActivityModelTests {
         #expect(model.shownStation == Places.stationA)
     }
 
-    @Test func aNotifiedArrivalStillStartsAfterARelaunchOfTheApp() async {
+    @Test func anArrivalInTheBackgroundStillStartsAfterARelaunchOfTheApp() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
 
         let relaunched = makeModel()
         await openTheApp(relaunched, after: 30)
@@ -60,24 +59,11 @@ extension AutoLiveActivityModelTests {
         withExtendedLifetime(model) {}
     }
 
-    @Test func withNotificationsRefusedOpeningTheAppAtTheStationStartsTheLiveActivity() async {
-        notifier.isRefusedByTheRider = true
-        let model = makeModel()
-        gps.report(Places.fiftyMetersFromA)
-        await waitUntil { !watcher.watched.isEmpty }
-        #expect(notifier.notified.isEmpty)
-
-        await openTheApp(model, after: 30)
-
-        #expect(model.shownStation == Places.stationA)
-        #expect(client.started.count == 1)
-    }
-
     @Test func openingTheAppAfterLeavingTheStationStartsNothing() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.report(Places.fourHundredMetersFromA)
-        await waitUntil { notifier.withdrawCount == 1 }
+        await waitUntil { wakeLog.entries.first { $0.kind == .decision }?.text.hasPrefix("No station within") == true }
 
         await openTheApp(model, after: 30)
 
@@ -87,7 +73,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppFarFromTheStationWithNoPositionSeenOnTheWayStartsNothingAndSaysNothing() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.stopReporting()
         gps.report(Places.fourHundredMetersFromA)
 
@@ -100,31 +86,20 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppTwiceStartsOneLiveActivity() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         await openTheApp(model, after: 30)
         model.setAppPhase(.background)
 
         await openTheApp(model, after: 30)
 
         #expect(client.started.count == 1)
-        #expect(notifier.notified.count == 1)
-    }
-
-    @Test func openingTheAppAfterATapOnTheNotificationStartsOneLiveActivity() async {
-        let model = makeModel()
-        await notifiedInTheBackground(in: model)
-
-        await model.notificationTapped(stationId: "a")
-        await openTheApp(model, after: 30)
-
-        #expect(client.started.count == 1)
-        #expect(gps.currentFixRequestCount == 0)
+        #expect(arrivalsWithNoStart.count == 1)
     }
 
     @Test(arguments: [SnoozeDuration.thirtyMinutes, .oneHour])
     func openingTheAppAfterASnoozeStartsNothingEvenOnceTheSnoozeIsOver(duration: SnoozeDuration) async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         await model.snooze(for: duration)
 
         await openTheApp(model, after: 30)
@@ -137,7 +112,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppWithTheAutomaticModeOffStartsNothing() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         automaticMode.setOn(false)
 
         await openTheApp(model, after: 30)
@@ -148,7 +123,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppAgainAfterTheLiveActivityOfThatArrivalWasSwipedStartsNothing() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         await openTheApp(model, after: 30)
         swipeAway()
         model.setAppPhase(.background)
@@ -161,7 +136,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppAgainAfterTheTimeLimitOfThatArrivalStartsNothing() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         await openTheApp(model, after: 30)
         model.setAppPhase(.background)
 
@@ -173,9 +148,9 @@ extension AutoLiveActivityModelTests {
 
     @Test func aNewArrivalReplacesTheOpenOne() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.report(Places.atB)
-        await waitUntil { notifier.notified.count == 2 }
+        await waitUntil { arrivalsWithNoStart.count == 2 }
 
         await openTheApp(model, after: 30)
 
@@ -184,7 +159,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppWithAnOldPositionAndNoAnswerFromIOSStartsNothingAndSaysSo() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.givesACurrentFix = false
 
         await openTheApp(model, after: 121)
@@ -195,7 +170,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func openingTheAppWithAnImprecisePositionStartsNothingAndSaysSo() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.report(PositionFix(coordinate: Places.fiftyMetersFromA, accuracyMeters: 300, timestamp: clock.now))
         await waitUntil { locationService.fix?.accuracyMeters == 300 }
         gps.givesACurrentFix = false
@@ -208,7 +183,7 @@ extension AutoLiveActivityModelTests {
 
     @Test func theLiveActivityStartsWhenAUsablePositionArrivesAfterTheNoPositionLine() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.givesACurrentFix = false
         await openTheApp(model, after: 121)
 
@@ -217,12 +192,12 @@ extension AutoLiveActivityModelTests {
 
         #expect(model.shownStation == Places.stationA)
         #expect(model.cannotFindPosition == false)
-        #expect(notifier.notified.count == 1)
+        #expect(arrivalsWithNoStart.count == 1)
     }
 
     @Test func aPositionThatStartsTheLiveActivityDuringTheWaitForIOSLeavesNoNoPositionLine() async {
         let model = makeModel()
-        await notifiedInTheBackground(in: model)
+        await arrivedInTheBackground(in: model)
         gps.holdsTheCurrentFixRequest = true
         clock.advance(by: 121)
         model.setAppPhase(.active)

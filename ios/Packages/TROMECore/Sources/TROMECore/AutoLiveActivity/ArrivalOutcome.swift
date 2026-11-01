@@ -1,7 +1,8 @@
 import Foundation
 
 enum ArrivalOutcome: Equatable, Sendable {
-    case notified(Station)
+    /// The app was in the background: the silent start then asks the server, and no notification comes.
+    case arrivedInTheBackground(Station)
     case started(Station)
     case switched(Station)
     case liveActivitiesOff(Station)
@@ -16,7 +17,8 @@ enum ArrivalOutcome: Equatable, Sendable {
     /// The station that the outcome is about, if any.
     var station: Station? {
         switch self {
-        case .notified(let station), .started(let station), .switched(let station), .liveActivitiesOff(let station),
+        case .arrivedInTheBackground(let station), .started(let station), .switched(let station),
+             .liveActivitiesOff(let station),
              .waitsForTheApp(let station), .automaticStartOff(let station), .paused(let station, _),
              .alreadyShown(let station), .alreadyArrived(let station), .left(let station):
             station
@@ -30,19 +32,12 @@ enum ArrivalOutcome: Equatable, Sendable {
         return "noStationNear:\(nearest?.station.id ?? "")"
     }
 
-    /// With the silent start, an arrival in the background asks the server first: the notification is only its
-    /// fallback.
-    var summaryWithASilentStart: String {
-        guard case .notified(let station) = self else { return summary }
-        return "Arrived in the background: \(station.name)"
-    }
-
     var summary: String {
         let arrivalRadius = Int(AutoLiveActivityRules.arrivalRadiusMeters)
         let stopRadius = Int(AutoLiveActivityRules.stopRadiusMeters)
         return switch self {
-        case .notified(let station):
-            "Notified: \(station.name)"
+        case .arrivedInTheBackground(let station):
+            "Arrived in the background: \(station.name)"
         case .started(let station):
             "Live Activity started: \(station.name)"
         case .switched(let station):
@@ -52,13 +47,13 @@ enum ArrivalOutcome: Equatable, Sendable {
         case .waitsForTheApp(let station):
             "Waits at \(station.name): a system popup covers the app"
         case .automaticStartOff(let station):
-            "No notification at \(station.name): automatic start is snoozed or off"
+            "No start at \(station.name): automatic start is snoozed or off"
         case .paused(let station, let end):
-            "No notification at \(station.name): paused until \(end.formatted(date: .omitted, time: .shortened))"
+            "No start at \(station.name): paused until \(end.formatted(date: .omitted, time: .shortened))"
         case .alreadyShown(let station):
-            "No notification at \(station.name): its Live Activity shows"
+            "No start at \(station.name): its Live Activity shows"
         case .alreadyArrived(let station):
-            "No notification at \(station.name): same arrival as before, until you leave its \(stopRadius) m area"
+            "No start at \(station.name): same arrival as before, until you leave its \(stopRadius) m area"
         case .left(let station):
             "Left \(station.name): iOS says the phone left its \(stopRadius) m area"
         case .noStationNear(let nearest?):

@@ -44,11 +44,14 @@ struct ArrivalSecondChanceTests {
         let rough = PositionFix(coordinate: insideTheArea, accuracyMeters: 500, timestamp: now - 3)
 
         #expect(chance.startLine == "Second chance at S: asks iOS for a position for up to 120 s")
-        #expect(chance.line(for: .outcome(.notified(station)), now: now) == "Second chance at S: notified after 42 s")
+        #expect(
+            chance.line(for: .outcome(.arrivedInTheBackground(station)), now: now)
+                == "Second chance at S: arrived in the background after 42 s"
+        )
         #expect(chance.line(for: .outcome(.started(station)), now: now)
             == "Second chance at S: Live Activity started after 42 s")
-        #expect(chance.line(for: .outcome(.notified(other)), now: now)
-            == "Second chance at S: ended after 42 s: Notified: O")
+        #expect(chance.line(for: .outcome(.arrivedInTheBackground(other)), now: now)
+            == "Second chance at S: ended after 42 s: Arrived in the background: O")
         #expect(chance.line(for: .far(meters: 400), now: now)
             == "Second chance at S: gave up after 42 s: the position is 400 m away")
         #expect(chance.line(for: .left, now: now)

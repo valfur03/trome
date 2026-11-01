@@ -22,7 +22,7 @@ extension AutoLiveActivityRulesTests {
         AutoLiveActivityState(arrivalStationId: Places.stationA.id)
     }
 
-    @Test func aResumeAtTheStationOfAnArrivalAlreadySeenStartsItsLiveActivityWithNoNotification() {
+    @Test func aResumeAtTheStationOfAnArrivalAlreadySeenStartsItsLiveActivityWithNoStartInTheBackground() {
         let decision = resume(arrivedAtA, at: Places.fiftyMetersFromA)
 
         #expect(decision.actions == [.start(Places.stationA)])

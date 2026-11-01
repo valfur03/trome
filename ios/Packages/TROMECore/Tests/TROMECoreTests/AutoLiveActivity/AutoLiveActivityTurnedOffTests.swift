@@ -39,7 +39,7 @@ extension AutoLiveActivityModelTests {
         #expect(gps.currentFixRequestCount == 0)
     }
 
-    @Test func turningLiveActivitiesOnAgainAtTheStationStartsItsLiveActivityAtOnceWithNoNotification() async {
+    @Test func turningLiveActivitiesOnAgainAtTheStationStartsItsLiveActivityAtOnceWithNoStartInTheBackground() async {
         let model = makeModel()
         await refusedOnTheLockScreenAtA(model)
         await openTheApp(model, after: 30)
@@ -49,7 +49,7 @@ extension AutoLiveActivityModelTests {
         #expect(model.liveActivityProblem == nil)
         #expect(model.shownStation == Places.stationA)
         #expect(client.started.map(\.stationName) == ["Station A", "Station A"])
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
     @Test func turningLiveActivitiesOnAgainAfterARelaunchAtTheStationStartsItsLiveActivity() async {
@@ -94,7 +94,7 @@ extension AutoLiveActivityModelTests {
         await comeBackFromSettings(to: model)
 
         #expect(model.shownStation == Places.stationA)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
     @Test func theLineShowsAwayFromEveryStationOnlyWhileTheAutomaticModeIsOnAndLiveActivitiesAreOff() async {
@@ -140,6 +140,6 @@ extension AutoLiveActivityModelTests {
 
         #expect(model.shownStation == Places.stationA)
         #expect(client.started.count == 2)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 }

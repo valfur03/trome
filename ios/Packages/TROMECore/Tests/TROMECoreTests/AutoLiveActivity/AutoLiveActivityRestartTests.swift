@@ -3,7 +3,8 @@ import Testing
 @testable import TROMECore
 
 /// A phone that ran out of battery in Paris and started again: in the 25 seconds after the launch, iOS said that it
-/// was inside the areas of 21 stations across the city, with no new position, and the app notified each of them.
+/// was inside the areas of 21 stations across the city, with no new position, and the app took an arrival at each
+/// of them (an earlier build sent a notification at each one).
 /// The first real position then put the phone 378 m from Mairie des Lilas, the nearest station.
 /// The stations and their order are the ones of the wake log of that phone.
 extension AutoLiveActivityModelTests {
@@ -24,7 +25,7 @@ extension AutoLiveActivityModelTests {
     }
 
     @Test(arguments: [false, true], [false, true])
-    func notifiesNoStationThatIOSReportsAfterARestartWithNoPositionThere(
+    func arrivesAtNoStationThatIOSReportsAfterARestartWithNoPositionThere(
         hasAPositionFromBeforeTheRestart: Bool,
         remembersTheLastArrival: Bool
     ) async throws {
@@ -51,7 +52,7 @@ extension AutoLiveActivityModelTests {
             await model.handleRegionEvent(entered(station), lastKnownFix: beforeTheRestart)
         }
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.isEmpty)
         let firstReason = hasAPositionFromBeforeTheRestart
             ? "the position is ±10 m and 515 s old"
@@ -63,14 +64,14 @@ extension AutoLiveActivityModelTests {
         #expect(plannedCenters.allSatisfy { $0 == Self.riderPlace })
     }
 
-    @Test func notifiesOnceWhenIOSReportsAnArrivalAndThenGivesAPositionAtTheStation() async {
+    @Test func arrivesOnceWhenIOSReportsAnArrivalAndThenGivesAPositionAtTheStation() async {
         let model = makeModel()
         gps.currentFixCoordinate = Places.fiftyMetersFromA
 
         await model.handleRegionEvent(entered(Places.stationA), lastKnownFix: nil)
         await model.handleRegionEvent(entered(Places.stationA), lastKnownFix: nil)
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         #expect(gps.currentFixRequestCount == 2)
     }
 
@@ -81,7 +82,7 @@ extension AutoLiveActivityModelTests {
 
         await model.handleRegionEvent(entered(Places.stationA), lastKnownFix: far)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(gps.currentFixRequestCount == 0)
         #expect(decisionLinesAfterTheRestart.first == "No arrival at Station A: the position is 400 m away")
     }
@@ -93,7 +94,7 @@ extension AutoLiveActivityModelTests {
 
         await model.handleRegionEvent(entered(Places.stationA), lastKnownFix: rough)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(decisionLinesAfterTheRestart.first == "No arrival at Station A: the position is ±1000 m and 0 s old")
     }
 }

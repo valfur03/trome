@@ -4,7 +4,7 @@ import Testing
 
 /// iOS reports that the phone entered the area of a station, and the first position is too rough to trust:
 /// cell towers only, a street between tall buildings. The app refuses the report, then asks iOS again for a while,
-/// so that a rider who is really at the station still gets the notification.
+/// so that a rider who is really at the station still gets the start in the background.
 extension AutoLiveActivityModelTests {
     enum FirstPosition: CaseIterable {
         case rough
@@ -36,36 +36,35 @@ extension AutoLiveActivityModelTests {
     }
 
     @Test(arguments: FirstPosition.allCases)
-    func notifiesOnceWhenATrustedPositionAtTheStationComesAfterARoughOne(_ first: FirstPosition) async {
+    func arrivesOnceWhenATrustedPositionAtTheStationComesAfterARoughOne(_ first: FirstPosition) async {
         let model = makeModel()
         roughPositionsAtA()
         gps.givesACurrentFix = first == .rough
 
         await enteredA(model)
         await enteredA(model)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         gps.givesACurrentFix = true
         gps.currentFixAccuracyMeters = 10
         await waitForTheEnd(of: model)
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         #expect(client.started.isEmpty)
         #expect(!keeper.isKeeping)
         let firstReason = first == .rough ? "the position is ±1000 m and 0 s old" : "iOS gave no position"
         #expect(decisionLines.first == "No arrival at Station A: \(firstReason)")
         #expect(decisionLines.filter { $0.hasPrefix("Second chance at Station A: asks iOS") }.count == 1)
-        #expect(decisionLines.contains { $0.hasPrefix("Second chance at Station A: notified after ") })
+        #expect(decisionLines.contains { $0.hasPrefix("Second chance at Station A: arrived in the background after ") })
 
         await enteredA(model, lastKnownFix: PositionFix(coordinate: Places.fiftyMetersFromA, accuracyMeters: 10,
                                                         timestamp: clock.now))
-        await model.notificationTapped(stationId: "a")
         await activate(model)
         #expect(client.started.map(\.stationName) == ["Station A"])
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
     }
 
     @Test(arguments: [false, true])
-    func notifiesNoStationWhenTheTrustedPositionAfterARestartIsFar(hasAPositionFromBeforeTheRestart: Bool)
+    func arrivesAtNoStationWhenTheTrustedPositionAfterARestartIsFar(hasAPositionFromBeforeTheRestart: Bool)
         async throws {
         let paris = try StationCatalog.bundled()
         let names = ["Magenta", "Gare du Nord", "Gambetta", "Mairie des Lilas", "Porte de Bagnolet", "Jourdain"]
@@ -86,7 +85,7 @@ extension AutoLiveActivityModelTests {
         gps.givesACurrentFix = true
         await waitForTheEnd(of: model)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.isEmpty)
         #expect(!keeper.isKeeping)
         #expect(decisionLines.filter { $0.hasPrefix("Second chance at ") && $0.contains(": gave up after ") }.count
@@ -97,7 +96,7 @@ extension AutoLiveActivityModelTests {
         })
     }
 
-    @Test func notifiesNothingWhenIOSSaysThatTheRiderLeftBeforeATrustedPosition() async {
+    @Test func startsNothingWhenIOSSaysThatTheRiderLeftBeforeATrustedPosition() async {
         let model = makeModel()
         roughPositionsAtA()
 
@@ -105,11 +104,11 @@ extension AutoLiveActivityModelTests {
         await model.handleRegionEvent(.left(regionId: "arrival:a"), lastKnownFix: nil)
         let asks = gps.currentFixRequestCount
         gps.currentFixAccuracyMeters = 10
-        await expectNever { gps.currentFixRequestCount > asks || !notifier.notified.isEmpty }
+        await expectNever { gps.currentFixRequestCount > asks || !arrivalsWithNoStart.isEmpty }
 
         #expect(model.secondChances.isEmpty)
         #expect(gps.currentFixRequestCount == asks)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(!keeper.isKeeping)
         #expect(decisionLines.contains {
             $0.hasPrefix("Second chance at Station A: gave up after ")
@@ -117,7 +116,7 @@ extension AutoLiveActivityModelTests {
         })
     }
 
-    @Test func notifiesNothingWhenTheFirstTrustedPositionIsPastTheStopArea() async {
+    @Test func startsNothingWhenTheFirstTrustedPositionIsPastTheStopArea() async {
         let model = makeModel()
         roughPositionsAtA()
 
@@ -126,7 +125,7 @@ extension AutoLiveActivityModelTests {
         gps.currentFixAccuracyMeters = 10
         await waitForTheEnd(of: model)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(!keeper.isKeeping)
         #expect(decisionLines.contains {
             $0.hasPrefix("Second chance at Station A: gave up after ") && $0.hasSuffix(" s: the position is 400 m away")
@@ -145,7 +144,7 @@ extension AutoLiveActivityModelTests {
 
         #expect(gps.currentFixRequestCount == asks)
         #expect(asks <= 1 + Int(ArrivalSecondChance.limit) / 5)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(!keeper.isKeeping)
         #expect(decisionLines.last == """
             Second chance at Station A: gave up after 120 s: the position is ±1000 m and 5 s old
@@ -161,9 +160,9 @@ extension AutoLiveActivityModelTests {
         gps.currentFixAccuracyMeters = 10
         await waitForTheEnd(of: model)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(decisionLines.contains { $0.hasPrefix("Second chance at Station A: ended after ") && $0.hasSuffix(
-            ": No notification at Station A: same arrival as before, until you leave its 250 m area"
+            ": No start at Station A: same arrival as before, until you leave its 250 m area"
         ) })
     }
 
@@ -183,12 +182,12 @@ extension AutoLiveActivityModelTests {
         await waitForTheEnd(of: model)
         let asks = gps.currentFixRequestCount
         gps.currentFixAccuracyMeters = 10
-        await expectNever { gps.currentFixRequestCount > asks || !notifier.notified.isEmpty }
+        await expectNever { gps.currentFixRequestCount > asks || !arrivalsWithNoStart.isEmpty }
 
         #expect(model.secondChances.isEmpty)
         #expect(gps.currentFixRequestCount == asks)
         #expect(asks <= asksBefore + 1)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(!keeper.isKeeping)
         #expect(decisionLines.contains {
             $0.hasPrefix("Second chance at Station A: gave up after ")

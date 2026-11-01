@@ -73,7 +73,7 @@ extension AutoLiveActivityModel {
 
     func resumeOpenArrival() async {
         guard waitsForAResume, let stationId = state.openArrivalStationId else { return }
-        Self.logPause("resume: the app is open after an arrival at \(stationId) that was only notified")
+        Self.logPause("resume: the app is open after an arrival at \(stationId) with no Live Activity")
         let position = await positionForAResume()
         guard waitsForAResume else { return }
         await resume(at: position)

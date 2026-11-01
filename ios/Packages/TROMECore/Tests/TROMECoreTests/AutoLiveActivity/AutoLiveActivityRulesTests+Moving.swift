@@ -2,10 +2,13 @@ import Foundation
 import Testing
 @testable import TROMECore
 
-/// A rider who moves past stations: while a Live Activity shows, the next station switches it, never notifies.
+/// A rider who moves past stations: while a Live Activity shows, the next station switches it,
+/// never starts a second one.
 extension AutoLiveActivityRulesTests {
     @Test(arguments: [AppPhase.active, .inactive, .background], [true, false])
-    func switchesAShownLiveActivityToTheNextStationWithNoNotification(appPhase: AppPhase, allowsAutomaticStart: Bool) {
+    func switchesAShownLiveActivityToTheNextStationWithNoStartInTheBackground(
+        appPhase: AppPhase, allowsAutomaticStart: Bool
+    ) {
         let decision = decide(
             showing(Places.stationA), at: Places.atB, appPhase: appPhase, allowsAutomaticStart: allowsAutomaticStart
         )
@@ -17,16 +20,16 @@ extension AutoLiveActivityRulesTests {
     @Test func saysHowFarTheRiderWasWhenTheLiveActivityEnded() throws {
         let decision = decide(showing(Places.stationA), at: Places.fourHundredMetersFromA)
 
-        #expect(decision.actions == [.withdrawNotification, .end])
+        #expect(decision.actions == [.end])
         let ending = try #require(decision.ending)
         #expect(ending.summary == "Live Activity ended: 400 m from Station A")
     }
 
-    @Test func notifiesTheNextStationWhenTheLiveActivityEndedOnTheWay() {
+    @Test func arrivesTheNextStationWhenTheLiveActivityEndedOnTheWay() {
         let onTheWay = decide(showing(Places.stationA), at: Places.fourHundredMetersFromA)
         let atB = decide(onTheWay.state, at: Places.atB)
 
-        #expect(atB.actions == [.notify(Places.stationB)])
+        #expect(atB.actions == [.startInTheBackground(Places.stationB)])
         #expect(atB.ending == nil)
     }
 

@@ -55,7 +55,7 @@ struct TestingToolsView: View {
                 }
                 .accessibilityIdentifier("wakeLog")
             } header: {
-                Text("Arrival notification")
+                Text("Arrivals")
             } footer: {
                 Text("What iOS woke the app for, and what the app decided.")
             }

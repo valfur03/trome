@@ -1,10 +1,10 @@
 import Foundation
 
+/// The question of iOS for notifications. The app sends no notification of its own: it asks, after the location
+/// questions, because the start of the Live Activity by the server may need it.
 @MainActor
-public protocol ArrivalNotifier: AnyObject {
+public protocol NotificationPermission: AnyObject {
     func requestAuthorization() async
-    func notify(_ station: Station) async
-    func withdraw()
 }
 
 @MainActor
@@ -77,24 +77,24 @@ extension AutoLiveActivityModel {
     }
 
     public struct Services {
-        public let notifier: any ArrivalNotifier
+        public let notifications: any NotificationPermission
         public let regionWatcher: any StationRegionWatcher
         public let locationKeeper: any BackgroundLocationKeeper
         public let liveActivityChanges: any LiveActivityWatcher
         public let wakeLog: WakeLog?
         /// Nil in a build with no push code (a free Apple ID, or a Release build until the silent start is on),
-        /// and in a build with no server: the app then notifies the arrival, as before.
+        /// and in a build with no server: no Live Activity then starts in the background, and the wake log says so.
         public let silentStart: SilentStart?
 
         public init(
-            notifier: any ArrivalNotifier,
+            notifications: any NotificationPermission,
             regionWatcher: any StationRegionWatcher,
             locationKeeper: any BackgroundLocationKeeper,
             liveActivityChanges: any LiveActivityWatcher,
             wakeLog: WakeLog? = nil,
             silentStart: SilentStart? = nil
         ) {
-            self.notifier = notifier
+            self.notifications = notifications
             self.regionWatcher = regionWatcher
             self.locationKeeper = locationKeeper
             self.liveActivityChanges = liveActivityChanges

@@ -16,21 +16,21 @@ extension AutoLiveActivityModelTests {
 
         #expect(client.started.map(\.stationName) == ["Station A"])
         #expect(model.shownStation == Places.stationA)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
-    @Test func notifiesAnArrivalUnderASystemQuestionWhenTheAppGoesToTheBackground() async {
+    @Test func arrivesAnArrivalUnderASystemQuestionWhenTheAppGoesToTheBackground() async {
         let model = makeModel()
         await activate(model)
         model.setAppPhase(.inactive)
 
         gps.report(Places.fiftyMetersFromA)
         await waitUntil { !watcher.watched.isEmpty }
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         model.setAppPhase(.background)
-        await waitUntil { !notifier.notified.isEmpty }
+        await waitUntil { !arrivalsWithNoStart.isEmpty }
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         #expect(client.started.isEmpty)
     }
 }

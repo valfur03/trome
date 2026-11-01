@@ -28,7 +28,7 @@ extension AutoLiveActivityModelTests {
         await reportAndWaitForRegions(roughFix(at: Places.fiftyMetersFromA))
 
         #expect(client.started.isEmpty)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(watcher.watched.last?.map(\.id) == ["arrival:a", "arrival:b", "refresh"])
     }
 
@@ -109,7 +109,7 @@ extension AutoLiveActivityModelTests {
 
         await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: roughFix(at: Places.fiftyMetersFromA))
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(watcher.watched.last?.map(\.id) == ["arrival:a", "arrival:b", "refresh"])
     }
 
@@ -124,13 +124,13 @@ extension AutoLiveActivityModelTests {
         #expect(model.shownStation == Places.stationA)
     }
 
-    @Test func notifiesOnEnteringAnArrivalAreaWithARoughPositionOnceIOSGivesAPositionThere() async {
+    @Test func arrivesOnEnteringAnArrivalAreaWithARoughPositionOnceIOSGivesAPositionThere() async {
         let model = makeModel()
         gps.currentFixCoordinate = Places.fiftyMetersFromA
 
         await model.handleRegionEvent(.entered(regionId: "arrival:a"), lastKnownFix: roughFix(at: Places.atB))
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
     }
 
     @Test func usesAPositionOfTheLastTwoMinutesFromRegionMonitoring() async {
@@ -143,6 +143,6 @@ extension AutoLiveActivityModelTests {
 
         await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: fix)
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
     }
 }

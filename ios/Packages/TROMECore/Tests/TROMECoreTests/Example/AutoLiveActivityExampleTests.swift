@@ -21,7 +21,6 @@ extension AutoLiveActivityModelTests {
     @Test(arguments: [LocationAuthorization.denied, .notDetermined, .authorized])
     func aTapShowsChateletWithSampleTimesFarFromParisWithNoTrainCall(location: LocationAuthorization) async throws {
         permission.authorization = location
-        notifier.isRefusedByTheRider = true
         let model = makeModel(catalog: try catalogWithChatelet())
         await activate(model)
         gps.report(Self.cupertino)

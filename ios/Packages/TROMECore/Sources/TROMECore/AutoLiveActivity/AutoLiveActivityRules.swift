@@ -75,7 +75,9 @@ public struct AutoLiveActivityRules: Sendable {
     public enum ArrivalResponse: Equatable, Sendable {
         case start
         case keepOpen
-        case notify
+        /// The app is in the background: the server may start the Live Activity (the silent start), and the app
+        /// never notifies the arrival.
+        case startInTheBackground
         case later
         case none
 
@@ -87,17 +89,16 @@ public struct AutoLiveActivityRules: Sendable {
             switch appPhase {
             case .active: self = activitiesAreEnabled ? .start : .keepOpen
             case .inactive: self = .later
-            case .background: self = .notify
+            case .background: self = .startInTheBackground
             }
         }
     }
 
     public enum Action: Equatable, Sendable {
-        case notify(Station)
+        case startInTheBackground(Station)
         case start(Station)
         case switchTo(Station)
         case end
-        case withdrawNotification
     }
 
     public struct Decision: Equatable, Sendable {
@@ -187,7 +188,6 @@ extension AutoLiveActivityRules.Decision {
         state.arrivalStationId = nil
         state.pendingArrivalStationId = nil
         state.openArrivalStationId = nil
-        actions.append(.withdrawNotification)
     }
 }
 
@@ -254,10 +254,10 @@ private extension AutoLiveActivityRules.Decision {
         case .keepOpen:
             state.openArrivalStationId = station.id
             arrival = .liveActivitiesOff(station)
-        case .notify:
+        case .startInTheBackground:
             state.openArrivalStationId = station.id
-            actions.append(.notify(station))
-            arrival = .notified(station)
+            actions.append(.startInTheBackground(station))
+            arrival = .arrivedInTheBackground(station)
         case .later:
             state.arrivalStationId = nil
             state.pendingArrivalStationId = station.id
@@ -272,7 +272,6 @@ private extension AutoLiveActivityRules.Decision {
               position.distance(to: station.coordinate) <= AutoLiveActivityRules.arrivalRadiusMeters else { return }
         state.shown = .init(stationId: station.id, startedAt: now, hasBeenNear: true)
         actions.append(.start(station))
-        actions.append(.withdrawNotification)
         arrival = .started(station)
     }
 

@@ -2,7 +2,6 @@ import AppIntents
 import TROMECore
 import SwiftUI
 import UIKit
-import UserNotifications
 
 @main
 struct TROMEApp: App {
@@ -19,7 +18,6 @@ struct TROMEApp: App {
     @State private var automaticModeModel: AutomaticModeModel
     private let stationCatalog: StationCatalog
     private let regionWatcher: CoreLocationStationRegionWatcher
-    private let notificationResponseHandler: ArrivalNotificationResponseHandler
     private let primConfiguration = Self.primConfigurationOfThisBuild()
     private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? ""
     #if DEBUG
@@ -53,7 +51,7 @@ struct TROMEApp: App {
             regionWatcher: regionWatcher,
             liveActivityChanges: liveActivityClient
         )
-        let notificationResponseHandler = Self.connectSystemEvents(
+        Self.connectSystemEvents(
             to: autoLiveActivityModel, liveActivity: liveActivityModel, regionWatcher: regionWatcher
         )
 
@@ -64,7 +62,6 @@ struct TROMEApp: App {
         self.stationCatalog = stationCatalog
         _permissionsModel = State(initialValue: PermissionsModel(locationPermission: permission))
         self.regionWatcher = regionWatcher
-        self.notificationResponseHandler = notificationResponseHandler
         _locationService = State(initialValue: locationService)
         _nearestStationModel = State(
             initialValue: NearestStationModel(
@@ -144,7 +141,7 @@ struct TROMEApp: App {
             liveActivity: liveActivity,
             inputs: inputs,
             services: .init(
-                notifier: UserNotificationArrivalNotifier(wakeLog: regionWatcher.wakeLog),
+                notifications: UserNotificationPermission(),
                 regionWatcher: regionWatcher,
                 locationKeeper: CoreLocationBackgroundLocationKeeper(),
                 liveActivityChanges: liveActivityChanges,
@@ -165,24 +162,13 @@ struct TROMEApp: App {
         to autoLiveActivityModel: AutoLiveActivityModel,
         liveActivity: StationLiveActivityModel,
         regionWatcher: CoreLocationStationRegionWatcher
-    ) -> ArrivalNotificationResponseHandler {
+    ) {
         AppDependencyManager.shared.add(dependency: autoLiveActivityModel)
         AppDependencyManager.shared.add(dependency: liveActivity)
-        let notificationResponseHandler = ArrivalNotificationResponseHandler(
-            onTap: { [weak autoLiveActivityModel] stationId in
-                await autoLiveActivityModel?.notificationTapped(stationId: stationId)
-            },
-            onAction: { [weak autoLiveActivityModel] action in
-                await autoLiveActivityModel?.notificationActionChosen(action)
-            }
-        )
-        UserNotificationArrivalNotifier.registerActions(in: .current())
-        UNUserNotificationCenter.current().delegate = notificationResponseHandler
         regionWatcher.onWake = { [weak autoLiveActivityModel] event, lastKnownFix in
             await autoLiveActivityModel?.handleRegionEvent(event, lastKnownFix: lastKnownFix)
         }
         Task { await regionWatcher.resume() }
-        return notificationResponseHandler
     }
 
     private static func makeRegionWatcher(
@@ -224,7 +210,8 @@ struct TROMEApp: App {
 
     /// The start of the Live Activity through the server, with no notification and no tap. Its push code is compiled
     /// only into a build that a paid team signs: every Release build, and a Debug build with `TROME_SILENT_START` in
-    /// `ios/Config/Local.xcconfig`. A free Apple ID cannot sign the push capability, so its builds notify as before.
+    /// `ios/Config/Local.xcconfig`. A free Apple ID cannot sign the push capability, so its builds start the Live
+    /// Activity only with the app open.
     /// Such a build asks iOS for the start token at every launch, with no server too (`ActivityKitStartTokens`).
     private static func silentStartOfThisBuild(wakeLog: WakeLog?) -> SilentStart? {
         #if SILENT_START

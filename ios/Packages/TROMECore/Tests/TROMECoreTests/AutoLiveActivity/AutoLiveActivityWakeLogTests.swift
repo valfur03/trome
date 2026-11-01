@@ -7,23 +7,23 @@ extension AutoLiveActivityModelTests {
         wakeLog.entries.filter { $0.kind == .decision }.map(\.text)
     }
 
-    @Test func logsTheNotificationOfARegionWake() async {
+    @Test func logsTheArrivalOfARegionWake() async {
         let model = makeModel()
 
         await wake(model, at: Places.fiftyMetersFromA)
 
-        #expect(decisions == ["Notified: Station A"])
+        #expect(decisions == ["Arrived in the background: Station A"])
         #expect(wakeLog.entries.contains { $0.kind == .regions })
     }
 
-    @Test func logsWhyASecondWakeAtTheSameStationGivesNoNotification() async {
+    @Test func logsWhyASecondWakeAtTheSameStationStartsNothing() async {
         let model = makeModel()
         await wake(model, at: Places.fiftyMetersFromA)
 
         await wake(model, at: Places.fiftyMetersFromA)
 
-        #expect(notifier.notified == [Places.stationA])
-        #expect(decisions.first?.hasPrefix("No notification at Station A: same arrival as before") == true)
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
+        #expect(decisions.first?.hasPrefix("No start at Station A: same arrival as before") == true)
     }
 
     @Test func logsAWakeWithAPositionTooOldToDecide() async {
@@ -42,7 +42,7 @@ extension AutoLiveActivityModelTests {
         await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: rough)
 
         #expect(decisions == ["No decision: position not trusted, ±400 m and 30 s old (needs ±100 m and 120 s)"])
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
     @Test func logsThatAFakePositionMakesTheAppIgnoreAWake() async {
@@ -68,7 +68,7 @@ extension AutoLiveActivityModelTests {
         #expect(decisions == [
             "Live Activity ended: 400 m from Station A",
             "No station within 150 m: nearest is Station A, 200 m",
-            "No notification at Station A: its Live Activity shows",
+            "No start at Station A: its Live Activity shows",
             "Live Activity started: Station A"
         ])
     }

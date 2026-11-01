@@ -3,7 +3,7 @@ import Foundation
 extension AutoLiveActivityRules {
     /// iOS says that the phone left the stop area of a station. It counts as leaving the arrival there,
     /// even when iOS gives no position, or one too old or too rough to trust:
-    /// so the next arrival at this station notifies again.
+    /// so the next arrival at this station starts again.
     func leaveStopArea(
         of stationId: String,
         state: AutoLiveActivityState,

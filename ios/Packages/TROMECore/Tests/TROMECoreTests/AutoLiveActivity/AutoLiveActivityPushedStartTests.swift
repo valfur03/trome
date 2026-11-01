@@ -49,7 +49,7 @@ extension AutoLiveActivityModelTests {
         #expect(client.endCount == 1)
         #expect(model.shownStation == nil)
         #expect(!keeper.isKeeping)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(model.pausedStation == nil)
         #expect(automaticMode.mode == .turnedOn)
         #expect(wakeLog.entries.contains { $0.text == "Live Activity ended: 328 m from Le Parc de Saint-Maur" })
@@ -68,7 +68,7 @@ extension AutoLiveActivityModelTests {
 
         #expect(client.endCount == 1)
         #expect(woken.shownStation == nil)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
     /// AC: the 45 minutes count from the server's answer, also when the app sees the Live Activity later.
@@ -127,7 +127,7 @@ extension AutoLiveActivityModelTests {
         #expect(client.endCount == 1)
         #expect(client.updates.allSatisfy { $0.stationName == "Station A" })
         #expect(starter.asks.map(\.stationId) == ["a", "b"])
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(wakeLog.entries.contains {
             $0.text == "Live Activity ended: the server started it for another station than Station B"
         })

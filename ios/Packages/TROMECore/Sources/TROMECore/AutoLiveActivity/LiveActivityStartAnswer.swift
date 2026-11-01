@@ -2,7 +2,7 @@ import Foundation
 
 /// The answer of the server to the start of a Live Activity, `POST /v1/stations/{stationId}/live-activity`
 /// (the examples are in `contracts/api/`). Only the first two mean that the Live Activity comes:
-/// from every other one, the app falls back to its arrival notification.
+/// every other one leaves the rider with nothing, and a line of the wake log that says why.
 public enum LiveActivityStartAnswer: Equatable, Sendable {
     /// Apple took the start.
     case started

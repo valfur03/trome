@@ -2,8 +2,9 @@ import Foundation
 import Testing
 @testable import TROMECore
 
-/// The silent start: iOS wakes the app at a station, the server starts the Live Activity, and the arrival
-/// notification comes only as the fallback.
+/// The silent start: iOS wakes the app at a station, and the server starts the Live Activity. When it does not, no
+/// notification stands in: the wake log says why, in one line, and the rider who opens the app there gets it.
+/// `StubNotificationPermission` is the only path from the core to the notifications of iOS, and it cannot send one.
 extension AutoLiveActivityModelTests {
     /// Le Parc de Saint-Maur, and the fix of the two "entered" events that iOS gave at 16:58:46 on the outing of
     /// 2026-10-18: 136 m from the station point, ±13 m, 0 s old.
@@ -39,6 +40,10 @@ extension AutoLiveActivityModelTests {
         wakeLog.entries.reversed().filter { $0.kind == .silentStart }.map(\.text)
     }
 
+    func noStartLine(at station: Station = Places.stationA, because cause: String) -> String {
+        "No start at \(station.name), no notification: \(cause)"
+    }
+
     @Test(arguments: [LiveActivityStartAnswer.started, .alreadyStarted])
     func startsThroughTheServerWithNoNotificationWhenIOSWakesTheAppAtAStation(answer: LiveActivityStartAnswer) async {
         let starter = StubLiveActivityStarter(answer: answer)
@@ -47,7 +52,7 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(starter.asks == [.init(stationId: "a", startToken: StubStartTokens.token)])
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.isEmpty)
         #expect(silentStartLines == [
             "Asks the server to start the Live Activity: Station A",
@@ -58,13 +63,14 @@ extension AutoLiveActivityModelTests {
     }
 
     @Test(arguments: [
-        LiveActivityStartAnswer.refused(reason: "BadDeviceToken"),
-        .refused(reason: "no-answer"),
-        .refused(reason: "HTTP 401"),
-        .notSetUp,
-        .noAnswer
+        (LiveActivityStartAnswer.refused(reason: "BadDeviceToken"), "refused (BadDeviceToken)"),
+        (.refused(reason: "no-answer"), "refused (no-answer)"),
+        (.refused(reason: "HTTP 401"), "refused (HTTP 401)"),
+        (.notSetUp, "not set up"),
+        (.noAnswer, "no answer")
     ])
-    func notifiesOnceWhenTheServerDoesNotStartIt(answer: LiveActivityStartAnswer) async {
+    func writesWhyAndSendsNoNotificationWhenTheServerDoesNotStartIt(answer: LiveActivityStartAnswer, cause: String)
+        async {
         let starter = StubLiveActivityStarter(answer: answer)
         let model = makeModel(silentStart: silentStart(starter))
 
@@ -72,19 +78,19 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(starter.asks.count == 1)
-        #expect(notifier.notified == [Places.stationA])
+        #expect(client.started.isEmpty)
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         let forgotten = answer.refusesTheStartToken ? ["Start token refused as invalid: forgotten"] : []
         #expect(silentStartLines == [
             "Asks the server to start the Live Activity: Station A",
             "Asks with this launch's start token"
         ] + forgotten + [
-            "Answer: \(answer.summary), after 0 s",
-            "Fallback: the arrival notification"
+            noStartLine(because: "\(cause), after 0 s")
         ])
     }
 
     /// A held answer that the code never ends fails the test at the time limit, rather than hanging the run.
-    @Test(.timeLimit(.minutes(1))) func notifiesWhenTheServerTakesMoreThanTenSeconds() async {
+    @Test(.timeLimit(.minutes(1))) func writesWhyAndSendsNoNotificationWhenTheServerTakesMoreThanTenSeconds() async {
         let starter = StubLiveActivityStarter(answer: nil)
         let model = makeModel(silentStart: silentStart(starter))
         clock.letTimersFire(upTo: 10)
@@ -92,8 +98,13 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(starter.asks.count == 1)
-        #expect(notifier.notified == [Places.stationA])
-        #expect(silentStartLines.suffix(2) == ["No answer within 10 s", "Fallback: the arrival notification"])
+        #expect(client.started.isEmpty)
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
+        #expect(silentStartLines == [
+            "Asks the server to start the Live Activity: Station A",
+            "Asks with this launch's start token",
+            noStartLine(because: "No answer within 10 s")
+        ])
     }
 
     @Test(.timeLimit(.minutes(1))) func takesAnAnswerThatComesWithinTenSeconds() async {
@@ -106,11 +117,11 @@ extension AutoLiveActivityModelTests {
         starter.answer(with: .started)
         await wake.value
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(silentStartLines.last == "Answer: started, after 0 s")
     }
 
-    @Test(.timeLimit(.minutes(1))) func notifiesWithNoAskWhenIOSGaveNoStartToken() async {
+    @Test(.timeLimit(.minutes(1))) func writesWhyAndSendsNoNotificationWhenIOSGaveNoStartToken() async {
         let starter = StubLiveActivityStarter(answer: .started)
         let tokens = StubStartTokens()
         tokens.token = nil
@@ -120,14 +131,15 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(starter.asks.isEmpty)
-        #expect(notifier.notified == [Places.stationA])
-        #expect(silentStartLines.suffix(2) == [
-            "No start token from iOS within 10 s",
-            "Fallback: the arrival notification"
+        #expect(client.started.isEmpty)
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
+        #expect(silentStartLines == [
+            "Asks the server to start the Live Activity: Station A",
+            noStartLine(because: "No start token from iOS within 10 s")
         ])
     }
 
-    @Test func notifiesWithNoAskWhenLiveActivitiesAreOffInSettings() async {
+    @Test func writesWhyAndSendsNoNotificationWithNoAskWhenLiveActivitiesAreOffInSettings() async {
         let starter = StubLiveActivityStarter(answer: .started)
         client.areActivitiesEnabled = false
         let model = makeModel(silentStart: silentStart(starter))
@@ -135,8 +147,33 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(starter.asks.isEmpty)
-        #expect(notifier.notified == [Places.stationA])
-        #expect(silentStartLines == ["Fallback: the arrival notification (Live Activities are off in Settings)"])
+        #expect(client.started.isEmpty)
+        #expect(silentStartLines == [noStartLine(because: "Live Activities are off in Settings")])
+    }
+
+    /// A build with no push code, or with no server: nothing asks, and nothing stands in.
+    @Test func writesWhyAndSendsNoNotificationInABuildWithNoSilentStart() async {
+        let model = makeModel(silentStart: nil)
+
+        await wake(model, at: Places.fiftyMetersFromA)
+
+        #expect(client.started.isEmpty)
+        #expect(silentStartLines == [noStartLine(because: "the silent start is off in this build")])
+    }
+
+    /// The other half of a start that does not come: the rider who opens the app at the station gets the Live
+    /// Activity at once, as with no silent start.
+    @Test func openingTheAppAtTheStationAfterARefusedStartStartsTheLiveActivity() async {
+        let starter = StubLiveActivityStarter(answer: .refused(reason: "BadDeviceToken"))
+        let model = makeModel(silentStart: silentStart(starter))
+        gps.report(Places.fiftyMetersFromA)
+        await waitUntil { !arrivalsWithNoStart.isEmpty }
+        #expect(client.started.isEmpty)
+
+        await activate(model)
+
+        #expect(client.started.map(\.stationName) == ["Station A"])
+        #expect(starter.asks.count == 1)
     }
 
     /// The outing of 2026-10-18: iOS gave "entered Le Parc" twice in the same second; the second comes here while
@@ -157,7 +194,7 @@ extension AutoLiveActivityModelTests {
         await second.value
 
         #expect(starter.asks == [.init(stationId: Self.leParc.id, startToken: StubStartTokens.token)])
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.isEmpty)
         #expect(silentStartLines.last == "Answer: started, after 0 s")
     }
@@ -172,7 +209,7 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(starter.asks.isEmpty)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.count == 1)
     }
 
@@ -190,10 +227,10 @@ extension AutoLiveActivityModelTests {
         starter.answer(with: .started)
         await wake.value
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
-    @Test(.timeLimit(.minutes(1))) func notifiesNoMoreOnceTheRiderLeftDuringTheAsk() async {
+    @Test(.timeLimit(.minutes(1))) func stillWritesWhyOnceTheRiderLeftDuringTheAsk() async {
         let starter = StubLiveActivityStarter(answer: nil)
         let model = makeModel(silentStart: silentStart(starter))
 
@@ -203,8 +240,8 @@ extension AutoLiveActivityModelTests {
         starter.answer(with: .notSetUp)
         await arrival.value
 
-        #expect(notifier.notified.isEmpty)
-        #expect(silentStartLines.last == "No fallback: the arrival at Station A is over")
+        #expect(client.started.isEmpty)
+        #expect(silentStartLines.last == noStartLine(because: "not set up, after 0 s"))
     }
 
     /// What a walk must read to tell a suspension from a rule: the background time that iOS still gives at the ask,
@@ -245,6 +282,6 @@ extension AutoLiveActivityModelTests {
         starter.answer(with: .noAnswer)
         await wake.value
 
-        #expect(silentStartLines.contains("Answer: \(LiveActivityStartAnswer.noAnswer.summary), after 11 s"))
+        #expect(silentStartLines.contains(noStartLine(because: "\(LiveActivityStartAnswer.noAnswer.summary), after 11 s")))
     }
 }

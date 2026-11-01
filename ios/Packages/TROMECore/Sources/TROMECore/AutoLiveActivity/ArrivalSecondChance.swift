@@ -33,7 +33,7 @@ struct ArrivalSecondChance: Equatable {
     /// A trusted position put the phone within 150 m, and the arrival rules are deciding on it.
     var isBeingDecided = false
 
-    /// Only a trusted position within the 150 m of the station counts: a second chance never notifies for a station
+    /// Only a trusted position within the 150 m of the station counts: a second chance never starts for a station
     /// that no trusted position puts the rider at. A trusted position beyond the 250 m ends it.
     func verdict(on fix: PositionFix?, now: Date) -> Verdict {
         guard let fix, AutoLiveActivityRules.trusts(fix, now: now) else { return .undecided }
@@ -58,7 +58,7 @@ struct ArrivalSecondChance: Equatable {
     func line(for end: End, now: Date) -> String {
         let after = "after \(Int(now.timeIntervalSince(reportedAt))) s"
         let result = switch end {
-        case .outcome(.notified(station)): "notified \(after)"
+        case .outcome(.arrivedInTheBackground(station)): "arrived in the background \(after)"
         case .outcome(.started(station)): "Live Activity started \(after)"
         case .outcome(let outcome): "ended \(after): \(outcome.summary)"
         case .far(let meters): "gave up \(after): the position is \(meters) m away"

@@ -3,24 +3,13 @@ import Synchronization
 import Testing
 @testable import TROMECore
 
+/// The only path from the core to the notifications of iOS: it can ask the question, and send nothing.
 @MainActor
-final class StubArrivalNotifier: ArrivalNotifier {
+final class StubNotificationPermission: NotificationPermission {
     private(set) var authorizationRequestCount = 0
-    private(set) var notified: [Station] = []
-    private(set) var withdrawCount = 0
-    var isRefusedByTheRider = false
 
     func requestAuthorization() async {
         authorizationRequestCount += 1
-    }
-
-    func notify(_ station: Station) async {
-        guard !isRefusedByTheRider else { return }
-        notified.append(station)
-    }
-
-    func withdraw() {
-        withdrawCount += 1
     }
 }
 
@@ -94,7 +83,7 @@ struct AutoLiveActivityModelTests {
     typealias Places = AutoTestPlaces
     let gps: ControlledLocationProvider
     let client = StubStationLiveActivityClient()
-    let notifier = StubArrivalNotifier()
+    let notifications = StubNotificationPermission()
     let watcher = StubRegionWatcher()
     let keeper = StubLocationKeeper()
     let removals = StubLiveActivityRemovals()
@@ -154,7 +143,7 @@ struct AutoLiveActivityModelTests {
                 automaticMode: automaticMode
             ),
             services: .init(
-                notifier: notifier,
+                notifications: notifications,
                 regionWatcher: watcher,
                 locationKeeper: keeper,
                 liveActivityChanges: removals,
@@ -163,6 +152,17 @@ struct AutoLiveActivityModelTests {
             ),
             configuration: .init(store: AutoLiveActivityStore(storage: storage), now: now, sleep: sleep)
         )
+    }
+
+    /// The station of each arrival in the background that started no Live Activity, oldest first: each one writes
+    /// its line of the wake log, with its cause, and no notification.
+    var arrivalsWithNoStart: [String] {
+        wakeLog.entries.reversed().filter { $0.kind == .silentStart }.compactMap { entry in
+            guard entry.text.hasPrefix("No start at "), let end = entry.text.range(of: ", no notification: ") else {
+                return nil
+            }
+            return String(entry.text[entry.text.index(entry.text.startIndex, offsetBy: 12)..<end.lowerBound])
+        }
     }
 
     func wake(_ model: AutoLiveActivityModel, at position: Coordinate) async {
@@ -195,29 +195,18 @@ struct AutoLiveActivityModelTests {
         #expect(client.started.map(\.stationName) == ["Station A"])
         #expect(model.shownStation == Places.stationA)
         #expect(keeper.isKeeping)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
-    @Test func notifiesWhenThePhoneArrivesWhileTheAppIsNotOnScreen() async {
+    @Test func startsNothingAndSaysWhyWhenThePhoneArrivesWhileTheAppIsNotOnScreen() async {
         let model = makeModel()
 
         gps.report(Places.fiftyMetersFromA)
-        await waitUntil { !notifier.notified.isEmpty }
+        await waitUntil { !arrivalsWithNoStart.isEmpty }
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         #expect(client.started.isEmpty)
         withExtendedLifetime(model) {}
-    }
-
-    @Test func startsTheLiveActivityOfTheTappedNotificationOnceTheAppIsOnScreen() async {
-        let model = makeModel()
-
-        await model.notificationTapped(stationId: "b")
-        #expect(client.started.isEmpty)
-        await activate(model)
-
-        #expect(client.started.map(\.stationName) == ["Station B"])
-        #expect(model.shownStation == Places.stationB)
     }
 
     @Test func switchesStationInsteadOfShowingASecondLiveActivity() async {
@@ -230,7 +219,7 @@ struct AutoLiveActivityModelTests {
         #expect(model.shownStation == Places.stationB)
         #expect(client.started.count == 1)
         #expect(client.updates.last?.stationName == "Station B")
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
     @Test func endsTheLiveActivityWhenThePhoneMovesAway() async {
@@ -338,7 +327,7 @@ struct AutoLiveActivityModelTests {
         await model.appDidBecomeActive()
 
         #expect(client.started.map(\.stationName) == ["Station A"])
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
     }
 
     @Test func watchesTheStationsAroundTheRealPosition() async {
@@ -352,12 +341,12 @@ struct AutoLiveActivityModelTests {
         withExtendedLifetime(model) {}
     }
 
-    @Test func notifiesAndWatchesTheStationsAroundAPositionFromRegionMonitoring() async {
+    @Test func arrivesAndWatchesTheStationsAroundAPositionFromRegionMonitoring() async {
         let model = makeModel()
 
         await wake(model, at: Places.fiftyMetersFromA)
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         #expect(watcher.watched.last?.map(\.id) == ["arrival:a", "arrival:b", "stop:a", "refresh"])
     }
 
@@ -371,18 +360,6 @@ struct AutoLiveActivityModelTests {
 
         #expect(watcher.watched.last == [])
         #expect(model.shownStation == Places.stationA)
-    }
-
-    @Test func keepsTheTappedLiveActivityWhenTheAppComesBackWithAPositionFromBefore() async {
-        let model = makeModel()
-        gps.report(Places.fourHundredMetersFromA)
-        await waitUntil { locationService.position != nil }
-
-        await model.notificationTapped(stationId: "a")
-        await activate(model)
-
-        #expect(model.shownStation == Places.stationA)
-        #expect(client.endCount == 0)
     }
 
     @Test func watchesTheStationsAgainWhenTheAppComesBackWithoutAMove() async {

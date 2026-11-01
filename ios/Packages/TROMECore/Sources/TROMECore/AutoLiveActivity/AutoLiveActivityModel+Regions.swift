@@ -41,7 +41,7 @@ extension AutoLiveActivityModel {
     }
 
     /// A position inside the stop area that iOS says the phone left is older than the exit: deciding on it
-    /// would take the rider back to the station, and notify a second time as they leave.
+    /// would take the rider back to the station, and start a second time as they leave.
     private func isInsideStopArea(of stationId: String, _ fix: PositionFix) -> Bool {
         guard let station = catalog.station(withId: stationId) else { return false }
         return fix.coordinate.distance(to: station.coordinate) <= AutoLiveActivityRules.stopRadiusMeters

@@ -6,12 +6,11 @@ extension AutoLiveActivityModel {
             return
         }
         lastLoggedOutcomeKey = outcome.logKey
-        let summary = services.silentStart == nil ? outcome.summary : outcome.summaryWithASilentStart
         guard case .switched = outcome else {
-            wakeLog.record(.decision, summary)
+            wakeLog.record(.decision, outcome.summary)
             return
         }
-        wakeLog.record(.decision, summary + suffix(for: origin))
+        wakeLog.record(.decision, outcome.summary + suffix(for: origin))
     }
 
     func log(_ ending: LiveActivityEnding?, from origin: PositionOrigin? = nil) {

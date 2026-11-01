@@ -40,11 +40,11 @@ struct AutoLiveActivityRulesTests {
         )
     }
 
-    @Test func notifiesWhenThePhoneEntersAStationAreaWhileTheAppIsClosed() {
+    @Test func arrivesWhenThePhoneEntersAStationAreaWhileTheAppIsClosed() {
         let decision = decide(at: Places.fiftyMetersFromA)
 
-        #expect(decision.actions == [.notify(Places.stationA)])
-        #expect(decision.state == notified(at: Places.stationA))
+        #expect(decision.actions == [.startInTheBackground(Places.stationA)])
+        #expect(decision.state == arrivedInTheBackground(at: Places.stationA))
     }
 
     @Test func startsAtOnceWhenTheAppIsOnScreen() {
@@ -55,14 +55,14 @@ struct AutoLiveActivityRulesTests {
     }
 
     @Test(arguments: [AppPhase.active, .inactive, .background])
-    func neitherNotifiesNorStartsWhileSnoozedOrOffButRemembersTheArrival(appPhase: AppPhase) {
+    func startsNothingWhileSnoozedOrOffButRemembersTheArrival(appPhase: AppPhase) {
         let decision = decide(at: Places.fiftyMetersFromA, appPhase: appPhase, allowsAutomaticStart: false)
 
         #expect(decision.actions.isEmpty)
         #expect(decision.state == AutoLiveActivityState(arrivalStationId: "a"))
     }
 
-    @Test func doesNotNotifyAfterTheSnoozeForTheStationOfAnArrivalDuringTheSnooze() {
+    @Test func startsNothingAfterTheSnoozeForTheStationOfAnArrivalDuringTheSnooze() {
         let duringSnooze = decide(at: Places.fiftyMetersFromA, allowsAutomaticStart: false)
         let afterSnooze = decide(duringSnooze.state, at: Places.fiftyMetersFromA)
 
@@ -80,7 +80,7 @@ struct AutoLiveActivityRulesTests {
 
         #expect(Response(appPhase: .active, allowsAutomaticStart: true) == .start)
         #expect(Response(appPhase: .inactive, allowsAutomaticStart: true) == .later)
-        #expect(Response(appPhase: .background, allowsAutomaticStart: true) == .notify)
+        #expect(Response(appPhase: .background, allowsAutomaticStart: true) == .startInTheBackground)
         #expect(Response(appPhase: .active, allowsAutomaticStart: false) == .none)
         #expect(Response(appPhase: .inactive, allowsAutomaticStart: false) == .none)
         #expect(Response(appPhase: .background, allowsAutomaticStart: false) == .none)
@@ -103,12 +103,12 @@ struct AutoLiveActivityRulesTests {
         #expect(active.state == showing(Places.stationA))
     }
 
-    @Test func notifiesAWaitingArrivalWhenTheAppGoesToTheBackground() {
+    @Test func arrivesAWaitingArrivalWhenTheAppGoesToTheBackground() {
         let covered = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
         let background = decide(covered.state, at: nil, appPhase: .background)
 
-        #expect(background.actions == [.notify(Places.stationA)])
-        #expect(background.state == notified(at: Places.stationA))
+        #expect(background.actions == [.startInTheBackground(Places.stationA)])
+        #expect(background.state == arrivedInTheBackground(at: Places.stationA))
     }
 
     @Test func forgetsAWaitingArrivalWhenThePhoneLeavesTheStationArea() {
@@ -151,7 +151,7 @@ struct AutoLiveActivityRulesTests {
         #expect(decision.state == AutoLiveActivityState())
     }
 
-    @Test func doesNotNotifyTwiceForTheSameArrival() {
+    @Test func doesNotStartTwiceForTheSameArrival() {
         let first = decide(at: Places.fiftyMetersFromA)
         let movedOut = decide(first.state, at: Places.twoHundredMetersFromA)
         let back = decide(movedOut.state, at: Places.fiftyMetersFromA)
@@ -160,14 +160,14 @@ struct AutoLiveActivityRulesTests {
         #expect(back.actions.isEmpty)
     }
 
-    @Test func notifiesAgainAfterThePhoneLeftTheStationArea() {
+    @Test func arrivesAgainAfterThePhoneLeftTheStationArea() {
         let first = decide(at: Places.fiftyMetersFromA)
         let left = decide(first.state, at: Places.fourHundredMetersFromA)
         let back = decide(left.state, at: Places.fiftyMetersFromA)
 
-        #expect(left.actions == [.withdrawNotification])
+        #expect(left.actions.isEmpty)
         #expect(left.state.arrivalStationId == nil)
-        #expect(back.actions == [.notify(Places.stationA)])
+        #expect(back.actions == [.startInTheBackground(Places.stationA)])
     }
 
     @Test func doesNotStartAgainAfterAStopByHandInTheSameArea() {
@@ -176,7 +176,7 @@ struct AutoLiveActivityRulesTests {
         #expect(decide(state, at: Places.fiftyMetersFromA, appPhase: .active).actions.isEmpty)
     }
 
-    @Test func switchesToANearerStationInsteadOfNotifying() {
+    @Test func switchesToANearerStationInsteadOfStartingInTheBackground() {
         let decision = decide(showing(Places.stationA), at: Places.atB)
 
         #expect(decision.actions == [.switchTo(Places.stationB)])
@@ -200,7 +200,7 @@ struct AutoLiveActivityRulesTests {
     @Test func endsTheLiveActivityWhenThePhoneMovesAwayFromTheStation() {
         let decision = decide(showing(Places.stationA), at: Places.fourHundredMetersFromA)
 
-        #expect(decision.actions == [.withdrawNotification, .end])
+        #expect(decision.actions == [.end])
         #expect(decision.state == AutoLiveActivityState())
     }
 

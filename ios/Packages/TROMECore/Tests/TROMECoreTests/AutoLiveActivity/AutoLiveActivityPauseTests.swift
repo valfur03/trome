@@ -138,7 +138,7 @@ extension AutoLiveActivityModelTests {
         #expect(relaunched.pausedStation?.station == Places.stationA)
     }
 
-    @Test func neitherNotifiesNorStartsAtThePausedStationEvenAfterLeavingAndComingBack() async {
+    @Test func startsNothingAtThePausedStationEvenAfterLeavingAndComingBack() async {
         let model = makeModel()
         await pausedAtA(model)
 
@@ -148,7 +148,7 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fourHundredMetersFromA)
         await wake(model, at: Places.fiftyMetersFromA)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.count == 1)
         #expect(model.pausedStation?.station == Places.stationA)
     }
@@ -161,7 +161,7 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fourHundredMetersFromA)
         await wake(model, at: Places.fiftyMetersFromA)
 
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
         #expect(model.pausedStation == nil)
     }
 
@@ -175,12 +175,12 @@ extension AutoLiveActivityModelTests {
         #expect(model.pausedStation == nil)
     }
 
-    @Test func anotherStationNotifiesInTheBackgroundAndStartsWithTheAppOpenDuringThePause() async {
+    @Test func anotherStationStartsInTheBackgroundAndStartsWithTheAppOpenDuringThePause() async {
         let model = makeModel()
         await pausedAtA(model)
 
         await wake(model, at: Places.atB)
-        #expect(notifier.notified == [Places.stationB])
+        #expect(arrivalsWithNoStart == [Places.stationB.name])
         await wake(model, at: Places.fourHundredMetersFromA)
         await activate(model)
         await wake(model, at: Places.atB)
@@ -229,17 +229,6 @@ extension AutoLiveActivityModelTests {
         #expect(model.pausedStation == nil)
     }
 
-    @Test func aTapOnTheArrivalNotificationOfThePausedStationEndsThePause() async {
-        let model = makeModel()
-        await pausedAtA(model)
-
-        await model.notificationTapped(stationId: "a")
-        await activate(model)
-
-        #expect(model.pausedStation == nil)
-        #expect(model.shownStation == Places.stationA)
-    }
-
     @Test func aSnoozeKeepsThePauseAndItsEnd() async {
         let model = makeModel()
         await pausedAtA(model)
@@ -272,7 +261,7 @@ extension AutoLiveActivityModelTests {
         await wake(model, at: Places.fiftyMetersFromA)
 
         #expect(model.pausedStation == nil)
-        #expect(notifier.notified == [Places.stationA])
+        #expect(arrivalsWithNoStart == [Places.stationA.name])
     }
 }
 

@@ -23,8 +23,8 @@ public protocol LiveActivityStarter: Sendable {
 
 /// The silent start: when iOS wakes the app at a station, the server starts the Live Activity through Apple's push
 /// service, so that the rider finds it on the lock screen with no notification and no tap.
-/// The app falls back to its arrival notification when it has no start token, when the answer is not one of the two
-/// that start it, or when no answer comes within `answerLimit`: a woken app has only seconds to run.
+/// Nothing comes when the app has no start token, when the answer is not one of the two that start it, or when no
+/// answer comes within `answerLimit` (a woken app has only seconds to run): the wake log then says why.
 @MainActor
 public final class SilentStart {
     public nonisolated static let answerLimit: Duration = .seconds(10)
@@ -41,18 +41,29 @@ public final class SilentStart {
             return answer.startsTheLiveActivity
         }
 
-        /// The line of the record, with how long the ask lasted: a process that iOS suspended during the ask runs
-        /// no timer, so an ask that lasts past its limit tells a walk that iOS suspended the app.
-        func line(lasting seconds: Int) -> String {
+        /// Why the Live Activity did not come, in the words of the answer lines, with how long the ask lasted: a
+        /// process that iOS suspended during the ask runs no timer, so an ask that lasts past its limit tells a walk
+        /// that iOS suspended the app.
+        func cause(lasting seconds: Int) -> String {
             let limit = SilentStart.answerLimit.components.seconds
             let outcome = switch self {
-            case .answered(let answer): "Answer: \(answer.summary), after \(seconds) s"
+            case .answered(let answer): "\(answer.summary), after \(seconds) s"
             case .noStartToken: "No start token from iOS within \(limit) s"
             case .noAnswerInTime: "No answer within \(limit) s"
             }
             guard Int64(seconds) > limit + SilentStart.suspensionTolerance else { return outcome }
             return "\(outcome); the ask lasted \(seconds) s for a limit of \(limit) s: iOS suspended the app"
         }
+    }
+
+    /// The outcome of one ask, and how long it lasted.
+    struct Ask: Equatable {
+        let outcome: Outcome
+        let seconds: Int
+
+        var startsTheLiveActivity: Bool { outcome.startsTheLiveActivity }
+
+        var cause: String { outcome.cause(lasting: seconds) }
     }
 
     private let starter: any LiveActivityStarter
@@ -79,16 +90,20 @@ public final class SilentStart {
         self.sleep = sleep
     }
 
-    /// Asks the server once for the start of the Live Activity of the station; true when it comes.
-    func start(at station: Station) async -> Bool {
+    /// Asks the server once for the start of the Live Activity of the station. Only a start writes its answer
+    /// line: the caller writes the line of a start that does not come, with its cause.
+    func start(at station: Station) async -> Ask {
         let time = backgroundTimeRemaining.map { " (\(BackgroundTime.line(remaining: $0())))" } ?? ""
         wakeLog?.record(.silentStart, "Asks the server to start the Live Activity: \(station.name)\(time)")
         let askedAt = now()
         let progress = Progress()
         let outcome = await askWithinTheLimit(station, progress)
             ?? (progress.hasStartToken ? .noAnswerInTime : .noStartToken)
-        wakeLog?.record(.silentStart, outcome.line(lasting: Int(now().timeIntervalSince(askedAt).rounded())))
-        return outcome.startsTheLiveActivity
+        let ask = Ask(outcome: outcome, seconds: Int(now().timeIntervalSince(askedAt).rounded()))
+        if ask.startsTheLiveActivity {
+            wakeLog?.record(.silentStart, "Answer: \(ask.cause)")
+        }
+        return ask
     }
 
     /// The outcome of the ask, or nil when the time is over first: the late ask is then cancelled, and its outcome

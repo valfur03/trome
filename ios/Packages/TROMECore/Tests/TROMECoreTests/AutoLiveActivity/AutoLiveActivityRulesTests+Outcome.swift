@@ -3,13 +3,13 @@ import Testing
 @testable import TROMECore
 
 extension AutoLiveActivityRulesTests {
-    @Test func saysItNotifiedWhenTheClosedAppReachesAStation() {
+    @Test func saysItArrivedInTheBackgroundWhenTheClosedAppReachesAStation() {
         let decision = decide(at: Places.fiftyMetersFromA)
 
-        #expect(decision.arrival == .notified(Places.stationA))
+        #expect(decision.arrival == .arrivedInTheBackground(Places.stationA))
     }
 
-    @Test func saysTheSameArrivalStopsASecondNotification() {
+    @Test func saysTheSameArrivalStopsASecondStart() {
         let decision = decide(AutoLiveActivityState(arrivalStationId: "a"), at: Places.fiftyMetersFromA)
 
         #expect(decision.actions.isEmpty)
@@ -27,13 +27,13 @@ extension AutoLiveActivityRulesTests {
         #expect((190...210).contains(nearest.distanceMeters))
     }
 
-    @Test func saysASnoozeOrTheOffSwitchStopsTheNotification() {
+    @Test func saysASnoozeOrTheOffSwitchStopsTheStart() {
         let decision = decide(at: Places.fiftyMetersFromA, allowsAutomaticStart: false)
 
         #expect(decision.arrival == .automaticStartOff(Places.stationA))
     }
 
-    @Test func saysAPauseStopsTheNotificationAndUntilWhen() {
+    @Test func saysAPauseStopsTheStartAndUntilWhen() {
         let end = now.addingTimeInterval(600)
         let paused = AutoLiveActivityState(pause: StationPause(stationId: "a", end: end))
 
@@ -73,7 +73,7 @@ extension AutoLiveActivityRulesTests {
 
         #expect(ArrivalOutcome.noStationNear(near).logKey == ArrivalOutcome.noStationNear(nearer).logKey)
         #expect(ArrivalOutcome.noStationNear(near).logKey != ArrivalOutcome.noStationNear(other).logKey)
-        let notified = ArrivalOutcome.notified(Places.stationA)
-        #expect(notified.logKey != ArrivalOutcome.alreadyArrived(Places.stationA).logKey)
+        let inTheBackground = ArrivalOutcome.arrivedInTheBackground(Places.stationA)
+        #expect(inTheBackground.logKey != ArrivalOutcome.alreadyArrived(Places.stationA).logKey)
     }
 }

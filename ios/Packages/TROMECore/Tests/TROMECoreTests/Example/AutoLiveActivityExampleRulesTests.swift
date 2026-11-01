@@ -99,18 +99,18 @@ struct AutoLiveActivityExampleRulesTests {
         #expect(decision.state.exampleStartedAt == nil)
     }
 
-    @Test func anArrivalThatIsOnlyNotifiedKeepsTheExample() {
+    @Test func anArrivalInTheBackgroundKeepsTheExample() {
         let state = showingTheExample()
 
         let decision = rules.decide(
             state: state,
             position: Places.fiftyMetersFromA,
             now: now,
-            onArrival: .notify,
+            onArrival: .startInTheBackground,
             catalog: Places.catalog
         )
 
-        #expect(decision.actions == [.notify(Places.stationA)])
+        #expect(decision.actions == [.startInTheBackground(Places.stationA)])
         #expect(decision.state.exampleStartedAt == state.exampleStartedAt)
     }
 

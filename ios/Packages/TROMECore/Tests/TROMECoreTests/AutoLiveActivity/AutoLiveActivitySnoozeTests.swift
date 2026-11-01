@@ -3,21 +3,20 @@ import Testing
 @testable import TROMECore
 
 extension AutoLiveActivityModelTests {
-    @Test func snoozeEndsTheLiveActivityAndWithdrawsTheNotification() async {
+    @Test func snoozeEndsTheLiveActivity() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
 
         await model.snooze(for: .thirtyMinutes)
-        await waitUntil { notifier.withdrawCount > 0 }
+        await waitUntil { !client.isShowing }
 
         #expect(client.isShowing == false)
         #expect(model.shownStation == nil)
         #expect(keeper.isKeeping == false)
-        #expect(notifier.withdrawCount > 0)
         #expect(automaticMode.mode == .snoozed(until: clock.now.addingTimeInterval(30 * 60)))
     }
 
-    @Test func neitherNotifiesNorStartsWhileSnoozed() async {
+    @Test func startsNothingWhileSnoozed() async {
         let model = makeModel()
         await model.snooze(for: .oneHour)
 
@@ -28,11 +27,11 @@ extension AutoLiveActivityModelTests {
         gps.report(Places.fiftyMetersFromA)
         await wake(model, at: Places.fiftyMetersFromA)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.isEmpty)
     }
 
-    @Test func notifiesAgainOnceTheSnoozeEnds() async {
+    @Test func arrivesAgainOnceTheSnoozeEnds() async {
         let model = makeModel()
         await model.snooze(for: .thirtyMinutes)
         await wake(model, at: Places.fiftyMetersFromA)
@@ -40,10 +39,10 @@ extension AutoLiveActivityModelTests {
         clock.advance(by: 30 * 60)
         await wake(model, at: Places.atB)
 
-        #expect(notifier.notified == [Places.stationB])
+        #expect(arrivalsWithNoStart == [Places.stationB.name])
     }
 
-    @Test func neitherNotifiesNorStartsWhileOff() async {
+    @Test func startsNothingWhileOff() async {
         let model = makeModel()
         automaticMode.setOn(false)
 
@@ -51,10 +50,8 @@ extension AutoLiveActivityModelTests {
         await activate(model)
         await wake(model, at: Places.atB)
 
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(client.started.isEmpty)
-        await waitUntil { notifier.withdrawCount > 0 }
-        #expect(notifier.withdrawCount > 0)
     }
 
     @Test(arguments: [false, true])

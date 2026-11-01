@@ -1,7 +1,8 @@
 import Foundation
 
 /// Why the rules ended the Live Activity, for the wake log: the rider can then tell a Live Activity that ended
-/// before the next station (so that station notifies) from one that switched.
+/// before the next station (so that station starts its own, in the background through the server) from one that
+/// switched.
 enum LiveActivityEnding: Equatable, Sendable {
     case farFrom(Station, distanceMeters: Double)
     case maximumDuration(TimeInterval)

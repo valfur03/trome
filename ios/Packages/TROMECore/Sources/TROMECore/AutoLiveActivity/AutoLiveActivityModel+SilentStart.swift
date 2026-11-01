@@ -2,36 +2,33 @@ import Foundation
 
 extension AutoLiveActivityModel {
     /// The rider arrived at a station with the app in the background: with the silent start, the server starts the
-    /// Live Activity, and the arrival notification is only its fallback. The arrival rules give this once for each
-    /// arrival, so a second event of iOS for the same station, even during the ask, asks nothing more.
-    func announceArrival(at station: Station) async {
+    /// Live Activity. The app never notifies the arrival: a start that does not come leaves one line in the wake log,
+    /// with its cause, and the rider who opens the app at the station gets the Live Activity then.
+    /// The arrival rules give this once for each arrival, so a second event of iOS for the same station, even during
+    /// the ask, asks nothing more.
+    func startInTheBackground(at station: Station) async {
         guard let silentStart = services.silentStart else {
-            await services.notifier.notify(station)
+            recordNoStart(at: station, because: "the silent start is off in this build")
             return
         }
         guard liveActivity.areActivitiesEnabled else {
-            await notifyAsTheFallback(at: station, because: "Live Activities are off in Settings")
+            recordNoStart(at: station, because: "Live Activities are off in Settings")
             return
         }
         // During the ask, the app opened at the station must not start a Live Activity of its own:
         // the one that Apple then brings would be a second.
         state.openArrivalStationId = nil
         followPositionInBackground()
-        let isStarted = await silentStart.start(at: station)
-        let isTheSameArrival = state.arrivalStationId == station.id && state.shown == nil
-        if isTheSameArrival {
+        let ask = await silentStart.start(at: station)
+        if state.arrivalStationId == station.id && state.shown == nil {
             state.openArrivalStationId = station.id
         }
-        if isStarted {
+        if ask.startsTheLiveActivity {
             followThePushedStart(at: station)
             return
         }
         endTheLocationKeptForTheAsk()
-        guard isTheSameArrival, inputs.automaticMode.allowsAutomaticStart else {
-            services.wakeLog?.record(.silentStart, "No fallback: the arrival at \(station.name) is over")
-            return
-        }
-        await notifyAsTheFallback(at: station, because: nil)
+        recordNoStart(at: station, because: ask.cause)
     }
 
     /// The push may have landed during the ask: the app then follows it at once, and keeps the location as for a
@@ -56,10 +53,9 @@ extension AutoLiveActivityModel {
         return true
     }
 
-    private func notifyAsTheFallback(at station: Station, because reason: String?) async {
-        let line = "Fallback: the arrival notification" + (reason.map { " (\($0))" } ?? "")
-        services.wakeLog?.record(.silentStart, line)
-        await services.notifier.notify(station)
+    /// The one line of a background start that does not come: it names the cause, and says that no banner stood in.
+    private func recordNoStart(at station: Station, because cause: String) {
+        services.wakeLog?.record(.silentStart, "No start at \(station.name), no notification: \(cause)")
     }
 
     /// iOS suspends a woken app seconds after the wake: the background location keeps it running for the ask.

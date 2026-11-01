@@ -7,6 +7,7 @@ public struct WakeLogEntry: Codable, Equatable, Sendable, Identifiable {
         case system
         case regions
         case decision
+        /// Written only by earlier builds, which sent the arrival notification: kept so that their lines still read.
         case notification
         case silentStart
         case trains

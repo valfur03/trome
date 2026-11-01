@@ -3,8 +3,8 @@ import Testing
 @testable import TROMECore
 
 /// A rider who moves past stations with the app in the background: the Live Activity switches at the next station
-/// with no notification, also when iOS wakes the app for the area of that station; and the wake log says when it
-/// ended on the way, so that the wake for the next station notifies.
+/// with no second start, also when iOS wakes the app for the area of that station; and the wake log says when it
+/// ended on the way, so that the wake for the next station starts in the background.
 extension AutoLiveActivityModelTests {
     enum ReportedPosition: CaseIterable {
         case lastKnown
@@ -21,7 +21,7 @@ extension AutoLiveActivityModelTests {
     }
 
     @Test(arguments: ReportedPosition.allCases)
-    func switchesWithNoNotificationWhenIOSReportsTheNextStationWhileTheLiveActivityShows(
+    func switchesWithNoStartInTheBackgroundWhenIOSReportsTheNextStationWhileTheLiveActivityShows(
         _ position: ReportedPosition
     ) async {
         let model = makeModel()
@@ -38,11 +38,11 @@ extension AutoLiveActivityModelTests {
 
         #expect(client.updates.last?.stationName == "Station B")
         #expect(client.started.count == 1)
-        #expect(notifier.notified.isEmpty)
+        #expect(arrivalsWithNoStart.isEmpty)
         #expect(decisionLines.contains("Live Activity switched to Station B"))
     }
 
-    @Test func logsWhyTheNextStationNotifiesWhenTheLiveActivityEndedOnTheWay() async {
+    @Test func logsWhyTheNextStationStartsInTheBackgroundWhenTheLiveActivityEndedOnTheWay() async {
         let model = makeModel()
         await showAInTheBackground(model)
 
@@ -51,11 +51,11 @@ extension AutoLiveActivityModelTests {
         let atB = PositionFix(coordinate: Places.atB, accuracyMeters: 10, timestamp: clock.now)
         await model.handleRegionEvent(.entered(regionId: "arrival:b"), lastKnownFix: atB)
 
-        #expect(notifier.notified == [Places.stationB])
+        #expect(arrivalsWithNoStart == [Places.stationB.name])
         #expect(decisionLines.suffix(3) == [
             "Live Activity ended: 400 m from Station A (position: stream)",
             "No station within 150 m: nearest is Station A, 400 m",
-            "Notified: Station B"
+            "Arrived in the background: Station B"
         ])
     }
 
@@ -71,14 +71,18 @@ extension AutoLiveActivityModelTests {
         #expect(decisionLines.last == "Live Activity ended: 45 min after it started")
     }
 
-    @Test func logsTheEndAtTheTimeLimitBeforeTheNotificationOfTheNextStation() async {
+    @Test func logsTheEndAtTheTimeLimitBeforeTheArrivalAtTheNextStation() async {
         let model = makeModel()
         await showAInTheBackground(model)
         clock.advance(by: 45 * 60)
 
         await model.handle(Places.atB)
 
-        #expect(notifier.notified == [Places.stationB])
-        #expect(decisionLines.suffix(2) == ["Live Activity ended: 45 min after it started", "Notified: Station B"])
+        #expect(arrivalsWithNoStart == [Places.stationB.name])
+        #expect(
+            decisionLines.suffix(2) == [
+                "Live Activity ended: 45 min after it started", "Arrived in the background: Station B"
+            ]
+        )
     }
 }

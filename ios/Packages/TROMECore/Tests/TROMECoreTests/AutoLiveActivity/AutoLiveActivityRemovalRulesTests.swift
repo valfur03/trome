@@ -49,7 +49,7 @@ struct AutoLiveActivityRemovalRulesTests {
     }
 
     @Test(arguments: [AppPhase.active, .inactive, .background])
-    func neitherNotifiesNorStartsAtThePausedStationButRemembersTheArrival(appPhase: AppPhase) {
+    func startsNothingAtThePausedStationButRemembersTheArrival(appPhase: AppPhase) {
         let pause = StationPause(stationId: "a", end: now.addingTimeInterval(60))
         let decision = rules.decide(
             state: AutoLiveActivityState(pause: pause),
@@ -73,7 +73,7 @@ struct AutoLiveActivityRemovalRulesTests {
             catalog: Places.catalog
         )
 
-        #expect(decision.actions == [.notify(Places.stationA)])
+        #expect(decision.actions == [.startInTheBackground(Places.stationA)])
     }
 
     @Test func aPauseAtAnotherStationDoesNotStopTheArrival() {

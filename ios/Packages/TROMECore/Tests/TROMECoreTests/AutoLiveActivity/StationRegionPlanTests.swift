@@ -39,7 +39,7 @@ struct StationRegionPlanTests {
     }
 
     /// A stop area assumed outside would be reported as left while the rider is still at the station,
-    /// for example when a new process adds the regions again, and the next "entered" would notify twice.
+    /// for example when a new process adds the regions again, and the next "entered" would start twice.
     @Test func onlyTheStopAreaStartsInsideSoARelaunchAtTheStationReportsNoExit() {
         let all = stations(count: 30)
         let catalog = StationCatalog(stations: all)

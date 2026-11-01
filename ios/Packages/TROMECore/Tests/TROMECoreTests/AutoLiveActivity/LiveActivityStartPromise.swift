@@ -45,7 +45,8 @@ struct LiveActivityStartPromise: Decodable {
     }
 }
 
-/// How the builds read an answer to the start: the Live Activity comes, or the arrival notification instead.
+/// How the builds read an answer to the start: the Live Activity comes, or nothing
+/// (an older build sends its arrival notification instead).
 enum PromisedStartReading: Equatable {
     case start
     case fallback

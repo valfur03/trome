@@ -8,23 +8,23 @@ extension AutoLiveActivityRulesTests {
     }
 
     @Test func forgetsTheArrivalWhenIOSSaysThePhoneLeftTheStopAreaWithNoPosition() {
-        let left = leaveStopArea(of: Places.stationA, notified(at: Places.stationA))
+        let left = leaveStopArea(of: Places.stationA, arrivedInTheBackground(at: Places.stationA))
 
         #expect(left.state == AutoLiveActivityState())
-        #expect(left.actions == [.withdrawNotification])
+        #expect(left.actions.isEmpty)
         #expect(left.arrival == .left(Places.stationA))
     }
 
-    @Test func notifiesAgainWhenTheRiderComesBackAfterLeavingTheStopArea() {
-        let left = leaveStopArea(of: Places.stationA, notified(at: Places.stationA))
+    @Test func arrivesAgainWhenTheRiderComesBackAfterLeavingTheStopArea() {
+        let left = leaveStopArea(of: Places.stationA, arrivedInTheBackground(at: Places.stationA))
 
         let back = decide(left.state, at: Places.fiftyMetersFromA, after: 24 * 3_600)
 
-        #expect(back.actions == [.notify(Places.stationA)])
+        #expect(back.actions == [.startInTheBackground(Places.stationA)])
     }
 
     @Test func keepsTheArrivalWhenThePhoneLeavesTheStopAreaOfAnotherStation() {
-        let state = notified(at: Places.stationA)
+        let state = arrivedInTheBackground(at: Places.stationA)
 
         let left = leaveStopArea(of: Places.stationB, state)
 
@@ -33,12 +33,12 @@ extension AutoLiveActivityRulesTests {
         #expect(left.arrival == nil)
     }
 
-    @Test func notifiesOnceWhileTheRiderMovesInsideTheStopArea() {
+    @Test func arrivesOnceWhileTheRiderMovesInsideTheStopArea() {
         let arrived = decide(at: Places.fiftyMetersFromA)
         let moved = decide(arrived.state, at: Places.twoHundredMetersFromA, after: 60)
         let back = decide(moved.state, at: Places.fiftyMetersFromA, after: 120)
 
-        #expect(arrived.actions == [.notify(Places.stationA)])
+        #expect(arrived.actions == [.startInTheBackground(Places.stationA)])
         #expect(moved.actions.isEmpty)
         #expect(back.actions.isEmpty)
         #expect(back.arrival == .alreadyArrived(Places.stationA))
@@ -64,7 +64,7 @@ extension AutoLiveActivityRulesTests {
         #expect(back.arrival == .automaticStartOff(Places.stationA))
     }
 
-    @Test func notifiesOnceForAWaitingArrivalAfterIOSClosedTheApp() throws {
+    @Test func arrivesOnceForAWaitingArrivalAfterIOSClosedTheApp() throws {
         let covered = decide(at: Places.fiftyMetersFromA, appPhase: .inactive)
         let relaunched = try JSONDecoder().decode(
             AutoLiveActivityState.self, from: JSONEncoder().encode(covered.state)
@@ -73,7 +73,7 @@ extension AutoLiveActivityRulesTests {
         let wake = decide(relaunched, at: Places.fiftyMetersFromA, after: 300)
         let nextWake = decide(wake.state, at: Places.fiftyMetersFromA, after: 400)
 
-        #expect(wake.actions == [.notify(Places.stationA)])
+        #expect(wake.actions == [.startInTheBackground(Places.stationA)])
         #expect(nextWake.actions.isEmpty)
     }
 

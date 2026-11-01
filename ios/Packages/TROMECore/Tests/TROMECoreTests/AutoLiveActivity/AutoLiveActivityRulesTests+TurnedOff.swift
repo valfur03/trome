@@ -17,17 +17,17 @@ extension AutoLiveActivityRulesTests {
         )
     }
 
-    @Test func anArrivalWithTheAppOpenAndLiveActivitiesOffStartsNothingNotifiesNothingAndStaysOpen() {
+    @Test func anArrivalWithTheAppOpenAndLiveActivitiesOffStartsNothingAndStaysOpen() {
         let decision = decideWithLiveActivitiesOff(at: Places.fiftyMetersFromA)
 
         #expect(decision.actions.isEmpty)
-        #expect(decision.state == notified(at: Places.stationA))
+        #expect(decision.state == arrivedInTheBackground(at: Places.stationA))
     }
 
-    @Test func anArrivalWithTheAppClosedAndLiveActivitiesOffStillNotifies() {
+    @Test func anArrivalWithTheAppClosedAndLiveActivitiesOffStillAsksTheServer() {
         let decision = decideWithLiveActivitiesOff(at: Places.fiftyMetersFromA, appPhase: .background)
 
-        #expect(decision.actions == [.notify(Places.stationA)])
+        #expect(decision.actions == [.startInTheBackground(Places.stationA)])
     }
 
     @Test func anArrivalKeptOpenWhileLiveActivitiesWereOffStartsOnceTheyAreOnWithTheAppOpen() {
@@ -35,7 +35,7 @@ extension AutoLiveActivityRulesTests {
 
         let turnedOn = decide(off.state, at: Places.fiftyMetersFromA, appPhase: .active)
 
-        #expect(turnedOn.actions == [.start(Places.stationA), .withdrawNotification])
+        #expect(turnedOn.actions == [.start(Places.stationA)])
         #expect(turnedOn.state == showing(Places.stationA))
         #expect(rules.waitsForAResume(state: off.state, now: now, onArrival: .start))
         #expect(rules.waitsForAResume(state: off.state, now: now, onArrival: .keepOpen) == false)
@@ -44,7 +44,7 @@ extension AutoLiveActivityRulesTests {
     @Test func aLiveActivityGoneBecauseLiveActivitiesAreOffKeepsItsArrivalOpen() {
         let state = rules.liveActivityIsGone(from: showing(Places.stationA), activitiesAreEnabled: false)
 
-        #expect(state == notified(at: Places.stationA))
+        #expect(state == arrivedInTheBackground(at: Places.stationA))
         #expect(rules.waitsForAResume(state: state, now: now, onArrival: .start))
     }
 
@@ -75,7 +75,7 @@ extension AutoLiveActivityRulesTests {
         )
 
         #expect(decision.actions.isEmpty)
-        #expect(decision.state == notified(at: Places.stationA))
+        #expect(decision.state == arrivedInTheBackground(at: Places.stationA))
     }
 
     @Test func turningTheAutomaticModeOffEndsTheShownLiveActivity() {
