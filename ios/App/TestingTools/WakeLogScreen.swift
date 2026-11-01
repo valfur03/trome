@@ -9,6 +9,7 @@ struct WakeLogScreen: View {
     @Environment(WakeLog.self) private var wakeLog: WakeLog?
     @Environment(LocationService.self) private var locationService
     @State private var phoneState: [String] = []
+    @State private var asksToClear = false
 
     var body: some View {
         List {
@@ -36,12 +37,22 @@ struct WakeLogScreen: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 ShareLink(item: wakeLog?.report(phone: phoneState) ?? "")
                     .disabled(entries.isEmpty)
+                // The log may be the only record of a walk, and the trash sits next to Share: one slip must not
+                // erase it, so iOS asks first, with its own destructive confirmation.
                 Button(role: .destructive) {
-                    wakeLog?.clear()
+                    asksToClear = true
                 } label: {
                     Label { Text(verbatim: "Clear") } icon: { Image(systemName: "trash") }
                 }
                 .disabled(entries.isEmpty)
+                .accessibilityIdentifier("wakeLogClear")
+                .confirmationDialog(Text(verbatim: "Clear"), isPresented: $asksToClear, titleVisibility: .hidden) {
+                    Button(role: .destructive) {
+                        wakeLog?.clear()
+                    } label: {
+                        Text(verbatim: "Clear All")
+                    }
+                }
             }
         }
         .task {

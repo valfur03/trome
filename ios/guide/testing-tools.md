@@ -183,7 +183,7 @@ The line "Region watch on: iOS keeps N regions for the app" is no proof either w
 A line "iOS keeps N areas for the app, the plan has M" is a problem: iOS does not keep the areas that the app just chose, and past 20 areas iOS refuses new ones, so a station near you may not wake the app.
 For a first walk, stand about 2 minutes within 150 meters of a station, because iOS can take a few seconds to a few minutes to report that you entered the area ([the arrival notification](#with-the-app-in-the-background-the-arrival-notification)).
 To see these area lines at your desk first, play [a walk into Le Parc de Saint-Maur](../App/TestingTools/WalkIntoLeParcDeSaintMaur.gpx) on your iPhone with **Debug** > **Simulate Location** in Xcode: the file has the steps.
-**Share** sends the log as text, and **Clear** empties it.
+**Share** sends the log as text, and **Clear** empties it once you confirm **Clear All**, so a slip next to **Share** keeps the log.
 The text holds the lines and **Phone now**, with distances to stations and never a position.
 A Release build records nothing, unless it is a build for a walk.
 
