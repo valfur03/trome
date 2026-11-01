@@ -235,6 +235,9 @@ extension AutoLiveActivityModelTests {
     @Test func stopsAskingInTheBackgroundOnceTheLiveActivityIsDismissed() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
+        // The first call of the on-screen feed runs off the main actor, so it can count after the read below:
+        // read the count once its trains came.
+        await waitUntil { client.updates.last?.hasTrains ?? false }
         model.setAppPhase(.background)
         let callCount = provider.callCount
 
