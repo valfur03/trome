@@ -82,6 +82,8 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   Fix the cause.
   Never silence a warning, and never raise `options.xcodeVersion` in `ios/project.yml` without adding the settings that Xcode proposes.
   An agent cannot open that Xcode dialog: when `make recommended-settings-check` fails, ask the prompter (label `needs-prompter`).
+- **The Release archive.** A change of `ios/project.yml`, `ios/Config/`, a Swift file that names a type of `ARCHIVE_TYPES` in `ios/scripts/release-entitlements-check.py`, or that check, needs a green `make release-archive-check`: `make check` builds it for such a change and for no other (`make release-archive-gate`), and the reviewer finds its line in the gate's log.
+  Why: TASK-507 deleted a type that the check looked for, and its review did not see it, as `make check` built no archive then; build 5 would have failed at its archive, after QA and the merge.
 - **New module.** Add a target in `ios/Packages/` only when it solves a real problem (code that must not see the rest, code shared with a new target, build time).
   Deeper changes that these rules call for are `tech` tasks.
 - **The note for riders.** A change of the app code that a rider or a builder will notice adds its note in `ios/changes/` (format and kinds: `ios/changes/README.md`); a change that nobody will notice says so in a commit, most often a title that ends with "(no rider change)" (the other ways: the same file).
