@@ -33,6 +33,7 @@ For each thing that could go wrong, ask: what could a rider lose, and what is th
   Assert on what the rider or iOS shows (the Live Activity in the Notification Center, the notification, the popup), not on an app label.
   Set up the state with a platform hook (`XCUIDevice.location`) or a launch argument, not through the app screen or the Testing tools.
   Fake only what is not the seam under test (`--fake-trains` replaces PRIM).
+  A new launch argument or Testing tool that changes a rider's path goes in the list of `ios/guide/tests.md` ("The test flags and a rider's path"), with the test that runs that path without it, or why the Simulator cannot (TASK-513: a keep-awake flag hid a pocket switch that never came).
   One test per seam.
   Each file in `ios/UITests/` starts with its seam and why a cheaper check cannot see it.
   Keep the test phase of the full suite at a few minutes.

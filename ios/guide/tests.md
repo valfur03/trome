@@ -80,7 +80,7 @@ A failed `make docs-screenshots` keeps its evidence in the same folder.
 | `SnoozeTests` | The widget draws the trains on the real Live Activity, and its buttons run in the app. |
 | `BackgroundPositionTests` | With no Live Activity, the app in the background follows no position: a phone that rides through a station at the speed of a train brings no arrival. |
 
-The wake of a closed app at a station has no test, because the Simulator cannot watch regions: check it on an iPhone.
+The paths of the automatic start that no test can run in the Simulator, and what checks them instead, are in [the test flags](#the-test-flags-and-a-riders-path).
 
 ### Write one
 
@@ -105,11 +105,37 @@ Each class inherits from `E2ETestCase` ([`ios/UITests/E2ETestCase.swift`](../UIT
 | `tapOnTheLiveActivity(_:)` | Waits until the tap point of a button of the Live Activity stays on the card on screen, then taps that point. The frame of a widget element is in the card's own space, so the frame alone does not show the card move. |
 
 In debug builds, `--fake-trains` gives fake trains with no call to PRIM, and `--fake-trains at-platform` a train at the platform at once ([the other states](testing-tools.md#ask-for-a-train-at-the-platform-or-another-state)).
-`--keep-running-in-background` keeps the app awake and following the position in the background, in place of the wake for the area of a station, so that a new position reaches it.
-A test of the Live Activity in the pocket never uses it: a rider's phone has no such argument, and it hides the stop of the position stream by iOS.
+A test of the Live Activity in the pocket uses no launch argument that changes a rider's path ([the list](#the-test-flags-and-a-riders-path)).
 `makeApp()` adds `--end-live-activity` (debug builds only): at launch, the app ends the Live Activity that the last test left, so each test starts with none, and no test taps a button of the app to end it.
 Before it kills the app of the last test, `makeApp()` sends it to the background and waits until it ends its position stream and its background sessions (debug builds only, `E2ETestCase+LocationEnd.swift`).
 Why: iOS keeps the stream of an app killed while it streams, and starts the app again to serve it, so a launch at that moment fails with "No such process".
+
+### The test flags and a rider's path
+
+A launch argument or a Testing tool that changes what the app does on a rider's path is in this list, with the test that runs the same path without it, or why the Simulator cannot.
+Why: `--keep-running-in-background` once kept the app following the position in the pocket, so the tests passed while the Live Activity never switched on a phone.
+
+| Flag | What it changes | The tests that use it | The same path without it |
+|---|---|---|---|
+| `--keep-running-in-background` | The app stays awake and follows the position in the background for the whole run, in place of the wake for the area of a station. | `BackgroundArrivalTests`: with no Live Activity, nothing else brings a position to the app in the background. | None in the Simulator: see the arrival in the background below. |
+| `--fake-trains [state]` | Fake trains in place of PRIM. | `SnoozeTests`: the boxes and the buttons need trains, and PRIM has a daily quota and data that changes. | The other classes run with no train data ("Times unavailable"); the real answers are unit tests of `contracts/prim/`, and a look with `make run`. |
+| `--content-as-the-server` | Every content of the Live Activity is the one that the server pushes. | `SnoozeTests`, for the page that a tap chose. | The other classes send the content of the app; `LiveActivityContentContractTests` and the server tests check that both are the same. |
+| `--end-live-activity` | At launch, the app ends the Live Activity of the last test. | Every class, through `makeApp()`. | No test launches the app while a Live Activity shows (iOS ended the app, then started it again): `AutoLiveActivityModelTests` checks it. |
+| A fake position (Testing tools) | Always trusted; iOS never sees it, and the app watches no area. | None: `--reset-location-source` (every class) puts back the real GPS. | Every class: the Simulator position, read through Core Location. |
+| A Live Activity shown by hand (Testing tools) | It starts far from its station, and ends at 250 m only after the phone came near. | None. | `AutoLiveActivityTests`. |
+| `-liveActivityMaximumDuration`, `-exampleDuration` | Shorter limits than the 45 minutes and the 10 minutes of the example. | None. | No test waits 45 minutes: the unit tests of the rules check the end. |
+| A Debug build | No [silent start](auto-live-activity.md#the-silent-start): a Simulator build does not ask the server, and a real server pushes only to the Release build. | Every class. | None in the Simulator: `AutoLiveActivitySilentStartTests`, the server tests, and a [walk with a TestFlight build](testing-tools.md#record-a-walk-with-a-testflight-build). |
+
+`--hide-testing-tools` only hides the link of the Testing tools, for the store pictures, and the wake log only reads: they change no path.
+iOS never suspends an app that a test launched, so no test sees the app suspended or ended in the background.
+
+| Path of the automatic start | The test that runs it with no flag of this list | When the Simulator cannot run it |
+|---|---|---|
+| The start with the app open | `AutoLiveActivityTests`, `LiveActivityTests` | |
+| The switch in the pocket | `AutoLiveActivityTests` | |
+| The end in the pocket | `AutoLiveActivityTests` | |
+| The arrival in the background | None: on a phone, the wake for the area of the station starts it, and the Simulator cannot watch areas (`isMonitoringAvailable` is false). | `BackgroundArrivalTests` with `--keep-running-in-background`: no notification, then the Live Activity once the rider opens the app. The unit tests of a reported arrival (`ReportedArrivalRulesTests`, `AutoLiveActivitySecondChanceTests`, `AutoLiveActivityRestartTests`) and of the silent start. The wake log of a walk. |
+| The wake of a closed app at a station | None, for the same reason. | The unit tests of the watched areas (`StationRegionPlanTests`, `StationRegionSyncTests`, `WakeProcessTests`), and the wake log of a walk. |
 
 ## The render check of the Live Activity
 
