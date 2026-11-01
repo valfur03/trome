@@ -107,4 +107,51 @@ extension AutoLiveActivityModelTests {
         #expect(watcher.watched.count == plans + 1)
         #expect(model.plannedRegions?.center == farNorth)
     }
+
+    /// A line of 40 stations, one each kilometre, north from 48.80 N: more than the 18 areas of one plan.
+    private static let line = StationCatalog(stations: (0..<40).map {
+        Station(id: "s\($0)", name: "Station \($0)", coordinate: kilometre(Double($0)), lines: [])
+    })
+
+    private static func kilometre(_ km: Double) -> Coordinate {
+        Coordinate(48.80 + km * 0.009, 2.3500)
+    }
+
+    private var watchedStationIds: Set<String> {
+        Set((watcher.watched.last ?? []).compactMap { WatchedRegion.arrivalStationId(inRegionId: $0.id) })
+    }
+
+    private func fix(at km: Double) -> PositionFix {
+        PositionFix(coordinate: Self.kilometre(km), accuracyMeters: 10, timestamp: clock.now)
+    }
+
+    /// The app is never on screen and follows no position: only the wakes of iOS move the plan of the areas, the
+    /// exit of the area around the rider first, which is smaller than the farthest planned station, so the rider
+    /// always leaves it before going past the plan. A relaunch by iOS keeps it going.
+    @Test func aClosedAppPlansTheAreasAgainAtEachWakeAlongARideAndTheFarStationStillNotifies() async {
+        let model = makeModel(catalog: Self.line)
+        model.setAppPhase(.background)
+        await waitUntil { !gps.isReporting }
+
+        await model.handleRegionEvent(.entered(regionId: "arrival:s0"), lastKnownFix: fix(at: 0))
+        #expect(notifier.notified.map(\.id) == ["s0"])
+        #expect(watchedStationIds.contains("s17") && !watchedStationIds.contains("s25"))
+        let refresh = watcher.watched.last?.first { $0.id == WatchedRegion.refreshId }
+        #expect(refresh.map { $0.radiusMeters < Self.kilometre(0).distance(to: Self.kilometre(17)) } == true)
+
+        clock.advance(by: 900)
+        await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: fix(at: 16.5))
+        #expect(watchedStationIds.contains("s25"))
+
+        clock.advance(by: 300)
+        let relaunched = makeModel(catalog: Self.line)
+        relaunched.setAppPhase(.background)
+        await relaunched.handleRegionEvent(.entered(regionId: "arrival:s25"), lastKnownFix: fix(at: 25))
+
+        #expect(notifier.notified.map(\.id) == ["s0", "s25"])
+        #expect(watchedStationIds.contains("s34"))
+        #expect(!gps.isReporting)
+        #expect(!keeper.isKeeping)
+        withExtendedLifetime(model) {}
+    }
 }
