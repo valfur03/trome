@@ -33,12 +33,23 @@ struct WakeLogScreen: View {
             }
         }
         .navigationTitle(Text(verbatim: "Wake log"))
+        // The log may be the only record of a walk, and the trash sits next to Share: one slip must not erase it, so
+        // iOS asks first. An alert, not a confirmation dialog: iOS 26 shows a dialog as a popover over the toolbar,
+        // where its button covers Share, so a second tap aimed at Share would erase the log.
+        .alert(Text(verbatim: "Clear the Wake log?"), isPresented: $asksToClear) {
+            Button(role: .cancel) {} label: {
+                Text(verbatim: "Cancel")
+            }
+            Button(role: .destructive) {
+                wakeLog?.clear()
+            } label: {
+                Text(verbatim: "Clear")
+            }
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 ShareLink(item: wakeLog?.report(phone: phoneState) ?? "")
                     .disabled(entries.isEmpty)
-                // The log may be the only record of a walk, and the trash sits next to Share: one slip must not
-                // erase it, so iOS asks first, with its own destructive confirmation.
                 Button(role: .destructive) {
                     asksToClear = true
                 } label: {
@@ -46,13 +57,6 @@ struct WakeLogScreen: View {
                 }
                 .disabled(entries.isEmpty)
                 .accessibilityIdentifier("wakeLogClear")
-                .confirmationDialog(Text(verbatim: "Clear"), isPresented: $asksToClear, titleVisibility: .hidden) {
-                    Button(role: .destructive) {
-                        wakeLog?.clear()
-                    } label: {
-                        Text(verbatim: "Clear All")
-                    }
-                }
             }
         }
         .task {
