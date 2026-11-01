@@ -123,6 +123,7 @@ On your iPhone, iOS also wakes a suspended or closed app near a station, after a
 ### On your iPhone: see why no notification came
 
 **Testing tools** > **Wake log** shows, newest first, what iOS woke the app for and what the app decided, with the time of each line.
+In a Release build for a walk, the list icon at the top right of the main screen opens it ([Record a walk with a TestFlight build](#record-a-walk-with-a-testflight-build)).
 It keeps the last 500 lines across launches, with no cable and no Xcode.
 At the top, **Phone now** shows the settings that can stop a wake: the location (Always, precise), Background App Refresh, Low Power Mode, the notifications, and a fake position.
 
@@ -140,18 +141,20 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Icon | A line for |
 |---|---|
 | Power | Each launch of the app, then the settings of the phone at that launch; each time the app comes on screen or leaves it |
-| Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports, with where the phone was for a station area; one line for the first state of the areas that iOS did not watch yet, but its own line for each station that the phone is inside |
+| Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports, with where the phone was for a station area, whether iOS launched the app for it, and the background time left; one line for the first state of the areas that iOS did not watch yet, but its own line for each station that the phone is inside |
 | Map | Each time the app chooses again the stations that iOS watches |
 | Branch | Each arrival that the app decides, with its reason: notified, started, switched, or why not; each end of the Live Activity by its distance or time limit |
 | Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
-| Radio waves | At each launch of a plain `make run` build (not `LIVE=1`), "Silent start off: this build has no server": expected, because that build has no server, so you set up nothing and none of the other lines of this row follow. A `make run LIVE=1` build writes this line only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and no server address set up; without that setting it has no silent start and writes none of the lines of this row. With the [silent start](auto-live-activity.md#the-silent-start) on: the start token from iOS, each ask to the server, its answer ("started", "already started", "refused", "not set up", "no answer") or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), the fallback to the notification, and "Follows the Live Activity that the server started" when the app finds it on screen |
+| Radio waves | At each launch of a plain `make run` build (not `LIVE=1`), "Silent start off: this build has no server": expected, because that build has no server, so you set up nothing and none of the other lines of this row follow. A `make run LIVE=1` build writes this line only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and no server address set up; without that setting it has no silent start and writes none of the lines of this row. With the [silent start](auto-live-activity.md#the-silent-start) on: the start token from iOS, each ask to the server with the background time left, its answer ("started", "already started", "refused", "not set up", "no answer") with the seconds that it took, or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), the fallback to the notification, and "Follows the Live Activity that the server started" when the app finds it on screen |
 | Tram | Each call that the app makes for its Live Activity in the background: how old the answer is and the next train of each direction that it hands to iOS (four at most), or why no answer came; then "next ask by" and a time, or "asks no more" |
 
 "App launched" is written at the start of the launch.
 When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.
+The line "Phone at launch" after it says the same: "Started by iOS, in the background" or "Started on screen".
 Only a line "iOS: entered" a station after it, or "first state of a new area: inside" a station, says that iOS woke the app near that station.
 After a station, in an "entered" or "left" line or in a line "first state of a new area: inside", the brackets say where the phone was when iOS sent the event, for example "(phone 85 m away, ±12 m, 4 s old)": the distance from the centre of the station, the accuracy, and the age of the last position that iOS had.
 The time of the line is when iOS woke the app: the gap from the time when you crossed the edge of the area is how late iOS was.
+The end of the line says "fresh launch, N s ago" when iOS launched the app for this event, or "app already running for" a time when the event came to an app that was running or suspended, then the background time that iOS still gave the app ("no background time limit" on screen).
 The app writes this line before it decides, so it is there even when no decision line follows, and "(iOS gave no position)" means that iOS had none to give.
 The decision line after it rests on that position, with one exception: after "entered", a position that does not settle the arrival makes the app ask iOS for a new one, for up to 10 seconds, and the decision then rests on the new one.
 Other area lines can follow any launch: iOS can send the state of each area when the app starts ("left", "not watched"), and "area around you" and "stop area" are not stations.
@@ -161,6 +164,8 @@ With a Live Activity on the lock screen and the app in the background, no tram l
 An old answer, or the same times line after line, comes from the train data; times in the line that the lock screen does not show mean that iOS did not draw them.
 A line "No arrival at" a station with a rough position or none is followed by "Second chance at" that station: "asks iOS for a position", then its result: "notified after N s", or "gave up" or "ended" after N s, with the reason.
 When the result line never comes, iOS suspended or closed the app before the end of the 2 minutes.
+An answer line that ends with "iOS suspended the app" says that the ask lasted past its 10 seconds: iOS stopped the app during the ask.
+After a "left" line, "No decision and no new areas" says that iOS gave no recent position, so the app chose no new stations to watch, and the stations further on may not wake it.
 A line "Live Activity ended: N m from" a station, before a line "Notified", says that the rider left that station before reaching the next one, so the next one notified instead of a switch.
 After a walk, do not read **Phone now** to know the position of the walk: it shows the state when you opened the screen.
 Read the line "App launched" (Power icon) of the walk instead, which says "Position: fake" with a place name, or "Position: real GPS", as it was at that launch.
@@ -172,4 +177,12 @@ A line "iOS keeps N areas for the app, the plan has M" is a problem: iOS does no
 For a first walk, stand about 2 minutes within 150 meters of a station, because iOS can take a few seconds to a few minutes to report that you entered the area ([the arrival notification](#with-the-app-in-the-background-the-arrival-notification)).
 To see these area lines at your desk first, play [a walk into Le Parc de Saint-Maur](../App/TestingTools/WalkIntoLeParcDeSaintMaur.gpx) on your iPhone with **Debug** > **Simulate Location** in Xcode: the file has the steps.
 **Share** sends the log as text, and **Clear** empties it.
-Release builds record nothing.
+The text holds the lines and **Phone now**, with distances to stations and never a position.
+A Release build records nothing, unless it is a build for a walk.
+
+### Record a walk with a TestFlight build
+
+A Release build archived with `TROME_WAKE_LOG = YES` in `ios/Config/Local.xcconfig` has the Wake log: the list icon at the top right of the main screen opens it, and nothing else on the screens changes.
+It records the same lines as a debug build, on the phone only: the app sends none of them anywhere, and only **Share** gives them to someone.
+Use it for a TestFlight build that you walk with, then empty the setting before you archive a build for the App Store.
+`make release-archive-check` fails when the archive has the Wake log while its Release settings do not ask for it, and says "a TestFlight build for a walk, never for the store" when they do.

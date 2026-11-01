@@ -1,6 +1,7 @@
 #!/bin/sh
 # The check of the silent start in a Release build: it fails when the app loses the push capability, when the app or
 # its widget loses the app group, or when the archive has no silent start; a fake xcodebuild gives the settings.
+# It also fails when a store archive has the Wake log, or a walk archive has none.
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
 script="$tests/../release-entitlements-check.py"
@@ -31,8 +32,8 @@ case $target in
     TROMEWidget) entitlements=${FAKE_WIDGET_ENTITLEMENTS-Config/AppGroup.entitlements} ;;
     *) exit 65 ;;
 esac
-printf '[{"target":"%s","buildSettings":{"SRCROOT":"%s","APP_BUNDLE_ID":"io.github.valfur03.trome","CODE_SIGN_ENTITLEMENTS":"%s"}}]\n' \
-    "$target" "$FAKE_SRCROOT" "$entitlements"
+printf '[{"target":"%s","buildSettings":{"SRCROOT":"%s","APP_BUNDLE_ID":"io.github.valfur03.trome","CODE_SIGN_ENTITLEMENTS":"%s","TROME_WAKE_LOG":"%s"}}]\n' \
+    "$target" "$FAKE_SRCROOT" "$entitlements" "${FAKE_WAKE_LOG-}"
 EOF
 chmod +x "$state/xcodebuild"
 
@@ -87,6 +88,14 @@ expect "an archive whose widget reads another app group fails" "$(run)" fails
 archive group.io.github.valfur03.trome NotificationOnly
 expect "an archive with no silent start compiled fails" "$(run)" fails
 expect "the failure names the silent start" "$(grep -c 'has no silent start' "$state/out")" 1
+archive group.io.github.valfur03.trome "ActivityKitPushToStartTokenSource WakeLogScreen"
+expect "a store archive with the Wake log fails" "$(run)" fails
+expect "the failure names the Wake log" "$(grep -c 'has the Wake log' "$state/out")" 1
+expect "a walk archive with the Wake log passes" "$(run FAKE_WAKE_LOG=YES)" passes
+expect "the pass says it is not for the store" "$(grep -c 'never for the store' "$state/out")" 1
+archive group.io.github.valfur03.trome ActivityKitPushToStartTokenSource
+expect "a walk archive with no Wake log fails" "$(run FAKE_WAKE_LOG=YES)" fails
+expect "the store archive says it has no Wake log" "$(run >/dev/null; grep -c 'with no Wake log' "$state/out")" 1
 rm -rf "$state/TROME.xcarchive"
 expect "a missing archive fails" "$(run)" fails
 

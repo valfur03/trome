@@ -118,15 +118,20 @@ targets:
       # Every Release build has it: only the paid team signs one.
       # A Debug build has it only with TROME_SILENT_START = YES in Config/Local.xcconfig (a paid team),
       # as a free Apple ID can sign neither; a Debug build for the Simulator, which needs no team, has the group.
+      # The Wake log (WAKE_LOG) records each wake and decision on the phone, for a walk: every Debug build has it,
+      # and a Release build only with TROME_WAKE_LOG = YES in Config/Local.xcconfig, for a TestFlight build of a walk.
+      # The store build never has it: make release-archive-check fails on an archive that has it while the
+      # Release settings do not ask for it.
       configs:
         Release:
-          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) SILENT_START
+          TROME_WAKE_LOG_CONDITION_YES: WAKE_LOG
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) SILENT_START $(TROME_WAKE_LOG_CONDITION_$(TROME_WAKE_LOG:default=NO))
           CODE_SIGN_ENTITLEMENTS: Config/SilentStart.entitlements
         Debug:
           TROME_SILENT_START_CONDITION_YES: SILENT_START
           TROME_SILENT_START_ENTITLEMENTS_YES: Config/SilentStart.entitlements
           TROME_SILENT_START_ENTITLEMENTS_NO[sdk=iphonesimulator*]: Config/AppGroup.entitlements
-          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) $(TROME_SILENT_START_CONDITION_$(TROME_SILENT_START:default=NO))
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) WAKE_LOG $(TROME_SILENT_START_CONDITION_$(TROME_SILENT_START:default=NO))
           CODE_SIGN_ENTITLEMENTS: $(TROME_SILENT_START_ENTITLEMENTS_$(TROME_SILENT_START:default=NO))
 
   TROMEWidget:

@@ -25,14 +25,16 @@ extension AutoLiveActivityModel {
         }
     }
 
+    /// An exit with no recent position decides nothing and plans no new areas: a walk reads from it why the stations
+    /// further on may not be watched.
     func logNoRecentPosition(_ lastKnownFix: PositionFix?) {
         guard let wakeLog = services.wakeLog else { return }
         guard let lastKnownFix else {
-            wakeLog.record(.decision, "No decision: iOS gave no position")
+            wakeLog.record(.decision, "No decision and no new areas: iOS gave no position")
             return
         }
         let age = Int(configuration.now().timeIntervalSince(lastKnownFix.timestamp))
-        wakeLog.record(.decision, "No decision: the last position is \(age) s old")
+        wakeLog.record(.decision, "No decision and no new areas: the last position is \(age) s old")
     }
 
     func logPositionBeforeLeaving() {

@@ -20,6 +20,7 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     private var hasLoggedNoAlways = false
     private var firstStates = RegionFirstStates()
     private var firstStatesFlush: Task<Void, Never>?
+    private var process: WakeProcess?
 
     func resume() async {
         _ = await startedMonitor()
@@ -125,7 +126,7 @@ private final class RegionWakeTime {
 
 extension CoreLocationStationRegionWatcher {
     private func recordNoAlways() {
-        #if DEBUG
+        #if WAKE_LOG
         guard !hasLoggedNoAlways else { return }
         hasLoggedNoAlways = true
         wakeLog?.record(.system, "Regions not watched: location is not Always")
@@ -133,7 +134,7 @@ extension CoreLocationStationRegionWatcher {
     }
 
     private func recordStart(of monitor: CLMonitor) async {
-        #if DEBUG
+        #if WAKE_LOG
         guard let wakeLog else { return }
         let count = await monitor.identifiers.count
         wakeLog.record(.system, "Region watch on: iOS keeps \(count) regions for the app")
@@ -141,7 +142,7 @@ extension CoreLocationStationRegionWatcher {
     }
 
     private func expectFirstStates(of ids: Set<String>) {
-        #if DEBUG
+        #if WAKE_LOG
         flushFirstStates()
         firstStates = RegionFirstStates(expecting: ids)
         firstStatesFlush = Task { [weak self] in
@@ -153,7 +154,7 @@ extension CoreLocationStationRegionWatcher {
     }
 
     private func flushFirstStates() {
-        #if DEBUG
+        #if WAKE_LOG
         firstStatesFlush?.cancel()
         firstStatesFlush = nil
         if let summary = firstStates.summary {
@@ -166,7 +167,7 @@ extension CoreLocationStationRegionWatcher {
     /// Writes the event before the app decides on it, with the position that the app decides on,
     /// so that a wake says where the phone was even when the app then decides nothing.
     private func record(_ event: CLMonitor.Event, as regionEvent: RegionEvent?, phoneAt fix: PositionFix?) {
-        #if DEBUG
+        #if WAKE_LOG
         guard let wakeLog, let catalog else { return }
         let now = Date()
         let region = regionEvent == nil
@@ -177,7 +178,8 @@ extension CoreLocationStationRegionWatcher {
         if state == .inside,
            let line = regionEvent?.firstStateLine(phoneAt: fix, now: now, catalog: catalog),
            firstStates.release(id: event.identifier) {
-            wakeLog.record(.system, problems.isEmpty ? line : "\(line) [\(problems)]")
+            let wake = "\(line); \(processLine(now: now, wakeLog: wakeLog))"
+            wakeLog.record(.system, problems.isEmpty ? wake : "\(wake) [\(problems)]")
             if firstStates.isComplete {
                 flushFirstStates()
             }
@@ -191,9 +193,21 @@ extension CoreLocationStationRegionWatcher {
         }
         let what = regionEvent?.wakeLine(phoneAt: fix, now: now, catalog: catalog)
             ?? Self.line(of: event, region: region)
-        wakeLog.record(.system, problems.isEmpty ? what : "\(what) [\(problems)]")
+        let wake = "\(what); \(processLine(now: now, wakeLog: wakeLog))"
+        wakeLog.record(.system, problems.isEmpty ? wake : "\(wake) [\(problems)]")
         #endif
     }
+
+    #if WAKE_LOG
+    /// What a wake line adds for a walk: a fresh launch or a process already running, and the background time that
+    /// iOS still gives the app at the event.
+    private func processLine(now: Date, wakeLog: WakeLog) -> String {
+        var process = self.process ?? WakeProcess(launchedAt: wakeLog.launchedAt)
+        let line = process.line(now: now)
+        self.process = process
+        return "\(line), \(BackgroundTime.line(remaining: UIApplication.shared.backgroundTimeRemaining))"
+    }
+    #endif
 
     nonisolated private static func firstState(of event: CLMonitor.Event) -> RegionFirstStates.State {
         switch event.state {

@@ -1,4 +1,4 @@
-#if DEBUG
+#if WAKE_LOG
 import CoreLocation
 import TROMECore
 import UIKit

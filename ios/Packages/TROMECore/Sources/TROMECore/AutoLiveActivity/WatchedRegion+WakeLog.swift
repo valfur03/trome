@@ -32,12 +32,11 @@ extension WatchedRegion {
     }
 }
 
-#if DEBUG
 extension WatchedRegion {
     /// The label of a station area with where the phone was when iOS sent its event: how far from the centre
     /// of the station (the point that the arrival rules measure from), and how accurate and how old the position
     /// that iOS had then was. A walk reads from it how far from the station, and how late, iOS woke the app.
-    /// Only the Wake log of debug builds uses it.
+    /// Only the Wake log uses it (a debug build, or a build for a walk: `ios/guide/testing-tools.md`).
     public static func wakeLabel(
         ofId id: String, phoneAt fix: PositionFix?, now: Date, catalog: StationCatalog
     ) -> String {
@@ -56,4 +55,3 @@ extension WatchedRegion {
         return id.hasPrefix(stopPrefix) ? String(id.dropFirst(stopPrefix.count)) : nil
     }
 }
-#endif

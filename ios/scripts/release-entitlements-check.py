@@ -9,6 +9,8 @@ It reads what Xcode signs a Release build with (the entitlements file of each ta
 needs no team and no Apple account.
 With an archive (make release-archive-check), it also checks the archive: the group that the app and its widget read
 in their Info.plist, and the push code compiled into the app.
+It also proves that the store build has no Wake log, the record of each wake for a walk: an archive has it only when
+its Release settings ask for it (TROME_WAKE_LOG = YES, a TestFlight build for a walk), and then it must have it.
 It prints no build setting but the name of the app group, which ios/project.yml shows: the release checks run on
 GitHub, where the logs are public.
 """
@@ -29,6 +31,9 @@ GROUPS = "com.apple.security.application-groups"
 GROUP_KEY = "TROMEAppGroup"
 # A type that exists only in a build with the silent start (ios/App/AutoLiveActivity/, inside #if SILENT_START).
 SILENT_START_TYPE = b"ActivityKitPushToStartTokenSource"
+# A type that exists only in a build with the Wake log (ios/App/TestingTools/, inside #if WAKE_LOG).
+WAKE_LOG_TYPE = b"WakeLogScreen"
+WAKE_LOG_SETTING = "TROME_WAKE_LOG"
 
 
 def release_settings(project, target):
@@ -76,10 +81,11 @@ def problems_of_the_project(project):
     _, widget_groups = entitlements(release_settings(project, WIDGET), WIDGET)
     if group not in widget_groups:
         problems.append(f"the Release entitlements of {WIDGET} do not name the app group {group}")
-    return group, problems
+    has_wake_log = app.get(WAKE_LOG_SETTING, "") == "YES"
+    return group, has_wake_log, problems
 
 
-def problems_of_the_archive(archive, group):
+def problems_of_the_archive(archive, group, has_wake_log):
     app = Path(archive) / "Products" / "Applications" / f"{APP}.app"
     problems = []
     for name, bundle in ((APP, app), (WIDGET, app / "PlugIns" / f"{WIDGET}.appex")):
@@ -97,6 +103,12 @@ def problems_of_the_archive(archive, group):
     if SILENT_START_TYPE not in binary:
         problems.append(f"in the archive, {APP} has no silent start (no {SILENT_START_TYPE.decode()}): "
                         "the Release build must compile SILENT_START")
+    if WAKE_LOG_TYPE in binary and not has_wake_log:
+        problems.append(f"in the archive, {APP} has the Wake log ({WAKE_LOG_TYPE.decode()}) while its Release settings "
+                        f"do not ask for it ({WAKE_LOG_SETTING}): the store build must never have it")
+    if WAKE_LOG_TYPE not in binary and has_wake_log:
+        problems.append(f"in the archive, {APP} has no Wake log ({WAKE_LOG_TYPE.decode()}) while its Release settings "
+                        f"ask for it ({WAKE_LOG_SETTING} = YES): the Release build must compile WAKE_LOG")
     return problems
 
 
@@ -105,19 +117,21 @@ def main(arguments):
         print(USAGE, file=sys.stderr)
         return 2
     try:
-        group, problems = problems_of_the_project(arguments[0])
+        group, has_wake_log, problems = problems_of_the_project(arguments[0])
     except ValueError as error:
         print(f"release-entitlements-check: FAILED: {error}", file=sys.stderr)
         return 1
     if len(arguments) == 2:
-        problems += problems_of_the_archive(arguments[1], group)
+        problems += problems_of_the_archive(arguments[1], group, has_wake_log)
     for problem in problems:
         print(f"release-entitlements-check: FAILED: {problem}", file=sys.stderr)
     if problems:
         return 1
     scope = "the archive and the project" if len(arguments) == 2 else "the project"
+    wake_log = (f"with the Wake log ({WAKE_LOG_SETTING} = YES): a TestFlight build for a walk, never for the store"
+                if has_wake_log else "with no Wake log, as the store build")
     print(f"release-entitlements-check: OK (in {scope}, the Release app has the push capability, "
-          "and the app and its widget share their app group)")
+          f"and the app and its widget share their app group; {wake_log})")
     return 0
 
 

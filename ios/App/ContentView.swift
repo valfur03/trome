@@ -53,6 +53,13 @@ struct ContentView: View {
                 .padding(.bottom, NightLook.pageMargin)
             }
             .background(NightLook.page.ignoresSafeArea())
+            #if WAKE_LOG && !DEBUG
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    WakeLogLink()
+                }
+            }
+            #endif
             #if DEBUG
             .toolbar {
                 if showsTestingToolsLink {

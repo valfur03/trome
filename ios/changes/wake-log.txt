@@ -1,2 +1,2 @@
 kind: builder
-en: In a debug build, the Wake log shows where the phone was at each area event of a station, and each background call for the Live Activity.
+en: In a debug build, the Wake log shows where the phone was at each area event of a station, and each background call for the Live Activity; a Release build archived with TROME_WAKE_LOG = YES has it too, for a TestFlight walk, and the store build never does.

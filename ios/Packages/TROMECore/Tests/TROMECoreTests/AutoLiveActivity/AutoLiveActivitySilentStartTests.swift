@@ -15,10 +15,19 @@ extension AutoLiveActivityModelTests {
     )
     static let leParcEdge = Coordinate(48.806633, 2.486624)
 
-    func silentStart(_ starter: StubLiveActivityStarter, tokens: StubStartTokens = StubStartTokens()) -> SilentStart {
+    func silentStart(
+        _ starter: StubLiveActivityStarter,
+        tokens: StubStartTokens = StubStartTokens(),
+        backgroundTimeRemaining: (@MainActor () -> TimeInterval)? = nil
+    ) -> SilentStart {
         let clock = clock
         return SilentStart(
-            starter: starter, tokens: tokens, wakeLog: wakeLog, sleep: { try await clock.sleep(for: $0) }
+            starter: starter,
+            tokens: tokens,
+            wakeLog: wakeLog,
+            backgroundTimeRemaining: backgroundTimeRemaining,
+            now: { clock.now },
+            sleep: { try await clock.sleep(for: $0) }
         )
     }
 
@@ -42,7 +51,7 @@ extension AutoLiveActivityModelTests {
         #expect(client.started.isEmpty)
         #expect(silentStartLines == [
             "Asks the server to start the Live Activity: Station A",
-            "Answer: \(answer.summary)"
+            "Answer: \(answer.summary), after 0 s"
         ])
         #expect(wakeLog.entries.contains { $0.kind == .decision && $0.text == "Arrived in the background: Station A" })
     }
@@ -65,7 +74,7 @@ extension AutoLiveActivityModelTests {
         #expect(notifier.notified == [Places.stationA])
         #expect(silentStartLines == [
             "Asks the server to start the Live Activity: Station A",
-            "Answer: \(answer.summary)",
+            "Answer: \(answer.summary), after 0 s",
             "Fallback: the arrival notification"
         ])
     }
@@ -94,7 +103,7 @@ extension AutoLiveActivityModelTests {
         await wake.value
 
         #expect(notifier.notified.isEmpty)
-        #expect(silentStartLines.last == "Answer: started")
+        #expect(silentStartLines.last == "Answer: started, after 0 s")
     }
 
     @Test(.timeLimit(.minutes(1))) func notifiesWithNoAskWhenIOSGaveNoStartToken() async {
@@ -146,7 +155,7 @@ extension AutoLiveActivityModelTests {
         #expect(starter.asks == [.init(stationId: Self.leParc.id, startToken: StubStartTokens.token)])
         #expect(notifier.notified.isEmpty)
         #expect(client.started.isEmpty)
-        #expect(silentStartLines.last == "Answer: started")
+        #expect(silentStartLines.last == "Answer: started, after 0 s")
     }
 
     @Test func neverAsksWhenTheRiderStartedTheLiveActivityByHand() async {
@@ -192,5 +201,46 @@ extension AutoLiveActivityModelTests {
 
         #expect(notifier.notified.isEmpty)
         #expect(silentStartLines.last == "No fallback: the arrival at Station A is over")
+    }
+
+    /// What a walk must read to tell a suspension from a rule (TASK-500 criteria 1 and 7): the background time that
+    /// iOS still gives at the ask, and an ask that lasts past its limit, as only a suspended app lets it.
+    @Test func tellsTheBackgroundTimeThatIOSStillGivesAtTheAsk() async {
+        let starter = StubLiveActivityStarter(answer: .started)
+        let model = makeModel(silentStart: silentStart(starter, backgroundTimeRemaining: { 24.6 }))
+
+        await wake(model, at: Places.fiftyMetersFromA)
+
+        #expect(silentStartLines.first == """
+            Asks the server to start the Live Activity: Station A (24 s of background time left)
+            """)
+    }
+
+    @Test(.timeLimit(.minutes(1))) func tellsThatIOSSuspendedTheAppWhenTheAskLastsPastItsLimit() async {
+        let starter = StubLiveActivityStarter(answer: nil)
+        let model = makeModel(silentStart: silentStart(starter))
+
+        let wake = Task { await wake(model, at: Places.fiftyMetersFromA) }
+        await waitUntil { starter.asks.count == 1 }
+        clock.advance(by: 40)
+        starter.answer(with: .started)
+        await wake.value
+
+        #expect(silentStartLines.last == """
+            Answer: started, after 40 s; the ask lasted 40 s for a limit of 10 s: iOS suspended the app
+            """)
+    }
+
+    @Test(.timeLimit(.minutes(1))) func tellsNoSuspensionForAnAskThatEndsWithinItsLimit() async {
+        let starter = StubLiveActivityStarter(answer: nil)
+        let model = makeModel(silentStart: silentStart(starter))
+
+        let wake = Task { await wake(model, at: Places.fiftyMetersFromA) }
+        await waitUntil { starter.asks.count == 1 }
+        clock.advance(by: 11)
+        starter.answer(with: .noAnswer)
+        await wake.value
+
+        #expect(silentStartLines.contains("Answer: \(LiveActivityStartAnswer.noAnswer.summary), after 11 s"))
     }
 }

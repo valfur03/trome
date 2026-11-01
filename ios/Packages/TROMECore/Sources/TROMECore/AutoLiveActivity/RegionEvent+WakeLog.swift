@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 
 extension RegionEvent {
@@ -27,4 +26,3 @@ extension RegionEvent {
         return "iOS: first state of a new area: inside \(region)"
     }
 }
-#endif

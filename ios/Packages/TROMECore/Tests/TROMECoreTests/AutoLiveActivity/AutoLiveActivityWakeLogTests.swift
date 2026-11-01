@@ -32,7 +32,7 @@ extension AutoLiveActivityModelTests {
 
         await model.handleRegionEvent(.left(regionId: "refresh"), lastKnownFix: old)
 
-        #expect(decisions == ["No decision: the last position is 600 s old"])
+        #expect(decisions == ["No decision and no new areas: the last position is 600 s old"])
     }
 
     @Test func logsAWakeWithAPositionTooRoughToTrust() async {
@@ -119,5 +119,28 @@ extension AutoLiveActivityModelTests {
         let firstTrain = "12 Mairie d'Issy \(time.string(from: train))"
         #expect(lines[1].hasPrefix("Asked for Station M: answer 0 s old, \(firstTrain); next ask by "))
         #expect(lines[0].hasPrefix("Asked for Station M: no answer (unreachable); next ask by "))
+    }
+
+    /// The record that the prompter shares after a walk holds no position (TASK-500 criterion 2): a whole arrival at
+    /// Le Parc, from the wake line to the answer of the server, with the plan of the areas, gives distances to
+    /// stations and never a coordinate, in any shape.
+    @Test func theSharedRecordOfAnArrivalHoldsNoCoordinate() async {
+        let starter = StubLiveActivityStarter(answer: .started)
+        let catalog = StationCatalog(stations: [Self.leParc, Places.stationA])
+        let model = makeModel(catalog: catalog, silentStart: silentStart(starter))
+        let entered = RegionEvent.entered(regionId: "arrival:\(Self.leParc.id)")
+        let fix = PositionFix(coordinate: Self.leParcEdge, accuracyMeters: 13, timestamp: clock.now)
+        wakeLog.record(.system, entered.wakeLine(phoneAt: fix, now: clock.now, catalog: catalog))
+
+        await model.handleRegionEvent(entered, lastKnownFix: fix)
+        let report = wakeLog.report(phone: ["Location: Always, precise", "Low Power Mode: off"])
+
+        #expect(report.contains("Le Parc de Saint-Maur (phone 136 m away, ±13 m, 0 s old)"))
+        #expect(report.contains("Watching"))
+        #expect(report.contains("Answer: started"))
+        #expect(report.firstMatch(of: /\d+[.,]\d{3,}/) == nil, "a coordinate in the shared record: \(report)")
+        for degrees in [Self.leParcEdge.latitude, Self.leParcEdge.longitude] {
+            #expect(!report.contains(String(format: "%.2f", degrees)))
+        }
     }
 }

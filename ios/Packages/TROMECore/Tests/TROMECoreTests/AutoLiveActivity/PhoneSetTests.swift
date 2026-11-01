@@ -137,6 +137,16 @@ struct PhoneSetTests {
         #expect(index != content.trains.linesPage?.firstIndex, "the line that the rider tapped to is on the first page")
     }
 
+    /// The Wake log of a build for a walk is a new value that only the new code reads: an update from a store build
+    /// opens with it empty, and reads every value that the rider set as before (the tests above).
+    @Test(arguments: try statePaths())
+    func theWakeLogOfAnUpdateStartsEmpty(_ path: String) throws {
+        let phone = try RecordedPhone(path)
+
+        #expect(phone.storage.values[WakeLog.key] == nil)
+        #expect(WakeLog(storage: phone.storage).entries.isEmpty)
+    }
+
     /// The widget decodes the content that iOS holds, and reads back every value that the build wrote in it.
     @Test(arguments: try contentPaths())
     func theWidgetReadsTheContentOfTheLiveActivity(_ path: String) throws {

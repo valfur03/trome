@@ -32,12 +32,16 @@ public final class WakeLog {
     public static let maximumEntries = 500
 
     public private(set) var entries: [WakeLogEntry]
+    /// When this process made the log: its launch, as the composition root makes the log at once.
+    /// The lines of a wake and of the start token count their seconds from it.
+    public let launchedAt: Date
     @ObservationIgnored private let storage: any KeyValueStore
     @ObservationIgnored private let now: @Sendable () -> Date
 
     public init(storage: any KeyValueStore, now: @escaping @Sendable () -> Date = { Date() }) {
         self.storage = storage
         self.now = now
+        launchedAt = now()
         entries = storage.data(forKey: Self.key)
             .flatMap { try? JSONDecoder().decode([WakeLogEntry].self, from: $0) } ?? []
     }

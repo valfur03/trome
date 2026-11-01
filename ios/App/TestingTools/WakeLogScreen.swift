@@ -1,7 +1,10 @@
-#if DEBUG
+#if WAKE_LOG
 import TROMECore
 import SwiftUI
 
+/// The Wake log: what iOS woke the app for and what the app decided, newest first, with the settings that can stop
+/// a wake. A debug build opens it from the Testing tools, and a build for a walk from the main screen.
+/// Its texts are verbatim, in English: a Release build for a walk must add nothing to the String Catalogs.
 struct WakeLogScreen: View {
     @Environment(WakeLog.self) private var wakeLog: WakeLog?
     @Environment(LocationService.self) private var locationService
@@ -9,28 +12,34 @@ struct WakeLogScreen: View {
 
     var body: some View {
         List {
-            Section("Phone now") {
+            Section {
                 ForEach(phoneState, id: \.self) { line in
                     Text(line)
                 }
+            } header: {
+                Text(verbatim: "Phone now")
             }
-            Section("Newest first") {
+            Section {
                 if entries.isEmpty {
-                    Text("Nothing yet")
+                    Text(verbatim: "Nothing yet")
                         .foregroundStyle(.secondary)
                 }
                 ForEach(entries) { entry in
                     WakeLogRow(entry: entry)
                 }
+            } header: {
+                Text(verbatim: "Newest first")
             }
         }
-        .navigationTitle("Wake log")
+        .navigationTitle(Text(verbatim: "Wake log"))
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                ShareLink(item: shareText)
+                ShareLink(item: wakeLog?.report(phone: phoneState) ?? "")
                     .disabled(entries.isEmpty)
-                Button("Clear", systemImage: "trash", role: .destructive) {
+                Button(role: .destructive) {
                     wakeLog?.clear()
+                } label: {
+                    Label { Text(verbatim: "Clear") } icon: { Image(systemName: "trash") }
                 }
                 .disabled(entries.isEmpty)
             }
@@ -43,11 +52,6 @@ struct WakeLogScreen: View {
     private var entries: [WakeLogEntry] {
         wakeLog?.entries ?? []
     }
-
-    private var shareText: String {
-        (phoneState + [""] + entries.map { "\(WakeLogRow.time(of: $0)) [\($0.kind.rawValue)] \($0.text)" })
-            .joined(separator: "\n")
-    }
 }
 
 private struct WakeLogRow: View {
@@ -57,7 +61,7 @@ private struct WakeLogRow: View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.text)
-                Text(Self.time(of: entry))
+                Text(WakeLog.time(of: entry))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -66,10 +70,6 @@ private struct WakeLogRow: View {
             Image(systemName: icon)
                 .foregroundStyle(colour)
         }
-    }
-
-    static func time(of entry: WakeLogEntry) -> String {
-        entry.date.formatted(.dateTime.day().month(.abbreviated).hour().minute().second())
     }
 
     private var icon: String {

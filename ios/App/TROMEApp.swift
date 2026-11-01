@@ -1,6 +1,7 @@
 import AppIntents
 import TROMECore
 import SwiftUI
+import UIKit
 import UserNotifications
 
 @main
@@ -87,7 +88,7 @@ struct TROMEApp: App {
             .environment(automaticModeModel)
             .environment(\.stationCatalog, stationCatalog)
             .environment(\.appName, appName)
-            #if DEBUG
+            #if WAKE_LOG
             .environment(regionWatcher.wakeLog)
             #endif
         }
@@ -186,7 +187,7 @@ struct TROMEApp: App {
         locationService: LocationService
     ) -> CoreLocationStationRegionWatcher {
         let regionWatcher = CoreLocationStationRegionWatcher()
-        #if DEBUG
+        #if WAKE_LOG
         let wakeLog = WakeLog(storage: UserDefaults.standard)
         wakeLog.recordLaunch(locationSource: locationService.source)
         regionWatcher.wakeLog = wakeLog
@@ -230,7 +231,8 @@ struct TROMEApp: App {
         return SilentStart(
             starter: ServerLiveActivityStarter(server: server, httpClient: URLSession(configuration: .ephemeral)),
             tokens: ActivityKitPushToStartTokenSource(wakeLog: wakeLog),
-            wakeLog: wakeLog
+            wakeLog: wakeLog,
+            backgroundTimeRemaining: { UIApplication.shared.backgroundTimeRemaining }
         )
         #else
         nil

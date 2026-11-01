@@ -46,11 +46,11 @@ final class UserNotificationArrivalNotifier: ArrivalNotifier {
         let request = UNNotificationRequest(identifier: Self.identifier, content: content, trigger: nil)
         do {
             try await center.add(request)
-            #if DEBUG
+            #if WAKE_LOG
             await record("Notification handed to iOS: \(station.name)")
             #endif
         } catch {
-            #if DEBUG
+            #if WAKE_LOG
             await record("iOS refused the notification of \(station.name): \(error.localizedDescription)")
             #endif
         }
@@ -59,12 +59,12 @@ final class UserNotificationArrivalNotifier: ArrivalNotifier {
     func withdraw() {
         center.removePendingNotificationRequests(withIdentifiers: [Self.identifier])
         center.removeDeliveredNotifications(withIdentifiers: [Self.identifier])
-        #if DEBUG
+        #if WAKE_LOG
         wakeLog?.record(.notification, "Notification withdrawn")
         #endif
     }
 
-    #if DEBUG
+    #if WAKE_LOG
     private func record(_ text: String) async {
         guard let wakeLog else { return }
         let settings = await PhoneStateReport.notifications(center.notificationSettings())
