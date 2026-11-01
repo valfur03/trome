@@ -63,6 +63,9 @@ public final class AutoLiveActivityModel {
         }
         endPauseIfOver()
         watchLiveActivityChanges()
+        services.locationKeeper.onPosition = { [weak self] fix in
+            self?.inputs.locationService.takeBackgroundFix(fix)
+        }
         observePosition()
         observeScreenStation()
         observeAutomaticMode()

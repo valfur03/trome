@@ -104,6 +104,15 @@ public final class LocationService {
         }
     }
 
+    /// A position of the updates that keep the app running in the background (`BackgroundLocationKeeper`).
+    /// Taken only while the service follows the real GPS, and only when it is newer than the last position:
+    /// the stream and these updates often give the same position, and it counts once.
+    public func takeBackgroundFix(_ newFix: PositionFix) {
+        guard updatesTask != nil, source == .realGPS else { return }
+        if let fix, newFix.timestamp <= fix.timestamp { return }
+        handle(.position(newFix))
+    }
+
     func requestCurrentFix() async -> PositionFix? {
         let requestedSource = source
         guard let newFix = await provider(for: requestedSource).currentFix(), source == requestedSource else {

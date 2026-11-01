@@ -4,6 +4,7 @@ import TROMECore
 
 @MainActor
 final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKeeper {
+    var onPosition: (@MainActor (PositionFix) -> Void)?
     private let manager = CLLocationManager()
     private var session: CLBackgroundActivitySession?
     private var isKeeping = false
@@ -11,7 +12,8 @@ final class CoreLocationBackgroundLocationKeeper: NSObject, BackgroundLocationKe
     override init() {
         super.init()
         manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        // The switch and the end decide on these positions in the background, within 150 and 250 meters of a station.
+        manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         manager.distanceFilter = kCLDistanceFilterNone
         manager.activityType = .otherNavigation
         manager.pausesLocationUpdatesAutomatically = false
@@ -66,6 +68,14 @@ extension CoreLocationBackgroundLocationKeeper {
 }
 
 extension CoreLocationBackgroundLocationKeeper: CLLocationManagerDelegate {
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let fix = locations.last.flatMap(PositionFix.init) else { return }
+        MainActor.assumeIsolated {
+            guard isKeeping else { return }
+            onPosition?(fix)
+        }
+    }
+
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         MainActor.assumeIsolated {
             updateSession()

@@ -36,6 +36,13 @@ final class StubRegionWatcher: StationRegionWatcher {
 @MainActor
 final class StubLocationKeeper: BackgroundLocationKeeper {
     private(set) var isKeeping = false
+    var onPosition: (@MainActor (PositionFix) -> Void)?
+
+    /// A position of the standard updates that keep the app running, as iOS gives it while it runs.
+    func report(_ fix: PositionFix) {
+        guard isKeeping else { return }
+        onPosition?(fix)
+    }
 
     func begin() {
         isKeeping = true
