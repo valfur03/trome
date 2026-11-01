@@ -51,6 +51,7 @@ extension AutoLiveActivityModelTests {
         #expect(client.started.isEmpty)
         #expect(silentStartLines == [
             "Asks the server to start the Live Activity: Station A",
+            "Asks with this launch's start token",
             "Answer: \(answer.summary), after 0 s"
         ])
         #expect(wakeLog.entries.contains { $0.kind == .decision && $0.text == "Arrived in the background: Station A" })
@@ -72,8 +73,11 @@ extension AutoLiveActivityModelTests {
 
         #expect(starter.asks.count == 1)
         #expect(notifier.notified == [Places.stationA])
+        let forgotten = answer.refusesTheStartToken ? ["Start token refused as invalid: forgotten"] : []
         #expect(silentStartLines == [
             "Asks the server to start the Live Activity: Station A",
+            "Asks with this launch's start token"
+        ] + forgotten + [
             "Answer: \(answer.summary), after 0 s",
             "Fallback: the arrival notification"
         ])

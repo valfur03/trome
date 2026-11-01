@@ -6,6 +6,9 @@ import UserNotifications
 
 @main
 struct TROMEApp: App {
+    #if SILENT_START
+    @UIApplicationDelegateAdaptor private var pushRegistration: PushRegistrationAppDelegate
+    #endif
     @State private var locationService: LocationService
     @State private var nearestStationModel: NearestStationModel
     @State private var permissionsModel: PermissionsModel
@@ -222,15 +225,17 @@ struct TROMEApp: App {
     /// The start of the Live Activity through the server, with no notification and no tap. Its push code is compiled
     /// only into a build that a paid team signs: every Release build, and a Debug build with `TROME_SILENT_START` in
     /// `ios/Config/Local.xcconfig`. A free Apple ID cannot sign the push capability, so its builds notify as before.
+    /// Such a build asks iOS for the start token at every launch, with no server too (`ActivityKitStartTokens`).
     private static func silentStartOfThisBuild(wakeLog: WakeLog?) -> SilentStart? {
         #if SILENT_START
+        let tokens = ActivityKitStartTokens.listen(wakeLog: wakeLog)
         guard let server = TrainServerConfiguration(infoDictionary: Bundle.main.infoDictionary) else {
             wakeLog?.record(.silentStart, "Silent start off: this build has no server")
             return nil
         }
         return SilentStart(
             starter: ServerLiveActivityStarter(server: server, httpClient: URLSession(configuration: .ephemeral)),
-            tokens: ActivityKitPushToStartTokenSource(wakeLog: wakeLog),
+            tokens: tokens,
             wakeLog: wakeLog,
             backgroundTimeRemaining: { UIApplication.shared.backgroundTimeRemaining }
         )

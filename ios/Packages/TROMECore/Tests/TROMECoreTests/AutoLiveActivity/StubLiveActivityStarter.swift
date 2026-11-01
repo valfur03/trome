@@ -44,12 +44,18 @@ final class StubStartTokens: PushToStartTokenSource {
     static let token = "0123456789abcdef0123456789abcdef"
 
     var token: String? = StubStartTokens.token
+    var isKept = false
+    private(set) var forgotten: [String] = []
 
-    func startToken() async -> String? {
+    func startToken() async -> StartToken? {
         if let token {
-            return token
+            return StartToken(value: token, isKept: isKept)
         }
         try? await Task.sleep(for: .seconds(3_600))
         return nil
+    }
+
+    func forget(_ token: String) {
+        forgotten.append(token)
     }
 }

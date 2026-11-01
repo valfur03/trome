@@ -20,6 +20,16 @@ public enum LiveActivityStartAnswer: Equatable, Sendable {
         self == .started || self == .alreadyStarted
     }
 
+    /// A refusal that names the token itself, with the reason of Apple's push service: `BadDeviceToken` (neither of
+    /// its two services knows the token) or `Unregistered` (the token is no longer active). The same token would be
+    /// refused again. The other refusals (no answer, a fault, a setup of the server) say nothing of the token.
+    var refusesTheStartToken: Bool {
+        guard case .refused(let reason) = self else { return false }
+        return Self.invalidTokenReasons.contains(reason)
+    }
+
+    private static let invalidTokenReasons: Set<String> = ["BadDeviceToken", "Unregistered"]
+
     init(status: Int, body: Data) {
         let read = try? JSONDecoder().decode(Body.self, from: body)
         switch (status, read?.result) {

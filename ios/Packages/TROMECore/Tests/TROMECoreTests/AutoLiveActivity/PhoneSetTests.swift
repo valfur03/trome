@@ -112,6 +112,15 @@ struct PhoneSetTests {
         }
     }
 
+    /// An update opens with no kept start token: the token has a key that no earlier build wrote, so the first wake
+    /// waits for the token of iOS, as before.
+    @Test(arguments: try statePaths())
+    func noStartTokenIsKeptAfterTheUpdate(_ path: String) throws {
+        let phone = try RecordedPhone(path)
+        #expect(phone.storage.values[StartTokenStore.key] == nil)
+        #expect(StartTokenStore(storage: phone.storage).load() == nil)
+    }
+
     /// The line page that the rider tapped to stays: the widget reads the same choice, and finds its line on the
     /// content of the same station, so the Live Activity does not go back to its first page after an update.
     @Test(arguments: try statePaths())

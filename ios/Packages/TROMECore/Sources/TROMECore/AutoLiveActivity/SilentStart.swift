@@ -3,9 +3,17 @@ import Foundation
 /// The push-to-start token of the Live Activity, which ActivityKit gives the app (iOS 17.2 and later).
 @MainActor
 public protocol PushToStartTokenSource: AnyObject {
-    /// The latest token, in hexadecimal; when iOS has given none yet, waits for the first one, and gives nil when
-    /// the wait is cancelled.
-    func startToken() async -> String?
+    /// The token to ask with, in hexadecimal; when there is none yet, waits for the first one that iOS gives, and
+    /// gives nil when the wait is cancelled.
+    func startToken() async -> StartToken?
+    /// Drops a token that the server refused as invalid, so that no later ask uses it again.
+    func forget(_ token: String)
+}
+
+/// A push-to-start token, and whether it is the one kept from an earlier process rather than one that iOS gave this one.
+public struct StartToken: Equatable, Sendable {
+    public let value: String
+    public let isKept: Bool
 }
 
 /// Asks for the start of the Live Activity of a station on this iPhone, with its push-to-start token.
@@ -104,7 +112,14 @@ public final class SilentStart {
     private func ask(_ station: Station, _ progress: Progress) async -> Outcome {
         guard let token = await tokens.startToken() else { return .noStartToken }
         progress.hasStartToken = true
-        return .answered(await starter.start(stationId: station.id, startToken: token))
+        let which = token.isKept ? "the kept start token" : "this launch's start token"
+        wakeLog?.record(.silentStart, "Asks with \(which)")
+        let answer = await starter.start(stationId: station.id, startToken: token.value)
+        if answer.refusesTheStartToken {
+            tokens.forget(token.value)
+            wakeLog?.record(.silentStart, "Start token refused as invalid: forgotten")
+        }
+        return .answered(answer)
     }
 }
 
