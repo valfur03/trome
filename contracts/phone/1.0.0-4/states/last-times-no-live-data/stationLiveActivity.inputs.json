@@ -1,0 +1,1 @@
+{"trains":{"noLiveData":{}},"station":{"id":"IDFM:22059","name":"Abbesses","lines":[{"name":"12","stopIds":["IDFM:22059","IDFM:463116"],"stopAreaIds":["IDFM:monomodalStopPlace:42155"],"color":{"background":"00643c","text":"ffffff"},"mode":"metro"}],"longitude":2.338381,"latitude":48.884388}}

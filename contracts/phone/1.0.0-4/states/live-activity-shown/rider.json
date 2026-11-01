@@ -1,0 +1,14 @@
+{
+  "arrivalStationId" : "IDFM:22059",
+  "automaticMode" : "on",
+  "lastTimes" : {
+    "departures" : 4,
+    "stationId" : "IDFM:22059",
+    "updatedAt" : "2026-09-26T10:00:10Z"
+  },
+  "shown" : {
+    "hasBeenNear" : true,
+    "startedAt" : "2026-09-26T09:55:30Z",
+    "stationId" : "IDFM:22059"
+  }
+}
