@@ -189,7 +189,7 @@ While a Live Activity shows, the app must go on getting the position, to switch 
   The app follows the position (`LocationService`, `PositionNeed`) for three reasons only, and stops as soon as none holds:
   - the app is on screen, to show the nearest station: this ends when the app goes to the background;
   - a Live Activity shows, to switch or end it: this ends with the Live Activity (the rider leaves, the 45 minutes, a swipe, a snooze);
-  - iOS reported a station area that no trusted position confirms yet: this ends with its decision, after at most 2 minutes (see [Start, switch and stop](#start-switch-and-stop)), or 10 seconds for the ask of [the silent start](#the-silent-start).
+  - iOS reported a station area, and the app decides the arrival: this ends with its decision, after at most 2 minutes when no trusted position confirms it yet (see [Start, switch and stop](#start-switch-and-stop)), or 10 seconds for the ask of [the silent start](#the-silent-start).
 
   Low Power Mode changes none of them.
   Otherwise the app follows no position in the background: iOS would run it for each new position, and drain the battery of a rider who only opened it once.

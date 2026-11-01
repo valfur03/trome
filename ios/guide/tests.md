@@ -78,7 +78,7 @@ A failed `make docs-screenshots` keeps its evidence in the same folder.
 | `ArrivalNotificationTests` | The arrival notification, its tap and its **Not for 1 h** action, the app opened at the station, and the notification of the next station, which replaces the one not opened. |
 | `SwipeAwayTests` | A swipe of the Live Activity pauses its station only, and cancelling the pause brings it back. |
 | `SnoozeTests` | The widget draws the trains on the real Live Activity, and its buttons run in the app. |
-| `BackgroundPositionTests` | With no Live Activity, iOS suspends the app in the background, and a phone that rides at the speed of a train does not wake it. |
+| `BackgroundPositionTests` | With no Live Activity, the app in the background follows no position: a phone that rides through a station at the speed of a train brings no arrival. |
 
 The wake of a closed app at a station has no test, because the Simulator cannot watch regions: check it on an iPhone.
 
