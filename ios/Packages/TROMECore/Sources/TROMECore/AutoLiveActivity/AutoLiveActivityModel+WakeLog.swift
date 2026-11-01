@@ -11,7 +11,7 @@ extension AutoLiveActivityModel {
             wakeLog.record(.decision, summary)
             return
         }
-        wakeLog.record(.decision, summary + Self.suffix(for: origin))
+        wakeLog.record(.decision, summary + suffix(for: origin))
     }
 
     func log(_ ending: LiveActivityEnding?, from origin: PositionOrigin? = nil) {
@@ -20,14 +20,23 @@ extension AutoLiveActivityModel {
             services.wakeLog?.record(.decision, ending.summary)
             return
         }
-        services.wakeLog?.record(.decision, ending.summary + Self.suffix(for: origin))
+        services.wakeLog?.record(.decision, ending.summary + suffix(for: origin))
     }
 
-    /// A switch or an end on a position of the real GPS says where the position came from: on a walk, a Live Activity
-    /// that moves only on the keeper's positions shows that iOS stopped the stream in the background.
-    private static func suffix(for origin: PositionOrigin?) -> String {
-        guard let origin else { return "" }
-        return " (position: \(origin.rawValue))"
+    /// A switch or an end on a position of the real GPS says where the position came from, and, for the keeper,
+    /// how old the last position of the stream was: on a walk, a stream minutes old while the rider moves shows that
+    /// iOS stopped it in the background; a stream a few seconds old shows that it still ran.
+    private func suffix(for origin: PositionOrigin?) -> String {
+        switch origin {
+        case nil:
+            ""
+        case .stream:
+            " (position: stream)"
+        case .keeper(let lastStreamFix?):
+            " (position: keeper; stream \(Int(configuration.now().timeIntervalSince(lastStreamFix))) s old)"
+        case .keeper(nil):
+            " (position: keeper; no stream position)"
+        }
     }
 
     func logScreenChange(from oldPhase: AppPhase, to newPhase: AppPhase) {

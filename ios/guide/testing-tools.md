@@ -168,8 +168,11 @@ An answer line that ends with "iOS suspended the app" says that the ask lasted p
 After a "left" line, "No decision and no new areas" says that iOS gave no recent position, so the app chose no new stations to watch, and the stations further on may not wake it.
 A line "Live Activity ended: N m from" a station, before a line "Notified", says that the rider left that station before reaching the next one, so the next one notified instead of a switch.
 A switch, or an end by distance, that rests on a position of the real GPS ends with where that position came from.
-"(position: stream)" is the position stream, which iOS stops about 10 seconds after the app leaves the screen, unless the app still counts as in use.
-"(position: keeper)" is the background updates that keep the app running while a Live Activity shows; with the location Always, only these go on in the background.
+"(position: stream)" is the position stream, which iOS can stop about 10 seconds after the app leaves the screen, unless the app still counts as in use.
+"(position: keeper; stream N s old)" is the background updates that keep the app running while a Live Activity shows, with the age of the last position of the stream.
+Both sources often give the same position, and either can come first, so read the age, not the source.
+On a ride, a stream a few seconds old shows that iOS still sent it; a stream tens of seconds or minutes old shows that iOS stopped it.
+"(position: keeper; no stream position)" says that the stream gave no position since the app started.
 A switch or an end with neither rests on a position from a wake of an area, or from one ask to iOS.
 After a walk, do not read **Phone now** to know the position of the walk: it shows the state when you opened the screen.
 Read the line "App launched" (Power icon) of the walk instead, which says "Position: fake" with a place name, or "Position: real GPS", as it was at that launch.
