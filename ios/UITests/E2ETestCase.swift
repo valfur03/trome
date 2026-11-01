@@ -7,6 +7,7 @@ class E2ETestCase: XCTestCase {
     private static let liveActivityIdentifier = "activity-content-view"
     private static let locationPromptAnswer = "Allow While Using App"
     private static let alwaysPromptAnswer = "Keep Only While Using"
+    private static let alwaysAllowedAnswer = "Change to Always Allow"
     private static let permissionAnswers = [locationPromptAnswer, alwaysPromptAnswer, "Allow"]
     private static let allowedLocationLabels = ["Location, Always", "Location, While Using the App"]
     @MainActor private static var permissionsAreSettled = false
@@ -65,6 +66,22 @@ class E2ETestCase: XCTestCase {
         }
     }
 
+    /// Launches the app with the location "Always", the access of a rider whose closed app wakes at stations.
+    /// End the test with `resetLocationAuthorization(of:)`, so that the next test gets "While Using the App" again.
+    @MainActor
+    func launchWithLocationAlways(_ app: XCUIApplication) {
+        resetLocationAuthorization(of: app)
+        app.launch()
+        XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
+        settlePermissions(
+            in: app,
+            resettingRefusedLocation: false,
+            expectingLocationPrompt: true,
+            alwaysAnswer: Self.alwaysAllowedAnswer
+        )
+        Self.permissionsAreSettled = false
+    }
+
     @MainActor
     func answerPermissionPrompts(in app: XCUIApplication) {
         XCTAssertTrue(waitFor(app.staticTexts["appTitle"]))
@@ -75,8 +92,11 @@ class E2ETestCase: XCTestCase {
     private func settlePermissions(
         in app: XCUIApplication,
         resettingRefusedLocation: Bool,
-        expectingLocationPrompt: Bool = false
+        expectingLocationPrompt: Bool = false,
+        alwaysAnswer: String = E2ETestCase.alwaysPromptAnswer
     ) {
+        let answersToGive = [Self.locationPromptAnswer, alwaysAnswer, "Allow"]
+        let locationLabels = alwaysAnswer == Self.alwaysAllowedAnswer ? ["Location, Always"] : Self.allowedLocationLabels
         let location = locationStatus(in: app)
         let notifications = notificationsStatus(in: app)
         let screen = app.scrollViews.firstMatch
@@ -84,7 +104,7 @@ class E2ETestCase: XCTestCase {
         var answers: [String] = []
         let deadline = Date().addingTimeInterval(UITestTimeout.element)
         while Date() < deadline {
-            answers += answerPermissionPrompt()
+            answers += answerPermissionPrompt(with: answersToGive)
             guard app.state == .runningForeground, screen.exists else {
                 if app.state != .runningForeground {
                     app.activate()
@@ -97,11 +117,11 @@ class E2ETestCase: XCTestCase {
                 continue
             }
             let askedForLocation = expectingLocationPrompt || answers.contains(Self.locationPromptAnswer)
-            let locationPromptsAnswered = !askedForLocation || answers.contains(Self.alwaysPromptAnswer)
-            if locationPromptsAnswered, Self.allowedLocationLabels.contains(location.label),
+            let locationPromptsAnswered = !askedForLocation || answers.contains(alwaysAnswer)
+            if locationPromptsAnswered, locationLabels.contains(location.label),
                notifications.label == "Notifications, On" {
                 if expectingLocationPrompt {
-                    assertLocationPromptsCameFirst(in: answers)
+                    assertLocationPromptsCameFirst(in: answers, alwaysAnswer: alwaysAnswer)
                 }
                 Self.permissionsAreSettled = true
                 scrollToTop(of: app)
@@ -120,9 +140,9 @@ class E2ETestCase: XCTestCase {
 
     @MainActor
     @discardableResult
-    private func answerPermissionPrompt() -> [String] {
+    private func answerPermissionPrompt(with permissionAnswers: [String] = E2ETestCase.permissionAnswers) -> [String] {
         var answers: [String] = []
-        for answer in Self.permissionAnswers where springboard.buttons[answer].exists {
+        for answer in permissionAnswers where springboard.buttons[answer].exists {
             let button = springboard.buttons[answer]
             button.tap()
             _ = button.waitForNonExistence(timeout: 2)
@@ -131,8 +151,8 @@ class E2ETestCase: XCTestCase {
         return answers
     }
 
-    private func assertLocationPromptsCameFirst(in answers: [String]) {
-        let locationPrompts = [Self.locationPromptAnswer, Self.alwaysPromptAnswer]
+    private func assertLocationPromptsCameFirst(in answers: [String], alwaysAnswer: String) {
+        let locationPrompts = [Self.locationPromptAnswer, alwaysAnswer]
         XCTAssertEqual(
             Array(answers.prefix(2)),
             locationPrompts,
