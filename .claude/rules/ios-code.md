@@ -26,7 +26,7 @@ The reviewer checks them: a file in the wrong place or a wrong dependency direct
   An iOS-only framework is allowed only for a type that the app and the widget share (today: the `ActivityAttributes` conformance and `SnoozeLiveActivityIntent`, the intent of the Live Activity's buttons), inside `#if os(iOS)`.
 - **Views hold no rules.** A view reads a model and calls it.
   A rule goes in `TROMECore`, with unit tests.
-- **Protocols in the core, adapters in the app.** For an Apple system service (ActivityKit, Core Location, notifications), `TROMECore` declares a small protocol, and the app implements it in a file named after the framework (`ActivityKitStationLiveActivityClient`, `CoreLocationProvider`, `UserNotificationArrivalNotifier`).
+- **Protocols in the core, adapters in the app.** For an Apple system service (ActivityKit, Core Location, notifications), `TROMECore` declares a small protocol, and the app implements it in a file named after the framework (`ActivityKitStationLiveActivityClient`, `CoreLocationProvider`, `UserNotificationPermission`).
   Unit tests use fakes.
   Foundation types that run on the Mac (`URLSession`, `UserDefaults`) may conform inside `TROMECore`.
 - **One composition root.** `ios/App/TROMEApp.swift` makes the models and the adapters and gives them to the views.

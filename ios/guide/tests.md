@@ -9,7 +9,7 @@ Each step of a test command prints one line when it passes and its whole output 
 | Your change | The test | Run it with |
 |---|---|---|
 | A rule or a value, "this input gives this output": what the Live Activity shows, when it starts or ends, the snooze, how an answer of PRIM, the train data service, is read | a [unit test](#unit-tests) | `make test`, in seconds |
-| A place where the app meets iOS: a real Live Activity, a notification, the position, the permission popups, a button of the Live Activity | an [end-to-end test](#end-to-end-tests) | `make e2e ONLY=<class>` ([the classes](#end-to-end-tests)), in minutes |
+| A place where the app meets iOS: a real Live Activity, the position, the permission popups, a button of the Live Activity | an [end-to-end test](#end-to-end-tests) | `make e2e ONLY=<class>` ([the classes](#end-to-end-tests)), in minutes |
 | How the Live Activity views draw: a cut text, a view too tall | the [render check](#the-render-check-of-the-live-activity) | `make live-activity-render` |
 | A script in `ios/scripts/` | a [script test](#script-tests) | `make test-scripts` |
 | The look of a screen, real train times, a text in French | look at it yourself with `make run` | |
@@ -53,7 +53,7 @@ To write one:
 
 ## End-to-end tests
 
-The end-to-end tests run the real app in the Simulator, and look at what iOS shows: the Live Activity in the Notification Center, a notification, a popup.
+The end-to-end tests run the real app in the Simulator, and look at what iOS shows: the Live Activity in the Notification Center, a popup.
 They are slow, so run only the classes of the flows that your change touches; the class names are the file names in `ios/UITests/`:
 
 ```sh
@@ -75,7 +75,7 @@ A failed `make docs-screenshots` keeps its evidence in the same folder.
 |---|---|
 | `LiveActivityTests` | The real location popups, then a Live Activity that starts with the app open at a station and that "Snooze" ends. |
 | `AutoLiveActivityTests` | A position from iOS starts the Live Activity, then switches and ends it in the pocket: the location "Always", the app in the background long after iOS stops the position stream, and no launch argument of the tests. |
-| `ArrivalNotificationTests` | The arrival notification, its tap and its **Not for 1 h** action, the app opened at the station, and the notification of the next station, which replaces the one not opened. |
+| `BackgroundArrivalTests` | No notification of the app at an arrival in the background, and the Live Activity when the rider then opens the app at the station. |
 | `SwipeAwayTests` | A swipe of the Live Activity pauses its station only, and cancelling the pause brings it back. |
 | `SnoozeTests` | The widget draws the trains on the real Live Activity, and its buttons run in the app. |
 | `BackgroundPositionTests` | With no Live Activity, the app in the background follows no position: a phone that rides through a station at the speed of a train brings no arrival. |

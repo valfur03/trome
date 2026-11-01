@@ -15,7 +15,7 @@ The app keeps the fake position until you tap **Use the real GPS**, also on an i
 **When you add a feature that needs the position, read it from `LocationService`**, never from Core Location: that is how the fake position reaches every feature.
 
 The fake position stays inside the app, so iOS does not see it.
-When iOS must see the phone move, for example for the arrival notification, tap **Use the real GPS** and move the Simulator instead:
+When iOS must see the phone move, for example for an arrival in the background, tap **Use the real GPS** and move the Simulator instead:
 
 ```sh
 xcrun simctl location "$(make -s simulator)" set 48.8584,2.2945
@@ -96,9 +96,10 @@ With the app open, pick Abbesses in **Testing tools** and go back: its Live Acti
 Pick Pigalle, near it: the Live Activity switches.
 Tap **Far from any station**: it ends.
 
-### With the app in the background: the arrival notification
+### With the app in the background: no notification
 
-In the background, the app shows a notification with the name of the station, instead of the Live Activity.
+In the background, the app asks the server to start the Live Activity ([the silent start](auto-live-activity.md#the-silent-start)), and sends no notification.
+A build of the Simulator has no silent start, so nothing shows: the [wake log](#on-your-iphone-see-why-no-live-activity-came) says why, and the Live Activity starts when you open the app at the station.
 In the Simulator, iOS keeps the app running for only about 10 to 25 seconds after you leave it, and nothing wakes it after that: do steps 3 and 4 within those seconds.
 
 1. Tap **Use the real GPS**, and in the **Settings** app of the Simulator, set the location of TROME to **Always**.
@@ -115,12 +116,13 @@ In the Simulator, iOS keeps the app running for only about 10 to 25 seconds afte
    xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838
    ```
 
-   The notification **Abbesses** shows within a few seconds.
-   Tap it to start the Live Activity, or touch and hold it to snooze the station.
+   No notification shows.
+   **Wake log** has the line "No start at Abbesses, no notification: the silent start is off in this build".
+5. Open the app: the Live Activity of Abbesses starts.
 
 On your iPhone, iOS also wakes a suspended or closed app near a station, after a few seconds to a few minutes: test that case there, with **Debug > Simulate Location** in Xcode.
 
-### On your iPhone: see why no notification came
+### On your iPhone: see why no Live Activity came
 
 **Testing tools** > **Wake log** shows, newest first, what iOS woke the app for and what the app decided, with the time of each line.
 In a Release build for a walk, the list icon at the top right of the main screen opens it ([Record a walk with a TestFlight build](#record-a-walk-with-a-testflight-build)).
@@ -143,9 +145,9 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Power | Each launch of the app, then the settings of the phone at that launch; each time the app comes on screen or leaves it |
 | Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports, with where the phone was for a station area, whether iOS launched the app for it, and the background time left; one line for the first state of the areas that iOS did not watch yet, but its own line for each station that the phone is inside |
 | Map | Each time the app chooses again the stations that iOS watches |
-| Branch | Each arrival that the app decides, with its reason: notified, started, switched, or why not; each end of the Live Activity by its distance or time limit |
-| Bell | Each notification that the app hands to iOS, or that iOS refuses, with the notification settings |
-| Radio waves | At each launch of a plain `make run` build (not `LIVE=1`), "Silent start off: this build has no server": expected, because that build has no server, so you set up nothing and none of the other lines of this row follow. A `make run LIVE=1` build writes this line only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and no server address set up; without that setting it has no silent start and writes none of the lines of this row. With the [silent start](auto-live-activity.md#the-silent-start) on: the start token from iOS, each ask to the server with the background time left, its answer ("started", "already started", "refused", "not set up", "no answer") with the seconds that it took, or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), the fallback to the notification, and "Follows the Live Activity that the server started" when the app finds it on screen |
+| Branch | Each arrival that the app decides, with its reason: arrived in the background, started, switched, or why not; each end of the Live Activity by its distance or time limit |
+| Bell | Only in a log kept from an earlier build: each arrival notification that it handed to iOS |
+| Radio waves | At each launch of a plain `make run` build (not `LIVE=1`), "Silent start off: this build has no server": expected, because that build has no server, so you set up nothing and none of the other lines of this row follow. A `make run LIVE=1` build writes this line only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and no server address set up; without that setting it has no silent start and writes none of the lines of this row. With the [silent start](auto-live-activity.md#the-silent-start) on: the start token from iOS, each ask to the server with the background time left, its answer ("started", "already started", "refused", "not set up", "no answer") with the seconds that it took, or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), one line "No start at" the station, ", no notification:" and the cause when the Live Activity does not come, and "Follows the Live Activity that the server started" when the app finds it on screen |
 | Tram | Each call that the app makes for its Live Activity in the background: how old the answer is and the next train of each direction that it hands to iOS (four at most), or why no answer came; then "next ask by" and a time, or "asks no more" |
 
 "App launched" is written at the start of the launch.
@@ -162,11 +164,11 @@ iOS also launches apps ahead of time, with no reason in the log.
 No line at all after a walk near a station means that iOS never woke the app.
 With a Live Activity on the lock screen and the app in the background, no tram line after the time of "next ask by" means that iOS was not running the app.
 An old answer, or the same times line after line, comes from the train data; times in the line that the lock screen does not show mean that iOS did not draw them.
-A line "No arrival at" a station with a rough position or none is followed by "Second chance at" that station: "asks iOS for a position", then its result: "notified after N s", or "gave up" or "ended" after N s, with the reason.
+A line "No arrival at" a station with a rough position or none is followed by "Second chance at" that station: "asks iOS for a position", then its result: "arrived in the background after N s", or "gave up" or "ended" after N s, with the reason.
 When the result line never comes, iOS suspended or closed the app before the end of the 2 minutes.
-An answer line that ends with "iOS suspended the app" says that the ask lasted past its 10 seconds: iOS stopped the app during the ask.
+An answer line or a "No start at" line that ends with "iOS suspended the app" says that the ask lasted past its 10 seconds: iOS stopped the app during the ask.
 After a "left" line, "No decision and no new areas" says that iOS gave no recent position, so the app chose no new stations to watch, and the stations further on may not wake it.
-A line "Live Activity ended: N m from" a station, before a line "Notified", says that the rider left that station before reaching the next one, so the next one notified instead of a switch.
+A line "Live Activity ended: N m from" a station, before a line "Arrived in the background", says that the rider left that station before reaching the next one, so the next one asked the server instead of a switch.
 A switch, or an end by distance, that rests on a position of the real GPS ends with where that position came from.
 "(position: stream)" is the position stream, which iOS can stop about 10 seconds after the app leaves the screen, unless the app still counts as in use.
 "(position: keeper; stream N s old)" is the background updates that keep the app running while a Live Activity shows, with the age of the last position of the stream.
@@ -181,7 +183,7 @@ Such a log says nothing about a closed app: tap **Use the real GPS**, then walk 
 With the real GPS, a Map line "Watching" some stations (often "Watching 18 stations") shows once the phone has a position; when it does not show, leave the app and open it again.
 The line "Region watch on: iOS keeps N regions for the app" is no proof either way: it counts the areas when the app starts, before the app chooses them, so it can say 0 with the real GPS, and more than 0 with a fake position.
 A line "iOS keeps N areas for the app, the plan has M" is a problem: iOS does not keep the areas that the app just chose, and past 20 areas iOS refuses new ones, so a station near you may not wake the app.
-For a first walk, stand about 2 minutes within 150 meters of a station, because iOS can take a few seconds to a few minutes to report that you entered the area ([the arrival notification](#with-the-app-in-the-background-the-arrival-notification)).
+For a first walk, stand about 2 minutes within 150 meters of a station, because iOS can take a few seconds to a few minutes to report that you entered the area ([with the app in the background](#with-the-app-in-the-background-no-notification)).
 To see these area lines at your desk first, play [a walk into Le Parc de Saint-Maur](../App/TestingTools/WalkIntoLeParcDeSaintMaur.gpx) on your iPhone with **Debug** > **Simulate Location** in Xcode: the file has the steps.
 **Share** sends the log as text, and **Clear** empties it once you confirm, so a slip next to **Share** keeps the log.
 The text holds the lines and **Phone now**, with distances to stations and never a position.

@@ -310,14 +310,14 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 2. Right after, the app asks if it can also use your location when you do not use it.
    Tap **Change to Always Allow**.
-   Then the app can tell you when you arrive at a station, also when it is closed.
+   Then the app knows when you arrive at a station, also when it is closed.
    [Help](/en/support/#what-trome-asks-of-the-iphone-and-why) says what each choice does.
 
    <Screenshot src={appAlwaysPermission} alt="The iPhone asks: Allow TROME to also use your location even when you are not using the app? The buttons are Keep Only While Using and Change to Always Allow." />
 
 3. The app asks to send you notifications.
    Tap **Allow**.
-   The app uses them to tell you when you arrive at a station.
+   The app sends no notification for now.
 
    <Screenshot src={appNotificationPermission} alt="The iPhone asks: TROME would like to send you notifications. The buttons are Don't Allow and Allow." />
 
@@ -349,9 +349,9 @@ The real times come from PRIM, and the app that you build needs your own free ke
   [Renew the app every 7 days](/en/build/renew-the-app/) takes about 5 minutes: do it each weekend.
 </Aside>
 
-The app on your iPhone makes the notifications and the Live Activity of your build, and a free Apple ID is enough for both.
-With the app closed, your build shows a notification at a station: tap it for the Live Activity.
-The build that I ship through TestFlight and the App Store needs no tap, as it starts the Live Activity with a push, which a free Apple ID cannot sign.
+The app on your iPhone makes the Live Activity of your build, and a free Apple ID is enough for it.
+With the app closed, your build shows nothing at a station: open the app there for the Live Activity.
+The build that I ship through TestFlight and the App Store starts it with the app closed, with a push, which a free Apple ID cannot sign.
 
 Where to go next:
 

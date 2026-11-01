@@ -29,7 +29,7 @@ For each thing that could go wrong, ask: what could a rider lose, and what is th
 - **Render check of the Live Activity** (proposed by decision-9, not built yet).
   How the app's views draw a given ContentState at the extreme cases: the 160 pt limit, cut or wrapped text.
 - **E2E test** (the shared Simulator, the factory's bottleneck).
-  Only for a seam where the app's code meets iOS and a fake would lie: ActivityKit starts, switches and ends a real Live Activity; the widget process draws the app's ContentState; iOS runs the intents of the Live Activity buttons; a real notification opens the app; the position from iOS reaches the rules; the permission popups come in order.
+  Only for a seam where the app's code meets iOS and a fake would lie: ActivityKit starts, switches and ends a real Live Activity; the widget process draws the app's ContentState; iOS runs the intents of the Live Activity buttons; iOS shows no notification of the app; the position from iOS reaches the rules; the permission popups come in order.
   Assert on what the rider or iOS shows (the Live Activity in the Notification Center, the notification, the popup), not on an app label.
   Set up the state with a platform hook (`XCUIDevice.location`) or a launch argument, not through the app screen or the Testing tools.
   Fake only what is not the seam under test (`--fake-trains` replaces PRIM).

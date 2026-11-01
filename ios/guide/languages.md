@@ -37,7 +37,7 @@ To see the whole Simulator in French, run `make run LANGUAGE=fr`, or `make switc
 
 | Catalog | Its texts |
 |---|---|
-| `ios/App/Localizable.xcstrings` | The screens of the app and the notifications |
+| `ios/App/Localizable.xcstrings` | The screens of the app |
 | `ios/App/InfoPlist.xcstrings` | The name under the icon, and the permission texts, which are written in English in `ios/project.yml` |
 | `ios/Widget/Localizable.xcstrings` | The Live Activity and the Dynamic Island |
 
