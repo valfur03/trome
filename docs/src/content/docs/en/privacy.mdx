@@ -8,7 +8,7 @@ sidebar:
 
 import Contact from '../../../components/Contact.astro';
 
-Last updated: 31 October 2026.
+Last updated: 1 November 2026.
 
 TROME needs to know which station you are near, not who you are.
 By Apple’s definition, TROME collects no data about you: the server uses what reaches it to answer, and keeps none of it in a form that anyone can read.
@@ -64,7 +64,7 @@ Here is what each piece of data is for:
   Under the GDPR, using data for the length of one request already counts as processing, even if nothing is stored.
   The interest is legitimate here because TROME cannot work without this data, the processing is very short, and the server stores neither the station that you ask for nor your IP address.
 - **The start token, and its hash**: to put the Live Activity on your lock screen when the app is closed, and to avoid a second start for the same arrival.
-  The interest is legitimate here because the start cannot happen without the token, the token is used for one request and not kept, and its hash is kept for 45 minutes only, cannot give the token back, and serves no other use.
+  The interest is legitimate here because the start cannot happen without the token, the server uses the token for one request and does not keep it, and its hash is kept for 45 minutes only, cannot give the token back, and serves no other use.
 - **The server’s totals, and their copy**: to watch the daily limit of calls to the source of the times, and to follow how much TROME is used.
   They have no station and no IP address.
 - **The server’s list of errors**: to see why it did not get the times from the source, and to fix what is wrong.
@@ -113,6 +113,7 @@ To show the Live Activity when the app is closed, the server sends the start tok
 
 TROME keeps your settings (the automatic mode, the snooze and the pauses), the last station shown, and the latest times it got, on your iPhone.
 The app sends them nowhere, but they are part of the backups of your iPhone, like the data of every app.
+It also keeps the last start token that iOS gave it, which it sends only in the start request described above.
 Deleting the app deletes them.
 
 ## What Apple provides

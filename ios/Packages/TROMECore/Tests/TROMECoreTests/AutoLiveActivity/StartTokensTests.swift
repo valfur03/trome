@@ -89,6 +89,8 @@ struct StartTokensTests {
     @Test func aTokenThatComesDuringTheWaitIsUsed() async {
         let tokens = tokens()
         let wait = Task { await tokens.startToken() }
+        // The main actor runs the wait first, up to its suspension, so that the token comes to a waiting ask.
+        await Task.yield()
 
         tokens.receive(Self.fresh)
 

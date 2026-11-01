@@ -8,7 +8,7 @@ sidebar:
 
 import Contact from '../../../components/Contact.astro';
 
-Dernière mise à jour : 31 octobre 2026.
+Dernière mise à jour : 1er novembre 2026.
 
 TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
 Selon la définition d’Apple, TROME ne collecte aucune donnée sur vous : le serveur se sert de ce qui lui arrive pour répondre, et n’en garde rien sous une forme lisible.
@@ -64,7 +64,7 @@ Voici à quoi sert chaque donnée :
   Au sens du RGPD, utiliser une donnée le temps d’une requête, c’est déjà la traiter, même si rien n’est conservé.
   L’intérêt est légitime ici : TROME ne peut pas fonctionner sans ces données, le traitement est très bref, et le serveur ne conserve ni la station demandée ni votre adresse IP.
 - **Le jeton de démarrage, et son empreinte** : afficher l’activité en direct sur votre écran verrouillé quand l’app est fermée, et éviter un second démarrage pour la même arrivée.
-  L’intérêt est légitime ici : le démarrage ne peut pas se faire sans le jeton, le jeton sert à une seule requête et n’est pas conservé, et son empreinte est gardée 45 minutes seulement, ne permet pas de retrouver le jeton, et ne sert à rien d’autre.
+  L’intérêt est légitime ici : le démarrage ne peut pas se faire sans le jeton, le serveur utilise le jeton pour une seule requête et ne le conserve pas, et son empreinte est gardée 45 minutes seulement, ne permet pas de retrouver le jeton, et ne sert à rien d’autre.
 - **Les compteurs du serveur, et leur copie** : surveiller la limite quotidienne d’appels à la source des horaires, et suivre l’usage de TROME.
   Ils ne contiennent ni station ni adresse IP.
 - **La liste d’erreurs du serveur** : comprendre pourquoi il n’a pas obtenu les horaires de la source, et corriger le problème.
@@ -113,6 +113,7 @@ Pour afficher l’activité en direct quand l’app est fermée, le serveur envo
 
 TROME conserve sur votre iPhone vos réglages (le mode automatique, la pause et les sourdines), la dernière station affichée et les derniers horaires reçus.
 L’app ne les envoie nulle part, mais ils font partie des sauvegardes de votre iPhone, comme les données de toutes les apps.
+Elle garde aussi le dernier jeton de démarrage qu’iOS lui a donné, qu’elle n’envoie que dans la demande de démarrage décrite plus haut.
 Ils disparaissent si vous supprimez l’app.
 
 ## Ce que fournit Apple
