@@ -282,6 +282,7 @@ extension AutoLiveActivityModelTests {
         starter.answer(with: .noAnswer)
         await wake.value
 
-        #expect(silentStartLines.contains(noStartLine(because: "\(LiveActivityStartAnswer.noAnswer.summary), after 11 s")))
+        let cause = "\(LiveActivityStartAnswer.noAnswer.summary), after 11 s"
+        #expect(silentStartLines.contains(noStartLine(because: cause)))
     }
 }
