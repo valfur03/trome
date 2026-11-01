@@ -49,6 +49,8 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         let stopRequest: StopRequest
         let visits: Result<[MonitoredVisit], any Error>
         var answeredAt: Date?
+        /// When the app sent the call, by its own clock: the debug log writes it (`PRIMAnswerLog`).
+        var askedAt: Date?
 
         var failed: Bool {
             if case .failure = visits { true } else { false }
@@ -74,15 +76,17 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         let answers = await withTaskGroup(of: Answer.self) { group in
             for stopRequest in stopRequests {
                 group.addTask {
+                    let askedAt = now()
                     do {
                         let stopAnswer = try await stopAnswer(at: stopRequest.monitoringRef)
                         return Answer(
                             stopRequest: stopRequest,
                             visits: .success(stopAnswer.visits),
-                            answeredAt: stopAnswer.answeredAt
+                            answeredAt: stopAnswer.answeredAt,
+                            askedAt: askedAt
                         )
                     } catch {
-                        return Answer(stopRequest: stopRequest, visits: .failure(error))
+                        return Answer(stopRequest: stopRequest, visits: .failure(error), askedAt: askedAt)
                     }
                 }
             }

@@ -11,8 +11,14 @@ struct PRIMAnswerLogTests {
     private func answer(_ visits: Result<[MonitoredVisit], any Error>) -> PRIMDeparturesProvider.Answer {
         PRIMDeparturesProvider.Answer(
             stopRequest: PRIMDeparturesProvider.StopRequest(monitoringRef: stopArea, lineCodes: ["C01382"]),
-            visits: visits
+            visits: visits,
+            askedAt: answerTime.addingTimeInterval(-1)
         )
+    }
+
+    /// The lines that say what the app does with each entry, with no `fields` line of a Debug build.
+    private func appLines(_ lines: [String]) -> [String] {
+        lines.filter { !$0.contains(" | fields") }
     }
 
     @Test func writesEachVisitOfAnAnswerWithWhatTheAppKeepsOrDrops() throws {
@@ -25,21 +31,21 @@ struct PRIMAnswerLogTests {
             timeZone: .gmt
         )
 
-        let prefix = "PRIM \(stopArea) | "
-        #expect(lines == [
+        let prefix = "PRIM \(stopArea) | call 2026-09-26T09:59:59.000Z | "
+        #expect(appLines(lines) == [
             prefix + "5 visits",
-            prefix + "kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:02:30 | arrival 10:02:10"
+            prefix + "entry 1 | kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:02:30 | arrival 10:02:10"
                 + " | status onTime | quay STIF:StopPoint:Q:463116: | destination STIF:StopPoint:Q:463108:"
                 + " | journey RATP-SIV:VehicleJourney::M12.R.1003:LOC | item RATP-SIV:Item::1.12.A.463116:LOC",
-            prefix + "kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:07:00 | status onTime"
+            prefix + "entry 2 | kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:07:00 | status onTime"
                 + " | quay STIF:StopPoint:Q:463116: | destination STIF:StopPoint:Q:463108:"
                 + " | journey RATP-SIV:VehicleJourney::M12.R.1007:LOC | item RATP-SIV:Item::1.12.A.463116.2:LOC",
-            prefix + "dropped, ends here | line STIF:Line::C01382: | to Abbesses | time 10:04:00 | arrival 10:04:00"
+            prefix + "entry 3 | dropped, ends here | line STIF:Line::C01382: | to Abbesses | time 10:04:00 | arrival 10:04:00"
                 + " | quay STIF:StopPoint:Q:463116: | destination STIF:StopPoint:Q:463116:"
                 + " | journey RATP-SIV:VehicleJourney::M12.R.1009:LOC | item RATP-SIV:Item::1.12.A.463116.3:LOC",
-            prefix + "dropped, line not asked | line STIF:Line::C01100: | to Gare du Nord | time 10:03:00"
+            prefix + "entry 4 | dropped, line not asked | line STIF:Line::C01100: | to Gare du Nord | time 10:03:00"
                 + " | item RATP-SIV:Item::bus.40:LOC",
-            prefix + "dropped, cancelled | line STIF:Line::C01382: | to Mairie d'Issy | time 10:05:00"
+            prefix + "entry 5 | dropped, cancelled | line STIF:Line::C01382: | to Mairie d'Issy | time 10:05:00"
                 + " | status cancelled | quay STIF:StopPoint:Q:463116: | destination STIF:StopPoint:Q:463108:"
                 + " | journey RATP-SIV:VehicleJourney::M12.R.1011:LOC | item RATP-SIV:Item::1.12.A.463116.5:LOC"
         ])
@@ -62,10 +68,11 @@ struct PRIMAnswerLogTests {
             timeZone: .gmt
         )
 
-        #expect(lines.dropFirst() == [
-            "PRIM \(stopArea) | kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:02:00"
+        let prefix = "PRIM \(stopArea) | call 2026-09-26T09:59:59.000Z"
+        #expect(appLines(lines).dropFirst() == [
+            "\(prefix) | entry 1 | kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:02:00"
                 + " | aimed 10:01:00 | at stop yes | journey M12.R.1",
-            "PRIM \(stopArea) | dropped, same journey as an earlier visit | line STIF:Line::C01382:"
+            "\(prefix) | entry 2 | dropped, same journey as an earlier visit | line STIF:Line::C01382:"
                 + " | to Mairie d'Issy | time 10:02:00 | aimed 10:01:00 | at stop yes | journey M12.R.1"
         ])
     }
@@ -95,7 +102,7 @@ struct PRIMAnswerLogTests {
             timeZone: .gmt
         )
 
-        #expect(lines.last?.hasPrefix("PRIM \(stopArea) | \(fate) | line") == true)
+        #expect(appLines(lines).last?.hasPrefix("PRIM \(stopArea) | call 2026-09-26T09:59:59.000Z | entry 1 | \(fate) | line") == true)
     }
 
     @Test func writesAFailedCall() {
@@ -105,7 +112,7 @@ struct PRIMAnswerLogTests {
             now: answerTime
         )
 
-        #expect(lines == ["PRIM \(stopArea) | failed: quotaExceeded"])
+        #expect(lines == ["PRIM \(stopArea) | call 2026-09-26T09:59:59.000Z | failed: quotaExceeded"])
     }
 
     @Test func givesEachLineToTheLogAndKeepsTheSameTrains() async throws {
@@ -120,6 +127,6 @@ struct PRIMAnswerLogTests {
         let notLogged = try await silent.departures(at: [base.abbesses])
 
         #expect(logged == notLogged)
-        #expect(lines.withLock { $0.count } == 6)
+        #expect(lines.withLock { appLines($0).count } == 6)
     }
 }
