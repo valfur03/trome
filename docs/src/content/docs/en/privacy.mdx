@@ -112,9 +112,11 @@ To show the Live Activity when the app is closed, the server sends the start tok
 ## What stays on your iPhone
 
 TROME keeps your settings (the automatic mode, the snooze and the pauses), the last station shown, and the latest times it got, on your iPhone.
-The app sends them nowhere, but they are part of the backups of your iPhone, like the data of every app.
-It also keeps the last start token that iOS gave it, which it sends only in the start request described above.
-Deleting the app deletes them.
+The app sends them nowhere.
+It also keeps the last start token that iOS gave it, to use it at a station when iOS has not given a new one yet.
+It sends the token only in the start request, [described above](#when-the-app-is-closed).
+All of this is part of the backups of your iPhone, like the data of every app.
+Deleting the app deletes it.
 
 ## What Apple provides
 
