@@ -129,7 +129,7 @@ Why: `--keep-running-in-background` once kept the app following the position in 
 `--hide-testing-tools` only hides the link of the Testing tools, for the store pictures, and the wake log only reads: they change no path.
 iOS never suspends an app that a test launched, so no test sees the app suspended or ended in the background.
 
-| Path of the automatic start | The test that runs it with no flag of this list | When the Simulator cannot run it |
+| Path of the automatic start | The test that runs it as on a rider's phone (only `makeApp()` flags) | What checks it when the Simulator cannot |
 |---|---|---|
 | The start with the app open | `AutoLiveActivityTests`, `LiveActivityTests` | |
 | The switch in the pocket | `AutoLiveActivityTests` | |
