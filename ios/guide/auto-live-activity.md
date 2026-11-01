@@ -20,7 +20,7 @@ The code is in `ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity/`, and
 | The permission questions | `LocationQuestionsRules` (`Location/`), `CoreLocationPermission` (`ios/App/Location/`) | `LocationQuestionsRulesTests` |
 | The regions that wake the app | `StationRegionPlan`, `CoreLocationStationRegionWatcher` | `StationRegionPlanTests` |
 | The notification | `StationArrivalNotifications` | `AutoLiveActivityNotificationTests` |
-| The silent start: the start token, the ask to the server, the fallback | `SilentStart`, `ServerLiveActivityStarter`, `LiveActivityStartAnswer`, `AutoLiveActivityModel+SilentStart`; `ActivityKitPushToStartTokenSource` (`ios/App/AutoLiveActivity/`) | `AutoLiveActivitySilentStartTests`, `LiveActivityStartContractTests` |
+| The silent start: the start token, the ask to the server, the fallback | `SilentStart`, `StartTokens`, `ServerLiveActivityStarter`, `LiveActivityStartAnswer`, `AutoLiveActivityModel+SilentStart`; `ActivityKitStartTokens`, `PushRegistrationAppDelegate` (`ios/App/AutoLiveActivity/`) | `AutoLiveActivitySilentStartTests`, `StartTokensTests`, `LiveActivityStartContractTests` |
 | The Live Activity that the server started: the app follows it, ends it, and waits for it | `PushedStart`, `AutoLiveActivityModel+SilentStart`; `ActivityKitStationLiveActivityClient` reports each Live Activity that the app did not start | `AutoLiveActivityPushedStartTests` |
 
 The values that a change often needs are constants:
@@ -85,6 +85,10 @@ Every Release build does it, the store build too.
 A Debug build does it only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` (then run `make generate`) and a server in `ios/Config/Server.xcconfig`.
 Both need a paid Apple Developer Program team, because a free Apple ID cannot sign the push capability; a Debug build with no such setting keeps the notification.
 The app sends the start token that iOS gives it to the server (`POST /v1/stations/<id>/live-activity`, [the server side](../../server/guide/how-it-works.md#the-start-of-a-live-activity)).
+At every launch, a launch in the background by the area of a station included, the app registers with Apple's push service, then listens for the start token, as Apple advises; this asks the rider for nothing.
+It keeps the last token on the phone, and asks with it when iOS has given this launch none: on a walk of 2026-10-31, the store build never asked the server, and a process that iOS wakes at a station may get no token in its seconds.
+A fresher token replaces the kept one, and a token that Apple refuses as unknown (`BadDeviceToken`, `Unregistered`) is forgotten.
+The token goes nowhere else than in this ask.
 The Live Activity then comes on the lock screen with no notification and no tap only when the push topic of the server is the bundle ID of this build.
 A real server pushes to the bundle ID of the Release build only ([`APNS_BUNDLE_ID`](../../server/guide/deploy.md#the-secrets)), so Apple refuses the start of a Debug build, the server answers refused, and the app sends the notification: a Debug build checks the ask and the fallback, and only a Release build shows the start.
 It asks once per arrival, and never while a Live Activity that the app follows shows.
@@ -92,7 +96,7 @@ The app follows the Live Activity that the server started as soon as it runs wit
 It then ends it as one that it started: at 250 meters, or 45 minutes after the answer of the server; a swipe pauses the station.
 It cannot switch it to the next station, as its updates come on the channel of its station: at the next station, it ends it, and that station starts its own, with the server or by the app when the app is open.
 With the app open at the station when the server answers, the app waits 30 seconds for that Live Activity, and only then starts its own.
-The notification comes instead, once, when Live Activities are off, when iOS gave no start token, or when the server cannot be reached, refuses, is not set up, or gives no answer within 10 seconds: iOS gives a woken app only seconds to run.
+The notification comes instead, once, when Live Activities are off, when no start token is kept and iOS gives none, or when the server cannot be reached, refuses, is not set up, or gives no answer within 10 seconds: iOS gives a woken app only seconds to run.
 In a Debug build, the [wake log](testing-tools.md#on-your-iphone-see-why-no-notification-came) writes each step.
 
 ## Snooze, turn off, and the pause after a swipe

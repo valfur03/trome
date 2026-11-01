@@ -7,8 +7,8 @@ import UIKit
 /// the app delegate only, and passes it to the Wake log. The device token itself is not kept and goes nowhere: the
 /// silent start uses the push-to-start token of ActivityKit.
 final class PushRegistrationAppDelegate: NSObject, UIApplicationDelegate {
-    private static let answered = Notification.Name("PushRegistrationAppDelegate.answered")
-    private static let answerKey = "answer"
+    private nonisolated static let answered = Notification.Name("PushRegistrationAppDelegate.answered")
+    private nonisolated static let answerKey = "answer"
 
     /// Writes each answer in the Wake log: "accepted", or the error of iOS.
     @MainActor
