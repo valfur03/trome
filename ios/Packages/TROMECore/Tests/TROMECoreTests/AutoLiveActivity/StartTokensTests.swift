@@ -49,9 +49,9 @@ struct StartTokensTests {
         keep(Self.old)
         let starter = StubLiveActivityStarter(answer: .started)
 
-        let started = await silentStart(starter, tokens()).start(at: AutoTestPlaces.stationA)
+        let ask = await silentStart(starter, tokens()).start(at: AutoTestPlaces.stationA)
 
-        #expect(started)
+        #expect(ask.startsTheLiveActivity)
         #expect(starter.asks == [.init(stationId: "a", startToken: Self.old)])
         #expect(lines.contains("Asks with the kept start token"))
     }
@@ -103,12 +103,12 @@ struct StartTokensTests {
         let starter = StubLiveActivityStarter(answer: .started)
         let firstProcess = tokens()
 
-        let started = await silentStart(starter, firstProcess, limitEnds: true).start(at: AutoTestPlaces.stationA)
+        let ask = await silentStart(starter, firstProcess, limitEnds: true).start(at: AutoTestPlaces.stationA)
         firstProcess.receive(Self.fresh)
 
-        #expect(!started)
+        #expect(!ask.startsTheLiveActivity)
         #expect(starter.asks.isEmpty)
-        #expect(lines.contains("No start token from iOS within 10 s"))
+        #expect(ask.cause == "No start token from iOS within 10 s")
         #expect(await tokens().startToken() == StartToken(value: Self.fresh, isKept: true))
     }
 
@@ -120,9 +120,9 @@ struct StartTokensTests {
         let starter = StubLiveActivityStarter(answer: .refused(reason: reason))
         let tokens = tokens()
 
-        let started = await silentStart(starter, tokens).start(at: AutoTestPlaces.stationA)
+        let ask = await silentStart(starter, tokens).start(at: AutoTestPlaces.stationA)
 
-        #expect(!started)
+        #expect(!ask.startsTheLiveActivity)
         #expect(kept == nil)
         #expect(lines.contains("Start token refused as invalid: forgotten"))
         let nextWake = Task { await tokens.startToken() }
