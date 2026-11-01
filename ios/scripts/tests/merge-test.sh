@@ -128,7 +128,7 @@ progress() {
 
 # Waits for the end of the merge, however long it takes: a busy Mac makes each step slower, so a bound on the whole merge
 # fails a merge that works (a failed train runs its checks three times). Only a merge that writes nothing for
-# $stall_seconds is stuck: it reads "stuck", and the cleanup stops it.
+# $stall_seconds is stuck: it reads "stuck", and it is stopped with the jobs that it started.
 stall_seconds=120
 finish_merge() {
     eval "pid=\$merge_$1"
@@ -144,9 +144,25 @@ finish_merge() {
             last=$now
         fi
     done
-    kill "$pid" 2> /dev/null || true
+    # A stuck merge.sh, and the jobs that it started, would keep their locks after the end of their wrapper:
+    # each later merge would wait behind them for its own stall bound.
+    kill $(descendants "$pid") "$pid" 2> /dev/null || true
     wait "$pid" 2> /dev/null || true
     cat "$state/$1.status" 2> /dev/null || echo "stuck"
+}
+
+# The processes under $1: its children, their children, and so on.
+descendants() {
+    ps -A -o pid= -o ppid= | awk -v root="$1" '
+        { parent[$1] = $2 }
+        END {
+            found[root] = 1
+            do {
+                more = 0
+                for (p in parent) if (!(p in found) && (parent[p] in found)) { found[p] = 1; more = 1 }
+            } while (more)
+            for (p in found) if (p != root) print p
+        }'
 }
 
 merge() {
