@@ -121,9 +121,9 @@ extension AutoLiveActivityModelTests {
         #expect(lines[0].hasPrefix("Asked for Station M: no answer (unreachable); next ask by "))
     }
 
-    /// The record that the prompter shares after a walk holds no position (TASK-500 criterion 2): a whole arrival at
-    /// Le Parc, from the wake line to the answer of the server, with the plan of the areas, gives distances to
-    /// stations and never a coordinate, in any shape.
+    /// The record that a walker shares holds no position: a whole arrival at Le Parc, from the wake line to the
+    /// answer of the server, with the plan of the areas, gives distances to stations and never a coordinate,
+    /// in any shape.
     @Test func theSharedRecordOfAnArrivalHoldsNoCoordinate() async {
         let starter = StubLiveActivityStarter(answer: .started)
         let catalog = StationCatalog(stations: [Self.leParc, Places.stationA])

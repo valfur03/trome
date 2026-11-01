@@ -2,8 +2,8 @@ import Foundation
 import Testing
 @testable import TROMECore
 
-/// Each wake line tells a fresh launch by iOS from an event that came to a running app (TASK-500 criterion 7): the
-/// stop at Le Parc of the walk of 2026-10-31 could not tell them apart.
+/// Each wake line tells a fresh launch by iOS from an event that came to a running app: the log of a walk with no
+/// such word could not tell why a station gave nothing.
 struct WakeProcessTests {
     let launch = Date(timeIntervalSince1970: 1_000_000)
 

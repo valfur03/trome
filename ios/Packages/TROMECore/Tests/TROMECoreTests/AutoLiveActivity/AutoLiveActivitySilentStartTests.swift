@@ -203,8 +203,8 @@ extension AutoLiveActivityModelTests {
         #expect(silentStartLines.last == "No fallback: the arrival at Station A is over")
     }
 
-    /// What a walk must read to tell a suspension from a rule (TASK-500 criteria 1 and 7): the background time that
-    /// iOS still gives at the ask, and an ask that lasts past its limit, as only a suspended app lets it.
+    /// What a walk must read to tell a suspension from a rule: the background time that iOS still gives at the ask,
+    /// and an ask that lasts past its limit, as only a suspended app lets it.
     @Test func tellsTheBackgroundTimeThatIOSStillGivesAtTheAsk() async {
         let starter = StubLiveActivityStarter(answer: .started)
         let model = makeModel(silentStart: silentStart(starter, backgroundTimeRemaining: { 24.6 }))
