@@ -158,7 +158,8 @@ public final class AutoLiveActivityModel {
     private func positionDidChange() {
         observePosition()
         guard let fix = inputs.locationService.fix else { return }
-        Task { await handle(fix) }
+        let origin = inputs.locationService.fixOrigin
+        Task { await handle(fix, from: origin) }
     }
 
     private func followPositionIfShowing() {
@@ -196,19 +197,28 @@ public final class AutoLiveActivityModel {
         }
     }
 
-    func evaluate(position: Coordinate?, asAResume: Bool = false, logsEveryOutcome: Bool = false) async {
+    func evaluate(
+        position: Coordinate?,
+        asAResume: Bool = false,
+        logsEveryOutcome: Bool = false,
+        from origin: PositionOrigin? = nil
+    ) async {
         syncWithSystem()
         endPauseIfOver()
         let decide = asAResume
             ? configuration.rules.resume(state:position:now:onArrival:catalog:)
             : configuration.rules.decide(state:position:now:onArrival:catalog:)
         let decision = decide(state, position, configuration.now(), arrivalResponse, catalog)
-        await apply(decision, logsEveryOutcome: logsEveryOutcome)
+        await apply(decision, logsEveryOutcome: logsEveryOutcome, from: origin)
     }
 
-    func apply(_ decision: AutoLiveActivityRules.Decision, logsEveryOutcome: Bool) async {
-        log(decision.ending)
-        log(decision.arrival, everyOutcome: logsEveryOutcome)
+    func apply(
+        _ decision: AutoLiveActivityRules.Decision,
+        logsEveryOutcome: Bool,
+        from origin: PositionOrigin? = nil
+    ) async {
+        log(decision.ending, from: origin)
+        log(decision.arrival, everyOutcome: logsEveryOutcome, from: origin)
         state = decision.state
         for action in decision.actions {
             await perform(action)
@@ -268,8 +278,13 @@ public final class AutoLiveActivityModel {
         restartFeed(fetchNow: false)
     }
 
-    func handle(_ position: Coordinate, asAResume: Bool = false, logsEveryOutcome: Bool = false) async {
-        await evaluate(position: position, asAResume: asAResume, logsEveryOutcome: logsEveryOutcome)
+    func handle(
+        _ position: Coordinate,
+        asAResume: Bool = false,
+        logsEveryOutcome: Bool = false,
+        from origin: PositionOrigin? = nil
+    ) async {
+        await evaluate(position: position, asAResume: asAResume, logsEveryOutcome: logsEveryOutcome, from: origin)
         await refreshRegions(around: position)
     }
 
@@ -365,7 +380,8 @@ extension AutoLiveActivityModel {
     func handle(
         _ fix: PositionFix,
         maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge,
-        logsEveryOutcome: Bool = false
+        logsEveryOutcome: Bool = false,
+        from origin: PositionOrigin? = nil
     ) async {
         guard trusts(fix, maximumAge: maximumAge) else {
             if logsEveryOutcome {
@@ -375,6 +391,6 @@ extension AutoLiveActivityModel {
             return
         }
         cannotFindPosition = false
-        await handle(fix.coordinate, logsEveryOutcome: logsEveryOutcome)
+        await handle(fix.coordinate, logsEveryOutcome: logsEveryOutcome, from: origin)
     }
 }

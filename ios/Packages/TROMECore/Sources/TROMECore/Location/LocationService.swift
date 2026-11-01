@@ -13,6 +13,8 @@ import Observation
 public final class LocationService {
     public private(set) var source: LocationSource
     private(set) var fix: PositionFix?
+    /// Where `fix` came from, when it is a position of the real GPS that the service follows; nil otherwise.
+    @ObservationIgnored private(set) var fixOrigin: PositionOrigin?
     public private(set) var problem: LocationProblem?
 
     public var position: Coordinate? {
@@ -96,6 +98,7 @@ public final class LocationService {
         }
         source = newSource
         sourceStore.save(newSource)
+        fixOrigin = nil
         fix = nil
         problem = nil
         if updatesTask != nil {
@@ -110,7 +113,7 @@ public final class LocationService {
     public func takeBackgroundFix(_ newFix: PositionFix) {
         guard updatesTask != nil, source == .realGPS else { return }
         if let fix, newFix.timestamp <= fix.timestamp { return }
-        handle(.position(newFix))
+        handle(.position(newFix), from: .keeper)
     }
 
     func requestCurrentFix() async -> PositionFix? {
@@ -118,6 +121,7 @@ public final class LocationService {
         guard let newFix = await provider(for: requestedSource).currentFix(), source == requestedSource else {
             return nil
         }
+        fixOrigin = nil
         fix = newFix
         problem = nil
         return newFix
@@ -147,9 +151,10 @@ public final class LocationService {
         }
     }
 
-    private func handle(_ event: LocationEvent) {
+    private func handle(_ event: LocationEvent, from origin: PositionOrigin = .stream) {
         switch event {
         case .position(let newFix):
+            fixOrigin = source == .realGPS ? origin : nil
             fix = newFix
             problem = nil
         case .problem(let newProblem):
@@ -159,6 +164,15 @@ public final class LocationService {
             problem = newProblem
         }
     }
+}
+
+/// Where a position of the real GPS came from, for the wake log: a walk then tells which one moved the Live Activity.
+public enum PositionOrigin: String, Sendable {
+    /// The position stream of the provider, which iOS stops about 10 seconds after the app leaves the screen,
+    /// unless the app still counts as in use.
+    case stream
+    /// The updates of `BackgroundLocationKeeper`, which go on in the background with the location Always.
+    case keeper
 }
 
 /// Why the app follows the position.

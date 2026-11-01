@@ -53,7 +53,7 @@ extension AutoLiveActivityModelTests {
 
         #expect(notifier.notified == [Places.stationB])
         #expect(decisionLines.suffix(3) == [
-            "Live Activity ended: 400 m from Station A",
+            "Live Activity ended: 400 m from Station A (position: stream)",
             "No station within 150 m: nearest is Station A, 400 m",
             "Notified: Station B"
         ])

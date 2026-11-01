@@ -1,17 +1,33 @@
 import Foundation
 
 extension AutoLiveActivityModel {
-    func log(_ outcome: ArrivalOutcome?, everyOutcome: Bool) {
+    func log(_ outcome: ArrivalOutcome?, everyOutcome: Bool, from origin: PositionOrigin? = nil) {
         guard let wakeLog = services.wakeLog, let outcome, everyOutcome || outcome.logKey != lastLoggedOutcomeKey else {
             return
         }
         lastLoggedOutcomeKey = outcome.logKey
-        wakeLog.record(.decision, services.silentStart == nil ? outcome.summary : outcome.summaryWithASilentStart)
+        let summary = services.silentStart == nil ? outcome.summary : outcome.summaryWithASilentStart
+        guard case .switched = outcome else {
+            wakeLog.record(.decision, summary)
+            return
+        }
+        wakeLog.record(.decision, summary + Self.suffix(for: origin))
     }
 
-    func log(_ ending: LiveActivityEnding?) {
+    func log(_ ending: LiveActivityEnding?, from origin: PositionOrigin? = nil) {
         guard let ending else { return }
-        services.wakeLog?.record(.decision, ending.summary)
+        guard case .farFrom = ending else {
+            services.wakeLog?.record(.decision, ending.summary)
+            return
+        }
+        services.wakeLog?.record(.decision, ending.summary + Self.suffix(for: origin))
+    }
+
+    /// A switch or an end on a position of the real GPS says where the position came from: on a walk, a Live Activity
+    /// that moves only on the keeper's positions shows that iOS stopped the stream in the background.
+    private static func suffix(for origin: PositionOrigin?) -> String {
+        guard let origin else { return "" }
+        return " (position: \(origin.rawValue))"
     }
 
     func logScreenChange(from oldPhase: AppPhase, to newPhase: AppPhase) {
