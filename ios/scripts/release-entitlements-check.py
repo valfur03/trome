@@ -10,7 +10,8 @@ needs no team and no Apple account.
 With an archive (make release-archive-check), it also checks the archive: the group that the app and its widget read
 in their Info.plist, and the push code compiled into the app.
 It also proves that the store build has no Wake log, the record of each wake for a walk: an archive has it only when
-its Release settings ask for it (TROME_WAKE_LOG = YES, a TestFlight build for a walk), and then it must have it.
+its Release settings compile it (TROME_WAKE_LOG_BUILD_<n> = YES for the build number n, a TestFlight build for a walk),
+and then it must have it.
 It prints no build setting but the name of the app group, which ios/project.yml shows: the release checks run on
 GitHub, where the logs are public.
 """
@@ -33,7 +34,8 @@ GROUP_KEY = "TROMEAppGroup"
 SILENT_START_TYPE = b"ActivityKitPushToStartTokenSource"
 # A type that exists only in a build with the Wake log (ios/App/TestingTools/, inside #if WAKE_LOG).
 WAKE_LOG_TYPE = b"WakeLogScreen"
-WAKE_LOG_SETTING = "TROME_WAKE_LOG"
+WAKE_LOG_CONDITION = "WAKE_LOG"
+WAKE_LOG_SETTING = "TROME_WAKE_LOG_BUILD_<n>"
 
 
 def release_settings(project, target):
@@ -81,7 +83,7 @@ def problems_of_the_project(project):
     _, widget_groups = entitlements(release_settings(project, WIDGET), WIDGET)
     if group not in widget_groups:
         problems.append(f"the Release entitlements of {WIDGET} do not name the app group {group}")
-    has_wake_log = app.get(WAKE_LOG_SETTING, "") == "YES"
+    has_wake_log = WAKE_LOG_CONDITION in app.get("SWIFT_ACTIVE_COMPILATION_CONDITIONS", "").split()
     return group, has_wake_log, problems
 
 
@@ -105,10 +107,10 @@ def problems_of_the_archive(archive, group, has_wake_log):
                         "the Release build must compile SILENT_START")
     if WAKE_LOG_TYPE in binary and not has_wake_log:
         problems.append(f"in the archive, {APP} has the Wake log ({WAKE_LOG_TYPE.decode()}) while its Release settings "
-                        f"do not ask for it ({WAKE_LOG_SETTING}): the store build must never have it")
+                        f"do not compile it ({WAKE_LOG_SETTING}): the store build must never have it")
     if WAKE_LOG_TYPE not in binary and has_wake_log:
         problems.append(f"in the archive, {APP} has no Wake log ({WAKE_LOG_TYPE.decode()}) while its Release settings "
-                        f"ask for it ({WAKE_LOG_SETTING} = YES): the Release build must compile WAKE_LOG")
+                        f"compile it ({WAKE_LOG_SETTING} = YES): the Release build must compile WAKE_LOG")
     return problems
 
 

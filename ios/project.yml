@@ -119,13 +119,15 @@ targets:
       # A Debug build has it only with TROME_SILENT_START = YES in Config/Local.xcconfig (a paid team),
       # as a free Apple ID can sign neither; a Debug build for the Simulator, which needs no team, has the group.
       # The Wake log (WAKE_LOG) records each wake and decision on the phone, for a walk: every Debug build has it,
-      # and a Release build only with TROME_WAKE_LOG = YES in Config/Local.xcconfig, for a TestFlight build of a walk.
-      # The store build never has it: make release-archive-check fails on an archive that has it while the
-      # Release settings do not ask for it.
+      # and a Release build only with TROME_WAKE_LOG_BUILD_<n> = YES in Config/Local.xcconfig, where n is the
+      # CURRENT_PROJECT_VERSION of the TestFlight build of a walk: the next build number turns it off by itself, so a
+      # line left in the file never reaches a store build. make release-archive-check fails on an archive that has it
+      # while the Release settings do not compile it.
       configs:
         Release:
           TROME_WAKE_LOG_CONDITION_YES: WAKE_LOG
-          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) SILENT_START $(TROME_WAKE_LOG_CONDITION_$(TROME_WAKE_LOG:default=NO))
+          TROME_WAKE_LOG_OF_THIS_BUILD: $(TROME_WAKE_LOG_BUILD_$(CURRENT_PROJECT_VERSION):default=NO)
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) SILENT_START $(TROME_WAKE_LOG_CONDITION_$(TROME_WAKE_LOG_OF_THIS_BUILD))
           CODE_SIGN_ENTITLEMENTS: Config/SilentStart.entitlements
         Debug:
           TROME_SILENT_START_CONDITION_YES: SILENT_START

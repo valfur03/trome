@@ -29,8 +29,9 @@ TROME_BUNDLE_ID_PREFIX = com.example
 // It also needs your server in ios/Config/Server.xcconfig (a copy of Server.example.xcconfig); with no server, the app notifies as before.
 // TROME_SILENT_START = YES
 
-// Optional, only to archive a TestFlight build for a walk: YES puts the Wake log into the Release build.
+// Optional, only to archive a TestFlight build for a walk: YES puts the Wake log into the Release build whose
+// CURRENT_PROJECT_VERSION (ios/Config/Base.xcconfig) is the number at the end of the name, here build 5.
 // It records on the phone each wake by iOS, each arrival decision and each ask of the start, and the button at the
 // top right of the main screen opens it (ios/guide/testing-tools.md). Debug builds always have it.
-// Empty it again before you archive a build for the App Store: a rider never gets the Wake log.
-// TROME_WAKE_LOG = YES
+// The next build number turns it off by itself, so a store build never has it; remove the line after the walk.
+// TROME_WAKE_LOG_BUILD_5 = YES

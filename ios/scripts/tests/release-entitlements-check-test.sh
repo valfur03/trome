@@ -32,8 +32,8 @@ case $target in
     TROMEWidget) entitlements=${FAKE_WIDGET_ENTITLEMENTS-Config/AppGroup.entitlements} ;;
     *) exit 65 ;;
 esac
-printf '[{"target":"%s","buildSettings":{"SRCROOT":"%s","APP_BUNDLE_ID":"io.github.valfur03.trome","CODE_SIGN_ENTITLEMENTS":"%s","TROME_WAKE_LOG":"%s"}}]\n' \
-    "$target" "$FAKE_SRCROOT" "$entitlements" "${FAKE_WAKE_LOG-}"
+printf '[{"target":"%s","buildSettings":{"SRCROOT":"%s","APP_BUNDLE_ID":"io.github.valfur03.trome","CODE_SIGN_ENTITLEMENTS":"%s","SWIFT_ACTIVE_COMPILATION_CONDITIONS":"%s"}}]\n' \
+    "$target" "$FAKE_SRCROOT" "$entitlements" "${FAKE_CONDITIONS-SILENT_START}"
 EOF
 chmod +x "$state/xcodebuild"
 
@@ -91,10 +91,10 @@ expect "the failure names the silent start" "$(grep -c 'has no silent start' "$s
 archive group.io.github.valfur03.trome "ActivityKitPushToStartTokenSource WakeLogScreen"
 expect "a store archive with the Wake log fails" "$(run)" fails
 expect "the failure names the Wake log" "$(grep -c 'has the Wake log' "$state/out")" 1
-expect "a walk archive with the Wake log passes" "$(run FAKE_WAKE_LOG=YES)" passes
+expect "a walk archive with the Wake log passes" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" passes
 expect "the pass says it is not for the store" "$(grep -c 'never for the store' "$state/out")" 1
 archive group.io.github.valfur03.trome ActivityKitPushToStartTokenSource
-expect "a walk archive with no Wake log fails" "$(run FAKE_WAKE_LOG=YES)" fails
+expect "a walk archive with no Wake log fails" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" fails
 expect "the store archive says it has no Wake log" "$(run >/dev/null; grep -c 'with no Wake log' "$state/out")" 1
 rm -rf "$state/TROME.xcarchive"
 expect "a missing archive fails" "$(run)" fails
