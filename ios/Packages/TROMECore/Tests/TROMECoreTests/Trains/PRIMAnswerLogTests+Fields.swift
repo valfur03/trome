@@ -13,7 +13,9 @@ struct PRIMAnswerLogFieldsTests {
         "ExpectedQuayRef", "AimedQuayRef", "Order", "ArrivalStatus", "DepartureStatus", "ItemProducer",
         "VehicleAtStop"
     ]
-    private static let liegeAnswers = ["stop-monitoring-liege-170043", "stop-monitoring-liege-170558", "stop-monitoring-liege-171032"]
+    private static let liegeAnswers = [
+        "stop-monitoring-liege-170043", "stop-monitoring-liege-170558", "stop-monitoring-liege-171032"
+    ]
 
     private func liege() throws -> Station {
         try #require(try StationCatalog.bundled().stations.first { $0.name == "Liège" })

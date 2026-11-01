@@ -45,18 +45,6 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         var lineCodes: Set<String>
     }
 
-    struct Answer {
-        let stopRequest: StopRequest
-        let visits: Result<[MonitoredVisit], any Error>
-        var answeredAt: Date?
-        /// When the app sent the call, by its own clock: the debug log writes it (`PRIMAnswerLog`).
-        var askedAt: Date?
-
-        var failed: Bool {
-            if case .failure = visits { true } else { false }
-        }
-    }
-
     struct StopAnswer {
         let visits: [MonitoredVisit]
         let answeredAt: Date?
@@ -288,6 +276,21 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
             .quotaExceeded
         default:
             .serviceFailure
+        }
+    }
+}
+
+extension PRIMDeparturesProvider {
+    /// The answer of one call, for one stop.
+    struct Answer {
+        let stopRequest: StopRequest
+        let visits: Result<[MonitoredVisit], any Error>
+        var answeredAt: Date?
+        /// When the app sent the call, by its own clock: the debug log writes it (`PRIMAnswerLog`).
+        var askedAt: Date?
+
+        var failed: Bool {
+            if case .failure = visits { true } else { false }
         }
     }
 }

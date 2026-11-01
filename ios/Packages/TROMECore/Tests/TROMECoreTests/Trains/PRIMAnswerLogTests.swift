@@ -40,8 +40,8 @@ struct PRIMAnswerLogTests {
             prefix + "entry 2 | kept | line STIF:Line::C01382: | to Mairie d'Issy | time 10:07:00 | status onTime"
                 + " | quay STIF:StopPoint:Q:463116: | destination STIF:StopPoint:Q:463108:"
                 + " | journey RATP-SIV:VehicleJourney::M12.R.1007:LOC | item RATP-SIV:Item::1.12.A.463116.2:LOC",
-            prefix + "entry 3 | dropped, ends here | line STIF:Line::C01382: | to Abbesses | time 10:04:00 | arrival 10:04:00"
-                + " | quay STIF:StopPoint:Q:463116: | destination STIF:StopPoint:Q:463116:"
+            prefix + "entry 3 | dropped, ends here | line STIF:Line::C01382: | to Abbesses | time 10:04:00"
+                + " | arrival 10:04:00 | quay STIF:StopPoint:Q:463116: | destination STIF:StopPoint:Q:463116:"
                 + " | journey RATP-SIV:VehicleJourney::M12.R.1009:LOC | item RATP-SIV:Item::1.12.A.463116.3:LOC",
             prefix + "entry 4 | dropped, line not asked | line STIF:Line::C01100: | to Gare du Nord | time 10:03:00"
                 + " | item RATP-SIV:Item::bus.40:LOC",
@@ -102,7 +102,8 @@ struct PRIMAnswerLogTests {
             timeZone: .gmt
         )
 
-        #expect(appLines(lines).last?.hasPrefix("PRIM \(stopArea) | call 2026-09-26T09:59:59.000Z | entry 1 | \(fate) | line") == true)
+        let prefix = "PRIM \(stopArea) | call 2026-09-26T09:59:59.000Z | entry 1 | \(fate) | line"
+        #expect(appLines(lines).last?.hasPrefix(prefix) == true)
     }
 
     @Test func writesAFailedCall() {
