@@ -1,9 +1,11 @@
 // Seam: the positions that iOS gives reach the app in the background only while the app follows the position.
 // A rider who opened the app once and left it, with no Live Activity, must cost no battery: the phone that rides
 // through a station at the speed of a train gives the app no position, so the app does no work for it.
-// The proof is what iOS shows: an app that still got the positions would notify the arrival at the station.
-// On an iPhone, the wake for the area of the station notifies instead; the Simulator cannot watch areas, so here
-// nothing may come (the arrival with the app closed is checked on an iPhone, see ArrivalNotificationTests).
+// The proof: an app that still got the positions would decide an arrival at the station, and write in the wake log
+// why no Live Activity started there (a build of the Simulator has no silent start). The app sends no notification,
+// so the wake log of the Testing tools is the one place that shows a decided arrival.
+// On an iPhone, the wake for the area of the station decides it instead; the Simulator cannot watch areas, so here
+// nothing may come (the arrival with the app in the background is checked in BackgroundArrivalTests).
 // iOS never suspends an app that an XCUITest launched, so the state of the app cannot show the drain.
 // The location is "Always", as for a rider whose closed app wakes at stations: with "While Using the App",
 // iOS sends no position to an app in the background that keeps no background session.
@@ -19,7 +21,7 @@ final class BackgroundPositionTests: E2ETestCase {
     private static let metersEachSecond = 10.0
     private static let rideSeconds = 60
     private static let metersBeforeTheStation = 350.0
-    private static let notificationTitleIdentifier = "NotificationTitle"
+    private static let mostSwipesThroughTheWakeLog = 40
 
     @MainActor
     func testARideThroughAStationGivesTheAppInTheBackgroundNoPositionWithNoLiveActivity() {
@@ -28,22 +30,66 @@ final class BackgroundPositionTests: E2ETestCase {
         launchWithLocationAlways(app)
         waitUntilTheLaunchEndedTheLiveActivity(in: app)
         moveThePhone(to: Self.pointOfTheRide(after: 0))
+        openAnEmptyWakeLog(in: app)
 
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: UITestTimeout.element))
-        let notification = arrivalNotification(titled: "Bel-Air")
         for second in 1...Self.rideSeconds {
             moveThePhone(to: Self.pointOfTheRide(after: second))
-            XCTAssertFalse(
-                notification.waitForExistence(timeout: 1),
-                "A position reached the app in the background after \(second) s of ride, with no Live Activity"
-            )
+            let oneSecondOfRide = XCTestExpectation(description: "one second of ride")
+            _ = XCTWaiter.wait(for: [oneSecondOfRide], timeout: 1)
         }
 
         openNotificationCenter(over: springboard, expectingALiveActivity: false)
-        XCTAssertFalse(notification.exists, "A position reached the app in the background, with no Live Activity")
         XCTAssertFalse(liveActivity.exists, "A position started a Live Activity from the background")
         closeNotificationCenter()
+        bringToFront(app)
+        XCTAssertTrue(waitFor(app.navigationBars["Wake log"]))
+        XCTAssertFalse(
+            wakeLogShows(noStartLine(at: "Bel-Air", in: app), in: app),
+            "A position reached the app in the background, with no Live Activity: it decided an arrival at Bel-Air"
+        )
+    }
+
+    /// The wake log keeps the lines of earlier runs, so the test clears it before the ride. New lines may come at
+    /// once (the plan of the station areas), so the test waits only for the line that it reads to go.
+    @MainActor
+    private func openAnEmptyWakeLog(in app: XCUIApplication) {
+        tap(app.buttons["testingTools"])
+        XCTAssertTrue(waitFor(app.navigationBars["Testing tools"]))
+        let wakeLog = app.buttons["wakeLog"]
+        for _ in 0..<5 where !(wakeLog.exists && wakeLog.isHittable) {
+            app.swipeUp()
+        }
+        tap(wakeLog)
+        let clear = app.buttons["Clear"]
+        XCTAssertTrue(waitFor(clear))
+        if clear.isEnabled {
+            clear.tap()
+        }
+        XCTAssertTrue(waitForNo(noStartLine(at: "Bel-Air", in: app)))
+    }
+
+    /// The list draws only the rows on screen, so the test scrolls down the log to its oldest line: the bottom is
+    /// where a swipe no longer changes the last row.
+    @MainActor
+    private func wakeLogShows(_ line: XCUIElement, in app: XCUIApplication) -> Bool {
+        let list = app.collectionViews.firstMatch
+        var lastRow = ""
+        for _ in 0..<Self.mostSwipesThroughTheWakeLog {
+            if line.exists {
+                return true
+            }
+            let texts = list.staticTexts
+            let count = texts.count
+            let row = count < 2 ? "" : texts.element(boundBy: count - 2).label + texts.element(boundBy: count - 1).label
+            if row == lastRow {
+                return false
+            }
+            lastRow = row
+            list.swipeUp()
+        }
+        return line.exists
     }
 
     private static func pointOfTheRide(after second: Int) -> CLLocation {
@@ -51,10 +97,11 @@ final class BackgroundPositionTests: E2ETestCase {
         return CLLocation(latitude: belAir.latitude + meters / 111_000, longitude: belAir.longitude)
     }
 
+    /// The line that a background arrival with no start writes, in place of the notification of earlier builds.
     @MainActor
-    private func arrivalNotification(titled title: String) -> XCUIElement {
-        springboard.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@ AND label == %@", Self.notificationTitleIdentifier, title))
+    private func noStartLine(at station: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "No start at \(station),"))
             .firstMatch
     }
 }
