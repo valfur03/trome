@@ -4,7 +4,7 @@
 // back at the swiped station after leaving it and coming back. Then the rider stands still at that station for
 // longer than the app trusts a position, opens the app and cancels the pause: by the resume rule, the app asks iOS
 // for a fresh position (Core Location sends none while the phone does not move), and the Live Activity of that
-// station comes back.
+// station comes back. The wake log then says that the rider swiped it away, from the end state that iOS gave it.
 // Why not cheaper: unit tests check the pause rules with a fake removal and a fake position; only iOS removes
 // a Live Activity on a swipe and tells the app, and only Core Location says whether a fresh position comes
 // while the phone stands still.
@@ -56,6 +56,12 @@ final class SwipeAwayTests: E2ETestCase {
             "The Live Activity did not come back at Liège after the cancel of the pause"
         )
         closeNotificationCenter()
+
+        openTheWakeLog(in: app)
+        let swipeLine = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "ended by the rider: swiped away (iOS: dismissed)"))
+            .firstMatch
+        XCTAssertTrue(wakeLogShows(swipeLine, in: app), "The wake log has no line for the swipe")
     }
 
     @MainActor

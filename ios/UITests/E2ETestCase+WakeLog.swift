@@ -9,13 +9,7 @@ extension E2ETestCase {
     /// once (the plan of the station areas), so the test waits only for the line that it reads to go.
     @MainActor
     func openAnEmptyWakeLog(in app: XCUIApplication, expectingNo line: XCUIElement) {
-        tap(app.buttons["testingTools"])
-        XCTAssertTrue(waitFor(app.navigationBars["Testing tools"]))
-        let wakeLog = app.buttons["wakeLog"]
-        for _ in 0..<5 where !(wakeLog.exists && wakeLog.isHittable) {
-            app.swipeUp()
-        }
-        tap(wakeLog)
+        openTheWakeLog(in: app)
         let trash = app.buttons["wakeLogClear"]
         XCTAssertTrue(waitFor(trash))
         if trash.isEnabled {
@@ -23,6 +17,18 @@ extension E2ETestCase {
             tap(app.alerts.buttons["Clear"])
         }
         XCTAssertTrue(waitForNo(line))
+    }
+
+    @MainActor
+    func openTheWakeLog(in app: XCUIApplication) {
+        tap(app.buttons["testingTools"])
+        XCTAssertTrue(waitFor(app.navigationBars["Testing tools"]))
+        let wakeLog = app.buttons["wakeLog"]
+        for _ in 0..<5 where !(wakeLog.exists && wakeLog.isHittable) {
+            app.swipeUp()
+        }
+        tap(wakeLog)
+        XCTAssertTrue(waitFor(app.buttons["wakeLogClear"]))
     }
 
     /// The list draws only the rows on screen, so the test scrolls down the log to its oldest line: the bottom is
