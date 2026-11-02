@@ -110,6 +110,10 @@ struct PRIMWalkRecordTests {
         log.entries.filter { $0.kind == .prim }.map(\.text)
     }
 
+    private func groups(_ log: WakeLog, of case: PRIMWalkRecord.Case) -> [String] {
+        groups(log).filter { $0.hasPrefix(`case`.title + ": ") }
+    }
+
     @Test func writesThePairAndTheStandingTrainOfTheRealLaDefenseAnswerWithTheirFields() async throws {
         let (log, _) = try await record(Self.answer(Self.laDefense))
 
@@ -206,20 +210,79 @@ struct PRIMWalkRecordTests {
         #expect(groups(log).count == 4)
     }
 
-    @Test func keepsOnlyTheNewestGroupsAndNoOtherLineGoes() {
+    /// Each case keeps its own newest groups, and no line of another kind goes.
+    @Test func keepsTheNewestGroupsOfEachCaseApartAndNoOtherLineGoes() {
         let clock = clock(at: Self.answerTime)
         let log = WakeLog(storage: storage, now: { clock.now })
         log.record(.decision, "Arrived at Joinville-le-Pont")
-        for index in 0...WakeLog.maximumPRIMGroups {
-            log.record([PRIMWalkRecord.Group(title: "PRIM, case: station \(index)", lines: ["entry"])])
+        for index in 0...max(WakeLog.maximumPRIMGroups(of: .pair), WakeLog.maximumPRIMGroups(of: .standing)) {
+            for `case` in PRIMWalkRecord.Case.allCases {
+                log.record([PRIMWalkRecord.Group(`case`, at: "station \(index)", lines: ["entry"])])
+            }
             clock.advance(by: 1)
         }
 
-        let kept = groups(log)
-        #expect(kept.count == WakeLog.maximumPRIMGroups)
-        #expect(kept.first?.hasPrefix("PRIM, case: station \(WakeLog.maximumPRIMGroups)\n") == true)
-        #expect(kept.last?.hasPrefix("PRIM, case: station 1\n") == true)
+        for `case` in PRIMWalkRecord.Case.allCases {
+            let bound = WakeLog.maximumPRIMGroups(of: `case`)
+            let kept = groups(log, of: `case`)
+            #expect(kept.count == bound)
+            #expect(kept.first?.hasPrefix("\(`case`.title): station \(bound)\n") == true)
+            #expect(kept.last?.hasPrefix("\(`case`.title): station 1\n") == true)
+        }
         #expect(log.entries.last?.text == "Arrived at Joinville-le-Pont")
+    }
+
+    private static let liegeStandingAnswers = [
+        ("stop-monitoring-liege-170043", "2026-10-02T15:00:43Z"),
+        ("stop-monitoring-liege-170558", "2026-10-02T15:05:58Z")
+    ]
+
+    /// The ghost pair is the only trace of the ghost row, and a walk meets it once. The walk goes on for hours, and
+    /// real metro answers keep a train at the platform 23 min past its time, so it writes a standing train about
+    /// once per station and hour: more of them than their bound never push the pair out.
+    @Test func moreStandingTrainsThanTheirBoundNeverPushOutThePairOfTheRealLaDefenseAnswer() async throws {
+        let clock = clock(at: Self.answerTime)
+        let log = WakeLog(storage: storage, now: { clock.now })
+        _ = try await record(Self.answer(Self.laDefense), in: log)
+        for index in 0..<WakeLog.maximumPRIMGroups(of: .standing) {
+            clock.advance(by: 1)
+            log.record([PRIMWalkRecord.Group(.standing, at: "station \(index)", lines: ["entry"])])
+        }
+        for (answer, time) in Self.liegeStandingAnswers {
+            clock.advance(by: WakeLog.primGroupSpacing + 1)
+            _ = try await record(Fixture.data(answer), at: "Liège", now: Fixture.date(time), in: log)
+        }
+
+        let standing = groups(log, of: .standing)
+        #expect(standing.count == WakeLog.maximumPRIMGroups(of: .standing))
+        #expect(standing.prefix(2).allSatisfy { $0.hasPrefix("PRIM, at the platform past its time: Liège\n") })
+        let pair = try #require(groups(log, of: .pair).first)
+        #expect(groups(log, of: .pair).count == 1)
+        #expect(pair.hasPrefix("PRIM, two entries under 60 s apart: La Défense\n"))
+        #expect(pair.contains("VehicleJourney::YRZZ01") && pair.contains("VehicleJourney::UZAR93"))
+    }
+
+    /// The reverse: more pairs than their bound never push out the train that a real metro answer says is still
+    /// at the platform.
+    @Test func morePairsThanTheirBoundNeverPushOutTheStandingTrainOfTheRealLiegeAnswer() async throws {
+        let clock = clock(at: Self.answerTime)
+        let log = WakeLog(storage: storage, now: { clock.now })
+        let (answer, time) = Self.liegeStandingAnswers[0]
+        _ = try await record(Fixture.data(answer), at: "Liège", now: Fixture.date(time), in: log)
+        clock.advance(by: 1)
+        _ = try await record(Self.answer(Self.laDefense), in: log)
+        for index in 0..<WakeLog.maximumPRIMGroups(of: .pair) {
+            clock.advance(by: 1)
+            log.record([PRIMWalkRecord.Group(.pair, at: "station \(index)", lines: ["entry"])])
+        }
+
+        let pairs = groups(log, of: .pair)
+        #expect(pairs.count == WakeLog.maximumPRIMGroups(of: .pair))
+        #expect(!pairs.contains { $0.contains("La Défense") }, "the bound of the pairs holds")
+        let standing = groups(log, of: .standing)
+        #expect(standing.count == 2)
+        #expect(standing.last?.hasPrefix("PRIM, at the platform past its time: Liège\n") == true)
+        #expect(standing.last?.contains("1409 s past its time") == true)
     }
 
     /// The record never leaves the phone and holds no position: the groups hold no coordinate, even when PRIM

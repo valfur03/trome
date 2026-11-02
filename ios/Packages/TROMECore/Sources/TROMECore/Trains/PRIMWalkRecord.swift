@@ -12,11 +12,37 @@ public enum PRIMWalkRecord {
     /// The two entries of a row are a pair when they are less than this apart.
     static let pairSpacing: TimeInterval = 60
 
+    /// The two cases. The record bounds the groups of each case apart (`WakeLog.maximumPRIMGroups(of:)`), so that
+    /// the many stations where a train stands past its time never push out the rare pair that a walk caught.
+    public enum Case: Sendable, CaseIterable {
+        case pair
+        case standing
+
+        /// The start of the first line of each group of this case.
+        public var title: String {
+            switch self {
+            case .pair: "PRIM, two entries under 60 s apart"
+            case .standing: "PRIM, at the platform past its time"
+            }
+        }
+    }
+
     public struct Group: Equatable, Sendable {
+        public let `case`: Case
+        public let station: String
+        public let lines: [String]
+
+        public init(_ case: Case, at station: String, lines: [String]) {
+            self.case = `case`
+            self.station = station
+            self.lines = lines
+        }
+
         /// The first line of the group: its case and its station, so that the record writes each case once per
         /// station and hour.
-        public let title: String
-        public let lines: [String]
+        public var title: String {
+            "\(self.case.title): \(station)"
+        }
 
         public var text: String {
             ([title] + lines).joined(separator: "\n")
@@ -70,7 +96,8 @@ public enum PRIMWalkRecord {
         }
         guard !paired.isEmpty else { return nil }
         return Group(
-            title: "PRIM, two entries under 60 s apart: \(station.name)",
+            .pair,
+            at: station.name,
             lines: paired.sorted().flatMap { index in
                 let departure = kept[index].departure
                 let minutes = LineDirection.Train(time: departure.time, destination: departure.destination)
@@ -96,7 +123,8 @@ public enum PRIMWalkRecord {
         let standing = kept.filter { $0.departure.isAtStop && $0.departure.time <= now }
         guard !standing.isEmpty else { return nil }
         return Group(
-            title: "PRIM, at the platform past its time: \(station.name)",
+            .standing,
+            at: station.name,
             lines: standing.flatMap { item in
                 let late = Int(now.timeIntervalSince(item.departure.time))
                 return entryLines(of: item.entry, adding: "\(late) s past its time")

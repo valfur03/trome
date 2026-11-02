@@ -49,19 +49,21 @@ public final class WakeLog {
             .flatMap { try? JSONDecoder().decode([WakeLogEntry].self, from: $0) } ?? []
     }
 
-    /// Writes a line, and keeps the 500 newest; with `keepingAtMost`, also only that many newest lines of its kind.
+    /// Writes a line, and keeps the 500 newest; with `keepingAtMost`, also only that many newest lines of its kind
+    /// that `alike` matches, so that the other lines of the kind keep their place.
     public func record(
         _ kind: WakeLogEntry.Kind,
         _ text: String,
         unlessRepeated: Bool = false,
-        keepingAtMost kindLimit: Int? = nil
+        keepingAtMost kindLimit: Int? = nil,
+        alike: (WakeLogEntry) -> Bool = { _ in true }
     ) {
         if unlessRepeated, entries.first(where: { $0.kind == kind })?.text == text {
             return
         }
         entries.insert(WakeLogEntry(date: now(), kind: kind, text: text), at: 0)
         if let kindLimit {
-            let older = Set(entries.filter { $0.kind == kind }.dropFirst(kindLimit).map(\.id))
+            let older = Set(entries.filter { $0.kind == kind && alike($0) }.dropFirst(kindLimit).map(\.id))
             entries.removeAll { older.contains($0.id) }
         }
         if entries.count > Self.maximumEntries {
