@@ -113,11 +113,11 @@ Why: iOS keeps the stream of an app killed while it streams, and starts the app 
 ### The test flags and a rider's path
 
 A launch argument or a Testing tool that changes what the app does on a rider's path is in this list, with the test that runs the same path without it, or why the Simulator cannot.
-Why: `--keep-running-in-background` once kept the app following the position in the pocket, so the tests passed while the Live Activity never switched on a phone.
+Why: a launch argument, since removed, once kept the app following the position in the pocket, so the tests passed while the Live Activity never switched on a phone.
 
 | Flag | What it changes | The tests that use it | The same path without it |
 |---|---|---|---|
-| `--keep-running-in-background` | The app stays awake and follows the position in the background for the whole run, in place of the wake for the area of a station. | `BackgroundArrivalTests`: with no Live Activity, nothing else brings a position to the app in the background. | None in the Simulator: see the arrival in the background below. |
+| `UITestRegionWake` (Testing tools) | A Darwin notification `TROME.UITests.region.entered.<area id>` runs the handler of a report of iOS for an arrival area that iOS keeps for the app, with the last position of iOS; it does what iOS does when the phone enters the area, which the Simulator cannot. | `BackgroundArrivalTests`. | None in the Simulator: the event of iOS itself, see the arrival in the background below. |
 | `--fake-trains [state]` | Fake trains in place of PRIM. | `SnoozeTests`: the boxes and the buttons need trains, and PRIM has a daily quota and data that changes. | The other classes run with no train data ("Times unavailable"); the real answers are unit tests of `contracts/prim/`, and a look with `make run`. |
 | `--content-as-the-server` | Every content of the Live Activity is the one that the server pushes. | `SnoozeTests`, for the page that a tap chose. | The other classes send the content of the app; `LiveActivityContentContractTests` and the server tests check that both are the same. |
 | `--end-live-activity` | At launch, the app ends the Live Activity of the last test. | Every class, through `makeApp()`. | No test launches the app while a Live Activity shows (iOS ended the app, then started it again): `AutoLiveActivityModelTests` checks it. |
@@ -134,7 +134,7 @@ iOS never suspends an app that a test launched, so no test sees the app suspende
 | The start with the app open | `AutoLiveActivityTests`, `LiveActivityTests` | |
 | The switch in the pocket | `AutoLiveActivityTests` | |
 | The end in the pocket | `AutoLiveActivityTests` | |
-| The arrival in the background | None: on a phone, the wake for the area of the station starts it, and the Simulator cannot watch areas (`isMonitoringAvailable` is false). | `BackgroundArrivalTests` with `--keep-running-in-background`: no notification, then the Live Activity once the rider opens the app. The unit tests of a reported arrival (`ReportedArrivalRulesTests`, `AutoLiveActivitySecondChanceTests`, `AutoLiveActivityRestartTests`) and of the silent start. The wake log of a walk. |
+| The arrival in the background | `BackgroundArrivalTests`, with `UITestRegionWake` in place of the event of iOS: the app in the background, its position stream stopped, decides the arrival from its own handler of a report (the wake log), sends no notification, and shows the Live Activity once the rider opens the app. | The event of iOS itself, since the Simulator cannot watch areas (`isMonitoringAvailable` is false). The keeper of the position started from the background (the second chance, when no position is trusted, and its role that keeps the app awake): Simulator positions are always trusted, and iOS never suspends a test app, so only a walk on a phone shows it, in its wake log. The unit tests of a reported arrival (`ReportedArrivalRulesTests`, `AutoLiveActivitySecondChanceTests`, `AutoLiveActivityRestartTests`) and of the silent start. |
 | The wake of a closed app at a station | None, for the same reason. | The unit tests of the watched areas (`StationRegionPlanTests`, `StationRegionSyncTests`, `WakeProcessTests`), and the wake log of a walk. |
 
 ## The render check of the Live Activity

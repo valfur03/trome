@@ -20,9 +20,6 @@ struct TROMEApp: App {
     private let regionWatcher: CoreLocationStationRegionWatcher
     private let primConfiguration = Self.primConfigurationOfThisBuild()
     private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? ""
-    #if DEBUG
-    private let uiTestLocationKeeper: CoreLocationBackgroundLocationKeeper?
-    #endif
 
     init() {
         let locationService = LocationService.makeForThisBuild()
@@ -56,7 +53,6 @@ struct TROMEApp: App {
         )
 
         #if DEBUG
-        uiTestLocationKeeper = .begunIfAsked(by: ProcessInfo.processInfo.arguments, following: locationService)
         autoLiveActivityModel.endLiveActivityIfAsked(by: ProcessInfo.processInfo.arguments)
         #endif
         self.stationCatalog = stationCatalog

@@ -34,12 +34,6 @@ public final class LocationService {
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private(set) var needs: Set<PositionNeed> = []
     @ObservationIgnored private(set) var isOnScreen = true
-    #if DEBUG
-    /// The E2E tests keep the app awake in the background in place of the wake for the area of a station, which the
-    /// Simulator cannot watch: the screen then keeps following the position off screen, so that a moved position
-    /// reaches the arrival rules, as a wake would.
-    @ObservationIgnored public var keepsFollowingOffScreen = false
-    #endif
 
     public init(realProvider: any LocationProvider, sourceStore: LocationSourceStore?) {
         self.realProvider = realProvider
@@ -53,7 +47,7 @@ public final class LocationService {
 
     /// Follows the position for `need`, until `stop(for:)` ends that need.
     public func start(for need: PositionNeed = .screen) {
-        guard need != .screen || followsTheScreen else { return }
+        guard need != .screen || isOnScreen else { return }
         needs.insert(need)
         guard updatesTask == nil else {
             return
@@ -72,17 +66,9 @@ public final class LocationService {
     /// ignored: the screen follows the position again when the app is back on screen.
     public func setOnScreen(_ onScreen: Bool) {
         isOnScreen = onScreen
-        if !followsTheScreen {
+        if !isOnScreen {
             stop(for: .screen)
         }
-    }
-
-    private var followsTheScreen: Bool {
-        #if DEBUG
-        isOnScreen || keepsFollowingOffScreen
-        #else
-        isOnScreen
-        #endif
     }
 
     /// Ends every need at once.

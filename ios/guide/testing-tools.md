@@ -127,32 +127,28 @@ Tap **Far from any station**: it ends.
 
 In the background, the app asks the server to start the Live Activity ([the silent start](auto-live-activity.md#the-silent-start)), and sends no notification.
 A build of the Simulator has no silent start, so nothing shows: the [wake log](#on-your-iphone-see-why-no-live-activity-came) says why, and the Live Activity starts when you open the app at the station.
-With no Live Activity, the app follows no position in the background, and the Simulator cannot watch the areas of the stations, so nothing would reach the app there.
-So launch it with `--keep-running-in-background`, which keeps it awake and following the position in the background, in place of the wake for the area of a station.
+With no Live Activity, the app follows no position in the background.
+On a phone, iOS reports the area of the station, and the app asks for one position; the Simulator cannot watch areas, so you post that report in place of iOS (debug builds only).
 
 1. Tap **Use the real GPS**, and in the **Settings** app of the Simulator, set the location of TROME to **Always**.
-2. Move the Simulator far from any station:
+2. Move the Simulator near Abbesses, 350 meters away, and launch the app again: it watches the area of Abbesses, and starts nothing.
 
    ```sh
-   xcrun simctl location "$(make -s simulator)" set 48.42,2.63
+   xcrun simctl location "$(make -s simulator)" set 48.8865,2.342
+   xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev
    ```
 
-3. Launch the app again, with the argument:
-
-   ```sh
-   xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev --keep-running-in-background
-   ```
-
-4. Go to the home screen.
-5. Move the Simulator to Abbesses:
+3. Go to the home screen, and wait 20 seconds: iOS stops the position stream of the app.
+4. Move the Simulator to Abbesses, and post the report of its area:
 
    ```sh
    xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838
+   xcrun simctl spawn "$(make -s simulator)" notifyutil -p TROME.UITests.region.entered.arrival:IDFM:22059
    ```
 
    No notification shows.
    **Wake log** has the line "No start at Abbesses, no notification: the silent start is off in this build".
-6. Open the app: the Live Activity of Abbesses starts.
+5. Open the app: the Live Activity of Abbesses starts.
 
 On your iPhone, iOS also wakes a suspended or closed app near a station, after a few seconds to a few minutes: test that case there, with **Debug > Simulate Location** in Xcode.
 
