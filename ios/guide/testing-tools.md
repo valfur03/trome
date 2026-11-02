@@ -203,6 +203,7 @@ An answer line or a "No start at" line that ends with "iOS suspended the app" sa
 After a "left" line, "No decision and no new areas" says that iOS gave no recent position, so the app chose no new stations to watch, and the stations further on may not wake it.
 A line "Live Activity ended: N m from" a station, before a line "Arrived in the background", says that the rider left that station before reaching the next one, so the next one asked the server instead of a switch.
 A line "Live Activity ended by the rider" (stopped by hand, snoozed, automatic start turned off, swiped away) or "Live Activity ended by iOS" says who ended it outside the rules of the app, and "(iOS: dismissed)" or "(iOS: ended)" is the end state that iOS gave it.
+"Live Activity ended outside the app: iOS gave no reason" says that the rider or iOS removed it, and that iOS no longer told the app how.
 A switch, or an end by distance, that rests on a position of the real GPS ends with where that position came from.
 "(position: stream)" is the position stream, which iOS can stop about 10 seconds after the app leaves the screen, unless the app still counts as in use.
 "(position: keeper; stream N s old)" is the background updates that keep the app running while a Live Activity shows, with the age of the last position of the stream.
