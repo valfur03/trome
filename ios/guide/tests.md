@@ -63,7 +63,7 @@ make e2e ONLY="SnoozeTests LiveActivityTests"
 
 `make e2e` alone runs them all, in a few minutes.
 It builds the tests first, then waits for the shared Simulator only to run them: `make e2e-build` does only the build, and `make e2e NO_BUILD=1` then runs the tests of that build.
-A run may first wait for iOS to update its wallpapers, which keeps the Simulator so busy that a test next to it can fail: usually a few seconds after the Simulator restarts its home screen, and once a day a few minutes.
+A run may first wait for iOS to update its wallpapers, which keeps the Simulator so busy that a test next to it can fail: usually a few seconds after the Simulator restarts its home screen, a few minutes after the Simulator boots, and once a day a few minutes.
 The tests have no train data key, so the Live Activity says "Times unavailable" unless a test asks for fake trains.
 On a pass, `make e2e` prints the counts of the tests and their time.
 On a failure, `make e2e` prints the file, the line and the message; open `ios/.build/e2e.xcresult` in Xcode for the full results.
