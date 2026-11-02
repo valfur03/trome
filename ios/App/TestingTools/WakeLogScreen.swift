@@ -96,6 +96,7 @@ private struct WakeLogRow: View {
         case .notification: "bell"
         case .silentStart: "dot.radiowaves.up.forward"
         case .trains: "tram"
+        case .prim: "doc.text.magnifyingglass"
         }
     }
 
@@ -108,6 +109,7 @@ private struct WakeLogRow: View {
         case .notification: .green
         case .silentStart: .purple
         case .trains: .indigo
+        case .prim: .pink
         }
     }
 }

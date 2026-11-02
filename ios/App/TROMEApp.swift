@@ -32,11 +32,14 @@ struct TROMEApp: App {
             catalog: stationCatalog,
             store: CurrentStationStore(storage: UserDefaults.standard)
         )
-        let departuresProvider = Self.departuresProvider(primConfiguration: primConfiguration)
+        let regionWatcher = Self.makeRegionWatcher(catalog: stationCatalog, locationService: locationService)
+        let departuresProvider = Self.departuresProvider(
+            primConfiguration: primConfiguration,
+            walkRecord: regionWatcher.wakeLog
+        )
         let nextTrainsModel = NextTrainsModel(provider: departuresProvider, catalog: stationCatalog)
         let liveActivityClient = ActivityKitStationLiveActivityClient()
         let liveActivityModel = Self.makeLiveActivityModel(client: liveActivityClient)
-        let regionWatcher = Self.makeRegionWatcher(catalog: stationCatalog, locationService: locationService)
         let automaticModeModel = AutomaticModeModel(store: AutomaticModeStore(storage: UserDefaults.standard))
         let autoLiveActivityModel = Self.makeAutoLiveActivityModel(
             catalog: stationCatalog,
@@ -193,17 +196,27 @@ struct TROMEApp: App {
         #endif
     }
 
-    private static func departuresProvider(primConfiguration: PRIMConfiguration?) -> (any DeparturesProvider)? {
+    /// The provider of the train times. With the Wake log, it writes there the few PRIM entries of `PRIMWalkRecord`.
+    private static func departuresProvider(
+        primConfiguration: PRIMConfiguration?,
+        walkRecord: WakeLog?
+    ) -> (any DeparturesProvider)? {
         #if DEBUG
         let fakeTrains = FakeTrainsStore(storage: UserDefaults.standard).launch(with: ProcessInfo.processInfo.arguments)
         fakeTrains.log(hasTrainDataKey: primConfiguration != nil)
         if let fakeProvider = fakeTrains.provider {
             return fakeProvider
         }
-        return primConfiguration.map { PRIMDeparturesProvider.loggingEachAnswer(apiKey: $0.apiKey) }
+        return primConfiguration.map {
+            PRIMDeparturesProvider.loggingEachAnswer(apiKey: $0.apiKey, walkRecord: walkRecord)
+        }
         #else
         return TrainServerConfiguration(infoDictionary: Bundle.main.infoDictionary).map { server in
-            PRIMDeparturesProvider(source: .server(server), httpClient: URLSession(configuration: .ephemeral))
+            PRIMDeparturesProvider(
+                source: .server(server),
+                httpClient: URLSession(configuration: .ephemeral),
+                walkRecord: walkRecord
+            )
         }
         #endif
     }

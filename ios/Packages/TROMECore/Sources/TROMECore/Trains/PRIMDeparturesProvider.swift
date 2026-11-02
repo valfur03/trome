@@ -10,6 +10,7 @@ import Foundation
 /// so it keeps only the trains of the lines that it asked this stop area for.
 /// It throws the error of a failed call only when no train is left from the other calls;
 /// else it says which stops did not answer (`DeparturesAnswer.unansweredStops`).
+/// With a walk record (`WakeLog`), it writes there the few entries of `PRIMWalkRecord`, and no other.
 public struct PRIMDeparturesProvider: DeparturesProvider {
     public static let endpoint = URL(string: "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring")!
     static let timeout: TimeInterval = 15
@@ -17,6 +18,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
     private let source: TrainDataSource
     private let httpClient: any HTTPClient
     private let log: (@Sendable (String) -> Void)?
+    private let walkRecord: WakeLog?
     private let now: @Sendable () -> Date
     private let retrySchedule = ServerRetrySchedule()
 
@@ -24,11 +26,13 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         source: TrainDataSource,
         httpClient: any HTTPClient = URLSession.shared,
         log: (@Sendable (String) -> Void)? = nil,
+        walkRecord: WakeLog? = nil,
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.source = source
         self.httpClient = httpClient
         self.log = log
+        self.walkRecord = walkRecord
         self.now = now
     }
 
@@ -88,6 +92,12 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         let departures = Self.departures(from: visits, at: stations)
         if let log {
             PRIMAnswerLog.lines(of: answers, at: stations, now: Date()).forEach(log)
+        }
+        if let walkRecord {
+            let groups = PRIMWalkRecord.groups(of: answers, at: stations, now: now())
+            if !groups.isEmpty {
+                await walkRecord.record(groups)
+            }
         }
         if departures.isEmpty, let error = Self.error(of: answers) {
             throw error

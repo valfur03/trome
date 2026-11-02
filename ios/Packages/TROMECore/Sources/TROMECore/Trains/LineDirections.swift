@@ -165,6 +165,44 @@ enum LineDirections {
         now: Date,
         showsEverySide: Bool = false
     ) -> [LineDirection] {
+        rows(of: line, at: station, trainsFrom: departures, showsEverySide: showsEverySide).map { row in
+            switch row {
+            case .side(let side, let trains):
+                direction(of: line, toward: side, from: station, trains: trains, now: now)
+            case .other(let trains):
+                LineDirection(
+                    label: trains[0].destination,
+                    trains: withStatuses(trains, of: line, at: now).prefix(timesPerDirection).map { shown($0) }
+                )
+            }
+        }
+    }
+
+    /// The trains of each row that the screen shows for a line, one entry per train, in time order, before the
+    /// rows keep their first times: the walk record reads them to find two entries of one side under 60 s apart.
+    static func trainsOfEachRow(
+        of line: TransitLine,
+        at station: Station,
+        from departures: [Departure]
+    ) -> [[Departure]] {
+        rows(of: line, at: station, trainsFrom: departures, showsEverySide: false).map { row in
+            switch row {
+            case .side(_, let trains), .other(let trains): trains
+            }
+        }
+    }
+
+    private enum Row {
+        case side([String], [Departure])
+        case other([Departure])
+    }
+
+    private static func rows(
+        of line: TransitLine,
+        at station: Station,
+        trainsFrom departures: [Departure],
+        showsEverySide: Bool
+    ) -> [Row] {
         let trains = departures
             .filter { $0.line.mode == line.mode && $0.line.name == line.name }
             .sorted { $0.time < $1.time }
@@ -188,26 +226,19 @@ enum LineDirections {
         let hasMetroQuayOfUnknownSide = line.mode == .metro
             && groups.contains { $0.isOneDirection && $0.side == nil && !$0.trains.isEmpty }
         let showsEmptySides = showsEverySide || (quays.count != 1 && !hasMetroQuayOfUnknownSide)
-        let sideDirections = sides.indices.compactMap { index -> LineDirection? in
+        let sideRows = sides.indices.compactMap { index -> Row? in
             let sideTrains = oneEntryPerTrain(
                 groups.filter { $0.side == index }.flatMap(\.trains).sorted { $0.time < $1.time },
                 of: line
             )
             guard showsEmptySides || !sideTrains.isEmpty else { return nil }
-            return direction(of: line, toward: sides[index], from: station, trains: sideTrains, now: now)
+            return .side(sides[index], sideTrains)
         }
-        let otherDirections = groups
+        let otherRows = groups
             .filter { $0.side == nil && !$0.trains.isEmpty && !isOnTheRERTrunk }
             .sorted { $0.trains[0].time < $1.trains[0].time }
-            .map { group in
-                LineDirection(
-                    label: group.trains[0].destination,
-                    trains: withStatuses(oneEntryPerTrain(group.trains, of: line), of: line, at: now)
-                        .prefix(timesPerDirection)
-                        .map { shown($0) }
-                )
-            }
-        return Array((sideDirections + otherDirections).prefix(maximumDirections))
+            .map { Row.other(oneEntryPerTrain($0.trains, of: line)) }
+        return Array((sideRows + otherRows).prefix(maximumDirections))
     }
 
     private static func oneEntryPerTrain(_ trains: [Departure], of line: TransitLine) -> [Departure] {

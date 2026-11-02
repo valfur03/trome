@@ -11,6 +11,8 @@ public struct WakeLogEntry: Codable, Equatable, Sendable, Identifiable {
         case notification
         case silentStart
         case trains
+        /// A group of PRIM entries of `PRIMWalkRecord`.
+        case prim
     }
 
     public let id: UUID
@@ -37,7 +39,7 @@ public final class WakeLog {
     /// The lines of a wake and of the start token count their seconds from it.
     public let launchedAt: Date
     @ObservationIgnored private let storage: any KeyValueStore
-    @ObservationIgnored private let now: @Sendable () -> Date
+    @ObservationIgnored let now: @Sendable () -> Date
 
     public init(storage: any KeyValueStore, now: @escaping @Sendable () -> Date = { Date() }) {
         self.storage = storage
@@ -47,11 +49,21 @@ public final class WakeLog {
             .flatMap { try? JSONDecoder().decode([WakeLogEntry].self, from: $0) } ?? []
     }
 
-    public func record(_ kind: WakeLogEntry.Kind, _ text: String, unlessRepeated: Bool = false) {
+    /// Writes a line, and keeps the 500 newest; with `keepingAtMost`, also only that many newest lines of its kind.
+    public func record(
+        _ kind: WakeLogEntry.Kind,
+        _ text: String,
+        unlessRepeated: Bool = false,
+        keepingAtMost kindLimit: Int? = nil
+    ) {
         if unlessRepeated, entries.first(where: { $0.kind == kind })?.text == text {
             return
         }
         entries.insert(WakeLogEntry(date: now(), kind: kind, text: text), at: 0)
+        if let kindLimit {
+            let older = Set(entries.filter { $0.kind == kind }.dropFirst(kindLimit).map(\.id))
+            entries.removeAll { older.contains($0.id) }
+        }
         if entries.count > Self.maximumEntries {
             entries.removeLast(entries.count - Self.maximumEntries)
         }

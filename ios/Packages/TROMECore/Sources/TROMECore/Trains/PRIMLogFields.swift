@@ -1,9 +1,10 @@
-#if DEBUG
 import Foundation
 
-/// The fields of one entry of a PRIM answer that only the debug log writes (`PRIMAnswerLog`), as PRIM gave them.
+/// The fields of one entry of a PRIM answer that the app does not use, as PRIM gave them: only the debug log
+/// (`PRIMAnswerLog`) and the walk record (`PRIMWalkRecord`) write them.
 /// They tell two entries of one minute apart: a plan entry that was never updated, or a real second train.
-/// Only a Debug build reads them, so a Release build parses and keeps none of them.
+/// Every build parses them, as a Release build for a walk writes them to its record; a build with neither log
+/// keeps them in memory with the visit, and writes them nowhere.
 /// They never change what the app does with a train, so they never make two visits differ (`==` is always true).
 struct PRIMLogFields: Equatable, Sendable {
     /// Each field with its name in the log, which is its name in the PRIM answer, in the order of the log line.
@@ -74,4 +75,3 @@ struct PRIMRawValue: Decodable, Equatable, Sendable {
         }
     }
 }
-#endif
