@@ -12,8 +12,8 @@ trap 'rm -rf "$state"' EXIT
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE MAKEFLAGS MAKELEVEL || true
 
 # The type of the silent start, as the archive check names it: the test follows the check.
-push_type=$(sed -n 's/^SILENT_START_TYPE = b"\(.*\)"$/\1/p' "$ios/scripts/release-entitlements-check.py")
-wake_type=$(sed -n 's/^WAKE_LOG_TYPE = b"\(.*\)"$/\1/p' "$ios/scripts/release-entitlements-check.py")
+push_type=$(sed -n 's/^SILENT_START_TYPE = "\(.*\)"$/\1/p' "$ios/scripts/release-entitlements-check.py")
+wake_type=$(sed -n 's/^WAKE_LOG_TYPE = "\(.*\)"$/\1/p' "$ios/scripts/release-entitlements-check.py")
 gate_file=$(cd "$ios/checks" && ls ./*-release-archive-gate.mk)
 gate_file=${gate_file#./}
 
