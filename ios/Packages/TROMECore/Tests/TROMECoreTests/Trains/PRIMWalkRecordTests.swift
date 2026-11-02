@@ -54,7 +54,9 @@ struct PRIMWalkRecordTests {
              "MonitoringRef": {"value": "\(stopArea)"},
              "MonitoredVehicleJourney": {
                "LineRef": {"value": "STIF:Line::C01742:"},
-               "FramedVehicleJourneyRef": {"DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::\(entry.number)"},
+               "FramedVehicleJourneyRef": {
+                 "DatedVehicleJourneyRef": "SNCF_MAGENTA_PRD:VehicleJourney::\(entry.number)"
+               },
                "DirectionRef": {"value": "Aller"},
                "DestinationRef": {"value": "STIF:StopArea:SP:90000\(rank):"},
                "DestinationName": [{"value": "\(entry.destination)"}],

@@ -93,12 +93,7 @@ public struct PRIMDeparturesProvider: DeparturesProvider {
         if let log {
             PRIMAnswerLog.lines(of: answers, at: stations, now: Date()).forEach(log)
         }
-        if let walkRecord {
-            let groups = PRIMWalkRecord.groups(of: answers, at: stations, now: now())
-            if !groups.isEmpty {
-                await walkRecord.record(groups)
-            }
-        }
+        await walkRecord?.record(PRIMWalkRecord.groups(of: answers, at: stations, now: now()))
         if departures.isEmpty, let error = Self.error(of: answers) {
             throw error
         }

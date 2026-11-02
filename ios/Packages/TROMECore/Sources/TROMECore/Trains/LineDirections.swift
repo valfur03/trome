@@ -158,46 +158,8 @@ enum LineDirections {
         return shown
     }
 
-    static func directions(
-        of line: TransitLine,
-        at station: Station,
-        trainsFrom departures: [Departure],
-        now: Date,
-        showsEverySide: Bool = false
-    ) -> [LineDirection] {
-        rows(of: line, at: station, trainsFrom: departures, showsEverySide: showsEverySide).map { row in
-            switch row {
-            case .side(let side, let trains):
-                direction(of: line, toward: side, from: station, trains: trains, now: now)
-            case .other(let trains):
-                LineDirection(
-                    label: trains[0].destination,
-                    trains: withStatuses(trains, of: line, at: now).prefix(timesPerDirection).map { shown($0) }
-                )
-            }
-        }
-    }
-
-    /// The trains of each row that the screen shows for a line, one entry per train, in time order, before the
-    /// rows keep their first times: the walk record reads them to find two entries of one side under 60 s apart.
-    static func trainsOfEachRow(
-        of line: TransitLine,
-        at station: Station,
-        from departures: [Departure]
-    ) -> [[Departure]] {
-        rows(of: line, at: station, trainsFrom: departures, showsEverySide: false).map { row in
-            switch row {
-            case .side(_, let trains), .other(let trains): trains
-            }
-        }
-    }
-
-    private enum Row {
-        case side([String], [Departure])
-        case other([Departure])
-    }
-
-    private static func rows(
+    /// The rows of a line at a station, in the order of the screen, each with one entry per train in time order.
+    static func rows(
         of line: TransitLine,
         at station: Station,
         trainsFrom departures: [Departure],

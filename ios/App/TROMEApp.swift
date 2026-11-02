@@ -33,10 +33,7 @@ struct TROMEApp: App {
             store: CurrentStationStore(storage: UserDefaults.standard)
         )
         let regionWatcher = Self.makeRegionWatcher(catalog: stationCatalog, locationService: locationService)
-        let departuresProvider = Self.departuresProvider(
-            primConfiguration: primConfiguration,
-            walkRecord: regionWatcher.wakeLog
-        )
+        let departuresProvider = Self.departuresProvider(primConfiguration, walkRecord: regionWatcher.wakeLog)
         let nextTrainsModel = NextTrainsModel(provider: departuresProvider, catalog: stationCatalog)
         let liveActivityClient = ActivityKitStationLiveActivityClient()
         let liveActivityModel = Self.makeLiveActivityModel(client: liveActivityClient)
@@ -198,7 +195,7 @@ struct TROMEApp: App {
 
     /// The provider of the train times. With the Wake log, it writes there the few PRIM entries of `PRIMWalkRecord`.
     private static func departuresProvider(
-        primConfiguration: PRIMConfiguration?,
+        _ primConfiguration: PRIMConfiguration?,
         walkRecord: WakeLog?
     ) -> (any DeparturesProvider)? {
         #if DEBUG
