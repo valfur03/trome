@@ -24,7 +24,7 @@ public final class AutoLiveActivityModel {
     }
     private(set) var appPhase = AppPhase.background
     var appIsActive: Bool { appPhase == .active }
-    private var hasAskedForNotifications = false
+    private(set) var hasAskedForNotifications = false
     var plannedRegions: RegionPlanKey?
     var hasClearedRegions = false
     @ObservationIgnored private var timerTask: Task<Void, Never>?
@@ -310,8 +310,15 @@ private extension AutoLiveActivityModel {
         hasAskedForNotifications = true
         Task { [weak self, permission = inputs.permission, notifications = services.notifications] in
             await permission.waitForAlwaysQuestion()
+            guard let self else { return }
+            // The location questions also end when the rider leaves the app (after Allow Once, iOS shows no
+            // Always question): the question then waits for the next return, so that iOS never shows it out of the app.
+            guard self.appIsActive else {
+                self.hasAskedForNotifications = false
+                return
+            }
             await notifications.requestAuthorization()
-            self?.hasAskedNotificationQuestion = true
+            self.hasAskedNotificationQuestion = true
         }
     }
 }
