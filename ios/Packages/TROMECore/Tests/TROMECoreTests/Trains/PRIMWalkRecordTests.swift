@@ -257,8 +257,7 @@ struct PRIMWalkRecordTests {
         #expect(standing.count == WakeLog.maximumPRIMGroups(of: .standing))
         #expect(standing.prefix(2).allSatisfy { $0.hasPrefix("PRIM, at the platform past its time: Liège\n") })
         let pair = try #require(groups(log, of: .pair).first)
-        #expect(groups(log, of: .pair).count == 1)
-        #expect(pair.hasPrefix("PRIM, two entries under 60 s apart: La Défense\n"))
+        #expect(groups(log, of: .pair) == [pair] && pair.hasPrefix("PRIM, two entries under 60 s apart: La Défense\n"))
         #expect(pair.contains("VehicleJourney::YRZZ01") && pair.contains("VehicleJourney::UZAR93"))
     }
 
@@ -281,8 +280,7 @@ struct PRIMWalkRecordTests {
         #expect(!pairs.contains { $0.contains("La Défense") }, "the bound of the pairs holds")
         let standing = groups(log, of: .standing)
         #expect(standing.count == 2)
-        #expect(standing.last?.hasPrefix("PRIM, at the platform past its time: Liège\n") == true)
-        #expect(standing.last?.contains("1409 s past its time") == true)
+        #expect(standing.last?.contains("1409 s past its time") == true, "the oldest is the train of Liège")
     }
 
     /// The record never leaves the phone and holds no position: the groups hold no coordinate, even when PRIM
