@@ -159,7 +159,12 @@ expect "the first trains call asked PRIM, the next ones got the held answer" \
 expect "the PRIM calls of the run: one" "$(line 'PRIM calls of this run')" "PRIM calls of this run: 1, as many as a rider who opens this stop for 1 s."
 expect "the server kept its answer" "$(line 'After 1 s')" "After 1 s: the server still held its answer."
 wait_ms=$(line 'Wait for PRIM' | sed -n 's/.*answer): \(-*[0-9]*\) ms\./\1/p')
-expect "the wait for PRIM is the 300 ms of the fake server" "$([ "${wait_ms:-0}" -ge 250 ] && [ "$wait_ms" -le 600 ] && echo yes || echo "no ($wait_ms)")" "yes"
+# By the rows of the table, not by a time window: on a busy machine, a held answer can take longer than the 300 ms.
+first_ms=$(column 'trains, first' 6)
+# shellcheck disable=SC2046 # three numbers.
+held_ms=$(printf '%s\n' $(column 'trains, again' 6) | sort -n | sed -n 2p)
+expect "the wait for PRIM is the first trains call minus the median held answer" "${wait_ms:-none}" "$((first_ms - held_ms))"
+expect "the first trains call holds the 300 ms of the fake server" "$([ "$first_ms" -ge 300 ] && echo yes || echo "no ($first_ms)")" "yes"
 for part in 'Connection to Cloudflare (DNS, TCP, TLS): ' 'Worker alone (health): ' 'Hop to the server object (held answer minus health): '; do
     expect "the summary gives: $part" "$(line "$part" | sed -n 's/.*: -*[0-9][0-9]* ms.*/ms/p')" "ms"
 done
