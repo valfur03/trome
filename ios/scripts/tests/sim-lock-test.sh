@@ -387,10 +387,20 @@ wallpaper_update_completed() {
     dasd_line 'COMPLETED <_DASActivity: "com.apple.springboard.posterboardupdate.overnight:6471FC", Utility, 60s, [10/17/26, 5:35:18 AM - 10/17/26, 10:23:18 AM], Started at 10/17/26, 10:26:47 AM, Group: com.apple.dasd.defaultIntensive, InternalGroups: {('
     wallpaper_update_submitted "Sun Oct 18 05:38:47 2099"
 }
-wait_for_wallpaper_update() {
+# One job on the Simulator as it is; wait_for_wallpaper_update is one job on a new Simulator, whose log each case writes.
+wallpaper_update_job() {
+    rm -f "$state/dasd-reads.$default"
     "$scripts/sim-lock.sh" job "$scripts/simulator.sh" wait-for-wallpaper-update sh -c 'echo ran > "$FAKE_SIM_STATE/after-wallpaper-update"' 2> "$state/wallpaper-update.err" > /dev/null
     cat "$state/after-wallpaper-update" 2> /dev/null || echo "did not run"
-    rm -f "$state/after-wallpaper-update" "$state/dasd-log.$default" "$state/dasd-log.$default.next"
+    rm -f "$state/after-wallpaper-update"
+}
+wait_for_wallpaper_update() {
+    wallpaper_update_job
+    rm -f "$state/dasd-log.$default" "$state/dasd-log.$default.next" "$TROME_LOGS/wallpaper-update-read.$default".*
+}
+# Which part of the log the job read for the daily update: whole, or since its last read.
+daily_update_reads() {
+    sed -n 's/^overnight //p' "$state/dasd-reads.$default" 2> /dev/null | paste -s -d ' ' -
 }
 wallpaper_update_message() {
     sed -n -E 's/.*(Waiting for the daily update|Waiting for the wallpaper prewarm|still [a-z]+|has ended|already waited).*/\1/p' "$state/wallpaper-update.err" | paste -s -d ' ' -
@@ -401,7 +411,7 @@ expect "a job runs at once when the daily wallpaper update is not due yet" "$(wa
 { wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; wallpaper_update_started; wallpaper_update_completed; } > "$state/dasd-log.$default"
 expect "a job runs at once when the daily wallpaper update has run" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
 wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
-{ wallpaper_update_submitted "Sat Oct  3 05:35:18 2026"; wallpaper_update_started; wallpaper_update_completed; } > "$state/dasd-log.$default.next"
+{ wallpaper_update_submitted "Sat Oct  3 05:35:18 2026"; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); wallpaper_update_started; wallpaper_update_completed); } > "$state/dasd-log.$default.next"
 expect "a job waits while the daily wallpaper update is due, until iOS has run it, then runs" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update has ended"
 { wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; wallpaper_update_started; } > "$state/dasd-log.$default"
 expect "a job runs at once when the daily wallpaper update started more than 10 minutes ago and its end was not logged" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
@@ -414,6 +424,15 @@ expect "the next job does not wait again for the same due update" "$(TROME_WALLP
 wallpaper_update_submitted "Sun Oct  4 05:35:18 2026" > "$state/dasd-log.$default"
 expect "a job waits again for the next due update" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update still due"
 rm -f "$TROME_LOGS/wallpaper-update-gave-up"
+# The whole log grows each day, and its read took 78 s at each job on a busy Mac: only the first job reads it all.
+wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
+expect "the first job on a Simulator reads its whole log for the daily wallpaper update" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wallpaper_update_job) $(wallpaper_update_message) $(daily_update_reads)" "ran Waiting for the daily update still due whole"
+rm -f "$TROME_LOGS/wallpaper-update-gave-up"
+expect "the next job reads only the log since the last read, and still sees the due update that the older log holds" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wallpaper_update_job) $(wallpaper_update_message) $(daily_update_reads)" "ran Waiting for the daily update still due since"
+rm -f "$TROME_LOGS/wallpaper-update-gave-up"
+{ cat "$state/dasd-log.$default"; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); wallpaper_update_started; wallpaper_update_completed); } > "$state/dasd-log.$default.next"
+mv "$state/dasd-log.$default.next" "$state/dasd-log.$default"
+expect "a job sees the run of the daily wallpaper update logged since the last read, and runs at once" "$(wait_for_wallpaper_update) $(wallpaper_update_message) $(daily_update_reads)" "ran  since"
 # The prewarm, as SpringBoard submits it at each of its starts (the lines of a real run, 2026-11-01).
 wallpaper_prewarm_submitted() {
     dasd_line "SUBMITTED com.apple.springboard.posterboardupdate.prewarm:AC4ACC at priority 30 ($1 - Sun Nov  1 20:47:45 2026)"

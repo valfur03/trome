@@ -12,7 +12,9 @@ wallpaper_update_submit_seconds=300
 wallpaper_update_task_prefix=com.apple.springboard.posterboardupdate.
 wallpaper_update_task_of_each_start=prewarm
 springboard_start_message='Bootstrapping osservice<com.apple.SpringBoard>'
-wallpaper_update_gave_up=${TROME_LOGS:-$HOME/Library/Logs/TROME}/wallpaper-update-gave-up
+trome_logs=${TROME_LOGS:-$HOME/Library/Logs/TROME}
+wallpaper_update_gave_up=$trome_logs/wallpaper-update-gave-up
+wallpaper_update_log_overlap_seconds=600
 slot=${RATP_SIM_SLOT:-1}
 
 case "$slot" in
@@ -214,6 +216,11 @@ wait_for_widget_host() {
 # of the arguments choose (all of it, or --last <time>): "submitted <date from which it is due>", "started <time>", or
 # nothing once it completed. For the task that SpringBoard submits at each of its starts, a start of SpringBoard with no
 # submission after it prints "expected <time of the start>".
+# The whole log is read only once per Simulator: the read saves its time and its result in TROME_LOGS, and the next
+# read starts from that result and reads only the log since that time. Why: the whole log grows each day, and its read
+# took 78 s at each job on a busy Mac (2026-11-02), against a few seconds for the last hour. The next read starts 10
+# minutes before the saved time, for a line that reaches the log a little after its time; a line read twice gives the
+# same result, as each line replaces the result of the lines before it. A failed read saves nothing.
 last_wallpaper_update_line() {
     udid=$1
     task=$wallpaper_update_task_prefix$2
@@ -223,9 +230,25 @@ last_wallpaper_update_line() {
         predicate="($predicate) OR (process == \"SpringBoard\" AND eventMessage BEGINSWITH \"$springboard_start_message\")"
         after_start=yes
     fi
+    saved=
+    seed=
+    if [ $# -eq 2 ]; then
+        saved=$trome_logs/wallpaper-update-read.$udid.$2
+        read_at=$(date '+%Y-%m-%d %H:%M:%S')
+    fi
     shift 2
-    xcrun simctl spawn "$udid" log show --style compact "$@" --predicate "$predicate" 2> /dev/null \
-        | awk -v task="$task" -v after_start="$after_start" -v start="$springboard_start_message" '
+    if [ -n "$saved" ] && [ -r "$saved" ] \
+        && since=$(date -j -v-"$wallpaper_update_log_overlap_seconds"S -f '%Y-%m-%d %H:%M:%S' "$(sed -n 1p "$saved")" '+%Y-%m-%d %H:%M:%S' 2> /dev/null); then
+        seed=$(sed -n 2p "$saved")
+        set -- --start "$since"
+    fi
+    if lines=$(xcrun simctl spawn "$udid" log show --style compact "$@" --predicate "$predicate" 2> /dev/null); then
+        read_ok=yes
+    else
+        read_ok=
+    fi
+    last=$(printf '%s\n' "$lines" \
+        | awk -v last="$seed" -v task="$task" -v after_start="$after_start" -v start="$springboard_start_message" '
             after_start && index($0, " SpringBoard[") && index($0, start) { last = "expected " substr($1 " " $2, 1, 19) }
             index($0, "SUBMITTED " task ":") && match($0, / \([A-Z][a-z][a-z] [A-Z][a-z][a-z] +[0-9]+ [0-9:]+ [0-9]+ - /) {
                 due = substr($0, RSTART + 2, RLENGTH - 5)
@@ -235,7 +258,11 @@ last_wallpaper_update_line() {
             index($0, "STARTED <_DASActivity: \"" task ":") { last = "started " substr($1 " " $2, 1, 19) }
             index($0, "COMPLETED <_DASActivity: \"" task ":") { last = "" }
             END { print last }
-        '
+        ')
+    if [ -n "$saved" ] && [ -n "$read_ok" ]; then
+        mkdir -p "$trome_logs" && printf '%s\n%s\n' "$read_at" "$last" > "$saved.new" && mv "$saved.new" "$saved"
+    fi
+    echo "$last"
 }
 
 # Prints due from <date>, running, not submitted yet, or idle for an update of the wallpapers of iOS. A start with no
@@ -274,7 +301,8 @@ wallpaper_update_state() {
 #   is enough.
 # - The daily update: SpringBoard submits it only at a boot of the Simulator, and after each run with the time from
 #   which it is next due; it ran for 2 minutes with about 15 extensions, and took the Mac to a load of 215
-#   (2026-10-17). Its last submission can be days old, so its whole log is read.
+#   (2026-10-17). Its last submission can be days old, so its whole log is read, once per Simulator (see
+#   last_wallpaper_update_line).
 # The widget host of the Simulator then stopped each draw of the Live Activity at its watchdog, then gave up, and a
 # test that looked for the Live Activity failed. So, when a task is due or runs, the jobs wait until iOS has run it.
 # A newer iOS may change these log messages: then the jobs no longer wait.

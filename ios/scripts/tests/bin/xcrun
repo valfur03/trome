@@ -138,7 +138,13 @@ case "$command" in
                         [ -e "$log" ] || exit 0
                         task=$(echo "$*" | sed -n -E 's/.*eventMessage CONTAINS "([^"]+)".*/\1/p')
                         start=$(echo "$*" | sed -n -E 's/.*eventMessage BEGINSWITH "([^"]+)".*/\1/p')
-                        grep -F -e "$task" ${start:+-e "$start"} "$log" > "$state/dasd-read.$1" || true
+                        # A read with --start gets only the lines logged from that time, as the real log does, and
+                        # the test sees which part of the log each read asked for.
+                        since=$(echo "$*" | sed -n -E 's/.* --start ([0-9-]+ [0-9:]+) .*/\1/p')
+                        part=whole
+                        [ -z "$since" ] || part=since
+                        echo "${task##*.} $part" >> "$state/dasd-reads.$1"
+                        grep -F -e "$task" ${start:+-e "$start"} "$log" | awk -v since="$since" 'substr($0, 1, 19) >= since' > "$state/dasd-read.$1" || true
                         cat "$state/dasd-read.$1"
                         if [ -s "$state/dasd-read.$1" ] && [ -e "$log.next" ]; then
                             mv "$log.next" "$log"
