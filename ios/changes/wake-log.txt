@@ -1,2 +1,2 @@
 kind: builder
-en: In a debug build, the Wake log shows where the phone was at each area event of a station, and each background call for the Live Activity; a Release build archived with TROME_WAKE_LOG_BUILD_<n> = YES for its build number has it too, for a TestFlight walk, and the store build never does.
+en: In a debug build, the Wake log shows where the phone was at each area event of a station, each background call for the Live Activity, and who ended each Live Activity: the app, the rider or iOS; a Release build archived with TROME_WAKE_LOG_BUILD_<n> = YES for its build number has it too, for a TestFlight walk, and the store build never does.

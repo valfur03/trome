@@ -12,6 +12,10 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
 
     private nonisolated let idsEndedByTheApp = Mutex<Set<String>>([])
     private var followedIds: Set<String> = []
+    /// The last Live Activity that the app followed, and the end state that its updates gave: the end state of the
+    /// one that the app finds gone.
+    private var lastFollowed: Activity<StationActivityAttributes>?
+    private var reportedEndStates: [String: LiveActivityEndState] = [:]
     private var idsStartedByTheApp: Set<String> = []
     private var onRemoval: (@MainActor (LiveActivityRemoval) -> Void)?
     private var onAppearance: (@MainActor () -> Void)?
@@ -85,6 +89,7 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
 
     private func follow(_ activity: Activity<StationActivityAttributes>) {
         guard followedIds.insert(activity.id).inserted else { return }
+        lastFollowed = activity
         #if DEBUG
         Self.logFollowed(activity)
         #endif
@@ -94,7 +99,9 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
                 #if DEBUG
                 Self.log(state, of: activity.id)
                 #endif
-                guard !isReported, state == .dismissed || state == .ended else { continue }
+                guard let endState = LiveActivityEndState(state) else { continue }
+                self?.reportedEndStates[activity.id] = endState
+                guard !isReported else { continue }
                 isReported = true
                 self?.reportRemoval(of: activity.id)
             }
@@ -122,11 +129,26 @@ final class ActivityKitStationLiveActivityClient: StationLiveActivityClient {
 }
 
 extension ActivityKitStationLiveActivityClient: LiveActivityWatcher {
+    var endState: LiveActivityEndState? {
+        guard let activity = lastFollowed else { return nil }
+        return reportedEndStates[activity.id] ?? LiveActivityEndState(activity.activityState)
+    }
+
     func watchRemovals(_ onRemoval: @escaping @MainActor (LiveActivityRemoval) -> Void) {
         self.onRemoval = onRemoval
     }
 
     func watchAppearances(_ onAppearance: @escaping @MainActor () -> Void) {
         self.onAppearance = onAppearance
+    }
+}
+
+private extension LiveActivityEndState {
+    init?(_ state: ActivityState) {
+        switch state {
+        case .ended: self = .ended
+        case .dismissed: self = .dismissed
+        default: return nil
+        }
     }
 }

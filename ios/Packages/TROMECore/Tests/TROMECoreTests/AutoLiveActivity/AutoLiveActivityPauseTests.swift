@@ -4,6 +4,7 @@ import Testing
 
 @MainActor
 final class StubLiveActivityRemovals: LiveActivityWatcher {
+    var endState: LiveActivityEndState?
     private var onRemoval: (@MainActor (LiveActivityRemoval) -> Void)?
     private var onAppearance: (@MainActor () -> Void)?
 
@@ -27,6 +28,7 @@ final class StubLiveActivityRemovals: LiveActivityWatcher {
 extension AutoLiveActivityModelTests {
     func swipeAway(activitiesAreEnabled: Bool = true) {
         client.isShowing = false
+        removals.endState = .dismissed
         removals.report(activitiesAreEnabled: activitiesAreEnabled)
     }
 

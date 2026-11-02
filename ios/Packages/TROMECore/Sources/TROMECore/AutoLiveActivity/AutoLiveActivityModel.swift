@@ -48,6 +48,7 @@ public final class AutoLiveActivityModel {
         self.services = services
         self.configuration = configuration
         var state = configuration.store.load()
+        let goneSinceTheLastRun = liveActivity.isShowing ? nil : state.shown
         if !liveActivity.isShowing {
             state = configuration.rules.liveActivityIsGone(
                 from: state,
@@ -57,6 +58,9 @@ public final class AutoLiveActivityModel {
         }
         self.state = state
         stateDidChange(from: AutoLiveActivityState())
+        if let goneSinceTheLastRun {
+            logEndOutsideTheApp(of: goneSinceTheLastRun)
+        }
         if liveActivity.isShowing {
             adoptThePushedLiveActivity()
         }
@@ -123,15 +127,22 @@ public final class AutoLiveActivityModel {
     }
 
     public func stopByHand() async {
-        state.shown = nil
-        await endLiveActivity()
-        await refreshRegions(around: inputs.locationService.position)
+        await stop(because: .stoppedByHand)
     }
 
     public func snooze(for duration: SnoozeDuration) async {
         state.openArrivalStationId = nil
         inputs.automaticMode.snooze(for: duration)
-        await stopByHand()
+        await stop(because: .snoozed(duration))
+    }
+
+    private func stop(because ending: LiveActivityEnding) async {
+        if state.shown != nil {
+            log(ending)
+        }
+        state.shown = nil
+        await endLiveActivity()
+        await refreshRegions(around: inputs.locationService.position)
     }
 
     private func observePosition() {
@@ -230,6 +241,7 @@ public final class AutoLiveActivityModel {
         }
         guard !liveActivity.isShowing, let shown = state.shown else { return }
         removedOutsideTheApp = shown
+        logEndOutsideTheApp(of: shown)
         forgetShownLiveActivity()
         stopFollowingPositionInBackground()
         restartFeed(fetchNow: false)
