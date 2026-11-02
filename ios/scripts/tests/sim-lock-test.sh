@@ -434,6 +434,18 @@ expect "a job says that it waits for a running wallpaper prewarm before it goes 
 { wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; wallpaper_update_submitted "Sat Oct  3 05:35:18 2026"; } > "$state/dasd-log.$default"
 expect "a job also waits for a due daily wallpaper update after the wallpaper prewarm has run" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update still due"
 rm -f "$TROME_LOGS/wallpaper-update-gave-up"
+springboard_started() {
+    echo "${dasd_time:-2026-11-01 20:42:44}.322 Df SpringBoard[8751:240b63a] [com.apple.FrontBoard:Process] Bootstrapping osservice<com.apple.SpringBoard>"
+}
+# After a cold boot, SpringBoard submits the prewarm up to minutes after its start (68 s on 2026-11-02).
+{ wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); springboard_started); } > "$state/dasd-log.$default"
+{ cat "$state/dasd-log.$default"; wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; } > "$state/dasd-log.$default.next"
+expect "a job waits after a start of SpringBoard until the wallpaper prewarm that it submits late has run, then runs" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the wallpaper prewarm has ended"
+{ wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); springboard_started); } > "$state/dasd-log.$default"
+expect "a job goes on at the limit when SpringBoard has not submitted the wallpaper prewarm yet" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the wallpaper prewarm still not"
+{ wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; springboard_started; } > "$state/dasd-log.$default"
+expect "a job runs at once when SpringBoard started more than 5 minutes ago and never submitted the wallpaper prewarm" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
+rm -f "$TROME_LOGS/wallpaper-update-gave-up"
 
 language_at_restart() {
     cat "$state/language-at-springboard-restart.$default" 2> /dev/null || echo "no restart"

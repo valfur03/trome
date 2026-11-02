@@ -70,6 +70,8 @@ show_language() {
     TROME_SIM_CLOCK=12 RATP_SIM_LANGUAGE=$1 "$scripts/simulator.sh" language
     shown_language=$1
     override_status_bar
+    # The switch starts SpringBoard again, and each start of SpringBoard brings a heavy update of the wallpapers.
+    "$scripts/simulator.sh" wait-for-wallpaper-prewarm
 }
 
 cleanup() {

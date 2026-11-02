@@ -8,7 +8,10 @@ widget_host_wait_seconds=${TROME_WIDGET_HOST_WAIT_SECONDS:-240}
 widget_host_log_seconds=60
 wallpaper_update_wait_seconds=${TROME_WALLPAPER_UPDATE_WAIT_SECONDS:-600}
 wallpaper_update_run_seconds=600
+wallpaper_update_submit_seconds=300
 wallpaper_update_task_prefix=com.apple.springboard.posterboardupdate.
+wallpaper_update_task_of_each_start=prewarm
+springboard_start_message='Bootstrapping osservice<com.apple.SpringBoard>'
 wallpaper_update_gave_up=${TROME_LOGS:-$HOME/Library/Logs/TROME}/wallpaper-update-gave-up
 slot=${RATP_SIM_SLOT:-1}
 
@@ -209,14 +212,21 @@ wait_for_widget_host() {
 
 # Prints the last line of the scheduler of iOS (dasd) on an update of the wallpapers of iOS, in the log that the rest
 # of the arguments choose (all of it, or --last <time>): "submitted <date from which it is due>", "started <time>", or
-# nothing once it completed.
+# nothing once it completed. For the task that SpringBoard submits at each of its starts, a start of SpringBoard with no
+# submission after it prints "expected <time of the start>".
 last_wallpaper_update_line() {
     udid=$1
     task=$wallpaper_update_task_prefix$2
+    predicate="process == \"dasd\" AND eventMessage CONTAINS \"$task\""
+    after_start=
+    if [ "$2" = "$wallpaper_update_task_of_each_start" ]; then
+        predicate="($predicate) OR (process == \"SpringBoard\" AND eventMessage BEGINSWITH \"$springboard_start_message\")"
+        after_start=yes
+    fi
     shift 2
-    xcrun simctl spawn "$udid" log show --style compact "$@" \
-        --predicate "process == \"dasd\" AND eventMessage CONTAINS \"$task\"" 2> /dev/null \
-        | awk -v task="$task" '
+    xcrun simctl spawn "$udid" log show --style compact "$@" --predicate "$predicate" 2> /dev/null \
+        | awk -v task="$task" -v after_start="$after_start" -v start="$springboard_start_message" '
+            after_start && index($0, " SpringBoard[") && index($0, start) { last = "expected " substr($1 " " $2, 1, 19) }
             index($0, "SUBMITTED " task ":") && match($0, / \([A-Z][a-z][a-z] [A-Z][a-z][a-z] +[0-9]+ [0-9:]+ [0-9]+ - /) {
                 due = substr($0, RSTART + 2, RLENGTH - 5)
                 gsub(/ +/, " ", due)
@@ -228,8 +238,9 @@ last_wallpaper_update_line() {
         '
 }
 
-# Prints due from <date>, running or idle for an update of the wallpapers of iOS. A start with no end logged for 10
-# minutes is idle: the run of the daily update once logged no end.
+# Prints due from <date>, running, not submitted yet, or idle for an update of the wallpapers of iOS. A start with no
+# end logged for 10 minutes is idle: the run of the daily update once logged no end. A start of SpringBoard with no
+# submission after 5 minutes is idle: a newer iOS may no longer submit it.
 wallpaper_update_state() {
     last=$(last_wallpaper_update_line "$@")
     case $last in
@@ -241,15 +252,26 @@ wallpaper_update_state() {
             started_at=$(date -j -f '%Y-%m-%d %H:%M:%S' "${last#started }" +%s 2> /dev/null) || started_at=0
             if [ $(($(date +%s) - started_at)) -lt "$wallpaper_update_run_seconds" ]; then echo running; else echo idle; fi
             ;;
+        "expected "*)
+            started_at=$(date -j -f '%Y-%m-%d %H:%M:%S' "${last#expected }" +%s 2> /dev/null) || started_at=0
+            if [ $(($(date +%s) - started_at)) -lt "$wallpaper_update_submit_seconds" ]; then
+                echo "not submitted yet since SpringBoard started at ${last#expected }"
+            else
+                echo idle
+            fi
+            ;;
         *) echo idle ;;
     esac
 }
 
 # SpringBoard asks the scheduler of iOS to update the wallpapers of the lock screen, in two background tasks that iOS
 # marks as heavy on CPU, memory, disk and GPU: PosterBoard then runs its wallpaper extensions at once.
-# - The prewarm: SpringBoard submits it at each of its starts, so at each job, due at once. iOS usually runs it at once,
-#   for 5 to 90 s, but it can hold it back for minutes, and then run it in the middle of the tests (2026-11-01: 6
-#   minutes after a cold boot, at a Mac load of 112). Its last submission is minutes old: a short log is enough.
+# - The prewarm: SpringBoard submits it at each of its starts, so at each job, due at once. Most often it is submitted
+#   and run within 20 s. After a cold boot, SpringBoard submits it up to 3 minutes after its start, and iOS can hold it
+#   back for minutes more, then run it in the middle of the tests (2026-11-01: 6 minutes after a cold boot, at a Mac
+#   load of 112; 2026-11-02: 1 minute after its submission, while the first Live Activity of the tests should show).
+#   So a start of SpringBoard with no submission after it waits too. Its last submission is minutes old: a short log
+#   is enough.
 # - The daily update: SpringBoard submits it only at a boot of the Simulator, and after each run with the time from
 #   which it is next due; it ran for 2 minutes with about 15 extensions, and took the Mac to a load of 215
 #   (2026-10-17). Its last submission can be days old, so its whole log is read.
@@ -257,8 +279,13 @@ wallpaper_update_state() {
 # test that looked for the Live Activity failed. So, when a task is due or runs, the jobs wait until iOS has run it.
 # A newer iOS may change these log messages: then the jobs no longer wait.
 wait_for_wallpaper_update() {
-    wait_for_wallpaper_task "$1" prewarm "the wallpaper prewarm of iOS" --last 30m
+    wait_for_wallpaper_prewarm "$1"
     wait_for_wallpaper_task "$1" overnight "the daily update of the wallpapers of iOS"
+}
+
+# Only the prewarm: after a restart of SpringBoard in a job that has already waited for both tasks.
+wait_for_wallpaper_prewarm() {
+    wait_for_wallpaper_task "$1" prewarm "the wallpaper prewarm of iOS" --last 30m
 }
 
 # A job that waited the whole limit for a due update writes it down, so the next jobs do not wait again for the same
@@ -455,6 +482,9 @@ case "$command" in
             exec "$@"
         fi
         ;;
+    wait-for-wallpaper-prewarm)
+        wait_for_wallpaper_prewarm "$(boot_device)"
+        ;;
     wait-for-widget-host)
         wait_for_widget_host "$(boot_device)"
         if [ $# -gt 0 ]; then
@@ -529,7 +559,7 @@ case "$command" in
         delete_old_devices
         ;;
     *)
-        echo "Usage: $0 [udid|find|runtime|boot|reset [command...]|wait-for-wallpaper-update [command...]|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|status-bar|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
+        echo "Usage: $0 [udid|find|runtime|boot|reset [command...]|wait-for-wallpaper-update [command...]|wait-for-wallpaper-prewarm|wait-for-widget-host [command...]|grant-location <app path> [command...]|launch <app path>|language|status-bar|switch-language <app path>|uninstall [udid]|booted-others|with-destination <xcodebuild command...>|booted|delete|delete-old]" >&2
         echo "RATP_SIM_SLOT=<n> uses the shared Simulators of slot n (RATP-Shared-<n>, RATP-Shared-Small-<n>); slot 1 (the default) uses RATP-Shared and RATP-Shared-Small" >&2
         echo "RATP_SIM_LANGUAGE=fr sets the language of the Simulator to French (with 'reset', 'launch', 'language' and 'switch-language'); the default is English (en)" >&2
         echo "'status-bar' sets the status bar of the pictures (9:41, full battery and signal), and boots the Simulator again once when it booted with a 24-hour clock" >&2

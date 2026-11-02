@@ -131,12 +131,14 @@ case "$command" in
                 log="$state/chronod-log.$1"
                 case "$*" in
                     *'process == "dasd"'*)
-                        # Only the lines of the task that the read asks for, as the real predicate does; the log
-                        # moves on to its next state only after a read that saw lines of that task.
+                        # Only the lines of the task that the read asks for, and the starts of SpringBoard when it
+                        # asks for them, as the real predicate does; the log moves on to its next state only after a
+                        # read that saw such lines.
                         log="$state/dasd-log.$1"
                         [ -e "$log" ] || exit 0
                         task=$(echo "$*" | sed -n -E 's/.*eventMessage CONTAINS "([^"]+)".*/\1/p')
-                        grep -F "$task" "$log" > "$state/dasd-read.$1" || true
+                        start=$(echo "$*" | sed -n -E 's/.*eventMessage BEGINSWITH "([^"]+)".*/\1/p')
+                        grep -F -e "$task" ${start:+-e "$start"} "$log" > "$state/dasd-read.$1" || true
                         cat "$state/dasd-read.$1"
                         if [ -s "$state/dasd-read.$1" ] && [ -e "$log.next" ]; then
                             mv "$log.next" "$log"
