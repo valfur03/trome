@@ -2,6 +2,8 @@
 # Tests release-server-timing.sh against a fake server that holds an answer for a stop, as the real one does,
 # and waits 300 ms when it "asks PRIM". It proves the calls that the script makes, the PRIM calls that it counts,
 # the parts that it splits, and that the token is never in the output, on a command line, or in a file.
+# No result may depend on the speed of the machine: the fake server forgets by the order of the calls, not by a time
+# alone, and a run with a forced slow call proves it.
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
 script="$tests/../release-server-timing.sh"
@@ -9,6 +11,7 @@ contracts="$tests/../../../contracts"
 work=$(mktemp -d)
 keeps="keepstoken$$abcdef"
 forgets="forgetstoken$$abcdef"
+slow="slowtoken$$abcdef"
 held="heldtoken$$abcdef"
 wrong="wrongtoken$$abcdef"
 failures=0
@@ -32,33 +35,43 @@ expect() {
     fi
 }
 
-# The fake server. Each token is a server of its own: "keeps" holds its answer, "forgets" loses it after a quiet
-# time of 0.9 s or more (the wait of a rider, 1 s here), "held" already holds one from 30 s ago, and any other token is refused.
+# The fake server. Each token is a server of its own: "keeps" holds its answer, "held" already holds one from 30 s ago,
+# and any other token is refused.
+# "forgets" (and "slow", the same server for the run with a slow call) holds its answer for the 3 calls that follow
+# a PRIM call, and loses it for the next one, the call of the rider after the wait (1 s here), if it comes 0.9 s or more
+# after the call before: a script that does not wait still gets the held answer.
+# Why not a quiet time alone: on a busy machine, the calls of one rider can come more than 0.9 s apart, and the fake
+# server then forgot too early and counted 3 PRIM calls.
 # It writes one line per request (the path, and which token it got), never the token.
 cat > "$work/server.py" <<'PY'
 import email.utils, http.server, socketserver, sys, time
-contracts, port_file, log_file, keeps, forgets, held = sys.argv[1:7]
+contracts, port_file, log_file, keeps, forgets, held, slow = sys.argv[1:8]
 with open(f"{contracts}/prim/stop-monitoring-abbesses-stop-area.json", "rb") as f:
     times = f.read()
 answers = {}
 last_call = {}
+held_calls = {}
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         auth = self.headers.get("Authorization")
-        which = {None: "none", f"Bearer {keeps}": "keeps", f"Bearer {forgets}": "forgets", f"Bearer {held}": "held"}.get(auth, "other")
+        which = {None: "none", f"Bearer {keeps}": "keeps", f"Bearer {forgets}": "forgets", f"Bearer {held}": "held", f"Bearer {slow}": "slow"}.get(auth, "other")
         with open(log_file, "a") as f:
             f.write(f"{self.path} {which}\n")
         status, body, headers = 401, b'{"error":"unauthorized"}', {}
         if self.path == "/health":
             status, body = 200, b'{"status":"ok"}'
-        elif which in ("keeps", "forgets", "held"):
+        elif which in ("keeps", "forgets", "held", "slow"):
             now = int(time.time())
             quiet = time.monotonic() - last_call.get(which, time.monotonic())
             last_call[which] = time.monotonic()
             kept = answers.get(which, now - 30 if which == "held" else None)
-            if kept is None or (which == "forgets" and quiet >= 0.9):
+            forgot = which in ("forgets", "slow") and held_calls.get(which, 0) >= 3 and quiet >= 0.9
+            if kept is None or forgot:
                 time.sleep(0.3)
                 kept = int(time.time())
+                held_calls[which] = 0
+            else:
+                held_calls[which] = held_calls.get(which, 0) + 1
             answers[which] = kept
             status, body = 200, times
             headers = {"Last-Modified": email.utils.formatdate(kept, usegmt=True)}
@@ -82,7 +95,7 @@ with open(port_file, "w") as f:
     f.write(str(server.server_address[1]))
 server.serve_forever()
 PY
-python3 -I "$work/server.py" "$contracts" "$work/port" "$work/requests" "$keeps" "$forgets" "$held" &
+python3 -I "$work/server.py" "$contracts" "$work/port" "$work/requests" "$keeps" "$forgets" "$held" "$slow" &
 server_pid=$!
 tries=0
 until [ -s "$work/port" ]; do
@@ -93,11 +106,17 @@ done
 fake="127.0.0.1:$(cat "$work/port")"
 
 # A curl that writes its command line to a log, then runs the real one.
+# When the file "slow" exists, it waits 1 s before the second trains call, as a busy machine can.
 mkdir -p "$work/bin" "$work/home" "$work/tmp" "$work/cwd" "$work/config"
 real_curl=$(command -v curl)
 cat > "$work/bin/curl" <<SH
 #!/bin/sh
 printf '%s\n' "\$*" >> "$work/curl-args"
+case "\$*" in
+*departures*)
+    echo >> "$work/trains-calls"
+    if [ -f "$work/slow" ] && [ "\$(wc -l < "$work/trains-calls")" -eq 2 ]; then sleep 1; fi ;;
+esac
 exec "$real_curl" "\$@"
 SH
 chmod +x "$work/bin/curl"
@@ -109,7 +128,7 @@ config="$work/config/Server.xcconfig"
 # The wait of 30 s between the calls of a rider is 1 s here: the fake server that forgets then answers anew.
 run() {
     printf 'TRAIN_SERVER_HOST = trome-server.example.workers.dev\nTRAIN_SERVER_APP_TOKEN = %s\n' "$1" > "$config"
-    rm -f "$work/requests"
+    rm -f "$work/requests" "$work/trains-calls"
     (cd "$work/cwd" && env -i PATH="$work/bin:$PATH" HOME="$work/home" TMPDIR="$work/tmp" \
         RELEASE_SERVER_CHECK_TEST_SERVER="$fake" RELEASE_SERVER_TIMING_TEST_WAIT=1 "$script" "$config" > "$work/output" 2>&1) \
         && echo "status 0" >> "$work/output" || echo "status $?" >> "$work/output"
@@ -121,7 +140,7 @@ outcome() { tail -n 1 "$work/output"; }
 
 leaks() {
     found=no
-    for token in "$keeps" "$forgets" "$held" "$wrong"; do
+    for token in "$keeps" "$forgets" "$held" "$slow" "$wrong"; do
         grep -qF "$token" "$work/output" && found="in the output"
         [ ! -f "$work/curl-args" ] || ! grep -qF "$token" "$work/curl-args" || found="on the command line of curl"
         [ -z "$(ls -A "$work/home" "$work/tmp" "$work/cwd" | grep -v '^\.curlrc$' | grep -v '^$' | grep -v ':$')" ] || found="in a file"
@@ -150,6 +169,15 @@ run "$forgets"
 expect "a server that forgets: the call a rider makes later asked PRIM again" "$(column 'trains, 1 s later' 12)" "yes"
 expect "a server that forgets: the summary says so" "$(line 'After 1 s')" "After 1 s: the server had forgotten its answer, so it asked PRIM again."
 expect "a server that forgets: two PRIM calls" "$(line 'PRIM calls of this run' | cut -d, -f1)" "PRIM calls of this run: 2"
+
+# A busy machine: the second trains call comes 1 s after the first one. The server still held its answer then.
+touch "$work/slow"
+run "$slow"
+rm -f "$work/slow"
+expect "a slow call on a busy machine: only the first call and the call after the wait asked PRIM" \
+    "$(column 'trains, first' 10) $(column 'trains, again' 10) $(column 'trains, 1 s later' 12)" "yes no no no yes"
+expect "a slow call on a busy machine: two PRIM calls" "$(line 'PRIM calls of this run' | cut -d, -f1)" "PRIM calls of this run: 2"
+expect "a slow call on a busy machine: the token is nowhere" "$(leaks)" "no"
 
 run "$held"
 expect "a server that already held an answer: no PRIM call, and no wait for PRIM to measure" \
