@@ -43,7 +43,7 @@ For each call, one line gives the stop, the time of the call by the clock of the
 Then each entry has two lines with the same start and its rank (`entry 3`): what the app does with it, and a `fields` line.
 The `fields` line writes each field as PRIM gave it, as its name and its value, and `absent` when the answer does not have it; `empty` is an empty list or object, and `""` an empty text.
 The fields go on their own line because the log cuts a line after 1024 bytes.
-A Release build reads none of these fields.
+A Release build writes them only in the [Wake log](#on-your-iphone-see-why-no-live-activity-came) of a build for a walk, and only for the two cases of its PRIM lines.
 
 | Field | Its place in the PRIM answer |
 |---|---|
@@ -183,6 +183,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Bell | Only in a log kept from an earlier build: each arrival notification that it handed to iOS |
 | Radio waves | At each launch of a plain `make run` build (not `LIVE=1`), "Silent start off: this build has no server": expected, because that build has no server, so you set up nothing and none of the other lines of this row follow. A `make run LIVE=1` build writes this line only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and no server address set up; without that setting it has no silent start and writes none of the lines of this row. With the [silent start](auto-live-activity.md#the-silent-start) on: the start token from iOS, each ask to the server with the background time left, its answer ("started", "already started", "refused", "not set up", "no answer") with the seconds that it took, or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), one line "No start at" the station, ", no notification:" and the cause when the Live Activity does not come, and "Follows the Live Activity that the server started" when the app finds it on screen |
 | Tram | Each call that the app makes for its Live Activity in the background: how old the answer is and the next train of each direction that it hands to iOS (four at most), or why no answer came; then "next ask by" and a time, or "asks no more" |
+| Page with a magnifying glass | Two rare cases of a PRIM answer that the app asked for, each with the lines of its entries as the [PRIM log](#record-what-prim-answers-field-by-field) writes them: "PRIM, two entries under 60 s apart" in one row, with the minutes that each shows, and "PRIM, at the platform past its time", with its seconds past; each case once per station and hour, and the 20 newest kept |
 
 "App launched" is written at the start of the launch.
 When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.
