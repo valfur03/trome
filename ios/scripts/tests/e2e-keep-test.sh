@@ -207,6 +207,17 @@ unset TROME_E2E_EVIDENCE_NOTE
 background="com.apple.springboard.iconlabelcache.overnight from 10:26:30 to the end of the log; the daily update of the wallpapers from 10:26:47 to 10:28:41"
 expect "the context names the heavy background tasks of iOS during the run, with their start and end" "$(grep '^Heavy' "$(cat "$state/note")/context.txt")" "Heavy background tasks of iOS: $background"
 expect "it also prints them when the daily update of the wallpapers ran, before the folder" "$(head -1 "$state/out")" "Heavy background tasks of iOS: $background."
+
+# The lines of a real run (2026-11-01) where the wallpaper prewarm ran next to the tests, shortened.
+cat > "$state/simulator.log" << 'EOF'
+2026-11-01 20:48:34.091 Df dasd[16312:2811192] [com.apple.duetactivityscheduler:lifecycle] STARTED <_DASActivity: "com.apple.springboard.posterboardupdate.prewarm:AC4ACC", Utility, 60s, [11/1/26, 8:42:45 PM - 11/1/26, 8:47:45 PM], Started at 11/1/26, 8:48:34 PM, Group: com.apple.dasd.defaultIntensive, Intensive: CPU Memory Disk GPU, PID: 17251>
+2026-11-01 20:49:25.860 Df dasd[16312:281119c] [com.apple.duetactivityscheduler:lifecycle] COMPLETED <_DASActivity: "com.apple.springboard.posterboardupdate.prewarm:AC4ACC", Utility, 60s, [11/1/26, 8:42:45 PM - 11/1/26, 8:47:45 PM], Started at 11/1/26, 8:48:34 PM, Group: com.apple.dasd.defaultIntensive, InternalGroups: {(
+EOF
+TROME_E2E_EVIDENCE_NOTE="$state/note"
+export TROME_E2E_EVIDENCE_NOTE
+keep > /dev/null
+unset TROME_E2E_EVIDENCE_NOTE
+expect "it also prints the heavy background tasks when the wallpaper prewarm ran, before the folder" "$(head -1 "$state/out")" "Heavy background tasks of iOS: the wallpaper prewarm from 20:48:34 to 20:49:25."
 rm "$state/simulator.log"
 
 for old in $(seq 1 25); do

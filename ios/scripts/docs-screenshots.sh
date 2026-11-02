@@ -81,7 +81,9 @@ cleanup() {
     xcrun simctl status_bar "$udid" clear 2> /dev/null || true
     xcrun simctl location "$udid" clear 2> /dev/null || true
     rm -rf "$exported" "$picked"
+    [ -z "$load_log" ] || kill "$load_log" 2> /dev/null || true
 }
+load_log=
 # A stopped run stops: it stops its test run, waits for it to end, and puts the Simulator back (cleanup).
 # The test run runs in the background, so that the signal does not wait for its end.
 test_run=
@@ -102,6 +104,9 @@ rm -rf "$exported" "$picked" "$wrong_clock"
 for language in $languages; do
     rm -rf "$(result_of "$language")"
 done
+# The load of the Mac during the run, next to the log, as make e2e writes it: a failed run keeps it (e2e-keep.py).
+"$scripts/mac-load-log.sh" "$(dirname "$log")/mac-load.log" &
+load_log=$!
 # First, as it may boot the Simulator again.
 override_status_bar
 xcrun simctl location "$udid" set "$fake_position"

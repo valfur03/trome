@@ -393,7 +393,7 @@ wait_for_wallpaper_update() {
     rm -f "$state/after-wallpaper-update" "$state/dasd-log.$default" "$state/dasd-log.$default.next"
 }
 wallpaper_update_message() {
-    sed -n -E 's/.*(Waiting for the daily update|was still [a-z]+|ended after|already waited).*/\1/p' "$state/wallpaper-update.err" | paste -s -d ' ' -
+    sed -n -E 's/.*(Waiting for the daily update|Waiting for the wallpaper prewarm|still [a-z]+|has ended|already waited).*/\1/p' "$state/wallpaper-update.err" | paste -s -d ' ' -
 }
 expect "a job runs at once when the scheduler of iOS logs nothing of the daily wallpaper update" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
 wallpaper_update_submitted "Sun Oct 18 05:38:47 2099" > "$state/dasd-log.$default"
@@ -402,17 +402,37 @@ expect "a job runs at once when the daily wallpaper update is not due yet" "$(wa
 expect "a job runs at once when the daily wallpaper update has run" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
 wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
 { wallpaper_update_submitted "Sat Oct  3 05:35:18 2026"; wallpaper_update_started; wallpaper_update_completed; } > "$state/dasd-log.$default.next"
-expect "a job waits while the daily wallpaper update is due, until iOS has run it, then runs" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update ended after"
+expect "a job waits while the daily wallpaper update is due, until iOS has run it, then runs" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update has ended"
 { wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; wallpaper_update_started; } > "$state/dasd-log.$default"
 expect "a job runs at once when the daily wallpaper update started more than 10 minutes ago and its end was not logged" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
 { wallpaper_update_submitted "Sat Oct 17 05:35:18 2026"; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); wallpaper_update_started); } > "$state/dasd-log.$default"
-expect "a job says that it waits for a running daily wallpaper update before it goes on at the limit" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still running"
+expect "a job says that it waits for a running daily wallpaper update before it goes on at the limit" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update still running"
 wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
-expect "a job goes on at the limit when the daily wallpaper update stays due" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still due"
+expect "a job goes on at the limit when the daily wallpaper update stays due" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update still due"
 wallpaper_update_submitted "Sat Oct  3 05:35:18 2026" > "$state/dasd-log.$default"
 expect "the next job does not wait again for the same due update" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran already waited"
 wallpaper_update_submitted "Sun Oct  4 05:35:18 2026" > "$state/dasd-log.$default"
-expect "a job waits again for the next due update" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update was still due"
+expect "a job waits again for the next due update" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update still due"
+rm -f "$TROME_LOGS/wallpaper-update-gave-up"
+# The prewarm, as SpringBoard submits it at each of its starts (the lines of a real run, 2026-11-01).
+wallpaper_prewarm_submitted() {
+    dasd_line "SUBMITTED com.apple.springboard.posterboardupdate.prewarm:AC4ACC at priority 30 ($1 - Sun Nov  1 20:47:45 2026)"
+}
+wallpaper_prewarm_started() {
+    dasd_line 'STARTED <_DASActivity: "com.apple.springboard.posterboardupdate.prewarm:AC4ACC", Utility, 60s, [11/1/26, 8:42:45 PM - 11/1/26, 8:47:45 PM], Started at 11/1/26, 8:48:34 PM, Group: com.apple.dasd.defaultIntensive, Intensive: CPU Memory Disk GPU, PID: 17251>'
+}
+wallpaper_prewarm_completed() {
+    dasd_line 'COMPLETED <_DASActivity: "com.apple.springboard.posterboardupdate.prewarm:AC4ACC", Utility, 60s, [11/1/26, 8:42:45 PM - 11/1/26, 8:47:45 PM], Started at 11/1/26, 8:48:34 PM, Group: com.apple.dasd.defaultIntensive, InternalGroups: {('
+}
+{ wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; } > "$state/dasd-log.$default"
+expect "a job runs at once when the wallpaper prewarm has run" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran "
+wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026" > "$state/dasd-log.$default"
+{ wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; } > "$state/dasd-log.$default.next"
+expect "a job waits while the wallpaper prewarm is due, until iOS has run it, then runs" "$(wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the wallpaper prewarm has ended"
+{ wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; (dasd_time=$(date '+%Y-%m-%d %H:%M:%S'); wallpaper_prewarm_started); } > "$state/dasd-log.$default"
+expect "a job says that it waits for a running wallpaper prewarm before it goes on at the limit" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the wallpaper prewarm still running"
+{ wallpaper_prewarm_submitted "Sun Nov  1 20:42:45 2026"; wallpaper_prewarm_started; wallpaper_prewarm_completed; wallpaper_update_submitted "Sat Oct  3 05:35:18 2026"; } > "$state/dasd-log.$default"
+expect "a job also waits for a due daily wallpaper update after the wallpaper prewarm has run" "$(TROME_WALLPAPER_UPDATE_WAIT_SECONDS=0 wait_for_wallpaper_update) $(wallpaper_update_message)" "ran Waiting for the daily update still due"
 rm -f "$TROME_LOGS/wallpaper-update-gave-up"
 
 language_at_restart() {

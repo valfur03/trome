@@ -106,11 +106,14 @@ final class DocsScreenshotTests: XCTestCase {
             steps.openNotificationCenter()
             steps.waitForTheLiveActivity(of: screenshot.station, showing: screenshot.destinations)
             saveStillScreenshot(named: "\(screenshot.name)-\(language)")
-            XCUIDevice.shared.press(.home)
+            steps.closeNotificationCenter()
             if screenshot.savesTheIsland {
                 let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
                 settings.activate()
-                XCTAssertTrue(settings.wait(for: .runningForeground, timeout: timeout))
+                XCTAssertTrue(
+                    settings.wait(for: .runningForeground, timeout: timeout),
+                    "Settings did not come to the front, for the picture of the Dynamic Island"
+                )
                 sleep(2)
                 saveStillScreenshot(named: "live-activity-island-\(language)")
                 settings.terminate()

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Writes the load of the Mac and its busiest processes to a file every 10 s, until the process that started it ends.
-# make e2e runs it next to the tests, and a failed run keeps the file (e2e-keep.py): when iOS in the Simulator is
-# slow, the file shows what kept the Mac busy at that moment, the Simulator itself or another job.
+# make e2e and make docs-screenshots run it next to the tests, and a failed run keeps the file (e2e-keep.py): when iOS
+# in the Simulator is slow, the file shows what kept the Mac busy at that moment, the Simulator itself or another job.
 set -u
 
 if [ $# -ne 1 ]; then

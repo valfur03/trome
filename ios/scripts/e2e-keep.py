@@ -17,12 +17,16 @@ NO_SUMMARY_LOG_SECONDS = 900
 # host (chronod) logs a watchdog when the intent has not ended after this time.
 LIVE_ACTIVITY_TAP_LIMIT_SECONDS = 30
 INTENT_RUNNER = "BackgroundShortcutRunner"
-# make e2e writes the load of the Mac and its busiest processes in this file of its log folder (mac-load-log.sh).
+# make e2e and make docs-screenshots write the load of the Mac and its busiest processes in this file of their log folder
+# (mac-load-log.sh).
 MAC_LOAD_LOG = "mac-load.log"
 MAC_LOAD_SAMPLE = re.compile(r"^\d\d:\d\d:\d\d load ([0-9.]+) \|")
-# The daily update of the wallpapers of iOS: about 15 wallpaper extensions at once, for minutes (simulator.sh waits
-# for it before a run, when it is due).
-WALLPAPER_UPDATE = "com.apple.springboard.posterboardupdate.overnight"
+# The updates of the wallpapers of iOS: wallpaper extensions at once, for minutes (simulator.sh waits for them before
+# a run, when they are due).
+WALLPAPER_UPDATES = {
+    "com.apple.springboard.posterboardupdate.overnight": "the daily update of the wallpapers",
+    "com.apple.springboard.posterboardupdate.prewarm": "the wallpaper prewarm",
+}
 BACKGROUND_TASK = re.compile(r'\] (STARTED|COMPLETED) <_DASActivity: "([^"]+?)(?::\w+)?"')
 LOG_LINE = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+) +\S+ +(\S+?)\[(\d+):")
 
@@ -305,13 +309,14 @@ def background_tasks(simulator_log):
     parts = []
     for name, runs in sorted(tasks.items(), key=lambda item: item[1][0][0]):
         for start, end in runs:
-            label = "the daily update of the wallpapers" if name == WALLPAPER_UPDATE else name
+            label = WALLPAPER_UPDATES.get(name, name)
             parts.append(f"{label} from {start:%H:%M:%S} to {f'{end:%H:%M:%S}' if end else 'the end of the log'}")
     return "; ".join(parts)
 
 
 def keep_mac_load(log, folder, since):
-    """Keeps the load of the Mac that make e2e wrote during this run, and names its busiest moment."""
+    """Keeps the load of the Mac that make e2e or make docs-screenshots wrote during this run, and names its busiest
+    moment."""
     path = log.parent / MAC_LOAD_LOG
     try:
         if path.stat().st_mtime < since:
@@ -387,7 +392,7 @@ def main():
         print(f"Taps on a Live Activity button: {taps}.")
     if renders and "iOS stopped" in renders:
         print(f"Draws of the Live Activity by iOS: {renders}.")
-    if background and "the daily update of the wallpapers" in background:
+    if background and any(label in background for label in WALLPAPER_UPDATES.values()):
         print(f"Heavy background tasks of iOS: {background}.")
     print(f"E2E evidence: the log, the result bundle, the Simulator log and the context of this failed run are kept in {folder}")
 

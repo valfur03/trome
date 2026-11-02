@@ -115,6 +115,16 @@ struct ScreenshotSteps {
         XCTAssertTrue(springboard.otherElements["lockscreen-date-view"].waitForExistence(timeout: timeout))
     }
 
+    /// Closes the Notification Center with the Home button, and waits until it has slid away: an app that opens
+    /// while it still slides away can stay in the background, and never come to the front.
+    func closeNotificationCenter() {
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(
+            springboard.otherElements["lockscreen-date-view"].waitForNonExistence(timeout: timeout),
+            "The Notification Center still covers the Home Screen"
+        )
+    }
+
     func waitUntil(_ condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
