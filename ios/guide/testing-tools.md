@@ -128,7 +128,8 @@ Tap **Far from any station**: it ends.
 In the background, the app asks the server to start the Live Activity ([the silent start](auto-live-activity.md#the-silent-start)), and sends no notification.
 A build of the Simulator has no silent start, so nothing shows: the [wake log](#on-your-iphone-see-why-no-live-activity-came) says why, and the Live Activity starts when you open the app at the station.
 With no Live Activity, the app follows no position in the background.
-On a phone, iOS reports the area of the station, and the app asks for one position; the Simulator cannot watch areas, so you post that report in place of iOS (debug builds only).
+On a phone, iOS reports the area of the station, and the app asks for one position.
+The Simulator cannot watch areas, so you post that report in place of iOS (debug builds only).
 
 1. Tap **Use the real GPS**, and in the **Settings** app of the Simulator, set the location of TROME to **Always**.
 2. Move the Simulator near Abbesses, 350 meters away, and launch the app again: it watches the area of Abbesses, and starts nothing.
@@ -138,8 +139,9 @@ On a phone, iOS reports the area of the station, and the app asks for one positi
    xcrun simctl launch --terminate-running-process "$(make -s simulator)" com.example.trome.dev
    ```
 
-3. Go to the home screen, and wait 20 seconds: iOS stops the position stream of the app.
-4. Move the Simulator to Abbesses, and post the report of its area:
+3. Go to the home screen.
+4. At once, move the Simulator to Abbesses, and post the report of its area.
+   About 10 seconds after the app leaves the screen, iOS suspends it, and a suspended app gets no report: on a phone, iOS would wake it.
 
    ```sh
    xcrun simctl location "$(make -s simulator)" set 48.88439,2.33838
