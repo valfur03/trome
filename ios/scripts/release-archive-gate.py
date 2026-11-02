@@ -44,7 +44,7 @@ def archive_types() -> List[str]:
     spec = importlib.util.spec_from_file_location("release_entitlements_check", SCRIPTS / "release-entitlements-check.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return [name.decode() for name in module.ARCHIVE_TYPES]
+    return list(module.ARCHIVE_TYPES)
 
 
 def git(root: Path, *arguments: str) -> str:
