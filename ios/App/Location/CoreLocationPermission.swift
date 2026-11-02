@@ -11,7 +11,6 @@ final class CoreLocationPermission: NSObject, LocationPermission {
     private var authorizationWaiters: [CheckedContinuation<LocationAuthorization, Never>] = []
     private var alwaysQuestionWaiters: [CheckedContinuation<Void, Never>] = []
     private var appObservers: [NSObjectProtocol] = []
-    private var alwaysQuestionTimeoutTask: Task<Void, Never>?
 
     override init() {
         super.init()
@@ -76,28 +75,14 @@ final class CoreLocationPermission: NSObject, LocationPermission {
             manager.requestWhenInUseAuthorization()
         case .askAlways:
             manager.requestAlwaysAuthorization()
-            startAlwaysQuestionTimeout()
         case nil:
             break
         }
         if !questions.keepsAuthorizationRequestsWaiting {
             resumeAuthorizationWaiters()
         }
-        if !questions.isAskingAlways {
-            alwaysQuestionTimeoutTask?.cancel()
-            alwaysQuestionTimeoutTask = nil
-        }
         if !questions.isAsking {
             resumeAlwaysQuestionWaiters()
-        }
-    }
-
-    private func startAlwaysQuestionTimeout() {
-        alwaysQuestionTimeoutTask?.cancel()
-        alwaysQuestionTimeoutTask = Task { [weak self] in
-            try? await Task.sleep(for: LocationQuestionsRules.alwaysQuestionTimeout)
-            guard !Task.isCancelled else { return }
-            self?.handle(.alwaysQuestionTimedOut)
         }
     }
 

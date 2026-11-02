@@ -38,7 +38,6 @@ The values that a change often needs are constants:
 | 10 seconds of wait for the start token and the answer of the server, in the silent start | `SilentStart.answerLimit` |
 | 30 seconds of wait for the Live Activity that the server started, with the app open at the station | `PushedStart.landingWait` |
 | 2 minutes of second chance, one ask every 5 seconds | `ArrivalSecondChance.limit`, `interval` |
-| 20 seconds of wait for the second location question | `LocationQuestionsRules.alwaysQuestionTimeout` |
 | 20 regions, 100 meters before the app chooses them again | `StationRegionPlan.maximumRegions`, `replanDistanceMeters` |
 
 The buttons of the Live Activity run `SnoozeLiveActivityIntent`, which is in `TROMECore` because the app and the widget share it.
@@ -151,9 +150,9 @@ It also asks for notifications, after the location, though it sends none of its 
 1. The location, **While Using the App**, at the first launch.
 2. The location, **Always**, right after the answer.
    iOS does not say when the rider taps **Keep Only While Using**, so the app waits until it is active again.
-   When iOS shows no second question (after **Allow Once**, it ignores it), the app waits at most 20 seconds, from the moment it is active again.
-   So the notifications question shows about 21 to 23 seconds after **Allow Once**, or at once when iOS takes the app out of the active state and back for the ignored question.
-3. The notifications, only after the second answer.
+   When iOS shows no second question (after **Allow Once**, it ignores it), iOS does not say so either: the app cannot tell this case from a rider who reads the question, so it sets no time limit.
+   So after **Allow Once**, the notifications question shows the next time the rider comes back to the app.
+3. The notifications, only after the second answer, or once the app has left the screen.
 
 With **While Using the App** only, the Live Activity starts by itself only while the app is open.
 The **Location** row of the main screen is then orange, with the line "Choose Always" ("Choisissez Toujours") and a button to open **Settings**.

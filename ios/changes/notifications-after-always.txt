@@ -1,0 +1,3 @@
+kind: item
+fr: La question des notifications ne cache plus celle de la position « Toujours ».
+en: The notifications question no longer covers the Always location question.

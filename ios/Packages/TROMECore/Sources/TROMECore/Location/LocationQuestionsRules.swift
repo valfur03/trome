@@ -1,11 +1,8 @@
 public struct LocationQuestionsRules: Equatable, Sendable {
-    public static let alwaysQuestionTimeout: Duration = .seconds(20)
-
     public enum Event: Equatable, Sendable {
         case accessChanged(LocationAccess, appIsActive: Bool)
         case appBecameActive
         case appResignedActive
-        case alwaysQuestionTimedOut
         case appEnteredBackground
     }
 
@@ -66,8 +63,7 @@ public struct LocationQuestionsRules: Equatable, Sendable {
             return askAlways()
         case (.alwaysAsked(appResigned: false), .appResignedActive):
             step = .alwaysAsked(appResigned: true)
-        case (.alwaysAsked(appResigned: true), .appBecameActive),
-             (.alwaysAsked, .alwaysQuestionTimedOut):
+        case (.alwaysAsked(appResigned: true), .appBecameActive):
             step = .idle
         default:
             break

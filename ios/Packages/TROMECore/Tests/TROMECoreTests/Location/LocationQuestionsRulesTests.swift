@@ -82,10 +82,27 @@ struct LocationQuestionsRulesTests {
         #expect(rules.isAskingAlways)
     }
 
-    @Test func endsWhenTheAlwaysQuestionTimesOut() {
+    // The notifications question never covers the Always question: iOS sends no event while it shows,
+    // so nothing but an answer or the app leaving the active state ends the wait.
+    @Test func keepsWaitingWhileTheAlwaysQuestionShows() {
         var rules = askedAlways()
 
-        #expect(rules.handle(.alwaysQuestionTimedOut) == nil)
+        #expect(rules.start(access: .whileUsing) == nil)
+        #expect(rules.handle(.appBecameActive) == nil)
+        #expect(rules.handle(.accessChanged(.whileUsing, appIsActive: true)) == nil)
+        #expect(rules.handle(.accessChanged(.whileUsing, appIsActive: false)) == nil)
+        #expect(rules.handle(.appBecameActive) == nil)
+        #expect(rules.isAskingAlways)
+    }
+
+    // After Allow Once, iOS shows no Always question: the notifications question waits for the next return to the app.
+    @Test func endsAfterAllowOnceWhenTheRiderLeavesTheApp() {
+        var rules = askedAlways()
+
+        #expect(rules.handle(.appResignedActive) == nil)
+        #expect(rules.handle(.appEnteredBackground) == nil)
+        #expect(!rules.isAsking)
+        #expect(rules.handle(.appBecameActive) == nil)
         #expect(!rules.isAsking)
     }
 
