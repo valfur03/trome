@@ -183,9 +183,8 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Tram | Each call that the app makes for its Live Activity in the background: how old the answer is and the next train of each direction that it hands to iOS (four at most), or why no answer came; then "next ask by" and a time, or "asks no more" |
 | Page with a magnifying glass | Two rare cases of a PRIM answer that the app asked for, each with the lines of its entries as the [PRIM log](#record-what-prim-answers-field-by-field) writes them: "PRIM, two entries under 60 s apart" in one row, with the minutes that each shows, and "PRIM, at the platform past its time", with its seconds past; each case once per station and hour, and the 20 newest pairs and the 20 newest trains at the platform kept apart, so that one case never pushes out the other |
 
-"App launched" is written at the start of the launch.
-When "App on screen" follows it within 2 seconds, you opened the app; when it does not, iOS launched the app in the background.
-The line "Phone at launch" after it says the same: "Started by iOS, in the background" or "Started on screen".
+"App launched" is written at the start of each launch, with the build number, the commit that the build was made from ("with changes not committed" when its `ios/` folder had some) and the iOS version.
+The launch lines after it say how the launch began, from whether a screen of the app came to the front: "Opened by the rider" with the seconds after the launch; with no screen in the first 5 s, "iOS ran the app", then "Opened by the rider" with the time since, when you open it later; at the next launch, "How the previous launch began: unknown" when the app stopped or iOS suspended it before it could tell.
 Only a line "iOS: entered" a station after it, or "first state of a new area: inside" a station, says that iOS woke the app near that station.
 After a station, in an "entered" or "left" line or in a line "first state of a new area: inside", the brackets say where the phone was when iOS sent the event, for example "(phone 85 m away, ±12 m, 4 s old)": the distance from the centre of the station, the accuracy, and the age of the last position that iOS had.
 The time of the line is when iOS woke the app: the gap from the time when you crossed the edge of the area is how late iOS was.
@@ -233,4 +232,4 @@ The list icon at the top right of the main screen opens it, and nothing else on 
 It records the same lines as a debug build, on the phone only: the app sends none of them anywhere, and only **Share** gives them to someone.
 Use it for a TestFlight build that you walk with, and never submit that build for the App Store.
 The next build number turns the Wake log off by itself, so a line left in the file never reaches a store build; remove it after the walk.
-`make release-archive-check` fails when the archive has the Wake log while its Release settings do not compile it, and says "a TestFlight build for a walk, never for the store" when they do.
+`make release-archive-check` fails when the archive has the Wake log while its Release settings do not compile it, or when a build for a walk names no commit (archived from a folder with no git history), and says "a TestFlight build for a walk, never for the store" when they do.
