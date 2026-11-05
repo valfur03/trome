@@ -87,6 +87,7 @@ final class TestClock: Sendable {
 }
 
 @MainActor
+@Suite(.realTime)
 struct AutoLiveActivityModelTests {
     typealias Places = AutoTestPlaces
     let gps: ControlledLocationProvider

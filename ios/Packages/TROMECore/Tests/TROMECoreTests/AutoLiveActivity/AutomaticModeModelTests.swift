@@ -3,6 +3,7 @@ import Testing
 @testable import TROMECore
 
 @MainActor
+@Suite(.realTime)
 struct AutomaticModeModelTests {
     private let storage = InMemoryKeyValueStore()
     private let clock = TestClock()

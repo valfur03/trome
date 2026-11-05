@@ -46,6 +46,7 @@ final class StubDeparturesProvider: DeparturesProvider {
 }
 
 @MainActor
+@Suite(.realTime)
 struct NextTrainsModelTests {
     private let now = Date(timeIntervalSince1970: 1_000_000)
     private let line12 = TransitLine(mode: .metro, name: "12")

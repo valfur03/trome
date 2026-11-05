@@ -33,7 +33,8 @@ enum WaitPace: String {
 /// that the failure shows where the test waited, not at a later check. Wait for the state that the next step reads,
 /// never for an earlier one.
 ///
-/// The limit is in real time, so that a wait for a timer of the test clock (20 ms of real time) holds in every pace.
+/// The limit is in real time, so that a wait for a timer of the test clock (20 ms of real time) holds in every pace;
+/// so the suite of the test has the trait `.realTime`, which keeps the other tests from taking that time.
 func waitUntil(
     _ comment: Comment? = nil,
     timeout: Duration = .seconds(10),
@@ -41,6 +42,7 @@ func waitUntil(
     sourceLocation: SourceLocation = #_sourceLocation,
     _ condition: () -> Bool
 ) async {
+    RealTimeSlots.checkHeld(sourceLocation: sourceLocation)
     let clock = ContinuousClock()
     let deadline = clock.now.advanced(by: timeout)
     while !condition() {
@@ -57,7 +59,7 @@ func waitUntil(
 
 /// Checks that `condition` stays false for `duration` of real time, and records an issue at its line as soon as it
 /// holds: a step that must not come (one more call, a retry) gets that long to come, as a 20 ms timer of the test
-/// clock fires many times in it.
+/// clock fires many times in it. The suite of the test has the trait `.realTime`, as for `waitUntil`.
 func expectNever(
     _ comment: Comment? = nil,
     for duration: Duration = .seconds(1),
@@ -65,6 +67,7 @@ func expectNever(
     sourceLocation: SourceLocation = #_sourceLocation,
     _ condition: () -> Bool
 ) async {
+    RealTimeSlots.checkHeld(sourceLocation: sourceLocation)
     let clock = ContinuousClock()
     let end = clock.now.advanced(by: duration)
     while clock.now < end {

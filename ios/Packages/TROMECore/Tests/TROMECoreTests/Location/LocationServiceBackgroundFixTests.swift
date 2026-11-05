@@ -5,6 +5,7 @@ import Testing
 /// The positions of the background keeper reach the features as the stream's do, so a Live Activity still switches
 /// and ends once iOS stops the stream; never over a fake position, and never back to an older position.
 @MainActor
+@Suite(.realTime)
 struct LocationServiceBackgroundFixTests {
     private let gps = ControlledLocationProvider()
     private let start = Date(timeIntervalSince1970: 1_000_000)

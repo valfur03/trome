@@ -3,6 +3,7 @@ import Testing
 @testable import TROMECore
 
 @MainActor
+@Suite(.realTime)
 struct StationLiveActivityModelTests {
     private let now = Date(timeIntervalSince1970: 1_000_000)
     private let client = StubStationLiveActivityClient()
