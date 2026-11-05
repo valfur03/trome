@@ -11,15 +11,15 @@ import { contactEmail } from '../../../../contact.ts';
 
 export const newFriendFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
 1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche sur l’écran verrouillé, avec des horaires d’exemple.
-2. À une vraie station de Paris : autorisez la localisation « Toujours » et les notifications, puis approchez-vous à moins de 150 mètres. Les trains s’affichent à votre arrivée, app ouverte ou fermée, sans rien toucher. Si rien ne vient, dites-le-moi.
+2. À une vraie station de Paris : autorisez la localisation « Toujours » (si iOS demande les notifications, autorisez-les), puis approchez-vous à moins de 150 mètres. Les trains devraient s’afficher seuls, app ouverte ou fermée. Si rien ne vient, dites-le-moi, et dites si vous aviez fermé TROME dans le sélecteur d’apps.
 3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ». Sur l’exemple, ils ne font que l’arrêter.
 
-À savoir : il n’y a pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
-Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envoyer. Vous pouvez aussi m’écrire à ${contactEmail}.`;
+À savoir : pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
+Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envoyer. Ou écrivez-moi à ${contactEmail}.`;
 
 export const newFriendEn = `For Paris and Île-de-France only. Three things to try:
 1. From anywhere: open TROME, tap “See an example”, then lock the iPhone. Châtelet shows on the lock screen, with sample times.
-2. At a real Paris station: allow location “Always” and notifications, then come within 150 meters. The trains show when you arrive, with the app open or closed, with no tap. If nothing comes, tell me.
+2. At a real Paris station: allow location “Always” (if iOS asks about notifications, allow them), then come within 150 meters. The trains should show by themselves, with the app open or closed. If nothing comes, tell me, and say if you had swiped TROME away in the app switcher.
 3. Not now: on the lock screen, tap “30 min”, “1 h” or “Today”. On the example, they only end it.
 
 Good to know: there is no account to create, and trains show only during the metro and RER service hours.
@@ -279,12 +279,15 @@ The command keeps each text under 1,000 bytes, as above.
 
 The text below was the What to Test of the builds up to 1.0.0 (3), for a first install, and it is no longer pasted in What to Test.
 It stays as a message that you may send to a new friend with the TestFlight link: three things to try, and how to report a problem.
+Step 2 says what is hoped, not a result: the start with the app closed is built, and the friends’ walks are what show that it comes.
+It asks a friend who got nothing to say if they had swiped TROME away, because that tells which case failed.
+When the walks have answered, change step 2 to say what they showed.
 
-Message to a new friend, French (981 bytes):
+Message to a new friend, French (986 bytes):
 
 <Code code={newFriendFr} lang="text" wrap />
 
-Message to a new friend, English (763 bytes):
+Message to a new friend, English (808 bytes):
 
 <Code code={newFriendEn} lang="text" wrap />
 
