@@ -49,7 +49,7 @@ To write one:
 - A suite whose tests use `waitUntil` or `expectNever` has the trait `.realTime`, as in `@Suite(.realTime)`: its tests run at most as many at once as the Mac has cores, in every run, a `swift test` by hand included.
   Without it, Swift Testing starts every test at once, and the tests of the main actor share its one thread, so on a busy Mac a wait runs out of time while that thread serves hundreds of other tests.
   A wait in a suite without the trait fails at its own line, in every run.
-  Never put the trait on a suite with a time limit: the wait for a free slot counts in the limit.
+  The wait for a free slot counts in the time limit of a test, so a test with a time limit takes the next free slot before the tests in the queue.
   The `make` commands also run at most as many of all the unit tests at once (`SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH`, set in `ios/Makefile`).
   When many waits of one run fail at the same moment, the whole run was slow, not one test.
   To make a run slow without loading the Mac, put `taskpolicy -b` in front of the command: it runs at the lowest priority of macOS, on fewer and slower cores.

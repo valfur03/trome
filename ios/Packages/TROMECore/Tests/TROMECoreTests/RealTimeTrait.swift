@@ -10,7 +10,8 @@ import Testing
 /// Xcode, does not; this trait holds the bound in every run. A wait checks that its test runs inside this trait, so a
 /// new suite that waits and lacks it fails at once, in every run, and not only on a busy Mac.
 ///
-/// Never put it on a suite with a time limit: Swift Testing counts the wait for a slot in the time limit of the test.
+/// Swift Testing counts the wait for a slot in the time limit of a test, so a test with a time limit takes the next
+/// free slot before the tests that wait in the queue: it waits for at most one test to end, not for the whole queue.
 struct RealTimeTrait: SuiteTrait, TestTrait, TestScoping {
     var isRecursive: Bool { true }
 
@@ -23,7 +24,7 @@ struct RealTimeTrait: SuiteTrait, TestTrait, TestScoping {
         testCase: Test.Case?,
         performing function: @Sendable () async throws -> Void
     ) async throws {
-        try await RealTimeSlots.shared.withSlot {
+        try await RealTimeSlots.shared.withSlot(first: test.timeLimit != nil) {
             try await RealTimeSlots.$isHeld.withValue(true) { try await function() }
         }
     }
@@ -59,19 +60,20 @@ actor RealTimeSlots {
         free = max(count, 1)
     }
 
-    func withSlot(_ operation: @Sendable () async throws -> Void) async throws {
-        await take()
+    /// With `first`, the test takes the next free slot before the tests that wait in the queue.
+    func withSlot(first: Bool = false, _ operation: @Sendable () async throws -> Void) async throws {
+        await take(first: first)
         defer { give() }
         try await operation()
     }
 
     /// A wait for a slot always ends, even in a cancelled run: each test that holds a slot gives it back when it ends.
-    private func take() async {
+    private func take(first: Bool) async {
         if free > 0 {
             free -= 1
             return
         }
-        await withCheckedContinuation { waiting.append($0) }
+        await withCheckedContinuation { waiting.insert($0, at: first ? 0 : waiting.endIndex) }
     }
 
     private func give() {
