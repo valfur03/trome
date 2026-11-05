@@ -30,7 +30,7 @@ This page says what the TROME iPhone app does with your data, what the server st
 ## Your position
 
 TROME uses your position, on the iPhone, to find the nearest station, and to show or remove the Live Activity when you come near a station or move away from it.
-TROME asks for **Always** access so that iOS can tell it when you come near a station: [Help says why](/en/support/#why-trome-asks-for-always-location).
+TROME asks for **Always** access so that iOS can tell it when you come near a station: [Help says what each choice does](/en/support/#what-trome-asks-of-the-iphone-and-why).
 
 The app sends your position to nobody, not even to the server.
 You can change this access at any time in **Settings > Apps > TROME > Location**.
@@ -48,8 +48,8 @@ The server does not read them and does not store them.
 
 ### When the app is closed
 
-To start the Live Activity with the app closed, the app asks the server to put it on your lock screen.
-It sends the identifier of the station and the start token that iOS made for the Live Activity of TROME on your iPhone.
+When you come near a station and the app is closed, the app asks the server to put the Live Activity on your lock screen.
+It sends the identifier of the station, the code that every copy of the app shares, and the start token that iOS made for the Live Activity of TROME on your iPhone.
 This token lets Apple’s push service reach TROME on your iPhone, so it identifies your iPhone for TROME.
 The server passes it once to Apple, with the content of the Live Activity (the station, its lines and its next trains), and then keeps it nowhere: in no storage, no log and no memory.
 For 45 minutes, it keeps only a keyed hash of the token and the station, in memory, with a key made at random.

@@ -45,20 +45,20 @@ L’activité en direct peut alors ne pas démarrer toute seule, et la station l
 ## Rien ne vient quand TROME est fermé
 
 TROME est conçu pour afficher l’activité en direct quand vous arrivez près d’une station, app ouverte ou fermée.
-App fermée, l’app demande au serveur de TROME de l’afficher sur votre écran verrouillé.
+Quand l’app est fermée, elle demande au serveur de TROME de l’afficher sur votre écran verrouillé.
 Cela demande une connexion à internet, et une version de TROME que TestFlight ou l’App Store distribue.
-Quand c’est impossible, rien ne vient : ouvrez TROME à la station, et l’activité en direct s’affiche aussitôt.
+Quand c’est impossible, rien ne vient : ouvrez TROME à la station, et l’activité en direct s’affiche.
 
-Si vous avez construit TROME vous-même avec un identifiant Apple gratuit, votre version ne peut pas démarrer l’activité en direct app fermée : ouvrez TROME à la station.
+Si vous avez construit TROME vous-même avec un identifiant Apple gratuit, votre version ne peut pas démarrer l’activité en direct quand l’app est fermée : ouvrez TROME à la station.
 La section [« What you have now »](/en/build/install-on-your-iphone/#what-you-have-now) de la page d’installation, en anglais, dit ce que fait cette version, et pourquoi.
 
-Avec la version de TestFlight ou de l’App Store, app fermée, vérifiez cette autorisation, dans **Réglages > Apps > TROME** :
+Avec la version de TestFlight ou de l’App Store, quand l’app est fermée, vérifiez cette autorisation, dans **Réglages > Apps > TROME** :
 
 - **Position** sur **Toujours**.
   Avec **Lorsque l’app est active**, rien ne vient quand TROME est fermé.
   [Pourquoi **Toujours** ?](#pourquoi-trome-demande-la-position-toujours)
 
-Si rien ne vient à une station avec cette version, [écrivez-moi](#écrivez-moi) et dites-moi laquelle : cela m’aide à vérifier.
+Si rien ne vient à une station avec cette version, [écrivez-moi](#écrivez-moi) et dites-moi laquelle et ce que vous avez vu : cela me montre si le démarrage app fermée fonctionne.
 
 Chaque arrivée démarre l’activité en direct une fois au plus.
 Pendant une pause, rien ne démarre : voyez [ce que font la pause et la sourdine](#que-font-le-mode-automatique-la-pause-et-la-sourdine).
@@ -144,7 +144,7 @@ L’app écrit alors « Châtelet : en sourdine jusqu’à 15:51 », et **Réact
 
 TROME n’envoie aucune notification.
 Il demande l’autorisation après la position, une seule fois.
-Gardez-la activée : TROME en a peut-être besoin pour démarrer l’activité en direct app fermée.
+Gardez-la activée : TROME en a peut-être besoin pour démarrer l’activité en direct quand l’app est fermée.
 Si vous l’avez refusée, activez-la dans **Réglages > Apps > TROME > Notifications**.
 
 ### Que montre « Voir un exemple »

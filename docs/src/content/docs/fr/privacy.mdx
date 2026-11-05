@@ -30,7 +30,7 @@ Cette page explique ce que l’app TROME pour iPhone fait de vos données, ce qu
 ## Votre position
 
 TROME utilise votre position, sur l’iPhone, pour trouver la station la plus proche, et pour afficher ou retirer l’activité en direct quand vous arrivez près d’une station ou que vous vous en éloignez.
-TROME demande l’accès **Toujours** pour qu’iOS puisse le prévenir quand vous arrivez près d’une station : [l’aide dit pourquoi](/fr/support/#pourquoi-trome-demande-la-position-toujours).
+TROME demande l’accès **Toujours** pour qu’iOS puisse le prévenir quand vous arrivez près d’une station : [l’aide dit ce que fait chaque choix](/fr/support/#ce-que-trome-demande-à-liphone-et-pourquoi).
 
 L’app n’envoie votre position à personne, pas même au serveur.
 Vous pouvez modifier cet accès à tout moment dans **Réglages > Apps > TROME > Position**.
@@ -48,8 +48,8 @@ Le serveur ne les lit pas et ne les conserve pas.
 
 ### Quand l’app est fermée
 
-Pour démarrer l’activité en direct app fermée, l’app demande au serveur de l’afficher sur votre écran verrouillé.
-Elle lui transmet l’identifiant de la station et le jeton de démarrage qu’iOS a créé pour l’activité en direct de TROME sur votre iPhone.
+Quand vous arrivez près d’une station et que l’app est fermée, l’app demande au serveur d’afficher l’activité en direct sur votre écran verrouillé.
+Elle lui transmet l’identifiant de la station, le code identique pour toutes les copies de l’app, et le jeton de démarrage qu’iOS a créé pour l’activité en direct de TROME sur votre iPhone.
 Ce jeton permet au service de notifications push d’Apple de joindre TROME sur votre iPhone : il identifie donc votre iPhone pour TROME.
 Le serveur le transmet une fois à Apple, avec le contenu de l’activité en direct (la station, ses lignes et ses prochains trains), puis ne le garde nulle part : ni stockage, ni journal, ni mémoire.
 Pendant 45 minutes, il garde seulement une empreinte à clé du jeton et de la station, en mémoire, avec une clé tirée au hasard.
