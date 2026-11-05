@@ -51,7 +51,9 @@ struct RegionCrossingTimeTests {
     @Test func saysThatIOSGaveAnExitAtOnce() {
         let line = line(.left(regionId: "stop:a"), seenAt: opened)
 
-        #expect(line == "iOS: left stop area of Station A (phone 50 m away, ±10 m, 0 s old), seen 18:49:13, given at once")
+        #expect(line == """
+            iOS: left stop area of Station A (phone 50 m away, ±10 m, 0 s old), seen 18:49:13, given at once
+            """)
     }
 
     @Test func saysWhenIOSGaveNoTimeForAnExit() {
@@ -71,7 +73,10 @@ struct RegionCrossingTimeTests {
             phoneAt: nil, seenAt: Self.time(18, 38, 18), now: opened, catalog: Places.catalog, timeZone: .gmt
         )
 
-        #expect(line == "iOS: first state of a new area: inside Station B (iOS gave no position), seen 18:38:18, given 10 min later")
+        #expect(line == """
+            iOS: first state of a new area: inside Station B (iOS gave no position), seen 18:38:18, \
+            given 10 min later
+            """)
     }
 
     @Test func readsADateThatNobodySetAsNoTime() {
@@ -114,7 +119,9 @@ struct RegionCrossingTimeTests {
     @Test func saysWhenIOSDoesNotKnowTheStateOfTheArea() {
         let line = holdLine(["arrival:a": RegionHold(state: .unknown, since: nil)])
 
-        #expect(line == "iOS holds Station A as unknown, no time from iOS; nothing keeps the app awake: iOS can suspend it")
+        #expect(line == """
+            iOS holds Station A as unknown, no time from iOS; nothing keeps the app awake: iOS can suspend it
+            """)
     }
 
     @Test func readsTheAreaOfTheStationNearestThePosition() {
@@ -127,6 +134,7 @@ struct RegionCrossingTimeTests {
 
         #expect(holdLine(holds, near: Places.atB).hasPrefix("iOS holds Station B as outside"))
         #expect(holdLine(holds, near: nil).hasPrefix("iOS holds 2 station areas, and the app has no position;"))
-        #expect(holdLine(["refresh": RegionHold(state: .inside, since: opened)]).hasPrefix("iOS holds no station area;"))
+        let noStation = holdLine(["refresh": RegionHold(state: .inside, since: opened)])
+        #expect(noStation.hasPrefix("iOS holds no station area;"))
     }
 }

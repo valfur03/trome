@@ -30,7 +30,9 @@ struct RegionEventTests {
     }
 
     @Test func saysThatIOSGaveNoPositionForAnEntryWithNone() {
-        #expect(line(.entered(regionId: "arrival:a"), nil) == "iOS: entered Station A (iOS gave no position), no time from iOS")
+        let line = line(.entered(regionId: "arrival:a"), nil)
+
+        #expect(line == "iOS: entered Station A (iOS gave no position), no time from iOS")
     }
 
     @Test func measuresAnExitFromTheCentreOfTheStationOfTheStopArea() {
@@ -58,7 +60,9 @@ struct RegionEventTests {
         let line = RegionEvent.entered(regionId: "arrival:b")
             .firstStateLine(phoneAt: atB, seenAt: nil, now: now, catalog: AutoTestPlaces.catalog)
 
-        #expect(line == "iOS: first state of a new area: inside Station B (phone 0 m away, ±12 m, 2 s old), no time from iOS")
+        #expect(line == """
+            iOS: first state of a new area: inside Station B (phone 0 m away, ±12 m, 2 s old), no time from iOS
+            """)
     }
 
     @Test func leavesTheFirstStateOfAnAreaThatIsNotAStationToTheSummary() {

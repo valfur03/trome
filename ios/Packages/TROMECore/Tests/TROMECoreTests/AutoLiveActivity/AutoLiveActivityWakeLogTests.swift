@@ -130,7 +130,8 @@ extension AutoLiveActivityModelTests {
         let model = makeModel(catalog: catalog, silentStart: silentStart(starter))
         let entered = RegionEvent.entered(regionId: "arrival:\(Self.leParc.id)")
         let fix = PositionFix(coordinate: Self.leParcEdge, accuracyMeters: 13, timestamp: clock.now)
-        wakeLog.record(.system, entered.wakeLine(phoneAt: fix, seenAt: clock.now - 480, now: clock.now, catalog: catalog))
+        let wakeLine = entered.wakeLine(phoneAt: fix, seenAt: clock.now - 480, now: clock.now, catalog: catalog)
+        wakeLog.record(.system, wakeLine)
 
         await model.handleRegionEvent(entered, lastKnownFix: fix)
         let report = wakeLog.report(phone: ["Location: Always, precise", "Low Power Mode: off"])
