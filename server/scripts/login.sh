@@ -13,6 +13,7 @@ fi
 if [ -n "$code" ]; then
     echo "This command opens no browser. Wrangler shows an address and a code."
     echo "Open the address in the browser of your choice (on this Mac or on another device), log in to Cloudflare, type the code, and allow the access."
+    echo "You have 5 minutes: if wrangler says that the code timed out or expired, run make server-login CODE=1 again, not the command that wrangler names."
     echo "Keep this terminal open: it says when you are logged in."
     exec ./node_modules/.bin/wrangler login --device --browser=false
 fi

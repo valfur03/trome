@@ -113,8 +113,11 @@ After every deploy and every change of a secret of the production Worker, run `m
 
 1. Have your PRIM key ready, and make an app token and an owner token for the staging Worker.
 2. Create a free Cloudflare account at https://dash.cloudflare.com/sign-up, with no card.
-3. Run `make server-login`, and allow the access in the browser that it opens.
-   To log in with another browser, run `make server-login LINK=1` and open the link that it shows on this Mac, within 2 minutes; or run `make server-login CODE=1`, and type its code on any device.
+3. Log in to Cloudflare with one of these commands:
+   - `make server-login` opens the default browser at once: allow the access there.
+   - `make server-login LINK=1` shows a link: open it in another browser on this Mac within 2 minutes.
+   - `make server-login CODE=1` shows a code: type it on any device within 5 minutes.
+     If wrangler says that the code timed out or expired, run `make server-login CODE=1` again, not the command that wrangler names.
 4. Run `make server-secrets STAGING=1`, and paste each value that it names.
    After the first one, answer `y` when wrangler asks whether to create the Worker "trome-server-staging".
 5. Run `make server-deploy-staging`, and note the address that wrangler shows, `https://trome-server-staging.<your subdomain>.workers.dev` (it asks you to choose a subdomain the first time).

@@ -26,6 +26,7 @@ cp "$scripts/login.sh" "$server/scripts/"
 cat > "$server/node_modules/.bin/wrangler" << FAKE
 #!/bin/sh
 echo "\$*" > "$state/wrangler-args"
+echo "wrangler starts"
 FAKE
 chmod +x "$server/node_modules/.bin/wrangler"
 
@@ -44,6 +45,11 @@ login() {
 
 wrangler_args() {
     cat "$state/wrangler-args" 2> /dev/null || echo "not called"
+}
+
+# The line that holds the text, before the line that the fake wrangler prints when it starts: so the person reads it before wrangler shows its code.
+said_before_wrangler() {
+    awk -v text="$1" 'index($0, text) && !said { said = 1 } /^wrangler starts$/ { print (said ? "yes" : "no"); found = 1; exit } END { if (!found) print "wrangler not called" }' "$state/out"
 }
 
 browser_opened() {
@@ -67,6 +73,8 @@ expect "CODE=1: it runs" "$(login "" 1)" "runs"
 expect "CODE=1: wrangler uses a code, and opens no browser for its page either" "$(wrangler_args)" "login --device --browser=false"
 expect "CODE=1: the script opens no browser itself" "$(browser_opened)" "no browser"
 expect "CODE=1: it says to type the code on the page" "$(contains "$state/out" "type the code")" "yes"
+expect "CODE=1: it says, before wrangler starts, that the code lasts 5 minutes" "$(said_before_wrangler "You have 5 minutes")" "yes"
+expect "CODE=1: it says, before wrangler starts, to run make server-login CODE=1 again on a time-out, not the command that wrangler names" "$(said_before_wrangler "run make server-login CODE=1 again, not the command that wrangler names")" "yes"
 
 expect "LINK=1 and CODE=1: it refuses" "$(login 1 1)" "refuses"
 expect "LINK=1 and CODE=1: it does not call wrangler" "$(wrangler_args)" "not called"
