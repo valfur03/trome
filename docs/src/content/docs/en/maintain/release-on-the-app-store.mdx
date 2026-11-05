@@ -778,7 +778,7 @@ The version stays the `MARKETING_VERSION` of the repo.
    ```
 
    `TROME_RELEASE_TEAM` is your Team ID, as in `ios/Config/Signing.xcconfig`; `TRAIN_SERVER_HOST` and `TRAIN_SERVER_APP_TOKEN` are the two values of `ios/Config/Server.xcconfig`.
-Set `TRAIN_SERVER_APP_TOKEN` again each time that you give the build a new app token.
+   Set `TRAIN_SERVER_APP_TOKEN` again each time that you give the build a new app token.
    Then delete the `.p8`, `.p12` and profile files from your Downloads folder, and keep the `.p8` and the password in your password manager.
 
 6. Optional, for the later steps of the pipeline: an environment `app-store-watch`, also on the branch `main` only, with no reviewer, which holds only the three `APP_STORE_CONNECT_` secrets (the first three commands, with `--env app-store-watch`).
@@ -789,7 +789,7 @@ Set `TRAIN_SERVER_APP_TOKEN` again each time that you give the build a new app t
 An Apple Distribution certificate ends one year after you made it, and a profile ends with it at the latest, whatever the date of your membership.
 A run warns 30 days before a profile ends.
 When you see that warning, repeat steps 2, 3 and 5 above: a new certificate, two new profiles, and four secrets set again (`DISTRIBUTION_CERTIFICATE`, `DISTRIBUTION_CERTIFICATE_PASSWORD`, `APP_PROFILE` and `WIDGET_PROFILE`).
-With the old password or an old profile, the run fails when it imports the certificate.
+With the old password, the run fails when it imports the certificate; with an old profile, it fails when it signs the archive.
 
 ### Each build
 
