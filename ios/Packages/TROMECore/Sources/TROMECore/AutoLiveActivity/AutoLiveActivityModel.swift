@@ -123,6 +123,9 @@ public final class AutoLiveActivityModel {
         }
         state.shown = .init(stationId: station.id, startedAt: configuration.now(), hasBeenNear: isNear ?? false)
         await show(station)
+        if liveActivity.isShowing {
+            logStartByHand(at: station)
+        }
         await refreshRegions(around: inputs.locationService.position)
     }
 

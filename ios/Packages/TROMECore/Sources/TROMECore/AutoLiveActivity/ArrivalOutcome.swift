@@ -27,6 +27,14 @@ enum ArrivalOutcome: Equatable, Sendable {
         }
     }
 
+    /// A start, a switch or an ask to the server: each one is a new event, never a repeat of the one before.
+    var acts: Bool {
+        switch self {
+        case .started, .switched, .arrivedInTheBackground: true
+        default: false
+        }
+    }
+
     var logKey: String {
         guard case .noStationNear(let nearest) = self else { return summary }
         return "noStationNear:\(nearest?.station.id ?? "")"

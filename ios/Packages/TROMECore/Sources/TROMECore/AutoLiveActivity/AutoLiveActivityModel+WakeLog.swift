@@ -1,8 +1,11 @@
 import Foundation
 
 extension AutoLiveActivityModel {
+    /// A reason why nothing started is written once while it stays the same; an outcome that acts is written each
+    /// time, or a start again at the station of the last start line would leave its end line with no start before it.
     func log(_ outcome: ArrivalOutcome?, everyOutcome: Bool, from origin: PositionOrigin? = nil) {
-        guard let wakeLog = services.wakeLog, let outcome, everyOutcome || outcome.logKey != lastLoggedOutcomeKey else {
+        guard let wakeLog = services.wakeLog, let outcome,
+              everyOutcome || outcome.acts || outcome.logKey != lastLoggedOutcomeKey else {
             return
         }
         lastLoggedOutcomeKey = outcome.logKey
@@ -36,6 +39,11 @@ extension AutoLiveActivityModel {
         case .keeper(nil):
             " (position: keeper; no stream position)"
         }
+    }
+
+    /// A start by hand is no decision of the rules, but the record needs its line, or its end line has no start.
+    func logStartByHand(at station: Station) {
+        services.wakeLog?.record(.decision, "Live Activity started by hand: \(station.name)")
     }
 
     func logScreenChange(from oldPhase: AppPhase, to newPhase: AppPhase) {

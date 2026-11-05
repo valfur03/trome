@@ -13,6 +13,11 @@ extension AutoLiveActivityModelTests {
         wakeLog.entries.filter { $0.kind == .decision }.map(\.text)
     }
 
+    /// The start and end lines, oldest first, as a walk reads them.
+    private var startsAndEnds: [String] {
+        decisionLines.reversed().filter { $0.hasPrefix("Live Activity started") || $0.hasPrefix("Live Activity ended") }
+    }
+
     @Test func aStopByHandSaysTheRiderStoppedIt() async {
         let model = makeModel()
         await arrive(at: Places.fiftyMetersFromA, in: model)
@@ -89,6 +94,51 @@ extension AutoLiveActivityModelTests {
         if let end, let start {
             #expect(start < end, "newest first: the start at B must be newer than the end at A")
         }
+    }
+
+    /// The bug: a start at the station of the last start line was dropped as a repeat, so two end lines followed
+    /// each other with no start between, which reads like a double end.
+    @Test func aStartAgainAtTheSameStationAfterASnoozeWritesItsLine() async {
+        let model = makeModel()
+        await snoozedAtAWithTheAppOpen(model, heldPositionAge: 10)
+
+        await model.cancelSnooze()
+        await model.snooze(for: .thirtyMinutes)
+
+        #expect(client.started.count == 2)
+        #expect(startsAndEnds == [
+            "Live Activity started: Station A", "Live Activity ended by the rider: snoozed for 1 h",
+            "Live Activity started: Station A", "Live Activity ended by the rider: snoozed for 30 min"
+        ])
+    }
+
+    @Test func aStartAgainAtTheSameStationAfterTheAutomaticStartTurnedOffWritesItsLine() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        automaticMode.setOn(false)
+        await waitUntil { client.endCount == 1 }
+
+        await turnOnTheAutomaticMode(in: model)
+
+        #expect(client.started.count == 2)
+        #expect(startsAndEnds == [
+            "Live Activity started: Station A", "Live Activity ended by the rider: automatic start turned off",
+            "Live Activity started: Station A"
+        ])
+    }
+
+    @Test func aStartByHandWritesItsLine() async {
+        let model = makeModel()
+        await arrive(at: Places.fiftyMetersFromA, in: model)
+        await model.stopByHand()
+
+        await model.startByHand(Places.stationA)
+        await model.stopByHand()
+
+        #expect(startsAndEnds == [
+            "Live Activity started: Station A", "Live Activity ended by the rider: stopped by hand",
+            "Live Activity started by hand: Station A", "Live Activity ended by the rider: stopped by hand"
+        ])
     }
 
     @Test(arguments: [
