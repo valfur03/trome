@@ -152,6 +152,7 @@ It also asks for notifications, after the location, though it sends none of its 
    iOS does not say when the rider taps **Keep Only While Using**, so the app waits until it is active again.
    When iOS shows no second question (after **Allow Once**, it ignores it), iOS does not say so either: the app cannot tell this case from a rider who reads the question, so it sets no time limit.
    So after **Allow Once**, the notifications question shows the next time the rider comes back to the app, after the location question that iOS may ask again.
+   A rider who taps **Allow Once** at each launch is never asked: only the start with the app closed may need the notifications, and that start needs **Always**.
 3. The notifications, only after the second answer, and only while the app is on screen.
 
 With **While Using the App** only, the Live Activity starts by itself only while the app is open.
