@@ -1,27 +1,22 @@
 name: Poser une question · Ask a question
-description: "Une question sur l’app, l’activité en direct ou vos données ? A question about the app, the Live Activity or your data? Or about building TROME. French or English."
+description: "Une question sur l’app, l’activité en direct, vos données ou la compilation de TROME ? A question about the app, the Live Activity, your data or building TROME? Français ou anglais · French or English."
 labels: [question]
 body:
   - type: markdown
     attributes:
       value: |
-        **Une question sur l’app, l’activité en direct ou vos données ? Posez-la ici, en français ou en anglais.**
         [La page d’aide](https://trome.valfur.fr/fr/support/) répond déjà aux questions courantes.
-        Ce message sera public : n’y mettez ni votre nom, ni votre e-mail, ni rien de personnel.
+        **Ce message sera public : n’y mettez ni votre nom, ni votre e-mail, ni rien de personnel.**
         Pour voir, corriger ou supprimer vos données, ne l’écrivez pas ici : l’adresse pour me joindre est sur [la page de confidentialité](https://trome.valfur.fr/fr/privacy/).
 
-        **A question about the app, the Live Activity or your data? Ask it here, in English or in French.**
         [The Help page](https://trome.valfur.fr/en/support/) answers the common ones.
-        This message will be public: do not write your name, your email address or anything personal in it.
+        **This message will be public: do not write your name, your email address or anything personal in it.**
         To see, correct or delete your data, do not ask here: the address to reach me is on [the privacy page](https://trome.valfur.fr/en/privacy/).
-
-        Vous compilez TROME, ou vous voulez comprendre son code ou ses docs ? Posez aussi votre question ici.
-        Building TROME, or how its code or its docs work? Ask it here too.
   - type: textarea
     id: question
     attributes:
       label: Votre question · Your question
-      description: "Écrivez ce que vous voyez ou voulez savoir. Say what you see or want to know. Building TROME? Add what you tried, with the page or the command if there is one."
+      description: "Vous compilez TROME ? Ajoutez ce que vous avez essayé, avec la page ou la commande. Building TROME? Add what you tried, with the page or the command."
       placeholder: |
         TROME marche-t-il hors de Paris ?
         Does TROME work outside Paris?
