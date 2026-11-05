@@ -6,7 +6,7 @@ state=$(mktemp -d "${TMPDIR:-/tmp}/merge-test.XXXXXX")
 repo="$state/repo"
 failures=0
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE ONLY RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID RATP_SIM_MERGE RATP_MERGE_QUEUE || true
-export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 RATP_MERGE_LOCK="$state/merge.lock" SCRIPTS="$scripts" TROME_LOGS="$state/logs"
+export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 RATP_MERGE_LOCK="$state/merge.lock" SCRIPTS="$scripts" TROME_LOGS="$state/logs" TROME_CHECK_LEDGER="$state/factory-checks.jsonl"
 # The work folders of make merge go in the folder of this run, so that the cleanup removes them too.
 mkdir "$state/tmp"
 export TMPDIR="$state/tmp"

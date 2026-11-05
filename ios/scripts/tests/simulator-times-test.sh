@@ -8,7 +8,7 @@ state=$(mktemp -d)
 default=11111111-1111-1111-1111-111111111111
 failures=0
 export FAKE_SIM_STATE="$state" PATH="$tests/bin:$PATH" RATP_SIM_LOCK="$state/lock" RATP_SIM_POLL_SECONDS=1 \
-    RATP_BUILD_GATE="$state/gate" TROME_LOGS="$state/logs"
+    RATP_BUILD_GATE="$state/gate" TROME_LOGS="$state/logs" TROME_CHECK_LEDGER="$state/factory-checks.jsonl"
 unset RATP_SIM_SIZE RATP_SIM_SLOTS RATP_SIM_HELD_LOCK RATP_SIM_HELD_PID RATP_SIM_MERGE RATP_MERGE_QUEUE RATP_SIM_KIND \
     RATP_SIM_DETAIL RATP_BUILD_GATE_HELD || true
 jobs_log="$state/logs/simulator-jobs.tsv"

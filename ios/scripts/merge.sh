@@ -203,7 +203,8 @@ run_simulator_checks() {
         fi
     fi
     step "3/4 takes the Simulator lock for the test runs"
-    RATP_SIM_MERGE=1 RATP_SIM_DETAIL=$names "$scripts/sim-lock.sh" job "$scripts/merge.sh" simulator-checks "$out" "$old" "$tip" "$tip_root" "$names" "$once" "$render_why" &
+    # The checks of a merge write the check ledger with the place "merge" (sim-lock.sh, record_check).
+    FACTORY_CHECK_WHERE=${FACTORY_CHECK_WHERE:-merge} RATP_SIM_MERGE=1 RATP_SIM_DETAIL=$names "$scripts/sim-lock.sh" job "$scripts/merge.sh" simulator-checks "$out" "$old" "$tip" "$tip_root" "$names" "$once" "$render_why" &
     sim_job=$!
     # A train whose make merges were all stopped while it waits for the Simulator stops waiting: no task would land.
     while kill -0 "$sim_job" 2> /dev/null; do

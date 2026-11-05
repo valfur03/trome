@@ -35,7 +35,7 @@ Claude Code loads a `paths:` rule only for a Read, a Write or an Edit of a file 
 The hook `.claude/hooks/rules.py` (set in `.claude/settings.json`) covers the other cases with the same lists: a worktree beside that folder, a command, a diff, an agent.
 Before a command, an edit or an agent, the hook stops it once and gives you its rules: read them, then do the same thing again.
 After a read or a diff, it adds the rules next to the output.
-Why: every call reads the whole context again, so a rule that loads for every job costs on every call of every agent; and a rule that guards a command must reach the agent that runs it, even if that agent never reads a matching file.
+Why: a rule that loads for every job costs on every call of every agent, and a rule that guards a command must reach the agent that runs it.
 When you add a rule, put it in the file of its topic, with a `paths:` or `commands:` list that brings it to every job that needs it; put it here only if every job needs it.
 `ios/scripts/tests/claude-rules-test.sh` checks the hook, the lists of every rule file, and the size of this file.
 
@@ -50,7 +50,7 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 | `render-check.md` | The Live Activity render check | run `make live-activity-render`; touch `ios/Widget/`, `ios/RenderCheck/`, the Live Activity code of `TROMECore`, the line badge (`TROMEBadge`), the render scripts |
 | `merge.md` | Merge a task into `main` | run `make merge`, `git rebase`, `git merge`, `git pull`; touch `ios/scripts/merge.sh` |
 | `github.md` | GitHub secrets, environments, release workflows, the review of a workflow | touch a workflow; run `gh` on them |
-| `tooling.md` | The shared build cache, the git hooks | touch `ios/scripts/`, the `Makefile` files |
+| `tooling.md` | Setup standard: v2 (where each item lives), the shared build cache, the git hooks | touch `ios/scripts/`, the `Makefile` files |
 | `server.md` | Code structure of the server, the server and its commands | touch `server/`, `contracts/`; run `make server-...` |
 | `docs-site.md` | The docs site: Node 24, port, screenshots | touch `docs/`; run `make docs...` |
 | `video.md` | The film: its renders and its studio | touch `video/`; run `make video-...` |

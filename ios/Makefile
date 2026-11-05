@@ -113,7 +113,7 @@ EXPORT_STRINGS := $(XCODEBUILD) $(NO_KEY) -scheme $(APP_SCHEME) CODE_SIGNING_ALL
 STRING_CATALOGS = $(wildcard App/*.xcstrings Widget/*.xcstrings)
 REMOVE_OLD_PROJECT := if [ -e $(OLD_PROJECT) ]; then rm -rf $(OLD_PROJECT) && echo "Removed the old Xcode project ios/$(OLD_PROJECT): open ios/$(PROJECT) instead"; fi
 
-.PHONY: help setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose film-captures live-activity-render release-run-check merge e2e-proof e2e-build release-run-build live-activity-render-build
+.PHONY: help setup generate project git-hooks git-hooks-off lint-fix strings-sync release-notes release-server-check release-server-timing release-tokens-check phone-set-record release-archive-check check run switch-language fake-trains e2e stations simulator simulator-shutdown simulator-times simulator-delete simulator-delete-old simulator-wallpaper simulator-wallpaper-set clean clean-shared-cache docs-screenshots store-screenshots store-screenshots-compose film-captures live-activity-render release-run-check merge e2e-proof e2e-build release-run-build live-activity-render-build lane full-run
 
 help::
 	@echo "make setup               Install the tools and create the Xcode project"
@@ -154,6 +154,8 @@ help::
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
 	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle)"
+	@echo "make lane                Print one line: the Simulator jobs that run and those that wait, with their kind and folder (takes no lock, boots no Simulator)"
+	@echo "make full-run            Run every check of the app on the head of main, in a temporary worktree that it removes at the end: make check, make release-archive-check, the full make e2e, make release-run-check and make live-activity-render (takes the Simulator lock for each Simulator check); one line per check and a verdict"
 	@echo "make simulator-times     How long the Simulator jobs waited for the Simulator and held it, by kind (merge, e2e, run...), and how long builds waited for a test run; SINCE=2026-10-08 for a part (records in ~/Library/Logs/TROME/)"
 	@echo "make simulator-delete    Delete the shared Simulators, also those of a second-slot trial (waits until no other Simulator job runs)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
@@ -298,6 +300,12 @@ simulator:
 
 simulator-shutdown:
 	@$(SIM_LOCK) free
+
+lane:
+	@$(SIM_LOCK) lane
+
+full-run:
+	@./scripts/full-run.sh
 
 simulator-times:
 	@./scripts/simulator-times.py $(if $(SINCE),--since "$(SINCE)")

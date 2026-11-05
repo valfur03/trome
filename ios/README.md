@@ -40,12 +40,15 @@ To put the app on your own iPhone, see [Install on your iPhone](#install-on-your
 
 The `make` commands run the app on one shared Simulator, `RATP-Shared`, and only one of them uses it at a time, in any clone or git worktree of the repo.
 A second command waits, and prints `Waiting for the Simulator lock`: let it wait.
+`make lane` prints in one line the command that holds the Simulator and the commands that wait, with no wait of its own.
 While the tests of a command run on the Simulator, the builds of every clone wait, and print `Waiting: a Simulator test run ... needs a quiet Mac`: a build next to the tests slows iOS so much that it drops the taps of the tests.
 After `make run`, the Simulator stays yours, and the other commands wait, until you run `make simulator-shutdown`.
 Each command starts from a clean app: it removes the app and its data, and resets the permissions (notifications included), the text size, the appearance and the language of the Simulator.
 In your own `xcrun simctl` commands, use the ID that `make -s simulator` prints.
 To see where the time of the Simulator goes, run `make simulator-times`: by kind of command, how long each waited for the Simulator and held it, and how long builds waited for the tests (add `SINCE=2026-10-08` for a part).
 Each command adds its line to `~/Library/Logs/TROME/simulator-jobs.tsv` when it frees the Simulator, and nothing deletes these lines.
+Each check on the Simulator (the E2E tests, the run of the Release app, the render check, the screenshots) also adds a JSON line to `factory-checks.jsonl`, in the git folder of the repo: its result, its time, its wait for the Simulator, where it ran, its commit.
+`make full-run` runs every check of the app on the last commit of `main`, in a temporary worktree that it removes at the end, and prints one line per check.
 
 To run the app from the **Run** button of Xcode instead, use a Simulator of your own: the `make` commands shut the shared one down a few minutes after their last job, even with your app open.
 Free the shared one and shut it down first, so that only one Simulator runs: `make simulator-shutdown`, then `xcrun simctl shutdown "$(make -s simulator)"`.

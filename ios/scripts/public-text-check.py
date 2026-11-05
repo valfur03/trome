@@ -86,6 +86,7 @@ ALLOWED_TEXTS: list[Allowed] = [
     Allowed("ios/scripts/simulator.sh", "RATPActivity", OLD_PROJECT_NAME_REASON),
     Allowed("ios/scripts/tests/sim-lock-test.sh", "RATPActivity", "it checks that the Simulator script removes the apps of the old name"),
     Allowed("ios/scripts/tests/claude-rules-test.sh", "Agent", "the name of the tool of Claude Code that starts a subagent"),
+    *(Allowed("ios/scripts/tests/check-ledger-test.sh", name, "the folder of a worktree, from whose name the check ledger takes the task") for name in ("task-77", "TASK-77")),
     *(Allowed(path, name, reason) for path, reason in OLD_SETTING_NAMES_REFUSAL.items() for name in OLD_SETTING_NAMES),
 ]
 

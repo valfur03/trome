@@ -69,6 +69,7 @@ All worktrees use one shared Simulator, named `RATP-Shared`.
 `make run` and `make e2e` take a machine-wide lock: the folder `/tmp/ratp-sim.lock`.
 While another job holds it, they wait and print `Waiting for the Simulator lock`, with their place in the line and who holds the lock (`2nd in line, held by a job (e2e) in <folder> (PID <n>)`).
 This is normal.
+`make lane` prints the lane in one line: the job that holds the lock, and the jobs that wait, in their order, each with its kind and its folder; it takes no lock.
 Do not stop them, and do not delete the lock or the line.
 The wait can be long, so run these commands in the background.
 
@@ -112,6 +113,7 @@ A merge that rebases, runs its gate or waits in the queue does not ask yet, so a
 A merge with no app code takes no Simulator lock.
 A `ios/scripts/sim-lock.sh job` that starts inside a job that holds the lock runs at once, in that job's slot: so the `make e2e` of `make merge` does not wait for its own lock.
 It does not free the lock when it ends: the outer job does.
+It writes its own line in the check ledger (below), and the outer job then writes none.
 
 `make check`, `make test` and `make test-scripts` need no Simulator and no Simulator lock.
 But their builds wait while a Simulator test run runs (they print `Waiting: a Simulator test run ... needs a quiet Mac`), and a test run waits for the builds that run (the build gate, `.claude/rules/tooling.md`).
@@ -125,8 +127,10 @@ Each Simulator job adds one line to `~/Library/Logs/TROME/simulator-jobs.tsv` wh
 A `make run` adds its line at `make simulator-shutdown`, so its hold counts the whole session.
 Each wait of the build gate adds a line to `~/Library/Logs/TROME/build-waits.tsv`.
 `make simulator-times` sums them up by kind (`SINCE=2026-10-08` for a part).
+Each check that runs through `sim-lock.sh job` also adds one JSON line to the check ledger, `<git common dir>/factory-checks.jsonl` (`.claude/rules/tooling.md`, "Setup standard: v2"): its kind, its result, its time and wait, where it ran (`FACTORY_CHECK_WHERE`), its commit and its task.
+A job stopped by a signal adds no line, and a write that fails never changes the end of the job.
 Never delete or edit these files: they compare the Simulator time across weeks.
-A script test sets `TROME_LOGS` to a folder of its own, so it never writes these files.
+A script test sets `TROME_LOGS` and `TROME_CHECK_LEDGER` to its own folder, so it never writes these files.
 
 ## Hold the Simulator only while you use it
 

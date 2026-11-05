@@ -30,6 +30,13 @@ held_slots=
 # It is outside /tmp, so a restart of the Mac keeps it; 'make simulator-times' sums it up.
 logs=${TROME_LOGS:-$HOME/Library/Logs/TROME}
 jobs_log="$logs/simulator-jobs.tsv"
+# Each check that runs as a Simulator job also adds one JSON line to the check ledger of the repo (see record_check).
+# A script test sets TROME_CHECK_LEDGER to a file of its own, so it never writes the ledger of the repo.
+check_ledger=${TROME_CHECK_LEDGER:-}
+# The kinds of job that check nothing: they hold the Simulator, but they have no place in the check ledger.
+not_checks=" simulator-delete-old simulator-wallpaper "
+check_started=
+joined_session=
 tab=$(printf '\t')
 if [ -n "${RATP_SIM_MERGE:-}" ]; then
     # A merge looks at the lock every second, so it wins the free lock even against the scripts of an older branch.
@@ -50,6 +57,7 @@ usage() {
     echo "       $0 all <command...>   Run a command with the locks of every slot (waits until no other job runs)" >&2
     echo "       $0 reopen <command...> Run a command on the Simulator that this folder keeps after 'open' (same slot, same size), and keep the lock, also when the command fails" >&2
     echo "       $0 udid               Print the ID of the Simulator that this folder keeps after 'open', or of the Simulator of slot 1" >&2
+    echo "       $0 lane               Print one line: the Simulator jobs that run and those that wait, with their kind and folder (takes no lock)" >&2
     echo "       $0 watch              Shut down the shared Simulators of each slot after $idle_minutes minutes with no job, and, during a job, the other shared Simulator of its slot" >&2
     echo "At most $slots Simulator jobs run at once (RATP_SIM_SLOTS). A job runs next to another one only when the CPU is at least $min_idle_percent% idle (RATP_SIM_MIN_IDLE_PERCENT)." >&2
     exit 1
@@ -188,6 +196,77 @@ record_job() {
     } 2> /dev/null || true
 }
 
+iso_time() {
+    date -r "$1" +%Y-%m-%dT%H:%M:%S%z | sed -E 's/([0-9][0-9])$/:\1/'
+}
+
+json_string() {
+    printf '"%s"' "$(printf '%s' "$1" | tr -d '\000-\037' | sed 's/\\/\\\\/g; s/"/\\"/g')"
+}
+
+# Adds one line to the check ledger: a JSON object with the check (the kind of the job), its result, when it started,
+# how long it ran and waited for the lane, where it ran (FACTORY_CHECK_WHERE: merge, main; branch when unset), its commit
+# and its task (from the folder name task-<n>). A job reports a pass on a retry by writing "flaky" in $TROME_CHECK_RESULT.
+# $1: the exit status of the job, $2: when it started, $3: its wait, $4: its kind, $5: its result file.
+# The ledger is a record, not a check: a write that fails never changes the end or the exit status of the job.
+record_check() {
+    case "$not_checks" in *" $4 "*) return 0 ;; esac
+    {
+        result=red
+        if [ "$1" -eq 0 ]; then
+            result=green
+            [ "$(cat "$5" 2> /dev/null)" != flaky ] || result=flaky
+        fi
+        ledger=$check_ledger
+        if [ -z "$ledger" ]; then
+            common=$(git -C "$root" rev-parse --path-format=absolute --git-common-dir) || return 0
+            ledger="$common/factory-checks.jsonl"
+        fi
+        commit=$(git -C "$root" rev-parse HEAD 2> /dev/null || true)
+        folder=$(basename "$root")
+        task=null
+        case "$folder" in
+            task- | task-*[!0-9]*) ;;
+            task-*) task=$(json_string "TASK-${folder#task-}") ;;
+        esac
+        printf '{"at": %s, "check": %s, "result": "%s", "seconds": %s, "waited": %s, "where": %s, "commit": %s, "task": %s}\n' \
+            "$(json_string "$(iso_time "$2")")" "$(json_string "$4")" "$result" "$(($(date +%s) - $2))" "${3:-0}" \
+            "$(json_string "${FACTORY_CHECK_WHERE:-branch}")" "$(json_string "$commit")" "$task" >> "$ledger"
+    } 2> /dev/null || true
+}
+
+# The check of a job that holds the lock: its line, unless the checks inside it wrote theirs (the checks of 'make merge').
+# A job stopped by a signal says nothing about its check: it has no line.
+record_held_check() {
+    [ -n "$check_started" ] && [ -z "${job_signal:-}" ] && [ -n "${RATP_SIM_HELD_LOCK:-}" ] || return 0
+    if [ ! -e "$RATP_SIM_HELD_LOCK/checks-inside" ]; then
+        check_wait=0
+        if [ -z "$joined_session" ]; then
+            check_wait=$(cut -f 4 "$RATP_SIM_HELD_LOCK/job" 2> /dev/null || true)
+        fi
+        check_kind=${RATP_SIM_KIND:-job}
+        [ -z "${RATP_SIM_MERGE:-}" ] || check_kind=merge
+        record_check "$1" "$check_started" "${check_wait:-0}" "$check_kind" "$TROME_CHECK_RESULT"
+    fi
+    rm -rf "$RATP_SIM_HELD_LOCK/checks-inside" "$TROME_CHECK_RESULT" 2> /dev/null || true
+}
+
+# A job that starts inside a job that holds the lock runs at once, in its slot, and adds its own line to the ledger.
+# The first one also takes the wait of the job that holds the lock, so a merge counts its wait once.
+run_inside_held_job() {
+    inside_started=$(date +%s)
+    inside_result="$RATP_SIM_HELD_LOCK/check-result.$$"
+    inside_status=0
+    TROME_CHECK_RESULT=$inside_result "$@" || inside_status=$?
+    inside_wait=0
+    if mkdir "$RATP_SIM_HELD_LOCK/checks-inside" 2> /dev/null; then
+        inside_wait=$(cut -f 4 "$RATP_SIM_HELD_LOCK/job" 2> /dev/null || true)
+    fi
+    record_check "$inside_status" "$inside_started" "${inside_wait:-0}" "${RATP_SIM_KIND:-job}" "$inside_result"
+    rm -f "$inside_result"
+    exit "$inside_status"
+}
+
 mark_held() {
     held_slots="$held_slots $RATP_SIM_SLOT"
     RATP_SIM_HELD_LOCK=$lock
@@ -282,15 +361,21 @@ join_line() {
     write_entry
 }
 
+# The kind of the job (e2e, run...) is in a file of its own, for 'lane': the scripts of an older branch read the entry.
 write_entry() {
     mkdir -p "$line"
+    if [ "$my_kind" = merge ]; then
+        echo merge > "$line/.kind.$my_entry"
+    else
+        echo "${RATP_SIM_KIND:-job}" > "$line/.kind.$my_entry"
+    fi
     printf '%s\n%s\n%s\n' "$my_kind" "$my_start" "$root" > "$line/.new.$$"
     mv "$line/.new.$$" "$line/$my_entry"
 }
 
 leave_line() {
     [ -n "$my_entry" ] || return 0
-    rm -f "$line/$my_entry" "$line/.new.$$"
+    rm -f "$line/$my_entry" "$line/.new.$$" "$line/.kind.$my_entry"
     my_entry=
 }
 
@@ -333,7 +418,7 @@ read_line() {
             entry_root=${content#*"$nl"}
             process=$(LC_ALL=C ps -p "$pid" -o stat= -o lstart= 2> /dev/null | sed -E 's/ +/ /g; s/^ //; s/ $//')
             if [ -z "$process" ] || [ "${process#* }" != "$entry_start" ]; then
-                rm -f "$entry"
+                rm -f "$entry" "$line/.kind.$name"
                 continue
             fi
             case $process in T*) continue ;; esac
@@ -480,6 +565,7 @@ acquire_slot() {
 
 enter() {
     if find_session; then
+        joined_session=1
         join_session
         start_watcher
     else
@@ -555,10 +641,75 @@ watch() {
     done
 }
 
+# One line on the Simulator lane: the jobs that hold it and the jobs that wait, in the order of the line, each with its kind
+# and its folder. It only reads: it takes no lock, removes nothing, and boots no Simulator.
+lane() {
+    now=$(date +%s)
+    runs=0
+    running=
+    for candidate in $(all_slots); do
+        use_slot "$candidate"
+        [ -d "$lock" ] || continue
+        runs=$((runs + 1))
+        lane_kind=$(cut -f 3 "$lock/job" 2> /dev/null || true)
+        lane_taken=$(cut -f 1 "$lock/job" 2> /dev/null || true)
+        lane_folder=$(holder worktree)
+        lane_folder=${lane_folder##*/}
+        about="${lane_kind:-job}, ${lane_folder:-by hand}"
+        case $lane_taken in
+            "" | *[!0-9]*) ;;
+            *) about="$about, $(((now - lane_taken) / 60)) min" ;;
+        esac
+        pid=$(holder pid)
+        if [ -n "$pid" ] && ! kill -0 "$pid" 2> /dev/null; then
+            about="$about, stale"
+        fi
+        running="$running${running:+; }$about"
+    done
+    read_passed
+    in_line=
+    for entry in "$line"/[0-9]*.[0-9]*; do
+        [ -f "$entry" ] || continue
+        name=${entry##*/}
+        key=${name%%.*}
+        pid=${name#*.}
+        case "$key.$pid" in *[!0-9.]* | *.*.*) continue ;; esac
+        content=$(cat "$entry" 2> /dev/null || true)
+        entry_kind=${content%%"$nl"*}
+        content=${content#*"$nl"}
+        entry_start=${content%%"$nl"*}
+        entry_root=${content#*"$nl"}
+        [ "$(started_at "$pid")" = "$entry_start" ] || continue
+        rank=3
+        if [ "$entry_kind" = merge ]; then
+            rank=2
+        elif [ "$key" -lt "$passed_key" ]; then
+            rank=1
+        fi
+        shown_kind=$(cat "$line/.kind.$name" 2> /dev/null || true)
+        in_line="$in_line$rank $key ${shown_kind:-$entry_kind}, ${entry_root##*/}$nl"
+    done
+    waits=0
+    waiting=
+    while read -r rank key about; do
+        [ -n "$about" ] || continue
+        waits=$((waits + 1))
+        waiting="$waiting${waiting:+; }$about"
+    done << LINE
+$(printf '%s' "$in_line" | sort -k1,1n -k2,2n)
+LINE
+    if [ "$runs" -eq 0 ] && [ "$waits" -eq 0 ]; then
+        echo "Simulator lane: free, no job waits."
+        return 0
+    fi
+    echo "Simulator lane: $runs running${running:+ ($running)}, $waits waiting${waiting:+ ($waiting)}."
+}
+
 on_exit() {
     status=$?
     trap - EXIT
     leave_line
+    record_held_check "$status"
     release "$status"
     exit "$status"
 }
@@ -672,10 +823,13 @@ case "$command" in
     job)
         [ $# -gt 0 ] || usage
         if in_held_job; then
-            exec "$@"
+            run_inside_held_job "$@"
         fi
         enter job
         trap on_exit EXIT
+        TROME_CHECK_RESULT="$RATP_SIM_HELD_LOCK/check-result"
+        export TROME_CHECK_RESULT
+        check_started=$(date +%s)
         run_job "$@"
         ;;
     open)
@@ -721,6 +875,9 @@ case "$command" in
             use_slot 1
             "$simulator" udid
         fi
+        ;;
+    lane)
+        lane
         ;;
     watch)
         if [ "${1:-}" != "$watcher_version" ]; then

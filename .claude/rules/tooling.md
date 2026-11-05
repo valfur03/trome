@@ -5,9 +5,26 @@ paths:
   - "ios/checks/**"
   - "Makefile"
 ---
-# The build tooling: the shared build cache, the build gate and the git hooks
+# The build tooling: the setup standard, the shared build cache, the build gate and the git hooks
 
 These rules are for a change to the scripts or the `Makefile` files of the app.
+
+## Setup standard: v2
+
+The setup standard of the factory (v2, 2026-11-04), one line per item: the command or file of this repo that meets it.
+
+- **One quiet gate:** `make check` (the files of `ios/checks/`, through `ios/scripts/quiet.sh`); it ends with the line `check: OK (...)`.
+- **E2E on the platform's runner:** XCUITest (`ios/UITests/`, `xcodebuild test-without-building`), on the one shared Simulator that each job resets.
+- **No live service in the gate:** the unit tests replay `contracts/prim/`, the E2E tests use `--fake-trains`, and only QA uses `LIVE=1` (`.claude/rules/live-data.md`); no scheduled live run, since the PRIM key never leaves the main folder.
+- **Few heavy tests, one per seam:** the seams of `.claude/rules/tests.md` and decision-9.
+- **The full run:** `make full-run` (`ios/scripts/full-run.sh`) runs every check of the app on the head of `main` in a temporary worktree, with `FACTORY_CHECK_WHERE=main`.
+- **Merge checks by changed paths, and the core checks:** waits for TASK-537; until then `make merge` runs the full E2E suite (`.claude/rules/merge.md`).
+- **E2E retries set to 1, with a flaky report:** waits for TASK-537; the ledger already takes `flaky` (a job writes it in the file `$TROME_CHECK_RESULT`).
+- **The check ledger:** `<git common dir>/factory-checks.jsonl`, one line per check that runs through `ios/scripts/sim-lock.sh job` (not `make run`, `make simulator-wallpaper`, `make simulator-delete-old`), also for each check inside `make merge`; a write that fails never changes the job.
+- **One lane, with a status line:** the Simulator lock (`ios/scripts/sim-lock.sh`) and `make lane`.
+  It is a `mkdir` lock, not `flock`: macOS has no `flock` command, and the PID check of the holder frees the lock of a job that died, which is what the standard wants from `flock`.
+- **`factory.json`:** in the backlog's repo, with `merge`, `fast_test`, `full_run` (`make full-run`), `lane` (`make lane`) and `heavy` (the patterns of the commands that take the Simulator).
+- **Backlog conventions** (labels, feedback by month): the Product Owner's side.
 
 ## The shared build cache
 
