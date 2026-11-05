@@ -35,7 +35,7 @@ function visit(node: Node, parents: Node[]) {
   });
   longInlineCode.element[0].visit(node, {
     parent: (child) => chain.get(child),
-    textContent: (child) => child.text ?? '',
+    textContent: (child: Node) => child.text ?? '',
     setProperty: (child, key, value) => {
       child.properties = { ...child.properties, [key]: value };
     },
