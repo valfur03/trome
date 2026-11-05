@@ -1,6 +1,8 @@
+import { satteri } from '@astrojs/markdown-satteri';
 import starlight from '@astrojs/starlight';
 import { defineConfig } from 'astro/config';
 import starlightLinksValidator from 'starlight-links-validator';
+import { longInlineCode } from './src/long-inline-code.ts';
 import { searchIndex } from './src/search-index.ts';
 
 // The address of the site: https://trome.valfur.fr/, at the root of its own domain, with no repo name in the path.
@@ -13,6 +15,8 @@ export default defineConfig({
   site,
   // French is the language of most riders, so the address of the site opens the French home.
   redirects: { '/': '/fr/' },
+  // A long inline code wraps on a phone, and a short one stays on one line: src/long-inline-code.ts says why.
+  markdown: { processor: satteri({ hastPlugins: [longInlineCode] }) },
   integrations: [
     starlight({
       title: 'TROME',

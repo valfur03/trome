@@ -1,3 +1,16 @@
+/* An inline code stays on one line, so a short path or a make command never breaks in the middle. */
 .sl-markdown-content :not(pre) > code {
   white-space: nowrap;
+}
+
+/*
+ * A code that may be too long for a phone (src/long-inline-code.ts) is an inline block as wide as the column at most:
+ * when it fits on one line, it moves to the next line whole; when it does not, it wraps inside,
+ * so the page never gets wider than the screen.
+ */
+.sl-markdown-content :not(pre) > code.long {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
