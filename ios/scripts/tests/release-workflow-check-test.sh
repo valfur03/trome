@@ -114,6 +114,19 @@ case_of "an echo of a secret fails" release.yml "          umask 077
           printf 'TRAIN_SERVER_HOST" "          echo \"token \$TRAIN_SERVER_APP_TOKEN\"
           umask 077
           printf 'TRAIN_SERVER_HOST" "jobs.build.steps.5 prints the secret TRAIN_SERVER_APP_TOKEN"
+case_of "an echo of a secret to the error output fails" release.yml "          umask 077
+          printf 'TRAIN_SERVER_HOST" "          echo \"token \$TRAIN_SERVER_APP_TOKEN\" >&2
+          umask 077
+          printf 'TRAIN_SERVER_HOST" "jobs.build.steps.5 prints the secret TRAIN_SERVER_APP_TOKEN"
+case_of "every secret at once fails" release.yml "        run: make release-server-check
+" "        env:
+          ALL: \${{ toJSON(secrets) }}
+        run: make release-server-check
+" "jobs.build.steps.6.env.ALL reads every secret at once: each secret goes by its name to the step that uses it"
+case_of "a secret named in brackets in the env: of a job fails" release.yml "      APP_ID: io.github.valfur03.trome
+" "      APP_ID: io.github.valfur03.trome
+      KEY: \${{ secrets['APP_STORE_CONNECT_KEY'] }}
+" "jobs.build.env.KEY names a secret outside the env: or with: of a step"
 case_of "a secret written for the later steps fails" release.yml "          umask 077
           printf 'TRAIN_SERVER_HOST" "          echo \"HOST=\$TRAIN_SERVER_HOST\" >> \"\$GITHUB_ENV\"
           umask 077

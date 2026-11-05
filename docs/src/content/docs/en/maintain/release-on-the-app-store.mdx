@@ -758,7 +758,7 @@ The version stays the `MARKETING_VERSION` of the repo.
    Download both.
 
 4. On GitHub, under **Settings > Environments** of the repo, make the environment `app-store`.
-   Add yourself under **Required reviewers**, set **Deployment branches and tags** to the branch `main` only, and turn off **Allow administrators to bypass configured protection rules**.
+   Add yourself under **Required reviewers**, leave **Prevent self-review** off (you start each run yourself), set **Deployment branches and tags** to the branch `main` only, and turn off **Allow administrators to bypass configured protection rules**.
    GitHub gives its secrets to no job before you approve it.
 
 5. Set its secrets from your own terminal, in the repo folder.

@@ -6,6 +6,11 @@ paths:
   - "server/scripts/deploy-check.ts"
   - "ios/scripts/release-build-number.py"
   - "ios/scripts/release-workflow-check.py"
+  - "ios/scripts/release-archive-number.py"
+  - "ios/scripts/release-entitlements-check.py"
+  - "ios/scripts/release-server-check.sh"
+  - "ios/scripts/release-server-config.sh"
+  - "ios/scripts/release-server-ask.sh"
 commands:
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+(secret|variable)(\s|$)'
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+workflow\s+(run|enable|disable)(\s|$)'

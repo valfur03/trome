@@ -30,6 +30,10 @@ CHECKS = "./.github/workflows/release-checks.yml"
 PROOF = "./.github/workflows/e2e-proof.yml"
 PROOF_READ = "ios/scripts/e2e-proof.sh read"
 SECRET = re.compile(r"secrets\.(?!GITHUB_TOKEN\b)([A-Za-z_][A-Za-z0-9_]*)")
+# Any read of the secrets in an expression: by name, in brackets (secrets['NAME']), or the whole context (toJSON).
+ANY_SECRET = re.compile(r"\bsecrets\b(?!\.GITHUB_TOKEN\b)")
+WHOLE_SECRETS = re.compile(r"\bsecrets\b(?!\s*[.\[])")
+EXPRESSION = re.compile(r"\$\{\{(.*?)\}\}", re.DOTALL)
 PINNED = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}$")
 MASKED = ("TRAIN_SERVER_HOST", "TRAIN_SERVER_APP_TOKEN")
 # What a run: must never hold, each with its reason.
@@ -48,7 +52,8 @@ NEVER = (
 )
 OUTPUTS = re.compile(r"GITHUB_STEP_SUMMARY|GITHUB_OUTPUT|GITHUB_ENV|GITHUB_PATH|/dev/std(out|err)|/dev/tty|\btee\b")
 PRINTS = re.compile(r"^\s*(echo|printf|cat)\b")
-TO_FILE = re.compile(r">>?\s*\S")
+# A redirection to a file; >&2 and 2>&1 go to the log.
+TO_FILE = re.compile(r">>?\s*(?!&)\S")
 
 
 # YAML to JSON, for each file: one Ruby for all of them, as it takes seconds to start on a busy Mac. A syntax error
@@ -128,8 +133,18 @@ def needs(job: dict) -> List[str]:
     return [value] if isinstance(value, str) else list(value)
 
 
+def expressions(path: Tuple, text: str) -> List[str]:
+    """The expressions of a value: each ${{ }}, or the whole value of an if:, which is one with no ${{ }}."""
+    return [text] if path and path[-1] == "if" else EXPRESSION.findall(text)
+
+
+def reads_secret(path: Tuple, text: str) -> bool:
+    return any(ANY_SECRET.search(expression) for expression in expressions(path, text))
+
+
 def secret_env(step: dict) -> Set[str]:
-    return {name for name, value in (step.get("env") or {}).items() if isinstance(value, str) and SECRET.search(value)}
+    return {name for name, value in (step.get("env") or {}).items()
+            if isinstance(value, str) and reads_secret(("env", name), value)}
 
 
 def uses_of(workflow: dict) -> List[Tuple[str, str]]:
@@ -147,8 +162,11 @@ def secret_findings(workflow: dict) -> Tuple[List[str], Set[str]]:
     """A secret only in the env: or with: of a step; the jobs that hold one."""
     found, holders = [], set()
     for path, text in strings(workflow):
-        if not SECRET.search(text):
+        if not reads_secret(path, text):
             continue
+        if any(WHOLE_SECRETS.search(expression) for expression in expressions(path, text)):
+            found.append(f"{where(path)} reads every secret at once: each secret goes by its name to the step that "
+                         "uses it")
         in_step = len(path) == 6 and path[0] == "jobs" and path[2] == "steps" and path[4] in ("env", "with")
         if not in_step:
             found.append(f"{where(path)} names a secret outside the env: or with: of a step")
