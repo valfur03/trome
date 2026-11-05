@@ -310,15 +310,15 @@ Apple's help: [Run the app](https://developer.apple.com/documentation/xcode/runn
 
 2. Right after, the app asks if it can also use your location when you do not use it.
    Tap **Change to Always Allow**.
-   Then iOS can tell the app when you arrive at a station, also when it is closed.
+   TROME asks for this so that iOS can tell it when you come near a station: [Help says why](/en/support/#why-trome-asks-for-always-location).
    Your own build still needs the app open to show trains: see [What you have now](#what-you-have-now).
-   [Help](/en/support/#what-trome-asks-of-the-iphone-and-why) says what each choice does.
 
    <Screenshot src={appAlwaysPermission} alt="The iPhone asks: Allow TROME to also use your location even when you are not using the app? The buttons are Keep Only While Using and Change to Always Allow." />
 
 3. The app asks to send you notifications.
    Tap **Allow**.
-   The app sends no notification for now.
+   The app sends no notification.
+   The version from TestFlight or the App Store may need this permission to start the Live Activity with the app closed: [Help says why](/en/support/#why-trome-asks-for-notifications).
 
    <Screenshot src={appNotificationPermission} alt="The iPhone asks: TROME would like to send you notifications. The buttons are Don't Allow and Allow." />
 
@@ -352,7 +352,8 @@ The real times come from PRIM, and the app that you build needs your own free ke
 
 The app on your iPhone makes the Live Activity of your build, and a free Apple ID is enough for it.
 With the app closed, your build shows nothing at a station: open the app there for the Live Activity.
-The build that I ship through TestFlight and the App Store starts it with the app closed, with a push, which a free Apple ID cannot sign.
+The version that I ship through TestFlight and the App Store is built to start it with the app closed, with a push, which a free Apple ID cannot sign.
+[Help](/en/support/#nothing-comes-when-trome-is-closed) says what it needs.
 
 Where to go next:
 
