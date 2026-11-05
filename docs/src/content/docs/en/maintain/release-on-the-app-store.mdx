@@ -733,6 +733,84 @@ Never leave it off for good: every build calls this address ([Keep the address o
 
 </Checklist>
 
+## A build from GitHub (not tried yet)
+
+<Badge text="Not checked on an account" variant="caution" />
+
+The workflow **Release to TestFlight** of the repo can make the build of [step 4](#4-build-upload-and-check-the-first-build) on GitHub's Mac: it runs the release checks, waits for your approval, then signs the app and its widget, uploads them, and tags the commit.
+No run has used it yet, so the steps of step 4 stay the way to make a build, and stay the fallback when a run fails.
+Your Mac keeps building with `ios/Config/Base.xcconfig` as step 4 says.
+
+The build number of a run is one more than the highest that App Store Connect holds for TROME, in all versions, expired and refused builds included, or than the highest `builds/` tag.
+So a run after a refused upload takes the next number by itself.
+The version stays the `MARKETING_VERSION` of the repo.
+
+### Once: the key, the certificate, the profiles and the secrets
+
+<Steps>
+
+1. In App Store Connect, under **Users and Access > Integrations > App Store Connect API**, make a team key with the role **App Manager**.
+   Download its `.p8` file, which Apple gives only once, and note its key ID and the issuer ID.
+
+2. In Xcode, under **Settings > Apple Accounts > Manage Certificates**, add an **Apple Distribution** certificate, and export it as a `.p12` file with a new password.
+
+3. In your [developer account](https://developer.apple.com/account), under **Profiles**, make two **App Store Connect** profiles with that certificate: one for `io.github.valfur03.trome`, one for `io.github.valfur03.trome.widget`.
+   Download both.
+
+4. On GitHub, under **Settings > Environments** of the repo, make the environment `app-store`.
+   Add yourself under **Required reviewers**, set **Deployment branches and tags** to the branch `main` only, and turn off **Allow administrators to bypass configured protection rules**.
+   GitHub gives its secrets to no job before you approve it.
+
+5. Set its secrets from your own terminal, in the repo folder.
+   Each command with no file asks for the value at a hidden prompt, so no value goes into a file or your shell history:
+
+   ```sh
+   gh secret set APP_STORE_CONNECT_KEY_ID --env app-store
+   gh secret set APP_STORE_CONNECT_ISSUER_ID --env app-store
+   gh secret set APP_STORE_CONNECT_KEY --env app-store < AuthKey_<key ID>.p8
+   base64 -i <certificate>.p12 | gh secret set DISTRIBUTION_CERTIFICATE --env app-store
+   gh secret set DISTRIBUTION_CERTIFICATE_PASSWORD --env app-store
+   base64 -i <app profile>.mobileprovision | gh secret set APP_PROFILE --env app-store
+   base64 -i <widget profile>.mobileprovision | gh secret set WIDGET_PROFILE --env app-store
+   gh secret set TROME_RELEASE_TEAM --env app-store
+   gh secret set TRAIN_SERVER_HOST --env app-store
+   gh secret set TRAIN_SERVER_APP_TOKEN --env app-store
+   ```
+
+   `TROME_RELEASE_TEAM` is your Team ID, as in `ios/Config/Signing.xcconfig`; `TRAIN_SERVER_HOST` and `TRAIN_SERVER_APP_TOKEN` are the two values of `ios/Config/Server.xcconfig`.
+   Then delete the `.p8`, `.p12` and profile files from your Downloads folder, and keep the `.p8` and the password in your password manager.
+
+6. Optional, for the later steps of the pipeline: an environment `app-store-watch`, also on the branch `main` only, with no reviewer, which holds only the three `APP_STORE_CONNECT_` secrets (the first three commands, with `--env app-store-watch`).
+   Nothing reads it yet.
+
+</Steps>
+
+Each year, when your membership renews, make a new certificate and two new profiles, and set their three secrets again.
+A run warns 30 days before a profile ends.
+
+### Each build
+
+<Steps>
+
+1. Open **Actions > Release to TestFlight > Run workflow** on GitHub, keep the branch `main`, and click **Run workflow**.
+   A run from another branch stops before its first job.
+
+2. The release checks run first, with no secret.
+   A commit with no record of a full end-to-end run on your Mac stops the run here: `make merge` leaves that record.
+
+3. GitHub then asks you to review a deployment to `app-store`.
+   Read the summary of the checks, then approve it, or reject it to stop the run with nothing uploaded.
+
+4. The run signs and uploads the build, and tags the commit with `builds/<version>/<build>`.
+   Its summary gives the version and the build number, and says `E2E: proven at merge` with the commit.
+
+5. Go on with items 7 to 11 of [step 4](#4-build-upload-and-check-the-first-build), from Apple's email: the tag of item 10 is already there.
+   If Apple refuses the build at item 8 or 9, delete the tag that the run made, with `git push origin :refs/tags/builds/<version>/<build>`: the next run still takes a higher number, as Apple keeps the refused one.
+
+</Steps>
+
+When a run fails after your approval, read its summary and log, fix the cause, and start a new run: it takes the next build number.
+
 ## The builds that riders may hold
 
 Every build uploaded to Apple is a row of this table, from its upload on, and keeps its row forever.
