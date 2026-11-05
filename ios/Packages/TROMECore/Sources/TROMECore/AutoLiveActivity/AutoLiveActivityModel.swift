@@ -34,6 +34,8 @@ public final class AutoLiveActivityModel {
     @ObservationIgnored var lastLoggedOutcomeKey: String?
     @ObservationIgnored var secondChances: [String: ArrivalSecondChance] = [:]
     @ObservationIgnored var secondChanceTask: Task<Void, Never>?
+    /// Whether the keeper runs: the Wake log says it when the app may be suspended.
+    @ObservationIgnored var isKeepingAwake = false
 
     public init(
         catalog: StationCatalog,

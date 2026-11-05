@@ -35,6 +35,16 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
         #endif
     }
 
+    func holds() async -> [String: RegionHold] {
+        guard let monitor = await monitorTask?.value else { return [:] }
+        var holds: [String: RegionHold] = [:]
+        for id in await monitor.identifiers {
+            guard let event = await monitor.record(for: id)?.lastEvent else { continue }
+            holds[id] = RegionHold(state: Self.holdState(of: event), since: RegionCrossingTime.seen(event.date))
+        }
+        return holds
+    }
+
     private func makeSync(of monitor: CLMonitor) -> StationRegionSync {
         let sync = StationRegionSync(monitor: CoreLocationRegionMonitor(monitor))
         sync.wakeLog = wakeLog
@@ -192,8 +202,9 @@ extension CoreLocationStationRegionWatcher {
             : WatchedRegion.wakeLabel(ofId: event.identifier, phoneAt: fix, now: now, catalog: catalog)
         let problems = Self.diagnostics(of: event)
         let state = Self.firstState(of: event)
+        let seenAt = RegionCrossingTime.seen(event.date)
         if state == .inside,
-           let line = regionEvent?.firstStateLine(phoneAt: fix, now: now, catalog: catalog),
+           let line = regionEvent?.firstStateLine(phoneAt: fix, seenAt: seenAt, now: now, catalog: catalog),
            firstStates.release(id: event.identifier) {
             let wake = "\(line); \(processLine(now: now, wakeLog: wakeLog))"
             wakeLog.record(.system, problems.isEmpty ? wake : "\(wake) [\(problems)]")
@@ -208,7 +219,7 @@ extension CoreLocationStationRegionWatcher {
             }
             return
         }
-        let what = regionEvent?.wakeLine(phoneAt: fix, now: now, catalog: catalog)
+        let what = regionEvent?.wakeLine(phoneAt: fix, seenAt: seenAt, now: now, catalog: catalog)
             ?? Self.line(of: event, region: region)
         let wake = "\(what); \(processLine(now: now, wakeLog: wakeLog))"
         wakeLog.record(.system, problems.isEmpty ? wake : "\(wake) [\(problems)]")
@@ -227,6 +238,15 @@ extension CoreLocationStationRegionWatcher {
     #endif
 
     nonisolated private static func firstState(of event: CLMonitor.Event) -> RegionFirstStates.State {
+        switch event.state {
+        case .satisfied: .inside
+        case .unsatisfied: .outside
+        case .unmonitored: .notWatched
+        default: .unknown
+        }
+    }
+
+    nonisolated private static func holdState(of event: CLMonitor.Event) -> RegionHold.State {
         switch event.state {
         case .satisfied: .inside
         case .unsatisfied: .outside

@@ -7,13 +7,19 @@ import Foundation
 extension AutoLiveActivityModel {
     /// The keeper keeps the app running in the background, and the position stream feeds the rules.
     func followPositionInBackground() {
+        isKeepingAwake = true
         services.locationKeeper.begin()
         guard inputs.permission.authorization == .authorized else { return }
         inputs.locationService.start(for: .backgroundWork)
     }
 
     func stopFollowingPositionInBackground() {
+        let wasKeepingAwake = isKeepingAwake
+        isKeepingAwake = false
         services.locationKeeper.end()
         inputs.locationService.stop(for: .backgroundWork)
+        if wasKeepingAwake {
+            logRegionHoldLater()
+        }
     }
 }

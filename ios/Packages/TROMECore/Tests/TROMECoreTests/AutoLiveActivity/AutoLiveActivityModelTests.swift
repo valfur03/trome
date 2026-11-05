@@ -16,9 +16,17 @@ final class StubNotificationPermission: NotificationPermission {
 @MainActor
 final class StubRegionWatcher: StationRegionWatcher {
     private(set) var watched: [[WatchedRegion]] = []
+    /// What iOS holds for each area, as the test sets it.
+    var held: [String: RegionHold] = [:]
+    private(set) var holdsReadCount = 0
 
     func watch(_ regions: [WatchedRegion]) async {
         watched.append(regions)
+    }
+
+    func holds() async -> [String: RegionHold] {
+        holdsReadCount += 1
+        return held
     }
 }
 

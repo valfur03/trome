@@ -189,6 +189,8 @@ The line "Phone at launch" after it says the same: "Started by iOS, in the backg
 Only a line "iOS: entered" a station after it, or "first state of a new area: inside" a station, says that iOS woke the app near that station.
 After a station, in an "entered" or "left" line or in a line "first state of a new area: inside", the brackets say where the phone was when iOS sent the event, for example "(phone 85 m away, ±12 m, 4 s old)": the distance from the centre of the station, the accuracy, and the age of the last position that iOS had.
 The time of the line is when iOS woke the app: the gap from the time when you crossed the edge of the area is how late iOS was.
+Then "seen" gives the time when iOS saw the crossing and how late it gave it to the app, for example "seen 18:41:03, given 8 min later" ("no time from iOS" when it gave none);
+and each time the app leaves the screen or stops keeping itself awake, a line "iOS holds" says the state of the area of the nearest station, since when, and whether anything keeps the app awake: an area held as inside wakes nothing on a walk back in.
 The end of the line says "fresh launch, N s ago" when iOS launched the app for this event, or "app already running for" a time when the event came to an app that was running or suspended, then the background time that iOS still gave the app ("no background time limit" on screen).
 The app writes this line before it decides, so it is there even when no decision line follows, and "(iOS gave no position)" means that iOS had none to give.
 The decision line after it rests on that position, with one exception: after "entered", a position that does not settle the arrival makes the app ask iOS for a new one, for up to 10 seconds, and the decision then rests on the new one.

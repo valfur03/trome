@@ -10,6 +10,8 @@ public protocol NotificationPermission: AnyObject {
 @MainActor
 public protocol StationRegionWatcher: AnyObject {
     func watch(_ regions: [WatchedRegion]) async
+    /// What iOS holds for each area that it keeps for the app; empty when iOS watches none. Only the Wake log reads it.
+    func holds() async -> [String: RegionHold]
 }
 
 /// The areas that iOS watches for the app: the identifiers that iOS keeps, also the ones it refused to watch.

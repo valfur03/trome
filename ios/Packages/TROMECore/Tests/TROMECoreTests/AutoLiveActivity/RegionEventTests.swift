@@ -11,14 +11,14 @@ struct RegionEventTests {
         PositionFix(coordinate: coordinate, accuracyMeters: accuracy, timestamp: now - age)
     }
 
-    private func line(_ event: RegionEvent, _ fix: PositionFix?) -> String {
-        event.wakeLine(phoneAt: fix, now: now, catalog: AutoTestPlaces.catalog)
+    private func line(_ event: RegionEvent, _ fix: PositionFix?, seenAt: Date? = nil) -> String {
+        event.wakeLine(phoneAt: fix, seenAt: seenAt, now: now, catalog: AutoTestPlaces.catalog, timeZone: .gmt)
     }
 
     @Test func saysWhereThePhoneWasForAnEntryWithAFreshPosition() {
         let line = line(.entered(regionId: "arrival:a"), fix(at: AutoTestPlaces.twoHundredMetersFromA, age: 4))
 
-        #expect(line == "iOS: entered Station A (phone 200 m away, ±12 m, 4 s old)")
+        #expect(line == "iOS: entered Station A (phone 200 m away, ±12 m, 4 s old), no time from iOS")
     }
 
     @Test func saysHowOldThePositionIsForAnEntryWithAnOldPosition() {
@@ -26,29 +26,29 @@ struct RegionEventTests {
 
         let line = line(.entered(regionId: "arrival:a"), old)
 
-        #expect(line == "iOS: entered Station A (phone 400 m away, ±65 m, 600 s old)")
+        #expect(line == "iOS: entered Station A (phone 400 m away, ±65 m, 600 s old), no time from iOS")
     }
 
     @Test func saysThatIOSGaveNoPositionForAnEntryWithNone() {
-        #expect(line(.entered(regionId: "arrival:a"), nil) == "iOS: entered Station A (iOS gave no position)")
+        #expect(line(.entered(regionId: "arrival:a"), nil) == "iOS: entered Station A (iOS gave no position), no time from iOS")
     }
 
     @Test func measuresAnExitFromTheCentreOfTheStationOfTheStopArea() {
         let line = line(.left(regionId: "stop:a"), fix(at: AutoTestPlaces.fourHundredMetersFromA, accuracy: 8, age: 0))
 
-        #expect(line == "iOS: left stop area of Station A (phone 400 m away, ±8 m, 0 s old)")
+        #expect(line == "iOS: left stop area of Station A (phone 400 m away, ±8 m, 0 s old), no time from iOS")
     }
 
     @Test func measuresTheExitOfAnArrivalAreaToo() {
         let line = line(.left(regionId: "arrival:b"), fix(at: AutoTestPlaces.atB, age: 30))
 
-        #expect(line == "iOS: left Station B (phone 0 m away, ±12 m, 30 s old)")
+        #expect(line == "iOS: left Station B (phone 0 m away, ±12 m, 30 s old), no time from iOS")
     }
 
     @Test func givesNoDistanceForAnAreaThatIsNotAStation() {
         let fresh = fix(at: AutoTestPlaces.fiftyMetersFromA, age: 4)
 
-        #expect(line(.left(regionId: "refresh"), fresh) == "iOS: left area around you")
+        #expect(line(.left(regionId: "refresh"), fresh, seenAt: now - 60) == "iOS: left area around you")
         #expect(line(.entered(regionId: "arrival:unknown"), nil) == "iOS: entered arrival:unknown")
     }
 
@@ -56,9 +56,9 @@ struct RegionEventTests {
         let atB = fix(at: AutoTestPlaces.atB, age: 2)
 
         let line = RegionEvent.entered(regionId: "arrival:b")
-            .firstStateLine(phoneAt: atB, now: now, catalog: AutoTestPlaces.catalog)
+            .firstStateLine(phoneAt: atB, seenAt: nil, now: now, catalog: AutoTestPlaces.catalog)
 
-        #expect(line == "iOS: first state of a new area: inside Station B (phone 0 m away, ±12 m, 2 s old)")
+        #expect(line == "iOS: first state of a new area: inside Station B (phone 0 m away, ±12 m, 2 s old), no time from iOS")
     }
 
     @Test func leavesTheFirstStateOfAnAreaThatIsNotAStationToTheSummary() {
@@ -66,8 +66,8 @@ struct RegionEventTests {
         let refresh = RegionEvent.entered(regionId: "refresh")
         let exit = RegionEvent.left(regionId: "arrival:a")
 
-        #expect(refresh.firstStateLine(phoneAt: nil, now: now, catalog: catalog) == nil)
-        #expect(exit.firstStateLine(phoneAt: nil, now: now, catalog: catalog) == nil)
+        #expect(refresh.firstStateLine(phoneAt: nil, seenAt: now, now: now, catalog: catalog) == nil)
+        #expect(exit.firstStateLine(phoneAt: nil, seenAt: now, now: now, catalog: catalog) == nil)
     }
 
     @Test func takesAReleasedFirstStateOutOfTheSummary() {
@@ -86,6 +86,6 @@ struct RegionEventTests {
     @Test func neverCountsAPositionFromTheFutureAsOld() {
         let line = line(.entered(regionId: "arrival:a"), fix(at: AutoTestPlaces.stationA.coordinate, age: -3))
 
-        #expect(line == "iOS: entered Station A (phone 0 m away, ±12 m, 0 s old)")
+        #expect(line == "iOS: entered Station A (phone 0 m away, ±12 m, 0 s old), no time from iOS")
     }
 }

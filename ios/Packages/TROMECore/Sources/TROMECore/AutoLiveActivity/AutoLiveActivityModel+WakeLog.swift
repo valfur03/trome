@@ -52,6 +52,7 @@ extension AutoLiveActivityModel {
             services.wakeLog?.record(.launch, "App on screen")
         case (.active, .background), (.inactive, .background):
             services.wakeLog?.record(.launch, "App in the background")
+            logRegionHoldLater()
         default:
             break
         }
@@ -97,5 +98,25 @@ extension AutoLiveActivityModel {
             now: configuration.now(),
             nextCall: nextCall
         ))
+    }
+
+    /// The line of `RegionHoldLine`, after what iOS holds is read: the area of the station nearest the last position.
+    /// None with a fake position, as the app then watches no area.
+    func logRegionHoldLater() {
+        guard let wakeLog = services.wakeLog, inputs.locationService.source == .realGPS else { return }
+        let keptAwake = isKeepingAwake
+        Task { [weak self, regionWatcher = services.regionWatcher] in
+            let holds = await regionWatcher.holds()
+            guard let self else { return }
+            let text = RegionHoldLine.text(
+                holds: holds,
+                near: inputs.locationService.fix?.coordinate ?? plannedRegions?.center,
+                keptAwake: keptAwake,
+                now: configuration.now(),
+                catalog: catalog
+            )
+            guard wakeLog.entries.first(where: RegionHoldLine.isHoldLine)?.text != text else { return }
+            wakeLog.record(.system, text, keepingAtMost: RegionHoldLine.maximumLines, alike: RegionHoldLine.isHoldLine)
+        }
     }
 }

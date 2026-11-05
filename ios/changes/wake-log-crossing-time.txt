@@ -1,0 +1,2 @@
+kind: builder
+en: The Wake log says when iOS saw each crossing of a station area and how late it gave it to the app, and, when the app may be suspended, what iOS holds for the nearest station area.
