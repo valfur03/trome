@@ -43,3 +43,40 @@ const needsPhoneLanguageSelect = !hasSidebar && isInBothLanguages(id);
     }
   }
 </style>
+
+<script>
+  import { withNoBreakHyphens } from '../no-break-words.ts';
+  import { inPieces, withNoBreakSpacesInText } from '../typography.ts';
+
+  // Pagefind gives the excerpt of a result with plain spaces, so a line of the search dialog could still start with » or end with «,
+  // or cut Wi-Fi or a number from its unit. Put the no-break spaces back in each result as it appears.
+  // The titles of a result already hold them (the page text goes into the index as it is): this changes them to the same text.
+  const resultText = '.pagefind-ui__result-title, .pagefind-ui__result-excerpt';
+
+  function keepTogether(element: Element) {
+    const language = document.documentElement.lang;
+    const rules = { highPunctuation: language.startsWith('fr'), units: true };
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    const nodes: Text[] = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) nodes.push(node as Text);
+    const changed = inPieces(
+      nodes.map((node) => node.data),
+      (text) => withNoBreakHyphens(withNoBreakSpacesInText(text, rules)),
+    );
+    nodes.forEach((node, index) => {
+      if (node.data !== changed[index]) node.data = changed[index];
+    });
+  }
+
+  // The dialog is in the page from the start, and the results are put into it, and replaced at each key.
+  // A change of a text node is no change of the list of children, so this never calls itself.
+  new MutationObserver((changes) => {
+    for (const change of changes) {
+      for (const added of change.addedNodes) {
+        if (!(added instanceof Element)) continue;
+        if (added.matches(resultText)) keepTogether(added);
+        added.querySelectorAll(resultText).forEach(keepTogether);
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+</script>

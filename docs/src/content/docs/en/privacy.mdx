@@ -21,7 +21,7 @@ This page says what the TROME iPhone app does with your data, what the server st
 - Your position stays on your iPhone: the app sends it to nobody.
 - To show the train times, the app sends the server the identifier of the station you are near, but not your position, and nothing that the app adds to identify you.
 - To show the Live Activity when the app is closed, the app also sends the start token that iOS gives it: the server passes it to Apple, and does not keep it.
-  For 45 minutes, it keeps only a hash of it, which cannot give the token back.
+  For 45 minutes, it keeps only a hash of it, which cannot give the token back.
 - The server keeps no history of the stations asked for, or of who asks for them.
   Cloudflare, which runs the server, sees each request while it passes, [as explained below](#cloudflare-and-the-source-of-the-times).
 - The App Store page says the same: Data Not Collected.
@@ -52,7 +52,7 @@ When you come near a station and the app is closed, the app asks the server to p
 It sends the identifier of the station, the code that every copy of the app shares, and the start token that iOS made for the Live Activity of TROME on your iPhone.
 This token lets Apple’s push service reach TROME on your iPhone, so it identifies your iPhone for TROME.
 The server passes it once to Apple, with the content of the Live Activity (the station, its lines and its next trains), and then keeps it nowhere: in no storage, no log and no memory.
-For 45 minutes, it keeps only a keyed hash of the token and the station, in memory, with a key made at random.
+For 45 minutes, it keeps only a keyed hash of the token and the station, in memory, with a key made at random.
 This hash cannot give the token back, and it serves only to avoid a second start when iOS reports the same arrival twice.
 
 ## Why this data is used, and on what legal basis
@@ -64,7 +64,7 @@ Here is what each piece of data is for:
   Under the GDPR, using data for the length of one request already counts as processing, even if nothing is stored.
   The interest is legitimate here because TROME cannot work without this data, the processing is very short, and the server stores neither the station that you ask for nor your IP address.
 - **The start token, and its hash**: to put the Live Activity on your lock screen when the app is closed, and to avoid a second start for the same arrival.
-  The interest is legitimate here because the start cannot happen without the token, the server uses the token for one request and does not keep it, and its hash is kept for 45 minutes only, cannot give the token back, and serves no other use.
+  The interest is legitimate here because the start cannot happen without the token, the server uses the token for one request and does not keep it, and its hash is kept for 45 minutes only, cannot give the token back, and serves no other use.
 - **The server’s totals, and their copy**: to watch the daily limit of calls to the source of the times, and to follow how much TROME is used.
   They have no station and no IP address.
 - **The server’s list of errors**: to see why it did not get the times from the source, and to fix what is wrong.
@@ -84,15 +84,15 @@ It stores only:
   It has no station either.
   It is kept only while it helps to find and fix the cause of an error;
 - **the latest answer of the source of the times for each station**, as the source gave it, to give it to everyone who asks.
-  It stays in the memory of the server for about 10 minutes, and is never written down.
+  It stays in the memory of the server for about 10 minutes, and is never written down.
   It does not say who asked for the station;
 - **the station for which the source just failed**, with the time of the failure, in the same memory, for one minute: the server does not call the source again at once;
 - **the time until which the server waits**, after the source refuses a call: it does not call the source before then;
-- **the keyed hash of a start token and its station**, in the same memory, for 45 minutes: it cannot give the token back ([see above](#when-the-app-is-closed));
-- **the channel of a station**, on which Apple sends the new times to the Live Activities of that station, for 45 minutes after its last start: it says nothing of who is there.
+- **the keyed hash of a start token and its station**, in the same memory, for 45 minutes: it cannot give the token back ([see above](#when-the-app-is-closed));
+- **the channel of a station**, on which Apple sends the new times to the Live Activities of that station, for 45 minutes after its last start: it says nothing of who is there.
 
 The server stores no IP address, no position and no start token.
-Of a start of the Live Activity, it keeps only the hash and the channel above, for 45 minutes.
+Of a start of the Live Activity, it keeps only the hash and the channel above, for 45 minutes.
 No request log is turned on at its host.
 
 ## Cloudflare and the source of the times

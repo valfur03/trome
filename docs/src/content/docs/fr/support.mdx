@@ -8,11 +8,11 @@ sidebar:
 
 import Contact from '../../../components/Contact.astro';
 
-Les prochains passages ne s’affichent pas sur votre écran verrouillé, ou les minutes ne bougent plus ?
+Les prochains passages ne s’affichent pas sur votre écran verrouillé, ou les minutes ne bougent plus ?
 iOS appelle cet affichage une activité en direct.
 
-Trouvez votre cas ci-dessous : la plupart se règlent en quelques gestes.
-Vous voulez savoir pourquoi TROME demande la position **Toujours** ou les notifications ?
+Trouvez votre cas ci-dessous : la plupart se règlent en quelques gestes.
+Vous voulez savoir pourquoi TROME demande la position **Toujours** ou les notifications ?
 Lisez [ce que TROME demande à l’iPhone](#ce-que-trome-demande-à-liphone-et-pourquoi).
 
 Si rien ne marche, écrivez-moi à <Contact />.
@@ -25,12 +25,12 @@ Je suis Valentin Furmanek, et je développe TROME.
 - **Vérifiez que TROME peut utiliser votre position.**
   Sans elle, TROME ne sait pas de quelle station vous êtes proche.
   Ouvrez **Réglages > Apps > TROME > Position**, et choisissez **Toujours** ou **Lorsque l’app est active**.
-  **Position exacte** doit aussi être activée : [voyez pourquoi](#trome-ne-démarre-pas-près-dune-station-ou-se-trompe-de-station).
+  **Position exacte** doit aussi être activée : [voyez pourquoi](#trome-ne-démarre-pas-près-dune-station-ou-se-trompe-de-station).
 - **Approchez-vous d’une station.**
-  L’activité en direct démarre à environ 150 mètres d’une station de métro ou de RER.
-  Elle s’arrête quand vous vous éloignez de plus de 250 mètres, ou 45 minutes après son début.
+  L’activité en direct démarre à environ 150 mètres d’une station de métro ou de RER.
+  Elle s’arrête quand vous vous éloignez de plus de 250 mètres, ou 45 minutes après son début.
 - **Vérifiez que le mode automatique est activé.**
-  Ouvrez TROME : si **Mode automatique** est désactivé, activez-le.
+  Ouvrez TROME : si **Mode automatique** est désactivé, activez-le.
   S’il est **En pause**, touchez **Annuler la pause**, ou attendez l’heure de reprise affichée.
 
 L’activité en direct s’affiche sur l’écran verrouillé et dans le Centre de notifications, et dans la Dynamic Island sur les iPhone qui en ont une.
@@ -47,28 +47,28 @@ L’activité en direct peut alors ne pas démarrer toute seule, et la station l
 TROME est conçu pour afficher l’activité en direct quand vous arrivez près d’une station, app ouverte ou fermée.
 Quand l’app est fermée, elle demande au serveur de TROME de l’afficher sur votre écran verrouillé.
 Cela demande une connexion à internet, et une version de TROME que TestFlight ou l’App Store distribue.
-Quand c’est impossible, rien ne vient : ouvrez TROME à la station, et l’activité en direct s’affiche.
+Quand c’est impossible, rien ne vient : ouvrez TROME à la station, et l’activité en direct s’affiche.
 
-Si vous avez construit TROME vous-même avec un identifiant Apple gratuit, votre version ne peut pas démarrer l’activité en direct quand l’app est fermée : ouvrez TROME à la station.
-La section [« What you have now »](/en/build/install-on-your-iphone/#what-you-have-now) de la page d’installation, en anglais, dit ce que fait cette version, et pourquoi.
+Si vous avez construit TROME vous-même avec un identifiant Apple gratuit, votre version ne peut pas démarrer l’activité en direct quand l’app est fermée : ouvrez TROME à la station.
+La section [« What you have now »](/en/build/install-on-your-iphone/#what-you-have-now) de la page d’installation, en anglais, dit ce que fait cette version, et pourquoi.
 
-Avec la version de TestFlight ou de l’App Store, quand l’app est fermée, vérifiez cette autorisation, dans **Réglages > Apps > TROME** :
+Avec la version de TestFlight ou de l’App Store, quand l’app est fermée, vérifiez cette autorisation, dans **Réglages > Apps > TROME** :
 
 - **Position** sur **Toujours**.
   Avec **Lorsque l’app est active**, rien ne vient quand TROME est fermé.
-  [Pourquoi **Toujours** ?](#pourquoi-trome-demande-la-position-toujours)
+  [Pourquoi **Toujours** ?](#pourquoi-trome-demande-la-position-toujours)
 
-Si rien ne vient à une station avec cette version, [écrivez-moi](#écrivez-moi) et dites-moi laquelle et ce que vous avez vu : cela me montre si le démarrage app fermée fonctionne.
+Si rien ne vient à une station avec cette version, [écrivez-moi](#écrivez-moi) et dites-moi laquelle et ce que vous avez vu : cela me montre si le démarrage app fermée fonctionne.
 
 Chaque arrivée démarre l’activité en direct une fois au plus.
-Pendant une pause, rien ne démarre : voyez [ce que font la pause et la sourdine](#que-font-le-mode-automatique-la-pause-et-la-sourdine).
+Pendant une pause, rien ne démarre : voyez [ce que font la pause et la sourdine](#que-font-le-mode-automatique-la-pause-et-la-sourdine).
 
 ## Les horaires ne se mettent plus à jour
 
-Quand l’activité en direct n’a plus d’horaires récents, ses minutes disparaissent et elle affiche **« Ouvrez l’app »**.
+Quand l’activité en direct n’a plus d’horaires récents, ses minutes disparaissent et elle affiche **« Ouvrez l’app »**.
 Cela arrive quand iOS arrête TROME en arrière-plan, ou quand l’iPhone n’a plus internet.
 
-Ouvrez TROME : l’app demande de nouveaux horaires tout de suite.
+Ouvrez TROME : l’app demande de nouveaux horaires tout de suite.
 Si rien ne change, vérifiez que l’iPhone est connecté à internet.
 Hors du Wi-Fi, voyez aussi [les données cellulaires](#les-horaires-ne-se-mettent-plus-à-jour-hors-du-wi-fi).
 
@@ -77,21 +77,21 @@ Hors du Wi-Fi, voyez aussi [les données cellulaires](#les-horaires-ne-se-metten
 Ouvrez **Réglages > Apps > TROME**, et activez **Données cellulaires**.
 
 Sans elles, TROME ne peut pas demander de nouveaux horaires quand l’iPhone n’est pas connecté au Wi-Fi.
-Ensuite, ouvrez TROME : l’app demande de nouveaux horaires tout de suite.
+Ensuite, ouvrez TROME : l’app demande de nouveaux horaires tout de suite.
 
-## « Horaires indisponibles »
+## « Horaires indisponibles »
 
 TROME peut demander les horaires un nombre limité de fois par jour, et tous ses utilisateurs partagent cette limite.
 Quand beaucoup de monde l’utilise en même temps, la limite peut être atteinte.
 L’activité en direct affiche alors ce message, et l’app écrit **Pas d’horaires en direct avant 14:59 environ**, avec l’heure de la prochaine tentative.
 
 Les minutes déjà affichées continuent de baisser jusqu’au départ du premier train.
-Vous n’avez rien à faire : TROME redemande les horaires tout seul, à l’heure indiquée dans l’app.
+Vous n’avez rien à faire : TROME redemande les horaires tout seul, à l’heure indiquée dans l’app.
 En attendant, fiez-vous à l’écran du quai.
 
-Ce message s’affiche aussi quand TROME n’a pas encore pu obtenir les horaires de la station, par exemple sans internet : vérifiez que l’iPhone est connecté.
+Ce message s’affiche aussi quand TROME n’a pas encore pu obtenir les horaires de la station, par exemple sans internet : vérifiez que l’iPhone est connecté.
 
-## « Mettez à jour l’app »
+## « Mettez à jour l’app »
 
 Cette version de TROME ne peut plus obtenir les horaires.
 Mettez TROME à jour dans l’App Store, ou dans TestFlight si vous le testez, puis ouvrez-le.
@@ -101,7 +101,7 @@ D’ici là, l’activité en direct et l’app affichent ce message, avec une i
 
 TROME affiche l’attente en minutes entières, calculée à partir des derniers horaires reçus.
 Entre deux mises à jour, un train peut prendre de l’avance ou du retard, et aux heures chargées les horaires reçus peuvent dater de quelques minutes.
-Un écart d’une ou deux minutes avec l’écran du quai est donc normal : en cas de doute, fiez-vous à l’écran du quai.
+Un écart d’une ou deux minutes avec l’écran du quai est donc normal : en cas de doute, fiez-vous à l’écran du quai.
 
 ## Ce que TROME demande à l’iPhone, et pourquoi
 
@@ -118,65 +118,65 @@ La [politique de confidentialité](/fr/privacy/#votre-position) dit ce qu’elle
 
 Pendant que l’activité en direct est affichée, TROME suit votre position, pour passer à la station suivante et pour s’arrêter quand vous vous éloignez de la station.
 iOS peut alors afficher une flèche de localisation dans la barre d’état, et, avec **Lorsque l’app est active**, un indicateur bleu.
-Quand vous arrivez près d’une station, la flèche peut aussi rester affichée jusqu’à 2 minutes, le temps que TROME vérifie que vous y êtes.
+Quand vous arrivez près d’une station, la flèche peut aussi rester affichée jusqu’à 2 minutes, le temps que TROME vérifie que vous y êtes.
 C’est normal.
 
 Pour voir quand TROME a utilisé votre position, ouvrez **Réglages > Confidentialité et sécurité > Service de localisation**, et regardez la flèche à côté de TROME.
-Une flèche pleine le dit par sa couleur : violette pour récemment, grise pour les dernières 24 heures.
+Une flèche pleine le dit par sa couleur : violette pour récemment, grise pour les dernières 24 heures.
 La légende en bas de cet écran explique chaque flèche, avec les mots de votre version d’iOS.
 
 ### Que font le mode automatique, la pause et la sourdine
 
-Le **mode automatique** affiche l’activité en direct quand vous arrivez près d’une station, et la retire quand vous partez : les distances sont [plus haut](#lactivité-en-direct-ne-saffiche-pas).
+Le **mode automatique** affiche l’activité en direct quand vous arrivez près d’une station, et la retire quand vous partez : les distances sont [plus haut](#lactivité-en-direct-ne-saffiche-pas).
 Quand vous le désactivez, l’activité en direct s’arrête tout de suite et rien ne démarre plus, jusqu’à ce que vous l’activiez de nouveau.
 
-**Mettre en pause** arrête TROME pour toutes les stations, 30 minutes, 1 heure ou jusqu’à la fin de la journée.
+**Mettre en pause** arrête TROME pour toutes les stations, 30 minutes, 1 heure ou jusqu’à la fin de la journée.
 L’activité en direct s’arrête tout de suite, et aucun démarrage automatique ne vient avant l’heure de reprise que l’app affiche.
 Le mode automatique reste activé.
-Les boutons **30 min**, **1 h** et **Aujourd’hui** de l’activité en direct sur l’écran verrouillé font la même chose.
+Les boutons **30 min**, **1 h** et **Aujourd’hui** de l’activité en direct sur l’écran verrouillé font la même chose.
 Pour reprendre plus tôt, touchez **Annuler la pause**.
 
 La **sourdine** concerne une seule station.
-Quand vous faites glisser l’activité en direct pour la retirer, elle ne revient pas à cette station pendant 1 heure.
-L’app écrit alors « Châtelet : en sourdine jusqu’à 15:51 », et **Réactiver Châtelet** la remet tout de suite.
+Quand vous faites glisser l’activité en direct pour la retirer, elle ne revient pas à cette station pendant 1 heure.
+L’app écrit alors « Châtelet : en sourdine jusqu’à 15:51 », et **Réactiver Châtelet** la remet tout de suite.
 
 ### Pourquoi TROME demande les notifications
 
 TROME n’envoie aucune notification.
 Il demande l’autorisation après la position, une seule fois.
-Gardez-la activée : TROME en a peut-être besoin pour démarrer l’activité en direct quand l’app est fermée.
+Gardez-la activée : TROME en a peut-être besoin pour démarrer l’activité en direct quand l’app est fermée.
 Si vous l’avez refusée, activez-la dans **Réglages > Apps > TROME > Notifications**.
 
-### Que montre « Voir un exemple »
+### Que montre « Voir un exemple »
 
-**Voir un exemple** affiche Châtelet sur l’écran verrouillé pendant 10 minutes, avec des horaires d’exemple, pour essayer TROME hors de Paris.
-Ce ne sont pas de vrais passages : l’app écrit « exemple » tant qu’il est affiché.
+**Voir un exemple** affiche Châtelet sur l’écran verrouillé pendant 10 minutes, avec des horaires d’exemple, pour essayer TROME hors de Paris.
+Ce ne sont pas de vrais passages : l’app écrit « exemple » tant qu’il est affiché.
 
 ## Écrivez-moi
 
 Pour me joindre, écrivez à <Contact />.
-TROME est une app gratuite : je réponds dès que je peux, sans promettre de délai.
+TROME est une app gratuite : je réponds dès que je peux, sans promettre de délai.
 
 Si vous avez un compte GitHub gratuit, vous pouvez aussi ouvrir une issue avec l’un de ces formulaires.
 Le formulaire de question est en français et en anglais, les deux autres en anglais, et vous pouvez écrire en français dans les trois.
 
-- [Un problème avec l’app](https://github.com/valfur03/trome/issues/new?template=bug.yml) : le formulaire de bug.
-- [Une question](https://github.com/valfur03/trome/issues/new?template=question.yml) : le formulaire de question.
-- [Une idée](https://github.com/valfur03/trome/issues/new?template=change.yml) : le formulaire pour proposer un changement.
+- [Un problème avec l’app](https://github.com/valfur03/trome/issues/new?template=bug.yml) : le formulaire de bug.
+- [Une question](https://github.com/valfur03/trome/issues/new?template=question.yml) : le formulaire de question.
+- [Une idée](https://github.com/valfur03/trome/issues/new?template=change.yml) : le formulaire pour proposer un changement.
 
 Pour que je trouve vite la cause, dites-moi le modèle de votre iPhone, sa version d’iOS, la station, et ce que vous voyez.
-Une capture d’écran aide beaucoup : regardez d’abord qu’elle ne montre rien de personnel.
+Une capture d’écran aide beaucoup : regardez d’abord qu’elle ne montre rien de personnel.
 
 Une issue est publique, et tout le monde peut la lire.
 N’y mettez ni votre nom, ni votre adresse e-mail, ni l’endroit où vous habitez.
 
-Un problème de sécurité, par exemple un moyen de savoir où se trouve quelqu’un ?
-Ne l’écrivez pas dans une issue publique : [envoyez-le en privé](https://github.com/valfur03/trome/security/advisories/new).
+Un problème de sécurité, par exemple un moyen de savoir où se trouve quelqu’un ?
+Ne l’écrivez pas dans une issue publique : [envoyez-le en privé](https://github.com/valfur03/trome/security/advisories/new).
 [SECURITY.md](https://github.com/valfur03/trome/blob/main/SECURITY.md) (en anglais) dit quoi y mettre.
 
 ## D’où viennent les données
 
-Contient des informations de la base « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), présentement mises à disposition aux conditions de la « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) ».
+Contient des informations de la base « [Prochains passages](https://prim.iledefrance-mobilites.fr) » d’Île-de-France Mobilités (PRIM), présentement mises à disposition aux conditions de la « [Licence Mobilités](https://prim.iledefrance-mobilites.fr/fr/licences) ».
 
 Liste des stations adaptée par TROME à partir des données d’Île-de-France Mobilités, sous licences [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) et [Licence Ouverte v2.0](https://www.data.gouv.fr/pages/legal/licences/etalab-2.0).
 

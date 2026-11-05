@@ -12,3 +12,8 @@
   white-space: normal;
   overflow-wrap: break-word;
 }
+
+/* A word with a hyphen that a line must never break, such as Wi-Fi (src/no-break-words.ts marks it). */
+.sl-markdown-content .nobreak {
+  white-space: nowrap;
+}

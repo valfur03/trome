@@ -8,29 +8,29 @@ sidebar:
 
 import Contact from '../../../components/Contact.astro';
 
-Dernière mise à jour : 5 novembre 2026.
+Dernière mise à jour : 5 novembre 2026.
 
 TROME a besoin de savoir près de quelle station vous êtes, pas de savoir qui vous êtes.
-Selon la définition d’Apple, TROME ne collecte aucune donnée sur vous : le serveur se sert de ce qui lui arrive pour répondre, et n’en garde rien sous une forme lisible.
+Selon la définition d’Apple, TROME ne collecte aucune donnée sur vous : le serveur se sert de ce qui lui arrive pour répondre, et n’en garde rien sous une forme lisible.
 Cette page explique ce que l’app TROME pour iPhone fait de vos données, ce que le serveur stocke, qui les reçoit, et quels sont vos droits.
 
 ## En bref
 
 - TROME n’a pas de compte et n’affiche pas de publicité.
-- L’app ne mesure rien de ce que vous faites : le serveur compte seulement combien de requêtes il reçoit, jamais qui les envoie.
-- Votre position reste sur votre iPhone : l’app ne l’envoie à personne.
+- L’app ne mesure rien de ce que vous faites : le serveur compte seulement combien de requêtes il reçoit, jamais qui les envoie.
+- Votre position reste sur votre iPhone : l’app ne l’envoie à personne.
 - Pour afficher les horaires, l’app envoie au serveur l’identifiant de la station près de laquelle vous êtes, mais ni votre position, ni aucun identifiant qui vous soit propre.
-- Pour afficher l’activité en direct quand l’app est fermée, l’app envoie aussi le jeton de démarrage qu’iOS lui donne : le serveur le transmet à Apple, et ne le garde pas.
-  Pendant 45 minutes, il en garde seulement une empreinte, qui ne permet pas de retrouver le jeton.
+- Pour afficher l’activité en direct quand l’app est fermée, l’app envoie aussi le jeton de démarrage qu’iOS lui donne : le serveur le transmet à Apple, et ne le garde pas.
+  Pendant 45 minutes, il en garde seulement une empreinte, qui ne permet pas de retrouver le jeton.
 - Le serveur ne garde aucun historique des stations demandées, ni de qui les demande.
   Cloudflare, qui héberge le serveur, voit passer chaque requête, [comme l’explique la suite](#cloudflare-et-la-source-des-horaires).
-- La fiche de l’App Store dit la même chose : données non collectées.
+- La fiche de l’App Store dit la même chose : données non collectées.
   Ce que fournit Apple, comme le nombre de téléchargements, ou vos données si vous testez TROME avec TestFlight, est expliqué [plus bas](#ce-que-fournit-apple).
 
 ## Votre position
 
 TROME utilise votre position, sur l’iPhone, pour trouver la station la plus proche, et pour afficher ou retirer l’activité en direct quand vous arrivez près d’une station ou que vous vous en éloignez.
-TROME demande l’accès **Toujours** pour qu’iOS puisse le prévenir quand vous arrivez près d’une station : [l’aide dit ce que fait chaque choix](/fr/support/#ce-que-trome-demande-à-liphone-et-pourquoi).
+TROME demande l’accès **Toujours** pour qu’iOS puisse le prévenir quand vous arrivez près d’une station : [l’aide dit ce que fait chaque choix](/fr/support/#ce-que-trome-demande-à-liphone-et-pourquoi).
 
 L’app n’envoie votre position à personne, pas même au serveur.
 Vous pouvez modifier cet accès à tout moment dans **Réglages > Apps > TROME > Position**.
@@ -50,58 +50,58 @@ Le serveur ne les lit pas et ne les conserve pas.
 
 Quand vous arrivez près d’une station et que l’app est fermée, l’app demande au serveur d’afficher l’activité en direct sur votre écran verrouillé.
 Elle lui transmet l’identifiant de la station, le code identique pour toutes les copies de l’app, et le jeton de démarrage qu’iOS a créé pour l’activité en direct de TROME sur votre iPhone.
-Ce jeton permet au service de notifications push d’Apple de joindre TROME sur votre iPhone : il identifie donc votre iPhone pour TROME.
-Le serveur le transmet une fois à Apple, avec le contenu de l’activité en direct (la station, ses lignes et ses prochains trains), puis ne le garde nulle part : ni stockage, ni journal, ni mémoire.
-Pendant 45 minutes, il garde seulement une empreinte à clé du jeton et de la station, en mémoire, avec une clé tirée au hasard.
+Ce jeton permet au service de notifications push d’Apple de joindre TROME sur votre iPhone : il identifie donc votre iPhone pour TROME.
+Le serveur le transmet une fois à Apple, avec le contenu de l’activité en direct (la station, ses lignes et ses prochains trains), puis ne le garde nulle part : ni stockage, ni journal, ni mémoire.
+Pendant 45 minutes, il garde seulement une empreinte à clé du jeton et de la station, en mémoire, avec une clé tirée au hasard.
 Cette empreinte ne permet pas de retrouver le jeton, et sert seulement à éviter un second démarrage quand iOS signale deux fois la même arrivée.
 
 ## Pourquoi ces données sont utilisées, et sur quelle base légale
 
-La base légale est la même pour chacun des usages ci-dessous : l’intérêt légitime (article 6, paragraphe 1, point f, du RGPD).
-Voici à quoi sert chaque donnée :
+La base légale est la même pour chacun des usages ci-dessous : l’intérêt légitime (article 6, paragraphe 1, point f, du RGPD).
+Voici à quoi sert chaque donnée :
 
-- **L’identifiant de la station, et l’adresse IP qui l’accompagne** : vous donner les horaires demandés, et rien d’autre.
+- **L’identifiant de la station, et l’adresse IP qui l’accompagne** : vous donner les horaires demandés, et rien d’autre.
   Au sens du RGPD, utiliser une donnée le temps d’une requête, c’est déjà la traiter, même si rien n’est conservé.
-  L’intérêt est légitime ici : TROME ne peut pas fonctionner sans ces données, le traitement est très bref, et le serveur ne conserve ni la station demandée ni votre adresse IP.
-- **Le jeton de démarrage, et son empreinte** : afficher l’activité en direct sur votre écran verrouillé quand l’app est fermée, et éviter un second démarrage pour la même arrivée.
-  L’intérêt est légitime ici : le démarrage ne peut pas se faire sans le jeton, le serveur utilise le jeton pour une seule requête et ne le conserve pas, et son empreinte est gardée 45 minutes seulement, ne permet pas de retrouver le jeton, et ne sert à rien d’autre.
-- **Les compteurs du serveur, et leur copie** : surveiller la limite quotidienne d’appels à la source des horaires, et suivre l’usage de TROME.
+  L’intérêt est légitime ici : TROME ne peut pas fonctionner sans ces données, le traitement est très bref, et le serveur ne conserve ni la station demandée ni votre adresse IP.
+- **Le jeton de démarrage, et son empreinte** : afficher l’activité en direct sur votre écran verrouillé quand l’app est fermée, et éviter un second démarrage pour la même arrivée.
+  L’intérêt est légitime ici : le démarrage ne peut pas se faire sans le jeton, le serveur utilise le jeton pour une seule requête et ne le conserve pas, et son empreinte est gardée 45 minutes seulement, ne permet pas de retrouver le jeton, et ne sert à rien d’autre.
+- **Les compteurs du serveur, et leur copie** : surveiller la limite quotidienne d’appels à la source des horaires, et suivre l’usage de TROME.
   Ils ne contiennent ni station ni adresse IP.
-- **La liste d’erreurs du serveur** : comprendre pourquoi il n’a pas obtenu les horaires de la source, et corriger le problème.
-- **Vos messages** : vous répondre et corriger TROME.
-- **Les données de TestFlight et les chiffres fournis par Apple** : corriger et améliorer TROME, et suivre son usage.
+- **La liste d’erreurs du serveur** : comprendre pourquoi il n’a pas obtenu les horaires de la source, et corriger le problème.
+- **Vos messages** : vous répondre et corriger TROME.
+- **Les données de TestFlight et les chiffres fournis par Apple** : corriger et améliorer TROME, et suivre son usage.
 
 ## Ce qui est stocké sur le serveur
 
 Le serveur n’inscrit aucune station demandée dans ses compteurs, dans ses erreurs ni dans ses journaux.
-Il ne stocke que :
+Il ne stocke que :
 
-- **des compteurs** : le nombre de requêtes reçues chaque heure et chaque jour, le nombre d’appels à la source des horaires, et le nombre d’erreurs.
+- **des compteurs** : le nombre de requêtes reçues chaque heure et chaque jour, le nombre d’appels à la source des horaires, et le nombre d’erreurs.
   Ces compteurs ne portent sur aucune station ni sur aucune personne.
-  Une copie va dans un outil de suivi privé, qu’aucun tiers n’héberge : personne d’autre ne la reçoit.
-  Les compteurs et leur copie sont conservés tant qu’ils restent utiles pour [les usages indiqués plus haut](#pourquoi-ces-données-sont-utilisées-et-sur-quelle-base-légale) ;
-- **une liste d’erreurs** : l’heure, le type d’erreur et son code.
+  Une copie va dans un outil de suivi privé, qu’aucun tiers n’héberge : personne d’autre ne la reçoit.
+  Les compteurs et leur copie sont conservés tant qu’ils restent utiles pour [les usages indiqués plus haut](#pourquoi-ces-données-sont-utilisées-et-sur-quelle-base-légale) ;
+- **une liste d’erreurs** : l’heure, le type d’erreur et son code.
   Elle ne contient pas de station non plus.
-  Elle n’est conservée que le temps de trouver et de corriger la cause d’une erreur ;
+  Elle n’est conservée que le temps de trouver et de corriger la cause d’une erreur ;
 - **la dernière réponse de la source des horaires pour chaque station**, telle que la source l’a donnée, pour la renvoyer à toute personne qui demande la même station.
   Elle reste dans la mémoire du serveur une dizaine de minutes, sans jamais être enregistrée.
-  Elle ne dit pas qui a demandé la station ;
-- **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, pendant une minute : le serveur ne rappelle pas la source aussitôt ;
-- **l’heure jusqu’à laquelle le serveur attend**, quand la source refuse un appel : il ne la rappelle pas avant ;
-- **l’empreinte à clé d’un jeton de démarrage et de sa station**, dans la même mémoire, pendant 45 minutes : elle ne permet pas de retrouver le jeton ([voir plus haut](#quand-lapp-est-fermée)) ;
-- **le canal d’une station**, sur lequel Apple envoie les nouveaux horaires aux activités en direct de cette station, pendant 45 minutes après son dernier démarrage : il ne dit rien de qui s’y trouve.
+  Elle ne dit pas qui a demandé la station ;
+- **la station pour laquelle la source vient d’échouer**, avec l’heure de l’échec, dans la même mémoire, pendant une minute : le serveur ne rappelle pas la source aussitôt ;
+- **l’heure jusqu’à laquelle le serveur attend**, quand la source refuse un appel : il ne la rappelle pas avant ;
+- **l’empreinte à clé d’un jeton de démarrage et de sa station**, dans la même mémoire, pendant 45 minutes : elle ne permet pas de retrouver le jeton ([voir plus haut](#quand-lapp-est-fermée)) ;
+- **le canal d’une station**, sur lequel Apple envoie les nouveaux horaires aux activités en direct de cette station, pendant 45 minutes après son dernier démarrage : il ne dit rien de qui s’y trouve.
 
 Le serveur ne conserve aucune adresse IP, aucune position et aucun jeton de démarrage.
-D’un démarrage de l’activité en direct, il garde seulement l’empreinte et le canal ci-dessus, pendant 45 minutes.
+D’un démarrage de l’activité en direct, il garde seulement l’empreinte et le canal ci-dessus, pendant 45 minutes.
 Aucun journal des requêtes n’est activé chez son hébergeur.
 
 ## Cloudflare et la source des horaires
 
 Le serveur fonctionne sur Cloudflare.
-Cloudflare reçoit chaque requête avant le serveur : elle voit donc l’adresse web demandée, qui contient l’identifiant de la station, et les informations réseau qui accompagnent toute requête web, comme votre adresse IP et le lieu approximatif qu’elle en déduit.
+Cloudflare reçoit chaque requête avant le serveur : elle voit donc l’adresse web demandée, qui contient l’identifiant de la station, et les informations réseau qui accompagnent toute requête web, comme votre adresse IP et le lieu approximatif qu’elle en déduit.
 Tous les journaux que Cloudflare pourrait conserver pour TROME sont désactivés.
 Cloudflare traite cette requête pour le compte de TROME, en tant que sous-traitant, selon son [accord de traitement des données](https://www.cloudflare.com/cloudflare-customer-dpa/) (en anglais) et sa [politique de confidentialité](https://www.cloudflare.com/fr-fr/privacypolicy/).
-Cloudflare est une société américaine : elle peut donc traiter une requête hors de l’Union européenne, notamment aux États-Unis.
+Cloudflare est une société américaine : elle peut donc traiter une requête hors de l’Union européenne, notamment aux États-Unis.
 Pour protéger vos données là-bas, elle s’appuie sur le cadre de protection des données UE–États-Unis (Data Privacy Framework) et sur les clauses contractuelles types de la Commission européenne, que son accord inclut.
 
 Le serveur demande les horaires à Île-de-France Mobilités (PRIM) avec le seul identifiant de la station et la clé d’accès de TROME.
@@ -124,7 +124,7 @@ Pour TROME sur l’App Store, Apple indique combien de fois TROME a été affich
 
 Si vous partagez les données d’analyse avec les développeurs d’apps (**Réglages > Confidentialité et sécurité > Analyse et améliorations > Partager avec les développeurs d’apps**), Apple fournit des rapports de plantage et des statistiques d’usage, sans rien qui dise qui vous êtes.
 Apple l’explique dans [Partager des informations relatives à l’analyse, au diagnostic et à l’utilisation avec Apple](https://support.apple.com/fr-fr/108971).
-Ces statistiques d’usage ne viennent que des personnes qui partagent : les autres n’y figurent pas.
+Ces statistiques d’usage ne viennent que des personnes qui partagent : les autres n’y figurent pas.
 
 Si vous testez TROME avec TestFlight, Apple fournit vos rapports de plantage, des données d’usage et les commentaires que vous envoyez.
 Si vous avez été invité par e-mail, ils arrivent avec votre nom et votre adresse e-mail, mais pas si vous avez rejoint le test par un lien public.
@@ -132,9 +132,9 @@ Apple l’explique dans [TestFlight et confidentialité](https://www.apple.com/l
 
 Ces informations servent uniquement à corriger et à améliorer TROME et à suivre son usage, et ne sont partagées avec personne.
 
-## Vos droits : consulter, corriger ou supprimer vos données
+## Vos droits : consulter, corriger ou supprimer vos données
 
-Le serveur ne stocke rien qui permette de vous retrouver : il n’y a donc rien à consulter ni à supprimer sur celui-ci.
+Le serveur ne stocke rien qui permette de vous retrouver : il n’y a donc rien à consulter ni à supprimer sur celui-ci.
 Les seules données personnelles qui me parviennent sont celles qu’Apple fournit si vous testez TROME avec TestFlight, et les messages que vous m’écrivez.
 Un message est conservé le temps de vous répondre et de régler le problème, puis supprimé, ou plus tôt si vous le demandez.
 Le nom et l’adresse e-mail d’un testeur sont conservés pendant la durée du test, puis retirés de la liste des testeurs.
@@ -143,15 +143,15 @@ Vous pouvez demander l’accès à ces données, leur rectification, leur efface
 Je réponds dans un délai d’un mois au plus.
 
 Pour poser une question ou faire l’une de ces demandes, écrivez à <Contact />.
-Si vous avez été invité à TestFlight par e-mail et que vous voulez que vos données soient supprimées ou que votre nom soit retiré des testeurs, écrivez depuis l’adresse qui a reçu l’invitation : elle me permet de retrouver votre nom.
-Pour une simple question, vous pouvez aussi ouvrir une issue GitHub avec [le formulaire de question](https://github.com/valfur03/trome/issues/new?template=question.yml), mais une issue est publique et GitHub la conserve selon sa [politique de confidentialité](https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement) :
+Si vous avez été invité à TestFlight par e-mail et que vous voulez que vos données soient supprimées ou que votre nom soit retiré des testeurs, écrivez depuis l’adresse qui a reçu l’invitation : elle me permet de retrouver votre nom.
+Pour une simple question, vous pouvez aussi ouvrir une issue GitHub avec [le formulaire de question](https://github.com/valfur03/trome/issues/new?template=question.yml), mais une issue est publique et GitHub la conserve selon sa [politique de confidentialité](https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement) :
 n’y mettez ni votre nom, ni votre adresse e-mail, ni rien de personnel.
 Vous pouvez aussi déposer une réclamation auprès de la [CNIL](https://www.cnil.fr/fr/plaintes) ou de l’autorité de protection des données de votre pays.
 
 ## Qui est responsable de vos données
 
 Je suis Valentin Furmanek, et je développe TROME seul.
-Je suis le responsable des données que décrit cette page (le « responsable du traitement », dans le RGPD).
+Je suis le responsable des données que décrit cette page (le « responsable du traitement », dans le RGPD).
 Pour me joindre, écrivez à <Contact />.
 
 ## Ce que GitHub voit quand vous ouvrez cette page

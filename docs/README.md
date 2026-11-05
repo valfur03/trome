@@ -320,6 +320,13 @@ Use the words of the RATP signs and of iOS in French, then write the English pag
 
 For any other label of the app, use its text in the String Catalogs, [of the app](../ios/App/Localizable.xcstrings) and [of the Live Activity](../ios/Widget/Localizable.xcstrings).
 
+Put a no-break space (U+00A0) before `»`, `:`, `;`, `?` and `!`, and after `«`, never a plain space.
+Why: French puts a space on both sides of these marks, and a plain space lets a line break there, so a line starts with `»` or `:`, or ends with a lone `«`.
+Put the same no-break space between a number and its unit (`150 mètres`, `150 meters`, `1 h`, `2:59 PM`) on the riders' pages of both languages.
+Write `Wi-Fi` as it is: the site keeps it on one line by itself.
+`npm test` in `docs/` reads every page and names each line that has a plain space where one of these belongs, with the line as it should be.
+The check skips code, and it reads only the units that `src/typography.ts` lists: add a unit there when a page needs it.
+
 ### Choose the right shape
 
 **A step list** is only for actions that the reader does in order.
