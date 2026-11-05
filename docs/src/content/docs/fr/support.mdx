@@ -44,15 +44,21 @@ L’activité en direct peut alors ne pas démarrer toute seule, et la station l
 
 ## Rien ne vient quand TROME est fermé
 
-L’activité en direct s’affiche dès que vous arrivez près d’une station, app ouverte ou fermée.
-App fermée, elle a besoin d’internet : l’app demande au serveur de TROME de l’afficher sur votre écran verrouillé.
+TROME est conçu pour afficher l’activité en direct quand vous arrivez près d’une station, app ouverte ou fermée.
+App fermée, l’app demande au serveur de TROME de l’afficher sur votre écran verrouillé.
+Cela demande une connexion à internet, et une version de TROME que TestFlight ou l’App Store distribue.
 Quand c’est impossible, rien ne vient : ouvrez TROME à la station, et l’activité en direct s’affiche aussitôt.
 
-Pour l’app fermée, vérifiez cette autorisation, dans **Réglages > Apps > TROME** :
+Si vous avez construit TROME vous-même avec un identifiant Apple gratuit, votre version ne peut pas démarrer l’activité en direct app fermée : ouvrez TROME à la station.
+La section [« What you have now »](/en/build/install-on-your-iphone/#what-you-have-now) de la page d’installation, en anglais, dit ce que fait cette version, et pourquoi.
+
+Avec la version de TestFlight ou de l’App Store, app fermée, vérifiez cette autorisation, dans **Réglages > Apps > TROME** :
 
 - **Position** sur **Toujours**.
   Avec **Lorsque l’app est active**, rien ne vient quand TROME est fermé.
   [Pourquoi **Toujours** ?](#pourquoi-trome-demande-la-position-toujours)
+
+Si rien ne vient à une station avec cette version, [écrivez-moi](#écrivez-moi) et dites-moi laquelle : cela m’aide à vérifier.
 
 Chaque arrivée démarre l’activité en direct une fois au plus.
 Pendant une pause, rien ne démarre : voyez [ce que font la pause et la sourdine](#que-font-le-mode-automatique-la-pause-et-la-sourdine).
@@ -101,7 +107,7 @@ Un écart d’une ou deux minutes avec l’écran du quai est donc normal : en c
 
 ### Pourquoi TROME demande la position **Toujours**
 
-Avec **Toujours**, iOS prévient TROME quand vous arrivez près d’une station, même quand l’app est fermée.
+TROME demande **Toujours** pour qu’iOS puisse le prévenir quand vous arrivez près d’une station, et que TROME puisse demander l’activité en direct.
 
 Avec **Lorsque l’app est active**, TROME ne connaît votre position que pendant que l’app est ouverte.
 
@@ -137,10 +143,9 @@ L’app écrit alors « Châtelet : en sourdine jusqu’à 15:51 », et **Réact
 ### Pourquoi TROME demande les notifications
 
 TROME n’envoie aucune notification.
-Sans elles, l’activité en direct démarre quand même seule.
-Quand elle ne le peut pas, elle s’affiche quand vous ouvrez TROME près d’une station.
-
-TROME ne demande les notifications qu’après la position, une seule fois.
+Il demande l’autorisation après la position, une seule fois.
+Gardez-la activée : TROME en a peut-être besoin pour démarrer l’activité en direct app fermée.
+Si vous l’avez refusée, activez-la dans **Réglages > Apps > TROME > Notifications**.
 
 ### Que montre « Voir un exemple »
 

@@ -8,7 +8,7 @@ sidebar:
 
 import Contact from '../../../components/Contact.astro';
 
-Last updated: 1 November 2026.
+Last updated: 5 November 2026.
 
 TROME needs to know which station you are near, not who you are.
 By Apple’s definition, TROME collects no data about you: the server uses what reaches it to answer, and keeps none of it in a form that anyone can read.
@@ -30,7 +30,7 @@ This page says what the TROME iPhone app does with your data, what the server st
 ## Your position
 
 TROME uses your position, on the iPhone, to find the nearest station, and to show or remove the Live Activity when you come near a station or move away from it.
-With **Always** access, iOS tells TROME when you come near a station, even when the app is closed.
+TROME asks for **Always** access so that iOS can tell it when you come near a station: [Help says why](/en/support/#why-trome-asks-for-always-location).
 
 The app sends your position to nobody, not even to the server.
 You can change this access at any time in **Settings > Apps > TROME > Location**.
@@ -48,7 +48,7 @@ The server does not read them and does not store them.
 
 ### When the app is closed
 
-When iOS wakes the closed app near a station, the app asks the server to put the Live Activity on your lock screen.
+To start the Live Activity with the app closed, the app asks the server to put it on your lock screen.
 It sends the identifier of the station and the start token that iOS made for the Live Activity of TROME on your iPhone.
 This token lets Apple’s push service reach TROME on your iPhone, so it identifies your iPhone for TROME.
 The server passes it once to Apple, with the content of the Live Activity (the station, its lines and its next trains), and then keeps it nowhere: in no storage, no log and no memory.

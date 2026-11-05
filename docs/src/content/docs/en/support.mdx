@@ -44,15 +44,21 @@ The Live Activity may then not start by itself, and the nearest station may be t
 
 ## Nothing comes when TROME is closed
 
-The Live Activity shows as soon as you come near a station, with TROME open or closed.
-With TROME closed, it needs the internet: the app asks TROME’s server to put it on your lock screen.
+TROME is built to show the Live Activity when you come near a station, with TROME open or closed.
+With TROME closed, the app asks TROME’s server to put it on your lock screen.
+This needs the internet, and a version of TROME that TestFlight or the App Store ships.
 When it cannot, nothing comes: open TROME at the station, and the Live Activity shows at once.
 
-With TROME closed, check this permission, in **Settings > Apps > TROME**:
+If you built TROME yourself with a free Apple ID, your build cannot start the Live Activity with TROME closed: open TROME at the station.
+[What you have now](/en/build/install-on-your-iphone/#what-you-have-now) says what that build does, and why.
+
+With the TestFlight or App Store version, and TROME closed, check this permission, in **Settings > Apps > TROME**:
 
 - **Location** set to **Always**.
   With **While Using the App**, nothing comes when TROME is closed.
   [Why **Always**?](#why-trome-asks-for-always-location)
+
+If nothing comes at a station with that version, [write to me](#write-to-me) and tell me which station: it helps me check this.
 
 Each arrival starts the Live Activity once at most.
 During a snooze, nothing starts: see [what the snooze and the pause do](#what-the-automatic-mode-the-snooze-and-the-pause-do).
@@ -101,7 +107,7 @@ So a gap of a minute or two with the platform screen is normal: when in doubt, t
 
 ### Why TROME asks for **Always** location
 
-With **Always**, iOS tells TROME when you come near a station, even when the app is closed.
+TROME asks for **Always** so that iOS can tell TROME when you come near a station, and TROME can ask for the Live Activity.
 
 With **While Using the App**, TROME knows your position only while the app is open.
 
@@ -137,10 +143,9 @@ The app then says “Paused at Châtelet until 3:51 PM”, and **Cancel the paus
 ### Why TROME asks for notifications
 
 TROME sends no notification.
-Without them, the Live Activity still starts by itself.
-When it cannot, it shows when you open TROME near a station.
-
-TROME asks for notifications only after the location, and only once.
+It asks for the permission after the location, once.
+Keep it allowed: TROME may need it to start the Live Activity with the app closed.
+If you refused it, turn it on in **Settings > Apps > TROME > Notifications**.
 
 ### What “See an example” shows
 
