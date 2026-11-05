@@ -11,7 +11,8 @@ With an archive (make release-archive-check), it also checks the archive: the gr
 in their Info.plist, and the push code compiled into the app, found by the whole name of its Swift type.
 It also proves that the store build has no Wake log, the record of each wake for a walk: an archive has it only when
 its Release settings compile it (TROME_WAKE_LOG_BUILD_<n> = YES for the build number n, a TestFlight build for a walk),
-and then it must have it.
+and then it must have it, with the commit that the build wrote in its Info.plist, so that the record of the walk
+names the commit that was walked.
 It prints no build setting but the name of the app group, which ios/project.yml shows: the release checks run on
 GitHub, where the logs are public.
 """
@@ -40,6 +41,9 @@ WAKE_LOG_TYPE = "WakeLogScreen"
 ARCHIVE_TYPES = (SILENT_START_TYPE, WAKE_LOG_TYPE)
 WAKE_LOG_CONDITION = "WAKE_LOG"
 WAKE_LOG_SETTING = "TROME_WAKE_LOG_BUILD_<n>"
+# The commit that ios/scripts/build-commit.sh writes at each build: a short hash, -dirty with changes not committed.
+COMMIT_KEY = "TROMECommit"
+COMMIT = re.compile(r"[0-9a-f]{7,40}(-dirty)?")
 
 
 # The Mach-O and Swift formats that swift_types reads: mach-o/loader.h and mach-o/fat.h of the SDK, and the type
@@ -174,12 +178,14 @@ def problems_of_the_project(project):
 def problems_of_the_archive(archive, group, has_wake_log):
     app = Path(archive) / "Products" / "Applications" / f"{APP}.app"
     problems = []
+    infos = {}
     for name, bundle in ((APP, app), (WIDGET, app / "PlugIns" / f"{WIDGET}.appex")):
         try:
             with (bundle / "Info.plist").open("rb") as file:
-                read = plistlib.load(file).get(GROUP_KEY)
+                infos[name] = plistlib.load(file)
         except (OSError, plistlib.InvalidFileException):
-            read = None
+            infos[name] = {}
+        read = infos[name].get(GROUP_KEY)
         if read != group:
             problems.append(f"in the archive, {name} does not read the app group {group} ({GROUP_KEY} of its Info.plist)")
     try:
@@ -196,6 +202,11 @@ def problems_of_the_archive(archive, group, has_wake_log):
     if WAKE_LOG_TYPE not in types and has_wake_log:
         problems.append(f"in the archive, {APP} has no Wake log ({WAKE_LOG_TYPE}) while its Release settings "
                         f"compile it ({WAKE_LOG_SETTING} = YES): the Release build must compile WAKE_LOG")
+    commit = infos[APP].get(COMMIT_KEY)
+    if has_wake_log and not (isinstance(commit, str) and COMMIT.fullmatch(commit)):
+        problems.append(f"in the archive, {APP} names no commit ({COMMIT_KEY} of its Info.plist): the record of a walk "
+                        "must say which commit was walked, so archive it from a git clone, where "
+                        "scripts/build-commit.sh writes it")
     return problems
 
 

@@ -38,8 +38,9 @@ public final class WakeLog {
     /// When this process made the log: its launch, as the composition root makes the log at once.
     /// The lines of a wake and of the start token count their seconds from it.
     public let launchedAt: Date
-    @ObservationIgnored private let storage: any KeyValueStore
+    @ObservationIgnored let storage: any KeyValueStore
     @ObservationIgnored let now: @Sendable () -> Date
+    @ObservationIgnored var launchStart = LaunchStart()
 
     public init(storage: any KeyValueStore, now: @escaping @Sendable () -> Date = { Date() }) {
         self.storage = storage

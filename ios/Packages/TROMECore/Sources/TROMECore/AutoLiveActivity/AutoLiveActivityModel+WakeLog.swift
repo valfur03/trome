@@ -49,7 +49,7 @@ extension AutoLiveActivityModel {
     func logScreenChange(from oldPhase: AppPhase, to newPhase: AppPhase) {
         switch (oldPhase, newPhase) {
         case (.background, .active), (.background, .inactive):
-            services.wakeLog?.record(.launch, "App on screen")
+            services.wakeLog?.recordScreenOnFront()
         case (.active, .background), (.inactive, .background):
             services.wakeLog?.record(.launch, "App in the background")
             logRegionHoldLater()

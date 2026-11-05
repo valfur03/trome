@@ -3,17 +3,21 @@ import TROMECore
 import UIKit
 
 extension WakeLog {
-    /// The lines of a launch. The second comes one turn later, once iOS says whether it started the app in the
-    /// background (for an event of a watched area) or on screen.
+    /// The lines of a launch. The second comes one turn later, with the settings that iOS gives only then. How the
+    /// launch began comes once a screen of the app is in front, or at the end of `openWindow` with none.
     func recordLaunch(locationSource: LocationSource) {
-        let phone = PhoneStateReport.launchLines(locationSource: locationSource)
-        record(.launch, (["App launched"] + phone).joined(separator: "\n"))
+        recordLaunch(
+            AppBuild(infoDictionary: Bundle.main.infoDictionary),
+            iOSVersion: UIDevice.current.systemVersion,
+            phone: PhoneStateReport.launchLines(locationSource: locationSource)
+        )
         Task { @MainActor in
-            let started = UIApplication.shared.applicationState == .background
-                ? "Started by iOS, in the background"
-                : "Started on screen"
             let later = await PhoneStateReport.laterLines()
-            record(.launch, (["Phone at launch", started] + later).joined(separator: "\n"))
+            record(.launch, (["Phone at launch"] + later).joined(separator: "\n"))
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: Self.openWindow)
+            recordOpenWindowEnd()
         }
     }
 }

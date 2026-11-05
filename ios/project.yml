@@ -85,6 +85,14 @@ targets:
           - $(SRCROOT)/scripts/train-server-check.sh
         basedOnDependencyAnalysis: false
         showEnvVars: false
+    postBuildScripts:
+      - name: Write the commit of the build
+        script: '"${SRCROOT}/scripts/build-commit.sh"'
+        inputFiles:
+          - $(SRCROOT)/scripts/build-commit.sh
+          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
     info:
       path: App/Info.plist
       properties:
@@ -113,6 +121,10 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # The script that writes the commit of the build runs git, which reads the git folder of the repo: the
+        # sandbox of the build scripts lets a script read only the files that it names, and the git folder of a
+        # worktree is outside the repo folder.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
       # The silent start compiles the push code, and adds the push capability and the app group that the app
       # shares with the widget for the page that a rider taps to on a push of the server.
       # Every Release build has it: only the paid team signs one.

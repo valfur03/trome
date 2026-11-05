@@ -1,7 +1,7 @@
 #!/bin/sh
 # The check of the silent start in a Release build: it fails when the app loses the push capability, when the app or
 # its widget loses the app group, or when the archive has no silent start; a fake xcodebuild gives the settings.
-# It also fails when a store archive has the Wake log, or a walk archive has none.
+# It also fails when a store archive has the Wake log, or a walk archive has none, or names no commit.
 # It finds a type by its whole name in the Swift types of the binary, so the app binaries here are compiled Swift.
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
@@ -70,13 +70,15 @@ binary wake-log 'final class PushRegistrationAppDelegate {}
 struct WakeLogScreen {}'
 printf 'binary PushRegistrationAppDelegate code' > "$state/swift/text.bin"
 
-# archive <app group of the widget> <app binary>: an archive as make release-archive-check makes it.
+# archive <app group of the widget> <app binary> [<commit>]: an archive as make release-archive-check makes it, with
+# the commit that the build wrote in its Info.plist.
 archive() {
     rm -rf "$state/TROME.xcarchive"
     app="$state/TROME.xcarchive/Products/Applications/TROME.app"
     mkdir -p "$app/PlugIns/TROMEWidget.appex"
     plutil -create xml1 "$app/Info.plist"
     plutil -insert TROMEAppGroup -string group.io.github.valfur03.trome "$app/Info.plist"
+    [ -z "${3:-}" ] || plutil -insert TROMECommit -string "$3" "$app/Info.plist"
     plutil -create xml1 "$app/PlugIns/TROMEWidget.appex/Info.plist"
     plutil -insert TROMEAppGroup -string "$1" "$app/PlugIns/TROMEWidget.appex/Info.plist"
     cp "$state/swift/$2.bin" "$app/TROME"
@@ -107,11 +109,18 @@ expect "an archive whose type is renamed in a file that keeps its old name fails
 expect "the failure names the silent start" "$(grep -c 'has no silent start' "$state/out")" 1
 archive group.io.github.valfur03.trome text
 expect "an app binary that holds the name only as text fails" "$(run)" fails
-archive group.io.github.valfur03.trome wake-log
+archive group.io.github.valfur03.trome wake-log 1e2e704
 expect "a store archive with the Wake log fails" "$(run)" fails
 expect "the failure names the Wake log" "$(grep -c 'has the Wake log' "$state/out")" 1
 expect "a walk archive with the Wake log passes" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" passes
 expect "the pass says it is not for the store" "$(grep -c 'never for the store' "$state/out")" 1
+archive group.io.github.valfur03.trome wake-log 1e2e704-dirty
+expect "a walk archive made with changes not committed passes" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" passes
+archive group.io.github.valfur03.trome wake-log
+expect "a walk archive that names no commit fails" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" fails
+expect "the failure names the commit" "$(grep -c 'names no commit' "$state/out")" 1
+archive group.io.github.valfur03.trome wake-log '$(TROME_COMMIT)'
+expect "a walk archive whose commit is no hash fails" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" fails
 archive group.io.github.valfur03.trome silent-start
 expect "a walk archive with no Wake log fails" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" fails
 expect "the store archive says it has no Wake log" "$(run >/dev/null; grep -c 'with no Wake log' "$state/out")" 1

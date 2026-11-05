@@ -81,8 +81,10 @@ extension AutoLiveActivityModelTests {
         model.setAppPhase(.active)
         model.setAppPhase(.background)
 
-        let screenChanges = wakeLog.entries.filter { $0.kind == .launch }.map(\.text)
-        #expect(screenChanges == ["App in the background", "App on screen"])
+        // The first screen also tells how the launch began (WakeLogLaunchStartTests), once.
+        let launchLines = wakeLog.entries.filter { $0.kind == .launch }.map(\.text)
+        #expect(launchLines.filter { !$0.hasPrefix("Opened by the rider") } == ["App in the background", "App on screen"])
+        #expect(launchLines.filter { $0.hasPrefix("Opened by the rider: on screen") }.count == 1)
     }
 
     /// A background call writes what answered and when the app asks again, so that the next outing can tell
