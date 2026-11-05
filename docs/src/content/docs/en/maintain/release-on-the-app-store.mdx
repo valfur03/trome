@@ -778,6 +778,7 @@ The version stays the `MARKETING_VERSION` of the repo.
    ```
 
    `TROME_RELEASE_TEAM` is your Team ID, as in `ios/Config/Signing.xcconfig`; `TRAIN_SERVER_HOST` and `TRAIN_SERVER_APP_TOKEN` are the two values of `ios/Config/Server.xcconfig`.
+Set `TRAIN_SERVER_APP_TOKEN` again each time that you give the build a new app token.
    Then delete the `.p8`, `.p12` and profile files from your Downloads folder, and keep the `.p8` and the password in your password manager.
 
 6. Optional, for the later steps of the pipeline: an environment `app-store-watch`, also on the branch `main` only, with no reviewer, which holds only the three `APP_STORE_CONNECT_` secrets (the first three commands, with `--env app-store-watch`).
@@ -785,14 +786,17 @@ The version stays the `MARKETING_VERSION` of the repo.
 
 </Steps>
 
-Each year, when your membership renews, make a new certificate and two new profiles, and set their three secrets again.
+An Apple Distribution certificate ends one year after you made it, and a profile ends with it at the latest, whatever the date of your membership.
 A run warns 30 days before a profile ends.
+When you see that warning, repeat steps 2, 3 and 5 above: a new certificate, two new profiles, and four secrets set again (`DISTRIBUTION_CERTIFICATE`, `DISTRIBUTION_CERTIFICATE_PASSWORD`, `APP_PROFILE` and `WIDGET_PROFILE`).
+With the old password or an old profile, the run fails when it imports the certificate.
 
 ### Each build
 
 <Steps>
 
-1. Open **Actions > Release to TestFlight > Run workflow** on GitHub, keep the branch `main`, and click **Run workflow**.
+1. On your Mac, run `make release-tokens-check`, and go on only when every build in the field is **accepted**: the run cannot make this check, because the file `ios/Config/BuildTokens.txt` stays on your Mac.
+   Then open **Actions > Release to TestFlight > Run workflow** on GitHub, keep the branch `main`, and click **Run workflow**.
    A run from another branch stops before its first job.
 
 2. The release checks run first, with no secret.
@@ -804,8 +808,28 @@ A run warns 30 days before a profile ends.
 4. The run signs and uploads the build, and tags the commit with `builds/<version>/<build>`.
    Its summary gives the version and the build number, and says `E2E: proven at merge` with the commit.
 
-5. Go on with items 7 to 11 of [step 4](#4-build-upload-and-check-the-first-build), from Apple's email: the tag of item 10 is already there.
-   If Apple refuses the build at item 8 or 9, delete the tag that the run made, with `git push origin :refs/tags/builds/<version>/<build>`: the next run still takes a higher number, as Apple keeps the refused one.
+5. The run made its tag on GitHub only, so get it on your Mac before anything else:
+
+   ```sh
+   git switch main
+   git pull
+   git fetch --tags
+   ```
+
+   Then go on with items 7 to 11 of [step 4](#4-build-upload-and-check-the-first-build), from Apple's email.
+   Where they say the build number that App Store Connect shows, it is the number in the summary of the run.
+   Skip item 10: the run tagged the commit, and a second tag would only be refused when you push it.
+   In item 11, the app token that the build holds is the value of your `TRAIN_SERVER_APP_TOKEN` secret.
+   The run never changes `ios/Config/Base.xcconfig`, so item 11 is also the step that raises `CURRENT_PROJECT_VERSION` there, for a build by hand.
+
+6. If Apple refuses the build at item 8 or 9, or marks it **Invalid Binary**, delete its tag on GitHub and on your Mac, so that no tag names a build that no rider can hold:
+
+   ```sh
+   git push origin :refs/tags/builds/<version>/<build>
+   git tag -d builds/<version>/<build>
+   ```
+
+   Do not raise the build number for the next run, as item 9 says for a build by hand: a run takes its number from Apple, which keeps the refused one, so the next run takes a higher number.
 
 </Steps>
 
