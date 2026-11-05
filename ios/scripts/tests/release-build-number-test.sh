@@ -32,7 +32,7 @@ expect() {
 }
 
 # A fake App Store Connect: it answers each path with the file of answers/ named after the path and its cursor, puts
-# its own address in place of {base}, and keeps the Authorization header of each request in requests.log.
+# its own address in place of {base} (and under another name in place of {other host}), and keeps the Authorization header of each request in requests.log.
 cat > "$state/fake-asc.py" << 'EOF'
 import http.server, os, sys, urllib.parse
 answers, log, ready = sys.argv[1:4]
@@ -51,6 +51,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             status, body = 404, '{"errors":[{"title":"Not found","detail":"no such page"}]}'
         else:
             body = open(path).read().replace("{base}", f"http://127.0.0.1:{self.server.server_port}")
+            body = body.replace("{other host}", f"http://localhost:{self.server.server_port}")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
@@ -204,10 +205,11 @@ answer v1_apps 1 '{"data":[],"links":{}}'
 expect "an App Store ID that Apple does not know gives no number" "$(number)" "none (1)"
 
 reset_repo builds/1.0.0/5
-answer v1_builds 1 '{"data":[{"type":"builds","id":"b5","attributes":{"version":"5"}}],"links":{"next":"https://example.com/v1/builds?cursor=2"}}'
+answer v1_builds 1 '{"data":[{"type":"builds","id":"b5","attributes":{"version":"5"}}],"links":{"next":"{other host}/v1/builds?cursor=2"}}'
+answer v1_builds 2 '{"data":[],"links":{}}'
 uploads_page 5:COMPLETE
 expect "a next page on another host gives no number" "$(number)" "none (1)"
-expect "and the token went to the fake App Store Connect only" "$(grep -c . "$state/requests.log")" 2
+expect "and the token never went to the other host" "$(grep -c . "$state/requests.log")" 2
 
 # The token: what the fake App Store Connect got is an ES256 token of the key, for Apple's audience, of 15 minutes at most.
 reset_repo builds/1.0.0/5
