@@ -62,7 +62,7 @@ struct WakeLogLaunchStartTests {
 
         #expect(opened.text == "Opened by the rider 12 min after iOS ran the app")
         #expect(opened.date == clock.now)
-        #expect(lines(log).dropFirst(2).first == "iOS ran the app: no screen of the app came to the front in its first 5 s")
+        #expect(lines(log).dropFirst(2).first == LaunchStart.noScreenLine)
     }
 
     /// iOS can suspend the app before the end of the window runs: the screen of a later open then comes first.

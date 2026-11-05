@@ -11,7 +11,8 @@ struct LaunchStart {
         How the previous launch began: unknown, the app stopped or was suspended within \(Int(openWindow)) s, \
         with no screen in front
         """
-    static let noScreenLine = "iOS ran the app: no screen of the app came to the front in its first \(Int(openWindow)) s"
+    static let noScreenLine =
+        "iOS ran the app: no screen of the app came to the front in its first \(Int(openWindow)) s"
 
     private enum State {
         case waiting

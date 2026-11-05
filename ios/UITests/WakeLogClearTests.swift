@@ -54,7 +54,9 @@ final class WakeLogClearTests: E2ETestCase {
             wakeLogShows(opened.firstMatch, in: app),
             "The Wake log does not tell this launch as the rider's open"
         )
-        let build = NSPredicate(format: "label MATCHES '(?s)App launched: build [0-9]+, commit [0-9a-f]{7}.*, iOS [0-9].*'")
+        let build = NSPredicate(
+            format: "label MATCHES '(?s)App launched: build [0-9]+, commit [0-9a-f]{7}.*, iOS [0-9].*'"
+        )
         XCTAssertTrue(
             wakeLogShows(app.staticTexts.matching(build).firstMatch, in: app),
             "The line of the launch does not name the build, its commit and the iOS version"

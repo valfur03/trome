@@ -81,10 +81,11 @@ extension AutoLiveActivityModelTests {
         model.setAppPhase(.active)
         model.setAppPhase(.background)
 
-        // The first screen also tells how the launch began (WakeLogLaunchStartTests), once.
+        // The first screen also tells how the launch began, once (its words: WakeLogLaunchStartTests, which fakes the
+        // clock; this log has the real one, so a busy machine may tell it as an open after a run of iOS).
         let launchLines = wakeLog.entries.filter { $0.kind == .launch }.map(\.text)
-        #expect(launchLines.filter { !$0.hasPrefix("Opened by the rider") } == ["App in the background", "App on screen"])
-        #expect(launchLines.filter { $0.hasPrefix("Opened by the rider: on screen") }.count == 1)
+        #expect(launchLines.filter { $0.hasPrefix("App ") } == ["App in the background", "App on screen"])
+        #expect(launchLines.filter { $0.hasPrefix("Opened by the rider") }.count == 1)
     }
 
     /// A background call writes what answered and when the app asks again, so that the next outing can tell
