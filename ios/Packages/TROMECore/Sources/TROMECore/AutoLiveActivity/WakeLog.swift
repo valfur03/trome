@@ -36,11 +36,14 @@ public final class WakeLog {
 
     public private(set) var entries: [WakeLogEntry]
     /// When this process made the log: its launch, as the composition root makes the log at once.
+    /// For a launch that iOS prepared in advance, the moment that iOS resumed it (`recordLaunchResumed`).
     /// The lines of a wake and of the start token count their seconds from it.
-    public let launchedAt: Date
+    public internal(set) var launchedAt: Date
     @ObservationIgnored let storage: any KeyValueStore
     @ObservationIgnored let now: @Sendable () -> Date
     @ObservationIgnored var launchStart = LaunchStart()
+    /// Set from a launch that iOS prepared in advance to the moment that iOS resumes it.
+    @ObservationIgnored var waitsForResume = false
 
     public init(storage: any KeyValueStore, now: @escaping @Sendable () -> Date = { Date() }) {
         self.storage = storage

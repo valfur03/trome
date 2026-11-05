@@ -186,6 +186,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 "App launched" is written at the start of each launch, with the build number, the commit that the build was made from ("with changes not committed" when its `ios/` folder had some) and the iOS version.
 The launch lines after it say how the launch began, from whether a screen of the app came to the front: "Opened by the rider" with the seconds after the launch; with no screen in the first 5 s, "iOS ran the app", then "Opened by the rider" with the time since, when you open it later;
 at the next launch, "How the previous launch began: unknown" when the app stopped or iOS suspended it before it could tell.
+When iOS prepared the app in advance (it may start an app ahead of a tap, then pause it), "App launched" ends with "prepared in advance by iOS" and keeps the time of that start; "Launch resumed" is then the launch, and the seconds count from it.
 Only a line "iOS: entered" a station after it, or "first state of a new area: inside" a station, says that iOS woke the app near that station.
 After a station, in an "entered" or "left" line or in a line "first state of a new area: inside", the brackets say where the phone was when iOS sent the event, for example "(phone 85 m away, ±12 m, 4 s old)": the distance from the centre of the station, the accuracy, and the age of the last position that iOS had.
 The time of the line is when iOS woke the app: the gap from the time when you crossed the edge of the area is how late iOS was.
