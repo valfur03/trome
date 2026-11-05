@@ -4,30 +4,11 @@
 }
 
 /*
- * The codes that may not fit the end of a line on a phone (src/long-inline-code.ts says which).
- * One that fits a phone line moves to the next line whole, with the punctuation next to it;
- * it wraps inside only in a column narrower than itself.
+ * A code that may be too long for a line on a phone (src/long-inline-code.ts says which) wraps like text.
+ * Its padding stays at its two ends only: Chrome does not count a padding cloned on each line when it breaks a long word,
+ * so the line passed the column by 2 to 3 px.
  */
-.sl-markdown-content :not(pre) > code.whole {
-  display: inline-block;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: break-word;
-}
-
-.sl-markdown-content .code-unit {
-  white-space: nowrap;
-}
-
-/* It leaves room in the column for the punctuation. */
-.sl-markdown-content .code-unit > code.whole {
-  max-width: calc(100% - 1.5em);
-}
-
-/* One that can never fit a phone line wraps like text, with its padding on each line. */
 .sl-markdown-content :not(pre) > code.wraps {
   white-space: normal;
   overflow-wrap: break-word;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
 }
