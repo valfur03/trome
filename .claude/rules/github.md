@@ -4,6 +4,8 @@ paths:
   - ".github/actions/**"
   - "server/scripts/deploy.sh"
   - "server/scripts/deploy-check.ts"
+  - "ios/scripts/release-build-number.py"
+  - "ios/scripts/release-workflow-check.py"
 commands:
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+(secret|variable)(\s|$)'
   - '^(\S*/)?gh(\s+(-R|--repo)\s+\S+|\s+--?\S+)*\s+workflow\s+(run|enable|disable)(\s|$)'
@@ -55,5 +57,7 @@ How you know that a change is one: `git diff main...task/<id>` shows a file of `
 - **The App Store click stays**: the release job keeps the environment of the signing, and no step or token can answer a waiting deployment.
 - **Third-party actions are pinned**: in a job that holds a secret, each `uses:` that is not `actions/...` names a full commit SHA.
   Why: a tag can be moved to new code, which then runs with the secret.
+- **The release workflow of the app** (`release.yml`): `make release-workflow-check` (part of `make check`) proves these clauses on the file, and the pins and the no-artifact rule in it and in the workflows that it calls; the reviewer still reads each step for a way to print a value, which no check of the text can rule out.
+  A change of a guard changes the check and its test (`ios/scripts/tests/release-workflow-check-test.sh`) in the same task, never the check alone.
 
 The reviewer writes one line per check in the task notes, with what it saw; a failed check is a high finding.

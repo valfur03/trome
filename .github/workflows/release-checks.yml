@@ -2,6 +2,7 @@ name: Release checks
 
 # The checks of a release, on GitHub's Mac, with the Xcode that ios/project.yml asks.
 # Started by hand only: Actions > Release checks > Run workflow, or gh workflow run release-checks.yml --ref <branch>.
+# The release workflow (release.yml) runs it too, first, before any job that holds a secret.
 # It holds no secret, signs nothing and uploads nothing. The repo is public, so its logs are public:
 # no step prints Info.plist or the build settings, and the archive is never uploaded as an artifact.
 # The summary of the run gives the Xcode build, the image, the wait for the runner, and the outcome and minutes of each check.
@@ -13,6 +14,7 @@ name: Release checks
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions: {}
 
