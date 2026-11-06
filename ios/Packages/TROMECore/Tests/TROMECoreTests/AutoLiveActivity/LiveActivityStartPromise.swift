@@ -45,22 +45,37 @@ struct LiveActivityStartPromise: Decodable {
     }
 }
 
-/// How the builds read an answer to the start: the Live Activity comes, or nothing
-/// (an older build sends its arrival notification instead).
+/// How the builds read an answer to the start: the Live Activity comes, or nothing (1.0.0 (4) sends its arrival
+/// notification instead); from 1.0.0 (5), a refusal can also make the build drop its start token.
 enum PromisedStartReading: Equatable {
     case start
-    case fallback
+    /// No start, from the status alone: the set judges no body, so the build may read one either way.
+    case noStart
+    /// No start, and the build keeps its start token: the body has no reason that names the token.
+    case noStartKeepingTheToken
+    /// No start, and the build drops the start token: the server relays a reason of Apple that names the token.
+    case noStartDroppingTheToken
 }
 
 extension PromisedAnswer {
     /// How the builds read this answer to the start, from the shape of the promise, as the words of its `reads` say:
-    /// status 200 with a result of `oneOf` is the start; any status out of 2xx, with no promised body, is the fallback.
+    /// status 200 with a result of `oneOf` is the start; status 502 with the result `refused` and a reason of `oneOf`
+    /// drops the token; any status out of 2xx is no start, which keeps the token when the body promises a reason
+    /// of `noneOf` alone.
     func startReading() throws -> PromisedStartReading {
-        if status.exact == 200, body.json?["result"]?.oneOf?.isEmpty == false {
+        let json = body.json
+        if status.exact == 200, json?["result"]?.oneOf?.isEmpty == false {
             return .start
         }
-        if status.notClass == "2xx", body.json == nil, body.primAnswer != true {
-            return .fallback
+        if status.exact == 502, json?["result"]?.exact == .text("refused"), json?["reason"]?.oneOf?.isEmpty == false {
+            return .noStartDroppingTheToken
+        }
+        if status.notClass == "2xx", body.primAnswer != true {
+            guard let json else { return .noStart }
+            let reason = json["reason"]
+            if json.keys.sorted() == ["reason"], reason?.noneOf?.isEmpty == false, reason?.oneOf == nil {
+                return .noStartKeepingTheToken
+            }
         }
         throw BuildPromiseSetError.unknown("how the builds read the start answer \"\(when)\"")
     }

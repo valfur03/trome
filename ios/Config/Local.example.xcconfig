@@ -30,8 +30,8 @@ TROME_BUNDLE_ID_PREFIX = com.example
 // TROME_SILENT_START = YES
 
 // Optional, only to archive a TestFlight build for a walk: YES puts the Wake log into the Release build whose
-// CURRENT_PROJECT_VERSION (ios/Config/Base.xcconfig) is the number at the end of the name, here build 5.
+// CURRENT_PROJECT_VERSION (ios/Config/Base.xcconfig) is the number at the end of the name, here build 6.
 // It records on the phone each wake by iOS, each arrival decision and each ask of the start, and the button at the
 // top right of the main screen opens it (ios/guide/testing-tools.md). Debug builds always have it.
 // The next build number turns it off by itself, so a store build never has it; remove the line after the walk.
-// TROME_WAKE_LOG_BUILD_5 = YES
+// TROME_WAKE_LOG_BUILD_6 = YES

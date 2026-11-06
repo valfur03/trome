@@ -16,7 +16,7 @@ export type PushKey = "with a push key" | "with no push key";
 
 interface FakeNetwork {
   prim: "answers" | "unreachable";
-  apple: "takes the start" | "refuses the start" | "refuses the channel" | "does not answer";
+  apple: "takes the start" | "refuses the start" | "says the token is unregistered" | "asks to slow down" | "refuses the channel" | "does not answer";
 }
 
 interface StartContext {
@@ -71,6 +71,12 @@ function fakeNetwork(): FakeNetwork {
     if (url.includes("/3/device/") && network.apple === "refuses the start") {
       return Promise.resolve(appleRefusal("BadDeviceToken"));
     }
+    if (url.includes("/3/device/") && network.apple === "says the token is unregistered") {
+      return Promise.resolve(appleRefusal("Unregistered", 410));
+    }
+    if (url.includes("/3/device/") && network.apple === "asks to slow down") {
+      return Promise.resolve(appleRefusal("TooManyRequests", 429));
+    }
     return Promise.resolve(new Response(null, { status: 200 }));
   });
   return network;
@@ -102,6 +108,28 @@ const situations: Record<PushKey, Record<string, Record<string, StartSituation>>
       },
       "when it refuses the channel of the station": (context) => {
         context.network.apple = "refuses the channel";
+        return ask(context);
+      },
+    },
+    "Apple's push service says that the start token is not valid": {
+      "with the reason BadDeviceToken of both services": (context) => {
+        context.network.apple = "refuses the start";
+        return ask(context);
+      },
+      "with the reason Unregistered": (context) => {
+        context.network.apple = "says the token is unregistered";
+        return ask(context);
+      },
+    },
+    "Apple's push service refuses the channel of the station": {
+      "with the reason InvalidProviderToken": (context) => {
+        context.network.apple = "refuses the channel";
+        return ask(context);
+      },
+    },
+    "Apple's push service refuses the start for a reason that is not the start token": {
+      "with the reason TooManyRequests": (context) => {
+        context.network.apple = "asks to slow down";
         return ask(context);
       },
     },

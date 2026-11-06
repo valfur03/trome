@@ -62,13 +62,24 @@ extension PromisedAnswer {
     /// Replies that keep this promise of the start of the Live Activity, as above. When the promise names no body,
     /// each status also comes with a body that says the start came, and the first status with other bodies:
     /// the server check judges no body then, so the build must read the status alone.
+    /// When the promise names a body but not its result, each reply also comes as a refusal (status 502, result
+    /// `refused`) if the promise allows that status: the build reads the reason of a refusal only then.
     func startReplies() throws -> [PromisedReply] {
         var first = PromisedReply()
         if body.json != nil {
             first.json = [:]
         }
         let anyBody = body.json == nil && body.primAnswer != true ? [Self.anyStartBody] : []
-        return try replies(from: first, parts: [statusSamples()] + headerSamples() + jsonSamples() + anyBody)
+        let replies = try replies(from: first, parts: [statusSamples()] + headerSamples() + jsonSamples() + anyBody)
+        let refusalStatus = try statusSamples().contains { $0.shown == "status 502" }
+        guard body.json != nil, body.json?["result"] == nil, refusalStatus else { return replies }
+        return replies + replies.map { reply in
+            var refusal = reply
+            refusal.status = 502
+            refusal.json?["result"] = "refused"
+            refusal.shown = ["status 502", "result: refused"] + reply.shown.filter { !$0.hasPrefix("status ") }
+            return refusal
+        }
     }
 
     private static var anyStartBody: [ReplySample] {
@@ -192,9 +203,12 @@ extension PromisedAnswer {
         ].map { text, seconds in
             SampleValue(value: .text(text), date: PromisedReply.now.addingTimeInterval(seconds))
         },
-        // A reason that no build knows, and every reason that this app reads as the server out.
-        "reason": (["prim-failure", "a-reason-that-no-build-knows"] + ServerOutAnswer.reasonsOfAnEmptyBudget.sorted())
-            .map { SampleValue(value: .text($0)) }
+        // A reason that no build knows, every reason that this app reads as the server out, and reasons of Apple that
+        // the server relays when it cannot start the Live Activity, the two that name the start token among them.
+        "reason": (
+            ["prim-failure", "a-reason-that-no-build-knows"] + ServerOutAnswer.reasonsOfAnEmptyBudget.sorted()
+                + ["BadDeviceToken", "Unregistered", "InvalidProviderToken", "no-answer"]
+        ).map { SampleValue(value: .text($0)) }
     ]
 
     /// Dates of every day of the week and every month, written as an HTTP date (RFC 9110, IMF-fixdate).

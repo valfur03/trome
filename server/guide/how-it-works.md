@@ -39,7 +39,7 @@ The builds that riders may hold are the rows of a table in the [release guide](.
 
 Each of them has a recorded set of promises in [`contracts/builds/`](../../contracts/builds/), one folder per set, written at its upload from the app code at its tag.
 Its `promises.json` holds the request that the build sends (the path, the shapes of stop reference, the headers and the token scheme), how it reads each answer, how long it waits for one answer and how often it asks.
-From 1.0.0 (4), the first build that asks the server to start the Live Activity, it also holds that start under `liveActivityStart`: the request, the shapes of station and start token, how long the build waits, and which answers it reads as the start and which as its arrival notification instead.
+From 1.0.0 (4), the first build that asks the server to start the Live Activity, it also holds that start under `liveActivityStart`: the request, the shapes of station and start token, how long the build waits, and which answers it reads as the start and which as no start.
 Its `prim/` folder holds its own copy of the PRIM answers that the server passes through, so that a new recording elsewhere changes nothing for it.
 
 `make server-check` judges the server against every set, as the build reads each answer, in [`build-promises.test.ts`](../test/cloudflare/build-promises.test.ts):
@@ -48,6 +48,7 @@ Its `prim/` folder holds its own copy of the PRIM answers that the server passes
 - Everything else is judged by what the build reads: the class of the status (any `2xx` is times), the headers that it reads and their exact form, the keys and values of the `out` answer, and the reasons that it knows.
   So a change that the build reads the same way passes: another retry time, another age of a held answer, another status that is not `2xx` for `out`.
 - The start of the Live Activity is judged by what the build reads too: status 200 with the result `started` or `already-started` is the start, and any other status is no start, whatever the body says (1.0.0 (4) then sends its arrival notification; later builds send none).
+  From 1.0.0 (5), a build also drops its start token when the answer is status 502 with the result `refused` and the reason `BadDeviceToken` or `Unregistered`, so the server gives these reasons only when Apple says them of the token.
   Its situations are in [`start-promises.ts`](../test/cloudflare/start-promises.ts), and most of them run with a push key of Apple made for the run, in [`build-promises-with-push-key.test.ts`](../test/cloudflare/build-promises-with-push-key.test.ts), which also fails on a set of a build from 1.0.0 (4) with no `liveActivityStart`.
 - The longest wait of the server for PRIM, with room for the wake of a server object and for the phone, stays under the shortest wait of a build ([`wait-of-the-builds.test.ts`](../test/core/relay/wait-of-the-builds.test.ts)).
 - The longest start of a Live Activity, with PRIM and Apple as late as their timeouts, and with the same room, stays under the shortest wait of a build for that answer ([`wait-of-the-start.test.ts`](../test/core/live-activity/wait-of-the-start.test.ts)).

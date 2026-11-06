@@ -278,10 +278,10 @@ With your paid team in it, Xcode signs the release build automatically, and make
 
 <Badge text="Items 3 to 8 checked 11 October 2026, Xcode 27.0" variant="success" />
 
-Builds 1 to 4 were archived and uploaded with items 3 to 8 of the list below (open the project, archive, validate, distribute, wait, read the status), from 11 October 2026, in Xcode 27.0 (27A266a).
+Builds 1 to 5 were archived and uploaded with items 3 to 8 of the list below (open the project, archive, validate, distribute, wait, read the status), from 11 October 2026, in Xcode 27.0 (27A266a).
 The choices of the **Distribute App** list in item 6 were read on 18 October 2026, in the Organizer of build 3.
 The tag and the files of items 10 and 11 (the set in `contracts/builds/`, the phone set) were first made for build 4, the day after its upload.
-Nobody noted the output of the checks of items 1 and 2 (`make e2e-proof`, `make release-server-check`, `make release-tokens-check`) on an upload yet: read it with care on build 5, and note what differs.
+Nobody noted the output of the checks of items 1 and 2 (`make e2e-proof`, `make release-server-check`, `make release-tokens-check`) on an upload yet: read it with care on build 6, and note what differs.
 
 Apple's help, read on 3 October 2026: [Distributing your app for beta testing and releases](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases), [Upload builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/),
 [App build statuses](https://developer.apple.com/help/app-store-connect/reference/app-uploads/app-build-statuses/), [Overview of export compliance](https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/),
@@ -391,7 +391,7 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    - **Ready to Submit**, **Ready to Test** or **Testing:** the build passed the upload checks, so go on to [TestFlight](#5-test-with-testflight-your-iphone-first-then-a-small-group).
      The three differ only in who holds the build: **Ready to Submit** has no group yet, **Ready to Test** has no tester yet, and **Testing** is held by a group or a tester.
      The Builds list of 18 October showed builds 1 to 3 as **Testing**, because groups hold them.
-     Nobody noted the status of build 4 before a group held it, so note it on build 5.
+     Nobody noted the status of builds 4 and 5 before a group held them, so note it on build 6.
    - **Missing Compliance:** the build does not answer the encryption question by itself.
      For this build, click **Manage** and say that TROME uses only the encryption built into iOS (its HTTPS connections): that use is exempt, so Apple needs no export compliance documents.
      Then open an issue in the repo, so that the next build answers by itself.
@@ -402,27 +402,27 @@ So right after each upload, you raise `CURRENT_PROJECT_VERSION` by 1 and commit 
    Fix it in the repo, raise the build number by 1 in the same commit, and upload again: a build that Apple refuses reaches no rider, so it gets no tag and no row.
 
 10. Write down the build number that App Store Connect shows.
-    Before any new commit, on `main`, tag the commit that you archived with the version and that number, here 1.0.0 and 5, and push the tag:
+    Before any new commit, on `main`, tag the commit that you archived with the version and that number, here 1.0.0 and 6, and push the tag:
 
     ```sh
-    git tag -a builds/1.0.0/5 -m "TROME 1.0.0 (5)"
-    git push origin builds/1.0.0/5
+    git tag -a builds/1.0.0/6 -m "TROME 1.0.0 (6)"
+    git push origin builds/1.0.0/6
     ```
 
 11. In one commit, add the row of the build to [the builds that riders may hold](#the-builds-that-riders-may-hold), and set `CURRENT_PROJECT_VERSION` to one more than the build number that App Store Connect shows, for the next upload; push it.
-    The same commit records the set of promises of the build in `contracts/builds/<version>-<build>/`, here `contracts/builds/1.0.0-5/`: what the build sends to the server and how it reads each answer, kept until its row is retired.
-    Copy the folder of the newest set, and in its `promises.json` write the new build alone in `builds`, as its row names it, here `"1.0.0 (5)"`.
-    If the app code that asks the server changed since the build of that set (`git diff builds/<old version>/<old build> builds/1.0.0/5 -- ios/Packages/TROMECore/Sources/TROMECore/Trains ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity`), make the copy say what the new code reads, and run `make test` and `make server-check`.
+    The same commit records the set of promises of the build in `contracts/builds/<version>-<build>/`, here `contracts/builds/1.0.0-6/`: what the build sends to the server and how it reads each answer, kept until its row is retired.
+    Copy the folder of the newest set, and in its `promises.json` write the new build alone in `builds`, as its row names it, here `"1.0.0 (6)"`.
+    If the app code that asks the server changed since the build of that set (`git diff builds/<old version>/<old build> builds/1.0.0/6 -- ios/Packages/TROMECore/Sources/TROMECore/Trains ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity`), make the copy say what the new code reads, and run `make test` and `make server-check`.
     From 1.0.0 (4), the first build that asks the server to start the Live Activity, the set also holds that start, under `liveActivityStart`: the request, the shapes of station and start token, how long the build waits, and how it reads each answer.
     When the newest set has no `liveActivityStart`, write it from the start code of the build (`ServerLiveActivityStarter.swift`, `LiveActivityStartAnswer.swift` and `SilentStart.swift`), in the form that [`start-promises.ts`](https://github.com/valfur03/trome/blob/main/server/test/cloudflare/start-promises.ts) reads.
     `make test` fails when the app code does not send and read what the newest set says, and `make server-check` when the server does not keep it; both fail on a set of a build from 1.0.0 (4) with no `liveActivityStart`.
     Never edit an older set: `make server-check` fails on it, and fails too when a build of the table has no set.
-    The same commit records the phone set of the build, next to its promises: run `make phone-set-record BUILD=1.0.0-5`, which refuses when the app code is not the code of the tag.
-    It writes in `contracts/phone/1.0.0-5/` the exact values that this build keeps on the phone for each state of a rider (Automatic mode, the Live Activity that it follows, its last times), and the content of its Live Activity for each case of `contracts/live-activity/cases/`.
+    The same commit records the phone set of the build, next to its promises: run `make phone-set-record BUILD=1.0.0-6`, which refuses when the app code is not the code of the tag.
+    It writes in `contracts/phone/1.0.0-6/` the exact values that this build keeps on the phone for each state of a rider (Automatic mode, the Live Activity that it follows, its last times), and the content of its Live Activity for each case of `contracts/live-activity/cases/`.
     `make test` reads every recorded set with the code of today, and fails when an update would forget what a rider set.
     Never edit a recorded phone set while its build is in the field: `make check` fails when one of its files changes, moves or goes, or when a file joins it, until the row of its build is retired.
-    And the job **Phone set** of the release checks prints `Phone set of 1.0.0 (5): found` or `missing` for the newest build in the field, and fails when it is missing.
-    Then add the line of the build to `ios/Config/BuildTokens.txt`, here `5 = <token>`, with the app token of `ios/Config/Server.xcconfig` that this build holds, and run `make release-tokens-check`: the line of the new build must say **accepted**.
+    And the job **Phone set** of the release checks prints `Phone set of 1.0.0 (6): found` or `missing` for the newest build in the field, and fails when it is missing.
+    Then add the line of the build to `ios/Config/BuildTokens.txt`, here `6 = <token>`, with the app token of `ios/Config/Server.xcconfig` that this build holds, and run `make release-tokens-check`: the line of the new build must say **accepted**.
     That file is not in git, so it is not in the commit.
 
 </Steps>
@@ -856,11 +856,13 @@ Apple's help, read on 11 October 2026: [TestFlight overview](https://developer.a
 | 1.0.0 (2) | 11 October 2026 | `9d83a8d` | TestFlight, until 9 January 2027 | In the field |
 | 1.0.0 (3) | 14 October 2026 | `680ad8f` | TestFlight, until 12 January 2027 | In the field |
 | 1.0.0 (4) | 31 October 2026 | `b3ae1ee` | TestFlight, until 29 January 2027 | In the field |
+| 1.0.0 (5) | 1 November 2026 | `41dee32` | TestFlight, internal testers, until 30 January 2027 | In the field |
 
 Builds 1 and 2 were tagged after their upload, from the history and the time of each archive.
 Build 2 was archived with its build number not yet committed, so its tag is on the commit of that number, made just after the archive with no other change.
 The app files of build 1 are the same in every commit from `dcf1d8d` to `dd59fdd`, so its tag holds the right app code whichever of them was checked out.
 Build 4 was archived from `f105511` and tagged the day after its upload, on `b3ae1ee`: the commits from one to the other change no code that a Release build holds, so its tag holds the app code of the build.
+Build 5 was tagged five days after its upload, on `41dee32`: its archive commit was not noted, but the Organizer shows that it was archived and uploaded on 1 November at about 20:15 Paris time, from the repo folder, which held `41dee32` then.
 
 ### Keep the address of the server
 
@@ -894,6 +896,7 @@ open -e ios/Config/BuildTokens.txt
 2 = <the app token of build 2>
 3 = <the app token of build 3>
 4 = <the app token of build 4>
+5 = <the app token of build 5>
 ```
 
 If you no longer have the token of a build, take it from the archive of that build, as [step 2 of the upload](#4-build-upload-and-check-the-first-build) says for the last one.

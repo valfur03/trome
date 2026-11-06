@@ -229,7 +229,7 @@ A Release build records nothing, unless it is a build for a walk.
 
 ### Record a walk with a TestFlight build
 
-A Release build archived with `TROME_WAKE_LOG_BUILD_<n> = YES` in `ios/Config/Local.xcconfig` has the Wake log, where `<n>` is its build number (`CURRENT_PROJECT_VERSION` in `ios/Config/Base.xcconfig`), for example `TROME_WAKE_LOG_BUILD_5 = YES` for build 5.
+A Release build archived with `TROME_WAKE_LOG_BUILD_<n> = YES` in `ios/Config/Local.xcconfig` has the Wake log, where `<n>` is its build number (`CURRENT_PROJECT_VERSION` in `ios/Config/Base.xcconfig`), for example `TROME_WAKE_LOG_BUILD_6 = YES` for build 6.
 The list icon at the top right of the main screen opens it, and nothing else on the screens changes.
 It records the same lines as a debug build, on the phone only: the app sends none of them anywhere, and only **Share** gives them to someone.
 Use it for a TestFlight build that you walk with, and never submit that build for the App Store.

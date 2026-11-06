@@ -1,0 +1,226 @@
+{
+  "description": "What build 1.0.0 (5) sends to the server and how it reads each answer, recorded from its app code at the tag builds/1.0.0/5. The server must keep giving every answer below as this build reads it, until the release guide retires the build. Never edit this folder: the server changes by adding, and make server-check fails on an edit.",
+  "builds": ["1.0.0 (5)"],
+  "app": {
+    "waitForOneAnswerSeconds": 15,
+    "askEverySeconds": 30,
+    "shortestWaitAfterAnOutAnswerSeconds": 30
+  },
+  "request": {
+    "method": "GET",
+    "path": "/v1/stops/<STOP>/departures",
+    "headers": {
+      "authorization": "Bearer <APP_TOKEN>",
+      "accept": "application/json"
+    }
+  },
+  "stops": [
+    {
+      "stop": "STIF:StopArea:SP:42155:",
+      "shape": "a stop area with a number of 5 digits, as a metro or RER line of the station list asks",
+      "prim": "prim/stop-monitoring-abbesses-stop-area.json"
+    },
+    {
+      "stop": "STIF:StopArea:SP:470549:",
+      "shape": "a stop area with a number of 6 digits",
+      "prim": "prim/stop-monitoring-la-defense-rer-a-at-stop.json"
+    },
+    {
+      "stop": "STIF:StopPoint:Q:463116:",
+      "shape": "a quay, as a metro line with no stop area asks",
+      "prim": "prim/stop-monitoring-abbesses.json"
+    }
+  ],
+  "answers": [
+    {
+      "when": "PRIM answers",
+      "askFor": "every stop",
+      "reads": "the times: any 2xx status, Last-Modified in the one form that the build parses, and the PRIM answer as PRIM gave it; no-store keeps the system cache of the phone from giving an old answer again",
+      "status": { "class": "2xx" },
+      "headers": {
+        "last-modified": { "form": "^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$" },
+        "cache-control": { "form": "(^|,)[ ]*no-store[ ]*(,|$)" }
+      },
+      "body": { "primAnswer": true }
+    },
+    {
+      "when": "PRIM answers with no train",
+      "askFor": "the first stop",
+      "prim": "prim/stop-monitoring-empty.json",
+      "reads": "the times, with no train",
+      "status": { "class": "2xx" },
+      "headers": {
+        "last-modified": { "form": "^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$" },
+        "cache-control": { "form": "(^|,)[ ]*no-store[ ]*(,|$)" }
+      },
+      "body": { "primAnswer": true }
+    },
+    {
+      "when": "the calls of the hour are spent, and the server holds a recent answer of the stop",
+      "askFor": "the first stop",
+      "reads": "the times, as above",
+      "status": { "class": "2xx" },
+      "headers": {
+        "last-modified": { "form": "^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$" },
+        "cache-control": { "form": "(^|,)[ ]*no-store[ ]*(,|$)" }
+      },
+      "body": { "primAnswer": true }
+    },
+    {
+      "when": "the calls of the hour are spent",
+      "askFor": "the first stop",
+      "reads": "the server is out: the build shows no live times until the retry time, and asks again only then",
+      "status": { "notClass": "2xx" },
+      "retryTime": {
+        "header": "retry-after",
+        "headerForm": "^[ \t]*[0-9]+([.][0-9]+)?[ \t]*$",
+        "orBodyKey": "retryAt",
+        "bodyKeyForm": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+      },
+      "body": {
+        "json": {
+          "status": { "is": "out" },
+          "reason": { "oneOf": ["budget"] },
+          "retryAt": { "type": "string", "optional": true }
+        }
+      }
+    },
+    {
+      "when": "PRIM answered 429",
+      "askFor": "the first stop",
+      "reads": "the server is out, as above",
+      "status": { "notClass": "2xx" },
+      "retryTime": {
+        "header": "retry-after",
+        "headerForm": "^[ \t]*[0-9]+([.][0-9]+)?[ \t]*$",
+        "orBodyKey": "retryAt",
+        "bodyKeyForm": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+      },
+      "body": {
+        "json": {
+          "status": { "is": "out" },
+          "reason": { "oneOf": ["prim-limit"] },
+          "retryAt": { "type": "string", "optional": true }
+        }
+      }
+    },
+    {
+      "when": "PRIM fails",
+      "askFor": "the first stop",
+      "reads": "a failure of this stop: the build shows Times unavailable, and asks this stop again only after the retry time; any reason but budget and prim-limit reads this way",
+      "status": { "notClass": "2xx" },
+      "retryTime": {
+        "header": "retry-after",
+        "headerForm": "^[ \t]*[0-9]+([.][0-9]+)?[ \t]*$",
+        "orBodyKey": "retryAt",
+        "bodyKeyForm": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+      },
+      "body": {
+        "json": {
+          "status": { "is": "out" },
+          "reason": { "type": "string", "noneOf": ["budget", "prim-limit"], "optional": true },
+          "retryAt": { "type": "string", "optional": true }
+        }
+      }
+    },
+    {
+      "when": "the server does not accept the app token",
+      "askFor": "the first stop",
+      "requestHeaders": { "authorization": "Bearer <A_TOKEN_THAT_THE_SERVER_DOES_NOT_ACCEPT>" },
+      "reads": "the refusal: this build reads the status 401 and the error unauthorized together as Update the app, and makes no call until the app is opened or a Live Activity starts; another 401, or a 403, is a failure like any other; other keys may join the body",
+      "status": { "is": 401 },
+      "body": {
+        "json": {
+          "error": { "is": "unauthorized" }
+        }
+      }
+    }
+  ],
+  "liveActivityStart": {
+    "app": {"waitForTheAnswerSeconds": 10},
+    "request": {
+      "method": "POST",
+      "path": "/v1/stations/<STATION>/live-activity",
+      "headers": {"authorization": "Bearer <APP_TOKEN>", "content-type": "application/json", "accept": "application/json"},
+      "body": {"startToken": "<START_TOKEN>"}
+    },
+    "stations": [
+      {"station": "IDFM:22059", "shape": "a station number of 5 digits, as most metro stations of the station list"},
+      {"station": "IDFM:483900", "shape": "a station number of 6 digits"},
+      {
+        "station": "IDFM:monomodalStopPlace:43234",
+        "shape": "a stop place of 5 digits, as most RER stations of the station list"
+      },
+      {"station": "IDFM:monomodalStopPlace:462398", "shape": "a stop place of 6 digits"}
+    ],
+    "startTokens": [
+      {
+        "startToken": "0b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186",
+        "shape": "32 bytes in lowercase hex, the size of a device token"
+      },
+      {
+        "startToken": "073c71a6db10457aafe4194e83b8ed22578cc1f62b6095caff34699ed3083d72a7dc11467bb0e51a4f84b9ee23588dc2f72c6196cb00356a9fd4093e73a8dd12477cb1e61b5085baef24598ec3f82d62",
+        "shape": "80 bytes in lowercase hex: the build sends the start token of ActivityKit at the length that iOS gives it"
+      }
+    ],
+    "answers": [
+      {
+        "when": "Apple's push service takes the start",
+        "askFor": "every station and start token",
+        "reads": "the start: status 200 with the result started or already-started; the build then does nothing more, and the Live Activity comes by itself; other keys may join the body",
+        "status": {"is": 200},
+        "body": {"json": {"result": {"oneOf": ["started", "already-started"]}}}
+      },
+      {
+        "when": "the same start token asks again for the same station, a moment after the start",
+        "askFor": "the first station",
+        "reads": "the start, as above: iOS often gives the build the same arrival twice",
+        "status": {"is": 200},
+        "body": {"json": {"result": {"oneOf": ["started", "already-started"]}}}
+      },
+      {
+        "when": "Apple's push service says that the start token is not valid",
+        "askFor": "the first station",
+        "reads": "no start, and the build drops this start token, so that no later ask uses it: status 502 with the result refused and the reason BadDeviceToken (no service of Apple knows the token) or Unregistered (the token is no longer active); other keys may join the body",
+        "status": {"is": 502},
+        "body": {"json": {"result": {"is": "refused"}, "reason": {"oneOf": ["BadDeviceToken", "Unregistered"]}}}
+      },
+      {
+        "when": "Apple's push service refuses the channel of the station",
+        "askFor": "the first station",
+        "reads": "no start, and the build keeps its start token: any status but 200 is no start, whatever the body says, and the body is a JSON object whose reason, if any, is neither BadDeviceToken nor Unregistered, which would make the build drop a token that works; nothing else comes, and no arrival notification",
+        "status": {"notClass": "2xx"},
+        "body": {"json": {"reason": {"type": "string", "noneOf": ["BadDeviceToken", "Unregistered"], "optional": true}}}
+      },
+      {
+        "when": "Apple's push service refuses the start for a reason that is not the start token",
+        "askFor": "the first station",
+        "reads": "no start, and the build keeps its start token, as above: the same token may start the Live Activity at the next station",
+        "status": {"notClass": "2xx"},
+        "body": {"json": {"reason": {"type": "string", "noneOf": ["BadDeviceToken", "Unregistered"], "optional": true}}}
+      },
+      {
+        "when": "Apple's push service does not answer",
+        "askFor": "the first station",
+        "reads": "no start, and the build keeps its start token, as above",
+        "status": {"notClass": "2xx"},
+        "body": {"json": {"reason": {"type": "string", "noneOf": ["BadDeviceToken", "Unregistered"], "optional": true}}}
+      },
+      {
+        "when": "the server has no push key of Apple",
+        "askFor": "the first station",
+        "reads": "no start, and the build keeps its start token, as above",
+        "status": {"notClass": "2xx"},
+        "body": {"json": {"reason": {"type": "string", "noneOf": ["BadDeviceToken", "Unregistered"], "optional": true}}}
+      },
+      {
+        "when": "the server does not accept the app token",
+        "askFor": "the first station",
+        "requestHeaders": {"authorization": "Bearer <A_TOKEN_THAT_THE_SERVER_DOES_NOT_ACCEPT>"},
+        "reads": "no start, and the build keeps its start token, as above: on this route, this build shows no Update the app for a refused token",
+        "status": {"notClass": "2xx"},
+        "body": {"json": {"reason": {"type": "string", "noneOf": ["BadDeviceToken", "Unregistered"], "optional": true}}}
+      }
+    ]
+  }
+}

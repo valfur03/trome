@@ -98,8 +98,16 @@ struct LiveActivityStartPromisesTests {
                 let client = ServerStubHTTPClient { _ in stubReply }
                 let starter = ServerLiveActivityStarter(server: .test, httpClient: client)
                 let read = await starter.start(stationId: ask.station, startToken: ask.startToken)
-                if read.startsTheLiveActivity != (reading == .start) {
-                    problems.append("\(answer.when), \(reply.shown.joined(separator: ", ")): reads \(read.summary)")
+                let dropsTheToken: Bool? = switch reading {
+                case .start, .noStartKeepingTheToken: false
+                case .noStartDroppingTheToken: true
+                case .noStart: nil
+                }
+                if read.startsTheLiveActivity != (reading == .start)
+                    || dropsTheToken.map({ $0 != read.refusesTheStartToken }) == true {
+                    let drops = read.refusesTheStartToken ? ", drops the token" : ""
+                    let shown = reply.shown.joined(separator: ", ")
+                    problems.append("\(answer.when), \(shown): reads \(read.summary)\(drops)")
                 }
             }
         }
