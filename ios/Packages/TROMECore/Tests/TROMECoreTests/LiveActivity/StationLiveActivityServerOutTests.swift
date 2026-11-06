@@ -3,6 +3,7 @@ import Testing
 @testable import TROMECore
 
 @MainActor
+@Suite(.bounded)
 struct StationLiveActivityServerOutTests {
     private let clock = TestClock()
     private let client = StubStationLiveActivityClient()

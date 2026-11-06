@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct StationCatalogTests {
     private let near = Station(
         id: "near",
@@ -91,6 +92,7 @@ struct StationCatalogTests {
     }
 }
 
+@Suite(.bounded)
 struct BundledStationCatalogTests {
     private let catalog: StationCatalog
 

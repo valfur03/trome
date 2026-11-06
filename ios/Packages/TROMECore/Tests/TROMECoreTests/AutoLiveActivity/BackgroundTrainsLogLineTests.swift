@@ -5,6 +5,7 @@ import Testing
 /// The Wake log line of a background call tells the next outing whether the app asked, what answered, how old
 /// the answer was, and what it handed to iOS: the minutes of the lock screen once stood still for 4 minutes,
 /// and no log could tell why.
+@Suite(.bounded)
 struct BackgroundTrainsLogLineTests {
     private let utc = TimeZone(identifier: "UTC")!
     private let lineA = TransitLine(mode: .rer, name: "A")

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct TransitLineTests {
     private func json(_ line: TransitLine) throws -> String {
         let encoder = JSONEncoder()

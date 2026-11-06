@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct StationCatalogHubsTests {
     private let line4 = TransitLine(mode: .metro, name: "4", stopIds: ["IDFM:4"])
     private let line1 = TransitLine(mode: .metro, name: "1", stopIds: ["IDFM:1"])

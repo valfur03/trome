@@ -4,6 +4,7 @@ import Testing
 
 /// The number that a wait reads on the Live Activity, as its countdown runs: a metro wait reads the whole minutes left,
 /// rounded down, like the platform screens of the metro; an RER wait keeps its round-up.
+@Suite(.bounded)
 struct TrainCountdownTests {
     let trainTime = Date(timeIntervalSince1970: 1_000_000)
     let line4 = TransitLine(mode: .metro, name: "4", stopIds: ["IDFM:40"])

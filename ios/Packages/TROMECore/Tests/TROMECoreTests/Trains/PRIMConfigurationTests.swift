@@ -1,6 +1,7 @@
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct PRIMConfigurationTests {
     @Test func readsTheKeyFromTheInfoDictionary() {
         let configuration = PRIMConfiguration(infoDictionary: ["PRIMAPIKey": "abc123"])

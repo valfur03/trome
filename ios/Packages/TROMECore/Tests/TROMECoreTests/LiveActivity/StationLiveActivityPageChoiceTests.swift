@@ -5,6 +5,7 @@ import Testing
 /// A rider at a station with several lines taps to the page of their line, and the pushes of the server, which show
 /// the first page to every rider of the station, keep them on it while they carry it.
 @MainActor
+@Suite(.bounded)
 struct StationLiveActivityPageChoiceTests {
     private let clock = TestClock()
     private let client = StubStationLiveActivityClient()

@@ -4,6 +4,7 @@ import Testing
 @testable import TROMECore
 
 @MainActor
+@Suite(.bounded)
 struct NextTrainsModelTokenRefusalTests {
     private let now = Date(timeIntervalSince1970: 1_000_000)
     private let line12 = TransitLine(mode: .metro, name: "12")

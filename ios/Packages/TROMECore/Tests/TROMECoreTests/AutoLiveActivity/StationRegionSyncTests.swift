@@ -51,7 +51,7 @@ final class FakeRegionMonitor: RegionMonitor {
 }
 
 @MainActor
-@Suite(.realTime)
+@Suite(.bounded)
 struct StationRegionSyncTests {
     private static func plan(_ name: String, count: Int = StationRegionPlan.maximumRegions) -> [WatchedRegion] {
         (0..<count).map { index in

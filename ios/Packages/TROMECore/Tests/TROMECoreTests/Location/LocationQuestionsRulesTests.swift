@@ -1,6 +1,7 @@
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct LocationQuestionsRulesTests {
     @Test func asksWhileUsingFirstWhenTheRiderWasNeverAsked() {
         var rules = LocationQuestionsRules()

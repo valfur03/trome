@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct FakeTrainsLaunchTests {
     private let executable = "/path/to/TROME"
     private let storage = InMemoryKeyValueStore()

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct StationActivityContentTests {
     typealias ContentState = StationActivityAttributes.ContentState
 

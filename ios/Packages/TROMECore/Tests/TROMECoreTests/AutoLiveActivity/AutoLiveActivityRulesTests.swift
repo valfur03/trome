@@ -12,6 +12,7 @@ enum AutoTestPlaces {
     static let atB = stationB.coordinate
 }
 
+@Suite(.bounded)
 struct AutoLiveActivityRulesTests {
     typealias Places = AutoTestPlaces
     let rules = AutoLiveActivityRules()

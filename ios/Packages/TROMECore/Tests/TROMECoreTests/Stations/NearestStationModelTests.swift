@@ -24,7 +24,7 @@ private final class MockLocationPermission: LocationPermission {
 }
 
 @MainActor
-@Suite(.realTime)
+@Suite(.bounded)
 struct NearestStationModelTests {
     private let gps = ControlledLocationProvider()
     private let nation = Station(

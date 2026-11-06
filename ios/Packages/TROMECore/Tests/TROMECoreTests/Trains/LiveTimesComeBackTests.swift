@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct LiveTimesComeBackTests {
     private func calendar(_ timeZone: String) -> Calendar {
         var calendar = Calendar(identifier: .gregorian)

@@ -4,6 +4,7 @@ import Testing
 
 /// Each wake line tells a fresh launch by iOS from an event that came to a running app: the log of a walk with no
 /// such word could not tell why a station gave nothing.
+@Suite(.bounded)
 struct WakeProcessTests {
     let launch = Date(timeIntervalSince1970: 1_000_000)
 

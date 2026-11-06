@@ -14,6 +14,7 @@ final class InMemoryKeyValueStore: KeyValueStore {
     }
 }
 
+@Suite(.bounded)
 struct LocationSourceStoreTests {
     private let chatelet = FakePosition(name: "Châtelet", coordinate: Coordinate(48.85855, 2.34743))
 

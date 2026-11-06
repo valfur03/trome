@@ -4,6 +4,7 @@ import Testing
 
 /// The background time that iOS still gives the app, as a wake line and the ask of the start say it: a walk reads
 /// from it whether iOS was about to suspend the app.
+@Suite(.bounded)
 struct BackgroundTimeTests {
     @Test func tellsTheWholeSecondsLeft() {
         #expect(BackgroundTime.line(remaining: 29.9) == "29 s of background time left")

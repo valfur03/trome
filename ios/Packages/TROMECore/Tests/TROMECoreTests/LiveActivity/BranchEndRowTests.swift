@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct BranchEndRowTests {
     private static let ends = ["Saint-Denis - Université", "Asnières - Gennevilliers - Les Courtilles"]
     private let now = Date(timeIntervalSince1970: 1_800_000_000)

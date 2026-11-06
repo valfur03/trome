@@ -3,6 +3,7 @@ import Synchronization
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct PRIMAnswerLogTests {
     private let base = PRIMDeparturesProviderTests()
     private let stopArea = "STIF:StopArea:SP:42155:"

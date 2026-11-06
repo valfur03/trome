@@ -1,6 +1,7 @@
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct PRIMStopReferenceTests {
     @Test func asksForAMetroStopByItsQuay() {
         #expect(PRIMStopReference.monitoringRef(forStopId: "IDFM:463116") == "STIF:StopPoint:Q:463116:")

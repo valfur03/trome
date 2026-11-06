@@ -7,7 +7,7 @@ import Testing
 /// app does with each one that ActivityKit gives, and claim nothing about a real push.
 /// A wait that the code never ends fails its test at the time limit, rather than hanging the run.
 @MainActor
-@Suite(.timeLimit(.minutes(1)))
+@Suite(.timeLimit(.minutes(1)), .bounded)
 struct StartTokensTests {
     static let old = "aaaa0000aaaa0000aaaa0000aaaa0000"
     static let fresh = "bbbb1111bbbb1111bbbb1111bbbb1111"

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct StationRegionPlanTests {
     private let origin = Coordinate(48.8500, 2.3500)
 

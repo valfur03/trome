@@ -3,6 +3,7 @@ import Testing
 @testable import TROMECore
 
 @MainActor
+@Suite(.bounded)
 struct WakeLogTests {
     let storage = InMemoryKeyValueStore()
     let start = Date(timeIntervalSince1970: 1_000_000)

@@ -5,6 +5,7 @@ import Testing
 
 /// The debug log keeps every field of a PRIM entry that names a train, so that a recording can tell two entries of
 /// one minute apart: a plan entry that was never updated, or a real second train.
+@Suite(.bounded)
 struct PRIMAnswerLogFieldsTests {
     private static let northQuay = "STIF:StopPoint:Q:22225:"
     private static let fieldNames = [

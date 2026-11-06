@@ -15,6 +15,7 @@ import Testing
 /// the newer builds can hold.
 /// With no `PHONE_SET_RECORD`, `make test` skips it.
 @MainActor
+@Suite(.bounded)
 struct PhoneSetRecorder {
     nonisolated static let output = ProcessInfo.processInfo.environment["PHONE_SET_RECORD"]
         .map { URL(filePath: $0, directoryHint: .isDirectory) }

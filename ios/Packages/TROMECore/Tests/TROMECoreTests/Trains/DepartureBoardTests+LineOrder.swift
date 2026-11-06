@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct DepartureBoardLineOrderTests {
     private let line1 = TransitLine(mode: .metro, name: "1")
     private let rerA = TransitLine(mode: .rer, name: "A")

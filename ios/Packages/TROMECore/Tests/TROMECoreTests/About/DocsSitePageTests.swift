@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct DocsSitePageTests {
     @Test(arguments: [
         (DocsSitePage.privacy, "fr", "https://trome.valfur.fr/fr/privacy/"),

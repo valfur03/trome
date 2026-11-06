@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct TrainServerConfigurationTests {
     private func configuration(host: Any?, token: Any?) -> TrainServerConfiguration? {
         var info: [String: Any] = [:]

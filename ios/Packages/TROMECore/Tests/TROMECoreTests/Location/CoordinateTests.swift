@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct CoordinateTests {
     @Test(arguments: ["48.8584, 2.2945", "48.8584,2.2945", "48.8584 2.2945", " 48.8584 ; 2.2945 "])
     func parsesLatitudeThenLongitude(text: String) {

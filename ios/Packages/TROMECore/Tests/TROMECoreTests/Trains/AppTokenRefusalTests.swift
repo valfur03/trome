@@ -6,6 +6,7 @@ import Testing
 /// (an empty budget, a PRIM failure or limit, times, a bad stop), a time-out, no network, and other refusals
 /// never do.
 @MainActor
+@Suite(.bounded)
 struct AppTokenRefusalTests {
     static let refusalExample = "departures-unauthorized"
     private let abbesses = PRIMDeparturesProviderTests().abbesses

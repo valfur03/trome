@@ -19,6 +19,7 @@ struct APIExample: Decodable {
     let response: Response
 }
 
+@Suite(.bounded)
 struct TrainServerContractTests {
     static let exampleNames = (try? Fixture.apiExampleNames(of: "departures")) ?? []
     static let requestTime = Fixture.date("2026-10-02T08:30:00Z")

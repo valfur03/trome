@@ -7,6 +7,7 @@ import Testing
 /// it says, and reads each promised answer as the set says.
 /// Why: the set of a new build is copied from the newest one at its upload, and the server is judged against it
 /// (`make server-check`); a set that the app code does not keep lets the server check pass while the start breaks.
+@Suite(.bounded)
 struct LiveActivityStartPromisesTests {
     /// The first build that asks the server to start the Live Activity: every set from it holds the start.
     static let firstBuildThatStarts = BuildNumber(version: [1, 0, 0], build: 4)

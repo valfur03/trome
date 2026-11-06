@@ -32,6 +32,7 @@ final class StubHTTPClient: HTTPClient {
     }
 }
 
+@Suite(.bounded)
 struct PRIMDeparturesProviderTests {
     let line12 = TransitLine(
         mode: .metro,

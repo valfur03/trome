@@ -6,6 +6,7 @@ import Testing
 /// entries of one side under 60 s apart (the ghost row), and a train at the platform that the Live Activity hides
 /// because its time has passed. Nothing else from PRIM goes in the record.
 @MainActor
+@Suite(.bounded)
 struct PRIMWalkRecordTests {
     private static let stopArea = "STIF:StopArea:SP:470549:"
     private static let platform = "STIF:StopPoint:Q:473921:"

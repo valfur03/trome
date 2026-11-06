@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct ExampleTimetableTests {
     // The phone locked within 10 s of the tap, then iOS suspends the app about 9 s later.
     private static let lastUpdateBeforeTheSuspension: TimeInterval = 19

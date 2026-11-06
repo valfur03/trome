@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct AutomaticModeTests {
     private static let paris: Calendar = {
         var calendar = Calendar(identifier: .gregorian)

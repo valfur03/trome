@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct ReportedArrivalRulesTests {
     private let station = Station(id: "s", name: "S", coordinate: Coordinate(48.8500, 2.3500), lines: [])
     private let insideTheArea = Coordinate(48.8505, 2.3500)

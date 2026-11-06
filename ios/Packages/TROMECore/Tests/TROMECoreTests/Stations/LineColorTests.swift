@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct LineColorTests {
     @Test func readsTheRedGreenAndBlueOfAHexColor() {
         let color = LineColor(background: "ffbe00", text: "000000")

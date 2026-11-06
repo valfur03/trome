@@ -7,6 +7,7 @@ import Testing
 /// the set, asks only for stops of the shapes that it names, and reads each promised answer as the set says.
 /// Why: the set of a new build is copied from the newest one at its upload, and the server is judged against it
 /// (`make server-check`); a set that the app code does not keep lets the server check pass while that build breaks.
+@Suite(.bounded)
 struct BuildPromisesTests {
     static let newest = Result { try BuildPromiseSet.newest() }
     static let answerNames = (try? newest.get())?.answers.map(\.when) ?? []

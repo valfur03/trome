@@ -68,7 +68,7 @@ final class ControlledLocationProvider: LocationProvider, @unchecked Sendable {
 }
 
 @MainActor
-@Suite(.realTime)
+@Suite(.bounded)
 struct LocationServiceTests {
     private let gps = ControlledLocationProvider()
     private let storage = InMemoryKeyValueStore()

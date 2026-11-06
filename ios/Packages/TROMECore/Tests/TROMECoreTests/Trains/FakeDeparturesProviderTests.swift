@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct FakeDeparturesProviderTests {
     let now = Date(timeIntervalSince1970: 1_000_000)
     let line4 = TransitLine(mode: .metro, name: "4")

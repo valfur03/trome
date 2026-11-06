@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct StationCatalogDataDateTests {
     @Test(arguments: [
         ("fr_FR", "27 septembre 2026"),

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct ResumePositionRulesTests {
     private let now = Date(timeIntervalSince1970: 1_000_000)
     private let station = AutoTestPlaces.fiftyMetersFromA

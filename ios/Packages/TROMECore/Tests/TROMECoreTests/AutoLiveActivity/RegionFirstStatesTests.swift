@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct RegionFirstStatesTests {
     @Test func summarizesTheFirstStateOfEachNewAreaInOneLine() {
         var states = RegionFirstStates(expecting: ["a", "b", "c", "d"])

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct DynamicIslandWaitTests {
     typealias ContentState = StationActivityAttributes.ContentState
 

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct StopMonitoringResponseTests {
     @Test func readsEveryVisitThatHasALineATimeAndADestination() throws {
         let visits = try StopMonitoringResponse.visits(from: Fixture.data("stop-monitoring-abbesses"))

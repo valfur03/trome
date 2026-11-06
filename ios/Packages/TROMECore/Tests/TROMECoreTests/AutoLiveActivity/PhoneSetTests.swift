@@ -10,6 +10,7 @@ import Testing
 /// A value that an older build never wrote is read as it was meant: not started by the push, no pushed start, an app
 /// that needs no update.
 @MainActor
+@Suite(.bounded)
 struct PhoneSetTests {
     nonisolated static func setNames() throws -> [String] {
         try FileManager.default.contentsOfDirectory(atPath: Fixture.contractsFolder("phone").path())

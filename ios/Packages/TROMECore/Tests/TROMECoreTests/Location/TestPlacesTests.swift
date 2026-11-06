@@ -1,6 +1,7 @@
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct TestPlacesTests {
     @Test func placesTheFakePositionOfAStationOnTheStation() {
         let chatelet = Station(

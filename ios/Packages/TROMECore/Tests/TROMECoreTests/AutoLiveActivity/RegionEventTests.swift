@@ -4,6 +4,7 @@ import Testing
 
 /// The line that the Wake log writes when iOS sends an event for an area: a walk reads from it how far
 /// from the station, and how late, iOS woke the app.
+@Suite(.bounded)
 struct RegionEventTests {
     private let now = Date(timeIntervalSinceReferenceDate: 800_000_000)
 

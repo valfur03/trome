@@ -5,6 +5,7 @@ import Testing
 /// iOS draws each update of the Live Activity again in the widget process, and an update that comes during a draw
 /// cancels it: an update that draws the same must not reach iOS.
 @MainActor
+@Suite(.bounded)
 struct StationLiveActivitySameDrawingTests {
     private let clock = TestClock()
     private let client = StubStationLiveActivityClient()

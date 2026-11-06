@@ -4,6 +4,7 @@ import Testing
 
 /// The examples of the start route in `contracts/api/`, which the server's own test answers in the same way:
 /// the app asks as the server expects, and reads each answer into its case.
+@Suite(.bounded)
 struct LiveActivityStartContractTests {
     static let exampleNames = (try? Fixture.apiExampleNames(of: "live-activity")) ?? []
 

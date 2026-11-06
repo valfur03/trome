@@ -4,6 +4,7 @@ import Testing
 
 /// The default fake trains count from the launch, not from each fetch: with the app running, a tester who watches a
 /// train sees it leave at its time, and never sees its wait rise again at the next fetch.
+@Suite(.bounded)
 struct FakeDeparturesProviderFromTheLaunchTests {
     let launch = Date(timeIntervalSince1970: 1_000_000)
     let line7 = TransitLine(mode: .metro, name: "7")

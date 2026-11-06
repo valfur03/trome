@@ -11,6 +11,7 @@ import Testing
 /// ends of each line), so that one place holds them.
 /// With `LIVE_ACTIVITY_CONTRACT_WRITE=1`, the test writes the contents and the line data instead of comparing.
 @MainActor
+@Suite(.bounded)
 struct LiveActivityContentContractTests {
     private nonisolated static let writes = ProcessInfo.processInfo.environment["LIVE_ACTIVITY_CONTRACT_WRITE"] == "1"
 

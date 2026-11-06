@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import TROMECore
 
+@Suite(.bounded)
 struct FakeTrainsScenarioTests {
     private let start = Date(timeIntervalSince1970: 1_000_000)
 
