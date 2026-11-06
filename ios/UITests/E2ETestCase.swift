@@ -216,9 +216,17 @@ class E2ETestCase: XCTestCase {
         }
     }
 
+    /// The Notification Center slides away for a moment after the Home press, and iOS drops a tap on the app below
+    /// it until it is gone; on a busy Mac a tap 0.6 s later was lost. So the test goes on only once it is gone.
     @MainActor
-    func closeNotificationCenter() {
+    func closeNotificationCenter(file: StaticString = #filePath, line: UInt = #line) {
         XCUIDevice.shared.press(.home)
+        XCTAssertTrue(
+            waitForNo(springboard.otherElements[Self.notificationCenterIdentifier]),
+            "The Notification Center did not close after the Home press",
+            file: file,
+            line: line
+        )
     }
 
     @MainActor
