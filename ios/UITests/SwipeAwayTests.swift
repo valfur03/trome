@@ -57,6 +57,7 @@ final class SwipeAwayTests: E2ETestCase {
         )
         closeNotificationCenter()
 
+        bringToFront(app)
         openTheWakeLog(in: app)
         let swipeLine = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "ended by the rider: swiped away (iOS: dismissed)"))

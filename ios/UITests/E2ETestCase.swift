@@ -5,6 +5,8 @@ class E2ETestCase: XCTestCase {
     static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
     private static let notificationCenterIdentifier = "lockscreen-date-view"
     private static let liveActivityIdentifier = "activity-content-view"
+    /// The mark of `UITestScenePhaseMark` in the app.
+    private static let scenePhaseIdentifier = "uiTestScenePhase"
     private static let locationPromptAnswer = "Allow While Using App"
     static let alwaysPromptAnswer = "Keep Only While Using"
     private static let permissionAnswers = [locationPromptAnswer, alwaysPromptAnswer, "Allow"]
@@ -216,8 +218,8 @@ class E2ETestCase: XCTestCase {
         }
     }
 
-    /// The Notification Center slides away for a moment after the Home press, and iOS drops a tap on the app below
-    /// it until it is gone; on a busy Mac a tap 0.6 s later was lost. So the test goes on only once it is gone.
+    /// Closes it as iOS does on a Home press; a test that taps the app next brings it to the front first, which waits
+    /// until iOS lets the app take taps again.
     @MainActor
     func closeNotificationCenter(file: StaticString = #filePath, line: UInt = #line) {
         XCUIDevice.shared.press(.home)
@@ -236,6 +238,15 @@ class E2ETestCase: XCTestCase {
         XCTAssertTrue(
             waitForNo(springboard.otherElements[Self.notificationCenterIdentifier]),
             "The Notification Center still covers the app, so iOS would drop a tap on it",
+            file: file,
+            line: line
+        )
+        let scenePhase = app.descendants(matching: .any)[Self.scenePhaseIdentifier]
+        let active = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "active"), object: scenePhase)
+        XCTAssertEqual(
+            XCTWaiter().wait(for: [active], timeout: UITestTimeout.element),
+            .completed,
+            "iOS did not make the app active, so it would drop a tap on it",
             file: file,
             line: line
         )

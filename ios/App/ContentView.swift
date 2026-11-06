@@ -76,6 +76,11 @@ struct ContentView: View {
             }
             #endif
         }
+        #if DEBUG
+        .overlay(alignment: .topLeading) {
+            UITestScenePhaseMark(isActive: scenePhase == .active)
+        }
+        #endif
         .onChange(of: scenePhase, initial: true) {
             autoLiveActivity.setAppPhase(AppPhase(scenePhase))
             guard scenePhase == .active else { return }
