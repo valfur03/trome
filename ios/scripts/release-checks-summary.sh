@@ -106,8 +106,8 @@ case "$mode" in
                 cancelled) row "$check" "**cancelled**" "" "" ;;
             esac
         done
-        # A fixed row, never a pass: the E2E suite runs on the Mac at make merge, as GitHub's Mac is too slow for it.
-        row "make e2e" "not run here: runs on the Mac at make merge" "" \
+        # A fixed row, never a pass: the E2E suite runs on the Mac at make full-run, as GitHub's Mac is too slow for it.
+        row "make e2e" "not run here: runs on the Mac at make full-run" "" \
             "too slow on GitHub's Mac for the Live Activity buttons: iOS stops their code at 30 s"
         if [ -f "$job_start" ]; then
             printf '\nThe job took %s minutes, from its start on the runner to this line.\n' \

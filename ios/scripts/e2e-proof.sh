@@ -1,12 +1,14 @@
 #!/bin/sh
-# The record that make merge leaves on a commit of main when the full E2E suite and the run of the Release app (make
-# release-run-check) passed on its tree, and its reader.
+# The record that make full-run leaves on a commit of main when the gate, the full E2E suite and the run of the Release
+# app (make release-run-check) passed on its tree, and its reader.
 #
-# The full E2E suite runs only on the Mac, at make merge: GitHub's Mac is too slow for the Live Activity buttons.
+# The full E2E suite runs only on the Mac: GitHub's Mac is too slow for the Live Activity buttons. A merge runs only the
+# E2E tests of the core checks and of the files that it changes, so it writes no record: make full-run does.
 # So the release reads this record before it cuts a commit, and refuses a commit with none.
-# The record is a commit status of GitHub, named "E2E on the Mac", on the commit of main that make merge pushed.
-# Its text names the tree that the suite ran on, the counts of the render check when make merge drew the views,
-# and the pass of the Release app run (a record of an older make merge has none, so its commit counts as not run).
+# The record is a commit status of GitHub, named "E2E on the Mac", on the commit of main that make full-run tested.
+# Its text names the tree that the suite ran on, the counts of the render check when the run drew the views,
+# and the pass of the Release app run (an old record, of a make merge that did not run it yet, has none: its commit
+# counts as not run). The records of the older make merge, which ran the full suite, still count.
 # A status is public and holds no secret; GitHub shows it next to the commit.
 #
 # Who can write it: only a token of the owner of the repo. The reader keeps only the statuses whose author is the owner,
@@ -26,9 +28,9 @@ usage() {
     echo "                             on the Mac, and its render counts: exit 0 when both are found, 1 when one is missing," >&2
     echo "                             2 when GitHub cannot be read." >&2
     echo "                             A commit with no record of its own is covered by the record of an older commit of main" >&2
-    echo "                             when no commit since changes app code (the rule of make merge for skipping the suite)." >&2
+    echo "                             when no commit since changes app code (the rule of make merge for skipping the E2E tests)." >&2
     echo "                             The lines go to GITHUB_STEP_SUMMARY too, when it is set." >&2
-    echo "       $0 publish <commit> [<render counts>]    Write the record on the commit, which must be on GitHub (make merge only)" >&2
+    echo "       $0 publish <commit> [<render counts>]    Write the record on the commit, which must be on GitHub (make full-run only)" >&2
     echo "       $0 render-counts <file>    Print the counts of the output of make live-activity-render, or nothing" >&2
     exit 2
 }
@@ -42,7 +44,7 @@ timed() {
     perl -e '$seconds = shift; alarm $seconds; exec @ARGV or die "cannot run $ARGV[0]: $!\n"' "$@"
 }
 
-# "too tall 0, cut texts 3, breaches 1" from the output of the render check, added up over the languages it drew (make merge draws French only; ENGLISH=1 adds English),
+# "too tall 0, cut texts 3, breaches 1" from the output of the render check, added up over the languages it drew (make full-run draws French only; ENGLISH=1 adds English),
 # or nothing when one of them misses a count (its text recognition failed): a count of one language only would hide a cut.
 render_counts() {
     awk '
@@ -136,14 +138,14 @@ read_proof() {
             if [ "$(printf '%s' "$record" | cut -f 2)" = passed ]; then
                 release="found (the app as the store ships it started on the Mac on $where, with no Testing tools)"
             else
-                release="missing (the record of $(short "$at") has no run of the Release app: make merge did not run it yet)"
+                release="missing (the record of $(short "$at") has no run of the Release app: it is older than that run)"
             fi
         fi
         if [ -n "$drawn" ] && [ "$drawn" != "not drawn" ] && [ -z "$render" ]; then
             render="$drawn (drawn on the Mac on $(short "$at"))"
         fi
         if [ -z "$e2e" ] && changes "$at" is_app_code; then
-            e2e="missing ($(short "$at") changes app code, and has no record of a full E2E pass on the Mac)"
+            e2e="missing ($(short "$at") changes app code, and has no record of a full E2E pass on the Mac: run make full-run on it or on a later commit)"
             release=missing
         fi
         if [ -z "$render" ] && changes "$at" is_render_input; then

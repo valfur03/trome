@@ -70,10 +70,10 @@ A change that a rider or a builder will notice adds its note to `changes/` ([how
 When your branch changes `docs/`, `server/`, `contracts/` or `video/`, `make check` checks them too, which needs Node 24 ([how to install it](../server/README.md#run-and-test-it-locally)).
 When it changes what the Release archive check reads (`project.yml`, `Config/`, a Swift file that names a type that `scripts/release-entitlements-check.py` looks for, or that check), `make check` also builds an unsigned Release archive (`make release-archive-check`, 2 to 3 minutes), so that a lost type fails here, not at the archive of a store build.
 On GitHub, a maintainer can start the same checks by hand on GitHub's Mac, with the render check and an unsigned Release archive (`make release-archive-check`): the workflow **Release checks**, in the **Actions** tab.
-The end-to-end tests are not part of it, as GitHub's Mac is too slow for the Live Activity buttons: they run on your own Mac, at `make merge`.
-After they pass, `make merge` starts the app as the store ships it (`make release-run-check`), and fails when the app does not reach its first screen or shows a Testing tool.
-Then it pushes `main` and leaves a record of both passes on its commit: a status named "E2E on the Mac", which also holds the counts of the render check.
-The workflow **E2E proof**, part of **Release checks**, fails on a commit with no such record, or with a record of an older `make merge` that did not start the Release app, and `make e2e-proof` reads it on your Mac.
+The end-to-end tests are not part of it, as GitHub's Mac is too slow for the Live Activity buttons: they run on your own Mac.
+`make merge` runs the core tests and the tests of the files that the branch changes (`scripts/e2e-paths.txt`), then starts the app as the store ships it (`make release-run-check`), and fails when the app does not reach its first screen or shows a Testing tool.
+`make full-run` runs every check on the head of `main`; after a pass, it pushes `main` and leaves a record on its commit: a status named "E2E on the Mac", which also holds the counts of the render check.
+The workflow **E2E proof**, part of **Release checks**, fails on a commit with no such record (or none on an older commit with the same app code), and `make e2e-proof` reads it on your Mac.
 The render check of the workflow draws every view and counts the too tall ones, but it cannot read the cut texts and the breaches, as the text recognition of macOS fails on GitHub's Mac: run `make live-activity-render` on your own Mac for them.
 
 `make check` runs no end-to-end test: [Test a change to the iPhone app](guide/tests.md) says which tests your change needs, and how to write one.

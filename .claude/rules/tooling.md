@@ -18,8 +18,8 @@ The setup standard of the factory (v2, 2026-11-04), one line per item: the comma
 - **No live service in the gate:** the unit tests replay `contracts/prim/`, the E2E tests use `--fake-trains`, and only QA uses `LIVE=1` (`.claude/rules/live-data.md`); no scheduled live run, since the PRIM key never leaves the main folder.
 - **Few heavy tests, one per seam:** the seams of `.claude/rules/tests.md` and decision-9.
 - **The full run:** `make full-run` (`ios/scripts/full-run.sh`) runs every check of the app on the head of `main` in a temporary worktree, with `FACTORY_CHECK_WHERE=main`.
-- **Merge checks by changed paths, and the core checks:** waits for TASK-537; until then `make merge` runs the full E2E suite (`.claude/rules/merge.md`).
-- **E2E retries set to 1, with a flaky report:** waits for TASK-537; the ledger already takes `flaky` (a job writes it in the file `$TROME_CHECK_RESULT`).
+- **Merge checks by changed paths, and the core checks:** `make merge` runs the core classes (`core_e2e_classes` in `ios/scripts/code-paths.sh`), `make release-run-check`, and the classes that `ios/scripts/e2e-paths.txt` gives to the changed files; an unmapped file of app code runs the full suite (`.claude/rules/tests.md`).
+- **E2E retries set to 1, with a flaky report:** `make merge` and `make full-run` run `make e2e E2E_RETRY=1` (`-retry-tests-on-failure -test-iterations 2`); `ios/scripts/e2e-failures.py` names a test that passed only on its retry and writes `flaky` in the file `$TROME_CHECK_RESULT`, which the ledger reads.
 - **The check ledger:** `<git common dir>/factory-checks.jsonl`, one line per check that runs through `ios/scripts/sim-lock.sh job` (not `make run`, `make simulator-wallpaper`, `make simulator-delete-old`), also for each check inside `make merge`; a write that fails never changes the job.
 - **One lane, with a status line:** the Simulator lock (`ios/scripts/sim-lock.sh`) and `make lane`.
   It is a `mkdir` lock, not `flock`: macOS has no `flock` command, and the PID check of the holder frees the lock of a job that died, which is what the standard wants from `flock`.

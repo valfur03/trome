@@ -91,9 +91,9 @@ When you add a rule, put it in the file of its topic, with a `paths:` or `comman
 ## Flaky tests
 
 A flaky test (it fails, then passes with no change) is a bug.
-Rerun a failing test at most once, to know if it is flaky.
-Then fix the cause in your task if the test covers your code.
-Otherwise, create a `bug` task with the test name, how often it failed, the error, and the evidence folder that the failed run printed.
+`make merge` and `make full-run` retry a failed E2E test once, and name each test that passed only then; by hand, rerun it once.
+Fix it in your task if the test covers your code.
+Otherwise, create a `bug` task labelled `flaky`, or add the run to its open one: the test, how often, the error, the evidence.
 That task is priority high, and it is fixed before new work (the prompter's order of 2026-10-07).
 Never fix it with retries or longer timeouts alone: find the cause (a race, a shared state, a missing wait for a condition).
 

@@ -6,7 +6,7 @@ name: Release to TestFlight
 #
 # The order, so that no secret opens before a person says yes:
 # 1. The release checks, with no secret (release-checks.yml): make check, make server-check, the unsigned release
-#    archive check, the render check, the phone set, and the E2E proof: the record that make merge leaves on the Mac
+#    archive check, the render check, the phone set, and the E2E proof: the record that make full-run leaves on the Mac
 #    after a full E2E pass (e2e-proof.yml). A commit with no record stops the run red here.
 # 2. The job "Sign and upload" waits at the environment app-store, whose required reviewer is the maintainer and whose
 #    branch rule is main only: GitHub gives it no secret before his approval. Its if: on main refuses a run started

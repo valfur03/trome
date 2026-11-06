@@ -2,10 +2,11 @@ name: E2E proof
 
 # Says whether the commit of the run has a record that the full E2E suite passed on the Mac on its tree, and that the app as the
 # store ships it started there (make release-run-check), and fails when either is missing.
-# The full E2E suite cannot pass on GitHub's Mac, so make merge runs both on the Mac, then pushes main and leaves the record:
-# a commit status named "E2E on the Mac", written with the token of the owner of the repo (ios/scripts/e2e-proof.sh).
+# The full E2E suite cannot pass on GitHub's Mac, so make full-run runs both on the Mac, on a commit of main, then leaves
+# the record: a commit status named "E2E on the Mac", written with the token of the owner of the repo (ios/scripts/e2e-proof.sh).
+# A merge runs only the E2E tests of the files that it changes, so it leaves none.
 # A commit with no record of its own counts when an older commit of main has one and no commit since changes app code,
-# the same rule by which make merge skips the suite.
+# the same rule by which make merge skips the E2E tests.
 # The release checks run it; it can also be started by hand: Actions > E2E proof > Run workflow, on main or on a branch.
 # It holds no secret: its token only reads the repo and the statuses.
 

@@ -105,8 +105,8 @@ expect "the end of the job passes" "$(step end "make check=success" "make server
 expect "a check that ran gets no second row" "$(grep -c '| make check |' "$GITHUB_STEP_SUMMARY")" "1"
 expect "a failed check gets no second row: its own row says it" "$(row "make server-check")" "no row"
 expect "a skipped check is not run" "$(row "make docs")" "| make docs | not run: a step above did not pass |  |  |"
-expect "the E2E suite gets its fixed row, never a pass: it runs on the Mac at make merge" "$(row "make e2e" | tail -n 1)" \
-    "| make e2e | not run here: runs on the Mac at make merge |  | too slow on GitHub's Mac for the Live Activity buttons: iOS stops their code at 30 s |"
+expect "the E2E suite gets its fixed row, never a pass: it runs on the Mac at make full-run" "$(row "make e2e" | tail -n 1)" \
+    "| make e2e | not run here: runs on the Mac at make full-run |  | too slow on GitHub's Mac for the Live Activity buttons: iOS stops their code at 30 s |"
 expect "the E2E row comes before the minutes of the job" \
     "$(awk '/^\| make e2e \| not run here/ { e = NR } /^The job took/ { t = NR } END { print (e && e < t) ? "before" : "not before" }' "$GITHUB_STEP_SUMMARY")" "before"
 expect "a check with no outcome is not run" "$(row "make release-archive-check")" "| make release-archive-check | not run: a step above did not pass |  |  |"

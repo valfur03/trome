@@ -102,9 +102,9 @@ A picture command never adds or deletes a wallpaper: it checks it on disk (`ios/
 Why: the Simulator has no command for a wallpaper, so it is set by taps in the wallpaper editor, and the delete by taps at the end of each run failed in three runs of five and left a stray wallpaper (TASK-311, decision-76).
 A job reset keeps the wallpaper; a new or erased Simulator does not, so run `make simulator-wallpaper` again after `make simulator-delete`.
 So is `make live-activity-render` (the render check of the Live Activity views, see `.claude/rules/render-check.md`).
-So is `make release-run-check`, which starts the app as the store ships it (`make merge` runs it after the E2E suite).
+So is `make release-run-check`, which starts the app as the store ships it (`make merge` runs it after the E2E tests).
 
-A `make merge` of app code holds the lock only for its test runs: the E2E suite, the Release app run and the render check (see `.claude/rules/merge.md`).
+A `make merge` of app code holds the lock only for its test runs: the E2E tests, the Release app run and the render check (see `.claude/rules/merge.md`).
 It rebases, runs `make check` and builds the tests first, with no Simulator lock, and frees the lock when the test runs end, before the fast-forward.
 Why: the rebase, the gate and the builds use no Simulator, and held it for about 9.5 minutes of each merge, while QA, reviews and E2E runs waited (TASK-489).
 Before all that, it takes a merge lock (`/tmp/ratp-merge.lock`, with `lockf`), so only one merge runs at a time, and it keeps that lock while it waits for the Simulator, so `main` cannot move between its gate and its tests.

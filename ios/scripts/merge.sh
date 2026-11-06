@@ -134,39 +134,33 @@ timed() {
     perl -e '$seconds = shift; alarm $seconds; exec @ARGV or die "cannot run $ARGV[0]: $!\n"' "$@"
 }
 
-# The release refuses a commit of main with no record of a full E2E pass and a Release app run on its tree (e2e-proof.sh).
-# After both passed, the merge draws the Live Activity views for the counts of the record, when they may have changed
-# since the last drawing on GitHub. render_plan says why it draws (render_why), or leaves render_why empty;
-# it runs before the Simulator lock, as it may read GitHub.
+# After the E2E tests and the Release app run passed, the merge draws the Live Activity views when the branch changes
+# them or their data (is_render_input), and prints their counts. render_plan says why it draws (render_why), or leaves
+# render_why empty. The counts that the release shows are the ones of the record of the full run (make full-run).
 render_plan() {
     render_why=
-    git remote get-url origin > /dev/null 2>&1 || return 0
     if diff_touches "$old" "$tip" is_render_input; then
         render_why="$names changes the Live Activity views or their data"
-    elif "$scripts/e2e-proof.sh" read "$old" 2> /dev/null | grep -q '^render counts: too tall '; then
-        step "3/4 render check: skipped, the views are the ones of the last drawing on GitHub"
-    else
-        render_why="$target has no render counts on GitHub"
     fi
 }
 
 # It sets render_counts, or leaves it empty when it did not draw.
 # The render check is a report, not a gate: it never fails the merge.
-draw_for_record() {
+draw_views() {
     render_counts=
     [ -n "$render_why" ] || return 0
     if [ ! -e "$out/render-built" ]; then
-        step "3/4 render check: skipped, its build failed (a report, not a gate: the merge goes on, and the record says 'not drawn')"
+        step "3/4 render check: skipped, its build failed (a report, not a gate: the merge goes on)"
         return 0
     fi
-    step "3/4 render check of the Live Activity ($render_command), for the record of the merge: $render_why"
+    step "3/4 render check of the Live Activity ($render_command): $render_why"
     render_log=$(mktemp "${TMPDIR:-/tmp}/trome-merge-render.XXXXXX")
     (cd "$tip_root" && sh -c "$render_command") > "$render_log" 2>&1 || true
     render_counts=$("$scripts/e2e-proof.sh" render-counts "$render_log")
     if [ -n "$render_counts" ]; then
         step "render counts: $render_counts"
     else
-        step "the render check gave no counts, so the record says 'not drawn' (a report, not a gate: the merge goes on). Its last lines:"
+        step "the render check gave no counts (a report, not a gate: the merge goes on). Its last lines:"
         tail -n 5 "$render_log" >&2
     fi
     rm -f "$render_log"
@@ -180,7 +174,8 @@ any_alive() {
     return 1
 }
 
-# The steps that use the Simulator: the full E2E suite, the Release app run, and the render check for the record.
+# The steps that use the Simulator: the E2E tests of the core checks and of the changed paths (e2e_classes), the Release
+# app run, and the render check when the views changed.
 # Their builds use no Simulator, so they run first, with no Simulator lock; the test runs then run as one Simulator job
 # of kind merge, which goes before the jobs that wait from the moment it asks for the lock (sim-lock.sh).
 # The merge keeps the merge lock while it waits, so main cannot move between the gate and the tests.
@@ -204,7 +199,7 @@ run_simulator_checks() {
     fi
     step "3/4 takes the Simulator lock for the test runs"
     # The checks of a merge write the check ledger with the place "merge" (sim-lock.sh, record_check).
-    FACTORY_CHECK_WHERE=${FACTORY_CHECK_WHERE:-merge} RATP_SIM_MERGE=1 RATP_SIM_DETAIL=$names "$scripts/sim-lock.sh" job "$scripts/merge.sh" simulator-checks "$out" "$old" "$tip" "$tip_root" "$names" "$once" "$render_why" &
+    FACTORY_CHECK_WHERE=${FACTORY_CHECK_WHERE:-merge} RATP_SIM_MERGE=1 RATP_SIM_DETAIL=$names "$scripts/sim-lock.sh" job "$scripts/merge.sh" simulator-checks "$out" "$old" "$tip" "$tip_root" "$names" "$once" "$render_why" "$e2e_only" &
     sim_job=$!
     # A train whose make merges were all stopped while it waits for the Simulator stops waiting: no task would land.
     while kill -0 "$sim_job" 2> /dev/null; do
@@ -216,9 +211,10 @@ run_simulator_checks() {
     done
     wait "$sim_job" || true
     sim_job=
+    flaky_tests=$(cat "$out/flaky" 2> /dev/null || true)
     if [ ! -e "$out/done" ]; then
-        stack_step="full E2E suite"
-        stack_failure="The Simulator job of the E2E suite stopped before its end."
+        stack_step="E2E tests"
+        stack_failure="The Simulator job of the E2E tests stopped before its end."
         return 0
     fi
     stack_step=$(cat "$out/step")
@@ -228,15 +224,21 @@ run_simulator_checks() {
 }
 
 simulator_checks() {
-    out=$1 old=$2 tip=$3 tip_root=$4 names=$5 once=$6 render_why=$7
+    out=$1 old=$2 tip=$3 tip_root=$4 names=$5 once=$6 render_why=$7 e2e_only=$8
     touch "$out/started"
     stack_step=
     stack_failure=
     render_counts=
-    step "3/4 full E2E suite ($e2e_command)$once"
+    if [ -n "$e2e_only" ]; then
+        step "3/4 E2E tests of the core checks and of the changed paths, $e2e_only ($e2e_command), a failed test retried once$once"
+    else
+        step "3/4 full E2E suite, as a changed file of app code has no line in ios/scripts/e2e-paths.txt ($e2e_command), a failed test retried once$once"
+    fi
     evidence_note=$(mktemp "${TMPDIR:-/tmp}/trome-e2e-evidence.XXXXXX")
-    if ! (cd "$tip_root" && TROME_E2E_EVIDENCE_NOTE=$evidence_note sh -c "$e2e_command"); then
-        stack_step="full E2E suite"
+    # ONLY picks the classes of make e2e (empty: all). E2E_RETRY=1 runs a failed test once more, and e2e-failures.py writes
+    # the names of the tests that passed only on their retry in the file TROME_E2E_FLAKY.
+    if ! (cd "$tip_root" && ONLY=$e2e_only E2E_RETRY=1 TROME_E2E_FLAKY="$out/flaky" TROME_E2E_EVIDENCE_NOTE=$evidence_note sh -c "$e2e_command"); then
+        stack_step="E2E tests"
         stack_failure=$(e2e_evidence "$evidence_note")
     else
         # Every commit of main must be safe to ship: the app as the store ships it must start, with no Testing tools.
@@ -246,7 +248,7 @@ simulator_checks() {
             stack_failure="Its result bundle, with the crash report when the app crashed: $tip_root/ios/.build/release-run.xcresult"
         else
             touch "$out/passed"
-            draw_for_record
+            draw_views
         fi
     fi
     rm -f "$evidence_note"
@@ -256,22 +258,22 @@ simulator_checks() {
     touch "$out/done"
 }
 
-# Pushes main to origin, and leaves on its new commit the record of its full E2E pass and Release app run:
-# GitHub keeps a status only for a commit that it has. Prints what it did. A failure leaves main as it landed, for the next push.
-publish_record() {
-    if ! git remote get-url origin > /dev/null 2>&1; then
-        echo "make merge: no remote 'origin', so no record of the E2E pass of $(short "$tip") is left on GitHub."
+# Pushes main to origin after its Simulator checks. Prints what it did. A failure leaves main as it landed, for the next push.
+# A merge leaves no record for the release: it runs only the E2E tests of the core checks and of the changed paths.
+# make full-run writes the record ('E2E on the Mac') after it passed every check on a commit of main (e2e-proof.sh).
+push_main() {
+    git remote get-url origin > /dev/null 2>&1 || return 0
+    if ! timed 120 git push -q origin "$tip:refs/heads/$target" > "$work/push.err" 2>&1; then
+        echo "make merge: the push of $target to origin failed, so the next merge or 'make full-run' pushes it: $(tail -n 1 "$work/push.err")"
         return 0
     fi
-    if ! timed 120 git push -q origin "$tip:refs/heads/$target" > "$work/publish.err" 2>&1; then
-        echo "make merge: the push of $target to origin failed, so $(short "$tip") has no record of its E2E pass on GitHub, and a release refuses it until the next merge that runs the E2E suite: $(tail -n 1 "$work/publish.err")"
-        return 0
-    fi
-    if ! "$scripts/e2e-proof.sh" publish "$tip" "$render_counts" > "$work/publish.err" 2>&1; then
-        echo "make merge: pushed $target, but GitHub did not take the record of the E2E pass of $(short "$tip"), so a release refuses it until the next merge that runs the E2E suite: $(tail -n 1 "$work/publish.err")"
-        return 0
-    fi
-    echo "make merge: pushed $target, and left on $(short "$tip") the record of its full E2E pass and Release app run (the status 'E2E on the Mac' on GitHub)${render_counts:+, with its render counts: $render_counts}."
+    echo "make merge: pushed $target. A release of $(short "$tip") waits for a pass of 'make full-run' on it, or on a later commit with the same app code."
+}
+
+# The tests that failed, then passed on their retry: a flaky test is a bug.
+flaky_report() {
+    [ -n "${flaky_tests:-}" ] || return 0
+    echo "make merge: flaky E2E tests (each failed, then passed on its retry): $(printf '%s\n' "$flaky_tests" | paste -s -d ',' - | sed 's/,/, /g'). File a bug labelled flaky for each one, or add this run to its open bug (see 'Flaky tests' in CLAUDE.md)."
 }
 
 e2e_evidence() {
@@ -508,6 +510,7 @@ land() {
     stack_failure=
     e2e_passed=
     render_counts=
+    flaky_tests=
     shared="one gate"
     use_node_of "$@"
     step "2/4 quality gate ($check_command)$once"
@@ -515,9 +518,11 @@ land() {
         stack_step="quality gate"
     elif changes_app_code "$old" "$tip"; then
         shared="one gate and one E2E run"
+        e2e_only=$(e2e_classes "$old" "$tip")
+        [ "$e2e_only" != all ] || e2e_only=
         run_simulator_checks "$@"
     else
-        step "3/4 full E2E suite and Release app run: skipped, and no Simulator lock: $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the notes of the changes, the server or the contracts, see .claude/rules/tests.md)"
+        step "3/4 E2E tests and Release app run: skipped, and no Simulator lock: $names changes no app code (only docs, Markdown, LICENSE, .claude/, .github/, unit tests, the notes of the changes, the server or the contracts, see .claude/rules/tests.md)"
     fi
     if [ -z "$stack_step" ]; then
         step "4/4 fast-forward $target to $(short "$tip")"
@@ -539,8 +544,12 @@ land() {
         fi
     fi
     if [ -z "$stack_step" ]; then
-        record=
-        [ -z "$e2e_passed" ] || record=$(publish_record)
+        record=$(flaky_report)
+        if [ -n "$e2e_passed" ]; then
+            pushed=$(push_main)
+            record="$record${record:+${pushed:+
+}}$pushed"
+        fi
         for key; do
             if [ "$count" -eq 1 ]; then
                 finish "$key" 0 "make merge: $target is now $(short "$tip") ($names).${record:+
@@ -554,6 +563,10 @@ $record}"
             finish "$key" 1 "$(cat "$work/$key.conflict")"
         done
         return 0
+    fi
+    if [ -n "$flaky_tests" ]; then
+        stack_failure="$stack_failure${stack_failure:+
+}$(flaky_report)"
     fi
     if [ "$count" -eq 1 ]; then
         finish "$1" 1 "$(failed "$stack_step" "$names" "$stack_failure")"
@@ -608,7 +621,7 @@ train() {
         land "$one"
     done
     case "$train_step" in
-        "quality gate" | "test build" | "full E2E suite" | "Release app run") ;;
+        "quality gate" | "test build" | "E2E tests" | "Release app run") ;;
         *) return 0 ;;
     esac
     last=
@@ -627,7 +640,7 @@ case "${1:-}" in
         branch=$(branch_of "$root") || fail "HEAD is not on a branch. Check out the branch of the task."
         [ "$branch" != "$target" ] || fail "you are on '$branch'. Run it on the branch of the task."
         git rev-parse -q --verify "refs/heads/$target" > /dev/null || fail "there is no branch '$target'."
-        [ -z "${ONLY:-}" ] || fail "ONLY works only with 'make e2e'. make merge always runs the full E2E suite."
+        [ -z "${ONLY:-}" ] || fail "ONLY works only with 'make e2e'. make merge picks the E2E tests by the files that the branch changes (ios/scripts/e2e-paths.txt)."
         problem=$(worktree_problem "$root")
         [ -z "$problem" ] || fail "$problem"
         problem=$(target_folder_problem "$root")
@@ -655,7 +668,7 @@ case "${1:-}" in
         simulator_checks "$@"
         ;;
     *)
-        echo "Usage: $0   Land the branch of this worktree on $target: rebase, gate and test builds with no Simulator lock, then, before the other Simulator jobs that wait, full E2E suite, Release app run, fast-forward, then push main with the record of both passes. The merges that wait together share one gate and one E2E run." >&2
+        echo "Usage: $0   Land the branch of this worktree on $target: rebase, gate and test builds with no Simulator lock, then, before the other Simulator jobs that wait, the E2E tests of the core checks and of the changed paths (a failed test retried once), Release app run, fast-forward, then push main. The merges that wait together share one gate and one E2E run." >&2
         exit 1
         ;;
 esac

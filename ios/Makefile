@@ -11,6 +11,9 @@ E2E_RESULT := $(BUILD_DIR)/e2e.xcresult
 XCODEGEN_CACHE := $(BUILD_DIR)/xcodegen-cache
 E2E_TARGET := TROMEUITests
 E2E_ONLY := $(foreach test,$(ONLY),-only-testing:$(E2E_TARGET)/$(test))
+# make merge and make full-run set E2E_RETRY=1: the runner runs a failed test once more, and a test that passes only then
+# is reported as flaky (scripts/e2e-failures.py). make e2e alone never retries, so the implementer sees each failure.
+E2E_RETRY_FLAGS := $(if $(filter 1,$(E2E_RETRY)),-retry-tests-on-failure -test-iterations 2)
 DOCS_SCHEME := TROMEDocsScreenshots
 DOCS_SCREENSHOTS_RESULT := $(BUILD_DIR)/docs-screenshots.xcresult
 WALLPAPER_RESULT := $(BUILD_DIR)/simulator-wallpaper.xcresult
@@ -148,14 +151,14 @@ help::
 	@echo "make e2e ONLY=<TestClass>  Only these E2E test classes (or Class/testMethod), separated by spaces"
 	@echo "make e2e-build           Only the build of make e2e, with no Simulator lock; make e2e NO_BUILD=1 then runs the tests with no build (make merge does so, and the same for release-run-build and live-activity-render-build)"
 	@echo "make release-run-check   Start the app as the store ships it (as make run RELEASE=1 builds it) on the shared Simulator, and fail when it does not reach its first screen or shows a Testing tool (takes the Simulator lock; make merge runs it)"
-	@echo "make merge               Merge the branch of this folder into main (after QA): rebase, make check and the test builds with no Simulator lock, then, before the other Simulator jobs, the test runs of the full make e2e and make release-run-check, fast-forward, then push main with the record of both passes and its render counts. Merges that wait together share one run; when it fails, they land one by one; a branch with no app code runs no E2E and takes no Simulator lock"
-	@echo "make e2e-proof           Say whether a commit (COMMIT=, default HEAD) has, on GitHub, the record that make merge leaves after a full E2E pass and a run of the Release app on its tree, and its render counts; fail when either is missing (the release refuses it)"
+	@echo "make merge               Merge the branch of this folder into main (after QA): rebase, make check and the test builds with no Simulator lock, then, before the other Simulator jobs, the test runs of make e2e for the core checks and the classes of the changed paths (ios/scripts/e2e-paths.txt; the full suite for a path with no line), a failed test retried once, and make release-run-check, fast-forward, then push main. Merges that wait together share one run; when it fails, they land one by one; a branch with no app code runs no E2E and takes no Simulator lock"
+	@echo "make e2e-proof           Say whether a commit (COMMIT=, default HEAD) has, on GitHub, the record that make full-run leaves after a full E2E pass and a run of the Release app on its tree, or on an older commit with the same app code, and its render counts; fail when either is missing (the release refuses it)"
 	@echo "make lint-fix            Fix the lint problems that can be fixed automatically"
 	@echo "make stations            Download the metro and RER station list again"
 	@echo "make simulator           Print the ID of the Simulator of this folder after make run, else of RATP-Shared (creates it if needed)"
 	@echo "make simulator-shutdown  Remove the app of 'make run' from the Simulator and free the lock (the Simulator shuts down when idle)"
 	@echo "make lane                Print one line: the Simulator jobs that run and those that wait, with their kind and folder (takes no lock, boots no Simulator)"
-	@echo "make full-run            Run every check of the app on the head of main, in a temporary worktree that it removes at the end: make check, make release-archive-check, the full make e2e, make release-run-check and make live-activity-render (takes the Simulator lock for each Simulator check); one line per check and a verdict"
+	@echo "make full-run            Run every check of the app on the head of main, in a temporary worktree that it removes at the end: make check, make release-archive-check, the full make e2e (a failed test retried once), make release-run-check and make live-activity-render (takes the Simulator lock for each Simulator check); one line per check and a verdict; after a pass, it pushes main and leaves on the commit the record that a release reads (make e2e-proof)"
 	@echo "make simulator-times     How long the Simulator jobs waited for the Simulator and held it, by kind (merge, e2e, run...), and how long builds waited for a test run; SINCE=2026-10-08 for a part (records in ~/Library/Logs/TROME/)"
 	@echo "make simulator-delete    Delete the shared Simulators, also those of a second-slot trial (waits until no other Simulator job runs)"
 	@echo "make simulator-delete-old  Delete the old Simulators of each folder (takes the Simulator lock)"
@@ -274,11 +277,11 @@ e2e: project
 	@rm -rf $(E2E_RESULT)
 	$(call UNLESS_BUILT,$(E2E_BUILD))
 	@RATP_SIM_KIND=e2e RATP_SIM_DETAIL="$(ONLY)" $(SIM_LOCK) job $(TEST_RUN_GATE) $(SIMULATOR) reset $(SIMULATOR) wait-for-wallpaper-update $(SIMULATOR) wait-for-widget-host $(SIMULATOR) grant-location "$(APP_PATH)" \
-		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E tests: ' \
-		sh -c './scripts/mac-load-log.sh $(LOGS)/mac-load.log & load_log=$$!; "$$@"; status=$$?; kill $$load_log 2>/dev/null; ./scripts/e2e-failures.py $(E2E_RESULT); [ $$status -eq 0 ] || ./scripts/e2e-keep.py $(E2E_RESULT) $(LOGS)/e2e.log "$(APP_PATH)"; exit $$status' e2e \
+		$(SIMULATOR) with-destination $(QUIET) $(LOGS)/e2e.log '^E2E (tests|flaky): ' \
+		sh -c './scripts/mac-load-log.sh $(LOGS)/mac-load.log & load_log=$$!; "$$@"; status=$$?; kill $$load_log 2>/dev/null; ./scripts/e2e-failures.py $(E2E_RESULT); flaky=$$?; [ $$status -eq 0 ] && [ $$flaky -ne 3 ] || ./scripts/e2e-keep.py $(E2E_RESULT) $(LOGS)/e2e.log "$(APP_PATH)"; exit $$status' e2e \
 		$(XCODEBUILD) $(NO_KEY) -scheme $(E2E_SCHEME) \
 		-parallel-testing-enabled NO -collect-test-diagnostics never \
-		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 \
+		-test-timeouts-enabled YES -default-test-execution-time-allowance 300 $(E2E_RETRY_FLAGS) \
 		$(E2E_ONLY) -resultBundlePath $(E2E_RESULT) test-without-building
 
 # The app as the store ships it, started by iOS: the test of ios/ReleaseRun/ needs no wallpaper, widget host or permission.

@@ -7,7 +7,7 @@ name: Release checks
 # no step prints Info.plist or the build settings, and the archive is never uploaded as an artifact.
 # The summary of the run gives the Xcode build, the image, the wait for the runner, and the outcome and minutes of each check.
 # The E2E suite does not run here: GitHub's Mac is too slow for the Live Activity buttons (iOS stops their code at 30 s),
-# so it stays a gate of every release on the Mac, at make merge. The summary says so in a fixed row, never a pass,
+# so it stays a gate of every release on the Mac, at make full-run. The summary says so in a fixed row, never a pass,
 # and the job "E2E proof" fails when the commit has no record of a full E2E pass on the Mac (e2e-proof.yml).
 # The job "Phone set" fails when the newest build in the field has no recorded phone set in contracts/phone/,
 # which the unit tests read with the code of today, so that an update keeps what a rider set (ios/scripts/phone-set-check.py).

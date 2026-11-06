@@ -20,6 +20,7 @@ cat "$FAKE_STATE/power.log"
 EOF
 chmod +x "$state/bin/xcrun" "$state/bin/pmset"
 export FAKE_STATE="$state" PATH="$state/bin:$PATH"
+unset TROME_E2E_FLAKY TROME_CHECK_RESULT || true
 
 cat > "$state/tests.json" << 'EOF'
 {"testNodes": [{"nodeType": "Test Plan", "children": [{"nodeType": "Test Case", "nodeIdentifier": "SnoozeTests/testSnooze()", "children": [
@@ -71,7 +72,7 @@ expect "the explanation of a failed run with a sleep succeeds" "$(explain)" "exi
 expect "it still prints the failing tests" "$(head -1 "$state/out")" "SnoozeTests.swift:42: SnoozeTests/testSnooze(): The next lines did not show."
 expect "it says when the Mac slept during the tests, from the sleep to the wake, as in a real night when the lid closed" "$(sleep_line)" "The Mac slept during the E2E tests, from 2026-09-30 22:26:22 to 2026-09-30 22:27:58 (96 s), says 'pmset -g log'."
 expect "it says that the failures may come from the sleep" "$(grep -c "may come from the sleep, not from the code" "$state/out")" "1"
-expect "it says to run the command again" "$(grep -c "^Run the same command again (make e2e, make merge or make docs-screenshots)" "$state/out")" "1"
+expect "it says to run the command again" "$(grep -c "^Run the same command again (make e2e or make docs-screenshots) before you look for a bug: make merge and make full-run already ran each failed test a second time." "$state/out")" "1"
 expect "the sleep comes after the failing tests" "$(sed -n 2p "$state/out" | cut -c1-14)" "The Mac slept "
 
 TZ=America/New_York
@@ -131,6 +132,65 @@ printf '{"result": "Passed", "totalTestCount": 7, "passedTests": 7, "failedTests
 echo '{"testNodes": []}' > "$state/tests.json"
 explain > /dev/null
 expect "a passing run prints only its counts, with no sleep note" "$(cat "$state/out")" "E2E tests: 7 passed, 0 failed, 0 skipped (of 7) in 230 s"
+
+# The retry of make merge and make full-run (make e2e E2E_RETRY=1, xcodebuild -retry-tests-on-failure -test-iterations 2).
+# The nodes have the shape that xcresulttool gives for a real run with retries: a test case holds one "Repetition"
+# per run, "First Run" then "Retry 1", and its own result is the one of its last run.
+export TROME_E2E_FLAKY="$state/flaky" TROME_CHECK_RESULT="$state/check-result"
+retried() {
+    rm -f "$TROME_E2E_FLAKY" "$TROME_CHECK_RESULT"
+    printf '{"result": "%s", "totalTestCount": 2, "passedTests": %s, "failedTests": %s, "skippedTests": 0}\n' "$1" "$2" "$3" > "$state/summary.json"
+    cat > "$state/tests.json"
+}
+noted() {
+    printf '%s|%s' "$(cat "$TROME_E2E_FLAKY" 2> /dev/null | tr '\n' ' ')" "$(cat "$TROME_CHECK_RESULT" 2> /dev/null)"
+}
+
+retried Passed 2 0 << 'EOF'
+{"testNodes": [{"nodeType": "Test Plan", "result": "Passed", "children": [
+  {"nodeType": "Test Case", "nodeIdentifier": "SnoozeTests/testSnooze()", "result": "Passed"},
+  {"nodeType": "Test Case", "nodeIdentifier": "LiveActivityTests/testStart()", "result": "Passed"}
+]}]}
+EOF
+expect "a pass with no retry exits 0" "$(explain)" "exit 0"
+expect "it prints only its counts" "$(cat "$state/out")" "E2E tests: 2 passed, 0 failed, 0 skipped (of 2)"
+expect "it writes no flaky test and no result for the ledger" "$(noted)" "|"
+
+retried Passed 2 0 << 'EOF'
+{"testNodes": [{"nodeType": "Test Plan", "result": "Passed", "children": [
+  {"nodeType": "Test Case", "nodeIdentifier": "SnoozeTests/testSnooze()", "result": "Passed", "children": [
+    {"nodeType": "Repetition", "name": "First Run", "result": "Failed", "children": [
+      {"nodeType": "Failure Message", "name": "The next lines did not show.", "sourceLocation": {"filePath": "/x/UITests/SnoozeTests.swift", "lineNumber": 42}}
+    ]},
+    {"nodeType": "Repetition", "name": "Retry 1", "result": "Passed"}
+  ]},
+  {"nodeType": "Test Case", "nodeIdentifier": "LiveActivityTests/testStart()", "result": "Passed"}
+]}]}
+EOF
+expect "a pass on the retry exits 3, so that make e2e keeps the evidence of the run" "$(explain)" "exit 3"
+expect "it names the test as flaky, with its first failure, and prints no failure" "$(sed 1d "$state/out")" \
+    "E2E flaky: SnoozeTests/testSnooze() failed, then passed on its retry. Its first failure: The next lines did not show."
+expect "it writes the name for make merge and make full-run, and 'flaky' for the ledger line" "$(noted)" "SnoozeTests/testSnooze() |flaky"
+
+retried Failed 1 1 << 'EOF'
+{"testNodes": [{"nodeType": "Test Plan", "result": "Failed", "children": [
+  {"nodeType": "Test Case", "nodeIdentifier": "SnoozeTests/testSnooze()", "result": "Failed", "children": [
+    {"nodeType": "Repetition", "name": "First Run", "result": "Failed", "children": [
+      {"nodeType": "Failure Message", "name": "The next lines did not show.", "sourceLocation": {"filePath": "/x/UITests/SnoozeTests.swift", "lineNumber": 42}}
+    ]},
+    {"nodeType": "Repetition", "name": "Retry 1", "result": "Failed", "children": [
+      {"nodeType": "Failure Message", "name": "The Live Activity did not show.", "sourceLocation": {"filePath": "/x/UITests/SnoozeTests.swift", "lineNumber": 50}}
+    ]}
+  ]},
+  {"nodeType": "Test Case", "nodeIdentifier": "LiveActivityTests/testStart()", "result": "Passed"}
+]}]}
+EOF
+FAKE_PMSET_FAILS=1 explain > /dev/null
+expect "a test that fails twice is a failure: both runs are printed, and it is not flaky" "$(sed 1d "$state/out")" \
+    "SnoozeTests.swift:42: SnoozeTests/testSnooze(): The next lines did not show.
+SnoozeTests.swift:50: SnoozeTests/testSnooze(): The Live Activity did not show."
+expect "it writes no flaky test" "$(noted)" "|"
+unset TROME_E2E_FLAKY TROME_CHECK_RESULT
 
 rm -r "$state/e2e.xcresult"
 expect "the explanation prints nothing when the run left no results" "$(explain) $(wc -c < "$state/out" | tr -d ' ')" "exit 0 0"

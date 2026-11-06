@@ -1,7 +1,8 @@
 #!/bin/sh
 # The record of a full E2E pass and of a Release app run on the Mac, and its reader: the release must refuse a commit
 # of main whose tree the full E2E suite or the run of the app as the store ships it never passed on, and must accept one
-# that make merge tested, or that changes no app code since.
+# that make full-run tested, or that changes no app code since. A merge runs only the E2E tests of its changed paths,
+# so it writes no record (merge-test.sh); make full-run writes it after a pass (full-run-test.sh).
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
 proof="$tests/../e2e-proof.sh"
@@ -62,14 +63,14 @@ git init -q -b main "$repo"
 mkdir -p "$FAKE_GH_STATE/statuses"
 first=$(commit ios/App/First.swift first)
 
-expect "a commit with no record is refused" "$(read_proof "$first")" "exit 1"
+expect "a commit with no full run is refused" "$(read_proof "$first")" "exit 1"
 expect "its line says that the proof is missing, and why" "$(line "E2E proof")" \
-    "E2E proof: missing ($(git -C "$repo" rev-parse --short "$first") changes app code, and has no record of a full E2E pass on the Mac)"
+    "E2E proof: missing ($(git -C "$repo" rev-parse --short "$first") changes app code, and has no record of a full E2E pass on the Mac: run make full-run on it or on a later commit)"
 expect "with no record, the Release app run is missing" "$(line "Release app run")" "Release app run: missing"
 expect "with no record, the render counts are missing" "$(line "render counts")" "render counts: missing"
 
 publish "$first" "too tall 1, cut texts 4, breaches 2"
-expect "make merge writes one status named 'E2E on the Mac', a success" \
+expect "make full-run writes one status named 'E2E on the Mac', a success" \
     "$(jq -r '.[] | [.context, .state] | @tsv' "$FAKE_GH_STATE/statuses/$first.json")" "$(printf 'E2E on the Mac\tsuccess')"
 expect "its text names the tree of the commit, the render counts, and the pass of the Release app run" \
     "$(jq -r '.[0].description' "$FAKE_GH_STATE/statuses/$first.json")" \
@@ -78,7 +79,7 @@ expect "its text fits the 140 characters of a status of GitHub, with the largest
     "$(cd "$repo" && "$proof" publish "$first" "too tall 999, cut texts 999, breaches 999" && jq -r '.[0].description | length <= 140' "$FAKE_GH_STATE/statuses/$first.json")" "true"
 rm "$FAKE_GH_STATE/statuses/$first.json"
 publish "$first" "too tall 1, cut texts 4, breaches 2"
-expect "a commit with the record of the owner is accepted" "$(read_proof "$first")" "exit 0"
+expect "a commit with the record of a full run by the owner is accepted" "$(read_proof "$first")" "exit 0"
 expect "its line says that the proof is found, on this tree" "$(line "E2E proof")" \
     "E2E proof: found (the full E2E suite passed on the Mac on this tree)"
 expect "and that the Release app run is found, on this tree" "$(line "Release app run")" \
@@ -88,7 +89,7 @@ expect "the render counts of the record are shown" "$(line "render counts")" \
 
 docs=$(commit docs/page.md docs)
 claude=$(commit .claude/rules/rule.md rule)
-expect "a commit that changes no app code since a tested commit is accepted (make merge skips the suite for it)" "$(read_proof "$claude")" "exit 0"
+expect "a newer commit with only docs changed since a full run is accepted" "$(read_proof "$claude")" "exit 0"
 expect "its line names the tested commit and the commits since" "$(line "E2E proof")" \
     "E2E proof: found (the full E2E suite passed on the Mac on $(git -C "$repo" rev-parse --short "$first"); the 2 commits since change no app code)"
 expect "the Release app run of the tested commit covers it too" "$(line "Release app run")" \
@@ -97,15 +98,15 @@ expect "it shows the render counts of the tested commit" "$(line "render counts"
     "render counts: too tall 1, cut texts 4, breaches 2 (drawn on the Mac on $(git -C "$repo" rev-parse --short "$first"))"
 
 app=$(commit ios/App/Second.swift second)
-expect "a commit that changes app code after the tested commit, with no record, is refused" "$(read_proof "$app")" "exit 1"
+expect "a newer commit with app code changed since a full run, and no full run of its own, is refused (a merge runs only the tests of its paths)" "$(read_proof "$app")" "exit 1"
 expect "a later change to main makes the old record not count" "$(line "E2E proof")" \
-    "E2E proof: missing ($(git -C "$repo" rev-parse --short "$app") changes app code, and has no record of a full E2E pass on the Mac)"
+    "E2E proof: missing ($(git -C "$repo" rev-parse --short "$app") changes app code, and has no record of a full E2E pass on the Mac: run make full-run on it or on a later commit)"
 expect "nor its Release app run" "$(line "Release app run")" "Release app run: missing"
 expect "app code that the views do not draw keeps the render counts of the tested commit" "$(line "render counts")" \
     "render counts: too tall 1, cut texts 4, breaches 2 (drawn on the Mac on $(git -C "$repo" rev-parse --short "$first"))"
 
 status "$app" owner success "E2E on the Mac" "Full E2E passed on tree $(tree "$app"). Render: not drawn. Release run: passed."
-expect "a record whose merge did not draw the views is a proof" "$(read_proof "$app")" "exit 0"
+expect "a record whose run did not draw the views is a proof" "$(read_proof "$app")" "exit 0"
 expect "its render counts are the ones of the last drawing" "$(line "render counts")" \
     "render counts: too tall 1, cut texts 4, breaches 2 (drawn on the Mac on $(git -C "$repo" rev-parse --short "$first"))"
 
@@ -131,13 +132,13 @@ expect "a change of the unit tests only is not app code" "$(read_proof "$tests_o
 notes_only=$(commit ios/changes/line-number.txt note)
 expect "a note of the changes only is not app code: no build and no test reads it" "$(read_proof "$notes_only")" "exit 0"
 
-# A record of a make merge that did not run the Release app yet: the E2E pass counts, but the release still refuses it.
+# An old record of a make merge that did not run the Release app yet: the E2E pass counts, but the release still refuses it.
 older=$(commit ios/App/Older.swift older)
 status "$older" owner success "E2E on the Mac" "Full E2E passed on tree $(tree "$older"). Render: not drawn."
 expect "a record with no Release app run is refused" "$(read_proof "$older")" "exit 1"
 expect "its E2E pass is found" "$(line "E2E proof")" "E2E proof: found (the full E2E suite passed on the Mac on this tree)"
 expect "its Release app run is missing, and the line says why" "$(line "Release app run")" \
-    "Release app run: missing (the record of $(git -C "$repo" rev-parse --short "$older") has no run of the Release app: make merge did not run it yet)"
+    "Release app run: missing (the record of $(git -C "$repo" rev-parse --short "$older") has no run of the Release app: it is older than that run)"
 expect "a docs commit after it is refused too" "$(read_proof "$(commit docs/older.md older)")" "exit 1"
 
 touch "$FAKE_GH_STATE/fail"

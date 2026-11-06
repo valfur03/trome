@@ -1,0 +1,72 @@
+# The E2E test classes that a merge runs for a changed file of app code, on top of the core checks (core_e2e_classes in
+# code-paths.sh, and make release-run-check), which run at every merge of app code.
+# One line: a pattern of paths (a shell pattern, in which * also matches /), then the classes, or - for the core checks only.
+# A changed file of app code that no line matches runs the full suite: a doubt never skips a test.
+# A file that several lines match runs the classes of each of them.
+# A line gives the classes whose test reads that code; the daily full run (make full-run) catches what a line misses.
+# The classes are the file names of ios/UITests/.
+
+# The tests themselves: a test class runs when its own file changes.
+# The files that every test shares (E2ETestCase and its helpers) have no line: they run the full suite.
+ios/UITests/LiveActivityTests.swift -
+ios/UITests/AutoLiveActivityTests.swift -
+ios/UITests/SnoozeTests.swift -
+ios/UITests/BackgroundArrivalTests.swift BackgroundArrivalTests
+ios/UITests/BackgroundPositionTests.swift BackgroundPositionTests
+ios/UITests/SwipeAwayTests.swift SwipeAwayTests
+ios/UITests/WakeLogClearTests.swift WakeLogClearTests
+
+# The widget and the line badge draw the Live Activity, which the core tests read (SnoozeTests, LiveActivityTests).
+ios/Widget/* -
+ios/Packages/TROMECore/Sources/TROMEBadge/* -
+# The run of the Release app is a core check; the docs screenshots and the render check are other test targets.
+ios/ReleaseRun/* -
+ios/DocsScreenshots/* -
+ios/RenderCheck/* -
+
+# The app and its rules, by feature.
+# The tests in the background reach stations through the position of iOS, the rules of the automatic Live Activity
+# and the wake log: they run for those features.
+ios/App/AutoLiveActivity/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+ios/Packages/TROMECore/Sources/TROMECore/AutoLiveActivity/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+ios/App/Location/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+ios/Packages/TROMECore/Sources/TROMECore/Location/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+ios/App/Permissions/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+ios/App/Stations/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+ios/Packages/TROMECore/Sources/TROMECore/Stations/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+ios/Packages/TROMECore/Sources/TROMECore/Resources/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests
+# The swipe away of the Live Activity reaches the app through its Live Activity code.
+ios/App/LiveActivity/* SwipeAwayTests
+ios/Packages/TROMECore/Sources/TROMECore/LiveActivity/* SwipeAwayTests
+# The wake log is in the Testing tools.
+ios/App/TestingTools/* BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests WakeLogClearTests
+# The trains (faked in the tests) show on the Live Activity, which the core tests read.
+ios/App/Trains/* -
+ios/Packages/TROMECore/Sources/TROMECore/Trains/* -
+# The screens that no E2E test opens beyond the start of the app, which the core tests do.
+ios/App/About/* -
+ios/Packages/TROMECore/Sources/TROMECore/About/* -
+ios/App/Example/* -
+ios/Packages/TROMECore/Sources/TROMECore/Example/* -
+ios/App/NightLook/* -
+ios/App/AppName/* -
+ios/Packages/TROMECore/Sources/TROMECore/Logging/* -
+
+# The checks of the gate and the scripts that no E2E run reads. The scripts of the E2E run (simulator.sh, sim-lock.sh,
+# quiet.sh, build-gate.py, e2e-failures.py, e2e-keep.py...), the Makefile files, ios/project.yml and ios/Config/ have no
+# line: they run the full suite. So do code-paths.sh and this map: a change to the rule runs every test once.
+ios/checks/* -
+ios/scripts/tests/* -
+ios/scripts/*-check.py -
+ios/scripts/change_notes.py -
+ios/scripts/markdown_prose.py -
+ios/scripts/repo_files.py -
+ios/scripts/builds_table.py -
+ios/scripts/test-waits.py -
+ios/scripts/merge.sh -
+ios/scripts/full-run.sh -
+ios/scripts/e2e-proof.sh -
+ios/scripts/release-* -
+ios/scripts/store-screenshots* -
+ios/scripts/docs-screenshots.sh -
+ios/scripts/timing/* -

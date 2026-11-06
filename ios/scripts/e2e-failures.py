@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import re
 import subprocess
 import sys
@@ -10,13 +11,49 @@ from pathlib import Path
 POWER_EVENT = re.compile(r"^(?P<moment>\d{4}-\d\d-\d\d \d\d:\d\d:\d\d) (?P<zone>[+-]\d{4}) (?P<kind>\S+) *\t(?P<message>.*)")
 
 
+# The exit status when a test failed, then passed on its retry (make e2e E2E_RETRY=1): the caller keeps the evidence.
+FLAKY_STATUS = 3
+
+
 def failures(node, test=None):
     if node.get("nodeType") == "Test Case":
         test = node.get("nodeIdentifier") or node.get("name")
+        # A test that passed on its retry is not a failure: flaky() reports it.
+        if node.get("result") == "Passed":
+            return
     if node.get("nodeType") == "Failure Message":
         yield test, node.get("name", ""), node.get("sourceLocation")
     for child in node.get("children", []):
         yield from failures(child, test)
+
+
+# The tests that passed in the end, but whose first run failed: the runner retried them (-retry-tests-on-failure).
+# Yields the name of the test and the message of its first failure.
+def flaky(node):
+    if node.get("nodeType") == "Test Case":
+        if node.get("result") == "Passed":
+            failed_runs = [run for run in node.get("children", []) if run.get("nodeType") == "Repetition" and run.get("result") == "Failed"]
+            if failed_runs:
+                messages = [child.get("name", "") for child in failed_runs[0].get("children", []) if child.get("nodeType") == "Failure Message"]
+                yield node.get("nodeIdentifier") or node.get("name"), messages[0] if messages else ""
+        return
+    for child in node.get("children", []):
+        yield from flaky(child)
+
+
+# Writes the names of the flaky tests in the file TROME_E2E_FLAKY (make merge, make full-run read it), and "flaky" in the
+# file TROME_CHECK_RESULT, which the Simulator job puts in the check ledger (sim-lock.sh). A write that fails is ignored:
+# the report is printed above.
+def note_flaky(names):
+    for variable, text in (("TROME_E2E_FLAKY", "".join(f"{name}\n" for name in names)), ("TROME_CHECK_RESULT", "flaky\n")):
+        path = os.environ.get(variable)
+        if not path:
+            continue
+        try:
+            with open(path, "a" if variable == "TROME_E2E_FLAKY" else "w") as file:
+                file.write(text)
+        except OSError:
+            pass
 
 
 def output_of(command):
@@ -60,7 +97,7 @@ def print_sleeps(summary):
     if spans:
         print(f"The Mac slept during the E2E tests, {', then '.join(spans)}, says 'pmset -g log'.")
         print("The Simulator stops while the Mac sleeps, but the waits of the tests count on the clock. So the failures above may come from the sleep, not from the code.")
-        print("Run the same command again (make e2e, make merge or make docs-screenshots) before you look for a bug.")
+        print("Run the same command again (make e2e or make docs-screenshots) before you look for a bug: make merge and make full-run already ran each failed test a second time.")
 
 
 def print_counts(summary):
@@ -81,16 +118,26 @@ def main():
     if summary is not None:
         print_counts(summary)
     tests = output_of(["xcrun", "xcresulttool", "get", "test-results", "tests", "--path", str(bundle)])
+    flaky_names = []
     if tests is not None:
-        for root in json.loads(tests).get("testNodes", []):
+        roots = json.loads(tests).get("testNodes", [])
+        for root in roots:
             for test, message, location in failures(root):
                 where = ""
                 if location:
                     where = f"{Path(location['filePath']).name}:{location['lineNumber']}: "
                 print(f"{where}{test}: {message}")
-    if summary is not None and summary.get("result") != "Passed":
+        for root in roots:
+            for test, message in flaky(root):
+                flaky_names.append(test)
+                print(f"E2E flaky: {test} failed, then passed on its retry. Its first failure: {message}")
+    if summary is not None and (summary.get("result") != "Passed" or flaky_names):
         print_sleeps(summary)
+    if flaky_names:
+        note_flaky(flaky_names)
+        return FLAKY_STATUS
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

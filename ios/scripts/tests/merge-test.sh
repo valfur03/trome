@@ -168,6 +168,7 @@ descendants() {
 merge() {
     : > "$state/steps"
     : > "$state/refs"
+    : > "$state/e2e-args"
     start_merge "$1"
     status=$(finish_merge "$1")
 }
@@ -193,11 +194,24 @@ EOF
 chmod +x "$repo/.git/hooks/reference-transaction"
 
 passing_check="$(step_recorder check)"
-passing_e2e="$(step_recorder e2e) && \"\$SCRIPTS/sim-lock.sh\" job sh -c 'echo nested-job >> \"\$FAKE_SIM_STATE/steps\"'"
+# The E2E stand-in also writes the classes that make merge asked for (ONLY, empty for the full suite) and its retry.
+passing_e2e="$(step_recorder e2e) && echo \"\${ONLY:-all}|\${E2E_RETRY:-no retry}\" >> \"\$FAKE_SIM_STATE/e2e-args\" && \"\$SCRIPTS/sim-lock.sh\" job sh -c 'echo nested-job >> \"\$FAKE_SIM_STATE/steps\"'"
 passing_release_run="$(step_recorder release-run)"
 passing_build="$(step_recorder build)"
 export TROME_MERGE_CHECK="$passing_check" TROME_MERGE_E2E="$passing_e2e" TROME_MERGE_RELEASE_RUN="$passing_release_run" \
     TROME_MERGE_BUILD="$passing_build" TROME_MERGE_RENDER_BUILD="$(step_recorder render-build)"
+# The render check, when a merge changes the views: it prints counts as make live-activity-render does.
+cat > "$state/render.sh" << 'RENDER'
+#!/bin/sh
+echo render >> "$FAKE_SIM_STATE/steps"
+if test -n "${RATP_SIM_HELD_PID:-}" && test "$(cat "$RATP_SIM_LOCK/pid" 2> /dev/null)" = "$RATP_SIM_HELD_PID"; then echo render-locked >> "$FAKE_SIM_STATE/steps"; fi
+[ ! -e "$FAKE_SIM_STATE/render-fails" ] || { echo "The text recognition of this Mac failed"; exit 1; }
+echo "Too tall for their text size, in fr: 0 (list: too-tall.csv)"
+echo "Cut texts in the images (OCR, for a person to read): 5 (list: cut-texts.txt)"
+echo "Breaches of the cut rules (texts cut too much), in the images of 3 stations: 1 (list: breaches.txt)"
+RENDER
+chmod +x "$state/render.sh"
+export TROME_MERGE_RENDER="$state/render.sh"
 
 new_task ok
 commit "$state/ok" ok ok
@@ -205,7 +219,9 @@ advance_main other other
 before=$(rev main)
 merge ok
 expect "make merge succeeds" "$status" "0"
-expect "make merge rebases the task, runs the gate and the test builds with no Simulator lock, then the full E2E suite and the Release app run with it" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
+expect "make merge rebases the task, runs the gate and the test builds with no Simulator lock, then the E2E tests and the Release app run with it" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
+expect "a changed file of app code with no line in the map runs the full E2E suite, a failed test retried once" "$(cat "$state/e2e-args")" "all|1"
+expect "make merge says why it runs the full suite" "$(contains "$state/ok.log" "full E2E suite, as a changed file of app code has no line in ios/scripts/e2e-paths.txt")" "yes"
 expect "make merge holds the lock neither for the rebase nor for the fast-forward" "$(tr '\n' ' ' < "$state/refs")" "refs/heads/task/ok free refs/heads/main free "
 expect "main is now the rebased task branch" "$(rev main)" "$(rev task/ok)"
 expect "the task branch was rebased onto the tip of main" "$(rev task/ok~1)" "$before"
@@ -342,7 +358,7 @@ for folder in ios/App ios/Widget ios/UITests ios/DocsScreenshots ios/RenderCheck
     mkdir -p "$state/$name/$folder"
     commit "$state/$name" "$folder/README.md" text
     merge "$name"
-    expect "make merge runs the E2E suite when the task changes a Markdown file in $folder, which the build of the app reads" "$(tr '\n' ' ' < "$state/steps")" "check build e2e e2e-locked nested-job release-run release-run-locked "
+    expect "make merge runs the E2E suite when the task changes a Markdown file in $folder, which the build of the app reads" "$(grep -c '^e2e-locked$' "$state/steps")" "1"
 done
 
 new_task mixed
@@ -380,7 +396,7 @@ merge e2e
 TROME_MERGE_E2E=$passing_e2e
 expect "make merge fails when the E2E suite fails" "$status" "1"
 expect "make merge leaves main unchanged when the E2E suite fails" "$(rev main)" "$before"
-expect "make merge says that the E2E suite failed" "$(contains "$state/e2e.log" "the step 'full E2E suite' failed")" "yes"
+expect "make merge says that the E2E suite failed" "$(contains "$state/e2e.log" "the step 'E2E tests' failed")" "yes"
 expect "make merge says where the failed E2E run kept its log and its .xcresult" "$(tail -1 "$state/e2e.log")" "The log, the .xcresult and the Simulator log of the failed run are kept in /kept/2026-10-07-141744-task-e2e"
 expect "make merge frees the Simulator lock when the E2E suite fails" "$(lock_state)" "free"
 
@@ -755,8 +771,8 @@ expect "when the second task of a train fails, the first one still lands" "$(fin
 expect "when the second task of a train fails, it does not land" "$(finish_merge second_bad)" "1"
 expect "when the second task of a train fails, main is the first task, which passed alone" "$(rev main) $(rev main~1)" "$(rev task/second_ok) $before"
 expect "when a train fails, its tasks land one by one: one E2E run for the train, then one for each task" "$(e2e_runs)" "3"
-expect "the failed task says which step failed" "$(contains "$state/second_bad.log" "the step 'full E2E suite' failed for task/second_bad")" "yes"
-expect "the train says which step failed" "$(contains "$state/second_ok.log" "the train of task/second_ok, task/second_bad failed at the step 'full E2E suite'")" "yes"
+expect "the failed task says which step failed" "$(contains "$state/second_bad.log" "the step 'E2E tests' failed for task/second_bad")" "yes"
+expect "the train says which step failed" "$(contains "$state/second_ok.log" "the train of task/second_ok, task/second_bad failed at the step 'E2E tests'")" "yes"
 expect "a train that fails for a task is not called flaky" "$(contains "$state/second_bad.log" "flaky")" "no"
 expect "the failed task keeps its own commits, on top of main" "$(git -C "$repo" rev-list --count main..task/second_bad) $(git -C "$repo" merge-base --is-ancestor main task/second_bad && echo on-main)" "2 on-main"
 
@@ -772,7 +788,7 @@ expect "when the first task of a train fails, the second one still lands" "$(fin
 expect "when the first task of a train fails, main is the second task alone" "$(rev main~1)" "$before"
 expect "the second task does not keep the commits of the first one" "$(git -C "$repo" merge-base --is-ancestor "$first_bad_head" task/first_ok && echo mixed || echo apart)" "apart"
 expect "the first task is back on its own commits" "$(rev task/first_bad)" "$first_bad_head"
-expect "the first task says which step failed" "$(contains "$state/first_bad.log" "the step 'full E2E suite' failed for task/first_bad")" "yes"
+expect "the first task says which step failed" "$(contains "$state/first_bad.log" "the step 'E2E tests' failed for task/first_bad")" "yes"
 expect "main has no merge commit after a failed train" "$(git -C "$repo" rev-list --merges main)" ""
 expect "a failed train frees the Simulator lock" "$(lock_state)" "free"
 
@@ -994,76 +1010,96 @@ export PATH="$path_before_node"
 TROME_MERGE_CHECK=$passing_check
 
 
-# The record of the E2E pass: with a remote, make merge pushes main and leaves the record on GitHub (a fake gh),
-# so that the release can refuse a commit of main whose tree the full suite never passed on (e2e-proof.sh).
+# The E2E tests of the changed paths (e2e_classes, ios/scripts/e2e-paths.txt): a merge runs the core checks and the classes
+# that the map gives to the files that it changes, a failed test retried once.
+new_task widget_only
+mkdir -p "$state/widget_only/ios/Widget"
+commit "$state/widget_only" ios/Widget/Strip.swift strip
+commit "$state/widget_only" widget_only.md docs
+merge widget_only
+expect "a merge of the widget and a docs page lands" "$status" "0"
+expect "it runs the core E2E classes only, as the map gives the widget no other class, a failed test retried once" \
+    "$(cat "$state/e2e-args")" "LiveActivityTests AutoLiveActivityTests SnoozeTests|1"
+expect "it runs the Release app run too, a core check" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
+expect "it says which classes it runs" "$(contains "$state/widget_only.log" "E2E tests of the core checks and of the changed paths, LiveActivityTests AutoLiveActivityTests SnoozeTests")" "yes"
+
+new_task background
+mkdir -p "$state/background/ios/App/AutoLiveActivity"
+commit "$state/background" ios/App/AutoLiveActivity/Watcher.swift watcher
+merge background
+expect "a merge of the automatic Live Activity runs the core classes and the tests in the background" "$(cat "$state/e2e-args")" \
+    "LiveActivityTests AutoLiveActivityTests SnoozeTests BackgroundArrivalTests BackgroundPositionTests SwipeAwayTests|1"
+expect "a merge that does not change the views runs no render check" "$(steps_line)" "check build e2e e2e-locked nested-job release-run release-run-locked "
+
+new_task merge_docs
+commit "$state/merge_docs" merge_docs.md docs
+merge merge_docs
+expect "a merge with no app code runs no E2E test" "$(cat "$state/e2e-args")$(steps_line)" "check "
+
+# A test that failed, then passed on its retry: inside its Simulator job, make e2e writes its name in TROME_E2E_FLAKY and
+# 'flaky' in TROME_CHECK_RESULT (e2e-failures.py), which the job writes in the check ledger.
+app_task flaky_one
+TROME_MERGE_E2E="$passing_e2e && RATP_SIM_KIND=e2e \"\$SCRIPTS/sim-lock.sh\" job sh -c 'echo flaky > \"\$TROME_CHECK_RESULT\"; echo \"SnoozeTests/testSnooze()\" >> \"\$TROME_E2E_FLAKY\"'"
+rm -f "$TROME_CHECK_LEDGER"
+merge flaky_one
+TROME_MERGE_E2E=$passing_e2e
+expect "a test that passed only on its retry is a pass: the task lands" "$status $(rev main)" "0 $(rev task/flaky_one)"
+expect "the merge names the flaky test, and says to file or update its bug" "$(contains "$state/flaky_one.log" "make merge: flaky E2E tests (each failed, then passed on its retry): SnoozeTests/testSnooze(). File a bug labelled flaky for each one, or add this run to its open bug (see 'Flaky tests' in CLAUDE.md).")" "yes"
+expect "the ledger line of that E2E run says flaky, at the place merge" \
+    "$(grep -c '"check": "e2e", "result": "flaky", .*"where": "merge"' "$TROME_CHECK_LEDGER")" "1"
+
+app_task flaky_red
+TROME_MERGE_E2E="$passing_e2e && echo \"SnoozeTests/testSnooze()\" >> \"\$TROME_E2E_FLAKY\" && exit 1"
+merge flaky_red
+TROME_MERGE_E2E=$passing_e2e
+expect "a test that failed twice is red: the task does not land, and the flaky one is still named" \
+    "$status $(contains "$state/flaky_red.log" "the step 'E2E tests' failed") $(contains "$state/flaky_red.log" "flaky E2E tests (each failed, then passed on its retry): SnoozeTests/testSnooze()")" "1 yes yes"
+
+# With a remote, a merge that ran its Simulator checks pushes main, but leaves no record for the release (e2e-proof.sh):
+# it ran only the E2E tests of its paths. make full-run writes the record (full-run-test.sh).
 export FAKE_GH_STATE="$state/gh"
 mkdir -p "$FAKE_GH_STATE/statuses"
 git init -q --bare "$state/origin.git"
 git -C "$repo" remote add origin "$state/origin.git"
 git -C "$repo" push -q origin main
-cat > "$state/render.sh" << 'RENDER'
-#!/bin/sh
-echo render >> "$FAKE_SIM_STATE/steps"
-if test -n "${RATP_SIM_HELD_PID:-}" && test "$(cat "$RATP_SIM_LOCK/pid" 2> /dev/null)" = "$RATP_SIM_HELD_PID"; then echo render-locked >> "$FAKE_SIM_STATE/steps"; fi
-[ ! -e "$FAKE_SIM_STATE/render-fails" ] || { echo "The text recognition of this Mac failed"; exit 1; }
-echo "Too tall for their text size, in fr: 0 (list: too-tall.csv)"
-echo "Cut texts in the images (OCR, for a person to read): 5 (list: cut-texts.txt)"
-echo "Breaches of the cut rules (texts cut too much), in the images of 3 stations: 1 (list: breaches.txt)"
-RENDER
-chmod +x "$state/render.sh"
-export TROME_MERGE_RENDER="$state/render.sh"
-TROME_MERGE_E2E=$passing_e2e
 
 origin_main() {
     git -C "$state/origin.git" rev-parse main
 }
 
-record() {
-    jq -r '.[0] | [.context, .state, .description] | join(" | ")' "$FAKE_GH_STATE/statuses/$1.json" 2> /dev/null || echo "no record"
-}
-
-proof() {
-    (cd "$repo" && "$scripts/e2e-proof.sh" read "$1" || true)
+statuses() {
+    ls "$FAKE_GH_STATE/statuses" | wc -l | tr -d ' '
 }
 
 short_main() {
     git -C "$repo" rev-parse --short "main${1:-}"
 }
 
-app_task recorded
-merge recorded
+app_task pushed
+merge pushed
 expect "a merge with a remote succeeds" "$status" "0"
-expect "after the E2E suite, it draws the views, as main has no render counts on GitHub" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
+expect "it draws no views, as the branch does not change them, even when main has no render counts on GitHub" "$(steps_line)" "check build e2e e2e-locked nested-job release-run release-run-locked "
 expect "it pushes main" "$(origin_main)" "$(rev main)"
-expect "it leaves on the new commit of main the record of the full E2E pass, with the tree and the render counts" "$(record "$(rev main)")" \
-    "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: too tall 0, cut texts 5, breaches 1. Release run: passed."
-expect "it says so" "$(contains "$state/recorded.log" "make merge: pushed main, and left on $(short_main) the record of its full E2E pass and Release app run (the status 'E2E on the Mac' on GitHub), with its render counts: too tall 0, cut texts 5, breaches 1.")" "yes"
-expect "the release reads the record" "$(proof main | head -n 2)" "E2E proof: found (the full E2E suite passed on the Mac on this tree)
-Release app run: found (the app as the store ships it started on the Mac on this tree, with no Testing tools)"
-
-app_task undrawn
-merge undrawn
-expect "a merge whose change the views do not draw runs no render check when main has render counts" "$(steps_line)" "check build e2e e2e-locked nested-job release-run release-run-locked "
-expect "its record says that it did not draw" "$(record "$(rev main)")" \
-    "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: not drawn. Release run: passed."
-expect "the release shows the counts of the last drawing" "$(proof main | sed -n 3p)" \
-    "render counts: too tall 0, cut texts 5, breaches 1 (drawn on the Mac on $(short_main '~1'))"
+expect "a merge, which ran only the E2E tests of its paths, writes no record for the release" "$(statuses)" "0"
+expect "it says that a release waits for a full run" "$(contains "$state/pushed.log" "make merge: pushed main. A release of $(short_main) waits for a pass of 'make full-run' on it, or on a later commit with the same app code.")" "yes"
+expect "the merge does not read GitHub: its render check depends only on the files that it changes" "$(cat "$FAKE_GH_STATE/calls" 2> /dev/null | wc -l | tr -d ' ')" "0"
+expect "the release refuses that commit" "$(cd "$repo" && "$scripts/e2e-proof.sh" read main > /dev/null 2>&1 && echo accepted || echo refused)" "refused"
 
 new_task views
 mkdir -p "$state/views/ios/Widget"
 commit "$state/views" ios/Widget/View.swift view
 merge views
-expect "a merge that changes the views draws them" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
+expect "a merge that changes the views draws them, after the Release app run" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
+expect "it prints the render counts" "$(contains "$state/views.log" "render counts: too tall 0, cut texts 5, breaches 1")" "yes"
+expect "it writes no record" "$(statuses)" "0"
 
-new_task recorded_docs
-commit "$state/recorded_docs" recorded_docs.md docs
+new_task pushed_docs
+commit "$state/pushed_docs" pushed_docs.md docs
 before=$(origin_main)
-merge recorded_docs
-expect "a merge that changes no app code runs no E2E suite, no Release app run and no render check" "$(steps_line)" "check "
-expect "it leaves no record and does not push: the push after the merge sends it" "$(origin_main) $(record "$(rev main)")" "$before no record"
+merge pushed_docs
+expect "a merge that changes no app code runs no E2E test, no Release app run and no render check" "$(steps_line)" "check "
+expect "it does not push: the next push sends it" "$(origin_main)" "$before"
 git -C "$repo" push -q origin main
-expect "the release still accepts its commit, by the record of the commit before it" "$(proof main | head -n 1)" \
-    "E2E proof: found (the full E2E suite passed on the Mac on $(short_main '~1'); the 1 commits since change no app code)"
 
 new_task render_fails
 mkdir -p "$state/render_fails/ios/Widget"
@@ -1072,8 +1108,6 @@ touch "$state/render-fails"
 merge render_fails
 rm "$state/render-fails"
 expect "a render check that fails does not stop the merge: it is a report" "$status $(origin_main)" "0 $(rev main)"
-expect "the record then says that it did not draw" "$(record "$(rev main)")" \
-    "E2E on the Mac | success | Full E2E passed on tree $(rev 'main^{tree}'). Render: not drawn. Release run: passed."
 expect "the merge says that the render check gave no counts" "$(contains "$state/render_fails.log" "the render check gave no counts")" "yes"
 
 app_task e2e_fails
@@ -1082,17 +1116,15 @@ before=$(origin_main)
 TROME_MERGE_E2E=$failing_e2e
 merge e2e_fails
 TROME_MERGE_E2E=$passing_e2e
-expect "a merge whose E2E suite fails draws nothing, pushes nothing and leaves no record" \
-    "$(steps_line)$(origin_main) $(record "$(rev task/e2e_fails)")" "check build render-build e2e e2e-locked nested-job $before no record"
+expect "a merge whose E2E tests fail draws nothing and pushes nothing" "$(steps_line)$(origin_main)" "check build e2e e2e-locked nested-job $before"
 
 app_task release_fails
 before=$(origin_main)
 TROME_MERGE_RELEASE_RUN="$passing_release_run && exit 1"
 merge release_fails
 TROME_MERGE_RELEASE_RUN=$passing_release_run
-expect "a merge whose Release app run fails does not land, draws nothing, pushes nothing and leaves no record" \
-    "$status $(steps_line)$(origin_main) $(record "$(rev task/release_fails)")" \
-    "1 check build render-build e2e e2e-locked nested-job release-run release-run-locked $before no record"
+expect "a merge whose Release app run fails does not land, draws nothing and pushes nothing" \
+    "$status $(steps_line)$(origin_main)" "1 check build e2e e2e-locked nested-job release-run release-run-locked $before"
 expect "it says that the Release app run failed" "$(contains "$state/release_fails.log" "the step 'Release app run' failed for task/release_fails")" "yes"
 expect "it says where the result bundle of the run is" "$(tail -1 "$state/release_fails.log")" \
     "Its result bundle, with the crash report when the app crashed: $(cd "$state/release_fails" && pwd -P)/ios/.build/release-run.xcresult"
@@ -1102,19 +1134,8 @@ git clone -q -b main "$state/origin.git" "$state/other-clone"
 commit "$state/other-clone" pushed-elsewhere other
 git -C "$state/other-clone" push -q origin main
 merge push_refused
-expect "when the push of main is refused, the merge still lands main" "$status $(rev main)" "0 $(rev task/push_refused)"
-expect "it leaves no record, and says that a release refuses the commit" \
-    "$(record "$(rev main)") $(contains "$state/push_refused.log" "the push of main to origin failed, so $(short_main) has no record of its E2E pass on GitHub, and a release refuses it")" "no record yes"
-git -C "$repo" fetch -q origin main
-git -C "$repo" reset -q --hard FETCH_HEAD
-
-app_task gh_fails
-touch "$FAKE_GH_STATE/fail"
-merge gh_fails
-rm "$FAKE_GH_STATE/fail"
-expect "when GitHub cannot be read, the merge draws the views, as it cannot tell if main has render counts" "$(steps_line)" "check build render-build e2e e2e-locked nested-job release-run release-run-locked render render-locked "
-expect "when GitHub does not take the record, the merge still lands and pushes main, and says that a release refuses the commit" \
-    "$status $(origin_main) $(contains "$state/gh_fails.log" "but GitHub did not take the record of the E2E pass of $(short_main), so a release refuses it")" "0 $(rev main) yes"
+expect "when the push of main is refused, the merge still lands main, and says so" \
+    "$status $(rev main) $(contains "$state/push_refused.log" "the push of main to origin failed, so the next merge or 'make full-run' pushes it")" "0 $(rev task/push_refused) yes"
 git -C "$repo" remote remove origin
 
 [ "$failures" -eq 0 ]
