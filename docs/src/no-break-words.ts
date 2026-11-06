@@ -1,9 +1,9 @@
-// Keeps a word with a hyphen on one line: 'Wi-Fi' broke into 'Wi-' and 'Fi' on a phone, and the reader reads two words.
+// Keeps a word with a hyphen on one line: 'Wi-Fi' broke into 'Wi-' and 'Fi' on a phone, and the reader reads two words; 'Île-de-France' ended a line with 'Île-de-'.
 // A non-breaking hyphen (U+2011) in the page would change the word for the search and for a copy, and some fonts draw it from another font,
 // so the page keeps its plain hyphen, and the word goes in a box that never breaks: src/styles/custom.css sets the class.
 
 export const noBreakClass = 'nobreak';
-export const noBreakWords = ['Wi-Fi'];
+export const noBreakWords = ['Wi-Fi', 'Île-de-France'];
 
 const wordPattern = new RegExp(`(?<![\\p{L}\\d-])(?:${noBreakWords.join('|')})(?![\\p{L}\\d-])`, 'gu');
 
@@ -32,6 +32,11 @@ export function splitAtWords(text: string): NewNode[] | undefined {
   if (nodes.length === 0) return undefined;
   if (end < text.length) nodes.push({ type: 'text', value: text.slice(end) });
   return nodes;
+}
+
+// The HTML of a text with each such word in a box that never breaks, for a text that Starlight writes as HTML outside the Markdown (the tagline of a home).
+export function withNoBreakBoxes(html: string): string {
+  return html.replace(wordPattern, (word) => `<span class="${noBreakClass}">${word}</span>`);
 }
 
 // The text with a non-breaking hyphen (U+2011) inside each such word, and the same length.

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { noBreakClass, noBreakWordsPlugin, splitAtWords, withNoBreakHyphens, withNoBreakHyphensInToc } from './no-break-words.ts';
+import { noBreakClass, noBreakWordsPlugin, splitAtWords, withNoBreakBoxes, withNoBreakHyphens, withNoBreakHyphensInToc } from './no-break-words.ts';
 import { inPieces, noBreakSpace as nb, rulesForPage, typographyFaults, withNoBreakSpaces, withNoBreakSpacesInText } from './typography.ts';
 
 // What each test is for: a French reader on a phone never meets a line that starts with », :, ;, ? or ! or ends with «,
@@ -145,6 +145,28 @@ describe('splitAtWords', () => {
   it('finds the word at the start and at the end of a text', () => {
     assert.equal(splitAtWords('Wi-Fi')?.length, 1);
     assert.equal(splitAtWords('Wi-Fi ou 4G')?.length, 2);
+  });
+});
+
+describe('Île-de-France', () => {
+  it('is a word that never breaks, in a text, in a table of contents and in a tagline', () => {
+    assert.deepEqual(
+      splitAtWords('Près de l’Île-de-France Mobilités')?.map((node) => node.children?.[0].value ?? node.value),
+      ['Près de l’', 'Île-de-France', ' Mobilités'],
+    );
+    assert.equal(splitAtWords('Île-de-France-Nord'), undefined);
+    assert.equal(withNoBreakHyphens('en Île-de-France'), 'en Île‑de‑France');
+    assert.equal(withNoBreakHyphens('en Île-de-France').length, 'en Île-de-France'.length);
+  });
+});
+
+describe('withNoBreakBoxes', () => {
+  it('puts each such word of an HTML text in a box, and leaves the rest', () => {
+    assert.equal(
+      withNoBreakBoxes('En Île-de-France, hors Wi-Fi.'),
+      `En <span class="${noBreakClass}">Île-de-France</span>, hors <span class="${noBreakClass}">Wi-Fi</span>.`,
+    );
+    assert.equal(withNoBreakBoxes('Saint-Paul'), 'Saint-Paul');
   });
 });
 

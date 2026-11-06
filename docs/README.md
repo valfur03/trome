@@ -332,9 +332,9 @@ The first holds for every French page, the second for every page that has a Fren
   A plain space before `«` and after `»` is right: a line may break there.
 - **A number and its unit.** On every page that has a French or English twin (everything but `build/` and `maintain/`), put the same no-break space between a number and its unit: 150 and meters, 150 and mètres, 1 and h, 2:59 and PM.
   Why: a line that ends with `150` and goes on with `mètres` reads as two things.
-- **`Wi-Fi`.** Write it with a plain hyphen, as you would anywhere.
-  The site keeps it on one line by itself: in the text of the page, in the list "On this page" and in the search results.
-  Another word that breaks at its hyphen, such as `Île-de-France`, is not covered yet: add it to `noBreakWords` in `src/no-break-words.ts`.
+- **`Wi-Fi` and `Île-de-France`.** Write them with a plain hyphen, as you would anywhere.
+  The site keeps each on one line by itself: in the text of the page, in the tagline of a home, in the list "On this page" and in the search results.
+  Another word that breaks at its hyphen is not covered yet: add it to `noBreakWords` in `src/no-break-words.ts`.
   That file is code, so an engineer reviews the change.
 
 A no-break space looks like a plain space, so type it with care.

@@ -13,7 +13,8 @@
   overflow-wrap: break-word;
 }
 
-/* A word with a hyphen that a line must never break, such as Wi-Fi (src/no-break-words.ts marks it). */
-.sl-markdown-content .nobreak {
+/* A word with a hyphen that a line must never break, such as Wi-Fi (src/no-break-words.ts marks it), in a page and in the tagline of a home. */
+.sl-markdown-content .nobreak,
+.hero .nobreak {
   white-space: nowrap;
 }
