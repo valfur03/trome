@@ -347,6 +347,7 @@ This page holds no no-break space to copy: the test below tells you whether your
 The test reads every page, skips code and the row under the head of a table, and names each line that has a plain space where a no-break space belongs.
 It prints the line with `⍽` in the place of each such space: replace each `⍽` with a no-break space.
 It knows the units that `src/typography.ts` lists: add a unit there when a page needs it, with a test.
+The French texts of `maintain/store-text` get the French marks too, from their own test (`src/store-text.test.ts`): they sit in code blocks of an English page, which the test above skips.
 
 ### Choose the right shape
 

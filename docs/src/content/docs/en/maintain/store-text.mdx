@@ -9,13 +9,13 @@ import { Code } from '@astrojs/starlight/components';
 import Contact from '../../../../components/Contact.astro';
 import { contactEmail } from '../../../../contact.ts';
 
-export const newFriendFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
-1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche sur l’écran verrouillé, avec des horaires d’exemple.
-2. À une vraie station de Paris : autorisez la localisation « Toujours » (si iOS demande les notifications, autorisez-les), puis approchez-vous à moins de 150 mètres. Les trains devraient s’afficher seuls, app ouverte ou fermée. Si rien ne vient, dites-le-moi, et dites si vous aviez fermé TROME dans le sélecteur d’apps.
-3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ». Sur l’exemple, ils ne font que l’arrêter.
+export const newFriendFr = `Pour Paris et l’Île-de-France seulement. Trois choses à essayer :
+1. De n’importe où : ouvrez TROME, touchez « Voir un exemple », puis verrouillez l’iPhone. Châtelet s’affiche avec des horaires d’exemple.
+2. À une vraie station de Paris : autorisez la localisation « Toujours » (si iOS demande les notifications, autorisez-les), puis approchez-vous à moins de 150 mètres. Les trains devraient s’afficher seuls, app ouverte ou fermée. Si rien ne vient, dites-le-moi, et dites si vous aviez fermé TROME dans le sélecteur d’apps.
+3. Pas maintenant : sur l’écran verrouillé, touchez « 30 min », « 1 h » ou « Aujourd’hui ». Sur l’exemple, ils ne font que l’arrêter.
 
-À savoir : pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
-Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envoyer. Ou écrivez-moi à ${contactEmail}.`;
+À savoir : pas de compte à créer, et les trains ne s’affichent que pendant les heures de service du métro et du RER.
+Un problème ? Prenez une capture d’écran : TestFlight propose de me l’envoyer. Ou écrivez-moi à ${contactEmail}.`;
 
 export const newFriendEn = `For Paris and Île-de-France only. Three things to try:
 1. From anywhere: open TROME, tap “See an example”, then lock the iPhone. Châtelet shows on the lock screen, with sample times.
@@ -33,6 +33,10 @@ French comes first, because most riders are French: paste the French text in the
 Apple counts characters for every field below except the keywords and the review notes, which it counts in bytes: an accented letter such as é takes two bytes.
 The limits are those of Apple's help pages, read on 7 October 2026: [Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/) and [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/).
 The sizes below are counted by script on the texts as they stand, so count again after any edit.
+The French texts hold a no-break space (U+00A0) before `:`, `;`, `?`, `!` and `»`, after `«`, and between a number and its unit, so that a line never starts with `»` or `:`.
+It takes two bytes, where a plain space takes one, so the byte sizes count it.
+Keep it when you edit a French text: copy the text from this page, and never retype its spaces.
+`make docs-check` runs a test that reads each text of this page, counts its size with the real address, and names each plain space to change.
 
 ## The store title: three to try, in order
 
@@ -80,7 +84,7 @@ Next trains on the lock screen
 Promotional text, French (166 of 170 characters):
 
 ```text wrap
-Si vous prenez le métro ou le RER en Île-de-France, TROME vous évite de chercher les horaires et de choisir une station. Elle ne coûte rien : ni compte, ni publicité.
+Si vous prenez le métro ou le RER en Île-de-France, TROME vous évite de chercher les horaires et de choisir une station. Elle ne coûte rien : ni compte, ni publicité.
 ```
 
 Promotional text, English (149 of 170 characters):
@@ -110,18 +114,18 @@ Ce que vous voyez
 • Tout cela s’affiche sur l’écran verrouillé, et dans la Dynamic Island sur les iPhone qui en ont une.
 
 Quand les trains s’affichent
-TROME détecte la station quand vous êtes à 150 mètres environ, donc vous n’avez aucune station à choisir. Les trains s’affichent dès votre arrivée, app ouverte ou fermée. Quand vous vous éloignez de la station, les trains disparaissent. Si vous ne voulez pas des trains maintenant, mettez TROME en pause pendant 30 minutes, 1 heure ou jusqu’à la fin de la journée, depuis l’écran verrouillé.
+TROME détecte la station quand vous êtes à 150 mètres environ, donc vous n’avez aucune station à choisir. Les trains s’affichent dès votre arrivée, app ouverte ou fermée. Quand vous vous éloignez de la station, les trains disparaissent. Si vous ne voulez pas des trains maintenant, mettez TROME en pause pendant 30 minutes, 1 heure ou jusqu’à la fin de la journée, depuis l’écran verrouillé.
 
 Votre position reste sur votre iPhone
-TROME s’en sert pour trouver la station la plus proche. Elle ne quitte pas l’iPhone : je ne la reçois jamais. Pour fonctionner quand l’app est fermée, TROME demande la localisation « Toujours ». Si vous la refusez, TROME fonctionne tant que l’app est ouverte.
+TROME s’en sert pour trouver la station la plus proche. Elle ne quitte pas l’iPhone : je ne la reçois jamais. Pour fonctionner quand l’app est fermée, TROME demande la localisation « Toujours ». Si vous la refusez, TROME fonctionne tant que l’app est ouverte.
 
 Bon à savoir
 • TROME couvre le métro (lignes 1 à 14, 3bis et 7bis) et le RER (A à E). Elle ne montre ni bus, ni tram, ni itinéraires, ni info trafic.
-• Hors de l’Île-de-France, seul « Voir un exemple » fonctionne : il montre Châtelet, avec des horaires d’exemple.
-• Les horaires suivent le service du métro et du RER : la nuit, quand les trains ne circulent pas, rien ne s’affiche. Un écart d’une ou deux minutes avec l’écran du quai est normal.
+• Hors de l’Île-de-France, seul « Voir un exemple » fonctionne : il montre Châtelet, avec des horaires d’exemple.
+• Les horaires suivent le service du métro et du RER : la nuit, quand les trains ne circulent pas, rien ne s’affiche. Un écart d’une ou deux minutes avec l’écran du quai est normal.
 • TROME fonctionne sur iPhone, avec iOS 18 ou plus, en français et en anglais.
 
-Horaires : « Prochains passages » d’Île-de-France Mobilités (PRIM), sous « Licence Mobilités ». Stations : adaptées à partir de données d’Île-de-France Mobilités, sous licences ODbL et Licence Ouverte v2.0. TROME n’est pas une app de la RATP ni d’Île-de-France Mobilités, et aucune des deux ne la soutient.
+Horaires : « Prochains passages » d’Île-de-France Mobilités (PRIM), sous « Licence Mobilités ». Stations : adaptées à partir de données d’Île-de-France Mobilités, sous licences ODbL et Licence Ouverte v2.0. TROME n’est pas une app de la RATP ni d’Île-de-France Mobilités, et aucune des deux ne la soutient.
 ```
 
 English (1852 of 4000 characters):
@@ -256,10 +260,10 @@ So each text stays under 1,000 bytes, which fits any limit of 1,000 bytes or mor
 Each text below says in its first sentence that TROME works in Paris and Île-de-France only, and is written in full sentences, as the description is.
 The feedback email is <Contact />, the address of every contact.
 
-Beta app description, French (287 bytes):
+Beta app description, French (290 bytes):
 
 ```text wrap
-TROME est faite pour Paris et l’Île-de-France seulement : elle affiche sur votre écran verrouillé les prochains trains de la station où vous êtes. Ailleurs, vous pouvez essayer « Voir un exemple ». C’est une version de test, gratuite et sans compte, et vos retours m’aident.
+TROME est faite pour Paris et l’Île-de-France seulement : elle affiche sur votre écran verrouillé les prochains trains de la station où vous êtes. Ailleurs, vous pouvez essayer « Voir un exemple ». C’est une version de test, gratuite et sans compte, et vos retours m’aident.
 ```
 
 Beta app description, English (246 bytes):
@@ -283,7 +287,7 @@ Step 2 says what is hoped, not a result: the start with the app closed is built,
 It asks a friend who got nothing to say if they had swiped TROME away, because that tells which case failed.
 When the walks have answered, change step 2 to say what they showed.
 
-Message to a new friend, French (986 bytes):
+Message to a new friend, French (978 bytes):
 
 <Code code={newFriendFr} lang="text" wrap />
 
