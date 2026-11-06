@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { noBreakClass, noBreakWordsPlugin, splitAtWords, withNoBreakHyphens } from './no-break-words.ts';
+import { noBreakClass, noBreakWordsPlugin, splitAtWords, withNoBreakHyphens, withNoBreakHyphensInToc } from './no-break-words.ts';
 import { inPieces, noBreakSpace as nb, rulesForPage, typographyFaults, withNoBreakSpaces, withNoBreakSpacesInText } from './typography.ts';
 
 // What each test is for: a French reader on a phone never meets a line that starts with », :, ;, ? or ! or ends with «,
@@ -43,6 +43,11 @@ describe('withNoBreakSpaces, French punctuation', () => {
     assert.equal(withNoBreakSpaces(`Déjà${nb}: bon`, fr), `Déjà${nb}: bon`);
     assert.equal(withNoBreakSpaces('Un lien https://example.org/a?b=1 et 14:59', fr), 'Un lien https://example.org/a?b=1 et 14:59');
     assert.equal(withNoBreakSpaces('key: value', fr), 'key: value');
+  });
+
+  it('leaves the row under the head of a table: a no-break space before its colon would end the table', () => {
+    for (const row of ['| :--- | ---: |', '| --- | :---: |', ':--- | ---:', '|:-|-:|']) assert.equal(withNoBreakSpaces(row, fr), row);
+    assert.equal(withNoBreakSpaces('| Ligne : 1 | 3 min |', fr), `| Ligne${nb}: 1 | 3${nb}min |`);
   });
 
   it('leaves an indented line that starts with a mark: it is no word before a mark', () => {
@@ -94,6 +99,13 @@ describe('typographyFaults', () => {
   });
 });
 
+// The line with ⍽ at each space to change, around the first one: a no-break space looks like a plain space in a terminal.
+function marked(text: string, fixed: string): string {
+  const first = text.split('').findIndex((character, index) => character !== fixed[index]);
+  const line = text.split('').map((character, index) => (character === fixed[index] ? character : '⍽')).join('');
+  return line.slice(Math.max(0, first - 50), first + 50);
+}
+
 // Every page of the site, as it is committed.
 const contentFolder = new URL('content/docs/', import.meta.url);
 const pages = readdirSync(contentFolder, { recursive: true, encoding: 'utf8' })
@@ -106,9 +118,9 @@ describe('the pages of the site', () => {
       const source = readFileSync(new URL(path, contentFolder), 'utf8');
       const faults = typographyFaults(source, rulesForPage(path.replace(/\.mdx?$/, '')));
       assert.deepEqual(
-        faults.map(({ line, text }) => `${path}:${line}: ${text.slice(0, 100)}`),
+        faults.map(({ line, text, fixed }) => `${path}:${line}: ${marked(text, fixed)}`),
         [],
-        `Replace the plain space by a no-break space (U+00A0) on these lines: before », :, ; ? and ! and after « on a French page, between a number and its unit on a riders page.`,
+        `Replace each plain space marked ⍽ by a no-break space (U+00A0): before », :, ; ? and ! and after « on a French page, between a number and its unit on a riders page.`,
       );
     });
   }
@@ -188,5 +200,13 @@ describe('withNoBreakHyphens', () => {
 
   it('leaves any other hyphen', () => {
     assert.equal(withNoBreakHyphens('Saint-Paul, sans-Wi-Fi'), 'Saint-Paul, sans-Wi-Fi');
+  });
+});
+
+describe('withNoBreakHyphensInToc', () => {
+  it('keeps Wi-Fi on one line in the table of contents, at every depth', () => {
+    const toc = [{ text: 'Hors du Wi-Fi', children: [{ text: 'Le Wi-Fi coupé', children: [] }] }];
+    withNoBreakHyphensInToc(toc);
+    assert.deepEqual(toc, [{ text: 'Hors du Wi‑Fi', children: [{ text: 'Le Wi‑Fi coupé', children: [] }] }]);
   });
 });

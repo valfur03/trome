@@ -324,8 +324,8 @@ Put a no-break space (U+00A0) before `»`, `:`, `;`, `?` and `!`, and after `«`
 Why: French puts a space on both sides of these marks, and a plain space lets a line break there, so a line starts with `»` or `:`, or ends with a lone `«`.
 Put the same no-break space between a number and its unit (`150 mètres`, `150 meters`, `1 h`, `2:59 PM`) on the riders' pages of both languages.
 Write `Wi-Fi` as it is: the site keeps it on one line by itself.
-`npm test` in `docs/` reads every page and names each line that has a plain space where one of these belongs, with the line as it should be.
-The check skips code, and it reads only the units that `src/typography.ts` lists: add a unit there when a page needs it.
+`npm test` in `docs/` reads every page and names each line that has a plain space where one of these belongs, with `⍽` at each such space.
+The check skips code and the row under the head of a table, and it reads only the units that `src/typography.ts` lists: add a unit there when a page needs it.
 
 ### Choose the right shape
 

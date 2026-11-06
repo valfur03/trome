@@ -35,9 +35,19 @@ export function splitAtWords(text: string): NewNode[] | undefined {
 }
 
 // The text with a non-breaking hyphen (U+2011) inside each such word, and the same length.
-// For a result of the search only, which the reader never copies and for which a box is too much: the page itself keeps its plain hyphen.
+// For a result of the search and the table of contents only, which the reader never copies and for which a box is too much: the page itself keeps its plain hyphen.
 export function withNoBreakHyphens(text: string): string {
   return text.replace(wordPattern, (word) => word.replaceAll('-', '\u2011'));
+}
+
+// The table of contents of a page, with a non-breaking hyphen in each such word of its headings.
+// Starlight writes it from the heading texts, outside the Markdown, so the box of the page never reaches it,
+// and the narrow column of 'On this page' broke 'Wi-Fi' at 360 px. It is not in the search index, and a reader never copies it.
+export function withNoBreakHyphensInToc<Item extends { text: string; children: Item[] }>(items: Item[]): void {
+  for (const item of items) {
+    item.text = withNoBreakHyphens(item.text);
+    withNoBreakHyphensInToc(item.children);
+  }
 }
 
 function isInCode(node: Node, ctx: Context): boolean {

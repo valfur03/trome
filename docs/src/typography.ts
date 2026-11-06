@@ -81,8 +81,11 @@ function withNoBreakSpacesInLine(line: string, rules: Rules): string {
   return line.split('').map((character, index) => (masked[index] === hidden ? character : changed[index])).join('');
 }
 
+// The row under the head of a table, such as '| :--- | ---: |': a no-break space before its ':' would end the table.
+const tableDelimiterRow = /^\s*\|?(?:\s*:?-+:?\s*\|)*\s*:?-+:?\s*\|?\s*$/;
+
 // The source of a Markdown or MDX page with a no-break space at each place of the rules above.
-// A code block, an inline code and the import lines of an MDX page are left as they are.
+// A code block, an inline code, the import lines of an MDX page and the row under the head of a table are left as they are.
 export function withNoBreakSpaces(source: string, rules: Rules): string {
   let fence: string | undefined;
   return source
@@ -97,7 +100,7 @@ export function withNoBreakSpaces(source: string, rules: Rules): string {
         fence = marker;
         return line;
       }
-      if (/^(import|export)\s/.test(line)) return line;
+      if (/^(import|export)\s/.test(line) || tableDelimiterRow.test(line)) return line;
       return withNoBreakSpacesInLine(line, rules);
     })
     .join('\n');
