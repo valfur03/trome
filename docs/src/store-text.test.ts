@@ -27,27 +27,31 @@ function exportedText(name: string): string {
   const from = source.indexOf(start);
   assert.ok(from >= 0, `the page exports no ${name}`);
   const textStart = from + start.length;
-  return source.slice(textStart, source.indexOf('`;', textStart)).replace('${contactEmail}', contactEmail);
+  const text = source.slice(textStart, source.indexOf('`;', textStart)).replaceAll('${contactEmail}', contactEmail);
+  assert.ok(!text.includes('${'), `${name} holds a value that this test does not know, so its size cannot be counted`);
+  return text;
 }
 
-// A text is a line that ends with its size, as "French (99 of 100 bytes):", then a code block or a `<Code code={name} />` block.
+// A text is a line that gives its size, as "French (99 of 100 bytes):" or a row of a table, then, within three lines, a code block or a `<Code code={name} />` block.
 function storeTexts(): StoreText[] {
   const texts: StoreText[] = [];
   lines.forEach((line, index) => {
-    const size = /\((\d+) (?:of (\d+) )?(bytes|characters)\):$/.exec(line);
+    const size = /\((\d+) (?:of (\d+) )?(bytes|characters)\)/.exec(line);
     if (!size) return;
-    const next = lines[index + 2] ?? '';
+    const start = lines.findIndex((candidate, at) => at > index && (candidate.startsWith('```') || candidate.startsWith('<Code ')));
+    assert.ok(start > index && start - index <= 3, `${line}: no text under this line`);
+    const next = lines[start];
     let text: string;
     if (next.startsWith('```')) {
-      const end = lines.findIndex((candidate, at) => at > index + 2 && candidate.startsWith('```'));
-      text = lines.slice(index + 3, end).join('\n');
+      const end = lines.findIndex((candidate, at) => at > start && candidate.startsWith('```'));
+      text = lines.slice(start + 1, end).join('\n');
     } else {
       const name = /code=\{(\w+)\}/.exec(next)?.[1];
       assert.ok(name, `${line}: no text under this line`);
       text = exportedText(name);
     }
     texts.push({
-      label: line,
+      label: line.slice(0, size.index + size[0].length),
       french: line.includes('French'),
       declared: Number(size[1]),
       limit: size[2] ? Number(size[2]) : undefined,
@@ -64,7 +68,7 @@ const french = rulesForPage('fr/store-text');
 describe('the texts of the store text page', () => {
   it('finds every text that the page sizes', () => {
     assert.equal(texts.filter((text) => text.french).length, 8);
-    assert.equal(texts.filter((text) => !text.french).length, 6);
+    assert.equal(texts.filter((text) => !text.french).length, 7);
   });
 
   for (const { label, french: isFrench, declared, limit, unit, text } of texts) {
