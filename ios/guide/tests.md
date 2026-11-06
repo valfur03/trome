@@ -46,9 +46,10 @@ To write one:
 - `make check` runs the tests of the test files that you changed with `make test-waits`: 3 times with waits that look again at once, as when the code under test runs late on a busy Mac, and 3 times with waits that look again after 50 ms, as when the test itself runs late.
   A test that passes in `make test` and fails there waits for one thing and checks another.
   To replay one failure, run `swift test` as above with `TROME_TEST_WAITS=eager` or `TROME_TEST_WAITS=late` in front.
-- A suite whose tests use `waitUntil` or `expectNever` has the trait `.realTime`, as in `@Suite(.realTime)`: its tests run at most as many at once as the Mac has cores, in every run, a `swift test` by hand included.
+- Every suite of `TROMECoreTests` has the trait `.bounded`, as in `@Suite(.bounded)`: its tests run at most as many at once as the Mac has cores, in every run, a `swift test` by hand included.
   Without it, Swift Testing starts every test at once, and the tests of the main actor share its one thread, so on a busy Mac a wait runs out of time while that thread serves hundreds of other tests.
-  A wait in a suite without the trait fails at its own line, in every run.
+  A bound on the suites that wait is not enough, since the other tests still take that thread.
+  `BoundedTraitTests` fails on a suite without the trait, and a wait in such a suite fails at its own line.
   The wait for a free slot counts in the time limit of a test, so a test with a time limit takes the next free slot before the tests in the queue.
   The `make` commands also run at most as many of all the unit tests at once (`SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH`, set in `ios/Makefile`).
   When many waits of one run fail at the same moment, the whole run was slow, not one test.
