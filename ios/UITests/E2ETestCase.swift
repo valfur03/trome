@@ -5,8 +5,6 @@ class E2ETestCase: XCTestCase {
     static let farFromAnyStation = CLLocation(latitude: 48.42, longitude: 2.63)
     private static let notificationCenterIdentifier = "lockscreen-date-view"
     private static let liveActivityIdentifier = "activity-content-view"
-    /// The mark of `UITestScenePhaseMark` in the app.
-    private static let scenePhaseIdentifier = "uiTestScenePhase"
     private static let locationPromptAnswer = "Allow While Using App"
     static let alwaysPromptAnswer = "Keep Only While Using"
     private static let permissionAnswers = [locationPromptAnswer, alwaysPromptAnswer, "Allow"]
@@ -241,15 +239,7 @@ class E2ETestCase: XCTestCase {
             file: file,
             line: line
         )
-        let scenePhase = app.descendants(matching: .any)[Self.scenePhaseIdentifier]
-        let active = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "active"), object: scenePhase)
-        XCTAssertEqual(
-            XCTWaiter().wait(for: [active], timeout: UITestTimeout.element),
-            .completed,
-            "iOS did not make the app active, so it would drop a tap on it",
-            file: file,
-            line: line
-        )
+        waitUntilIOSMakesActive(app, file: file, line: line)
     }
 
     @MainActor
