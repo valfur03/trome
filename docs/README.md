@@ -334,6 +334,8 @@ The first holds for every French page, the second for every page that has a Fren
   Why: a line that ends with `150` and goes on with `mètres` reads as two things.
 - **`Wi-Fi` and `Île-de-France`.** Write them with a plain hyphen, as you would anywhere.
   The site keeps each on one line by itself: in the text of the page, in the tagline of a home, in the list "On this page" and in the search results.
+  The title of a home (its hero headline) is not covered: keep a word with a hyphen out of it, or word it so that the break reads well.
+  The match is exact and case-sensitive, so `Ile-de-France` without the accent and `ÎLE-DE-FRANCE` in capitals can still break: write the name as above.
   Another word that breaks at its hyphen is not covered yet: add it to `noBreakWords` in `src/no-break-words.ts`.
   That file is code, so an engineer reviews the change.
 
