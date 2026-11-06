@@ -320,12 +320,30 @@ Use the words of the RATP signs and of iOS in French, then write the English pag
 
 For any other label of the app, use its text in the String Catalogs, [of the app](../ios/App/Localizable.xcstrings) and [of the Live Activity](../ios/Widget/Localizable.xcstrings).
 
-Put a no-break space (U+00A0) before `»`, `:`, `;`, `?` and `!`, and after `«`, never a plain space.
-Why: French puts a space on both sides of these marks, and a plain space lets a line break there, so a line starts with `»` or `:`, or ends with a lone `«`.
-Put the same no-break space between a number and its unit (`150 mètres`, `150 meters`, `1 h`, `2:59 PM`) on the riders' pages of both languages.
-Write `Wi-Fi` as it is: the site keeps it on one line by itself.
-`npm test` in `docs/` reads every page and names each line that has a plain space where one of these belongs, with `⍽` at each such space.
-The check skips code and the row under the head of a table, and it reads only the units that `src/typography.ts` lists: add a unit there when a page needs it.
+### Keep a line from breaking at the wrong place
+
+A rider reads on a phone, where a line is short, so a line breaks often.
+A break in the wrong place makes the page look careless: a line that starts with `»` or `:`, a number apart from its unit, `Wi-` and `Fi` on two lines.
+Three rules stop it.
+The first holds for every French page, the second for the riders' pages of both languages, and the third for every page.
+
+- **French marks.** On a French page, put a no-break space (U+00A0) before `»`, `:`, `;`, `?` and `!`, and after `«`, never a plain space.
+  Why: French puts a space before `:`, `;`, `?`, `!` and `»`, and after `«`, and no space before `«` or after `»`; a plain space lets a line break at that space, so a line starts with `»` or `:`, or ends with a lone `«`.
+- **A number and its unit.** On the riders' pages, in French and in English, put the same no-break space between a number and its unit: 150 and meters, 150 and mètres, 1 and h, 2:59 and PM.
+  Why: a line that ends with `150` and goes on with `mètres` reads as two things.
+- **`Wi-Fi`.** Write it with a plain hyphen, as you would anywhere.
+  The site keeps it on one line by itself: in the text of the page, in the list "On this page" and in the search results.
+  Another word that breaks at its hyphen, such as `Île-de-France`, is not covered yet: add it to `noBreakWords` in `src/no-break-words.ts`.
+  That file is code, so an engineer reviews the change.
+
+A no-break space looks like a plain space, so type it with care.
+On a Mac, Option and Space type it.
+The examples above hold plain spaces: do not copy them into a page.
+
+`make docs-check` runs the test of this rule (it needs Node 24, so run it through fnm: see "Run the site").
+The test reads every page, skips code and the row under the head of a table, and names each line that has a plain space where a no-break space belongs.
+It prints the line with `⍽` in the place of each such space: replace each `⍽` with a no-break space.
+It knows the units that `src/typography.ts` lists: add a unit there when a page needs it, with a test.
 
 ### Choose the right shape
 
