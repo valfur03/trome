@@ -14,26 +14,33 @@ struct StartTestRow: View {
     @State private var asked: Bool?
 
     var body: some View {
-        if let asked {
-            LabeledContent {
-                Label {
-                    Text(verbatim: asked ? text("Sent", "Envoyé") : text("Not sent", "Non envoyé"))
-                } icon: {
-                    Image(systemName: asked ? "paperplane.fill" : "xmark.circle")
-                        .foregroundStyle(asked ? Color.accentColor : .red)
+        // One button whatever the state: a row that swaps its view in a List kept the height of the old one.
+        Button {
+            guard asked == nil else { return }
+            asked = autoLiveActivity.testTheStart()
+        } label: {
+            HStack {
+                title
+                Spacer()
+                if let asked {
+                    status(asked)
                 }
-            } label: {
-                title
             }
-            .accessibilityIdentifier("testTheStart")
-        } else {
-            Button {
-                asked = autoLiveActivity.testTheStart()
-            } label: {
-                title
-            }
-            .accessibilityIdentifier("testTheStart")
         }
+        .accessibilityIdentifier("testTheStart")
+    }
+
+    /// "Sent" with its icon; a red cross alone when nothing left, as the log under it says why.
+    private func status(_ asked: Bool) -> some View {
+        Label {
+            Text(verbatim: asked ? text("Sent", "Envoyé") : text("Not sent", "Non envoyé"))
+        } icon: {
+            Image(systemName: asked ? "paperplane.fill" : "xmark.circle")
+                .foregroundStyle(asked ? Color.accentColor : .red)
+        }
+        .labelStyle(StatusLabelStyle(showsTitle: asked))
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier("testTheStartStatus")
     }
 
     private var title: some View {
@@ -46,6 +53,19 @@ struct StartTestRow: View {
 
     private func text(_ english: String, _ french: String) -> String {
         Bundle.main.preferredLocalizations.first == "fr" ? french : english
+    }
+}
+
+/// The icon and the title, or the icon alone, which VoiceOver still reads with its title.
+private struct StatusLabelStyle: LabelStyle {
+    let showsTitle: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if showsTitle {
+            Label(configuration)
+        } else {
+            Label(configuration).labelStyle(.iconOnly)
+        }
     }
 }
 #endif
