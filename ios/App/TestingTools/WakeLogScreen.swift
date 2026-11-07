@@ -3,8 +3,10 @@ import TROMECore
 import SwiftUI
 
 /// The Wake log: what iOS woke the app for and what the app decided, newest first, with the settings that can stop
-/// a wake. A debug build opens it from the Testing tools, and a build for a walk from the main screen.
-/// Its texts are verbatim, in English: a Release build for a walk must add nothing to the String Catalogs.
+/// a wake, under the test of the start (`StartTestRow`). A debug build opens it from the Testing tools, and a build
+/// for a walk from the main screen.
+/// Its texts are verbatim, in English but for the test row: a Release build for a walk must add nothing to the String
+/// Catalogs.
 struct WakeLogScreen: View {
     @Environment(WakeLog.self) private var wakeLog: WakeLog?
     @Environment(LocationService.self) private var locationService
@@ -13,6 +15,9 @@ struct WakeLogScreen: View {
 
     var body: some View {
         List {
+            Section {
+                StartTestRow()
+            }
             Section {
                 ForEach(phoneState, id: \.self) { line in
                     Text(line)

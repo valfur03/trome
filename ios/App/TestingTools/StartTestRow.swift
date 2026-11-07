@@ -1,0 +1,51 @@
+#if WAKE_LOG
+import Foundation
+import SwiftUI
+import TROMECore
+
+/// The test of the start, in the Wake log: one tap asks the server, as a wake at a station does, to start the Live
+/// Activity of the nearest station (`AutoLiveActivityModel.testTheStart`), so that a build for a walk proves the push at
+/// a desk. The row says only whether the ask left: the answer is in the lines of the log, as for a wake.
+/// One tap per opening of the screen, so a slip never asks twice.
+/// Its texts are verbatim, as every text of the Wake log, but in the language of the app: a Release build must add
+/// nothing to the String Catalogs, and the build for a walk is read on a French phone.
+struct StartTestRow: View {
+    @Environment(AutoLiveActivityModel.self) private var autoLiveActivity
+    @State private var asked: Bool?
+
+    var body: some View {
+        if let asked {
+            LabeledContent {
+                Label {
+                    Text(verbatim: asked ? text("Sent", "Envoyé") : text("Not sent", "Non envoyé"))
+                } icon: {
+                    Image(systemName: asked ? "paperplane.fill" : "xmark.circle")
+                        .foregroundStyle(asked ? Color.accentColor : .red)
+                }
+            } label: {
+                title
+            }
+            .accessibilityIdentifier("testTheStart")
+        } else {
+            Button {
+                asked = autoLiveActivity.testTheStart()
+            } label: {
+                title
+            }
+            .accessibilityIdentifier("testTheStart")
+        }
+    }
+
+    private var title: some View {
+        Label {
+            Text(verbatim: text("Test the start", "Tester le démarrage"))
+        } icon: {
+            Image(systemName: "dot.radiowaves.up.forward")
+        }
+    }
+
+    private func text(_ english: String, _ french: String) -> String {
+        Bundle.main.preferredLocalizations.first == "fr" ? french : english
+    }
+}
+#endif

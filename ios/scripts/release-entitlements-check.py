@@ -9,9 +9,10 @@ It reads what Xcode signs a Release build with (the entitlements file of each ta
 needs no team and no Apple account.
 With an archive (make release-archive-check), it also checks the archive: the group that the app and its widget read
 in their Info.plist, and the push code compiled into the app, found by the whole name of its Swift type.
-It also proves that the store build has no Wake log, the record of each wake for a walk: an archive has it only when
-its Release settings compile it (TROME_WAKE_LOG_BUILD_<n> = YES for the build number n, a TestFlight build for a walk),
-and then it must have it, with the commit that the build wrote in its Info.plist, so that the record of the walk
+It also proves that the store build has no Wake log, the record of each wake for a walk, and no test of the start, its
+row that asks the server for a start: an archive has them only when its Release settings compile them
+(TROME_WAKE_LOG_BUILD_<n> = YES for the build number n, a TestFlight build for a walk), and then it must have them,
+with the commit that the build wrote in its Info.plist, so that the record of the walk
 names the commit that was walked.
 It prints no build setting but the name of the app group, which ios/project.yml shows: the release checks run on
 GitHub, where the logs are public.
@@ -36,9 +37,11 @@ GROUP_KEY = "TROMEAppGroup"
 SILENT_START_TYPE = "PushRegistrationAppDelegate"
 # A type that exists only in a build with the Wake log (ios/App/TestingTools/, inside #if WAKE_LOG).
 WAKE_LOG_TYPE = "WakeLogScreen"
+# The row of the Wake log that asks the server for a test start (inside #if WAKE_LOG too): the store build never has it.
+TEST_START_TYPE = "StartTestRow"
 # The types that the archive check looks for: release-archive-gate.py builds the archive in make check when a change
 # touches a Swift file that names one of them.
-ARCHIVE_TYPES = (SILENT_START_TYPE, WAKE_LOG_TYPE)
+ARCHIVE_TYPES = (SILENT_START_TYPE, WAKE_LOG_TYPE, TEST_START_TYPE)
 WAKE_LOG_CONDITION = "WAKE_LOG"
 WAKE_LOG_SETTING = "TROME_WAKE_LOG_BUILD_<n>"
 # The commit that ios/scripts/build-commit.sh writes at each build: a short hash, -dirty with changes not committed.
@@ -196,12 +199,14 @@ def problems_of_the_archive(archive, group, has_wake_log):
     if SILENT_START_TYPE not in types:
         problems.append(f"in the archive, {APP} has no silent start (no type {SILENT_START_TYPE}): "
                         "the Release build must compile SILENT_START")
-    if WAKE_LOG_TYPE in types and not has_wake_log:
-        problems.append(f"in the archive, {APP} has the Wake log ({WAKE_LOG_TYPE}) while its Release settings "
-                        f"do not compile it ({WAKE_LOG_SETTING}): the store build must never have it")
-    if WAKE_LOG_TYPE not in types and has_wake_log:
-        problems.append(f"in the archive, {APP} has no Wake log ({WAKE_LOG_TYPE}) while its Release settings "
-                        f"compile it ({WAKE_LOG_SETTING} = YES): the Release build must compile WAKE_LOG")
+    for name, type_name in (("the Wake log", WAKE_LOG_TYPE), ("the test of the start", TEST_START_TYPE)):
+        if type_name in types and not has_wake_log:
+            problems.append(f"in the archive, {APP} has {name} ({type_name}) while its Release settings "
+                            f"do not compile it ({WAKE_LOG_SETTING}): the store build must never have it")
+        if type_name not in types and has_wake_log:
+            problems.append(f"in the archive, {APP} has no {name.removeprefix('the ')} ({type_name}) while its "
+                            f"Release settings compile it ({WAKE_LOG_SETTING} = YES): the Release build must "
+                            "compile WAKE_LOG")
     commit = infos[APP].get(COMMIT_KEY)
     if has_wake_log and not (isinstance(commit, str) and COMMIT.fullmatch(commit)):
         problems.append(f"in the archive, {APP} names no commit ({COMMIT_KEY} of its Info.plist): the record of a walk "

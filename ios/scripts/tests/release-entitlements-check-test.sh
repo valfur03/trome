@@ -1,7 +1,8 @@
 #!/bin/sh
 # The check of the silent start in a Release build: it fails when the app loses the push capability, when the app or
 # its widget loses the app group, or when the archive has no silent start; a fake xcodebuild gives the settings.
-# It also fails when a store archive has the Wake log, or a walk archive has none, or names no commit.
+# It also fails when a store archive has the Wake log or its test of the start, or a walk archive has none, or names
+# no commit.
 # It finds a type by its whole name in the Swift types of the binary, so the app binaries here are compiled Swift.
 set -eu
 tests=$(cd "$(dirname "$0")" && pwd)
@@ -67,6 +68,11 @@ binary() {
 binary silent-start 'final class PushRegistrationAppDelegate {}'
 binary renamed 'final class StartTokenAppDelegate { let answered = "PushRegistrationAppDelegate.answered" }'
 binary wake-log 'final class PushRegistrationAppDelegate {}
+struct WakeLogScreen {}
+struct StartTestRow {}'
+binary test-start 'final class PushRegistrationAppDelegate {}
+struct StartTestRow {}'
+binary wake-log-no-test 'final class PushRegistrationAppDelegate {}
 struct WakeLogScreen {}'
 printf 'binary PushRegistrationAppDelegate code' > "$state/swift/text.bin"
 
@@ -114,6 +120,12 @@ expect "a store archive with the Wake log fails" "$(run)" fails
 expect "the failure names the Wake log" "$(grep -c 'has the Wake log' "$state/out")" 1
 expect "a walk archive with the Wake log passes" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" passes
 expect "the pass says it is not for the store" "$(grep -c 'never for the store' "$state/out")" 1
+archive group.io.github.valfur03.trome test-start 1e2e704
+expect "a store archive with the test of the start fails" "$(run)" fails
+expect "the failure names the test of the start" "$(grep -c 'has the test of the start' "$state/out")" 1
+archive group.io.github.valfur03.trome wake-log-no-test 1e2e704
+expect "a walk archive with no test of the start fails" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" fails
+expect "the failure names the missing test of the start" "$(grep -c 'has no test of the start' "$state/out")" 1
 archive group.io.github.valfur03.trome wake-log 1e2e704-dirty
 expect "a walk archive made with changes not committed passes" "$(run FAKE_CONDITIONS="SILENT_START WAKE_LOG")" passes
 archive group.io.github.valfur03.trome wake-log

@@ -159,7 +159,7 @@ On your iPhone, iOS also wakes a suspended or closed app near a station, after a
 **Testing tools** > **Wake log** shows, newest first, what iOS woke the app for and what the app decided, with the time of each line.
 In a Release build for a walk, the list icon at the top right of the main screen opens it ([Record a walk with a TestFlight build](#record-a-walk-with-a-testflight-build)).
 It keeps the last 500 lines across launches, with no cable and no Xcode.
-At the top, **Phone now** shows the settings that can stop a wake: the location (Always, precise), Background App Refresh, Low Power Mode, the notifications, and a fake position.
+Under **Test the start**, **Phone now** shows the settings that can stop a wake: the location (Always, precise), Background App Refresh, Low Power Mode, the notifications, and a fake position.
 
 Check this before every walk, because a fake position makes the walk test nothing:
 the app keeps a fake position across launches, and with it the app watches no area, so iOS wakes nothing.
@@ -177,7 +177,7 @@ the app keeps a fake position across launches, and with it the app watches no ar
 | Power | Each launch of the app, then the settings of the phone at that launch; each time the app comes on screen or leaves it |
 | Location | Each event that iOS sends for an area: entered, left, or a problem that iOS reports, with where the phone was for a station area, whether iOS launched the app for it, and the background time left; one line for the first state of the areas that iOS did not watch yet, but its own line for each station that the phone is inside |
 | Map | Each time the app chooses again the stations that iOS watches |
-| Branch | Each arrival that the app decides, with its reason: arrived in the background, started, switched, or why not (a reason only once while it stays the same); each start by hand from Testing tools; each end of the Live Activity, with who ended it: its distance or time limit, the rider, or iOS |
+| Branch | Each arrival that the app decides, with its reason: arrived in the background, started, switched, or why not (a reason only once while it stays the same); each start by hand from Testing tools; each tap on **Test the start**, with the station and its distance; each end of the Live Activity, with who ended it: its distance or time limit, the rider, or iOS |
 | Bell | Only in a log kept from an earlier build: each arrival notification that it handed to iOS |
 | Radio waves | At each launch of a plain `make run` build (not `LIVE=1`), "Silent start off: this build has no server": expected, because that build has no server, so you set up nothing and none of the other lines of this row follow. A `make run LIVE=1` build writes this line only with `TROME_SILENT_START = YES` in `ios/Config/Local.xcconfig` and no server address set up; without that setting it has no silent start and writes none of the lines of this row. With the [silent start](auto-live-activity.md#the-silent-start) on: the start token from iOS, each ask to the server with the background time left, its answer ("started", "already started", "refused", "not set up", "no answer") with the seconds that it took, or "No answer within 10 s" ("No start token from iOS within 10 s" when iOS gave none), one line "No start at" the station, ", no notification:" and the cause when the Live Activity does not come, and "Follows the Live Activity that the server started" when the app finds it on screen |
 | Tram | Each call that the app makes for its Live Activity in the background: how old the answer is and the next train of each direction that it hands to iOS (four at most), or why no answer came; then "next ask by" and a time, or "asks no more" |
@@ -231,6 +231,7 @@ A Release build records nothing, unless it is a build for a walk.
 
 A Release build archived with `TROME_WAKE_LOG_BUILD_<n> = YES` in `ios/Config/Local.xcconfig` has the Wake log, where `<n>` is its build number (`CURRENT_PROJECT_VERSION` in `ios/Config/Base.xcconfig`), for example `TROME_WAKE_LOG_BUILD_6 = YES` for build 6.
 The list icon at the top right of the main screen opens it, and nothing else on the screens changes.
+At its top, **Test the start** (**Tester le démarrage** in French) asks the server, as a wake at a station does, to start the Live Activity of the nearest station, whatever its distance: tap it and lock the phone, and the Live Activity comes on the lock screen, or the Radio waves lines say which step stopped.
 It records the same lines as a debug build, on the phone only: the app sends none of them anywhere, and only **Share** gives them to someone.
 Use it for a TestFlight build that you walk with, and never submit that build for the App Store.
 The next build number turns the Wake log off by itself, so a line left in the file never reaches a store build; remove it after the walk.
