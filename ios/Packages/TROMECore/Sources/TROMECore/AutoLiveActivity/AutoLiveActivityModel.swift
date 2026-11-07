@@ -36,6 +36,8 @@ public final class AutoLiveActivityModel {
     @ObservationIgnored var secondChanceTask: Task<Void, Never>?
     /// Whether the keeper runs: the Wake log says it when the app may be suspended.
     @ObservationIgnored var isKeepingAwake = false
+    /// The ask of the last test of the start, which the tests wait for.
+    @ObservationIgnored var startTestTask: Task<Void, Never>?
 
     public init(
         catalog: StationCatalog,
@@ -294,14 +296,6 @@ private extension AutoLiveActivityModel {
         }
     }
 
-    func precisePosition() -> Coordinate? {
-        guard let fix = inputs.locationService.fix else { return nil }
-        guard inputs.locationService.source != .realGPS || AutoLiveActivityRules.isPrecise(fix) else {
-            return nil
-        }
-        return fix.coordinate
-    }
-
     func trusts(_ fix: PositionFix, maximumAge: TimeInterval = AutoLiveActivityRules.maximumPositionAge) -> Bool {
         guard inputs.locationService.source == .realGPS else { return true }
         return AutoLiveActivityRules.trusts(fix, now: configuration.now(), maximumAge: maximumAge)
@@ -326,6 +320,14 @@ private extension AutoLiveActivityModel {
 }
 
 extension AutoLiveActivityModel {
+    func precisePosition() -> Coordinate? {
+        guard let fix = inputs.locationService.fix else { return nil }
+        guard inputs.locationService.source != .realGPS || AutoLiveActivityRules.isPrecise(fix) else {
+            return nil
+        }
+        return fix.coordinate
+    }
+
     func evaluate(
         position: Coordinate?,
         asAResume: Bool = false,

@@ -6,7 +6,8 @@ extension AutoLiveActivityModel {
     /// with its cause, and the rider who opens the app at the station gets the Live Activity then.
     /// The arrival rules give this once for each arrival, so a second event of iOS for the same station, even during
     /// the ask, asks nothing more.
-    func startInTheBackground(at station: Station) async {
+    /// `hasBeenNear` is false only for a test of the start from more than 250 meters away.
+    func startInTheBackground(at station: Station, hasBeenNear: Bool = true) async {
         guard let silentStart = services.silentStart else {
             recordNoStart(at: station, because: "the silent start is off in this build")
             return
@@ -24,7 +25,7 @@ extension AutoLiveActivityModel {
             state.openArrivalStationId = station.id
         }
         if ask.startsTheLiveActivity {
-            followThePushedStart(at: station)
+            followThePushedStart(at: station, hasBeenNear: hasBeenNear)
             return
         }
         endTheLocationKeptForTheAsk()
@@ -34,9 +35,9 @@ extension AutoLiveActivityModel {
     /// The push may have landed during the ask: the app then follows it at once, and keeps the location as for a
     /// Live Activity that it started. Otherwise it follows it when iOS next runs the app: at the push, at a wake of
     /// a region, or when the rider opens it.
-    private func followThePushedStart(at station: Station) {
+    private func followThePushedStart(at station: Station, hasBeenNear: Bool) {
         guard state.shown == nil else { return }
-        state.pushedStart = PushedStart(stationId: station.id, answeredAt: configuration.now())
+        state.pushedStart = PushedStart(stationId: station.id, answeredAt: configuration.now(), hasBeenNear: hasBeenNear)
         syncWithSystem()
         if state.shown == nil {
             endTheLocationKeptForTheAsk()
