@@ -5,6 +5,7 @@ import Testing
 /// A walk is read from its record alone: each launch says how it began, a tap of the rider or a run by iOS with no
 /// screen, so that a tap is never told as a wake of iOS (the walk of 2026-11-02 could not tell them apart).
 @MainActor
+@Suite(.bounded)
 struct WakeLogLaunchStartTests {
     let storage = InMemoryKeyValueStore()
     let clock = TestClock()

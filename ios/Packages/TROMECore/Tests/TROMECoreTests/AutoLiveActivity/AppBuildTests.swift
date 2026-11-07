@@ -3,6 +3,7 @@ import Testing
 @testable import TROMECore
 
 /// The record of a walk says which build was walked and on which iOS, with no question to the rider.
+@Suite(.bounded)
 struct AppBuildTests {
     @Test func namesTheBuildItsCommitAndIOS() {
         let build = AppBuild(infoDictionary: ["CFBundleVersion": "6", AppBuild.commitKey: "1e2e704"])

@@ -4,6 +4,7 @@ import Testing
 
 /// A walk tells a crossing that iOS saw minutes before the rider opened the app from one that iOS reported at that
 /// moment, and reads what iOS still holds for the nearest station when the app may be suspended.
+@Suite(.bounded)
 struct RegionCrossingTimeTests {
     typealias Places = AutoTestPlaces
 
