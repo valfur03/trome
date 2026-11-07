@@ -4,8 +4,8 @@ import SwiftUI
 import TROMECore
 
 /// The test of the start, in the Wake log: one tap asks the server, as a wake at a station does, to start the Live
-/// Activity of the nearest station (`AutoLiveActivityModel.testTheStart`), so that a build for a walk proves the push at
-/// a desk. The row says only whether the ask left: the answer is in the lines of the log, as for a wake.
+/// Activity of the nearest station (`AutoLiveActivityModel.testTheStart`), so that a build for a walk proves the push
+/// at a desk. The row says only whether the ask left: the answer is in the lines of the log, as for a wake.
 /// One tap per opening of the screen, so a slip never asks twice.
 /// Its texts are verbatim, as every text of the Wake log, but in the language of the app: a Release build must add
 /// nothing to the String Catalogs, and the build for a walk is read on a French phone.

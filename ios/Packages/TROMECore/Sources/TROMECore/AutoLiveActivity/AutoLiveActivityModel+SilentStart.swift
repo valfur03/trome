@@ -37,7 +37,9 @@ extension AutoLiveActivityModel {
     /// a region, or when the rider opens it.
     private func followThePushedStart(at station: Station, hasBeenNear: Bool) {
         guard state.shown == nil else { return }
-        state.pushedStart = PushedStart(stationId: station.id, answeredAt: configuration.now(), hasBeenNear: hasBeenNear)
+        state.pushedStart = PushedStart(
+            stationId: station.id, answeredAt: configuration.now(), hasBeenNear: hasBeenNear
+        )
         syncWithSystem()
         if state.shown == nil {
             endTheLocationKeptForTheAsk()

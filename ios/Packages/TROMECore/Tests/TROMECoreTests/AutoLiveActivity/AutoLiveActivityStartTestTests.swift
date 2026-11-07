@@ -151,7 +151,9 @@ extension AutoLiveActivityModelTests {
     /// AC 3: the ask of a test sends the request of a wake: the station in the path and the start token in the body,
     /// and nothing of the position.
     @Test func sendsTheStationAndTheStartTokenAndNoPosition() async throws {
-        let http = ServerStubHTTPClient { _ in .init(body: Data(#"{"result":"started"}"#.utf8), status: 200, headers: [:]) }
+        let http = ServerStubHTTPClient { _ in
+            .init(body: Data(#"{"result":"started"}"#.utf8), status: 200, headers: [:])
+        }
         let starter = ServerLiveActivityStarter(server: .test, httpClient: http)
         let clock = clock
         let model = makeModel(silentStart: SilentStart(
@@ -168,7 +170,8 @@ extension AutoLiveActivityModelTests {
         #expect(sent.allHTTPHeaderFields == ofAWake.allHTTPHeaderFields)
         let body = try JSONSerialization.jsonObject(with: try #require(sent.httpBody)) as? [String: String]
         #expect(body == ["startToken": StubStartTokens.token])
-        let whole = "\(sent.url?.absoluteString ?? "") \(sent.allHTTPHeaderFields ?? [:]) \(String(decoding: sent.httpBody ?? Data(), as: UTF8.self))"
+        let sentBody = String(bytes: sent.httpBody ?? Data(), encoding: .utf8) ?? ""
+        let whole = "\(sent.url?.absoluteString ?? "") \(sent.allHTTPHeaderFields ?? [:]) \(sentBody)"
         #expect(!whole.contains("48.85"))
         #expect(!whole.contains("2.35"))
     }
