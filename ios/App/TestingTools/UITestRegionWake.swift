@@ -4,7 +4,8 @@ import TROMECore
 
 // The Simulator cannot watch regions (in the iOS 27 Simulator, `isMonitoringAvailable` is false), so it never wakes
 // the app at a station. An E2E test posts `entered` with the id of an arrival area (a Darwin notification) in place
-// of the event of iOS: the app runs the handler of a real event, in the background, from the last position of iOS.
+// of the event of iOS: once the position of iOS is inside the area, as iOS reports it only then, the app runs the
+// handler of a real event, in the background, from the last position of iOS.
 // A Darwin notification has no content, so the app listens to one name for each arrival area of its plan. It posts
 // `handled` when its handler returns, so that the test looks for a notification only after the decision.
 @MainActor

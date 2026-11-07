@@ -6,7 +6,8 @@
 // report. No launch argument keeps it awake or following the position.
 // The Simulator cannot watch areas (in the iOS 27 Simulator, `isMonitoringAvailable` is false), so the test posts
 // the report in place of iOS (`UITestRegionWake`, debug builds only): the app runs its own handler of a report,
-// from the background, with the last position of iOS.
+// from the background, with the last position of iOS, once that position is inside the area (the Simulator takes
+// seconds to give the app a new position on a busy Mac, and iOS reports an area only from its own position).
 // Not guarded: the wake of a closed or suspended app by iOS, which QA and the iPhone check; iOS never suspends an
 // app that an XCUITest launched.
 // The wake log is the one place that shows the decision in the background: a build of the Simulator has no silent

@@ -118,6 +118,9 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
     }
 
     #if DEBUG
+    /// Less than the wait of the test for the end of the handler (30 s), so that the test still sees the decision.
+    private static let uiTestPositionLimit: Duration = .seconds(10)
+
     /// The wake of `listen(to:)` for an E2E test, which the Simulator cannot give: the same handler, with the last
     /// position of iOS, for an area that iOS keeps for the app. False when iOS keeps no such area.
     func enterForUITests(_ regionId: String) async -> Bool {
@@ -126,8 +129,26 @@ final class CoreLocationStationRegionWatcher: StationRegionWatcher {
             return false
         }
         Self.logger.notice("UI tests: the phone entered \(regionId, privacy: .public)")
+        await waitUntilIOSPlacesThePhone(in: monitor.record(for: regionId)?.condition)
         await handle(.entered(regionId: regionId), lastKnownFix: manager.location.flatMap(PositionFix.init))
         return true
+    }
+
+    /// iOS reports an area only once its own position is inside it. The Simulator takes a moment, seconds on a busy
+    /// Mac, to give the app the position that a test set just before its report, so the stand-in waits for it as
+    /// iOS would. After the limit, it reports anyway, and the app decides from the position that it has.
+    private func waitUntilIOSPlacesThePhone(in condition: CLCondition?) async {
+        guard let area = condition as? CLMonitor.CircularGeographicCondition else { return }
+        let center = CLLocation(latitude: area.center.latitude, longitude: area.center.longitude)
+        let clock = ContinuousClock()
+        let limit = clock.now + Self.uiTestPositionLimit
+        while clock.now < limit {
+            if let location = manager.location, location.distance(from: center) <= area.radius {
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        Self.logger.notice("UI tests: iOS gave no position inside the area, the app decides from the last one")
     }
     #endif
 }
