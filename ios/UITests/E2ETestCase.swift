@@ -204,6 +204,14 @@ class E2ETestCase: XCTestCase {
             "The Notification Center did not open, or iOS renamed its SpringBoard element "
                 + "'\(Self.notificationCenterIdentifier)'"
         )
+        // iOS shows the Notification Center before it ends its move over the app, and drops a Home press in that
+        // move; the app goes to the background only at its end.
+        if app.bundleIdentifier != springboard.bundleIdentifier {
+            XCTAssertTrue(
+                app.wait(for: .runningBackground, timeout: UITestTimeout.element),
+                "The Notification Center did not finish its move over the app"
+            )
+        }
         guard expectingALiveActivity else { return }
         let allowLiveActivities = springboard.buttons["Allow"]
         XCTAssertNotNil(
