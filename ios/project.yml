@@ -1,7 +1,7 @@
 name: TROME
 
 options:
-  xcodeVersion: "27.0"
+  xcodeVersion: "27.2"
   developmentLanguage: en
   deploymentTarget:
     iOS: "18.0"

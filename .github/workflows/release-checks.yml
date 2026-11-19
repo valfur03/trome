@@ -56,7 +56,7 @@ jobs:
       actions: read
     env:
       # The build of Xcode of the Mac that the project is made on. Its path comes from options.xcodeVersion of ios/project.yml.
-      XCODE_BUILD: 27A266a
+      XCODE_BUILD: 27B52
       XCODEGEN_VERSION: 2.46.0
       XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
       SWIFTLINT_VERSION: 0.65.1
