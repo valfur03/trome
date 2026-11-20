@@ -23,10 +23,9 @@ class E2ETestCase: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// One instance per test, so a helper can tell it from the app under test (`===`).
     @MainActor
-    var springboard: XCUIApplication {
-        XCUIApplication(bundleIdentifier: "com.apple.springboard")
-    }
+    lazy var springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
 
     @MainActor
     func makeApp() -> XCUIApplication {
@@ -206,7 +205,7 @@ class E2ETestCase: XCTestCase {
         )
         // iOS shows the Notification Center before it ends its move over the app, and drops a Home press in that
         // move; the app goes to the background only at its end.
-        if app.bundleIdentifier != springboard.bundleIdentifier {
+        if app !== springboard {
             XCTAssertTrue(
                 app.wait(for: .runningBackground, timeout: UITestTimeout.element),
                 "The Notification Center did not finish its move over the app"
